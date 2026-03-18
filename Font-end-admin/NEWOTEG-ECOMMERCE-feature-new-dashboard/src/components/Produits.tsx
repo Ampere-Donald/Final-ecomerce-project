@@ -397,13 +397,16 @@ export const Produits = () => {
                     {/* Image + Nom */}
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
-                        <div className="size-12 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center overflow-hidden shrink-0">
+                    {/* DEBUG TEMPORAIRE : à supprimer après validation */}
+                    {(() => { if (prod.imageUrl) console.log('[IMAGE URL]', prod.id, prod.imageUrl); return null; })()}
+                    <div className="size-12 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center overflow-hidden shrink-0">
                           {prod.imageUrl ? (
                             <img
-                              src={`http://localhost:3000${prod.imageUrl}`}
+                              src={`http://localhost:3000${prod.imageUrl.startsWith('/') ? '' : '/'}${prod.imageUrl}`}
                               alt={prod.nomProduit}
                               className="w-full h-full object-cover"
                               onError={(e) => {
+                                console.warn('[IMAGE ERROR]', `http://localhost:3000${prod.imageUrl}`);
                                 (e.target as HTMLImageElement).style.display = 'none';
                               }}
                             />
