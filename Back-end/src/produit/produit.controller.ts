@@ -76,10 +76,26 @@ export class ProduitController {
   }
 
   @Patch(':id')
+  @UseInterceptors(
+    FileInterceptor('file', {
+      storage: diskStorage({
+        destination: './uploads',
+        filename: (req, file, cb) => {
+          const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+          const ext = extname(file.originalname);
+          cb(null, `${file.fieldname}-${uniqueSuffix}${ext}`);
+        },
+      }),
+    }),
+  )
   update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() updateProduitDto: UpdateProduitDto,
+    @UploadedFile() file?: Express.Multer.File,
   ) {
+    if (file) {
+      updateProduitDto.imageUrl = `/uploads/${file.filename}`;
+    }
     return this.produitService.update(id, updateProduitDto);
   }
 
