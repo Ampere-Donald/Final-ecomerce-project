@@ -1,0 +1,76 @@
+@use '../../styles/variables' as *;
+
+.home-page {
+    background-color: $color-background;
+    padding-top: 80px;
+
+    &__divider {
+        height: 1px;
+        background: linear-gradient(90deg, transparent 0%, rgba($color-border, 0.5) 50%, transparent 100%);
+        margin: $spacing-2xl 0;
+    }
+}
+
+// ── Partner Brands ───────────────────────────────────────────
+.partner-brands {
+    background: $color-surface;
+    padding: $spacing-lg 0;
+    border-bottom: 1px solid rgba($color-border, 0.4);
+    overflow: hidden;
+
+    &__title {
+        text-align: center;
+        font-size: 10px;
+        font-weight: $font-weight-extrabold;
+        color: $color-secondary-light;
+        text-transform: uppercase;
+        letter-spacing: 0.15em;
+        margin-bottom: $spacing-lg;
+    }
+
+    &__marquee {
+        width: 100%;
+        overflow: hidden;
+        position: relative;
+        mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+        -webkit-mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+    }
+
+    &__track {
+        display: flex;
+        gap: $spacing-3xl;
+        width: max-content;
+        animation: marquee 40s linear infinite;
+
+        @media (max-width: $breakpoint-md) {
+            gap: $spacing-xl;
+        }
+
+        &:hover {
+            animation-play-state: paused;
+        }
+    }
+
+    &__name {
+        font-family: monospace;
+        font-size: 16px;
+        font-weight: $font-weight-bold;
+        color: $color-secondary;
+        transition: color $transition-fast;
+        cursor: default;
+
+        &:hover {
+            color: $color-primary-dark;
+        }
+    }
+}
+
+@keyframes marquee {
+    from {
+        transform: translateX(0);
+    }
+
+    to {
+        transform: translateX(calc(-100% / 3));
+    }
+}

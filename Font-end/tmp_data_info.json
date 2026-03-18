@@ -1,0 +1,60 @@
+{
+  "columns": [
+    "model",
+    "code",
+    "marque",
+    "deleted_at",
+    "created_at",
+    "updated_at",
+    "famille_article_id"
+  ],
+  "total_columns": 7,
+  "sample_rows": [
+    {
+      "model": " LECTEUR MP3 + BLUETOOTH X1783  AUTO",
+      "code": "215194",
+      "marque": "NULL",
+      "deleted_at": "NULL",
+      "created_at": "2023-09-06 12:44:46",
+      "updated_at": "2023-09-06 12:44:46",
+      "famille_article_id": "215"
+    },
+    {
+      "model": "008A",
+      "code": "707024",
+      "marque": "NULL",
+      "deleted_at": "NULL",
+      "created_at": "2023-09-06 14:58:58",
+      "updated_at": "2023-09-06 14:58:58",
+      "famille_article_id": "707"
+    },
+    {
+      "model": "100N03",
+      "code": "101001",
+      "marque": "NULL",
+      "deleted_at": "NULL",
+      "created_at": "2023-09-06 12:37:11",
+      "updated_at": "2023-09-06 12:37:11",
+      "famille_article_id": "101"
+    },
+    {
+      "model": "106 DE FER A SOUDER 100W ORG",
+      "code": "240010",
+      "marque": "NULL",
+      "deleted_at": "NULL",
+      "created_at": "2023-09-06 12:44:18",
+      "updated_at": "2023-09-06 12:44:18",
+      "famille_article_id": "240"
+    },
+    {
+      "model": "106 DE FER A SOUDER 20W ORD",
+      "code": "240014",
+      "marque": "NULL",
+      "deleted_at": "NULL",
+      "created_at": "2023-09-06 12:44:18",
+      "updated_at": "2023-09-06 12:44:18",
+      "famille_article_id": "240"
+    }
+  ],
+  "total_rows": 6865
+}

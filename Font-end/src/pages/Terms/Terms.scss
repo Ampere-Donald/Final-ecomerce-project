@@ -1,0 +1,69 @@
+@use '../../styles/variables' as *;
+
+.terms-page {
+    background-color: $color-background;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+
+    .terms-header {
+        background-color: $color-primary;
+        color: white;
+        padding: $spacing-3xl 0;
+        text-align: center;
+
+        h1 {
+            font-size: $font-size-3xl;
+            margin-bottom: $spacing-sm;
+            font-weight: $font-weight-bold;
+        }
+
+        p {
+            font-size: $font-size-md;
+            color: rgba(255, 255, 255, 0.8);
+            margin: 0;
+        }
+    }
+
+    .terms-content {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: $spacing-3xl $spacing-md;
+        flex: 1;
+
+        section {
+            margin-bottom: $spacing-2xl;
+
+            h2 {
+                font-size: $font-size-xl;
+                color: $color-text;
+                margin-bottom: $spacing-md;
+                position: relative;
+                padding-bottom: $spacing-xs;
+
+                &::after {
+                    content: '';
+                    position: absolute;
+                    bottom: 0;
+                    left: 0;
+                    width: 40px;
+                    height: 3px;
+                    background-color: $color-primary;
+                    border-radius: $border-radius-full;
+                }
+            }
+
+            p {
+                font-size: $font-size-md;
+                line-height: $line-height-relaxed;
+                color: $color-text-muted;
+                margin-bottom: $spacing-md;
+            }
+
+            strong {
+                color: $color-text;
+                font-weight: $font-weight-bold;
+            }
+        }
+    }
+}

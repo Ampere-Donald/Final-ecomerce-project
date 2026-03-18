@@ -1,0 +1,155 @@
+// ==========================================================
+// Newoteg SARL — Main Stylesheet
+// ==========================================================
+
+@use 'variables' as *;
+
+// ── Google Fonts ───────────────────────────────────────────
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+// ── Reset & Base ───────────────────────────────────────────
+*,
+*::before,
+*::after {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html {
+    font-size: 100%;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    scroll-behavior: smooth;
+}
+
+body {
+    font-family: $font-family-base;
+    font-size: $font-size-base;
+    font-weight: $font-weight-regular;
+    line-height: $line-height-base;
+    color: $color-text;
+    background-color: $color-background;
+    min-height: 100vh;
+}
+
+// ── Typographie ────────────────────────────────────────────
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    font-family: $font-family-heading;
+    font-weight: $font-weight-bold;
+    line-height: $line-height-tight;
+    color: $color-text;
+}
+
+h1 {
+    font-size: $font-size-3xl;
+}
+
+h2 {
+    font-size: $font-size-2xl;
+}
+
+h3 {
+    font-size: $font-size-xl;
+}
+
+h4 {
+    font-size: $font-size-lg;
+}
+
+h5 {
+    font-size: $font-size-md;
+}
+
+h6 {
+    font-size: $font-size-base;
+}
+
+p {
+    margin-bottom: $spacing-md;
+    line-height: $line-height-base;
+}
+
+a {
+    color: $color-primary;
+    text-decoration: none;
+    transition: color $transition-fast;
+
+    &:hover {
+        color: $color-primary-dark;
+    }
+}
+
+// ── Images ─────────────────────────────────────────────────
+img,
+svg {
+    display: block;
+    max-width: 100%;
+}
+
+// ── Listes ─────────────────────────────────────────────────
+ul,
+ol {
+    list-style: none;
+}
+
+// ── Boutons (reset) ────────────────────────────────────────
+button {
+    font-family: inherit;
+    font-size: inherit;
+    cursor: pointer;
+    border: none;
+    background: none;
+}
+
+// ── Inputs (reset) ─────────────────────────────────────────
+input,
+textarea,
+select {
+    font-family: inherit;
+    font-size: inherit;
+    border: $border-width solid $color-border;
+    border-radius: $border-radius-md;
+    outline: none;
+    transition: border-color $transition-fast, box-shadow $transition-fast;
+
+    &:focus {
+        border-color: $color-primary;
+        box-shadow: 0 0 0 3px rgba($color-primary, 0.15);
+    }
+}
+
+// ── Utilitaires ────────────────────────────────────────────
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+.container {
+    width: calc(100% - 4rem);
+    max-width: 1600px;
+    margin-inline: auto;
+
+    @media (max-width: $breakpoint-md) {
+        width: calc(100% - 2rem);
+    }
+}
+
+// ── #app root ──────────────────────────────────────────────
+#root {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}

@@ -1,0 +1,44 @@
+@use '../../styles/variables' as *;
+
+.toast {
+    position: fixed;
+    top: 1.5rem;
+    right: 1.5rem;
+    z-index: $z-tooltip;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.875rem 1.25rem;
+    background: $color-surface;
+    border-left: 3px solid $color-primary;
+    border-radius: $border-radius-md;
+    box-shadow: $shadow-lg;
+    max-width: 340px;
+    animation: toast-slide-in $transition-base forwards;
+
+    &__icon {
+        flex-shrink: 0;
+        color: $color-primary;
+        display: flex;
+        align-items: center;
+    }
+
+    &__message {
+        font-size: $font-size-sm;
+        font-weight: $font-weight-medium;
+        color: $color-text-body;
+        line-height: $line-height-base;
+    }
+}
+
+@keyframes toast-slide-in {
+    from {
+        opacity: 0;
+        transform: translateX(120%);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}

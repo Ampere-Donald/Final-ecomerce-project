@@ -1,0 +1,426 @@
+@use '../../styles/variables' as *;
+
+// ══════════════════════════════════════════════════════════════
+// Sidebar
+// ══════════════════════════════════════════════════════════════
+.catalogue-sidebar {
+    width: 280px;
+    flex-shrink: 0;
+
+    @media (max-width: calc($breakpoint-lg - 1px)) {
+        position: fixed;
+        top: 0;
+        left: -320px;
+        width: 300px;
+        height: 100vh;
+        background: $color-surface;
+        z-index: $z-modal;
+        padding: $spacing-xl;
+        overflow-y: auto;
+        transition: left $transition-base;
+        border-right: 1px solid $color-border;
+        box-shadow: $shadow-lg;
+
+        &--open {
+            left: 0;
+        }
+    }
+
+    &__header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: $spacing-xl;
+
+        @media (min-width: $breakpoint-lg) {
+            display: none;
+        }
+    }
+
+    &__close {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        color: $color-secondary;
+        background: $color-background;
+        border-radius: $border-radius-sm;
+        cursor: pointer;
+        transition: all $transition-fast;
+
+        &:hover {
+            color: $color-text;
+            background: $color-border;
+        }
+    }
+
+    &__title {
+        display: flex;
+        align-items: center;
+        gap: $spacing-xs;
+        font-size: 15px;
+        font-weight: $font-weight-bold;
+        color: $color-text;
+        margin: 0;
+    }
+
+    // ── Sections ─────────────────────────────────────────────
+    &__section {
+        margin-bottom: $spacing-xl;
+        padding-bottom: $spacing-lg;
+        border-bottom: 1px solid $color-border;
+    }
+
+    &__section-title {
+        font-size: 11px;
+        font-weight: $font-weight-bold;
+        color: $color-secondary-light;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        margin: 0 0 $spacing-md;
+    }
+
+    // ── Search ───────────────────────────────────────────────
+    &__search {
+        position: relative;
+        display: flex;
+        align-items: center;
+
+        svg {
+            position: absolute;
+            left: $spacing-sm;
+            color: $color-secondary-light;
+            pointer-events: none;
+        }
+
+        input {
+            width: 100%;
+            padding: 0.6rem 2rem 0.6rem 2.25rem;
+            background: $color-surface;
+            border: 1px solid $color-border;
+            border-radius: $border-radius-md;
+            color: $color-text;
+            font-size: 13px;
+
+            &::placeholder {
+                color: $color-secondary-light;
+            }
+
+            &:focus {
+                border-color: $color-primary;
+                box-shadow: 0 0 0 3px rgba($color-primary, 0.1);
+            }
+        }
+
+        &-clear {
+            position: absolute;
+            right: $spacing-xs;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 20px;
+            height: 20px;
+            color: $color-secondary-light;
+            cursor: pointer;
+
+            &:hover {
+                color: $color-danger;
+            }
+        }
+    }
+
+    // ── Categories Tree ──────────────────────────────────────
+    &__categories {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+
+    &__cat-item {
+        &--all {
+            margin-bottom: $spacing-xs;
+
+            .catalogue-sidebar__cat-name {
+                padding: 0.6rem 0.8rem;
+                border-radius: $border-radius-sm;
+                transition: all $transition-fast;
+
+                &--active {
+                    background: $color-primary-dark; // Fond bleu foncé
+                    color: $color-surface; // Texte blanc
+                    font-weight: $font-weight-bold;
+
+                    &:hover {
+                        color: $color-surface; // Reste blanc au survol
+                    }
+                }
+            }
+        }
+    }
+
+    &__cat-header {
+        display: flex;
+        align-items: center;
+        border-radius: $border-radius-sm;
+        transition: background $transition-fast;
+
+        &:hover {
+            background: $color-surface-hover;
+        }
+
+        &--active {
+            background: rgba($color-primary, 0.05);
+
+            .catalogue-sidebar__cat-name {
+                color: $color-primary-dark;
+                font-weight: $font-weight-bold;
+            }
+
+            .catalogue-sidebar__cat-count {
+                background: rgba($color-primary, 0.1);
+                border-color: rgba($color-primary, 0.2);
+                color: $color-primary-dark;
+            }
+        }
+    }
+
+    &__cat-name {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.5rem 0.5rem 0.5rem 0.75rem;
+        font-size: 13px;
+        font-weight: $font-weight-medium;
+        color: $color-text-body;
+        cursor: pointer;
+        text-align: left;
+        transition: color $transition-fast;
+
+        &:hover {
+            color: $color-text;
+        }
+    }
+
+    &__cat-count {
+        font-size: 10px;
+        font-weight: $font-weight-bold;
+        color: $color-secondary;
+        background: $color-background;
+        border: 1px solid $color-border;
+        padding: 0.15rem 0.4rem;
+        border-radius: $border-radius-sm;
+        min-width: 28px;
+        text-align: center;
+    }
+
+    &__cat-toggle {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 28px;
+        height: 28px;
+        color: $color-secondary-light;
+        cursor: pointer;
+        transition: transform $transition-fast, color $transition-fast;
+
+        &--open {
+            transform: rotate(180deg);
+        }
+
+        &:hover {
+            color: $color-text;
+        }
+    }
+
+    &__subcats {
+        padding-left: 0.75rem;
+        margin-top: 2px;
+        border-left: 1px solid $color-border;
+        margin-left: 0.75rem;
+    }
+
+    &__subcat-btn {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        width: 100%;
+        padding: 0.4rem 0.5rem 0.4rem 0.6rem;
+        font-size: 12px;
+        color: $color-secondary;
+        cursor: pointer;
+        border-radius: $border-radius-sm;
+        text-align: left;
+        transition: all $transition-fast;
+
+        &:hover {
+            color: $color-text;
+            background: $color-surface-hover;
+        }
+
+        &--active {
+            color: $color-primary-dark;
+            background: rgba($color-primary, 0.05);
+            font-weight: $font-weight-medium;
+        }
+    }
+
+    // ── Price Range ──────────────────────────────────────────
+    &__price-range {
+        .slider-track {
+            height: 4px;
+            background: $color-border;
+            border-radius: 2px;
+            position: relative;
+            margin: $spacing-md 0 $spacing-sm;
+        }
+
+        .slider-progress {
+            position: absolute;
+            height: 100%;
+            background: $color-primary;
+            border-radius: 2px;
+            left: 0;
+            right: 20%;
+        }
+
+        .slider-thumb {
+            width: 14px;
+            height: 14px;
+            background: $color-surface;
+            border: 2px solid $color-primary;
+            border-radius: 50%;
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+
+            &-left {
+                left: 0;
+            }
+
+            &-right {
+                right: 20%;
+            }
+        }
+
+        .price-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 11px;
+            color: $color-secondary;
+            font-weight: $font-weight-medium;
+        }
+    }
+
+    // ── Stock Availability ───────────────────────────────────
+    &__stock {
+        display: flex;
+        flex-direction: column;
+        gap: $spacing-sm;
+
+        .stock-radio {
+            display: flex;
+            align-items: center;
+            font-size: 13px;
+            color: $color-text-body;
+            cursor: pointer;
+
+            input {
+                display: none;
+            }
+
+            .radio-custom {
+                width: 16px;
+                height: 16px;
+                border: 2px solid $color-border;
+                border-radius: 50%;
+                margin-right: $spacing-sm;
+                position: relative;
+                transition: all $transition-fast;
+
+                &::after {
+                    content: '';
+                    position: absolute;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%) scale(0);
+                    width: 8px;
+                    height: 8px;
+                    background: $color-primary;
+                    border-radius: 50%;
+                    transition: transform $transition-fast;
+                }
+            }
+
+            input:checked+.radio-custom {
+                border-color: $color-primary;
+
+                &::after {
+                    transform: translate(-50%, -50%) scale(1);
+                }
+            }
+        }
+    }
+
+    // ── Bulk Orders ──────────────────────────────────────────
+    &__bulk {
+        background-color: rgba($color-primary, 0.05);
+        border-radius: $border-radius-lg;
+        padding: $spacing-lg;
+        margin-top: $spacing-2xl;
+        text-align: left;
+
+        h5 {
+            color: $color-primary-dark;
+            font-size: 13px;
+            font-weight: $font-weight-bold;
+            margin-bottom: $spacing-xs;
+        }
+
+        p {
+            font-size: 11px;
+            color: $color-text-body;
+            line-height: $line-height-relaxed;
+            margin-bottom: $spacing-md;
+        }
+
+        .bulk-btn {
+            width: 100%;
+            background-color: $color-primary-dark;
+            color: $color-surface;
+            border: none;
+            padding: $spacing-sm;
+            border-radius: $border-radius-sm;
+            font-size: 12px;
+            font-weight: $font-weight-bold;
+            cursor: pointer;
+            transition: opacity $transition-fast;
+
+            &:hover {
+                opacity: 0.9;
+            }
+        }
+    }
+
+    // ── Clear Button ─────────────────────────────────────────
+    &__clear {
+        display: flex;
+        align-items: center;
+        gap: $spacing-xs;
+        width: 100%;
+        padding: 0.6rem;
+        font-size: 12px;
+        font-weight: $font-weight-bold;
+        color: $color-danger;
+        background: rgba($color-danger, 0.05);
+        border: 1px solid rgba($color-danger, 0.1);
+        border-radius: $border-radius-md;
+        cursor: pointer;
+        transition: all $transition-fast;
+
+        &:hover {
+            background: rgba($color-danger, 0.1);
+        }
+    }
+}

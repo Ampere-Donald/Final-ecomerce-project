@@ -1,0 +1,185 @@
+@use '../../styles/variables' as *;
+
+.product-card {
+    display: flex;
+    flex-direction: column;
+    background: $color-surface;
+    border-radius: $border-radius-lg;
+    border: 1px solid $color-border;
+    overflow: hidden;
+    transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1), box-shadow 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    position: relative;
+    text-decoration: none;
+
+    &:hover {
+        transform: translateY(-4px);
+        box-shadow: $shadow-lg;
+        border-color: rgba($color-primary, 0.3);
+
+        .product-card__img {
+            transform: scale(1.05);
+        }
+
+        .product-card__heart {
+            opacity: 1;
+        }
+    }
+
+    // ── Image Area ────────────────────────────────────────────
+    &__image-area {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        aspect-ratio: 1 / 1;
+        overflow: hidden;
+        background-color: $color-surface-hover; // Remplacé le noir profond par un fond clair moderne
+        text-decoration: none;
+        flex-shrink: 0;
+    }
+
+    &__img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        padding: 10%;
+        mix-blend-mode: multiply; // Permet aux images avec fond blanc de fusionner avec le fond gris clair
+        transition: transform 0.5s cubic-bezier(0.25, 0.8, 0.25, 1);
+        display: block;
+    }
+
+    // ── Badges ────────────────────────────────────────────────
+    &__badge {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.05em;
+        padding: 4px 8px;
+        border-radius: $border-radius-sm;
+        text-transform: uppercase;
+        z-index: 2;
+
+        &--stock {
+            background-color: $color-success;
+            color: $color-surface;
+        }
+
+        &--promo {
+            top: 40px;
+            background-color: $color-danger;
+            color: $color-surface;
+        }
+    }
+
+    // ── Heart / Favorite ──────────────────────────────────────
+    &__heart {
+        position: absolute;
+        top: 12px;
+        left: 12px;
+        z-index: 3;
+        width: 32px;
+        height: 32px;
+        border-radius: $border-radius-circle;
+        background-color: $color-surface;
+        box-shadow: $shadow-sm;
+        color: $color-text-muted;
+        border: 1px solid rgba($color-border, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+        opacity: 0;
+        cursor: pointer;
+
+        @media (hover: none) {
+            opacity: 1; // Toujours visible sur mobile
+        }
+
+        &:hover {
+            color: $color-danger;
+            transform: scale(1.1);
+            border-color: rgba($color-danger, 0.3);
+        }
+
+        &--active {
+            opacity: 1 !important;
+            color: $color-danger;
+            background-color: rgba($color-danger, 0.05);
+            border-color: rgba($color-danger, 0.3);
+
+            &:hover {
+                background-color: rgba($color-danger, 0.1);
+            }
+        }
+    }
+
+    // ── Content ───────────────────────────────────────────────
+    &__content {
+        padding: $spacing-md;
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+        text-decoration: none;
+    }
+
+    &__category {
+        font-size: 11px;
+        font-weight: 700;
+        color: $color-secondary;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin: 0 0 $spacing-xs 0;
+    }
+
+    &__name {
+        font-size: 14px;
+        font-weight: $font-weight-bold;
+        color: $color-text;
+        margin: 0 0 $spacing-md 0;
+        line-height: 1.3;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        transition: color 0.2s;
+        min-height: 36px; // Garde une hauteur fixe même si le titre est court
+
+        &:hover {
+            color: $color-primary;
+        }
+    }
+
+    // ── Pricing Rows ──────────────────────────────────────────
+    &__price-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: $spacing-xs 0;
+
+        &--retail {
+            border-bottom: 1px dashed $color-border;
+        }
+    }
+
+    &__price-label {
+        font-size: 11px;
+        color: $color-secondary-light;
+        font-weight: $font-weight-medium;
+    }
+
+    &__price {
+        font-weight: $font-weight-bold;
+        font-size: 15px;
+
+        &--retail {
+            color: $color-text;
+        }
+
+        &--wholesale {
+            color: $color-primary;
+        }
+    }
+}

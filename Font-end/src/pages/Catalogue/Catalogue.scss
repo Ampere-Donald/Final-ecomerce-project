@@ -1,0 +1,333 @@
+@use '../../styles/variables' as *;
+
+// ══════════════════════════════════════════════════════════════
+// Catalogue Page — Clean Light E-commerce
+// ══════════════════════════════════════════════════════════════
+
+.catalogue-page {
+    padding-top: 80px;
+    background-color: $color-background;
+    min-height: 100vh;
+
+    // ── Page Header ──────────────────────────────────────────
+    &__header {
+        padding: $spacing-xl 0 $spacing-lg;
+        border-bottom: 1px solid $color-border;
+        background-color: $color-surface;
+    }
+
+    &__breadcrumb {
+        display: flex;
+        align-items: center;
+        gap: $spacing-xs;
+        font-size: 13px;
+        color: $color-secondary;
+        margin-bottom: $spacing-md;
+
+        a {
+            color: $color-secondary;
+            text-decoration: none;
+            transition: color $transition-fast;
+
+            &:hover {
+                color: $color-primary;
+            }
+        }
+
+        &-active {
+            color: $color-primary;
+            font-weight: $font-weight-bold;
+        }
+    }
+
+    &__title-row {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: $spacing-md;
+        flex-wrap: wrap;
+
+        @media (max-width: $breakpoint-sm) {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+    }
+
+    &__title {
+        font-size: $font-size-2xl;
+        font-weight: $font-weight-extrabold;
+        color: $color-text;
+        margin: 0;
+        letter-spacing: -0.5px;
+    }
+
+    &__count {
+        font-size: 13px;
+        color: $color-secondary;
+        margin: 0.3rem 0 0;
+    }
+
+    &__filter-toggle {
+        display: flex;
+        align-items: center;
+        gap: $spacing-xs;
+        padding: 0.6rem 1.2rem;
+        background: $color-surface;
+        border: 1px solid $color-border;
+        border-radius: $border-radius-md;
+        color: $color-text;
+        font-size: 13px;
+        font-weight: $font-weight-medium;
+        cursor: pointer;
+        transition: all $transition-fast;
+
+        &:hover {
+            background: $color-surface-hover;
+            border-color: $color-primary;
+        }
+
+        @media (min-width: $breakpoint-lg) {
+            display: none;
+        }
+    }
+
+    // ── Layout ───────────────────────────────────────────────
+    &__layout {
+        display: flex;
+        gap: $spacing-2xl;
+        padding: $spacing-xl 0 $spacing-3xl;
+
+        @media (max-width: calc(#{$breakpoint-lg} - 1px)) {
+            flex-direction: column;
+            gap: $spacing-xl;
+        }
+    }
+}
+
+// ══════════════════════════════════════════════════════════════
+// Main Content Area
+// ══════════════════════════════════════════════════════════════
+.catalogue-main {
+    flex: 1;
+    min-width: 0;
+
+    &__toolbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: $spacing-md;
+        margin-bottom: $spacing-xl;
+        flex-wrap: wrap;
+
+        @media (max-width: $breakpoint-sm) {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+    }
+
+    &__chips {
+        display: flex;
+        gap: $spacing-xs;
+        flex-wrap: wrap;
+    }
+
+    &__sort {
+        display: flex;
+        align-items: center;
+        gap: $spacing-xs;
+
+        label {
+            font-size: 12px;
+            color: $color-secondary;
+            white-space: nowrap;
+        }
+
+        select {
+            padding: 0.45rem 2rem 0.45rem 0.75rem;
+            background: $color-surface;
+            border: 1px solid $color-border;
+            border-radius: $border-radius-md;
+            color: $color-text;
+            font-size: 13px;
+            font-weight: $font-weight-medium;
+            cursor: pointer;
+            appearance: none;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 0.5rem center;
+            background-size: 1em;
+
+            &:focus {
+                border-color: $color-primary;
+                box-shadow: 0 0 0 2px rgba($color-primary, 0.1);
+            }
+        }
+    }
+}
+
+// ── Filter Chips ─────────────────────────────────────────────
+.catalogue-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.3rem 0.6rem 0.3rem 0.75rem;
+    background: rgba($color-primary, 0.05);
+    border: 1px solid rgba($color-primary, 0.2);
+    border-radius: $border-radius-sm;
+    font-size: 11px;
+    font-weight: $font-weight-bold;
+    color: $color-primary-dark;
+
+    button {
+        display: flex;
+        align-items: center;
+        color: $color-secondary-light;
+        cursor: pointer;
+        transition: color $transition-fast;
+
+        &:hover {
+            color: $color-primary;
+        }
+    }
+}
+
+// ══════════════════════════════════════════════════════════════
+// Product Grid
+// ══════════════════════════════════════════════════════════════
+.catalogue-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: $spacing-md;
+
+    @media (max-width: $breakpoint-xl) {
+        grid-template-columns: repeat(3, 1fr);
+    }
+
+    @media (max-width: $breakpoint-md) {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    @media (max-width: $breakpoint-sm) {
+        grid-template-columns: 1fr;
+    }
+}
+
+// ══════════════════════════════════════════════════════════════
+// Empty State
+// ══════════════════════════════════════════════════════════════
+.catalogue-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: $spacing-3xl $spacing-xl;
+    text-align: center;
+    background: $color-surface;
+    border: 1px dashed $color-border;
+    border-radius: $border-radius-lg;
+
+    svg {
+        color: $color-secondary-light;
+        margin-bottom: $spacing-lg;
+    }
+
+    h3 {
+        font-size: $font-size-lg;
+        color: $color-text;
+        font-weight: $font-weight-bold;
+        margin: 0 0 $spacing-xs;
+    }
+
+    p {
+        color: $color-secondary;
+        font-size: 14px;
+        margin: 0 0 $spacing-lg;
+    }
+
+    &__btn {
+        padding: 0.6rem 1.5rem;
+        background: $color-primary;
+        color: $color-surface;
+        font-size: 13px;
+        font-weight: $font-weight-bold;
+        border-radius: $border-radius-sm;
+        cursor: pointer;
+        transition: all $transition-fast;
+
+        &:hover {
+            background: $color-primary-dark;
+            transform: translateY(-1px);
+        }
+    }
+}
+
+// ══════════════════════════════════════════════════════════════
+// Pagination
+// ══════════════════════════════════════════════════════════════
+.catalogue-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: $spacing-sm;
+    margin-top: $spacing-2xl;
+    padding-top: $spacing-xl;
+    border-top: none;
+
+    &__btn,
+    &__page {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 36px;
+        min-width: 36px;
+        background: $color-surface;
+        border: 1px solid $color-border;
+        border-radius: $border-radius-sm;
+        color: $color-text-body;
+        font-size: 13px;
+        font-weight: $font-weight-medium;
+        cursor: pointer;
+        transition: all $transition-fast;
+        padding: 0 $spacing-sm;
+
+        &:hover:not(:disabled) {
+            border-color: $color-primary;
+            color: $color-primary;
+        }
+
+        &:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background: rgba($color-border, 0.2);
+        }
+
+        &--active {
+            background: $color-primary-dark;
+            color: $color-surface;
+            border-color: $color-primary-dark;
+            font-weight: $font-weight-bold;
+
+            &:hover {
+                color: $color-surface;
+                background: $color-primary;
+                border-color: $color-primary;
+            }
+        }
+    }
+
+    &__btn {
+        gap: 4px;
+    }
+
+    &__pages {
+        display: flex;
+        align-items: center;
+        gap: $spacing-xs;
+    }
+
+    &__ellipsis {
+        color: $color-secondary;
+        padding: 0 $spacing-xs;
+        letter-spacing: 2px;
+    }
+}
