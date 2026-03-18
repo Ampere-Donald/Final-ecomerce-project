@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { Trash2, Plus, Minus, CheckCircle2, Circle, Lock, ShieldCheck, ShoppingCart } from 'lucide-react';
-import { formatFCFA } from '../../data/productsData';
+import { formatFCFA } from '../../utils/formatFCFA';
 import { useCart } from '../../context/CartContext';
 import { Link } from 'react-router-dom';
 import Footer from '../../components/Footer/Footer';

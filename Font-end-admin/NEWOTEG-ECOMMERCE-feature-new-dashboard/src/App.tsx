@@ -8,7 +8,7 @@ import { Settings } from './components/Settings';
 import { Support } from './components/Support';
 import { Produits } from './components/Produits';
 import { Categories } from './components/Categories';
-import { Variantes } from './components/Variantes';
+
 import { Ventes } from './components/Ventes';
 import { Achats } from './components/Achats';
 import { Clients } from './components/Clients';
@@ -29,7 +29,7 @@ export default function App() {
           {/* Nouveaux écrans connectés au backend */}
           <Route path="produits" element={<Produits />} />
           <Route path="categories" element={<Categories />} />
-          <Route path="variantes" element={<Variantes />} />
+
           <Route path="stock" element={<MouvementsStock />} />
           <Route path="ventes" element={<Ventes />} />
           <Route path="achats" element={<Achats />} />

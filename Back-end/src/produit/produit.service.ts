@@ -19,7 +19,6 @@ export class ProduitService {
       include: {
         categorie: true,
         attributs: true,
-        variantes: true,
       },
     });
   }
@@ -30,7 +29,6 @@ export class ProduitService {
       include: {
         categorie: true,
         attributs: { include: { valeurs: true } },
-        variantes: true,
       },
     });
     if (!produit) {

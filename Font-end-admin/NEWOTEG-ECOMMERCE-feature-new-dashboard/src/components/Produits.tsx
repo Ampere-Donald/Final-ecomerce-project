@@ -15,8 +15,10 @@ interface Produit {
   marque: string;
   description?: string;
   imageUrl?: string;
+  prixDetail?: number;
+  prixGros?: number;
+  quantiteStock?: number;
   categorie?: Categorie;
-  variantes?: any[];
 }
 
 // ─── État initial du formulaire isolé ─────────────────────────────────────────
@@ -25,6 +27,9 @@ const FORM_INITIAL = {
   marque: '',
   categorieId: '',
   description: '',
+  prixDetail: '',
+  prixGros: '',
+  quantiteStock: '0',
 };
 
 // ─── Composant principal ──────────────────────────────────────────────────────
@@ -95,6 +100,9 @@ export const Produits = () => {
       marque: prod.marque ?? '',
       categorieId: prod.categorie?.id ?? '',
       description: prod.description ?? '',
+      prixDetail: prod.prixDetail != null ? String(prod.prixDetail) : '',
+      prixGros: prod.prixGros != null ? String(prod.prixGros) : '',
+      quantiteStock: prod.quantiteStock != null ? String(prod.quantiteStock) : '0',
     });
     setImageFile(null);
     setImagePreview(prod.imageUrl ? `http://localhost:3000${prod.imageUrl}` : null);
@@ -129,6 +137,9 @@ export const Produits = () => {
       dataToSend.append('marque', formData.marque);
       dataToSend.append('categorieId', formData.categorieId);
       if (formData.description) dataToSend.append('description', formData.description);
+      if (formData.prixDetail) dataToSend.append('prixDetail', formData.prixDetail);
+      if (formData.prixGros) dataToSend.append('prixGros', formData.prixGros);
+      dataToSend.append('quantiteStock', formData.quantiteStock || '0');
       if (imageFile) dataToSend.append('file', imageFile);
 
       if (editingProduit) {
@@ -286,11 +297,17 @@ export const Produits = () => {
                       className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary/20 outline-none transition-all"
                     >
                       <option value="">Sélectionner...</option>
-                      {categories.map((cat) => (
-                        <option key={cat.id} value={cat.id}>
-                          {cat.nom}
+                      {categories.length === 0 ? (
+                        <option value="" disabled>
+                          Chargement des catégories...
                         </option>
-                      ))}
+                      ) : (
+                        categories.map((cat) => (
+                          <option key={cat.id} value={cat.id}>
+                            {cat.nom}
+                          </option>
+                        ))
+                      )}
                     </select>
                   </div>
                   <div>
@@ -321,6 +338,52 @@ export const Produits = () => {
                     className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary/20 outline-none transition-all resize-none"
                     placeholder="Détails techniques du produit..."
                   />
+                </div>
+
+                {/* Prix & Stock */}
+                <div className="grid grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">
+                      Prix Détail (FCFA)
+                    </label>
+                    <input
+                      type="number"
+                      min={0}
+                      step="any"
+                      value={formData.prixDetail}
+                      onChange={(e) => setFormData((f) => ({ ...f, prixDetail: e.target.value }))}
+                      className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+                      placeholder="0"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">
+                      Prix Gros (FCFA)
+                    </label>
+                    <input
+                      type="number"
+                      min={0}
+                      step="any"
+                      value={formData.prixGros}
+                      onChange={(e) => setFormData((f) => ({ ...f, prixGros: e.target.value }))}
+                      className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+                      placeholder="0"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">
+                      Stock
+                    </label>
+                    <input
+                      type="number"
+                      min={0}
+                      step="1"
+                      value={formData.quantiteStock}
+                      onChange={(e) => setFormData((f) => ({ ...f, quantiteStock: e.target.value }))}
+                      className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+                      placeholder="0"
+                    />
+                  </div>
                 </div>
 
                 {/* Boutons */}
@@ -371,14 +434,16 @@ export const Produits = () => {
                 <th className="px-6 py-4">Produit</th>
                 <th className="px-6 py-4">Catégorie</th>
                 <th className="px-6 py-4">Marque</th>
-                <th className="px-6 py-4">Variantes</th>
+                <th className="px-6 py-4">Prix Détail</th>
+                <th className="px-6 py-4">Prix Gros</th>
+                <th className="px-6 py-4">Stock</th>
                 <th className="px-6 py-4 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {loading ? (
                 <tr>
-                  <td colSpan={5} className="px-6 py-10 text-center text-slate-400">
+                  <td colSpan={7} className="px-6 py-10 text-center text-slate-400">
                     <div className="flex justify-center items-center gap-2">
                       <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
                       Chargement des produits...
@@ -387,7 +452,7 @@ export const Produits = () => {
                 </tr>
               ) : filteredProduits.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-6 py-10 text-center text-slate-400">
+                  <td colSpan={7} className="px-6 py-10 text-center text-slate-400">
                     Aucun produit trouvé.
                   </td>
                 </tr>
@@ -434,9 +499,27 @@ export const Produits = () => {
                     {/* Marque */}
                     <td className="px-6 py-4 font-medium text-slate-700">{prod.marque}</td>
 
-                    {/* Variantes */}
-                    <td className="px-6 py-4 text-sm font-semibold text-primary">
-                      {prod.variantes?.length || 0}
+                    {/* Prix Détail */}
+                    <td className="px-6 py-4 text-sm font-semibold text-emerald-600">
+                      {prod.prixDetail != null ? `${prod.prixDetail.toLocaleString('fr-FR')} FCFA` : '—'}
+                    </td>
+
+                    {/* Prix Gros */}
+                    <td className="px-6 py-4 text-sm font-medium text-slate-600">
+                      {prod.prixGros != null ? `${prod.prixGros.toLocaleString('fr-FR')} FCFA` : '—'}
+                    </td>
+
+                    {/* Stock */}
+                    <td className="px-6 py-4">
+                      <span className={`inline-flex items-center px-2 py-1 rounded-md text-xs font-bold ${
+                        (prod.quantiteStock ?? 0) > 10
+                          ? 'bg-emerald-50 text-emerald-700'
+                          : (prod.quantiteStock ?? 0) > 0
+                            ? 'bg-amber-50 text-amber-700'
+                            : 'bg-red-50 text-red-700'
+                      }`}>
+                        {prod.quantiteStock ?? 0}
+                      </span>
                     </td>
 
                     {/* Actions */}

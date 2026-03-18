@@ -1,891 +1,113 @@
-// Auto-generated from XELEC database
-// Category mapping for NEWOTEG e-commerce
+// Catégories dynamiques basées sur les vraies catégories de la BDD NEWOTEG
+// Utilisé pour le filtrage/sidebar du catalogue
 
 export const categories = [
   {
-    "name": "Circuits Intégrés",
-    "slug": "circuits-integres",
-    "count": 1518,
-    "image": "https://images.unsplash.com/photo-1518770660439-4636190af475?q=80&w=400&auto=format&fit=crop",
-    "subcategories": [
-      {
-        "name": "Circuits Intégrés",
-        "slug": "circuits-integres",
-        "count": 706
-      },
-      {
-        "name": "CI Audio TDA/STA",
-        "slug": "ci-audio",
-        "count": 259
-      },
-      {
-        "name": "Logic ICs 74HC",
-        "slug": "logic-ics",
-        "count": 220
-      },
-      {
-        "name": "Modules Audio",
-        "slug": "modules-audio",
-        "count": 124
-      },
-      {
-        "name": "CI Série TA",
-        "slug": "ci-serie-ta",
-        "count": 124
-      },
-      {
-        "name": "STK Modules",
-        "slug": "stk-modules",
-        "count": 85
-      }
-    ]
+    name: 'Semi-conducteurs',
+    slug: 'semi-conducteurs',
+    count: 0,
+    image: 'https://images.unsplash.com/photo-1608564697071-ddf911d81370?q=80&w=400&auto=format&fit=crop',
+    subcategories: [
+      { name: 'MOSFET', slug: 'mosfet', count: 0 },
+      { name: 'Transistors Bipolaires', slug: 'transistors-bipolaires', count: 0 },
+      { name: 'IGBT & Thyristors', slug: 'igbt-&-thyristors', count: 0 },
+    ],
   },
   {
-    "name": "Transistors & MOSFET",
-    "slug": "transistors",
-    "count": 1265,
-    "image": "https://images.unsplash.com/photo-1608564697071-ddf911d81370?q=80&w=400&auto=format&fit=crop",
-    "subcategories": [
-      {
-        "name": "Transistors Bipolaires",
-        "slug": "transistors-bipolaires",
-        "count": 1099
-      },
-      {
-        "name": "MOSFET",
-        "slug": "mosfet",
-        "count": 166
-      }
-    ]
+    name: 'Circuits Intégrés',
+    slug: 'circuits-integres',
+    count: 0,
+    image: 'https://images.unsplash.com/photo-1518770660439-4636190af475?q=80&w=400&auto=format&fit=crop',
+    subcategories: [
+      { name: 'Mémoires & EEPROM', slug: 'mémoires-&-eeprom', count: 0 },
+      { name: 'Amplificateurs & Audio', slug: 'amplificateurs-&-audio', count: 0 },
+      { name: 'Régulateurs de Tension', slug: 'régulateurs-de-tension', count: 0 },
+      { name: 'Microcontrôleurs & Logic', slug: 'microcontrôleurs-&-logic', count: 0 },
+    ],
   },
   {
-    "name": "Résistances & Condensateurs",
-    "slug": "resistances",
-    "count": 996,
-    "image": "https://images.unsplash.com/photo-1608564697071-ddf911d81370?q=80&w=400&auto=format&fit=crop",
-    "subcategories": [
-      {
-        "name": "Condensateurs Électrolytiques",
-        "slug": "condensateurs-electrolytiques",
-        "count": 380
-      },
-      {
-        "name": "Résistances Carbone",
-        "slug": "resistances-carbone",
-        "count": 273
-      },
-      {
-        "name": "Résistances de Puissance",
-        "slug": "resistances-puissance",
-        "count": 131
-      },
-      {
-        "name": "Potentiomètres",
-        "slug": "potentiometres",
-        "count": 69
-      },
-      {
-        "name": "Fusibles",
-        "slug": "fusibles",
-        "count": 64
-      },
-      {
-        "name": "Condensateurs Céramiques",
-        "slug": "condensateurs-ceramiques",
-        "count": 57
-      },
-      {
-        "name": "Résistances Ajustables",
-        "slug": "resistances-ajustables",
-        "count": 22
-      }
-    ]
+    name: 'Diodes',
+    slug: 'diodes',
+    count: 0,
+    image: 'https://images.unsplash.com/photo-1553406830-ef2513450d76?q=80&w=400&auto=format&fit=crop',
+    subcategories: [
+      { name: 'Diodes Redresseuses', slug: 'diodes-redresseuses', count: 0 },
+      { name: 'Diodes Zener', slug: 'diodes-zener', count: 0 },
+      { name: 'Diodes Schottky', slug: 'diodes-schottky', count: 0 },
+      { name: 'LED & Optronique', slug: 'led-&-optronique', count: 0 },
+    ],
   },
   {
-    "name": "Accessoires & Câbles",
-    "slug": "accessoires-cables",
-    "count": 810,
-    "image": "https://images.unsplash.com/photo-1588783948922-5aa15e674084?q=80&w=400&auto=format&fit=crop",
-    "subcategories": [
-      {
-        "name": "Famille 212",
-        "slug": "famille-212",
-        "count": 42
-      },
-      {
-        "name": "Famille 210",
-        "slug": "famille-210",
-        "count": 36
-      },
-      {
-        "name": "Famille 218",
-        "slug": "famille-218",
-        "count": 35
-      },
-      {
-        "name": "Famille 217",
-        "slug": "famille-217",
-        "count": 30
-      },
-      {
-        "name": "Famille 250",
-        "slug": "famille-250",
-        "count": 27
-      },
-      {
-        "name": "Famille 228",
-        "slug": "famille-228",
-        "count": 26
-      },
-      {
-        "name": "Famille 223",
-        "slug": "famille-223",
-        "count": 25
-      },
-      {
-        "name": "Famille 230",
-        "slug": "famille-230",
-        "count": 25
-      },
-      {
-        "name": "Famille 266",
-        "slug": "famille-266",
-        "count": 24
-      },
-      {
-        "name": "Famille 225",
-        "slug": "famille-225",
-        "count": 22
-      },
-      {
-        "name": "Famille 202",
-        "slug": "famille-202",
-        "count": 22
-      },
-      {
-        "name": "Famille 236",
-        "slug": "famille-236",
-        "count": 22
-      },
-      {
-        "name": "Famille 239",
-        "slug": "famille-239",
-        "count": 22
-      },
-      {
-        "name": "Famille 206",
-        "slug": "famille-206",
-        "count": 20
-      },
-      {
-        "name": "Famille 203",
-        "slug": "famille-203",
-        "count": 19
-      },
-      {
-        "name": "Famille 221",
-        "slug": "famille-221",
-        "count": 18
-      },
-      {
-        "name": "Famille 247",
-        "slug": "famille-247",
-        "count": 18
-      },
-      {
-        "name": "Famille 264",
-        "slug": "famille-264",
-        "count": 18
-      },
-      {
-        "name": "Famille 209",
-        "slug": "famille-209",
-        "count": 17
-      },
-      {
-        "name": "Famille 220",
-        "slug": "famille-220",
-        "count": 17
-      },
-      {
-        "name": "Famille 258",
-        "slug": "famille-258",
-        "count": 17
-      },
-      {
-        "name": "Famille 219",
-        "slug": "famille-219",
-        "count": 16
-      },
-      {
-        "name": "Famille 235",
-        "slug": "famille-235",
-        "count": 15
-      },
-      {
-        "name": "Famille 248",
-        "slug": "famille-248",
-        "count": 15
-      },
-      {
-        "name": "Famille 205",
-        "slug": "famille-205",
-        "count": 15
-      },
-      {
-        "name": "Famille 213",
-        "slug": "famille-213",
-        "count": 14
-      },
-      {
-        "name": "Famille 214",
-        "slug": "famille-214",
-        "count": 14
-      },
-      {
-        "name": "Famille 222",
-        "slug": "famille-222",
-        "count": 14
-      },
-      {
-        "name": "Famille 256",
-        "slug": "famille-256",
-        "count": 14
-      },
-      {
-        "name": "Famille 238",
-        "slug": "famille-238",
-        "count": 13
-      },
-      {
-        "name": "Famille 226",
-        "slug": "famille-226",
-        "count": 12
-      },
-      {
-        "name": "Famille 201",
-        "slug": "famille-201",
-        "count": 12
-      },
-      {
-        "name": "Famille 216",
-        "slug": "famille-216",
-        "count": 11
-      },
-      {
-        "name": "Famille 224",
-        "slug": "famille-224",
-        "count": 10
-      },
-      {
-        "name": "Famille 231",
-        "slug": "famille-231",
-        "count": 10
-      },
-      {
-        "name": "Famille 265",
-        "slug": "famille-265",
-        "count": 10
-      },
-      {
-        "name": "Famille 261",
-        "slug": "famille-261",
-        "count": 9
-      },
-      {
-        "name": "Famille 204",
-        "slug": "famille-204",
-        "count": 9
-      },
-      {
-        "name": "Famille 245",
-        "slug": "famille-245",
-        "count": 8
-      },
-      {
-        "name": "Famille 262",
-        "slug": "famille-262",
-        "count": 8
-      },
-      {
-        "name": "Famille 263",
-        "slug": "famille-263",
-        "count": 8
-      },
-      {
-        "name": "Famille 244",
-        "slug": "famille-244",
-        "count": 7
-      },
-      {
-        "name": "Famille 251",
-        "slug": "famille-251",
-        "count": 7
-      },
-      {
-        "name": "Famille 207",
-        "slug": "famille-207",
-        "count": 7
-      },
-      {
-        "name": "Famille 246",
-        "slug": "famille-246",
-        "count": 6
-      },
-      {
-        "name": "Famille 253",
-        "slug": "famille-253",
-        "count": 6
-      },
-      {
-        "name": "Famille 252",
-        "slug": "famille-252",
-        "count": 5
-      },
-      {
-        "name": "Famille 254",
-        "slug": "famille-254",
-        "count": 5
-      },
-      {
-        "name": "Famille 259",
-        "slug": "famille-259",
-        "count": 5
-      },
-      {
-        "name": "Famille 257",
-        "slug": "famille-257",
-        "count": 4
-      },
-      {
-        "name": "Famille 267",
-        "slug": "famille-267",
-        "count": 4
-      },
-      {
-        "name": "Famille 227",
-        "slug": "famille-227",
-        "count": 3
-      },
-      {
-        "name": "Famille 234",
-        "slug": "famille-234",
-        "count": 3
-      },
-      {
-        "name": "Famille 260",
-        "slug": "famille-260",
-        "count": 3
-      },
-      {
-        "name": "Famille 229",
-        "slug": "famille-229",
-        "count": 2
-      },
-      {
-        "name": "Famille 232",
-        "slug": "famille-232",
-        "count": 2
-      },
-      {
-        "name": "Famille 249",
-        "slug": "famille-249",
-        "count": 2
-      }
-    ]
+    name: 'Condensateurs',
+    slug: 'condensateurs',
+    count: 0,
+    image: 'https://images.unsplash.com/photo-1597852074816-d933c7d2b988?q=80&w=400&auto=format&fit=crop',
+    subcategories: [
+      { name: 'Condensateurs Électrolytiques', slug: 'condensateurs-électrolytiques', count: 0 },
+      { name: 'Condensateurs Céramiques', slug: 'condensateurs-céramiques', count: 0 },
+      { name: 'Condensateurs Tantale & Autres', slug: 'condensateurs-tantale-&-autres', count: 0 },
+    ],
   },
   {
-    "name": "Multimédia",
-    "slug": "multimedia",
-    "count": 355,
-    "image": "https://images.unsplash.com/photo-1526738549149-8e07eca6c147?q=80&w=400&auto=format&fit=crop",
-    "subcategories": [
-      {
-        "name": "Lecteurs & Multimédia",
-        "slug": "lecteurs-multimedia",
-        "count": 355
-      }
-    ]
+    name: 'Résistances & Passifs',
+    slug: 'resistances-passifs',
+    count: 0,
+    image: 'https://images.unsplash.com/photo-1608564697071-ddf911d81370?q=80&w=400&auto=format&fit=crop',
+    subcategories: [
+      { name: 'Résistances', slug: 'résistances', count: 0 },
+      { name: 'Inductances & Bobines', slug: 'inductances-&-bobines', count: 0 },
+      { name: 'Thermistances & Varistors', slug: 'thermistances-&-varistors', count: 0 },
+    ],
   },
   {
-    "name": "Câbles & Connecteurs",
-    "slug": "cables",
-    "count": 283,
-    "image": "https://images.unsplash.com/photo-1541484042-49da4504192d?q=80&w=400&auto=format&fit=crop",
-    "subcategories": [
-      {
-        "name": "Fiches & Connecteurs",
-        "slug": "fiches-connecteurs",
-        "count": 78
-      },
-      {
-        "name": "Câbles & Cordons",
-        "slug": "cables-cordons",
-        "count": 73
-      },
-      {
-        "name": "Adaptateurs",
-        "slug": "adaptateurs",
-        "count": 72
-      },
-      {
-        "name": "Interrupteurs",
-        "slug": "interrupteurs",
-        "count": 60
-      }
-    ]
+    name: 'Modules & Développement',
+    slug: 'modules-developpement',
+    count: 0,
+    image: 'https://images.unsplash.com/photo-1558618666-fcd25c85f82e?q=80&w=400&auto=format&fit=crop',
+    subcategories: [
+      { name: 'Modules Arduino & ESP', slug: 'modules-arduino-&-esp', count: 0 },
+      { name: 'Afficheurs LCD & LED', slug: 'afficheurs-lcd-&-led', count: 0 },
+      { name: 'Modules de Puissance', slug: 'modules-de-puissance', count: 0 },
+      { name: 'Capteurs & Détecteurs', slug: 'capteurs-&-détecteurs', count: 0 },
+    ],
   },
   {
-    "name": "Divers",
-    "slug": "divers",
-    "count": 277,
-    "image": "https://images.unsplash.com/photo-1608564697071-ddf911d81370?q=80&w=400&auto=format&fit=crop",
-    "subcategories": [
-      {
-        "name": "Famille 501",
-        "slug": "famille-501",
-        "count": 277
-      }
-    ]
+    name: 'Connecteurs & Câblage',
+    slug: 'connecteurs-cablage',
+    count: 0,
+    image: 'https://images.unsplash.com/photo-1541484042-49da4504192d?q=80&w=400&auto=format&fit=crop',
+    subcategories: [
+      { name: 'Connecteurs & Bornes', slug: 'connecteurs-&-bornes', count: 0 },
+      { name: 'Câbles & Fils', slug: 'câbles-&-fils', count: 0 },
+    ],
   },
   {
-    "name": "Composants Électroniques",
-    "slug": "composants",
-    "count": 272,
-    "image": "https://images.unsplash.com/photo-1597852074816-d933c7d2b988?q=80&w=400&auto=format&fit=crop",
-    "subcategories": [
-      {
-        "name": "Famille 125",
-        "slug": "famille-125",
-        "count": 37
-      },
-      {
-        "name": "Famille 114",
-        "slug": "famille-114",
-        "count": 32
-      },
-      {
-        "name": "Famille 129",
-        "slug": "famille-129",
-        "count": 32
-      },
-      {
-        "name": "Famille 116",
-        "slug": "famille-116",
-        "count": 28
-      },
-      {
-        "name": "Famille 119",
-        "slug": "famille-119",
-        "count": 27
-      },
-      {
-        "name": "Famille 120",
-        "slug": "famille-120",
-        "count": 23
-      },
-      {
-        "name": "Famille 109",
-        "slug": "famille-109",
-        "count": 19
-      },
-      {
-        "name": "Famille 131",
-        "slug": "famille-131",
-        "count": 15
-      },
-      {
-        "name": "Famille 122",
-        "slug": "famille-122",
-        "count": 14
-      },
-      {
-        "name": "Famille 130",
-        "slug": "famille-130",
-        "count": 12
-      },
-      {
-        "name": "Famille 126",
-        "slug": "famille-126",
-        "count": 11
-      },
-      {
-        "name": "Famille 124",
-        "slug": "famille-124",
-        "count": 8
-      },
-      {
-        "name": "Famille 127",
-        "slug": "famille-127",
-        "count": 7
-      },
-      {
-        "name": "Famille 121",
-        "slug": "famille-121",
-        "count": 6
-      },
-      {
-        "name": "Famille 110",
-        "slug": "famille-110",
-        "count": 1
-      }
-    ]
+    name: 'Outils & Consommables',
+    slug: 'outils-consommables',
+    count: 0,
+    image: 'https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?q=80&w=400&auto=format&fit=crop',
+    subcategories: [
+      { name: 'Outils & Soudure', slug: 'outils-&-soudure', count: 0 },
+      { name: 'Consommables Soudure', slug: 'consommables-soudure', count: 0 },
+      { name: 'Protections & Boîtiers', slug: 'protections-&-boîtiers', count: 0 },
+    ],
   },
   {
-    "name": "Électroménager",
-    "slug": "electromenager",
-    "count": 256,
-    "image": "https://images.unsplash.com/photo-1584282502804-d50d684cb322?q=80&w=400&auto=format&fit=crop",
-    "subcategories": [
-      {
-        "name": "Réfrigérateurs",
-        "slug": "refrigerateurs",
-        "count": 71
-      },
-      {
-        "name": "Téléviseurs",
-        "slug": "televiseurs",
-        "count": 55
-      },
-      {
-        "name": "Famille 602",
-        "slug": "famille-602",
-        "count": 24
-      },
-      {
-        "name": "Famille 609",
-        "slug": "famille-609",
-        "count": 24
-      },
-      {
-        "name": "Famille 622",
-        "slug": "famille-622",
-        "count": 12
-      },
-      {
-        "name": "Famille 617",
-        "slug": "famille-617",
-        "count": 9
-      },
-      {
-        "name": "Famille 618",
-        "slug": "famille-618",
-        "count": 8
-      },
-      {
-        "name": "Famille 607",
-        "slug": "famille-607",
-        "count": 7
-      },
-      {
-        "name": "Famille 605",
-        "slug": "famille-605",
-        "count": 6
-      },
-      {
-        "name": "Famille 613",
-        "slug": "famille-613",
-        "count": 5
-      },
-      {
-        "name": "Famille 621",
-        "slug": "famille-621",
-        "count": 5
-      },
-      {
-        "name": "Famille 608",
-        "slug": "famille-608",
-        "count": 4
-      },
-      {
-        "name": "Famille 604",
-        "slug": "famille-604",
-        "count": 4
-      },
-      {
-        "name": "Famille 619",
-        "slug": "famille-619",
-        "count": 4
-      },
-      {
-        "name": "Famille 603",
-        "slug": "famille-603",
-        "count": 3
-      },
-      {
-        "name": "Famille 614",
-        "slug": "famille-614",
-        "count": 3
-      },
-      {
-        "name": "Famille 606",
-        "slug": "famille-606",
-        "count": 3
-      },
-      {
-        "name": "Famille 601",
-        "slug": "famille-601",
-        "count": 3
-      },
-      {
-        "name": "Famille 610",
-        "slug": "famille-610",
-        "count": 2
-      },
-      {
-        "name": "Famille 612",
-        "slug": "famille-612",
-        "count": 2
-      },
-      {
-        "name": "Famille 615",
-        "slug": "famille-615",
-        "count": 1
-      },
-      {
-        "name": "Famille 611",
-        "slug": "famille-611",
-        "count": 1
-      }
-    ]
+    name: 'Alimentation & Énergie',
+    slug: 'alimentation-energie',
+    count: 0,
+    image: 'https://images.unsplash.com/photo-1609692814858-f7cd2f0afa4f?q=80&w=400&auto=format&fit=crop',
+    subcategories: [
+      { name: 'Alimentations & Batteries', slug: 'alimentations-&-batteries', count: 0 },
+    ],
   },
   {
-    "name": "Accessoires",
-    "slug": "accessoires",
-    "count": 169,
-    "image": "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?q=80&w=400&auto=format&fit=crop",
-    "subcategories": [
-      {
-        "name": "Télécommandes",
-        "slug": "telecommandes",
-        "count": 119
-      },
-      {
-        "name": "Ampoules",
-        "slug": "ampoules",
-        "count": 50
-      }
-    ]
+    name: 'Divers',
+    slug: 'divers',
+    count: 0,
+    image: 'https://images.unsplash.com/photo-1597852074816-d933c7d2b988?q=80&w=400&auto=format&fit=crop',
+    subcategories: [
+      { name: 'Divers & Consommables', slug: 'divers-&-consommables', count: 0 },
+    ],
   },
-  {
-    "name": "Mobilier & Confort",
-    "slug": "mobilier",
-    "count": 159,
-    "image": "https://images.unsplash.com/photo-1505843490538-5133c6c7d0e1?q=80&w=400&auto=format&fit=crop",
-    "subcategories": [
-      {
-        "name": "Famille 705",
-        "slug": "famille-705",
-        "count": 44
-      },
-      {
-        "name": "Famille 702",
-        "slug": "famille-702",
-        "count": 32
-      },
-      {
-        "name": "Famille 707",
-        "slug": "famille-707",
-        "count": 31
-      },
-      {
-        "name": "Famille 710",
-        "slug": "famille-710",
-        "count": 18
-      },
-      {
-        "name": "Famille 701",
-        "slug": "famille-701",
-        "count": 16
-      },
-      {
-        "name": "Famille 706",
-        "slug": "famille-706",
-        "count": 8
-      },
-      {
-        "name": "Famille 709",
-        "slug": "famille-709",
-        "count": 4
-      },
-      {
-        "name": "Famille 708",
-        "slug": "famille-708",
-        "count": 4
-      },
-      {
-        "name": "Famille 704",
-        "slug": "famille-704",
-        "count": 1
-      },
-      {
-        "name": "Famille 703",
-        "slug": "famille-703",
-        "count": 1
-      }
-    ]
-  },
-  {
-    "name": "LED & Diodes",
-    "slug": "led-diodes",
-    "count": 148,
-    "image": "https://images.unsplash.com/photo-1553406830-ef2513450d76?q=80&w=400&auto=format&fit=crop",
-    "subcategories": [
-      {
-        "name": "Diodes",
-        "slug": "diodes",
-        "count": 102
-      },
-      {
-        "name": "LED",
-        "slug": "led",
-        "count": 46
-      }
-    ]
-  },
-  {
-    "name": "Audio & Haut-Parleurs",
-    "slug": "audio",
-    "count": 130,
-    "image": "https://images.unsplash.com/photo-1545454675-3531b543be5d?q=80&w=400&auto=format&fit=crop",
-    "subcategories": [
-      {
-        "name": "Haut-Parleurs",
-        "slug": "haut-parleurs",
-        "count": 130
-      }
-    ]
-  },
-  {
-    "name": "Alimentation",
-    "slug": "alimentation",
-    "count": 104,
-    "image": "https://images.unsplash.com/photo-1609692814858-f7cd2f0afa4f?q=80&w=400&auto=format&fit=crop",
-    "subcategories": [
-      {
-        "name": "Chargeurs",
-        "slug": "chargeurs",
-        "count": 61
-      },
-      {
-        "name": "Piles & Batteries",
-        "slug": "piles-batteries",
-        "count": 43
-      }
-    ]
-  },
-  {
-    "name": "Connecteurs & Embases",
-    "slug": "connecteurs",
-    "count": 61,
-    "image": "https://images.unsplash.com/photo-1520694478166-daaaaaec74b4?q=80&w=400&auto=format&fit=crop",
-    "subcategories": [
-      {
-        "name": "Famille 303",
-        "slug": "famille-303",
-        "count": 15
-      },
-      {
-        "name": "Famille 311",
-        "slug": "famille-311",
-        "count": 9
-      },
-      {
-        "name": "Famille 310",
-        "slug": "famille-310",
-        "count": 6
-      },
-      {
-        "name": "Famille 304",
-        "slug": "famille-304",
-        "count": 5
-      },
-      {
-        "name": "Famille 312",
-        "slug": "famille-312",
-        "count": 5
-      },
-      {
-        "name": "Famille 302",
-        "slug": "famille-302",
-        "count": 4
-      },
-      {
-        "name": "Famille 301",
-        "slug": "famille-301",
-        "count": 3
-      },
-      {
-        "name": "Famille 306",
-        "slug": "famille-306",
-        "count": 3
-      },
-      {
-        "name": "Famille 308",
-        "slug": "famille-308",
-        "count": 3
-      },
-      {
-        "name": "Famille 305",
-        "slug": "famille-305",
-        "count": 3
-      },
-      {
-        "name": "Famille 309",
-        "slug": "famille-309",
-        "count": 3
-      },
-      {
-        "name": "Famille 307",
-        "slug": "famille-307",
-        "count": 1
-      },
-      {
-        "name": "Famille 313",
-        "slug": "famille-313",
-        "count": 1
-      }
-    ]
-  },
-  {
-    "name": "Équipements",
-    "slug": "equipements",
-    "count": 40,
-    "image": "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?q=80&w=400&auto=format&fit=crop",
-    "subcategories": [
-      {
-        "name": "Famille 404",
-        "slug": "famille-404",
-        "count": 25
-      },
-      {
-        "name": "Famille 403",
-        "slug": "famille-403",
-        "count": 11
-      },
-      {
-        "name": "Famille 401",
-        "slug": "famille-401",
-        "count": 2
-      },
-      {
-        "name": "Famille 402",
-        "slug": "famille-402",
-        "count": 2
-      }
-    ]
-  },
-  {
-    "name": "Outils & Soudure",
-    "slug": "outils",
-    "count": 22,
-    "image": "https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?q=80&w=400&auto=format&fit=crop",
-    "subcategories": [
-      {
-        "name": "Outils & Soudure",
-        "slug": "outils-soudure",
-        "count": 22
-      }
-    ]
-  }
 ];

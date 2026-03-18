@@ -1,32 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Zap } from 'lucide-react';
-import products, { formatFCFA } from '../../data/productsData';
+import axios from 'axios';
+import { formatFCFA } from '../../utils/formatFCFA';
 import { useCart } from '../../context/CartContext';
 import { Link } from 'react-router-dom';
 import './FeaturedProducts.scss';
 
-// Grab some real products for Flash Deal (Indices 1 et 30)
-const flashDealProducts = [products[1], products[30]].map((p, index) => ({
-    ...p,
-    id: `fd${index}`,
-    price: p.wholesalePrice,
-    badge: index === 1 ? '-33%' : '',
-}));
-
-// Belles images premium pour palier au quota de génération
-const premiumImages = [
-    '/images/hero_1.png',
-    '/images/hero_2.png',
-    '/images/hero_3.png',
-    '/images/hero_4.png',
-];
-
-// Grab some real products for Best Sellers (Indices 31, 32, 10, 40)
-const bestSellers = [products[31], products[32], products[10], products[40]].map((p, index) => ({
-    ...p,
-    id: `bs${index}`,
-    image: premiumImages[index] || p.image // Override image with premium one
-}));
+const PLACEHOLDER_IMG = 'https://images.unsplash.com/photo-1608564697071-ddf911d81370?q=80&w=400&auto=format&fit=crop';
 
 // ── Countdown Hook ─────────────────────────────────────────
 const useCountdown = (hours = 2, minutes = 14, seconds = 56) => {
@@ -52,8 +32,61 @@ const useCountdown = (hours = 2, minutes = 14, seconds = 56) => {
 const FeaturedProducts = () => {
     const countdown = useCountdown(47, 59, 56);
     const { addToCart } = useCart();
+    const [flashProducts, setFlashProducts] = useState([]);
+    const [bestSellers, setBestSellers] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    // Fetch products from API
+    useEffect(() => {
+        const fetchProducts = async () => {
+            try {
+                const res = await axios.get('/api/produits');
+                const allProducts = res.data.map(p => ({
+                    model: p.nomProduit,
+                    code: p.variantes && p.variantes.length > 0 ? p.variantes[0].codeVariante : p.id.split('-')[0].toUpperCase(),
+                    brand: p.marque,
+                    categoryName: p.categorie?.nom || 'COMPOSANT',
+                    retailPrice: p.variantes && p.variantes.length > 0 ? parseFloat(p.variantes[0].prixVente) : 0,
+                    wholesalePrice: p.variantes && p.variantes.length > 0 ? parseFloat(p.variantes[0].prixAchat) : 0,
+                    image: p.imageUrl 
+                        ? `http://localhost:3000${p.imageUrl}` 
+                        : PLACEHOLDER_IMG,
+                }));
+
+                // Flash deals : les 2 premiers produits avec image
+                const withImage = allProducts.filter(p => p.image !== PLACEHOLDER_IMG);
+                setFlashProducts(withImage.slice(0, 2).map((p, i) => ({
+                    ...p,
+                    id: `fd${i}`,
+                    badge: i === 1 ? '-33%' : '',
+                })));
+
+                // Best sellers : 4 produits (prioriser ceux avec images)
+                const remaining = [...withImage.slice(2), ...allProducts.filter(p => p.image === PLACEHOLDER_IMG)];
+                setBestSellers(remaining.slice(0, 4).map((p, i) => ({
+                    ...p,
+                    id: `bs${i}`,
+                })));
+            } catch (err) {
+                console.error("Erreur de chargement des produits vedettes", err);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchProducts();
+    }, []);
 
     const pad = (n) => String(n).padStart(2, '0');
+
+    if (loading) {
+        return (
+            <section className="promo-catalogue">
+                <div className="container" style={{ textAlign: 'center', padding: '4rem 0', color: '#94a3b8' }}>
+                    Chargement des produits vedettes...
+                </div>
+            </section>
+        );
+    }
 
     return (
         <section className="promo-catalogue">
@@ -90,7 +123,7 @@ const FeaturedProducts = () => {
                     </div>
 
                     <div className="flash-deal-b2b__products">
-                        {flashDealProducts.map((product) => (
+                        {flashProducts.map((product) => (
                             <Link to={`/product/${product.code}`} key={product.id} className="product-card">
                                 <div className="product-card__image-wrapper">
                                     <span className="product-card__stock-badge">STOCK</span>
@@ -98,7 +131,11 @@ const FeaturedProducts = () => {
                                         <span className="product-card__promo-badge">{product.badge}</span>
                                     )}
                                     <div className="product-card__image">
-                                        <img src={product.image} alt={product.model} />
+                                        <img 
+                                            src={product.image} 
+                                            alt={product.model} 
+                                            onError={(e) => { e.target.src = PLACEHOLDER_IMG; }}
+                                        />
                                     </div>
                                 </div>
                                 <div className="product-card__body">
@@ -109,11 +146,11 @@ const FeaturedProducts = () => {
 
                                     <div className="product-card__pricing">
                                         <div className="product-card__retail">
-                                            <span className="product-card__retail-label">Retail<br />(prix_vente_d)</span>
+                                            <span className="product-card__retail-label">Détail</span>
                                             <span className="product-card__retail-price">{formatFCFA(product.retailPrice)}</span>
                                         </div>
                                         <div className="product-card__wholesale">
-                                            <span className="product-card__wholesale-label">Wholesale<br />(prix_vente_g)</span>
+                                            <span className="product-card__wholesale-label">Gros</span>
                                             <span className="product-card__wholesale-price">{formatFCFA(product.wholesalePrice)}</span>
                                         </div>
                                     </div>
@@ -143,7 +180,11 @@ const FeaturedProducts = () => {
                                 <div className="product-card__image-wrapper">
                                     <span className="product-card__stock-badge">STOCK</span>
                                     <div className="product-card__image">
-                                        <img src={product.image} alt={product.model} />
+                                        <img 
+                                            src={product.image} 
+                                            alt={product.model} 
+                                            onError={(e) => { e.target.src = PLACEHOLDER_IMG; }}
+                                        />
                                     </div>
                                 </div>
                                 <div className="product-card__body">
@@ -154,11 +195,11 @@ const FeaturedProducts = () => {
 
                                     <div className="product-card__pricing">
                                         <div className="product-card__retail">
-                                            <span className="product-card__retail-label">Retail<br />(prix_vente_d)</span>
+                                            <span className="product-card__retail-label">Détail</span>
                                             <span className="product-card__retail-price">{formatFCFA(product.retailPrice)}</span>
                                         </div>
                                         <div className="product-card__wholesale">
-                                            <span className="product-card__wholesale-label">Wholesale<br />(prix_vente_g)</span>
+                                            <span className="product-card__wholesale-label">Gros</span>
                                             <span className="product-card__wholesale-price">{formatFCFA(product.wholesalePrice)}</span>
                                         </div>
                                     </div>

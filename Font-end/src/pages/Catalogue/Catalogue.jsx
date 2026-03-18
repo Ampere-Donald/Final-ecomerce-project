@@ -34,13 +34,14 @@ const Catalogue = () => {
                 // Formater les produits de la BDD pour qu'ils matchent le design côté client
                 const formatted = res.data.map(p => ({
                     model: p.nomProduit,
-                    code: p.variantes && p.variantes.length > 0 ? p.variantes[0].codeVariante : p.id.split('-')[0].toUpperCase(),
+                    code: p.id.split('-')[0].toUpperCase(),
                     brand: p.marque,
                     description: p.description,
                     categoryName: p.categorie?.nom || 'DIVERS',
                     categorySlug: p.categorie?.nom.toLowerCase().replace(/ \/ | /g, '-') || 'divers',
-                    retailPrice: p.variantes && p.variantes.length > 0 ? parseFloat(p.variantes[0].prixVente) : 0,
-                    wholesalePrice: p.variantes && p.variantes.length > 0 ? parseFloat(p.variantes[0].prixAchat) : 0,
+                    retailPrice: p.prixDetail ?? 0,
+                    wholesalePrice: p.prixGros ?? 0,
+                    stock: p.quantiteStock ?? 0,
                     oldPrice: null,
                     parentCategory: 'ÉQUIPEMENTS',
                     image: p.imageUrl 

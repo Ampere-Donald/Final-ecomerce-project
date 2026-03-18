@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { ChevronRight, ShoppingCart, CheckCircle2, Truck, FileText, Package, Plus, Minus, ShieldCheck, Box } from 'lucide-react';
 import axios from 'axios';
-import { formatFCFA } from '../../data/productsData';
+import { formatFCFA } from '../../utils/formatFCFA';
 import { useCart } from '../../context/CartContext';
 import Footer from '../../components/Footer/Footer';
 import './ProductDetails.scss';

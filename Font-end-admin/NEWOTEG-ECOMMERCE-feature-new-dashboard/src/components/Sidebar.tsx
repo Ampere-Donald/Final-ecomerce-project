@@ -22,7 +22,6 @@ const catalogueItems = [
   { label: 'Tableau de bord', icon: LayoutDashboard, path: '/' },
   { label: 'Produits', icon: Package, path: '/produits' },
   { label: 'Catégories', icon: Tags, path: '/categories' },
-  { label: 'Variantes & Prix', icon: Layers, path: '/variantes' },
 ];
 
 const operationItems = [

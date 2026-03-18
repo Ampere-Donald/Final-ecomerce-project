@@ -7,8 +7,7 @@ import { CategorieModule } from './categorie/categorie.module';
 import { ProduitModule } from './produit/produit.module';
 import { AttributModule } from './attribut/attribut.module';
 import { ValeurAttributModule } from './valeur-attribut/valeur-attribut.module';
-import { VarianteProduitModule } from './variante-produit/variante-produit.module';
-import { VarianteProduitAttributModule } from './variante-produit-attribut/variante-produit-attribut.module';
+
 import { FournisseurModule } from './fournisseur/fournisseur.module';
 import { ClientModule } from './client/client.module';
 import { AchatModule } from './achat/achat.module';
@@ -30,8 +29,7 @@ import { DatabaseModule } from './database/database.module';
     ProduitModule,
     AttributModule,
     ValeurAttributModule,
-    VarianteProduitModule,
-    VarianteProduitAttributModule,
+
     FournisseurModule,
     ClientModule,
     AchatModule,
