@@ -17,17 +17,17 @@ export class VenteService {
     return await this.db.$transaction(async (tx: any) => {
       // Vérifier le stock disponible pour chaque ligne
       for (const ligne of lignesVente) {
-        const variante = await tx.varianteProduit.findUnique({
-          where: { id: ligne.varianteProduitId },
+        const variante = await tx.produit.findUnique({
+          where: { id: ligne.produitId },
         });
         if (!variante) {
           throw new NotFoundException(
-            `Variante produit ${ligne.varianteProduitId} non trouvée`,
+            `Produit ${ligne.produitId} non trouvée`,
           );
         }
         if (variante.quantiteStock < ligne.quantite) {
           throw new BadRequestException(
-            `Stock insuffisant pour ${variante.codeVariante}. Disponible: ${variante.quantiteStock}, Demandé: ${ligne.quantite}`,
+            `Stock insuffisant pour ${variante.nomProduit}. Disponible: ${variante.quantiteStock}, Demandé: ${ligne.quantite}`,
           );
         }
       }
@@ -38,7 +38,7 @@ export class VenteService {
           ...venteData,
           lignesVente: {
             create: lignesVente.map((ligne) => ({
-              varianteProduitId: ligne.varianteProduitId,
+              produitId: ligne.produitId,
               quantite: ligne.quantite,
               prixUnitaire: ligne.prixUnitaire,
               sousTotal: ligne.quantite * ligne.prixUnitaire,
@@ -47,14 +47,14 @@ export class VenteService {
         },
         include: {
           client: true,
-          lignesVente: { include: { varianteProduit: true } },
+          lignesVente: { include: { produit: true } },
         },
       });
 
       // Mettre à jour le stock pour chaque ligne
       for (const ligne of lignesVente) {
-        await tx.varianteProduit.update({
-          where: { id: ligne.varianteProduitId },
+        await tx.produit.update({
+          where: { id: ligne.produitId },
           data: {
             quantiteStock: { decrement: ligne.quantite },
             version: { increment: 1 },
@@ -64,7 +64,7 @@ export class VenteService {
         // Créer un mouvement de stock
         await tx.mouvementStock.create({
           data: {
-            varianteProduitId: ligne.varianteProduitId,
+            produitId: ligne.produitId,
             typeMouvement: 'SORTIE',
             quantite: ligne.quantite,
             motif: `Vente #${vente.id}`,
@@ -90,7 +90,7 @@ export class VenteService {
     return await this.db.vente.findMany({
       include: {
         client: true,
-        lignesVente: { include: { varianteProduit: true } },
+        lignesVente: { include: { produit: true } },
       },
     });
   }
@@ -100,7 +100,7 @@ export class VenteService {
       where: { id },
       include: {
         client: true,
-        lignesVente: { include: { varianteProduit: true } },
+        lignesVente: { include: { produit: true } },
       },
     });
     if (!vente) {
@@ -119,7 +119,7 @@ export class VenteService {
       },
       include: {
         client: true,
-        lignesVente: { include: { varianteProduit: true } },
+        lignesVente: { include: { produit: true } },
       },
     });
   }

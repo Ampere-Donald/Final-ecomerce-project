@@ -10,27 +10,27 @@ export class LigneVenteService {
   async create(createLigneVenteDto: CreateLigneVenteDto) {
     return await this.db.ligneVente.create({
       data: createLigneVenteDto,
-      include: { vente: true, varianteProduit: true },
+      include: { vente: true, produit: true },
     });
   }
 
   async findAll() {
     return await this.db.ligneVente.findMany({
-      include: { vente: true, varianteProduit: true },
+      include: { vente: true, produit: true },
     });
   }
 
   findByVente(venteId: string) {
     return this.db.ligneVente.findMany({
       where: { venteId },
-      include: { varianteProduit: true },
+      include: { produit: true },
     });
   }
 
   async findOne(id: string) {
     const ligne = await this.db.ligneVente.findUnique({
       where: { id },
-      include: { vente: true, varianteProduit: true },
+      include: { vente: true, produit: true },
     });
     if (!ligne) {
       throw new NotFoundException(`Ligne vente avec l'id ${id} non trouvée`);
@@ -46,7 +46,7 @@ export class LigneVenteService {
         ...updateLigneVenteDto,
         version: { increment: 1 },
       },
-      include: { vente: true, varianteProduit: true },
+      include: { vente: true, produit: true },
     });
   }
 

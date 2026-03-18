@@ -182,4 +182,63 @@
             color: $color-primary;
         }
     }
+
+    // ── Stock Info ─────────────────────────────────────────────
+    &__stock-info {
+        font-size: 11px;
+        font-weight: $font-weight-medium;
+        color: $color-success;
+        margin-top: $spacing-sm;
+
+        &--danger {
+            color: $color-danger;
+            font-weight: 700;
+        }
+    }
+
+    // ── Rupture Badge ─────────────────────────────────────────
+    &__badge--rupture {
+        background-color: $color-danger;
+        color: $color-surface;
+    }
+
+    // ── Add to Cart Button ────────────────────────────────────
+    &__add-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        width: calc(100% - #{$spacing-md} * 2);
+        margin: 0 $spacing-md $spacing-md;
+        padding: $spacing-sm $spacing-md;
+        background-color: $color-primary;
+        color: $color-surface;
+        border: none;
+        border-radius: $border-radius-sm;
+        font-size: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        cursor: pointer;
+        transition: background-color 0.2s, opacity 0.2s;
+
+        &:hover:not(:disabled) {
+            background-color: darken($color-primary, 8%);
+        }
+
+        &--disabled,
+        &:disabled {
+            background-color: $color-text-muted;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+    }
+
+    // ── Out of Stock Card ─────────────────────────────────────
+    &--out-of-stock {
+        .product-card__img {
+            opacity: 0.5;
+            filter: grayscale(40%);
+        }
+    }
 }

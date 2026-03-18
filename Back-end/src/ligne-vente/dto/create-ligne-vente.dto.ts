@@ -6,7 +6,7 @@ export class CreateLigneVenteDto {
   venteId: string;
 
   @IsUUID()
-  varianteProduitId: string;
+  produitId: string;
 
   @IsNumber()
   @Type(() => Number)

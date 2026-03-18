@@ -23,9 +23,9 @@ export class MouvementStockController {
   }
 
   @Get()
-  findAll(@Query('varianteProduitId') varianteProduitId?: string) {
-    if (varianteProduitId) {
-      return this.mouvementStockService.findByVariante(varianteProduitId);
+  findAll(@Query('produitId') produitId?: string) {
+    if (produitId) {
+      return this.mouvementStockService.findByVariante(produitId);
     }
     return this.mouvementStockService.findAll();
   }

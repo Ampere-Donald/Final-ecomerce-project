@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { Order, User } from '../types';
-import { venteApi, varianteApi, caisseApi } from '../services/api';
+import { venteApi, produitApi, caisseApi } from '../services/api';
 
 const MOCK_USER: User = {
   name: 'Jean Dupont',
@@ -43,9 +43,9 @@ export const Dashboard = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [ventesRes, variantesRes, caissesRes] = await Promise.all([
+        const [ventesRes, produitsRes, caissesRes] = await Promise.all([
           venteApi.getAll(),
-          varianteApi.getAll(),
+          produitApi.getAll(),
           caisseApi.getAll()
         ]);
 
@@ -57,11 +57,12 @@ export const Dashboard = () => {
         setCaJour(ca);
         setRecentOrders(ventesRes.slice(0, 5)); // 5 dernières ventes
 
-        // Stocks (top 4 alertes/stocks)
-        const stocksFormatted = variantesRes.slice(0, 4).map((v: any) => ({
-          name: v.produit?.nomProduit || v.codeVariante,
-          count: v.quantiteStock,
-          status: v.quantiteStock <= 0 ? 'Rupture' : v.quantiteStock <= v.seuilAlerte ? 'Critique' : 'Optimal'
+        // Stocks (top 4 produits avec stock le plus bas)
+        const sorted = [...produitsRes].sort((a: any, b: any) => (a.quantiteStock ?? 0) - (b.quantiteStock ?? 0));
+        const stocksFormatted = sorted.slice(0, 4).map((p: any) => ({
+          name: p.nomProduit,
+          count: p.quantiteStock ?? 0,
+          status: (p.quantiteStock ?? 0) <= 0 ? 'Rupture' : (p.quantiteStock ?? 0) <= 5 ? 'Critique' : 'Optimal'
         }));
         setStockData(stocksFormatted);
 

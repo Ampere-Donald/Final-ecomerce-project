@@ -47,15 +47,6 @@ export const categorieApi = {
   delete: (id: string) => api.delete(`/categories/${id}`).then(res => res.data),
 };
 
-// Variantes (Stock unitaire / prix d'un produit)
-export const varianteApi = {
-  getAll: () => api.get('/variantes-produit').then(res => res.data),
-  getOne: (id: string) => api.get(`/variantes-produit/${id}`).then(res => res.data),
-  create: (data: any) => api.post('/variantes-produit', data).then(res => res.data),
-  update: (id: string, data: any) => api.patch(`/variantes-produit/${id}`, data).then(res => res.data),
-  delete: (id: string) => api.delete(`/variantes-produit/${id}`).then(res => res.data),
-};
-
 // Mouvements de stock
 export const mouvementStockApi = {
   getAll: () => api.get('/mouvements-stock').then(res => res.data),

@@ -12,7 +12,7 @@ import { TypeMouvement } from '@prisma/client';
 
 export class CreateMouvementStockDto {
   @IsUUID()
-  varianteProduitId: string;
+  produitId: string;
 
   @IsEnum(TypeMouvement)
   typeMouvement: TypeMouvement;

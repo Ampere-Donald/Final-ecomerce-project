@@ -11,7 +11,7 @@ import { StatutPaiement } from '@prisma/client';
 
 export class LigneAchatDto {
   @IsUUID()
-  varianteProduitId: string;
+  produitId: string;
 
   @IsNumber()
   @Type(() => Number)

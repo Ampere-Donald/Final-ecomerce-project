@@ -41,6 +41,10 @@ export class ProduitController {
     if (file) {
       createProduitDto.imageUrl = `/uploads/${file.filename}`;
     }
+    // Parsing manuel de sécurité pour les champs envoyés en FormData (strings)
+    if (createProduitDto.prixGros != null) createProduitDto.prixGros = parseFloat(String(createProduitDto.prixGros));
+    if (createProduitDto.prixDetail != null) createProduitDto.prixDetail = parseFloat(String(createProduitDto.prixDetail));
+    if (createProduitDto.quantiteStock != null) createProduitDto.quantiteStock = parseInt(String(createProduitDto.quantiteStock), 10);
     return this.produitService.create(createProduitDto);
   }
 
@@ -96,6 +100,10 @@ export class ProduitController {
     if (file) {
       updateProduitDto.imageUrl = `/uploads/${file.filename}`;
     }
+    // Parsing manuel de sécurité pour les champs envoyés en FormData (strings)
+    if (updateProduitDto.prixGros != null) updateProduitDto.prixGros = parseFloat(String(updateProduitDto.prixGros));
+    if (updateProduitDto.prixDetail != null) updateProduitDto.prixDetail = parseFloat(String(updateProduitDto.prixDetail));
+    if (updateProduitDto.quantiteStock != null) updateProduitDto.quantiteStock = parseInt(String(updateProduitDto.quantiteStock), 10);
     return this.produitService.update(id, updateProduitDto);
   }
 

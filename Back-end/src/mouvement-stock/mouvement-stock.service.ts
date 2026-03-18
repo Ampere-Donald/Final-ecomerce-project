@@ -8,19 +8,19 @@ export class MouvementStockService {
   constructor(private readonly db: DatabaseService) {}
 
   async create(createMouvementStockDto: CreateMouvementStockDto) {
-    const { varianteProduitId, typeMouvement, quantite, ...rest } =
+    const { produitId, typeMouvement, quantite, ...rest } =
       createMouvementStockDto;
 
     return await this.db.$transaction(async (tx: any) => {
       // Créer le mouvement
       const mouvement = await tx.mouvementStock.create({
         data: {
-          varianteProduitId,
+          produitId,
           typeMouvement,
           quantite,
           ...rest,
         },
-        include: { varianteProduit: true },
+        include: { produit: true },
       });
 
       // Mettre à jour le stock selon le type de mouvement
@@ -39,8 +39,8 @@ export class MouvementStockService {
           break;
       }
 
-      await tx.varianteProduit.update({
-        where: { id: varianteProduitId },
+      await tx.produit.update({
+        where: { id: produitId },
         data: {
           quantiteStock: { increment: stockChange },
           version: { increment: 1 },
@@ -53,14 +53,14 @@ export class MouvementStockService {
 
   async findAll() {
     return await this.db.mouvementStock.findMany({
-      include: { varianteProduit: true },
+      include: { produit: true },
       orderBy: { dateMouvement: 'desc' },
     });
   }
 
-  findByVariante(varianteProduitId: string) {
+  findByVariante(produitId: string) {
     return this.db.mouvementStock.findMany({
-      where: { varianteProduitId },
+      where: { produitId },
       orderBy: { dateMouvement: 'desc' },
     });
   }
@@ -68,7 +68,7 @@ export class MouvementStockService {
   async findOne(id: string) {
     const mouvement = await this.db.mouvementStock.findUnique({
       where: { id },
-      include: { varianteProduit: true },
+      include: { produit: true },
     });
     if (!mouvement) {
       throw new NotFoundException(`Mouvement stock avec l'id ${id} non trouvé`);
@@ -84,7 +84,7 @@ export class MouvementStockService {
         ...updateMouvementStockDto,
         version: { increment: 1 },
       },
-      include: { varianteProduit: true },
+      include: { produit: true },
     });
   }
 

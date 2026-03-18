@@ -42,12 +42,14 @@ const FeaturedProducts = () => {
             try {
                 const res = await axios.get('/api/produits');
                 const allProducts = res.data.map(p => ({
+                    id: p.id,
                     model: p.nomProduit,
-                    code: p.variantes && p.variantes.length > 0 ? p.variantes[0].codeVariante : p.id.split('-')[0].toUpperCase(),
+                    code: p.id.split('-')[0].toUpperCase(),
                     brand: p.marque,
                     categoryName: p.categorie?.nom || 'COMPOSANT',
-                    retailPrice: p.variantes && p.variantes.length > 0 ? parseFloat(p.variantes[0].prixVente) : 0,
-                    wholesalePrice: p.variantes && p.variantes.length > 0 ? parseFloat(p.variantes[0].prixAchat) : 0,
+                    retailPrice: parseFloat(p.prixDetail) || 0,
+                    wholesalePrice: parseFloat(p.prixGros) || 0,
+                    stock: p.quantiteStock ?? 0,
                     image: p.imageUrl 
                         ? `http://localhost:3000${p.imageUrl}` 
                         : PLACEHOLDER_IMG,
@@ -123,10 +125,14 @@ const FeaturedProducts = () => {
                     </div>
 
                     <div className="flash-deal-b2b__products">
-                        {flashProducts.map((product) => (
-                            <Link to={`/product/${product.code}`} key={product.id} className="product-card">
+                        {flashProducts.map((product) => {
+                            const outOfStock = (product.stock ?? 0) <= 0;
+                            return (
+                            <Link to={`/product/${product.code}`} key={product.id} className={`product-card ${outOfStock ? 'product-card--out-of-stock' : ''}`}>
                                 <div className="product-card__image-wrapper">
-                                    <span className="product-card__stock-badge">STOCK</span>
+                                    <span className={`product-card__stock-badge ${outOfStock ? 'product-card__stock-badge--rupture' : ''}`}>
+                                        {outOfStock ? 'RUPTURE' : 'EN STOCK'}
+                                    </span>
                                     {product.badge && (
                                         <span className="product-card__promo-badge">{product.badge}</span>
                                     )}
@@ -155,15 +161,21 @@ const FeaturedProducts = () => {
                                         </div>
                                     </div>
 
+                                    <p className={`product-card__stock-info ${outOfStock ? 'product-card__stock-info--danger' : ''}`}>
+                                        {outOfStock ? 'Rupture de stock' : `En stock : ${product.stock} unités`}
+                                    </p>
+
                                     <button
-                                        className="product-card__add-btn"
-                                        onClick={(e) => { e.preventDefault(); addToCart(product, 1); }}
+                                        className={`product-card__add-btn ${outOfStock ? 'product-card__add-btn--disabled' : ''}`}
+                                        onClick={(e) => { e.preventDefault(); if (!outOfStock) addToCart(product, 1); }}
+                                        disabled={outOfStock}
                                     >
-                                        Add to Cart
+                                        {outOfStock ? 'Indisponible' : 'Ajouter au panier'}
                                     </button>
                                 </div>
                             </Link>
-                        ))}
+                            );
+                        })}
                     </div>
                 </div>
 
@@ -175,10 +187,14 @@ const FeaturedProducts = () => {
                     </div>
 
                     <div className="bestsellers__grid">
-                        {bestSellers.map((product) => (
-                            <Link to={`/product/${product.code}`} key={product.id} className="product-card">
+                        {bestSellers.map((product) => {
+                            const outOfStock = (product.stock ?? 0) <= 0;
+                            return (
+                            <Link to={`/product/${product.code}`} key={product.id} className={`product-card ${outOfStock ? 'product-card--out-of-stock' : ''}`}>
                                 <div className="product-card__image-wrapper">
-                                    <span className="product-card__stock-badge">STOCK</span>
+                                    <span className={`product-card__stock-badge ${outOfStock ? 'product-card__stock-badge--rupture' : ''}`}>
+                                        {outOfStock ? 'RUPTURE' : 'EN STOCK'}
+                                    </span>
                                     <div className="product-card__image">
                                         <img 
                                             src={product.image} 
@@ -204,15 +220,21 @@ const FeaturedProducts = () => {
                                         </div>
                                     </div>
 
+                                    <p className={`product-card__stock-info ${outOfStock ? 'product-card__stock-info--danger' : ''}`}>
+                                        {outOfStock ? 'Rupture de stock' : `En stock : ${product.stock} unités`}
+                                    </p>
+
                                     <button
-                                        className="product-card__add-btn"
-                                        onClick={(e) => { e.preventDefault(); addToCart(product, 1); }}
+                                        className={`product-card__add-btn ${outOfStock ? 'product-card__add-btn--disabled' : ''}`}
+                                        onClick={(e) => { e.preventDefault(); if (!outOfStock) addToCart(product, 1); }}
+                                        disabled={outOfStock}
                                     >
-                                        Add to Cart
+                                        {outOfStock ? 'Indisponible' : 'Ajouter au panier'}
                                     </button>
                                 </div>
                             </Link>
-                        ))}
+                            );
+                        })}
                     </div>
                 </div>
 

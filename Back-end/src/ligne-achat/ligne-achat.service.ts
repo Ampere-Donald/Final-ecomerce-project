@@ -10,27 +10,27 @@ export class LigneAchatService {
   async create(createLigneAchatDto: CreateLigneAchatDto) {
     return await this.db.ligneAchat.create({
       data: createLigneAchatDto,
-      include: { achat: true, varianteProduit: true },
+      include: { achat: true, produit: true },
     });
   }
 
   async findAll() {
     return await this.db.ligneAchat.findMany({
-      include: { achat: true, varianteProduit: true },
+      include: { achat: true, produit: true },
     });
   }
 
   findByAchat(achatId: string) {
     return this.db.ligneAchat.findMany({
       where: { achatId },
-      include: { varianteProduit: true },
+      include: { produit: true },
     });
   }
 
   async findOne(id: string) {
     const ligne = await this.db.ligneAchat.findUnique({
       where: { id },
-      include: { achat: true, varianteProduit: true },
+      include: { achat: true, produit: true },
     });
     if (!ligne) {
       throw new NotFoundException(`Ligne achat avec l'id ${id} non trouvée`);
@@ -46,7 +46,7 @@ export class LigneAchatService {
         ...updateLigneAchatDto,
         version: { increment: 1 },
       },
-      include: { achat: true, varianteProduit: true },
+      include: { achat: true, produit: true },
     });
   }
 

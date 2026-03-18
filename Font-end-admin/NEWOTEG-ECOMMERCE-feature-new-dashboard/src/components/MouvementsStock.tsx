@@ -1,19 +1,19 @@
 import React, { useEffect, useState } from 'react';
 import { PlusCircle, Search, ArrowDownRight, ArrowUpRight, Activity, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { mouvementStockApi, varianteApi } from '../services/api';
+import { mouvementStockApi, produitApi } from '../services/api';
 
 const TYPES_MOUVEMENT = ['ENTREE', 'SORTIE', 'AJUSTEMENT', 'RETOUR'];
 
 export const MouvementsStock = () => {
   const [mouvements, setMouvements] = useState<any[]>([]);
-  const [variantes, setVariantes] = useState<any[]>([]);
+  const [produits, setProduits] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [search, setSearch] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
-    varianteProduitId: '',
+    produitId: '',
     typeMouvement: 'ENTREE',
     quantite: '',
     motif: '',
@@ -21,9 +21,9 @@ export const MouvementsStock = () => {
 
   const fetchData = async () => {
     try {
-      const [m, v] = await Promise.all([mouvementStockApi.getAll(), varianteApi.getAll()]);
+      const [m, p] = await Promise.all([mouvementStockApi.getAll(), produitApi.getAll()]);
       setMouvements(m);
-      setVariantes(v);
+      setProduits(p);
     } catch (err) {
       console.error(err);
     } finally {
@@ -43,7 +43,7 @@ export const MouvementsStock = () => {
       });
       await fetchData();
       setIsModalOpen(false);
-      setFormData({ varianteProduitId: '', typeMouvement: 'ENTREE', quantite: '', motif: '' });
+      setFormData({ produitId: '', typeMouvement: 'ENTREE', quantite: '', motif: '' });
     } catch (err) {
       console.error(err);
       alert('Erreur lors de la création du mouvement.');
@@ -53,7 +53,7 @@ export const MouvementsStock = () => {
   };
 
   const filtered = mouvements.filter(m =>
-    (m.varianteProduit?.codeVariante || '').toLowerCase().includes(search.toLowerCase()) ||
+    (m.produit?.nomProduit || '').toLowerCase().includes(search.toLowerCase()) ||
     (m.motif || '').toLowerCase().includes(search.toLowerCase())
   );
 
@@ -83,11 +83,11 @@ export const MouvementsStock = () => {
               </div>
               <form onSubmit={handleSubmit} className="p-6 space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Variante concernée *</label>
-                  <select required value={formData.varianteProduitId} onChange={e => setFormData({ ...formData, varianteProduitId: e.target.value })}
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Produit concerné *</label>
+                  <select required value={formData.produitId} onChange={e => setFormData({ ...formData, produitId: e.target.value })}
                     className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary/20 outline-none">
-                    <option value="">Sélectionner une variante...</option>
-                    {variantes.map(v => <option key={v.id} value={v.id}>{v.codeVariante} – {v.produit?.nomProduit || 'N/A'}</option>)}
+                    <option value="">Sélectionner un produit...</option>
+                    {produits.map(p => <option key={p.id} value={p.id}>{p.nomProduit || 'N/A'} - {p.marque}</option>)}
                   </select>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
@@ -127,7 +127,7 @@ export const MouvementsStock = () => {
         <div className="p-4 border-b border-slate-100">
           <div className="relative w-full max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-            <input type="text" placeholder="Rechercher par variante ou motif..." value={search} onChange={e => setSearch(e.target.value)}
+            <input type="text" placeholder="Rechercher par produit ou motif..." value={search} onChange={e => setSearch(e.target.value)}
               className="w-full pl-10 pr-4 py-2 bg-slate-50 border-none rounded-lg text-sm focus:ring-2 focus:ring-primary/20 outline-none" />
           </div>
         </div>
@@ -137,7 +137,7 @@ export const MouvementsStock = () => {
               <tr className="bg-slate-50 text-slate-500 text-xs font-bold uppercase tracking-wider">
                 <th className="px-6 py-4">Date & Heure</th>
                 <th className="px-6 py-4">Type</th>
-                <th className="px-6 py-4">Variante (Code)</th>
+                <th className="px-6 py-4">Produit</th>
                 <th className="px-6 py-4">Quantité</th>
                 <th className="px-6 py-4">Motif</th>
               </tr>
@@ -162,7 +162,7 @@ export const MouvementsStock = () => {
                           {m.typeMouvement}
                         </span>
                       </td>
-                      <td className="px-6 py-4 font-mono font-bold text-slate-900 text-sm">{m.varianteProduit?.codeVariante || 'N/A'}</td>
+                      <td className="px-6 py-4 font-mono font-bold text-slate-900 text-sm">{m.produit?.nomProduit || 'N/A'}</td>
                       <td className={`px-6 py-4 font-bold text-lg ${isPositive ? 'text-emerald-600' : 'text-red-600'}`}>
                         {isPositive ? '+' : '-'}{m.quantite}
                       </td>

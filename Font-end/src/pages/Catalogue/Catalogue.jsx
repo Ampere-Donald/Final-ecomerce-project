@@ -119,7 +119,7 @@ const Catalogue = () => {
         }
 
         return result;
-    }, [searchQuery, selectedCategory, selectedSubCategory, sortBy, priceRange]);
+    }, [products, searchQuery, selectedCategory, selectedSubCategory, sortBy, priceRange]);
 
     // ── Pagination ─────────────────────────────────────────
     const totalPages = Math.ceil(filteredProducts.length / ITEMS_PER_PAGE);

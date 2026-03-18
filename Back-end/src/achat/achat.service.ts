@@ -16,7 +16,7 @@ export class AchatService {
           ...achatData,
           lignesAchat: {
             create: lignesAchat.map((ligne) => ({
-              varianteProduitId: ligne.varianteProduitId,
+              produitId: ligne.produitId,
               quantite: ligne.quantite,
               prixUnitaire: ligne.prixUnitaire,
               sousTotal: ligne.quantite * ligne.prixUnitaire,
@@ -25,14 +25,14 @@ export class AchatService {
         },
         include: {
           fournisseur: true,
-          lignesAchat: { include: { varianteProduit: true } },
+          lignesAchat: { include: { produit: true } },
         },
       });
 
       // Mettre à jour le stock pour chaque ligne
       for (const ligne of lignesAchat) {
-        await tx.varianteProduit.update({
-          where: { id: ligne.varianteProduitId },
+        await tx.produit.update({
+          where: { id: ligne.produitId },
           data: {
             quantiteStock: { increment: ligne.quantite },
             version: { increment: 1 },
@@ -42,7 +42,7 @@ export class AchatService {
         // Créer un mouvement de stock
         await tx.mouvementStock.create({
           data: {
-            varianteProduitId: ligne.varianteProduitId,
+            produitId: ligne.produitId,
             typeMouvement: 'ENTREE',
             quantite: ligne.quantite,
             motif: `Achat #${achat.id}`,
@@ -58,7 +58,7 @@ export class AchatService {
     return await this.db.achat.findMany({
       include: {
         fournisseur: true,
-        lignesAchat: { include: { varianteProduit: true } },
+        lignesAchat: { include: { produit: true } },
       },
     });
   }
@@ -68,7 +68,7 @@ export class AchatService {
       where: { id },
       include: {
         fournisseur: true,
-        lignesAchat: { include: { varianteProduit: true } },
+        lignesAchat: { include: { produit: true } },
       },
     });
     if (!achat) {
@@ -87,7 +87,7 @@ export class AchatService {
       },
       include: {
         fournisseur: true,
-        lignesAchat: { include: { varianteProduit: true } },
+        lignesAchat: { include: { produit: true } },
       },
     });
   }
