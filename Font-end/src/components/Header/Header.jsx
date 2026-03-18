@@ -1,15 +1,18 @@
 import { useState, useEffect } from 'react';
-import { Link, NavLink } from 'react-router-dom';
+import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { ShoppingCart, User, Menu, Heart, X, Search } from 'lucide-react';
 import { useCart } from '../../context/CartContext';
+import { formatFCFA } from '../../utils/formatFCFA';
 import SearchBar from '../SearchBar/SearchBar';
 import './Header.scss';
 
 const Header = () => {
-    const { cartCount } = useCart();
+    const { cartCount, cartTotal } = useCart();
+    const navigate = useNavigate();
     const [isScrolled, setIsScrolled] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
+    const [mobileSearchTerm, setMobileSearchTerm] = useState('');
 
     useEffect(() => {
         const handleScroll = () => {
@@ -29,6 +32,15 @@ const Header = () => {
     }, [isMobileMenuOpen]);
 
     const closeMobileMenu = () => setIsMobileMenuOpen(false);
+
+    const handleMobileSearch = (e) => {
+        e.preventDefault();
+        if (mobileSearchTerm.trim()) {
+            navigate(`/catalogue?search=${encodeURIComponent(mobileSearchTerm.trim())}`);
+            setMobileSearchTerm('');
+            setIsMobileSearchOpen(false);
+        }
+    };
 
     return (
         <>
@@ -63,13 +75,13 @@ const Header = () => {
                     {/* Desktop Actions */}
                     <div className="header__actions">
                         <SearchBar />
-                        <button className="header__action-btn header__action-btn--icon-only" aria-label="Favorites">
+                        <Link to="/favourites" className="header__action-btn header__action-btn--icon-only" aria-label="Favoris">
                             <Heart size={20} />
-                        </button>
-                        <button className="header__action-btn header__action-btn--icon-only" aria-label="Profile">
+                        </Link>
+                        <Link to="/login" className="header__action-btn header__action-btn--icon-only" aria-label="Mon Compte">
                             <User size={20} />
-                        </button>
-                        <Link to="/checkout" className="header__action-btn header__action-btn--cart" aria-label="Cart">
+                        </Link>
+                        <Link to="/checkout" className="header__action-btn header__action-btn--cart" aria-label="Panier">
                             <ShoppingCart size={20} />
                             {cartCount > 0 && <span className="header__cart-badge">{cartCount}</span>}
                         </Link>
@@ -116,21 +128,24 @@ const Header = () => {
 
                 {/* Mobile Expandable Search */}
                 <div className={`header__mobile-search ${isMobileSearchOpen ? 'header__mobile-search--open' : ''}`}>
-                    <div className="header__mobile-search-inner container">
+                    <form className="header__mobile-search-inner container" onSubmit={handleMobileSearch}>
                         <Search size={16} className="header__mobile-search-icon" />
                         <input
                             type="text"
                             className="header__mobile-search-input"
                             placeholder="Rechercher un composant..."
+                            value={mobileSearchTerm}
+                            onChange={(e) => setMobileSearchTerm(e.target.value)}
                         />
                         <button
+                            type="button"
                             className="header__mobile-search-close"
-                            onClick={() => setIsMobileSearchOpen(false)}
+                            onClick={() => { setIsMobileSearchOpen(false); setMobileSearchTerm(''); }}
                             aria-label="Fermer la recherche"
                         >
                             <X size={16} />
                         </button>
-                    </div>
+                    </form>
                 </div>
             </header>
 
@@ -177,18 +192,18 @@ const Header = () => {
                     <li>
                         <NavLink to="/checkout" className={({ isActive }) => `header__drawer-link ${isActive ? 'header__drawer-link--active' : ''}`} onClick={closeMobileMenu}>
                             Panier
-                            {cartCount > 0 && <span className="header__drawer-badge">{cartCount}</span>}
+                            {cartCount > 0 && <span className="header__drawer-badge">{cartCount} · {formatFCFA(cartTotal)}</span>}
                         </NavLink>
                     </li>
                     <li>
-                        <button className="header__drawer-link" onClick={closeMobileMenu}>
+                        <NavLink to="/favourites" className={({ isActive }) => `header__drawer-link ${isActive ? 'header__drawer-link--active' : ''}`} onClick={closeMobileMenu}>
                             Favoris
-                        </button>
+                        </NavLink>
                     </li>
                     <li>
-                        <button className="header__drawer-link" onClick={closeMobileMenu}>
+                        <NavLink to="/login" className={({ isActive }) => `header__drawer-link ${isActive ? 'header__drawer-link--active' : ''}`} onClick={closeMobileMenu}>
                             Mon Compte
-                        </button>
+                        </NavLink>
                     </li>
                 </ul>
 

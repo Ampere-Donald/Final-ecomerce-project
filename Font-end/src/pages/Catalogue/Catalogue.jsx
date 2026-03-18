@@ -3,7 +3,6 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { SlidersHorizontal, X, ChevronLeft, ChevronRight, Search } from 'lucide-react';
 import axios from 'axios';
-import { categories } from '../../data/categoriesData';
 import Footer from '../../components/Footer/Footer';
 import Sidebar from '../../components/Sidebar/Sidebar';
 import ProductCard from '../../components/ProductCard/ProductCard';
@@ -16,7 +15,10 @@ const Catalogue = () => {
 
     // ── State ──────────────────────────────────────────────
     const [products, setProducts] = useState([]);
+    const [dynamicCategories, setDynamicCategories] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
+
+    // ... (rest of the state stays the same)
     const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '');
     const [selectedCategory, setSelectedCategory] = useState(searchParams.get('category') || '');
     const [selectedSubCategory, setSelectedSubCategory] = useState(searchParams.get('sub') || '');
@@ -24,21 +26,26 @@ const Catalogue = () => {
     const [currentPage, setCurrentPage] = useState(Number(searchParams.get('page')) || 1);
     const [expandedCategories, setExpandedCategories] = useState({});
     const [sidebarOpen, setSidebarOpen] = useState(false);
-    const [priceRange, setPriceRange] = useState([0, 500000]);
+    const [priceRange, setPriceRange] = useState([0, 1000000]);
+    const [inStockOnly, setInStockOnly] = useState(searchParams.get('instock') === 'true');
 
     // ── Fetch Data ─────────────────────────────────────────
     useEffect(() => {
-        const fetchProducts = async () => {
+        const fetchData = async () => {
             try {
-                const res = await axios.get('/api/produits');
-                // Formater les produits de la BDD pour qu'ils matchent le design côté client
-                const formatted = res.data.map(p => ({
+                const [prodRes, catRes] = await Promise.all([
+                    axios.get('/api/produits'),
+                    axios.get('/api/categories')
+                ]);
+
+                const formattedProducts = prodRes.data.map(p => ({
                     model: p.nomProduit,
                     code: p.id.split('-')[0].toUpperCase(),
                     brand: p.marque,
                     description: p.description,
                     categoryName: p.categorie?.nom || 'DIVERS',
-                    categorySlug: p.categorie?.nom.toLowerCase().replace(/ \/ | /g, '-') || 'divers',
+                    categoryId: p.categorie?.id || '',
+                    categorySlug: p.categorie?.id || 'divers', // Using ID as slug for uniqueness and matching
                     retailPrice: p.prixDetail ?? 0,
                     wholesalePrice: p.prixGros ?? 0,
                     stock: p.quantiteStock ?? 0,
@@ -48,15 +55,32 @@ const Catalogue = () => {
                         ? `http://localhost:3000${p.imageUrl}` 
                         : 'https://images.unsplash.com/photo-1505843490538-5133c6c7d0e1?q=80&w=400&auto=format&fit=crop'
                 }));
-                // Si la BDD est vide, on garde quelques exemples ou on affiche vide.
-                setProducts(formatted);
+
+                setProducts(formattedProducts);
+
+                // Build dynamic categories array for sidebar with counts
+                const apiCategories = catRes.data;
+                const sidebarCategories = apiCategories.map(cat => {
+                    // Count how many products belong to this category
+                    const count = formattedProducts.filter(p => p.categoryId === cat.id).length;
+                    return {
+                        name: cat.nom,
+                        slug: cat.id, 
+                        count: count,
+                        subcategories: [] // No subcategories in backend currently, so we just use flat categories
+                    };
+                });
+                
+                // Filter out empty categories if wanted, but standard is to show all with 0 counts
+                setDynamicCategories(sidebarCategories);
+
             } catch (err) {
-                console.error("Erreur de chargement des produits", err);
+                console.error("Erreur de chargement des données", err);
             } finally {
                 setIsLoading(false);
             }
         };
-        fetchProducts();
+        fetchData();
     }, []);
 
     // Sync URL params
@@ -67,8 +91,9 @@ const Catalogue = () => {
         if (selectedSubCategory) params.sub = selectedSubCategory;
         if (sortBy !== 'name-asc') params.sort = sortBy;
         if (currentPage > 1) params.page = currentPage;
+        if (inStockOnly) params.instock = 'true';
         setSearchParams(params, { replace: true });
-    }, [searchQuery, selectedCategory, selectedSubCategory, sortBy, currentPage, setSearchParams]);
+    }, [searchQuery, selectedCategory, selectedSubCategory, sortBy, currentPage, inStockOnly, setSearchParams]);
 
     // ── Filtering & Sorting ────────────────────────────────
     const filteredProducts = useMemo(() => {
@@ -85,20 +110,20 @@ const Catalogue = () => {
         }
 
         // Category filter
-        if (selectedSubCategory) {
-            result = result.filter(p => p.categorySlug === selectedSubCategory);
-        } else if (selectedCategory) {
-            const cat = categories.find(c => c.slug === selectedCategory);
-            if (cat) {
-                const subSlugs = cat.subcategories.map(s => s.slug);
-                result = result.filter(p => subSlugs.includes(p.categorySlug) || p.parentCategory === cat.name);
-            }
+        if (selectedCategory) {
+            // we only have flat categories now
+            result = result.filter(p => p.categoryId === selectedCategory || p.categorySlug === selectedCategory);
         }
 
         // Price filter
         result = result.filter(p =>
             p.retailPrice >= priceRange[0] && p.retailPrice <= priceRange[1]
         );
+
+        // Stock filter
+        if (inStockOnly) {
+            result = result.filter(p => p.stock > 0);
+        }
 
         // Sorting
         switch (sortBy) {
@@ -131,7 +156,7 @@ const Catalogue = () => {
     // Reset page when filters change
     useEffect(() => {
         setCurrentPage(1);
-    }, [searchQuery, selectedCategory, selectedSubCategory, sortBy, priceRange]);
+    }, [searchQuery, selectedCategory, selectedSubCategory, sortBy, priceRange, inStockOnly]);
 
     // ── Handlers ───────────────────────────────────────────
     const toggleCategory = (slug) => {
@@ -163,10 +188,11 @@ const Catalogue = () => {
         setSelectedCategory('');
         setSelectedSubCategory('');
         setSortBy('name-asc');
-        setPriceRange([0, 500000]);
+        setPriceRange([0, 1000000]);
+        setInStockOnly(false);
     };
 
-    const hasActiveFilters = searchQuery || selectedCategory || selectedSubCategory || sortBy !== 'name-asc';
+    const hasActiveFilters = searchQuery || selectedCategory || selectedSubCategory || sortBy !== 'name-asc' || inStockOnly || priceRange[1] < 1000000;
 
     // ── Pagination Controls ────────────────────────────────
     const getPageNumbers = () => {
@@ -185,18 +211,12 @@ const Catalogue = () => {
 
     // ── Active Category Name ───────────────────────────────
     const activeCategoryName = useMemo(() => {
-        if (selectedSubCategory) {
-            for (const cat of categories) {
-                const sub = cat.subcategories.find(s => s.slug === selectedSubCategory);
-                if (sub) return sub.name;
-            }
-        }
         if (selectedCategory) {
-            const cat = categories.find(c => c.slug === selectedCategory);
+            const cat = dynamicCategories.find(c => c.slug === selectedCategory);
             if (cat) return cat.name;
         }
         return null;
-    }, [selectedCategory, selectedSubCategory]);
+    }, [selectedCategory, dynamicCategories]);
 
     return (
         <div className="catalogue-page">
@@ -246,7 +266,7 @@ const Catalogue = () => {
                         setSidebarOpen={setSidebarOpen}
                         searchQuery={searchQuery}
                         setSearchQuery={setSearchQuery}
-                        categories={categories}
+                        categories={dynamicCategories}
                         selectedCategory={selectedCategory}
                         handleCategorySelect={handleCategorySelect}
                         selectedSubCategory={selectedSubCategory}
@@ -255,6 +275,10 @@ const Catalogue = () => {
                         toggleCategory={toggleCategory}
                         clearFilters={clearFilters}
                         hasActiveFilters={hasActiveFilters}
+                        priceRange={priceRange}
+                        setPriceRange={setPriceRange}
+                        inStockOnly={inStockOnly}
+                        setInStockOnly={setInStockOnly}
                     />
 
                     {/* ── Main Content ──────────────────────────── */}

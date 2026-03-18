@@ -160,9 +160,17 @@
 
         &--cart {
             background-color: $color-background;
-            padding: $spacing-xs;
-            border-radius: $border-radius-circle;
+            padding: $spacing-xs $spacing-sm $spacing-xs $spacing-xs;
+            border-radius: $border-radius-pill;
+            gap: $spacing-2xs;
         }
+    }
+
+    &__cart-total {
+        font-size: 12px;
+        font-weight: $font-weight-bold;
+        color: $color-text;
+        white-space: nowrap;
     }
 
     &__cart-badge {

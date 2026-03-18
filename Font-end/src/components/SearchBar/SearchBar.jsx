@@ -1,22 +1,16 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Search } from 'lucide-react';
+import axios from 'axios';
 import './SearchBar.scss';
 
-const MOCK_DATA = [
-    '10N60 GM',
-    '100N03',
-    'Multimètre Digital',
-    'Condensateur 100uF',
-    'Résistance 1k Ohm',
-    'Transistor NPN',
-    'LED Rouge 5mm'
-];
-
 const SearchBar = () => {
+    const navigate = useNavigate();
     const [searchQuery, setSearchQuery] = useState('');
     const [results, setResults] = useState([]);
     const [isOpen, setIsOpen] = useState(false);
 
+    // Autocomplete : recherche dynamique via l'API produits
     useEffect(() => {
         if (!searchQuery.trim()) {
             setResults([]);
@@ -24,19 +18,42 @@ const SearchBar = () => {
             return;
         }
 
-        const handler = setTimeout(() => {
-            const filtered = MOCK_DATA.filter((item) =>
-                item.toLowerCase().includes(searchQuery.toLowerCase())
-            );
-            setResults(filtered);
-            setIsOpen(true);
+        const handler = setTimeout(async () => {
+            try {
+                const res = await axios.get('/api/produits');
+                const filtered = res.data
+                    .filter((p) =>
+                        p.nomProduit.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                        (p.marque && p.marque.toLowerCase().includes(searchQuery.toLowerCase()))
+                    )
+                    .slice(0, 6)
+                    .map((p) => p.nomProduit);
+                setResults(filtered);
+                setIsOpen(filtered.length > 0);
+            } catch {
+                setResults([]);
+            }
         }, 300);
 
         return () => clearTimeout(handler);
     }, [searchQuery]);
 
+    const handleSubmit = (e) => {
+        e?.preventDefault();
+        if (searchQuery.trim()) {
+            setIsOpen(false);
+            navigate(`/catalogue?search=${encodeURIComponent(searchQuery.trim())}`);
+        }
+    };
+
+    const handleSelectResult = (result) => {
+        setSearchQuery(result);
+        setIsOpen(false);
+        navigate(`/catalogue?search=${encodeURIComponent(result)}`);
+    };
+
     return (
-        <div className="search-bar">
+        <form className="search-bar" onSubmit={handleSubmit}>
             <div className="search-bar__input-wrapper">
                 <Search className="search-bar__icon" size={18} />
                 <input
@@ -45,7 +62,7 @@ const SearchBar = () => {
                     placeholder="Rechercher un composant..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    onFocus={() => searchQuery.trim() && setIsOpen(true)}
+                    onFocus={() => searchQuery.trim() && results.length > 0 && setIsOpen(true)}
                     onBlur={() => setTimeout(() => setIsOpen(false), 200)}
                 />
             </div>
@@ -55,11 +72,9 @@ const SearchBar = () => {
                     {results.map((result, index) => (
                         <li key={index} className="search-bar__item">
                             <button
+                                type="button"
                                 className="search-bar__item-btn"
-                                onClick={() => {
-                                    setSearchQuery(result);
-                                    setIsOpen(false);
-                                }}
+                                onMouseDown={() => handleSelectResult(result)}
                             >
                                 {result}
                             </button>
@@ -73,7 +88,7 @@ const SearchBar = () => {
                     <div className="search-bar__no-results">Aucun résultat trouvé</div>
                 </div>
             )}
-        </div>
+        </form>
     );
 };
 

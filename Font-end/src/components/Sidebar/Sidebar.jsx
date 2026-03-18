@@ -14,7 +14,11 @@ const Sidebar = ({
     expandedCategories,
     toggleCategory,
     clearFilters,
-    hasActiveFilters
+    hasActiveFilters,
+    priceRange,
+    setPriceRange,
+    inStockOnly,
+    setInStockOnly
 }) => {
     return (
         <aside className={`catalogue-sidebar ${sidebarOpen ? 'catalogue-sidebar--open' : ''}`}>
@@ -105,33 +109,47 @@ const Sidebar = ({
 
             {/* Price Range */}
             <div className="catalogue-sidebar__section">
-                <h4 className="catalogue-sidebar__section-title">PRICE RANGE (FCFA)</h4>
+                <h4 className="catalogue-sidebar__section-title">PRIX MAXIMUM (FCFA)</h4>
                 <div className="catalogue-sidebar__price-range">
-                    <div className="slider-track">
-                        <div className="slider-progress"></div>
-                        <div className="slider-thumb slider-thumb-left"></div>
-                        <div className="slider-thumb slider-thumb-right"></div>
-                    </div>
+                    <input 
+                        type="range" 
+                        min="0" 
+                        max="1000000" 
+                        step="1000"
+                        value={priceRange[1]} 
+                        onChange={(e) => setPriceRange([priceRange[0], parseInt(e.target.value)])} 
+                        style={{ width: '100%' }}
+                    />
                     <div className="price-labels">
                         <span>0 FCFA</span>
-                        <span>500,000 FCFA</span>
+                        <span>{priceRange[1].toLocaleString('fr-FR')} FCFA</span>
                     </div>
                 </div>
             </div>
 
             {/* Stock Availability */}
             <div className="catalogue-sidebar__section">
-                <h4 className="catalogue-sidebar__section-title">STOCK AVAILABILITY</h4>
+                <h4 className="catalogue-sidebar__section-title">DISPONIBILITÉ</h4>
                 <div className="catalogue-sidebar__stock">
                     <label className="stock-radio">
-                        <input type="radio" name="stock" defaultChecked />
+                        <input 
+                           type="radio" 
+                           name="stock" 
+                           checked={inStockOnly} 
+                           onChange={() => setInStockOnly(true)} 
+                        />
                         <span className="radio-custom"></span>
-                        In Stock Only
+                        En stock uniquement
                     </label>
                     <label className="stock-radio">
-                        <input type="radio" name="stock" />
+                        <input 
+                           type="radio" 
+                           name="stock" 
+                           checked={!inStockOnly} 
+                           onChange={() => setInStockOnly(false)} 
+                        />
                         <span className="radio-custom"></span>
-                        Show All Items
+                        Tous les articles
                     </label>
                 </div>
             </div>
