@@ -20,7 +20,14 @@ export const produitApi = {
     }
     return api.post('/produits', data).then(res => res.data);
   },
-  update: (id: string, data: any) => api.patch(`/produits/${id}`, data).then(res => res.data),
+  update: (id: string, data: any) => {
+    if (data instanceof FormData) {
+      return api.patch(`/produits/${id}`, data, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      }).then(res => res.data);
+    }
+    return api.patch(`/produits/${id}`, data).then(res => res.data);
+  },
   delete: (id: string) => api.delete(`/produits/${id}`).then(res => res.data),
   uploadImage: (id: string, file: File) => {
     const formData = new FormData();
