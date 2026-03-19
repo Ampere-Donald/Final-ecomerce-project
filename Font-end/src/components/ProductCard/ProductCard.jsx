@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Heart, ShoppingCart } from 'lucide-react';
+import { Heart, ShoppingCart, FileText, Info } from 'lucide-react';
 import { useFavorites } from '../../context/FavoritesContext';
 import { useCart } from '../../context/CartContext';
 import { formatFCFA } from '../../utils/formatFCFA';
@@ -14,7 +14,7 @@ const ProductCard = ({ product, badge }) => {
     const isLiked = isFavorite(product.code);
     const [imgSrc, setImgSrc] = useState(product.image || PLACEHOLDER_IMG);
 
-    const isOutOfStock = (product.stock ?? 0) <= 0;
+    const isBackorder = (product.stock ?? 0) <= 0;
 
     const handleFavorite = (e) => {
         e.preventDefault();
@@ -25,9 +25,7 @@ const ProductCard = ({ product, badge }) => {
     const handleAddToCart = (e) => {
         e.preventDefault();
         e.stopPropagation();
-        if (!isOutOfStock) {
-            addToCart(product, 1);
-        }
+        addToCart(product, 1);
     };
 
     const handleImageError = () => {
@@ -35,7 +33,7 @@ const ProductCard = ({ product, badge }) => {
     };
 
     return (
-        <div className={`product-card ${isOutOfStock ? 'product-card--out-of-stock' : ''}`}>
+        <div className={`product-card ${isBackorder ? 'product-card--backorder' : ''}`}>
             {/* Image area */}
             <Link to={`/product/${product.code}`} className="product-card__image-area">
                 <img
@@ -46,8 +44,8 @@ const ProductCard = ({ product, badge }) => {
                     onError={handleImageError}
                 />
                 {/* Stock Badge */}
-                {isOutOfStock ? (
-                    <span className="product-card__badge product-card__badge--rupture">RUPTURE</span>
+                {isBackorder ? (
+                    <span className="product-card__badge product-card__badge--preorder">SUR COMMANDE</span>
                 ) : (
                     <span className="product-card__badge product-card__badge--stock">EN STOCK</span>
                 )}
@@ -90,23 +88,44 @@ const ProductCard = ({ product, badge }) => {
                 </div>
 
                 {/* Stock info */}
-                <p className={`product-card__stock-info ${isOutOfStock ? 'product-card__stock-info--danger' : ''}`}>
-                    {isOutOfStock
-                        ? 'Rupture de stock'
+                <p className={`product-card__stock-info ${isBackorder ? 'product-card__stock-info--warning' : ''}`}>
+                    {isBackorder
+                        ? 'Sur commande (Délai : ~14 jours)'
                         : `En stock : ${product.stock} unités`
                     }
                 </p>
             </Link>
 
+            {/* Fiche Technique (Datasheet B2B) */}
+            {product.urlDatasheet && (
+                <a 
+                    href={product.urlDatasheet} 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    className="product-card__datasheet" 
+                    onClick={e => e.stopPropagation()}
+                    title="Télécharger la fiche technique (PDF)"
+                >
+                    <FileText size={14} />
+                    Fiche Technique
+                </a>
+            )}
+
+            {/* Info Prix Dégressif si applicable */}
+            {(product.wholesalePrice > 0 && product.wholesalePrice < product.retailPrice) && (
+                <div className="product-card__discount-banner">
+                    <Info size={12} /> Prix de gros disponible
+                </div>
+            )}
+
             {/* Add to Cart Button */}
             <button
-                className={`product-card__add-btn ${isOutOfStock ? 'product-card__add-btn--disabled' : ''}`}
+                className={`product-card__add-btn ${isBackorder ? 'product-card__add-btn--preorder' : ''}`}
                 onClick={handleAddToCart}
-                disabled={isOutOfStock}
-                title={isOutOfStock ? 'Produit en rupture de stock' : 'Ajouter au panier'}
+                title={isBackorder ? 'Commander avec délai (14j)' : 'Ajouter au panier'}
             >
                 <ShoppingCart size={14} />
-                {isOutOfStock ? 'Indisponible' : 'Ajouter au panier'}
+                {isBackorder ? 'Commander' : 'Ajouter au panier'}
             </button>
         </div>
     );

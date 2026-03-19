@@ -38,4 +38,8 @@ export class CreateProduitDto {
   @Min(0)
   @Type(() => Number)
   quantiteStock?: number;
+
+  @IsOptional()
+  @IsString()
+  urlDatasheet?: string;
 }

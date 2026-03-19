@@ -10,7 +10,7 @@ const api = axios.create({
 
 // Produits
 export const produitApi = {
-  getAll: () => api.get('/produits').then(res => res.data),
+  getAll: () => api.get('/produits?limit=1000').then(res => res.data.data ? res.data.data : res.data),
   getOne: (id: string) => api.get(`/produits/${id}`).then(res => res.data),
   create: (data: any) => {
     if (data instanceof FormData) {

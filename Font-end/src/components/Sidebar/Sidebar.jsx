@@ -18,7 +18,9 @@ const Sidebar = ({
     priceRange,
     setPriceRange,
     inStockOnly,
-    setInStockOnly
+    setInStockOnly,
+    globalMinPrice,
+    globalMaxPrice
 }) => {
     return (
         <aside className={`catalogue-sidebar ${sidebarOpen ? 'catalogue-sidebar--open' : ''}`}>
@@ -113,15 +115,15 @@ const Sidebar = ({
                 <div className="catalogue-sidebar__price-range">
                     <input 
                         type="range" 
-                        min="0" 
-                        max="1000000" 
+                        min={globalMinPrice || 0} 
+                        max={globalMaxPrice || 1000000} 
                         step="1000"
                         value={priceRange[1]} 
-                        onChange={(e) => setPriceRange([priceRange[0], parseInt(e.target.value)])} 
+                        onChange={(e) => setPriceRange([globalMinPrice, parseInt(e.target.value)])} 
                         style={{ width: '100%' }}
                     />
                     <div className="price-labels">
-                        <span>0 FCFA</span>
+                        <span>{(globalMinPrice || 0).toLocaleString('fr-FR')} FCFA</span>
                         <span>{priceRange[1].toLocaleString('fr-FR')} FCFA</span>
                     </div>
                 </div>

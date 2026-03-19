@@ -9,6 +9,7 @@ import {
   ParseUUIDPipe,
   UseInterceptors,
   UploadedFile,
+  Query,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
@@ -49,8 +50,32 @@ export class ProduitController {
   }
 
   @Get()
-  findAll() {
-    return this.produitService.findAll();
+  findAll(
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+    @Query('search') search?: string,
+    @Query('categoryId') categoryId?: string,
+    @Query('minPrice') minPrice?: string,
+    @Query('maxPrice') maxPrice?: string,
+    @Query('inStock') inStock?: string,
+    @Query('sort') sort?: string,
+  ) {
+    console.log('--- GET /api/produits CALLED WITH PARAMS ---', { page, limit, search, categoryId, minPrice, maxPrice, inStock, sort });
+    return this.produitService.findAll({
+      page: page ? parseInt(page, 10) : 1,
+      limit: limit ? parseInt(limit, 10) : 1000,
+      search,
+      categoryId,
+      minPrice: minPrice ? parseFloat(minPrice) : undefined,
+      maxPrice: maxPrice ? parseFloat(maxPrice) : undefined,
+      inStock: inStock === 'true',
+      sort,
+    });
+  }
+
+  @Get('metadata')
+  getMetadata() {
+    return this.produitService.getMetadata();
   }
 
   @Get(':id')

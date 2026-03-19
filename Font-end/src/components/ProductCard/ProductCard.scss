@@ -190,15 +190,15 @@
         color: $color-success;
         margin-top: $spacing-sm;
 
-        &--danger {
-            color: $color-danger;
+        &--warning {
+            color: $color-warning;
             font-weight: 700;
         }
     }
 
-    // ── Rupture Badge ─────────────────────────────────────────
-    &__badge--rupture {
-        background-color: $color-danger;
+    // ── Preorder Badge ─────────────────────────────────────────
+    &__badge--preorder {
+        background-color: $color-warning;
         color: $color-surface;
     }
 
@@ -226,19 +226,56 @@
             background-color: darken($color-primary, 8%);
         }
 
-        &--disabled,
-        &:disabled {
-            background-color: $color-text-muted;
-            cursor: not-allowed;
-            opacity: 0.6;
+        &--preorder {
+            background-color: $color-warning;
+            &:hover {
+                background-color: darken($color-warning, 10%);
+            }
         }
     }
 
-    // ── Out of Stock Card ─────────────────────────────────────
-    &--out-of-stock {
+    // ── Datasheet & Discount Banner ───────────────────────────
+    &__datasheet {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        width: 100%;
+        padding: 8px;
+        background-color: $color-surface;
+        color: $color-text;
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        text-decoration: none;
+        border-top: 1px solid $color-border;
+        transition: all 0.2s;
+
+        &:hover {
+            color: $color-danger;
+            background-color: rgba($color-danger, 0.05);
+        }
+    }
+
+    &__discount-banner {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+        width: 100%;
+        padding: 6px;
+        background-color: rgba($color-success, 0.1);
+        color: $color-success;
+        font-size: 10px;
+        font-weight: 700;
+        text-transform: uppercase;
+        border-top: 1px solid rgba($color-success, 0.2);
+    }
+
+    // ── Backorder Card ─────────────────────────────────────
+    &--backorder {
         .product-card__img {
-            opacity: 0.5;
-            filter: grayscale(40%);
+            opacity: 0.8;
         }
     }
 }

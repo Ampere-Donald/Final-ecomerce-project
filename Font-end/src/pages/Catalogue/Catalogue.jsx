@@ -1,11 +1,13 @@
 import { useState, useMemo, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import { SlidersHorizontal, X, ChevronLeft, ChevronRight, Search } from 'lucide-react';
+import { SlidersHorizontal, X, ChevronLeft, ChevronRight, Search, LayoutGrid, List } from 'lucide-react';
 import axios from 'axios';
+import { useDebounce } from '../../hooks/useDebounce';
 import Footer from '../../components/Footer/Footer';
 import Sidebar from '../../components/Sidebar/Sidebar';
 import ProductCard from '../../components/ProductCard/ProductCard';
+import ProductTable from '../../components/ProductTable/ProductTable';
 import './Catalogue.scss';
 
 const ITEMS_PER_PAGE = 24;
@@ -28,51 +30,92 @@ const Catalogue = () => {
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [priceRange, setPriceRange] = useState([0, 1000000]);
     const [inStockOnly, setInStockOnly] = useState(searchParams.get('instock') === 'true');
+    const [totalPages, setTotalPages] = useState(1);
+    const [totalProducts, setTotalProducts] = useState(0);
+    const [viewMode, setViewMode] = useState(localStorage.getItem('catalogueViewMode') || 'grid');
+    const [globalMinPrice, setGlobalMinPrice] = useState(0);
+    const [globalMaxPrice, setGlobalMaxPrice] = useState(1000000);
 
-    // ── Fetch Data ─────────────────────────────────────────
+    const debouncedSearch = useDebounce(searchQuery, 500);
+    const debouncedPrice = useDebounce(priceRange, 500);
+
+    // ── Initial Fetch (Categories, Global Price limits) ──
+    useEffect(() => {
+        const fetchInitialMeta = async () => {
+            try {
+                const [catRes, metaRes] = await Promise.all([
+                    axios.get('/api/categories'),
+                    axios.get('/api/produits/metadata')
+                ]);
+                const apiCategories = catRes.data;
+                const sidebarCategories = apiCategories.map(cat => ({
+                    name: cat.nom,
+                    slug: cat.id, 
+                    count: cat._count?.produits || cat.produits?.length || 0,
+                    subcategories: []
+                }));
+                setDynamicCategories(sidebarCategories);
+
+                const minP = metaRes.data.minPrice || 0;
+                // Arrondir au millier supérieur pour un joli curseur
+                const maxP = Math.ceil((metaRes.data.maxPrice || 1000000) / 1000) * 1000;
+                
+                setGlobalMinPrice(minP);
+                setGlobalMaxPrice(maxP);
+                
+                // Set default price range if untouched
+                setPriceRange([minP, maxP]);
+
+            } catch (err) {
+                console.error("Erreur chargement metadata:", err);
+            }
+        };
+        fetchInitialMeta();
+    }, []);
+
+    // ── Fetch Dynamic Data (Products) ──
     useEffect(() => {
         const fetchData = async () => {
+            setIsLoading(true);
             try {
-                const [prodRes, catRes] = await Promise.all([
-                    axios.get('/api/produits'),
-                    axios.get('/api/categories')
-                ]);
+                const params = new URLSearchParams();
+                params.append('page', currentPage);
+                params.append('limit', 24);
+                if (debouncedSearch) params.append('search', debouncedSearch);
+                if (selectedCategory) params.append('categoryId', selectedCategory);
+                if (debouncedPrice[0] > globalMinPrice) params.append('minPrice', debouncedPrice[0]);
+                if (debouncedPrice[1] && debouncedPrice[1] < globalMaxPrice) params.append('maxPrice', debouncedPrice[1]);
+                if (inStockOnly) params.append('inStock', 'true');
+                if (sortBy && sortBy !== 'name-asc') params.append('sort', sortBy);
 
-                const formattedProducts = prodRes.data.map(p => ({
+                const prodRes = await axios.get(`/api/produits?${params.toString()}`);
+
+                const backendProducts = prodRes.data.data || [];
+                const meta = prodRes.data.meta || { lastPage: 1, total: 0 };
+                
+                setTotalPages(meta.lastPage);
+                setTotalProducts(meta.total);
+
+                const formattedProducts = backendProducts.map(p => ({
                     model: p.nomProduit,
                     code: p.id.split('-')[0].toUpperCase(),
                     brand: p.marque,
                     description: p.description,
                     categoryName: p.categorie?.nom || 'DIVERS',
                     categoryId: p.categorie?.id || '',
-                    categorySlug: p.categorie?.id || 'divers', // Using ID as slug for uniqueness and matching
+                    categorySlug: p.categorie?.id || 'divers',
                     retailPrice: p.prixDetail ?? 0,
                     wholesalePrice: p.prixGros ?? 0,
                     stock: p.quantiteStock ?? 0,
                     oldPrice: null,
                     parentCategory: 'ÉQUIPEMENTS',
+                    urlDatasheet: p.urlDatasheet || null,
                     image: p.imageUrl 
                         ? `http://localhost:3000${p.imageUrl}` 
                         : 'https://images.unsplash.com/photo-1505843490538-5133c6c7d0e1?q=80&w=400&auto=format&fit=crop'
                 }));
 
                 setProducts(formattedProducts);
-
-                // Build dynamic categories array for sidebar with counts
-                const apiCategories = catRes.data;
-                const sidebarCategories = apiCategories.map(cat => {
-                    // Count how many products belong to this category
-                    const count = formattedProducts.filter(p => p.categoryId === cat.id).length;
-                    return {
-                        name: cat.nom,
-                        slug: cat.id, 
-                        count: count,
-                        subcategories: [] // No subcategories in backend currently, so we just use flat categories
-                    };
-                });
-                
-                // Filter out empty categories if wanted, but standard is to show all with 0 counts
-                setDynamicCategories(sidebarCategories);
 
             } catch (err) {
                 console.error("Erreur de chargement des données", err);
@@ -81,7 +124,7 @@ const Catalogue = () => {
             }
         };
         fetchData();
-    }, []);
+    }, [currentPage, debouncedSearch, selectedCategory, debouncedPrice, inStockOnly, sortBy, globalMinPrice, globalMaxPrice]);
 
     // Sync URL params
     useEffect(() => {
@@ -95,68 +138,13 @@ const Catalogue = () => {
         setSearchParams(params, { replace: true });
     }, [searchQuery, selectedCategory, selectedSubCategory, sortBy, currentPage, inStockOnly, setSearchParams]);
 
-    // ── Filtering & Sorting ────────────────────────────────
-    const filteredProducts = useMemo(() => {
-        let result = [...products];
-
-        // Search filter
-        if (searchQuery.trim()) {
-            const q = searchQuery.toLowerCase().trim();
-            result = result.filter(p =>
-                p.model.toLowerCase().includes(q) ||
-                p.code.includes(q) ||
-                p.categoryName.toLowerCase().includes(q)
-            );
-        }
-
-        // Category filter
-        if (selectedCategory) {
-            // we only have flat categories now
-            result = result.filter(p => p.categoryId === selectedCategory || p.categorySlug === selectedCategory);
-        }
-
-        // Price filter
-        result = result.filter(p =>
-            p.retailPrice >= priceRange[0] && p.retailPrice <= priceRange[1]
-        );
-
-        // Stock filter
-        if (inStockOnly) {
-            result = result.filter(p => p.stock > 0);
-        }
-
-        // Sorting
-        switch (sortBy) {
-            case 'name-asc':
-                result.sort((a, b) => a.model.localeCompare(b.model));
-                break;
-            case 'name-desc':
-                result.sort((a, b) => b.model.localeCompare(a.model));
-                break;
-            case 'price-asc':
-                result.sort((a, b) => a.retailPrice - b.retailPrice);
-                break;
-            case 'price-desc':
-                result.sort((a, b) => b.retailPrice - a.retailPrice);
-                break;
-            default:
-                break;
-        }
-
-        return result;
-    }, [products, searchQuery, selectedCategory, selectedSubCategory, sortBy, priceRange]);
-
-    // ── Pagination ─────────────────────────────────────────
-    const totalPages = Math.ceil(filteredProducts.length / ITEMS_PER_PAGE);
-    const paginatedProducts = useMemo(() => {
-        const start = (currentPage - 1) * ITEMS_PER_PAGE;
-        return filteredProducts.slice(start, start + ITEMS_PER_PAGE);
-    }, [filteredProducts, currentPage]);
+    // ── Sorting (Now handled completely by the server) ──
+    const sortedProducts = products;
 
     // Reset page when filters change
     useEffect(() => {
         setCurrentPage(1);
-    }, [searchQuery, selectedCategory, selectedSubCategory, sortBy, priceRange, inStockOnly]);
+    }, [debouncedSearch, selectedCategory, selectedSubCategory, sortBy, debouncedPrice, inStockOnly]);
 
     // ── Handlers ───────────────────────────────────────────
     const toggleCategory = (slug) => {
@@ -181,6 +169,11 @@ const Catalogue = () => {
             setSelectedCategory(parentSlug);
             setSelectedSubCategory(subSlug);
         }
+    };
+
+    const handleViewModeToggle = (mode) => {
+        setViewMode(mode);
+        localStorage.setItem('catalogueViewMode', mode);
     };
 
     const clearFilters = () => {
@@ -244,7 +237,7 @@ const Catalogue = () => {
                                 {activeCategoryName || 'Catalogue'}
                             </h1>
                             <p className="catalogue-page__count">
-                                {filteredProducts.length.toLocaleString('fr-FR')} produit{filteredProducts.length > 1 ? 's' : ''} trouvé{filteredProducts.length > 1 ? 's' : ''}
+                                {totalProducts.toLocaleString('fr-FR')} produit{totalProducts > 1 ? 's' : ''} trouvé{totalProducts > 1 ? 's' : ''}
                             </p>
                         </div>
                         <button
@@ -279,6 +272,8 @@ const Catalogue = () => {
                         setPriceRange={setPriceRange}
                         inStockOnly={inStockOnly}
                         setInStockOnly={setInStockOnly}
+                        globalMinPrice={globalMinPrice}
+                        globalMaxPrice={globalMaxPrice}
                     />
 
                     {/* ── Main Content ──────────────────────────── */}
@@ -301,6 +296,22 @@ const Catalogue = () => {
                                 )}
                             </div>
                             <div className="catalogue-main__sort">
+                                <div className="catalogue-main__view-toggle">
+                                    <button 
+                                        className={`view-btn ${viewMode === 'grid' ? 'active' : ''}`}
+                                        onClick={() => handleViewModeToggle('grid')}
+                                        title="Vue Grille"
+                                    >
+                                        <LayoutGrid size={18} />
+                                    </button>
+                                    <button 
+                                        className={`view-btn ${viewMode === 'table' ? 'active' : ''}`}
+                                        onClick={() => handleViewModeToggle('table')}
+                                        title="Vue Liste (B2B)"
+                                    >
+                                        <List size={18} />
+                                    </button>
+                                </div>
                                 <label>Trier par:</label>
                                 <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
                                     <option value="name-asc">Nom A → Z</option>
@@ -318,12 +329,18 @@ const Catalogue = () => {
                                 <h3>Chargement des produits...</h3>
                                 <p>Connexion à la base de données en cours</p>
                             </div>
-                        ) : paginatedProducts.length > 0 ? (
-                            <div className="catalogue-grid">
-                                {paginatedProducts.map((product) => (
-                                    <ProductCard key={product.code} product={product} />
-                                ))}
-                            </div>
+                        ) : sortedProducts.length > 0 ? (
+                            <>
+                                {viewMode === 'grid' ? (
+                                    <div className="catalogue-grid">
+                                        {sortedProducts.map((product) => (
+                                            <ProductCard key={product.code} product={product} />
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <ProductTable products={sortedProducts} />
+                                )}
+                            </>
                         ) : (
                             <div className="catalogue-empty">
                                 <Search size={48} strokeWidth={1} />

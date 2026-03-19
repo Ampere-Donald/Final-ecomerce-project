@@ -15,7 +15,12 @@ export class CategorieService {
 
   async findAll() {
     return await this.db.categorie.findMany({
-      include: { produits: true },
+      include: {
+        _count: {
+          select: { produits: true },
+        },
+      },
+      orderBy: { nom: 'asc' },
     });
   }
 

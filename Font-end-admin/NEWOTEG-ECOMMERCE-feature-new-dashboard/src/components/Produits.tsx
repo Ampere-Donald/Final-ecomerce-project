@@ -18,6 +18,7 @@ interface Produit {
   prixDetail?: number;
   prixGros?: number;
   quantiteStock?: number;
+  urlDatasheet?: string;
   categorie?: Categorie;
 }
 
@@ -30,6 +31,7 @@ const FORM_INITIAL = {
   prixDetail: '',
   prixGros: '',
   quantiteStock: '0',
+  urlDatasheet: '',
 };
 
 // ─── Composant principal ──────────────────────────────────────────────────────
@@ -103,6 +105,7 @@ export const Produits = () => {
       prixDetail: prod.prixDetail != null ? String(prod.prixDetail) : '',
       prixGros: prod.prixGros != null ? String(prod.prixGros) : '',
       quantiteStock: prod.quantiteStock != null ? String(prod.quantiteStock) : '0',
+      urlDatasheet: prod.urlDatasheet ?? '',
     });
     setImageFile(null);
     setImagePreview(prod.imageUrl ? `http://localhost:3000${prod.imageUrl}` : null);
@@ -140,6 +143,7 @@ export const Produits = () => {
       if (formData.prixDetail) dataToSend.append('prixDetail', formData.prixDetail);
       if (formData.prixGros) dataToSend.append('prixGros', formData.prixGros);
       dataToSend.append('quantiteStock', formData.quantiteStock || '0');
+      if (formData.urlDatasheet) dataToSend.append('urlDatasheet', formData.urlDatasheet);
       if (imageFile) dataToSend.append('file', imageFile);
 
       if (editingProduit) {
@@ -155,9 +159,10 @@ export const Produits = () => {
       }
 
       closeModal();
-    } catch (err) {
+    } catch (err: any) {
       console.error('Erreur soumission :', err);
-      alert('Une erreur est survenue. Veuillez réessayer.');
+      const msg = err.response?.data?.message || err.message;
+      alert('Erreur technique : ' + (Array.isArray(msg) ? msg.join(', ') : msg));
     } finally {
       setIsSubmitting(false);
     }
@@ -326,18 +331,32 @@ export const Produits = () => {
                   </div>
                 </div>
 
-                {/* Description */}
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
-                    Description (Optionnel)
-                  </label>
-                  <textarea
-                    rows={3}
-                    value={formData.description}
-                    onChange={(e) => setFormData((f) => ({ ...f, description: e.target.value }))}
-                    className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary/20 outline-none transition-all resize-none"
-                    placeholder="Détails techniques du produit..."
-                  />
+                {/* Description & Datasheet */}
+                <div className="grid grid-cols-1 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">
+                      Description (Optionnel)
+                    </label>
+                    <textarea
+                      rows={3}
+                      value={formData.description}
+                      onChange={(e) => setFormData((f) => ({ ...f, description: e.target.value }))}
+                      className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary/20 outline-none transition-all resize-none"
+                      placeholder="Détails techniques du produit..."
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">
+                      Lien Fiche Technique (PDF / Optionnel)
+                    </label>
+                    <input
+                      type="url"
+                      value={formData.urlDatasheet}
+                      onChange={(e) => setFormData((f) => ({ ...f, urlDatasheet: e.target.value }))}
+                      className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+                      placeholder="https://exemple.com/datasheet.pdf"
+                    />
+                  </div>
                 </div>
 
                 {/* Prix & Stock */}

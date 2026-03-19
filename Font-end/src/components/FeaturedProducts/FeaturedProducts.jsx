@@ -40,8 +40,8 @@ const FeaturedProducts = () => {
     useEffect(() => {
         const fetchProducts = async () => {
             try {
-                const res = await axios.get('/api/produits');
-                const allProducts = res.data.map(p => ({
+                const res = await axios.get('/api/produits?limit=8');
+                const allProducts = res.data.data.map(p => ({
                     id: p.id,
                     model: p.nomProduit,
                     code: p.id.split('-')[0].toUpperCase(),
