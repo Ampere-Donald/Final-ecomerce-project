@@ -102,7 +102,7 @@ const ProductDetails = () => {
             <div className="product-details__breadcrumb-bar">
                 <div className="container">
                     <nav className="product-details__breadcrumb">
-                        <Link to="/">Home</Link>
+                        <Link to="/">Accueil</Link>
                         <ChevronRight size={14} />
                         <Link to="/catalogue">Catalogue</Link>
                         <ChevronRight size={14} />
@@ -139,43 +139,43 @@ const ProductDetails = () => {
                         {/* ── Right: Product Info ────────────────── */}
                         <div className="product-details__info-col">
                             <div className="product-details__badge-stock">
-                                IN STOCK
+                                EN STOCK
                             </div>
 
                             <h1 className="product-details__name">{product.model}</h1>
 
                             <div className="product-details__reference">
-                                Reference ID : <strong>NTG-{product.code}-TR</strong>
+                                Référence : <strong>NTG-{product.code}-TR</strong>
                             </div>
 
                             <div className="product-details__logistics">
                                 <div className="product-details__logistics-item product-details__logistics-item--success">
                                     <CheckCircle2 size={16} />
-                                    <span>5,420 units available for immediate dispatch</span>
+                                    <span>5 420 unités disponibles en expédition immédiate</span>
                                 </div>
                                 <div className="product-details__logistics-item">
                                     <Truck size={16} />
-                                    <span>Warehouse: North Africa Logistics Hub</span>
+                                    <span>Entrepôt : Hub Logistique Afrique</span>
                                 </div>
                             </div>
 
                             {/* ── Pricing Block (Oraimo Style) ──────── */}
                             <div className="product-details__pricing-box">
                                 <div className="product-details__price-retail">
-                                    <span className="product-details__price-label">RETAIL PRICE</span>
+                                    <span className="product-details__price-label">PRIX DÉTAIL</span>
                                     <div className="product-details__price-value">
                                         <span className="amount">{formatFCFA(product.retailPrice)}</span>
-                                        <span className="unit">/ unit</span>
+                                        <span className="unit">/ unité</span>
                                     </div>
                                 </div>
                                 <div className="product-details__price-divider" />
                                 <div className="product-details__price-wholesale">
-                                    <span className="product-details__price-label">WHOLESALE PRICE</span>
+                                    <span className="product-details__price-label">PRIX DE GROS</span>
                                     <div className="product-details__price-value product-details__price-value--primary">
                                         <span className="amount">{formatFCFA(product.wholesalePrice)}</span>
-                                        <span className="unit">/ unit</span>
+                                        <span className="unit">/ unité</span>
                                     </div>
-                                    <span className="product-details__price-min">Minimum order: 100 units</span>
+                                    <span className="product-details__price-min">Commande minimum : 100 unités</span>
                                 </div>
                             </div>
 
@@ -188,7 +188,7 @@ const ProductDetails = () => {
                                 </div>
                                 <button className="product-details__add-btn" onClick={() => addToCart(product, quantity)}>
                                     <ShoppingCart size={18} fill="currentColor" />
-                                    Add to Cart
+                                    Ajouter au panier
                                 </button>
                             </div>
                         </div>
@@ -205,21 +205,21 @@ const ProductDetails = () => {
                             onClick={() => setActiveTab('specs')}
                         >
                             <FileText size={16} />
-                            Technical Specs
+                            Spécifications Techniques
                         </button>
                         <button
                             className={`product-details__tab ${activeTab === 'sales' ? 'product-details__tab--active' : ''}`}
                             onClick={() => setActiveTab('sales')}
                         >
                             <Box size={16} />
-                            Sales Unit
+                            Unité de Vente
                         </button>
                         <button
                             className={`product-details__tab ${activeTab === 'return' ? 'product-details__tab--active' : ''}`}
                             onClick={() => setActiveTab('return')}
                         >
                             <ShieldCheck size={16} />
-                            Return Policy
+                            Politique de Retour
                         </button>
                     </div>
 
@@ -228,39 +228,39 @@ const ProductDetails = () => {
                         {activeTab === 'specs' && (
                             <div className="product-details__specs-grid">
                                 <div className="product-details__specs-group">
-                                    <h4>General Parameters</h4>
+                                    <h4>Paramètres Généraux</h4>
                                     <div className="product-details__spec-row">
-                                        <span>Category</span>
+                                        <span>Catégorie</span>
                                         <strong>{product.categoryName}</strong>
                                     </div>
                                     <div className="product-details__spec-row">
-                                        <span>Family Code</span>
+                                        <span>Code Famille</span>
                                         <strong>{product.familleId}</strong>
                                     </div>
                                     <div className="product-details__spec-row">
-                                        <span>Reference</span>
+                                        <span>Référence</span>
                                         <strong>{product.code}</strong>
                                     </div>
                                 </div>
                                 <div className="product-details__specs-group">
-                                    <h4>Properties</h4>
+                                    <h4>Propriétés</h4>
                                     <div className="product-details__spec-row">
-                                        <span>Brand</span>
+                                        <span>Marque</span>
                                         <strong>{product.marque || 'NEWOTEG Standard'}</strong>
                                     </div>
                                     <div className="product-details__spec-row">
-                                        <span>Quality Grade</span>
-                                        <strong>Industrial</strong>
+                                        <span>Grade Qualité</span>
+                                        <strong>Industriel</strong>
                                     </div>
                                 </div>
                                 <div className="product-details__specs-group">
-                                    <h4>Package & Form</h4>
+                                    <h4>Emballage & Forme</h4>
                                     <div className="product-details__spec-row">
-                                        <span>Package Type</span>
-                                        <strong>Standard Box</strong>
+                                        <span>Type d'emballage</span>
+                                        <strong>Boîte Standard</strong>
                                     </div>
                                     <div className="product-details__spec-row">
-                                        <span>Mounting Type</span>
+                                        <span>Type de Montage</span>
                                         <strong>N/A</strong>
                                     </div>
                                 </div>
@@ -268,12 +268,12 @@ const ProductDetails = () => {
                         )}
                         {activeTab === 'sales' && (
                             <div className="product-details__tab-pane">
-                                <p>This item is currently sold in individual units and bulk cartons. Wholesale pricing begins at 100+ units. Please contact sales for pallet configurations.</p>
+                                <p>Cet article est actuellement vendu à l'unité et en cartons. Les prix de gros s'appliquent à partir de 100 unités. Contactez notre service commercial pour des configurations palette.</p>
                             </div>
                         )}
                         {activeTab === 'return' && (
                             <div className="product-details__tab-pane">
-                                <p>We offer a 1-year warranty on industrial grade components. Replacement only, no repair. Read our full return policy for eligibility conditions.</p>
+                                <p>Nous offrons une garantie d'1 an sur les composants de grade industriel. Remplacement uniquement, pas de réparation. Consultez notre politique de retour complète pour les conditions d'éligibilité.</p>
                             </div>
                         )}
                     </div>
@@ -284,7 +284,7 @@ const ProductDetails = () => {
             {relatedProducts.length > 0 && (
                 <section className="product-details__related">
                     <div className="container">
-                        <h2 className="product-details__related-title">Frequently bought together</h2>
+                        <h2 className="product-details__related-title">Fréquemment achetés ensemble</h2>
                         <div className="product-details__related-grid">
                             {relatedProducts.map(p => (
                                 <Link to={`/product/${p.code}`} key={p.code} className="product-card-light">

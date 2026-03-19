@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Helmet } from 'react-helmet-async';
-import { Cpu, Wrench, Shield, Home, Award, Zap, Users, Quote, MapPin, Camera, PlayCircle, X } from 'lucide-react';
+import { Cpu, Wrench, Shield, Home, Award, Zap, Users, Quote, MapPin, Camera, PlayCircle, X, Code, Globe, Truck } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import Footer from '../../components/Footer/Footer';
 import './About.scss';
@@ -21,9 +21,9 @@ const About = () => {
             <section className="about-hero">
                 <div className="container about-hero__content">
                     <span className="about-hero__tag">À PROPOS DE NEWOTEG SARL</span>
-                    <h1>Notre Histoire : De <strong>X Electronics</strong> à l'Excellence <strong>NEWOTEG</strong></h1>
+                    <h1>Notre Histoire : De <strong>l'Expertise Technique</strong> à l'Innovation <strong>Numérique</strong></h1>
                     <p>
-                        L'aventure a débuté sous l'enseigne X Electronics, une structure passionnée qui s'est fait un nom grâce à sa maîtrise technique. Fondée en 2011 par Monsieur Jude FOGUENG, l'entreprise a évolué pour devenir NEWOTEG.
+                        L'aventure a débuté sous l'enseigne X Electronics, une structure reconnue à Douala pour sa maîtrise de la maintenance audiovisuelle et informatique. Fondée en 2011 par Monsieur Jude FOGUENG, l'entreprise a évolué pour devenir NEWOTEG (New World Technologie Group) SARL.
                     </p>
                     <div className="about-hero__actions">
                         <Link to="/catalogue" className="btn btn--primary">Découvrir nos produits &rarr;</Link>
@@ -37,13 +37,17 @@ const About = () => {
                 <div className="about-expertise__text">
                     <h2>Une évolution motivée par l'excellence</h2>
                     <p>
-                        NEWOTEG (New World Technologie Group) SARL reflète notre ambition de connecter le Cameroun aux meilleures technologies mondiales.
+                        NEWOTEG (New World Technologie Group) SARL reflète notre volonté d'intégrer les nouvelles technologies au cœur de nos services.
                     </p>
                     <p>
-                        À nos débuts, notre cœur de métier était exclusivement tourné vers la maintenance audiovisuelle et informatique. C’est sur le terrain, en réparant et en optimisant vos équipements, que nous avons forgé notre savoir-faire.
+                        Historiquement spécialisés dans la maintenance de haute précision, nous avons forgé notre réputation sur le terrain. Pour répondre aux besoins croissants du marché camerounais, nous sommes devenus importateurs directs de composants électroniques et d'appareils de pointe en provenance d'Europe, de Chine et du Canada.
+                    </p>
+                    <h2>Le Tournant Digital : L'Expertise Logicielle</h2>
+                    <p>
+                        Aujourd'hui, NEWOTEG franchit une étape décisive. Conscients que la performance matérielle est indissociable de l'intelligence logicielle, nous avons structuré un pôle <strong>Développement de Logiciels</strong>.
                     </p>
                     <p>
-                        Face aux défis d'approvisionnement du marché local, nous avons choisi de prendre les devants en devenant importateurs directs de composants et d'appareils de haute qualité. Nous sourçons nos produits avec une exigence absolue en provenance d'Europe, de Chine et du Canada.
+                        Sous la direction de Mlle Noubissie Kely Rachel, ce département a pour mission initiale l'automatisation intégrale de nos propres processus (gestion de stocks, suivi client, logistique). Cette transformation digitale interne est le socle qui nous permet de garantir une réactivité inégalée et de préparer, à terme, l'accompagnement de nos partenaires vers des solutions numériques sur mesure.
                     </p>
                 </div>
                 <div className="about-expertise__image">
@@ -56,7 +60,7 @@ const About = () => {
                 <div className="container">
                     <div className="stats-grid">
                         <div className="stat-card">
-                            <h3>12+</h3>
+                            <h3>15+</h3>
                             <p>Années d'Expérience</p>
                         </div>
                         <div className="stat-card">
@@ -89,21 +93,21 @@ const About = () => {
                                 <Shield size={24} />
                             </div>
                             <h3>Produits Authentiques</h3>
-                            <p>Une traçabilité garantie pour chaque composant et équipement technique importé par nos soins.</p>
+                            <p>Une traçabilité garantie pour chaque composant importé. Nous sourçons directement d'Europe, de Chine et du Canada.</p>
                         </div>
                         <div className="offer-card">
                             <div className="offer-card__icon">
-                                <Zap size={24} />
+                                <Code size={24} />
                             </div>
-                            <h3>Livraison Rapide</h3>
-                            <p>Un réseau logistique optimisé pour couvrir efficacement tous vos besoins au Cameroun et en Afrique Centrale.</p>
+                            <h3>Synergie Hardware & Software</h3>
+                            <p>Une vision globale alliant la maintenance physique du matériel et l'optimisation par le code et les solutions logicielles.</p>
                         </div>
                         <div className="offer-card">
                             <div className="offer-card__icon">
-                                <Award size={24} />
+                                <Truck size={24} />
                             </div>
-                            <h3>Paiement Sécurisé</h3>
-                            <p>Des procédures rigoureusement fiables pour sécuriser l'ensemble de vos transactions commerciales.</p>
+                            <h3>Réactivité Logistique</h3>
+                            <p>Un réseau optimisé pour couvrir Douala et l'ensemble de la zone CEMAC avec rapidité et fiabilité.</p>
                         </div>
                         <div className="offer-card">
                             <div className="offer-card__icon">
@@ -157,8 +161,8 @@ const About = () => {
             <section className="about-team bg-light">
                 <div className="container">
                     <div className="section-header text-left">
-                        <h2>L'équipe dirigeante</h2>
-                        <p>L'ADN DE NEWOTEG repose sur l'expertise de ses fondateurs, dévoués à vous fournir les meilleurs équipements techniques du marché.</p>
+                        <h2>L'Équipe NEWOTEG</h2>
+                        <p>DIRECTION, PÔLE INGÉNIERIE & INNOVATION, LOGISTIQUE & ADMINISTRATION — UNE ÉQUIPE COMPLÈTE À VOTRE SERVICE.</p>
                     </div>
 
                     <div className="team-grid">
@@ -169,7 +173,7 @@ const About = () => {
                                     <img src="/images/img-equipe/1.png" alt="Jude FOGUENG" loading="lazy" onError={(e) => { e.target.src = 'https://ui-avatars.com/api/?name=Jude+FOGUENG&background=random'; }} />
                                 </div>
                                 <h3>M. Jude FOGUENG</h3>
-                                <span className="team-card__role">Fondateur & Resp. Approvisionnement</span>
+                                <span className="team-card__role">Fondateur & Import</span>
                             </div>
                             <div className="team-card team-card--lead">
                                 <div className="team-card__image">
@@ -186,8 +190,8 @@ const About = () => {
                                 <div className="team-card__image">
                                     <img src="/images/img-equipe/3.png" alt="Fogueng Noubissi kely Rachel" loading="lazy" onError={(e) => { e.target.src = 'https://ui-avatars.com/api/?name=Fogueng+Noubissi+kely+Rachel&background=random'; }} />
                                 </div>
-                                <h3>Fogueng Noubissi kely Rachel</h3>
-                                <span className="team-card__role">Responsable des systèmes logiciels au sein de Newoteg</span>
+                                <h3>Mlle Noubissie Kely Rachel</h3>
+                                <span className="team-card__role">Pôle Ingénierie & Innovation</span>
                             </div>
                             <div className="team-card">
                                 <div className="team-card__image">
@@ -339,7 +343,7 @@ const About = () => {
                     <div className="location-wrapper">
                         <div className="location-info">
                             <h2>Une Présence Stratégique</h2>
-                            <p className="location-subtitle">Pour mieux vous servir, NEWOTEG dispose aujourd'hui de deux points de vente et d'intervention au cœur de la capitale économique :</p>
+                            <p className="location-subtitle">Pour assurer la proximité avec nos clients, NEWOTEG s'appuie sur deux sites névralgiques :</p>
 
                             <div className="location-card">
                                 <div className="location-card__icon">
@@ -348,7 +352,7 @@ const About = () => {
                                 <div className="location-card__content">
                                     <h3>Direction Générale & Showroom</h3>
                                     <p>Akwa, Rue Foch, Douala</p>
-                                    <span>Le cœur administratif et commercial</span>
+                                    <span>Centre de nos activités administratives et commerciales</span>
                                 </div>
                             </div>
 

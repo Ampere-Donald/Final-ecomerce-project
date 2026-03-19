@@ -78,6 +78,20 @@
     &--flash {
         width: calc(100% / 2);
         padding: 0 $spacing-sm;
+
+        .product-card__image {
+            height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+
+            img {
+                width: 100%;
+                height: 100%;
+                object-fit: contain;
+            }
+        }
     }
 
     &--pop {
@@ -151,6 +165,7 @@
         line-height: 1.1;
         margin-bottom: $spacing-md;
         letter-spacing: -1px;
+        text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
     }
 
     &__desc {

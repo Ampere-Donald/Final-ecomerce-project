@@ -64,7 +64,7 @@ const Sidebar = ({
                             className={`catalogue-sidebar__cat-name ${!selectedCategory ? 'catalogue-sidebar__cat-name--active' : ''}`}
                             onClick={() => { handleCategorySelect(''); }}
                         >
-                            All Categories
+                            Toutes les catégories
                             {!selectedCategory && <ChevronRight size={14} />}
                         </button>
                     </li>
@@ -158,9 +158,9 @@ const Sidebar = ({
 
             {/* Bulk Orders */}
             <div className="catalogue-sidebar__bulk">
-                <h5>Need bulk orders?</h5>
-                <p>Contact our sales team for personalized wholesale quotes.</p>
-                <button className="bulk-btn">Contact Support</button>
+                <h5>Commandes en gros ?</h5>
+                <p>Contactez notre équipe commerciale pour des devis grossiste personnalisés.</p>
+                <button className="bulk-btn">Contacter le support</button>
             </div>
 
             {/* Clear Filters */}

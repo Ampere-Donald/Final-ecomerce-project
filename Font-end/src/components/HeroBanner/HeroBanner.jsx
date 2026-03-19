@@ -7,47 +7,47 @@ const heroSlides = [
     {
         id: 1,
         image: '/images/hero_1.png',
-        badge: 'NEW GENERATION TECH',
-        title: 'Scalable Enterprise\nSolutions',
-        subtitle: 'From high-precision microcontrollers to industrial-grade server racks. Powering the future of African industry.',
-        primaryAction: { label: 'Explore Infrastructure', link: '/catalogue' },
-        secondaryAction: { label: 'Component Catalog', link: '/about' }
+        badge: 'NOUVELLE GÉNÉRATION TECH',
+        title: 'Solutions Industrielles\nÉvolutives',
+        subtitle: 'Des microcontrôleurs de haute précision aux serveurs de grade industriel. Propulsez l\'avenir de l\'industrie africaine.',
+        primaryAction: { label: 'Explorer le Catalogue', link: '/catalogue' },
+        secondaryAction: { label: 'Nos Composants', link: '/about' }
     },
     {
         id: 2,
         image: '/images/hero_2.png',
-        badge: 'PREMIUM COMPONENTS',
-        title: 'Industrial Grade\nElectronics',
-        subtitle: 'High-end capacitors, resistors, and transistors for your most demanding projects.',
-        primaryAction: { label: 'Shop Components', link: '/catalogue?category=components' },
-        secondaryAction: { label: 'View Specifications', link: '/product/101001' }
+        badge: 'COMPOSANTS PREMIUM',
+        title: 'Électronique de\nGrade Industriel',
+        subtitle: 'Condensateurs, résistances et transistors haut de gamme pour vos projets les plus exigeants.',
+        primaryAction: { label: 'Voir les Composants', link: '/catalogue?category=components' },
+        secondaryAction: { label: 'Spécifications', link: '/product/101001' }
     },
     {
         id: 3,
         image: '/images/hero_4.png',
-        badge: 'ADVANCED MICROCHIPS',
-        title: 'Next-Gen\nProcessing Power',
-        subtitle: 'Ultra-detailed modern processors. Experience the pinnacle of performance and reliability.',
-        primaryAction: { label: 'Discover Processors', link: '/catalogue?category=microchips' },
-        secondaryAction: { label: 'Learn More', link: '/about' }
+        badge: 'MICROPROCESSEURS AVANCÉS',
+        title: 'Puissance de\nTraitement Next-Gen',
+        subtitle: 'Processeurs modernes ultra-détaillés. Découvrez le sommet de la performance et de la fiabilité.',
+        primaryAction: { label: 'Découvrir les Processeurs', link: '/catalogue?category=microchips' },
+        secondaryAction: { label: 'En Savoir Plus', link: '/about' }
     },
     {
         id: 4,
         image: '/images/hero_3.png',
-        badge: 'AUTOMATION SYSTEMS',
-        title: 'Industrial Automation &\nRobotics',
-        subtitle: 'Precision electronic manufacturing tools and robotic arms for modern laboratories and factories.',
-        primaryAction: { label: 'View Automation', link: '/catalogue?category=automation' },
-        secondaryAction: { label: 'Our Technologies', link: '/about' }
+        badge: 'SYSTÈMES D\'AUTOMATISATION',
+        title: 'Automatisation\nIndustrielle & Robotique',
+        subtitle: 'Outils de fabrication électronique de précision et bras robotiques pour laboratoires et usines modernes.',
+        primaryAction: { label: 'Voir l\'Automatisation', link: '/catalogue?category=automation' },
+        secondaryAction: { label: 'Nos Technologies', link: '/about' }
     },
     {
         id: 5,
         image: '/images/hero-tech.png',
-        badge: 'FAST DELIVERY',
-        title: 'Express Logistics &\nFulfillment',
-        subtitle: 'Our modern tech logistics guarantee stock availability and rapid delivery anywhere in Africa.',
-        primaryAction: { label: 'Track Order', link: '/checkout' },
-        secondaryAction: { label: 'Contact Us', link: '/about' }
+        badge: 'LIVRAISON RAPIDE',
+        title: 'Logistique Express\n& Disponibilité',
+        subtitle: 'Notre logistique tech moderne garantit la disponibilité des stocks et une livraison rapide partout en Afrique.',
+        primaryAction: { label: 'Suivre ma Commande', link: '/checkout' },
+        secondaryAction: { label: 'Nous Contacter', link: '/about' }
     }
 ];
 
