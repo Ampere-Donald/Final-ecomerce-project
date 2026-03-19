@@ -29,6 +29,13 @@ export const produitApi = {
     return api.patch(`/produits/${id}`, data).then(res => res.data);
   },
   delete: (id: string) => api.delete(`/produits/${id}`).then(res => res.data),
+  importCsv: (file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return api.post('/produits/import', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    }).then(res => res.data);
+  },
   uploadImage: (id: string, file: File) => {
     const formData = new FormData();
     formData.append('file', file);

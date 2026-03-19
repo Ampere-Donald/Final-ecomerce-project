@@ -1,5 +1,5 @@
-import { IsString, IsOptional, IsUUID, MaxLength, IsNumber, IsInt, Min } from 'class-validator';
-import { Type } from 'class-transformer';
+import { IsString, IsOptional, IsUUID, MaxLength, IsNumber, IsInt, Min, IsBoolean } from 'class-validator';
+import { Type, Transform } from 'class-transformer';
 
 export class CreateProduitDto {
   @IsUUID()
@@ -42,4 +42,19 @@ export class CreateProduitDto {
   @IsOptional()
   @IsString()
   urlDatasheet?: string;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  @Type(() => Number)
+  prixPromo?: number;
+
+  @IsOptional()
+  @IsString()
+  finPromo?: string;
+
+  @IsOptional()
+  @Transform(({ value }) => value === 'true' || value === true)
+  @IsBoolean()
+  isPopulaire?: boolean;
 }

@@ -35,6 +35,9 @@ model Produit {
   prixDetail     Float?           @map("prix_detail")
   quantiteStock  Int              @default(0) @map("quantite_stock")
   urlDatasheet   String?          @map("url_datasheet") @db.Text
+  prixPromo      Float?           @map("prix_promo")
+  finPromo       DateTime?        @map("fin_promo")
+  isPopulaire    Boolean          @default(false) @map("is_populaire")
   dateAjout      DateTime         @default(now()) @map("date_ajout")
   version        Int              @default(1)
   categorie      Categorie        @relation(fields: [categorieId], references: [id])

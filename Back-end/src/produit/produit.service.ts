@@ -2,6 +2,9 @@ import { Injectable, NotFoundException, BadRequestException } from '@nestjs/comm
 import { DatabaseService } from 'src/database/database.service';
 import { CreateProduitDto } from './dto/create-produit.dto';
 import { UpdateProduitDto } from './dto/update-produit.dto';
+import { Readable } from 'stream';
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const csvParser = require('csv-parser');
 
 @Injectable()
 export class ProduitService {
@@ -9,9 +12,16 @@ export class ProduitService {
 
   async create(createProduitDto: CreateProduitDto) {
     const { categorieId, ...rest } = createProduitDto;
+
+    // Convertir finPromo string → Date si présent
+    const data: any = { ...rest };
+    if (data.finPromo) {
+      data.finPromo = new Date(data.finPromo);
+    }
+
     return await this.db.produit.create({
       data: {
-        ...rest,
+        ...data,
         categorie: { connect: { id: categorieId } },
       },
       include: { categorie: true },
@@ -27,6 +37,28 @@ export class ProduitService {
       minPrice: agg._min.prixDetail ?? 0,
       maxPrice: agg._max.prixDetail ?? 1000000,
     };
+  }
+
+  // ── Flash Deals : produits avec promo active ────────────────────────────
+  async findFlash() {
+    return await this.db.produit.findMany({
+      where: {
+        prixPromo: { not: null },
+        finPromo: { gt: new Date() },
+      },
+      include: { categorie: true },
+      orderBy: { dateAjout: 'desc' },
+    });
+  }
+
+  // ── Populaires : produits marqués comme populaires ─────────────────────
+  async findPopulaires() {
+    return await this.db.produit.findMany({
+      where: { isPopulaire: true },
+      include: { categorie: true },
+      orderBy: { dateAjout: 'desc' },
+      take: 20,
+    });
   }
 
   async findAll(params: {
@@ -131,6 +163,11 @@ export class ProduitService {
       ...rest,
       version: { increment: 1 },
     };
+
+    // Convertir finPromo string → Date si présent
+    if (updateData.finPromo) {
+      updateData.finPromo = new Date(updateData.finPromo);
+    }
     
     if (categorieId) {
       updateData.categorie = { connect: { id: categorieId } };
@@ -161,5 +198,96 @@ export class ProduitService {
     return await this.db.produit.delete({
       where: { id },
     });
+  }
+
+  // ── Import CSV en masse ────────────────────────────────────────────────
+  async importCsv(buffer: Buffer) {
+    // 1. Parse CSV buffer into rows
+    const rows: Record<string, string>[] = await new Promise((resolve, reject) => {
+      const results: Record<string, string>[] = [];
+      const stream = Readable.from(buffer);
+      stream
+        .pipe(csvParser({ separator: ';' }))
+        .on('data', (row) => results.push(row))
+        .on('end', () => resolve(results))
+        .on('error', (err) => reject(err));
+    });
+
+    if (rows.length === 0) {
+      throw new BadRequestException('Le fichier CSV est vide ou illisible.');
+    }
+
+    // 2. Build category map (name lowercase → id)
+    const existingCategories = await this.db.categorie.findMany();
+    const categoryMap = new Map<string, string>();
+    for (const cat of existingCategories) {
+      categoryMap.set(cat.nom.toLowerCase().trim(), cat.id);
+    }
+
+    // Ensure a fallback "Divers" category exists
+    if (!categoryMap.has('divers')) {
+      const divers = await this.db.categorie.create({ data: { nom: 'Divers' } });
+      categoryMap.set('divers', divers.id);
+    }
+
+    const newCategoriesCreated: string[] = [];
+
+    // 3. Map each row to product data
+    const productsData: any[] = [];
+    for (const row of rows) {
+      // Flexible column name matching (handles various CSV formats)
+      const nomProduit = row['nomProduit'] || row['nom_produit'] || row['NomProduit'] || row['Nom'] || row['nom'] || '';
+      const marque = row['marque'] || row['Marque'] || '';
+      const description = row['description'] || row['Description'] || '';
+      const prixDetail = parseFloat(row['prixDetail'] || row['prix_detail'] || row['PrixDetail'] || row['Prix'] || row['prix'] || '0');
+      const prixGros = parseFloat(row['prixGros'] || row['prix_gros'] || row['PrixGros'] || '0');
+      const quantiteStock = parseInt(row['quantiteStock'] || row['quantite_stock'] || row['QuantiteStock'] || row['Stock'] || row['stock'] || '0', 10);
+      const nomImage = row['nomImage'] || row['nom_image'] || row['NomImage'] || row['Image'] || row['image'] || '';
+      const categorieNom = (row['categorieNom'] || row['categorie_nom'] || row['CategorieNom'] || row['Categorie'] || row['categorie'] || row['Catégorie'] || row['catégorie'] || '').trim();
+
+      // Skip rows with no product name
+      if (!nomProduit.trim()) continue;
+
+      // Resolve category
+      const catKey = categorieNom.toLowerCase() || 'divers';
+      let categorieId = categoryMap.get(catKey);
+
+      if (!categorieId) {
+        // Create category on-the-fly
+        const newCat = await this.db.categorie.create({ data: { nom: categorieNom || 'Divers' } });
+        categoryMap.set(catKey, newCat.id);
+        categorieId = newCat.id;
+        newCategoriesCreated.push(categorieNom);
+      }
+
+      productsData.push({
+        nomProduit: nomProduit.trim(),
+        marque: marque.trim() || null,
+        description: description.trim() || null,
+        prixDetail: isNaN(prixDetail) ? 0 : prixDetail,
+        prixGros: isNaN(prixGros) ? 0 : prixGros,
+        quantiteStock: isNaN(quantiteStock) ? 0 : quantiteStock,
+        imageUrl: nomImage.trim() ? `/uploads/${nomImage.trim()}` : null,
+        categorieId,
+      });
+    }
+
+    if (productsData.length === 0) {
+      throw new BadRequestException('Le fichier ne contient aucun produit valide.');
+    }
+
+    // 4. Bulk insert
+    const result = await this.db.produit.createMany({
+      data: productsData,
+      skipDuplicates: true,
+    });
+
+    return {
+      message: `Import terminé avec succès`,
+      totalLignesCsv: rows.length,
+      produitsImportes: result.count,
+      produitsIgnores: productsData.length - result.count,
+      nouvellesCategories: newCategoriesCreated,
+    };
   }
 }
