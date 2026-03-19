@@ -124,9 +124,14 @@ const Checkout = () => {
                         <p className="checkout__success-note">
                             Un membre de notre équipe vous contactera sous peu pour confirmer les détails de votre commande.
                         </p>
-                        <Link to="/catalogue" className="checkout__place-order-btn" style={{ textDecoration: 'none', display: 'inline-flex', justifyContent: 'center' }}>
-                            Continuer mes achats
-                        </Link>
+                        <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+                            <Link to="/profile" className="checkout__place-order-btn" style={{ textDecoration: 'none', display: 'inline-flex', justifyContent: 'center', background: 'transparent', border: '2px solid currentColor', color: 'inherit' }}>
+                                Voir mon historique
+                            </Link>
+                            <Link to="/catalogue" className="checkout__place-order-btn" style={{ textDecoration: 'none', display: 'inline-flex', justifyContent: 'center' }}>
+                                Continuer mes achats
+                            </Link>
+                        </div>
                     </div>
                 </div>
                 <Footer />

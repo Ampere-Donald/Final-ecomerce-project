@@ -2,7 +2,12 @@
 
 .profile {
   padding: $spacing-2xl 0;
+  padding-top: calc(80px + #{$spacing-2xl}); // offset for fixed navbar (desktop)
   min-height: 70vh;
+
+  @media (max-width: 768px) {
+    padding-top: calc(102px + #{$spacing-xl}); // taller navbar on mobile
+  }
 
   &__header {
     display: flex;

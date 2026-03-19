@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import { User, LogOut, Package, Heart, ShoppingBag, AlertTriangle } from 'lucide-react';
+import { LogOut, Package, Heart, ShoppingBag, AlertTriangle } from 'lucide-react';
 import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
 import { useFavorites } from '../../context/FavoritesContext';
@@ -25,7 +25,7 @@ const MODE_LABELS = {
 };
 
 const Profile = () => {
-  const { user, logout } = useAuth();
+  const { user, token, loading, logout } = useAuth();
   const { favoritesCount } = useFavorites();
   const navigate = useNavigate();
 
@@ -35,21 +35,30 @@ const Profile = () => {
   const [cancelError, setCancelError] = useState('');
 
   const fetchOrders = useCallback(async () => {
+    if (!token) return;
     try {
-      const { data } = await axios.get(`${API}/commandes/my-orders`);
+      // Explicitly pass Authorization header to avoid any axios-defaults race condition
+      const { data } = await axios.get(`${API}/commandes/my-orders`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       setOrders(data);
     } catch { /* empty */ }
     setLoadingOrders(false);
-  }, []);
+  }, [token]);
 
-  useEffect(() => { fetchOrders(); }, [fetchOrders]);
+  // Wait until AuthContext has finished restoring the session before fetching
+  useEffect(() => {
+    if (!loading) fetchOrders();
+  }, [loading, fetchOrders]);
 
   const handleCancel = async (id) => {
     if (!window.confirm('Êtes-vous sûr de vouloir annuler cette commande ?')) return;
     setCancellingId(id);
     setCancelError('');
     try {
-      await axios.patch(`${API}/commandes/${id}/cancel`);
+      await axios.patch(`${API}/commandes/${id}/cancel`, {}, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       fetchOrders();
     } catch (err) {
       setCancelError(err.response?.data?.message || "Impossible d'annuler cette commande.");
