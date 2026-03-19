@@ -92,7 +92,7 @@ export const Achats = () => {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Montant Total (€) *</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Montant Total (FCFA) *</label>
                   <input type="number" required min="0" step="0.01" value={formData.montantTotal} onChange={e => setFormData({ ...formData, montantTotal: e.target.value })}
                     className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary/20 outline-none"
                     placeholder="0.00" />
@@ -168,7 +168,7 @@ export const Achats = () => {
                     <td className="px-6 py-4 font-mono font-bold text-slate-600 text-sm">{a.id.substring(0, 8)}</td>
                     <td className="px-6 py-4 font-bold text-slate-900">{a.fournisseur?.nomEntreprise || 'N/A'}</td>
                     <td className="px-6 py-4 text-sm text-slate-500">{new Date(a.dateAchat).toLocaleDateString()}</td>
-                    <td className="px-6 py-4 font-bold text-slate-900">{a.montantTotal} €</td>
+                    <td className="px-6 py-4 font-bold text-slate-900">{a.montantTotal} FCFA</td>
                     <td className="px-6 py-4">
                       <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
                         a.statutPaiement === 'PAYE' ? 'bg-emerald-100 text-emerald-800' :

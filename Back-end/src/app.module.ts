@@ -17,6 +17,11 @@ import { LigneVenteModule } from './ligne-vente/ligne-vente.module';
 import { MouvementStockModule } from './mouvement-stock/mouvement-stock.module';
 import { CaisseModule } from './caisse/caisse.module';
 import { RoleModule } from './role/role.module';
+import { CommandeModule } from './commande/commande.module';
+import { NotificationModule } from './notification/notification.module';
+import { SearchModule } from './search/search.module';
+import { AuthModule } from './auth/auth.module';
+import { FavoriModule } from './favori/favori.module';
 import { DatabaseModule } from './database/database.module';
 
 @Module({
@@ -39,6 +44,11 @@ import { DatabaseModule } from './database/database.module';
     MouvementStockModule,
     CaisseModule,
     RoleModule,
+    CommandeModule,
+    NotificationModule,
+    SearchModule,
+    AuthModule,
+    FavoriModule,
     DatabaseModule,
   ],
   controllers: [AppController],

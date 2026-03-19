@@ -3,6 +3,62 @@ import { PlusCircle, Search, Edit2, Trash2, Tags, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { categorieApi } from '../services/api';
 
+/* ── Standalone Modal Form ────────────────────────────────────────────
+   Extracted OUTSIDE the Categories component so React doesn't unmount
+   it on every parent state change (this was the root cause of the
+   "one character at a time" input bug).
+──────────────────────────────────────────────────────────────────────*/
+interface ModalFormProps {
+  title: string;
+  formData: { nom: string; description: string };
+  setFormData: React.Dispatch<React.SetStateAction<{ nom: string; description: string }>>;
+  isSubmitting: boolean;
+  onSubmit: (e: React.FormEvent) => void;
+  onClose: () => void;
+}
+
+const ModalForm: React.FC<ModalFormProps> = ({ title, formData, setFormData, isSubmitting, onSubmit, onClose }) => (
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
+    <motion.div
+      initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
+      className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden"
+    >
+      <div className="flex items-center justify-between p-6 border-b border-slate-100">
+        <h2 className="text-xl font-bold text-slate-800">{title}</h2>
+        <button onClick={onClose} className="text-slate-400 hover:text-slate-600 transition-colors"><X size={24} /></button>
+      </div>
+      <form onSubmit={onSubmit} className="p-6 space-y-4">
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-1">Nom de la catégorie *</label>
+          <input
+            type="text" required maxLength={100}
+            value={formData.nom}
+            onChange={e => setFormData(prev => ({ ...prev, nom: e.target.value }))}
+            className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+            placeholder="Ex: Électronique"
+            autoFocus
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-1">Description (Optionnel)</label>
+          <textarea
+            rows={3} value={formData.description}
+            onChange={e => setFormData(prev => ({ ...prev, description: e.target.value }))}
+            className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary/20 outline-none transition-all resize-none"
+            placeholder="Description de la catégorie..."
+          />
+        </div>
+        <div className="pt-4 border-t border-slate-100 flex justify-end gap-3">
+          <button type="button" onClick={onClose} className="px-5 py-2 text-sm font-bold text-slate-600 bg-slate-100 rounded-lg hover:bg-slate-200 transition-colors">Annuler</button>
+          <button type="submit" disabled={isSubmitting} className="px-5 py-2 text-sm font-bold text-white bg-primary rounded-lg hover:bg-opacity-90 transition-all shadow-sm disabled:opacity-50">
+            {isSubmitting ? 'Enregistrement...' : 'Enregistrer'}
+          </button>
+        </div>
+      </form>
+    </motion.div>
+  </div>
+);
+
 export const Categories = () => {
   const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -75,47 +131,6 @@ export const Categories = () => {
 
   const filtered = categories.filter(c => c.nom?.toLowerCase().includes(search.toLowerCase()));
 
-  const ModalForm = ({ title, onSubmit, onClose }: { title: string; onSubmit: (e: React.FormEvent) => void; onClose: () => void; }) => (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
-        className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden"
-      >
-        <div className="flex items-center justify-between p-6 border-b border-slate-100">
-          <h2 className="text-xl font-bold text-slate-800">{title}</h2>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-600 transition-colors"><X size={24} /></button>
-        </div>
-        <form onSubmit={onSubmit} className="p-6 space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Nom de la catégorie *</label>
-            <input
-              type="text" required maxLength={100}
-              value={formData.nom}
-              onChange={e => setFormData({ ...formData, nom: e.target.value })}
-              className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary/20 outline-none transition-all"
-              placeholder="Ex: Électronique"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Description (Optionnel)</label>
-            <textarea
-              rows={3} value={formData.description}
-              onChange={e => setFormData({ ...formData, description: e.target.value })}
-              className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary/20 outline-none transition-all resize-none"
-              placeholder="Description de la catégorie..."
-            />
-          </div>
-          <div className="pt-4 border-t border-slate-100 flex justify-end gap-3">
-            <button type="button" onClick={onClose} className="px-5 py-2 text-sm font-bold text-slate-600 bg-slate-100 rounded-lg hover:bg-slate-200 transition-colors">Annuler</button>
-            <button type="submit" disabled={isSubmitting} className="px-5 py-2 text-sm font-bold text-white bg-primary rounded-lg hover:bg-opacity-90 transition-all shadow-sm disabled:opacity-50">
-              {isSubmitting ? 'Enregistrement...' : 'Enregistrer'}
-            </button>
-          </div>
-        </form>
-      </motion.div>
-    </div>
-  );
-
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -130,8 +145,8 @@ export const Categories = () => {
       </div>
 
       <AnimatePresence>
-        {isModalOpen && <ModalForm title="Ajouter une catégorie" onSubmit={handleSubmit} onClose={() => setIsModalOpen(false)} />}
-        {editModal.open && <ModalForm title="Modifier la catégorie" onSubmit={handleEdit} onClose={() => setEditModal({ open: false, cat: null })} />}
+        {isModalOpen && <ModalForm title="Ajouter une catégorie" formData={formData} setFormData={setFormData} isSubmitting={isSubmitting} onSubmit={handleSubmit} onClose={() => setIsModalOpen(false)} />}
+        {editModal.open && <ModalForm title="Modifier la catégorie" formData={formData} setFormData={setFormData} isSubmitting={isSubmitting} onSubmit={handleEdit} onClose={() => setEditModal({ open: false, cat: null })} />}
       </AnimatePresence>
 
       <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">

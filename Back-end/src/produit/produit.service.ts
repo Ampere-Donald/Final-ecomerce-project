@@ -1,17 +1,23 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { DatabaseService } from 'src/database/database.service';
+import { NotificationService } from 'src/notification/notification.service';
 import { CreateProduitDto } from './dto/create-produit.dto';
 import { UpdateProduitDto } from './dto/update-produit.dto';
 
 @Injectable()
 export class ProduitService {
-  constructor(private readonly db: DatabaseService) {}
+  constructor(
+    private readonly db: DatabaseService,
+    private readonly notifications: NotificationService,
+  ) {}
 
   async create(createProduitDto: CreateProduitDto) {
-    return await this.db.produit.create({
+    const produit = await this.db.produit.create({
       data: createProduitDto,
       include: { categorie: true },
     });
+    this.notifications.create('PRODUIT_CREE', `Produit "${produit.nomProduit}" ajouté au catalogue`).catch(() => {});
+    return produit;
   }
 
   async findAll() {
@@ -39,7 +45,7 @@ export class ProduitService {
 
   async update(id: string, updateProduitDto: UpdateProduitDto) {
     await this.findOne(id);
-    return await this.db.produit.update({
+    const produit = await this.db.produit.update({
       where: { id },
       data: {
         ...updateProduitDto,
@@ -47,6 +53,8 @@ export class ProduitService {
       },
       include: { categorie: true },
     });
+    this.notifications.create('PRODUIT_MAJ', `Produit "${produit.nomProduit}" mis à jour`).catch(() => {});
+    return produit;
   }
 
   async uploadImage(id: string, imageUrl: string) {

@@ -1,13 +1,15 @@
 import { useState, useEffect } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
-import { ShoppingCart, User, Menu, Heart, X, Search } from 'lucide-react';
+import { ShoppingCart, User, Menu, Heart, X, Search, LogOut } from 'lucide-react';
 import { useCart } from '../../context/CartContext';
+import { useAuth } from '../../context/AuthContext';
 import { formatFCFA } from '../../utils/formatFCFA';
 import SearchBar from '../SearchBar/SearchBar';
 import './Header.scss';
 
 const Header = () => {
     const { cartCount, cartTotal } = useCart();
+    const { isAuthenticated, user, logout } = useAuth();
     const navigate = useNavigate();
     const [isScrolled, setIsScrolled] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -40,6 +42,36 @@ const Header = () => {
             setMobileSearchTerm('');
             setIsMobileSearchOpen(false);
         }
+    };
+
+    const handleProfileClick = () => {
+        if (isAuthenticated) {
+            navigate('/profile');
+        } else {
+            navigate('/login?returnTo=/profile');
+        }
+    };
+
+    const handleFavoritesClick = () => {
+        if (isAuthenticated) {
+            navigate('/favourites');
+        } else {
+            navigate('/login?returnTo=/favourites');
+        }
+    };
+
+    const handleCartClick = () => {
+        if (isAuthenticated) {
+            navigate('/checkout');
+        } else {
+            navigate('/login?returnTo=/checkout');
+        }
+    };
+
+    const handleLogout = () => {
+        logout();
+        closeMobileMenu();
+        navigate('/');
     };
 
     return (
@@ -75,16 +107,19 @@ const Header = () => {
                     {/* Desktop Actions */}
                     <div className="header__actions">
                         <SearchBar />
-                        <Link to="/favourites" className="header__action-btn header__action-btn--icon-only" aria-label="Favoris">
+                        <button onClick={handleFavoritesClick} className="header__action-btn header__action-btn--icon-only" aria-label="Favoris">
                             <Heart size={20} />
-                        </Link>
-                        <Link to="/login" className="header__action-btn header__action-btn--icon-only" aria-label="Mon Compte">
+                        </button>
+                        <button onClick={handleProfileClick} className="header__action-btn header__action-btn--icon-only" aria-label="Mon Compte">
                             <User size={20} />
-                        </Link>
-                        <Link to="/checkout" className="header__action-btn header__action-btn--cart" aria-label="Panier">
+                            {isAuthenticated && (
+                                <span className="header__user-dot" />
+                            )}
+                        </button>
+                        <button onClick={handleCartClick} className="header__action-btn header__action-btn--cart" aria-label="Panier">
                             <ShoppingCart size={20} />
                             {cartCount > 0 && <span className="header__cart-badge">{cartCount}</span>}
-                        </Link>
+                        </button>
                     </div>
 
                     {/* Mobile Actions (right side of header) */}
@@ -96,10 +131,10 @@ const Header = () => {
                         >
                             <Search size={20} />
                         </button>
-                        <Link to="/checkout" className="header__mobile-action-btn header__mobile-action-btn--cart" aria-label="Panier">
+                        <button onClick={handleCartClick} className="header__mobile-action-btn header__mobile-action-btn--cart" aria-label="Panier">
                             <ShoppingCart size={20} />
                             {cartCount > 0 && <span className="header__mobile-action-badge">{cartCount}</span>}
-                        </Link>
+                        </button>
                         <button
                             className="header__mobile-action-btn"
                             aria-label="Ouvrir le menu"
@@ -169,6 +204,19 @@ const Header = () => {
                     </button>
                 </div>
 
+                {/* Drawer user section */}
+                {isAuthenticated && (
+                    <div className="header__drawer-user">
+                        <div className="header__drawer-user-avatar">
+                            {user?.nom?.charAt(0)?.toUpperCase() || '?'}
+                        </div>
+                        <div>
+                            <p className="header__drawer-user-name">{user?.nom}</p>
+                            <p className="header__drawer-user-email">{user?.email}</p>
+                        </div>
+                    </div>
+                )}
+
                 {/* Drawer Links */}
                 <ul className="header__drawer-list">
                     <li>
@@ -201,10 +249,27 @@ const Header = () => {
                         </NavLink>
                     </li>
                     <li>
-                        <NavLink to="/login" className={({ isActive }) => `header__drawer-link ${isActive ? 'header__drawer-link--active' : ''}`} onClick={closeMobileMenu}>
-                            Mon Compte
-                        </NavLink>
+                        {isAuthenticated ? (
+                            <NavLink to="/profile" className={({ isActive }) => `header__drawer-link ${isActive ? 'header__drawer-link--active' : ''}`} onClick={closeMobileMenu}>
+                                Mon Profil
+                            </NavLink>
+                        ) : (
+                            <NavLink to="/login" className={({ isActive }) => `header__drawer-link ${isActive ? 'header__drawer-link--active' : ''}`} onClick={closeMobileMenu}>
+                                Se Connecter
+                            </NavLink>
+                        )}
                     </li>
+
+                    {isAuthenticated && (
+                        <>
+                            <li className="header__drawer-divider" />
+                            <li>
+                                <button className="header__drawer-link header__drawer-link--danger" onClick={handleLogout}>
+                                    <LogOut size={18} /> Déconnexion
+                                </button>
+                            </li>
+                        </>
+                    )}
                 </ul>
 
                 {/* Drawer Footer */}

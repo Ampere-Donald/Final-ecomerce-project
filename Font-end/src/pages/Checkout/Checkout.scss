@@ -631,3 +631,108 @@
         }
     }
 }
+
+// ── Field Validation Errors ───────────────────────────────
+.checkout__field-error {
+    color: #dc2626;
+    font-size: 12px;
+    margin: 4px 0 0;
+}
+
+.checkout__submit-error {
+    background-color: #fef2f2;
+    border: 1px solid #fecaca;
+    color: #991b1b;
+    border-radius: $border-radius-md;
+    padding: $spacing-sm $spacing-md;
+    font-size: 13px;
+    margin-bottom: $spacing-md;
+}
+
+.input--error {
+    border-color: #dc2626 !important;
+    box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1) !important;
+}
+
+// ── Success Confirmation ──────────────────────────────────
+.checkout__success-overlay {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: $spacing-2xl $spacing-md;
+    min-height: 60vh;
+}
+
+.checkout__success-modal {
+    background-color: $color-surface;
+    border-radius: $border-radius-lg;
+    box-shadow: $shadow-md;
+    border: 1px solid $color-border;
+    padding: $spacing-2xl $spacing-xl;
+    max-width: 480px;
+    width: 100%;
+    text-align: center;
+
+    h2 {
+        font-size: $font-size-xl;
+        font-weight: $font-weight-bold;
+        color: $color-text;
+        margin: $spacing-md 0 $spacing-xs;
+    }
+}
+
+.checkout__success-icon {
+    width: 72px;
+    height: 72px;
+    border-radius: $border-radius-circle;
+    background-color: rgba($color-primary, 0.1);
+    color: $color-primary;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+}
+
+.checkout__success-subtitle {
+    color: $color-secondary;
+    font-size: 14px;
+    margin: 0 0 $spacing-lg;
+    line-height: 1.5;
+}
+
+.checkout__success-info {
+    background-color: rgba($color-primary, 0.04);
+    border-radius: $border-radius-md;
+    padding: $spacing-md;
+    margin-bottom: $spacing-lg;
+}
+
+.checkout__success-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: $spacing-xs 0;
+
+    &:not(:last-child) {
+        border-bottom: 1px solid $color-border;
+    }
+
+    span {
+        font-size: 13px;
+        color: $color-secondary;
+    }
+
+    strong {
+        font-size: 14px;
+        color: $color-primary;
+        font-weight: $font-weight-bold;
+    }
+}
+
+.checkout__success-note {
+    font-size: 12px;
+    color: $color-secondary;
+    margin-bottom: $spacing-xl;
+    line-height: 1.5;
+}

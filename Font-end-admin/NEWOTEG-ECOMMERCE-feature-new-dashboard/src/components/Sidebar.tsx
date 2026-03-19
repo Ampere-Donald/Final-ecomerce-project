@@ -14,7 +14,8 @@ import {
   Settings, 
   LifeBuoy, 
   LogOut,
-  Package2
+  Package2,
+  ClipboardList
 } from 'lucide-react';
 import { motion } from 'motion/react';
 
@@ -25,6 +26,7 @@ const catalogueItems = [
 ];
 
 const operationItems = [
+  { label: 'Commandes', icon: ClipboardList, path: '/orders' },
   { label: 'Mouvements Stock', icon: Activity, path: '/stock' },
   { label: 'Ventes', icon: ShoppingCart, path: '/ventes' },
   { label: 'Achats (Réappro)', icon: Truck, path: '/achats' },

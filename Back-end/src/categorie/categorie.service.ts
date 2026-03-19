@@ -1,16 +1,22 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { DatabaseService } from 'src/database/database.service';
+import { NotificationService } from 'src/notification/notification.service';
 import { CreateCategorieDto } from './dto/create-categorie.dto';
 import { UpdateCategorieDto } from './dto/update-categorie.dto';
 
 @Injectable()
 export class CategorieService {
-  constructor(private readonly db: DatabaseService) {}
+  constructor(
+    private readonly db: DatabaseService,
+    private readonly notifications: NotificationService,
+  ) {}
 
   async create(createCategorieDto: CreateCategorieDto) {
-    return await this.db.categorie.create({
+    const cat = await this.db.categorie.create({
       data: createCategorieDto,
     });
+    this.notifications.create('CATEGORIE_CREEE', `Catégorie "${cat.nom}" créée`).catch(() => {});
+    return cat;
   }
 
   async findAll() {
@@ -32,13 +38,15 @@ export class CategorieService {
 
   async update(id: string, updateCategorieDto: UpdateCategorieDto) {
     await this.findOne(id);
-    return await this.db.categorie.update({
+    const cat = await this.db.categorie.update({
       where: { id },
       data: {
         ...updateCategorieDto,
         version: { increment: 1 },
       },
     });
+    this.notifications.create('CATEGORIE_MAJ', `Catégorie "${cat.nom}" mise à jour`).catch(() => {});
+    return cat;
   }
 
   async remove(id: string) {

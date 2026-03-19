@@ -6,6 +6,7 @@ import axios from 'axios';
 import Footer from '../../components/Footer/Footer';
 import Sidebar from '../../components/Sidebar/Sidebar';
 import ProductCard from '../../components/ProductCard/ProductCard';
+import { mapProduct } from '../../utils/mapProduct';
 import './Catalogue.scss';
 
 const ITEMS_PER_PAGE = 24;
@@ -38,23 +39,7 @@ const Catalogue = () => {
                     axios.get('/api/categories')
                 ]);
 
-                const formattedProducts = prodRes.data.map(p => ({
-                    model: p.nomProduit,
-                    code: p.id.split('-')[0].toUpperCase(),
-                    brand: p.marque,
-                    description: p.description,
-                    categoryName: p.categorie?.nom || 'DIVERS',
-                    categoryId: p.categorie?.id || '',
-                    categorySlug: p.categorie?.id || 'divers', // Using ID as slug for uniqueness and matching
-                    retailPrice: p.prixDetail ?? 0,
-                    wholesalePrice: p.prixGros ?? 0,
-                    stock: p.quantiteStock ?? 0,
-                    oldPrice: null,
-                    parentCategory: 'ÉQUIPEMENTS',
-                    image: p.imageUrl 
-                        ? `http://localhost:3000${p.imageUrl}` 
-                        : 'https://images.unsplash.com/photo-1505843490538-5133c6c7d0e1?q=80&w=400&auto=format&fit=crop'
-                }));
+                const formattedProducts = prodRes.data.map(mapProduct);
 
                 setProducts(formattedProducts);
 

@@ -42,6 +42,7 @@ model Produit {
   lignesVente    LigneVente[]
   mouvementsStock MouvementStock[]
   lignesCommande  LigneCommande[]
+  favoris         Favori[]
 
   @@unique([marque, nomProduit], name: "unique_produit")
   @@map("produit")
@@ -94,16 +95,30 @@ model Fournisseur {
   @@map("fournisseur")
 }
 
+// ── TYPE DE CLIENT ──────────────────────────────────────────────────────────
+enum TypeClient {
+  PARTICULIER
+  PROFESSIONNEL
+}
+
 // 6. GESTION DES TIERS - CLIENT
 model Client {
-  id        String  @id @default(uuid())
-  nom       String  @db.VarChar(100)
-  prenom    String? @db.VarChar(100)
-  telephone String? @db.VarChar(20)
-  email     String? @db.VarChar(100)
-  adresse   String? @db.Text
-  version   Int     @default(1)
-  ventes    Vente[]
+  id             String      @id @default(uuid())
+  nom            String      @db.VarChar(100)
+  prenom         String?     @db.VarChar(100)
+  telephone      String?     @unique @db.VarChar(20)
+  email          String?     @unique @db.VarChar(100)
+  adresse        String?     @db.Text
+  motDePasse     String?     @map("mot_de_passe") @db.Text
+  typeClient     TypeClient  @default(PARTICULIER) @map("type_client")
+  emailVerifie   Boolean     @default(false) @map("email_verifie")
+  otpCode        String?     @map("otp_code") @db.VarChar(6)
+  otpExpiresAt   DateTime?   @map("otp_expires_at")
+  createdAt      DateTime    @default(now()) @map("created_at")
+  version        Int         @default(1)
+  ventes         Vente[]
+  favoris        Favori[]
+  commandes      Commande[]
 
   @@map("client")
 }
@@ -243,6 +258,12 @@ enum StatutCommande {
   ANNULEE
 }
 
+// ── MODE DE RÉCEPTION ───────────────────────────────────────────────────────
+enum ModeReception {
+  LIVRAISON
+  RETRAIT_MAGASIN
+}
+
 // 16. COMMANDE (order placed by e-commerce client)
 model Commande {
   id               String          @id @default(uuid())
@@ -252,11 +273,27 @@ model Commande {
   adresseLivraison String          @map("adresse_livraison") @db.Text
   montantTotal     Decimal         @map("montant_total") @db.Decimal(12, 2)
   statut           StatutCommande  @default(EN_ATTENTE)
+  modeReception    ModeReception   @default(LIVRAISON) @map("mode_reception")
   dateCommande     DateTime        @default(now()) @map("date_commande")
+  clientId         String?         @map("client_id")
   version          Int             @default(1)
+  client           Client?         @relation(fields: [clientId], references: [id])
   lignes           LigneCommande[]
 
   @@map("commande")
+}
+
+// ── FAVORIS ─────────────────────────────────────────────────────────────────
+model Favori {
+  id        String   @id @default(uuid())
+  clientId  String   @map("client_id")
+  produitId String   @map("produit_id")
+  createdAt DateTime @default(now()) @map("created_at")
+  client    Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  produit   Produit  @relation(fields: [produitId], references: [id], onDelete: Cascade)
+
+  @@unique([clientId, produitId])
+  @@map("favori")
 }
 
 // 17. LIGNE DE COMMANDE (order line item)
@@ -273,4 +310,27 @@ model LigneCommande {
   produit      Produit  @relation(fields: [produitId], references: [id])
 
   @@map("ligne_commande")
+}
+
+// ── NOTIFICATIONS ────────────────────────────────────────────────────────────
+enum TypeNotification {
+  COMMANDE_CREEE
+  COMMANDE_STATUT
+  PRODUIT_CREE
+  PRODUIT_MAJ
+  STOCK_CHANGE
+  CATEGORIE_CREEE
+  CATEGORIE_MAJ
+  VENTE_CREEE
+  ACHAT_CREE
+}
+
+model Notification {
+  id        String           @id @default(uuid())
+  type      TypeNotification
+  message   String           @db.Text
+  lue       Boolean          @default(false)
+  createdAt DateTime         @default(now()) @map("created_at")
+
+  @@map("notification")
 }

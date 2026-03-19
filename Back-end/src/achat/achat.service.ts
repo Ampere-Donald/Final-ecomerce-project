@@ -2,14 +2,18 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateAchatDto } from './dto/create-achat.dto';
 import { UpdateAchatDto } from './dto/update-achat.dto';
 import { DatabaseService } from 'src/database/database.service';
+import { NotificationService } from 'src/notification/notification.service';
 @Injectable()
 export class AchatService {
-  constructor(private readonly db: DatabaseService) {}
+  constructor(
+    private readonly db: DatabaseService,
+    private readonly notifications: NotificationService,
+  ) {}
 
   async create(createAchatDto: CreateAchatDto) {
     const { lignesAchat, ...achatData } = createAchatDto;
 
-    return await this.db.$transaction(async (tx: any) => {
+    const result = await this.db.$transaction(async (tx: any) => {
       // Créer l'achat avec ses lignes
       const achat = await tx.achat.create({
         data: {
@@ -52,6 +56,9 @@ export class AchatService {
 
       return achat;
     });
+
+    this.notifications.create('ACHAT_CREE', `Achat enregistré — ${result.montantTotal} FCFA`).catch(() => {});
+    return result;
   }
 
   async findAll() {

@@ -1,25 +1,143 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
-import { Trash2, Plus, Minus, CheckCircle2, Circle, Lock, ShieldCheck, ShoppingCart } from 'lucide-react';
+import { Trash2, Plus, Minus, CheckCircle2, Circle, Lock, ShieldCheck, ShoppingCart, X, PackageCheck } from 'lucide-react';
 import { formatFCFA } from '../../utils/formatFCFA';
 import { useCart } from '../../context/CartContext';
+import { useAuth } from '../../context/AuthContext';
 import { Link } from 'react-router-dom';
+import axios from 'axios';
 import Footer from '../../components/Footer/Footer';
 import './Checkout.scss';
 
 const Checkout = () => {
-    const { cartItems: cart, updateQuantity, removeFromCart: remove } = useCart();
+    const { cartItems: cart, updateQuantity, removeFromCart: remove, clearCart } = useCart();
+    const { user, isAuthenticated } = useAuth();
     const [shipping, setShipping] = useState('standard');
     const [payment, setPayment] = useState('card');
+
+    // ── Form state ──────────────────────────────────────────
+    const [fullName, setFullName] = useState('');
+    const [phone, setPhone] = useState('');
+    const [address, setAddress] = useState('');
+    const [formErrors, setFormErrors] = useState({});
+
+    // Pre-fill from authenticated user
+    useEffect(() => {
+        if (isAuthenticated && user) {
+            if (!fullName && user.nom) setFullName(user.nom);
+            if (!phone && user.telephone) setPhone(user.telephone);
+        }
+    }, [isAuthenticated, user]);
+
+    // ── Submission state ────────────────────────────────────
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [orderSuccess, setOrderSuccess] = useState(null); // { numeroSuivi }
+    const [submitError, setSubmitError] = useState('');
 
     const subtotal = cart.reduce((acc, item) => acc + item.retailPrice * item.quantity, 0);
     const shippingCost = shipping === 'standard' ? 5000 : 0;
     const total = subtotal + shippingCost;
 
+    // ── Validation ──────────────────────────────────────────
+    const validate = () => {
+        const errors = {};
+        if (!fullName.trim() || fullName.trim().length < 2) errors.fullName = 'Le nom complet est requis (min. 2 caractères)';
+        if (!phone.trim() || phone.trim().length < 6) errors.phone = 'Un numéro de téléphone valide est requis';
+        if (shipping === 'standard' && (!address.trim() || address.trim().length < 5)) {
+            errors.address = "L'adresse de livraison est requise pour la livraison standard";
+        }
+        if (cart.length === 0) errors.cart = 'Votre panier est vide';
+        setFormErrors(errors);
+        return Object.keys(errors).length === 0;
+    };
+
+    // ── Place Order ─────────────────────────────────────────
+    const handlePlaceOrder = async () => {
+        if (!validate()) return;
+
+        setIsSubmitting(true);
+        setSubmitError('');
+
+        try {
+            const deliveryAddress = shipping === 'pickup'
+                ? 'Retrait en agence — Yaoundé, Bastos'
+                : address.trim();
+
+            const payload = {
+                nomClient: fullName.trim(),
+                telephone: phone.trim(),
+                adresseLivraison: deliveryAddress,
+                montantTotal: total,
+                modeReception: shipping === 'pickup' ? 'RETRAIT_MAGASIN' : 'LIVRAISON',
+                clientId: isAuthenticated && user ? user.id : undefined,
+                lignes: cart.map(item => ({
+                    produitId: item.id,
+                    nomProduit: item.model,
+                    quantite: item.quantity,
+                    prixUnitaire: item.retailPrice,
+                })),
+            };
+
+            const res = await axios.post('/api/commandes', payload);
+            setOrderSuccess({
+                numeroSuivi: res.data.numeroSuivi,
+                total: total,
+            });
+            clearCart();
+        } catch (err) {
+            console.error('Erreur lors de la commande', err);
+            const msg = err.response?.data?.message;
+            setSubmitError(
+                Array.isArray(msg) ? msg.join(', ') : msg || 'Une erreur est survenue. Veuillez réessayer.'
+            );
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    // ── Success Modal ───────────────────────────────────────
+    if (orderSuccess) {
+        return (
+            <div className="checkout-page">
+                <Helmet>
+                    <title>Commande Confirmée — NEWOTEG SARL</title>
+                </Helmet>
+                <div className="checkout__success-overlay">
+                    <div className="checkout__success-modal">
+                        <div className="checkout__success-icon">
+                            <PackageCheck size={48} strokeWidth={1.5} />
+                        </div>
+                        <h2>Commande Confirmée !</h2>
+                        <p className="checkout__success-subtitle">
+                            Votre commande a été enregistrée avec succès et est en cours de traitement.
+                        </p>
+                        <div className="checkout__success-info">
+                            <div className="checkout__success-row">
+                                <span>Numéro de suivi</span>
+                                <strong>{orderSuccess.numeroSuivi}</strong>
+                            </div>
+                            <div className="checkout__success-row">
+                                <span>Montant total</span>
+                                <strong>{formatFCFA(orderSuccess.total)}</strong>
+                            </div>
+                        </div>
+                        <p className="checkout__success-note">
+                            Un membre de notre équipe vous contactera sous peu pour confirmer les détails de votre commande.
+                        </p>
+                        <Link to="/catalogue" className="checkout__place-order-btn" style={{ textDecoration: 'none', display: 'inline-flex', justifyContent: 'center' }}>
+                            Continuer mes achats
+                        </Link>
+                    </div>
+                </div>
+                <Footer />
+            </div>
+        );
+    }
+
     return (
         <div className="checkout-page">
             <Helmet>
-                <title>Panier & Paiement — NEWOTEG SARL</title>
+                <title>Panier &amp; Paiement — NEWOTEG SARL</title>
                 <meta name="description" content="Finalisez votre commande chez NEWOTEG SARL. Paiement sécurisé et livraison rapide au Cameroun." />
                 <meta name="robots" content="noindex, nofollow" />
             </Helmet>
@@ -48,7 +166,7 @@ const Checkout = () => {
             <div className="checkout__main">
                 <div className="container">
                     <div className="checkout__layout">
-                        {/* 左侧区域 : Cart & Shipping */}
+                        {/* Left : Cart & Shipping */}
                         <div className="checkout__left">
 
                             {/* Shopping Cart Section */}
@@ -72,7 +190,7 @@ const Checkout = () => {
                                                 </div>
                                                 <div className="checkout__cart-details">
                                                     <h3>{item.model}</h3>
-                                                    <p>{item.marque || 'NEWOTEG Standard'}</p>
+                                                    <p>{item.brand || item.marque || 'NEWOTEG Standard'}</p>
                                                     <div className="checkout__cart-price">{formatFCFA(item.retailPrice)}</div>
                                                 </div>
                                                 <div className="checkout__cart-actions">
@@ -89,6 +207,7 @@ const Checkout = () => {
                                         ))}
                                     </div>
                                 )}
+                                {formErrors.cart && <p className="checkout__field-error">{formErrors.cart}</p>}
                             </section>
 
                             {/* Shipping Method Section */}
@@ -126,22 +245,44 @@ const Checkout = () => {
 
                                 <div className="checkout__shipping-form">
                                     <div className="checkout__form-group">
-                                        <label>Full Name</label>
-                                        <input type="text" placeholder="John Doe" />
+                                        <label>Full Name *</label>
+                                        <input
+                                            type="text"
+                                            placeholder="John Doe"
+                                            value={fullName}
+                                            onChange={e => setFullName(e.target.value)}
+                                            className={formErrors.fullName ? 'input--error' : ''}
+                                        />
+                                        {formErrors.fullName && <p className="checkout__field-error">{formErrors.fullName}</p>}
                                     </div>
                                     <div className="checkout__form-group">
-                                        <label>Phone Number</label>
-                                        <input type="tel" placeholder="+237 6xx xxx xxx" />
+                                        <label>Phone Number *</label>
+                                        <input
+                                            type="tel"
+                                            placeholder="+237 6xx xxx xxx"
+                                            value={phone}
+                                            onChange={e => setPhone(e.target.value)}
+                                            className={formErrors.phone ? 'input--error' : ''}
+                                        />
+                                        {formErrors.phone && <p className="checkout__field-error">{formErrors.phone}</p>}
                                     </div>
                                     <div className="checkout__form-group checkout__form-group--full">
-                                        <label>Delivery Address</label>
-                                        <input type="text" placeholder="Street name, Neighborhood, City" />
+                                        <label>Delivery Address {shipping === 'standard' ? '*' : '(optionnel pour retrait)'}</label>
+                                        <input
+                                            type="text"
+                                            placeholder={shipping === 'pickup' ? 'Retrait en agence — Yaoundé, Bastos' : 'Street name, Neighborhood, City'}
+                                            value={address}
+                                            onChange={e => setAddress(e.target.value)}
+                                            disabled={shipping === 'pickup'}
+                                            className={formErrors.address ? 'input--error' : ''}
+                                        />
+                                        {formErrors.address && <p className="checkout__field-error">{formErrors.address}</p>}
                                     </div>
                                 </div>
                             </section>
                         </div>
 
-                        {/* 右侧区域 : Payment & Order Summary */}
+                        {/* Right : Payment & Order Summary */}
                         <div className="checkout__right">
 
                             {/* Payment Method Section */}
@@ -211,9 +352,23 @@ const Checkout = () => {
                                         <span className="tax-incl">ALL PRICES INCLUSIVE</span>
                                     </div>
                                 </div>
-                                <button className="checkout__place-order-btn">
-                                    Place Order
-                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14" /><path d="m12 5 7 7-7 7" /></svg>
+
+                                {submitError && (
+                                    <div className="checkout__submit-error">
+                                        {submitError}
+                                    </div>
+                                )}
+
+                                <button
+                                    className="checkout__place-order-btn"
+                                    onClick={handlePlaceOrder}
+                                    disabled={isSubmitting || cart.length === 0}
+                                    style={isSubmitting ? { opacity: 0.7, cursor: 'not-allowed' } : {}}
+                                >
+                                    {isSubmitting ? 'Traitement en cours...' : 'Place Order'}
+                                    {!isSubmitting && (
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14" /><path d="m12 5 7 7-7 7" /></svg>
+                                    )}
                                 </button>
                                 <div className="checkout__summary-trusted">
                                     <span style={{ color: '#475569', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '6px', justifyContent: 'center' }}>
@@ -248,5 +403,4 @@ const Checkout = () => {
     );
 };
 
-// Add ShieldCheck to lucide imports (already done above, wait I need to import ShieldCheck in the start)
 export default Checkout;

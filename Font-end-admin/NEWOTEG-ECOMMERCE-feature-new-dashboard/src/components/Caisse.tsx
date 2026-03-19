@@ -78,21 +78,21 @@ export const Caisse = () => {
             <div className="p-2 bg-white/20 rounded-lg"><Wallet size={20} /></div>
             <span className="text-xs font-bold text-white/60 uppercase tracking-wider">Solde Actuel</span>
           </div>
-          <p className="text-3xl font-black mt-2">{loading ? '...' : solde.toLocaleString('fr-FR', { minimumFractionDigits: 2 })} €</p>
+          <p className="text-3xl font-black mt-2">{loading ? '...' : solde.toLocaleString('fr-FR', { minimumFractionDigits: 2 })} FCFA</p>
         </div>
         <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
           <div className="flex items-center justify-between mb-2">
             <div className="p-2 bg-emerald-50 text-emerald-600 rounded-lg"><TrendingUp size={20} /></div>
             <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Entrées</span>
           </div>
-          <p className="text-2xl font-black text-emerald-600">{loading ? '...' : `+${totalEntrees.toLocaleString('fr-FR', { minimumFractionDigits: 2 })}`} €</p>
+          <p className="text-2xl font-black text-emerald-600">{loading ? '...' : `+${totalEntrees.toLocaleString('fr-FR', { minimumFractionDigits: 2 })}`} FCFA</p>
         </div>
         <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
           <div className="flex items-center justify-between mb-2">
             <div className="p-2 bg-red-50 text-red-600 rounded-lg"><TrendingDown size={20} /></div>
             <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Sorties</span>
           </div>
-          <p className="text-2xl font-black text-red-600">{loading ? '...' : `-${totalSorties.toLocaleString('fr-FR', { minimumFractionDigits: 2 })}`} €</p>
+          <p className="text-2xl font-black text-red-600">{loading ? '...' : `-${totalSorties.toLocaleString('fr-FR', { minimumFractionDigits: 2 })}`} FCFA</p>
         </div>
       </div>
 
@@ -127,7 +127,7 @@ export const Caisse = () => {
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Montant (€) *</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Montant (FCFA) *</label>
                   <input type="number" required min="0" step="0.01" value={formData.montant} onChange={e => setFormData({ ...formData, montant: e.target.value })}
                     className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary/20 outline-none"
                     placeholder="0.00" />
@@ -194,7 +194,7 @@ export const Caisse = () => {
                         {op.venteId ? `Vente: ${op.venteId.substring(0, 8)}` : op.achatId ? `Achat: ${op.achatId.substring(0, 8)}` : '-'}
                       </td>
                       <td className={`px-6 py-4 text-right font-bold ${isEntree ? 'text-emerald-600' : 'text-red-600'}`}>
-                        {isEntree ? '+' : '-'}{op.montant} €
+                        {isEntree ? '+' : '-'}{op.montant} FCFA
                       </td>
                     </tr>
                   );

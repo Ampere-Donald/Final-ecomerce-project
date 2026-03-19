@@ -2,11 +2,10 @@ import { useState, useEffect } from 'react';
 import { Zap } from 'lucide-react';
 import axios from 'axios';
 import { formatFCFA } from '../../utils/formatFCFA';
+import { mapProduct, PLACEHOLDER_IMG } from '../../utils/mapProduct';
 import { useCart } from '../../context/CartContext';
 import { Link } from 'react-router-dom';
 import './FeaturedProducts.scss';
-
-const PLACEHOLDER_IMG = 'https://images.unsplash.com/photo-1608564697071-ddf911d81370?q=80&w=400&auto=format&fit=crop';
 
 // ── Countdown Hook ─────────────────────────────────────────
 const useCountdown = (hours = 2, minutes = 14, seconds = 56) => {
@@ -41,19 +40,7 @@ const FeaturedProducts = () => {
         const fetchProducts = async () => {
             try {
                 const res = await axios.get('/api/produits');
-                const allProducts = res.data.map(p => ({
-                    id: p.id,
-                    model: p.nomProduit,
-                    code: p.id.split('-')[0].toUpperCase(),
-                    brand: p.marque,
-                    categoryName: p.categorie?.nom || 'COMPOSANT',
-                    retailPrice: parseFloat(p.prixDetail) || 0,
-                    wholesalePrice: parseFloat(p.prixGros) || 0,
-                    stock: p.quantiteStock ?? 0,
-                    image: p.imageUrl 
-                        ? `http://localhost:3000${p.imageUrl}` 
-                        : PLACEHOLDER_IMG,
-                }));
+                const allProducts = res.data.map(mapProduct);
 
                 // Flash deals : les 2 premiers produits avec image
                 const withImage = allProducts.filter(p => p.image !== PLACEHOLDER_IMG);

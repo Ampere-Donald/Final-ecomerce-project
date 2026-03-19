@@ -83,7 +83,7 @@ export const Ventes = () => {
                     <td className="px-6 py-4 text-sm text-slate-500">{new Date(v.dateVente).toLocaleDateString()}</td>
                     <td className="px-6 py-4 font-medium text-slate-700">{v.client ? `${v.client.nom} ${v.client.prenom || ''}` : 'Client Anonyme'}</td>
                     <td className="px-6 py-4 text-xs font-semibold uppercase">{v.methodePaiement}</td>
-                    <td className="px-6 py-4 font-bold text-slate-900">{v.montantTotal} €</td>
+                    <td className="px-6 py-4 font-bold text-slate-900">{v.montantTotal} FCFA</td>
                     <td className="px-6 py-4">
                       <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
                         v.statutPaiement === 'PAYE' ? 'bg-emerald-100 text-emerald-800' : 

@@ -15,14 +15,51 @@ export class ClientService {
 
   async findAll() {
     return await this.db.client.findMany({
-      include: { ventes: true },
+      select: {
+        id: true,
+        nom: true,
+        prenom: true,
+        telephone: true,
+        email: true,
+        adresse: true,
+        typeClient: true,
+        emailVerifie: true,
+        createdAt: true,
+        version: true,
+        _count: { select: { commandes: true, ventes: true } },
+      },
+      orderBy: { createdAt: 'desc' },
     });
   }
 
   async findOne(id: string) {
     const client = await this.db.client.findUnique({
       where: { id },
-      include: { ventes: true },
+      select: {
+        id: true,
+        nom: true,
+        prenom: true,
+        telephone: true,
+        email: true,
+        adresse: true,
+        typeClient: true,
+        emailVerifie: true,
+        createdAt: true,
+        version: true,
+        commandes: {
+          select: {
+            id: true,
+            numeroSuivi: true,
+            montantTotal: true,
+            statut: true,
+            dateCommande: true,
+            modeReception: true,
+          },
+          orderBy: { dateCommande: 'desc' },
+          take: 10,
+        },
+        _count: { select: { commandes: true, ventes: true } },
+      },
     });
     if (!client) {
       throw new NotFoundException(`Client avec l'id ${id} non trouvé`);

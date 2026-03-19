@@ -1,9 +1,10 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { ChevronRight, ShoppingCart, CheckCircle2, Truck, FileText, Package, Plus, Minus, ShieldCheck, Box } from 'lucide-react';
 import axios from 'axios';
 import { formatFCFA } from '../../utils/formatFCFA';
+import { mapProduct, getProductCode } from '../../utils/mapProduct';
 import { useCart } from '../../context/CartContext';
 import Footer from '../../components/Footer/Footer';
 import './ProductDetails.scss';
@@ -24,38 +25,20 @@ const ProductDetails = () => {
                 setLoading(true);
                 const res = await axios.get('/api/produits');
                 const allProducts = res.data;
-                const foundProduct = allProducts.find(p => p.variantes && p.variantes.some(v => String(v.codeVariante) === String(code)));
+
+                // Match the route :code param against the short code derived from the UUID
+                const upperCode = code.toUpperCase();
+                const foundRaw = allProducts.find(p => getProductCode(p.id) === upperCode);
                 
-                if (foundProduct) {
-                    const variant = foundProduct.variantes.find(v => String(v.codeVariante) === String(code));
-                    const formattedProd = {
-                        model: foundProduct.nomProduit,
-                        code: code,
-                        brand: foundProduct.marque,
-                        description: foundProduct.description,
-                        categoryName: foundProduct.categorie?.nom || 'DIVERS',
-                        categorySlug: foundProduct.categorie?.nom.toLowerCase().replace(/ \/ | /g, '-') || 'divers',
-                        retailPrice: parseFloat(variant.prixVente || 0),
-                        wholesalePrice: parseFloat(variant.prixAchat || 0),
-                        image: foundProduct.imageUrl 
-                            ? `http://localhost:3000${foundProduct.imageUrl}` 
-                            : 'https://images.unsplash.com/photo-1505843490538-5133c6c7d0e1?q=80&w=400&auto=format&fit=crop'
-                    };
+                if (foundRaw) {
+                    const formattedProd = mapProduct(foundRaw);
                     setProduct(formattedProd);
 
-                    // Related
+                    // Related products — same category, exclude current
                     const related = allProducts
-                        .filter(p => p.id !== foundProduct.id && p.categorieId === foundProduct.categorieId)
+                        .filter(p => p.id !== foundRaw.id && p.categorieId === foundRaw.categorieId)
                         .slice(0, 4)
-                        .map(p => ({
-                            model: p.nomProduit,
-                            code: p.variantes && p.variantes.length > 0 ? p.variantes[0].codeVariante : p.id.split('-')[0].toUpperCase(),
-                            categoryName: p.categorie?.nom || 'DIVERS',
-                            retailPrice: p.variantes && p.variantes.length > 0 ? parseFloat(p.variantes[0].prixVente) : 0,
-                            image: p.imageUrl 
-                                ? `http://localhost:3000${p.imageUrl}` 
-                                : 'https://images.unsplash.com/photo-1505843490538-5133c6c7d0e1?q=80&w=400&auto=format&fit=crop'
-                        }));
+                        .map(mapProduct);
                     setRelatedProducts(related);
                 } else {
                     setProduct(null);
@@ -89,6 +72,7 @@ const ProductDetails = () => {
         );
     }
 
+    const isOutOfStock = product.stock <= 0;
     const increaseQuantity = () => setQuantity(q => q + 1);
     const decreaseQuantity = () => setQuantity(q => q > 1 ? q - 1 : 1);
 
@@ -138,8 +122,8 @@ const ProductDetails = () => {
 
                         {/* ── Right: Product Info ────────────────── */}
                         <div className="product-details__info-col">
-                            <div className="product-details__badge-stock">
-                                IN STOCK
+                            <div className={`product-details__badge-stock ${isOutOfStock ? 'product-details__badge-stock--out' : ''}`}>
+                                {isOutOfStock ? 'RUPTURE DE STOCK' : 'IN STOCK'}
                             </div>
 
                             <h1 className="product-details__name">{product.model}</h1>
@@ -149,9 +133,9 @@ const ProductDetails = () => {
                             </div>
 
                             <div className="product-details__logistics">
-                                <div className="product-details__logistics-item product-details__logistics-item--success">
+                                <div className={`product-details__logistics-item ${isOutOfStock ? '' : 'product-details__logistics-item--success'}`}>
                                     <CheckCircle2 size={16} />
-                                    <span>5,420 units available for immediate dispatch</span>
+                                    <span>{isOutOfStock ? 'Rupture de stock' : `${product.stock.toLocaleString('fr-FR')} units available for immediate dispatch`}</span>
                                 </div>
                                 <div className="product-details__logistics-item">
                                     <Truck size={16} />
@@ -186,9 +170,13 @@ const ProductDetails = () => {
                                     <input type="number" value={quantity} readOnly />
                                     <button onClick={increaseQuantity} aria-label="Increase quantity"><Plus size={16} /></button>
                                 </div>
-                                <button className="product-details__add-btn" onClick={() => addToCart(product, quantity)}>
+                                <button
+                                    className={`product-details__add-btn ${isOutOfStock ? 'product-details__add-btn--disabled' : ''}`}
+                                    onClick={() => { if (!isOutOfStock) addToCart(product, quantity); }}
+                                    disabled={isOutOfStock}
+                                >
                                     <ShoppingCart size={18} fill="currentColor" />
-                                    Add to Cart
+                                    {isOutOfStock ? 'Indisponible' : 'Add to Cart'}
                                 </button>
                             </div>
                         </div>
@@ -234,10 +222,6 @@ const ProductDetails = () => {
                                         <strong>{product.categoryName}</strong>
                                     </div>
                                     <div className="product-details__spec-row">
-                                        <span>Family Code</span>
-                                        <strong>{product.familleId}</strong>
-                                    </div>
-                                    <div className="product-details__spec-row">
                                         <span>Reference</span>
                                         <strong>{product.code}</strong>
                                     </div>
@@ -246,7 +230,7 @@ const ProductDetails = () => {
                                     <h4>Properties</h4>
                                     <div className="product-details__spec-row">
                                         <span>Brand</span>
-                                        <strong>{product.marque || 'NEWOTEG Standard'}</strong>
+                                        <strong>{product.brand || 'NEWOTEG Standard'}</strong>
                                     </div>
                                     <div className="product-details__spec-row">
                                         <span>Quality Grade</span>

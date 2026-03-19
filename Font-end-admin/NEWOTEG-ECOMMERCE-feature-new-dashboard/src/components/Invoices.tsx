@@ -30,7 +30,7 @@ export const Invoices = () => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
           <p className="text-sm text-slate-500 font-medium">Total Impayé</p>
-          <p className="text-2xl font-bold text-slate-900 mt-1">16 600,00 €</p>
+          <p className="text-2xl font-bold text-slate-900 mt-1">16 600,00 FCFA</p>
           <div className="flex items-center gap-1 text-xs text-amber-600 mt-2 font-medium">
             <AlertCircle size={14} />
             <span>1 facture en retard</span>
@@ -38,7 +38,7 @@ export const Invoices = () => {
         </div>
         <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
           <p className="text-sm text-slate-500 font-medium">Dernier Paiement</p>
-          <p className="text-2xl font-bold text-slate-900 mt-1">3 150,00 €</p>
+          <p className="text-2xl font-bold text-slate-900 mt-1">3 150,00 FCFA</p>
           <p className="text-xs text-slate-400 mt-2">Payé le 25 Juil 2024</p>
         </div>
         <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
@@ -77,7 +77,7 @@ export const Invoices = () => {
                   </td>
                   <td className="px-6 py-4 text-sm text-slate-500">{invoice.date}</td>
                   <td className="px-6 py-4 text-sm text-slate-500">{invoice.dueDate}</td>
-                  <td className="px-6 py-4 text-sm font-semibold text-slate-900">{invoice.amount.toLocaleString()} €</td>
+                  <td className="px-6 py-4 text-sm font-semibold text-slate-900">{invoice.amount.toLocaleString()} FCFA</td>
                   <td className="px-6 py-4">
                     <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium ${
                       invoice.status === 'Paid' 

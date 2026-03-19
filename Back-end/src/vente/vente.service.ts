@@ -4,17 +4,21 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { DatabaseService } from 'src/database/database.service';
+import { NotificationService } from 'src/notification/notification.service';
 import { CreateVenteDto } from './dto/create-vente.dto';
 import { UpdateVenteDto } from './dto/update-vente.dto';
 
 @Injectable()
 export class VenteService {
-  constructor(private readonly db: DatabaseService) {}
+  constructor(
+    private readonly db: DatabaseService,
+    private readonly notifications: NotificationService,
+  ) {}
 
   async create(createVenteDto: CreateVenteDto) {
     const { lignesVente, ...venteData } = createVenteDto;
 
-    return await this.db.$transaction(async (tx: any) => {
+    const result = await this.db.$transaction(async (tx: any) => {
       // Vérifier le stock disponible pour chaque ligne
       for (const ligne of lignesVente) {
         const variante = await tx.produit.findUnique({
@@ -84,6 +88,9 @@ export class VenteService {
 
       return vente;
     });
+
+    this.notifications.create('VENTE_CREEE', `Vente enregistrée — ${result.montantTotal} FCFA`).catch(() => {});
+    return result;
   }
 
   async findAll() {

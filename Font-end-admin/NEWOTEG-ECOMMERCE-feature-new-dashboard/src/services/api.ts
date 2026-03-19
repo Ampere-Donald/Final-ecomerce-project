@@ -68,6 +68,7 @@ export const achatApi = {
 // Clients
 export const clientApi = {
   getAll: () => api.get('/clients').then(res => res.data),
+  getOne: (id: string) => api.get(`/clients/${id}`).then(res => res.data),
   create: (data: any) => api.post('/clients', data).then(res => res.data),
 };
 
@@ -80,6 +81,26 @@ export const fournisseurApi = {
 // Caisse
 export const caisseApi = {
   getAll: () => api.get('/caisse').then(res => res.data),
+};
+
+// Commandes (e-commerce orders)
+export const commandeApi = {
+  getAll: () => api.get('/commandes').then(res => res.data),
+  getOne: (id: string) => api.get(`/commandes/${id}`).then(res => res.data),
+  update: (id: string, data: any) => api.patch(`/commandes/${id}`, data).then(res => res.data),
+};
+
+// Notifications
+export const notificationApi = {
+  getAll: () => api.get('/notifications').then(res => res.data),
+  unreadCount: () => api.get('/notifications/unread-count').then(res => res.data),
+  markAsRead: (id: string) => api.patch(`/notifications/${id}/read`).then(res => res.data),
+  markAllAsRead: () => api.patch('/notifications/read-all').then(res => res.data),
+};
+
+// Search
+export const searchApi = {
+  search: (q: string) => api.get('/search', { params: { q } }).then(res => res.data),
 };
 
 export default api;

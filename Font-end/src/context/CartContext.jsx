@@ -22,13 +22,15 @@ function cartReducer(state, action) {
             return [
                 ...state,
                 {
+                    id: product.id,
                     code: product.code,
                     model: product.model,
                     image: product.image,
                     retailPrice: product.retailPrice,
                     wholesalePrice: product.wholesalePrice,
                     categoryName: product.categoryName,
-                    marque: product.marque,
+                    brand: product.brand,
+                    marque: product.marque || product.brand,
                     quantity,
                 },
             ];
