@@ -14,7 +14,8 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
-import { extname } from 'path';
+import { extname, join } from 'path';
+import { existsSync } from 'fs';
 import { ProduitService } from './produit.service';
 import { CreateProduitDto } from './dto/create-produit.dto';
 import { UpdateProduitDto } from './dto/update-produit.dto';
@@ -107,6 +108,12 @@ export class ProduitController {
       throw new BadRequestException('Aucun fichier CSV fourni.');
     }
     return this.produitService.importCsv(file.buffer);
+  }
+
+  // ── Nettoyage des imageUrl invalides (fichiers absents du disque) ────────
+  @Post('cleanup-images')
+  async cleanupImages() {
+    return this.produitService.cleanupInvalidImages();
   }
 
   @Get(':id')

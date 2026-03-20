@@ -4,6 +4,8 @@ import { NotificationService } from 'src/notification/notification.service';
 import { CreateProduitDto } from './dto/create-produit.dto';
 import { UpdateProduitDto } from './dto/update-produit.dto';
 import { Readable } from 'stream';
+import { existsSync } from 'fs';
+import { join, basename } from 'path';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const csvParser = require('csv-parser');
 
@@ -304,6 +306,45 @@ export class ProduitService {
       produitsImportes: result.count,
       produitsIgnores: productsData.length - result.count,
       nouvellesCategories: newCategoriesCreated,
+    };
+  }
+
+  // ── Nettoyage des imageUrl invalides (fichier absent du disque) ──────
+  async cleanupInvalidImages() {
+    const uploadsDir = join(process.cwd(), 'uploads');
+
+    const produits = await this.db.produit.findMany({
+      where: { imageUrl: { not: null } },
+      select: { id: true, nomProduit: true, imageUrl: true },
+    });
+
+    const invalids: string[] = [];
+    let valid = 0;
+
+    for (const prod of produits) {
+      const filename = basename(prod.imageUrl!);
+      const filePath = join(uploadsDir, filename);
+      if (!existsSync(filePath)) {
+        invalids.push(prod.id);
+      } else {
+        valid++;
+      }
+    }
+
+    if (invalids.length === 0) {
+      return { message: 'Aucune imageUrl invalide trouvée.', cleaned: 0, valid };
+    }
+
+    const result = await this.db.produit.updateMany({
+      where: { id: { in: invalids } },
+      data: { imageUrl: null },
+    });
+
+    return {
+      message: `Nettoyage terminé avec succès.`,
+      cleaned: result.count,
+      valid,
+      total: produits.length,
     };
   }
 }
