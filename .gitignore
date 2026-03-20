@@ -8,3 +8,5 @@ coverage/
 uploads/
 .DS_Store
 *.env
+*.xlsx
+*.csv
