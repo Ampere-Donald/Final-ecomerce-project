@@ -578,4 +578,37 @@
             border-left-color: rgba($color-danger, 0.3) !important;
         }
     }
+
+    // ── Drawer Language Toggle ──
+    &__drawer-link--lang {
+        color: $color-primary !important;
+        font-weight: $font-weight-semibold !important;
+
+        &:hover {
+            background-color: rgba($color-primary, 0.06) !important;
+        }
+    }
+
+    // ── Desktop Language Toggle ──
+    &__lang-toggle {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 34px;
+        height: 34px;
+        border-radius: $border-radius-md;
+        background: rgba($color-primary, 0.08);
+        color: $color-primary;
+        font-size: 12px;
+        font-weight: $font-weight-extrabold;
+        letter-spacing: 0.05em;
+        cursor: pointer;
+        transition: all $transition-fast;
+        border: 1px solid rgba($color-primary, 0.15);
+
+        &:hover {
+            background: rgba($color-primary, 0.15);
+            transform: translateY(-1px);
+        }
+    }
 }

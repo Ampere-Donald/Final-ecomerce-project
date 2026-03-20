@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Helmet } from 'react-helmet-async';
-import { MapPin, Phone, Mail, Send, CheckCircle } from 'lucide-react';
+import { MapPin, Phone, Mail, Send, CheckCircle, User, MessageSquare, FileText } from 'lucide-react';
 import Footer from '../../components/Footer/Footer';
 import './Contact.scss';
 
@@ -61,49 +61,49 @@ const Contact = () => {
                         </p>
 
                         <div className="contact-cards">
-                            <div className="contact-card">
+                            <a href="https://maps.google.com/?q=Akwa+Rue+Foch+Douala+Cameroun" target="_blank" rel="noopener noreferrer" className="contact-card contact-card--clickable">
                                 <div className="contact-card__icon">
                                     <MapPin size={24} />
                                 </div>
                                 <div className="contact-card__content">
                                     <h3>Direction Générale & Showroom</h3>
                                     <p>Akwa, Rue Foch, Douala</p>
-                                    <span>Centre de nos activités administratives et commerciales.</span>
+                                    <span>Cliquez pour ouvrir dans Maps →</span>
                                 </div>
-                            </div>
+                            </a>
 
-                            <div className="contact-card">
+                            <a href="https://maps.google.com/?q=Camp+Yabassi+Douala+Cameroun" target="_blank" rel="noopener noreferrer" className="contact-card contact-card--clickable">
                                 <div className="contact-card__icon">
                                     <MapPin size={24} />
                                 </div>
                                 <div className="contact-card__content">
                                     <h3>Point de Service & Logistique</h3>
                                     <p>Akwa, Lieu-dit Camp Yabassi</p>
-                                    <span>(Ancien dépôt de planches)</span>
+                                    <span>Cliquez pour ouvrir dans Maps →</span>
                                 </div>
-                            </div>
+                            </a>
 
-                            <div className="contact-card">
-                                <div className="contact-card__icon">
+                            <a href="https://wa.me/237699966160" target="_blank" rel="noopener noreferrer" className="contact-card contact-card--clickable contact-card--whatsapp">
+                                <div className="contact-card__icon contact-card__icon--whatsapp">
                                     <Phone size={24} />
                                 </div>
                                 <div className="contact-card__content">
-                                    <h3>Téléphone & WhatsApp</h3>
+                                    <h3>WhatsApp & Téléphone</h3>
                                     <p>+237 699 966 160 / 670 478 228</p>
-                                    <span>WhatsApp: +237 699 966 160</span>
+                                    <span>Cliquez pour ouvrir WhatsApp →</span>
                                 </div>
-                            </div>
+                            </a>
 
-                            <div className="contact-card">
+                            <a href="mailto:contact@newoteg.com" className="contact-card contact-card--clickable">
                                 <div className="contact-card__icon">
                                     <Mail size={24} />
                                 </div>
                                 <div className="contact-card__content">
                                     <h3>Email</h3>
                                     <p>contact@newoteg.com</p>
-                                    <span>Réponse sous 24h ouvrées</span>
+                                    <span>Cliquez pour envoyer un email →</span>
                                 </div>
-                            </div>
+                            </a>
                         </div>
                     </div>
 
@@ -123,51 +123,63 @@ const Contact = () => {
                                 <form className="contact-form" onSubmit={handleSubmit}>
                                     <div className="form-group">
                                         <label htmlFor="name">Nom complet *</label>
-                                        <input 
-                                            type="text" 
-                                            id="name" 
-                                            name="name" 
-                                            value={formData.name} 
-                                            onChange={handleChange} 
-                                            required 
-                                            placeholder="Ex: Jean Dupont"
-                                        />
+                                        <div className="form-group__input-wrapper">
+                                            <User size={16} className="form-group__icon" />
+                                            <input 
+                                                type="text" 
+                                                id="name" 
+                                                name="name" 
+                                                value={formData.name} 
+                                                onChange={handleChange} 
+                                                required 
+                                                placeholder="Ex: Jean Dupont"
+                                            />
+                                        </div>
                                     </div>
                                     <div className="form-group">
                                         <label htmlFor="email">Adresse email *</label>
-                                        <input 
-                                            type="email" 
-                                            id="email" 
-                                            name="email" 
-                                            value={formData.email} 
-                                            onChange={handleChange} 
-                                            required 
-                                            placeholder="Ex: jean.dupont@email.com"
-                                        />
+                                        <div className="form-group__input-wrapper">
+                                            <Mail size={16} className="form-group__icon" />
+                                            <input 
+                                                type="email" 
+                                                id="email" 
+                                                name="email" 
+                                                value={formData.email} 
+                                                onChange={handleChange} 
+                                                required 
+                                                placeholder="Ex: jean.dupont@email.com"
+                                            />
+                                        </div>
                                     </div>
                                     <div className="form-group">
                                         <label htmlFor="subject">Sujet du message *</label>
-                                        <input 
-                                            type="text" 
-                                            id="subject" 
-                                            name="subject" 
-                                            value={formData.subject} 
-                                            onChange={handleChange} 
-                                            required 
-                                            placeholder="Ex: Demande de devis"
-                                        />
+                                        <div className="form-group__input-wrapper">
+                                            <FileText size={16} className="form-group__icon" />
+                                            <input 
+                                                type="text" 
+                                                id="subject" 
+                                                name="subject" 
+                                                value={formData.subject} 
+                                                onChange={handleChange} 
+                                                required 
+                                                placeholder="Ex: Demande de devis"
+                                            />
+                                        </div>
                                     </div>
                                     <div className="form-group">
                                         <label htmlFor="message">Votre message *</label>
-                                        <textarea 
-                                            id="message" 
-                                            name="message" 
-                                            value={formData.message} 
-                                            onChange={handleChange} 
-                                            required 
-                                            rows="5"
-                                            placeholder="Détaillez votre besoin ici..."
-                                        ></textarea>
+                                        <div className="form-group__input-wrapper form-group__input-wrapper--textarea">
+                                            <MessageSquare size={16} className="form-group__icon form-group__icon--textarea" />
+                                            <textarea 
+                                                id="message" 
+                                                name="message" 
+                                                value={formData.message} 
+                                                onChange={handleChange} 
+                                                required 
+                                                rows="5"
+                                                placeholder="Détaillez votre besoin ici..."
+                                            ></textarea>
+                                        </div>
                                     </div>
                                     <button type="submit" className="btn btn--primary submit-btn" disabled={isSubmitting}>
                                         {isSubmitting ? 'Envoi en cours...' : (

@@ -2,7 +2,7 @@ import { Controller, Post, Get, Body, UseGuards, Request } from '@nestjs/common'
 import { AuthService } from './auth.service';
 import { SignupDto } from './dto/signup.dto';
 import { LoginDto } from './dto/login.dto';
-import { VerifyOtpDto } from './dto/verify-otp.dto';
+import { GoogleAuthDto } from './dto/google-auth.dto';
 import { JwtAuthGuard } from './jwt-auth.guard';
 
 @Controller('auth')
@@ -14,19 +14,14 @@ export class AuthController {
     return this.authService.signup(dto);
   }
 
-  @Post('verify-otp')
-  verifyOtp(@Body() dto: VerifyOtpDto) {
-    return this.authService.verifyOtp(dto);
-  }
-
-  @Post('resend-otp')
-  resendOtp(@Body('email') email: string) {
-    return this.authService.resendOtp(email);
-  }
-
   @Post('login')
   login(@Body() dto: LoginDto) {
     return this.authService.login(dto);
+  }
+
+  @Post('google')
+  googleLogin(@Body() dto: GoogleAuthDto) {
+    return this.authService.googleLogin(dto.credential);
   }
 
   @UseGuards(JwtAuthGuard)

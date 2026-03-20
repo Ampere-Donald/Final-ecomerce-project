@@ -42,7 +42,7 @@ export function AuthProvider({ children }) {
     }
   }, [user]);
 
-  // Try to restore session on mount
+  // Try to restore session on mount via GET /api/auth/me
   useEffect(() => {
     const restore = async () => {
       const saved = initAuth();
@@ -71,17 +71,31 @@ export function AuthProvider({ children }) {
 
   const signup = useCallback(async (formData) => {
     const { data } = await axios.post(`${API}/auth/signup`, formData);
+    // Signup now returns access_token + user (auto-login)
+    if (data.access_token && data.user) {
+      setToken(data.access_token);
+      setUser(data.user);
+    }
     return data;
   }, []);
 
-  const verifyOtp = useCallback(async (email, code) => {
-    const { data } = await axios.post(`${API}/auth/verify-otp`, { email, code });
+  /**
+   * Google OAuth login — sends Google credential to backend.
+   */
+  const googleLogin = useCallback(async (credential) => {
+    const { data } = await axios.post(`${API}/auth/google`, { credential });
+    setToken(data.access_token);
+    setUser(data.user);
     return data;
   }, []);
 
-  const resendOtp = useCallback(async (email) => {
-    const { data } = await axios.post(`${API}/auth/resend-otp`, { email });
-    return data;
+  /**
+   * Set auth state from an external token + user payload.
+   * Used by Checkout after inline account creation.
+   */
+  const loginFromToken = useCallback((newToken, userData) => {
+    setToken(newToken);
+    setUser(userData);
   }, []);
 
   const logout = useCallback(() => {
@@ -98,8 +112,8 @@ export function AuthProvider({ children }) {
     isAuthenticated,
     login,
     signup,
-    verifyOtp,
-    resendOtp,
+    googleLogin,
+    loginFromToken,
     logout,
   };
 

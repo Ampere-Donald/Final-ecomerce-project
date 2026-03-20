@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { Helmet } from 'react-helmet-async';
-import { Cpu, Wrench, Shield, Home, Award, Zap, Users, Quote, MapPin, Camera, PlayCircle, X, Code, Globe, Truck } from 'lucide-react';
+import { Cpu, Wrench, Shield, Home, Award, Zap, Users, Quote, MapPin, Camera, PlayCircle, X, Code, Globe, Truck, ArrowRight, ChevronDown, ChevronUp } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import Footer from '../../components/Footer/Footer';
 import './About.scss';
 
 const About = () => {
     const [selectedMedia, setSelectedMedia] = useState(null);
+    const [heroExpanded, setHeroExpanded] = useState(false);
 
     const openMedia = (media) => setSelectedMedia(media);
     const closeMedia = () => setSelectedMedia(null);
@@ -22,12 +23,23 @@ const About = () => {
                 <div className="container about-hero__content">
                     <span className="about-hero__tag">À PROPOS DE NEWOTEG SARL</span>
                     <h1>Notre Histoire : De <strong>l'Expertise Technique</strong> à l'Innovation <strong>Numérique</strong></h1>
-                    <p>
-                        L'aventure a débuté sous l'enseigne X Electronics, une structure reconnue à Douala pour sa maîtrise de la maintenance audiovisuelle et informatique. Fondée en 2011 par Monsieur Jude FOGUENG, l'entreprise a évolué pour devenir NEWOTEG (New World Technologie Group) SARL.
-                    </p>
+                    <div className={`about-hero__text-wrapper ${heroExpanded ? 'about-hero__text-wrapper--expanded' : ''}`}>
+                        <p>
+                            L'aventure a débuté sous l'enseigne X Electronics, une structure reconnue à Douala pour sa maîtrise de la maintenance audiovisuelle et informatique. Fondée en 2011 par Monsieur Jude FOGUENG, l'entreprise a évolué pour devenir NEWOTEG (New World Technologie Group) SARL.
+                        </p>
+                    </div>
+                    <button className="about-hero__read-more" onClick={() => setHeroExpanded(!heroExpanded)}>
+                        {heroExpanded ? (<><ChevronUp size={16} /> Réduire</>) : (<><ChevronDown size={16} /> Lire la suite</>)}
+                    </button>
                     <div className="about-hero__actions">
-                        <Link to="/catalogue" className="btn btn--primary">Découvrir nos produits &rarr;</Link>
-                        <Link to="/catalogue" className="btn btn--white">Nos Services</Link>
+                        <Link to="/catalogue" className="btn btn--gradient">
+                            <ArrowRight size={18} />
+                            Découvrir nos produits
+                        </Link>
+                        <Link to="/contact" className="btn btn--glass">
+                            <Wrench size={18} />
+                            Nos Services
+                        </Link>
                     </div>
                 </div>
             </section>

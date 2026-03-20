@@ -3,6 +3,7 @@ import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { ShoppingCart, User, Menu, Heart, X, Search, LogOut } from 'lucide-react';
 import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
+import { useI18n } from '../../context/I18nContext';
 import { formatFCFA } from '../../utils/formatFCFA';
 import SearchBar from '../SearchBar/SearchBar';
 import './Header.scss';
@@ -10,6 +11,7 @@ import './Header.scss';
 const Header = () => {
     const { cartCount, cartTotal } = useCart();
     const { isAuthenticated, user, logout } = useAuth();
+    const { lang, t, toggleLang } = useI18n();
     const navigate = useNavigate();
     const [isScrolled, setIsScrolled] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -61,11 +63,7 @@ const Header = () => {
     };
 
     const handleCartClick = () => {
-        if (isAuthenticated) {
-            navigate('/checkout');
-        } else {
-            navigate('/login?returnTo=/checkout');
-        }
+        navigate('/checkout');
     };
 
     const handleLogout = () => {
@@ -93,22 +91,25 @@ const Header = () => {
                     <nav className="header__nav">
                         <ul className="header__nav-list">
                             <li className="header__nav-item">
-                                <NavLink to="/" className={({ isActive }) => `header__nav-link ${isActive ? 'header__nav-link--active' : ''}`}>ACCUEIL</NavLink>
+                                <NavLink to="/" className={({ isActive }) => `header__nav-link ${isActive ? 'header__nav-link--active' : ''}`}>{t('nav.home')}</NavLink>
                             </li>
                             <li className="header__nav-item">
-                                <NavLink to="/catalogue" className={({ isActive }) => `header__nav-link ${isActive ? 'header__nav-link--active' : ''}`}>CATALOGUE</NavLink>
+                                <NavLink to="/catalogue" className={({ isActive }) => `header__nav-link ${isActive ? 'header__nav-link--active' : ''}`}>{t('nav.catalogue')}</NavLink>
                             </li>
                             <li className="header__nav-item">
-                                <NavLink to="/about" className={({ isActive }) => `header__nav-link ${isActive ? 'header__nav-link--active' : ''}`}>À PROPOS</NavLink>
+                                <NavLink to="/about" className={({ isActive }) => `header__nav-link ${isActive ? 'header__nav-link--active' : ''}`}>{t('nav.about')}</NavLink>
                             </li>
                             <li className="header__nav-item">
-                                <NavLink to="/contact" className={({ isActive }) => `header__nav-link ${isActive ? 'header__nav-link--active' : ''}`}>CONTACT</NavLink>
+                                <NavLink to="/contact" className={({ isActive }) => `header__nav-link ${isActive ? 'header__nav-link--active' : ''}`}>{t('nav.contact')}</NavLink>
                             </li>
                         </ul>
                     </nav>
 
                     {/* Desktop Actions */}
                     <div className="header__actions">
+                        <button onClick={toggleLang} className="header__lang-toggle" aria-label="Changer de langue">
+                            {lang === 'fr' ? 'EN' : 'FR'}
+                        </button>
                         <SearchBar />
                         <button onClick={handleFavoritesClick} className="header__action-btn header__action-btn--icon-only" aria-label="Favoris">
                             <Heart size={20} />
@@ -153,16 +154,16 @@ const Header = () => {
                 <div className="header__mobile-strip">
                     <nav className="header__mobile-strip-nav">
                         <NavLink to="/" end className={({ isActive }) => `header__mobile-strip-link ${isActive ? 'header__mobile-strip-link--active' : ''}`}>
-                            Accueil
+                            {t('mobileStrip.home')}
                         </NavLink>
                         <NavLink to="/catalogue" className={({ isActive }) => `header__mobile-strip-link ${isActive ? 'header__mobile-strip-link--active' : ''}`}>
-                            Catalogue
+                            {t('mobileStrip.catalogue')}
                         </NavLink>
                         <NavLink to="/about" className={({ isActive }) => `header__mobile-strip-link ${isActive ? 'header__mobile-strip-link--active' : ''}`}>
-                            À Propos
+                            {t('mobileStrip.about')}
                         </NavLink>
                         <NavLink to="/contact" className={({ isActive }) => `header__mobile-strip-link ${isActive ? 'header__mobile-strip-link--active' : ''}`}>
-                            Contact
+                            {t('mobileStrip.contact')}
                         </NavLink>
                     </nav>
                 </div>
@@ -227,22 +228,22 @@ const Header = () => {
                 <ul className="header__drawer-list">
                     <li>
                         <NavLink to="/" end className={({ isActive }) => `header__drawer-link ${isActive ? 'header__drawer-link--active' : ''}`} onClick={closeMobileMenu}>
-                            Accueil
+                            {t('drawer.home')}
                         </NavLink>
                     </li>
                     <li>
                         <NavLink to="/catalogue" className={({ isActive }) => `header__drawer-link ${isActive ? 'header__drawer-link--active' : ''}`} onClick={closeMobileMenu}>
-                            Catalogue
+                            {t('drawer.catalogue')}
                         </NavLink>
                     </li>
                     <li>
                         <NavLink to="/about" className={({ isActive }) => `header__drawer-link ${isActive ? 'header__drawer-link--active' : ''}`} onClick={closeMobileMenu}>
-                            À Propos
+                            {t('drawer.about')}
                         </NavLink>
                     </li>
                     <li>
                         <NavLink to="/contact" className={({ isActive }) => `header__drawer-link ${isActive ? 'header__drawer-link--active' : ''}`} onClick={closeMobileMenu}>
-                            Contact
+                            {t('drawer.contact')}
                         </NavLink>
                     </li>
 
@@ -250,25 +251,33 @@ const Header = () => {
 
                     <li>
                         <NavLink to="/checkout" className={({ isActive }) => `header__drawer-link ${isActive ? 'header__drawer-link--active' : ''}`} onClick={closeMobileMenu}>
-                            Panier
+                            {t('drawer.cart')}
                             {cartCount > 0 && <span className="header__drawer-badge">{cartCount} · {formatFCFA(cartTotal)}</span>}
                         </NavLink>
                     </li>
                     <li>
                         <NavLink to="/favourites" className={({ isActive }) => `header__drawer-link ${isActive ? 'header__drawer-link--active' : ''}`} onClick={closeMobileMenu}>
-                            Favoris
+                            {t('drawer.favorites')}
                         </NavLink>
                     </li>
                     <li>
                         {isAuthenticated ? (
                             <NavLink to="/profile" className={({ isActive }) => `header__drawer-link ${isActive ? 'header__drawer-link--active' : ''}`} onClick={closeMobileMenu}>
-                                Mon Profil
+                                {t('drawer.profile')}
                             </NavLink>
                         ) : (
                             <NavLink to="/login" className={({ isActive }) => `header__drawer-link ${isActive ? 'header__drawer-link--active' : ''}`} onClick={closeMobileMenu}>
-                                Se Connecter
+                                {t('drawer.login')}
                             </NavLink>
                         )}
+                    </li>
+
+                    {/* Language toggle in drawer */}
+                    <li className="header__drawer-divider" />
+                    <li>
+                        <button className="header__drawer-link header__drawer-link--lang" onClick={toggleLang}>
+                            🌐 {lang === 'fr' ? 'Switch to English' : 'Passer en Français'}
+                        </button>
                     </li>
 
                     {isAuthenticated && (
@@ -276,7 +285,7 @@ const Header = () => {
                             <li className="header__drawer-divider" />
                             <li>
                                 <button className="header__drawer-link header__drawer-link--danger" onClick={handleLogout}>
-                                    <LogOut size={18} /> Déconnexion
+                                    <LogOut size={18} /> {t('drawer.logout')}
                                 </button>
                             </li>
                         </>

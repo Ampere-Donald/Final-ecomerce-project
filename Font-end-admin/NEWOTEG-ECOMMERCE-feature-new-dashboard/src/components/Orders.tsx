@@ -20,6 +20,9 @@ const MODE_LABELS: Record<ModeReception, { label: string; icon: typeof Truck }> 
 
 const ALL_STATUSES: StatutCommande[] = ['EN_ATTENTE', 'CONFIRMEE', 'EN_LIVRAISON', 'LIVREE', 'ANNULEE'];
 
+// Admin can only set these statuses.
+const ADMIN_STATUSES: StatutCommande[] = ['EN_ATTENTE', 'EN_LIVRAISON'];
+
 export const Orders = () => {
   const [orders, setOrders] = useState<Commande[]>([]);
   const [loading, setLoading] = useState(true);
@@ -70,6 +73,33 @@ export const Orders = () => {
     return `${first.quantite}x ${first.nomProduit}${rest > 0 ? ` +${rest}` : ''}`;
   };
 
+  const handleExportCSV = () => {
+    if (filtered.length === 0) return;
+
+    const headers = ['N° Suivi', 'Date', 'Client', 'Telephone', 'Articles', 'Montant', 'Mode', 'Statut'];
+    const rows = filtered.map(o => [
+      o.numeroSuivi,
+      new Date(o.dateCommande).toLocaleDateString('fr-FR'),
+      `"${o.nomClient}"`,
+      `"${o.telephone}"`,
+      `"${itemsSummary(o)}"`,
+      o.montantTotal,
+      MODE_LABELS[o.modeReception].label,
+      STATUS_CONFIG[o.statut].label,
+    ]);
+
+    const csvContent = [headers.join(','), ...rows.map(row => row.join(','))].join('\n');
+    const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `commandes_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -82,7 +112,11 @@ export const Orders = () => {
           <p className="text-slate-500 text-sm">Gérez et suivez toutes les commandes clients</p>
         </div>
         <div className="flex items-center gap-3">
-          <button className="flex items-center gap-2 px-4 py-2 border border-slate-200 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-colors">
+          <button 
+            onClick={handleExportCSV}
+            disabled={filtered.length === 0}
+            className="flex items-center gap-2 px-4 py-2 border border-slate-200 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
             <Download size={18} />
             <span>Exporter CSV</span>
           </button>
@@ -144,10 +178,15 @@ export const Orders = () => {
                         <select
                           value={order.statut}
                           onChange={e => handleStatusChange(order.id, e.target.value as StatutCommande)}
-                          disabled={updatingId === order.id}
-                          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border-0 cursor-pointer ${st.bg} ${st.text} outline-none`}
+                          disabled={updatingId === order.id || order.statut === 'CONFIRMEE' || order.statut === 'ANNULEE'}
+                          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border-0 cursor-pointer ${st.bg} ${st.text} outline-none ${order.statut === 'CONFIRMEE' || order.statut === 'ANNULEE' ? 'opacity-80 cursor-not-allowed' : ''}`}
                         >
-                          {ALL_STATUSES.map(s => (
+                          {/* If terminal state, show it as the only option */}
+                          {['CONFIRMEE', 'ANNULEE'].includes(order.statut) && (
+                            <option value={order.statut}>{STATUS_CONFIG[order.statut].label}</option>
+                          )}
+                          {/* Otherwise show admin options */}
+                          {!['CONFIRMEE', 'ANNULEE'].includes(order.statut) && ADMIN_STATUSES.map(s => (
                             <option key={s} value={s}>{STATUS_CONFIG[s].label}</option>
                           ))}
                         </select>

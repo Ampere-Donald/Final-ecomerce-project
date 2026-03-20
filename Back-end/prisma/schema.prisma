@@ -118,6 +118,7 @@ model Client {
   emailVerifie   Boolean     @default(false) @map("email_verifie")
   otpCode        String?     @map("otp_code") @db.VarChar(6)
   otpExpiresAt   DateTime?   @map("otp_expires_at")
+  googleId       String?     @unique @map("google_id")
   createdAt      DateTime    @default(now()) @map("created_at")
   version        Int         @default(1)
   ventes         Vente[]
@@ -337,4 +338,13 @@ model Notification {
   createdAt DateTime         @default(now()) @map("created_at")
 
   @@map("notification")
+}
+
+// NEWSLETTER SUBSCRIPTIONS
+model Newsletter {
+  id        String   @id @default(uuid())
+  email     String   @unique @db.VarChar(255)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("newsletter")
 }

@@ -1,5 +1,6 @@
 import React from 'react';
 import { Helmet } from 'react-helmet-async';
+import { Shield, Lock, Eye, UserCheck, Database, Globe, Phone, FileText } from 'lucide-react';
 import Footer from '../../components/Footer/Footer';
 import './Privacy.scss';
 
@@ -8,7 +9,7 @@ const Privacy = () => {
         <div className="privacy-page">
             <Helmet>
                 <title>Politique de Confidentialité — NEWOTEG SARL</title>
-                <meta name="description" content="Découvrez comment NEWOTEG SARL protège vos données personnelles. Politique de confidentialité, droits d'accès et sécurité des informations." />
+                <meta name="description" content="Politique de Confidentialité de NEWOTEG SARL. Protection de vos données personnelles conformément à la législation camerounaise." />
             </Helmet>
             <div className="privacy-header">
                 <div className="container">
@@ -18,64 +19,103 @@ const Privacy = () => {
             </div>
 
             <div className="container privacy-content">
-                <section>
-                    <h2>1. Introduction</h2>
-                    <p>
-                        Chez NEWOTEG SARL, nous accordons une grande importance à la protection de vos données personnelles. Cette politique de confidentialité explique comment nous collectons, utilisons, partageons et protégeons les informations que vous nous confiez lorsque vous utilisez notre site web et nos services.
-                    </p>
+                <section className="legal-section">
+                    <div className="legal-section__icon"><Shield size={24} /></div>
+                    <div className="legal-section__body">
+                        <h2>1. Engagement de NEWOTEG SARL</h2>
+                        <p>
+                            NEWOTEG (New World Technologie Group) SARL, société de droit camerounais basée à Akwa, Douala, s'engage à protéger la vie privée et les données personnelles de ses utilisateurs, clients et partenaires. La présente politique est conforme à la loi n° 2010/012 du 21 décembre 2010 relative à la cybersécurité et à la cybercriminalité au Cameroun, ainsi qu'aux standards internationaux de protection des données.
+                        </p>
+                    </div>
                 </section>
 
-                <section>
-                    <h2>2. Données collectées</h2>
-                    <p>
-                        Nous pouvons collecter les informations suivantes :
-                    </p>
-                    <ul>
-                        <li><strong>Informations d'identification :</strong> Nom, prénom, adresse e-mail, numéro de téléphone (lorsque vous nous contactez ou créez un compte).</li>
-                        <li><strong>Données de transaction :</strong> Historique des achats, adresses de facturation et de livraison liées aux commandes de nos équipements et composants.</li>
-                        <li><strong>Données de navigation :</strong> Adresse IP, type de navigateur, pages visitées sur notre site, afin d'améliorer l'expérience utilisateur.</li>
-                    </ul>
+                <section className="legal-section">
+                    <div className="legal-section__icon"><Database size={24} /></div>
+                    <div className="legal-section__body">
+                        <h2>2. Données Collectées</h2>
+                        <p>Dans le cadre de nos activités, nous pouvons collecter :</p>
+                        <ul>
+                            <li><strong>Informations d'identification :</strong> Nom, prénom, adresse e-mail, numéro de téléphone (lors de la création de compte ou de la prise de contact).</li>
+                            <li><strong>Données transactionnelles :</strong> Historique des achats, adresses de livraison, détails des commandes de composants électroniques et équipements.</li>
+                            <li><strong>Données de navigation :</strong> Adresse IP, type de navigateur, pages visitées, afin d'améliorer l'expérience utilisateur sur notre plateforme.</li>
+                            <li><strong>Données de newsletter :</strong> Adresse email pour les inscriptions à notre newsletter promotionnelle.</li>
+                        </ul>
+                    </div>
                 </section>
 
-                <section>
-                    <h2>3. Utilisation de vos données</h2>
-                    <p>
-                        Vos informations sont utilisées pour :
-                    </p>
-                    <ul>
-                        <li>Traiter vos commandes et assurer la livraison de vos produits en Afrique Centrale.</li>
-                        <li>Communiquer avec vous concernant vos achats ou répondre à vos demandes (support technique, devis).</li>
-                        <li>Améliorer nos offres, notre site web et personnaliser votre expérience client.</li>
-                        <li>Vous envoyer des informations pertinentes sur nos nouveaux arrivages (uniquement si vous y avez consenti via notre newsletter).</li>
-                    </ul>
+                <section className="legal-section">
+                    <div className="legal-section__icon"><Eye size={24} /></div>
+                    <div className="legal-section__body">
+                        <h2>3. Finalités du Traitement</h2>
+                        <p>Vos données sont traitées pour :</p>
+                        <ul>
+                            <li>Traiter et assurer le suivi de vos commandes sur le territoire camerounais et en zone CEMAC.</li>
+                            <li>Communiquer avec vous concernant vos achats, demandes de devis ou support technique.</li>
+                            <li>Améliorer nos services, personnaliser votre expérience et optimiser notre plateforme e-commerce.</li>
+                            <li>Vous informer de nos nouveaux arrivages et promotions (uniquement avec votre consentement préalable).</li>
+                        </ul>
+                    </div>
                 </section>
 
-                <section>
-                    <h2>4. Protection et Sécurité</h2>
-                    <p>
-                        Nous mettons en œuvre des mesures de sécurité techniques et organisationnelles appropriées pour protéger vos données personnelles contre tout accès non autorisé, altération, divulgation ou destruction. Nos transactions en ligne sont sécurisées selon les standards de l'industrie.
-                    </p>
+                <section className="legal-section">
+                    <div className="legal-section__icon"><Lock size={24} /></div>
+                    <div className="legal-section__body">
+                        <h2>4. Sécurité des Données</h2>
+                        <p>
+                            NEWOTEG SARL met en œuvre des mesures de sécurité techniques et organisationnelles appropriées pour protéger vos données contre tout accès non autorisé, altération, divulgation ou destruction. Les mots de passe sont chiffrés. Les échanges de données sensibles sont sécurisés via protocole HTTPS.
+                        </p>
+                    </div>
                 </section>
 
-                <section>
-                    <h2>5. Partage des données</h2>
-                    <p>
-                        NEWOTEG SARL ne vend pas, ne loue pas et ne commercialise pas vos données personnelles à des tiers. Nous pouvons partager vos informations uniquement avec des prestataires de confiance (par exemple, nos partenaires logistiques pour la livraison) qui s'engagent à respecter la confidentialité de vos données.
-                    </p>
+                <section className="legal-section">
+                    <div className="legal-section__icon"><Globe size={24} /></div>
+                    <div className="legal-section__body">
+                        <h2>5. Partage et Transfert des Données</h2>
+                        <p>
+                            NEWOTEG SARL ne vend, ne loue et ne commercialise en aucun cas vos données personnelles. Nous pouvons partager vos informations uniquement avec des prestataires de confiance (partenaires logistiques pour la livraison) qui s'engagent contractuellement à respecter la confidentialité de vos données, conformément au droit camerounais.
+                        </p>
+                    </div>
                 </section>
 
-                <section>
-                    <h2>6. Vos droits</h2>
-                    <p>
-                        Conformément à la réglementation applicable, vous disposez d'un droit d'accès, de rectification, de suppression et d'opposition au traitement de vos données personnelles. Si vous souhaitez exercer ces droits, vous pouvez nous contacter à tout moment.
-                    </p>
+                <section className="legal-section">
+                    <div className="legal-section__icon"><UserCheck size={24} /></div>
+                    <div className="legal-section__body">
+                        <h2>6. Vos Droits</h2>
+                        <p>
+                            Conformément à la législation camerounaise en vigueur, vous disposez des droits suivants :
+                        </p>
+                        <ul>
+                            <li><strong>Droit d'accès :</strong> Obtenir une copie de vos données personnelles détenues par NEWOTEG.</li>
+                            <li><strong>Droit de rectification :</strong> Demander la correction de données inexactes ou incomplètes.</li>
+                            <li><strong>Droit de suppression :</strong> Demander l'effacement de vos données, sous réserve des obligations légales de conservation.</li>
+                            <li><strong>Droit d'opposition :</strong> Vous opposer au traitement de vos données à des fins de prospection commerciale.</li>
+                        </ul>
+                    </div>
                 </section>
 
-                <section>
-                    <h2>7. Nous contacter</h2>
-                    <p>
-                        Pour toute question relative à notre politique de confidentialité ou pour exercer vos droits, veuillez nous contacter à l'adresse <strong>newoteg.com</strong> ou vous rendre dans nos bureaux à Akwa, Rue Foch, Douala.
-                    </p>
+                <section className="legal-section">
+                    <div className="legal-section__icon"><FileText size={24} /></div>
+                    <div className="legal-section__body">
+                        <h2>7. Conservation des Données</h2>
+                        <p>
+                            Vos données personnelles sont conservées pendant la durée strictement nécessaire aux finalités pour lesquelles elles ont été collectées, et conformément aux délais de prescription prévus par le droit camerounais et les Actes Uniformes OHADA.
+                        </p>
+                    </div>
+                </section>
+
+                <section className="legal-section">
+                    <div className="legal-section__icon"><Phone size={24} /></div>
+                    <div className="legal-section__body">
+                        <h2>8. Contact — Délégué à la Protection des Données</h2>
+                        <p>
+                            Pour exercer vos droits ou pour toute question relative à notre politique de confidentialité :
+                        </p>
+                        <ul>
+                            <li><strong>Email :</strong> contact@newoteg.com</li>
+                            <li><strong>Téléphone :</strong> +237 699 966 160 / 670 478 228</li>
+                            <li><strong>Adresse :</strong> NEWOTEG SARL — Akwa, Rue Foch, Douala, Cameroun</li>
+                        </ul>
+                    </div>
                 </section>
             </div>
 

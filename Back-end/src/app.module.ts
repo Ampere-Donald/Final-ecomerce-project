@@ -23,6 +23,7 @@ import { SearchModule } from './search/search.module';
 import { AuthModule } from './auth/auth.module';
 import { FavoriModule } from './favori/favori.module';
 import { DatabaseModule } from './database/database.module';
+import { NewsletterModule } from './newsletter/newsletter.module';
 
 @Module({
   imports: [
@@ -50,6 +51,7 @@ import { DatabaseModule } from './database/database.module';
     AuthModule,
     FavoriModule,
     DatabaseModule,
+    NewsletterModule,
   ],
   controllers: [AppController],
   providers: [AppService],

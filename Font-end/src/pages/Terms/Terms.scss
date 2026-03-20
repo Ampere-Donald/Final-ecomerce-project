@@ -1,68 +1,112 @@
 @use '../../styles/variables' as *;
 
-.terms-page {
+.terms-page,
+.privacy-page {
     background-color: $color-background;
     min-height: 100vh;
-    display: flex;
-    flex-direction: column;
+}
 
-    .terms-header {
-        background-color: $color-primary;
+.terms-header,
+.privacy-header {
+    background: linear-gradient(135deg, $color-text 0%, #1e1b4b 100%);
+    padding: 160px 0 80px;
+    text-align: center;
+    margin-top: -80px;
+
+    h1 {
+        font-size: clamp(2rem, 4vw, 3rem);
+        font-weight: 800;
         color: white;
-        padding: $spacing-3xl 0;
-        text-align: center;
+        margin-bottom: $spacing-sm;
+        letter-spacing: -0.02em;
+    }
 
-        h1 {
-            font-size: $font-size-3xl;
+    p {
+        font-size: 14px;
+        color: rgba(white, 0.6);
+        font-weight: 500;
+    }
+}
+
+.terms-content,
+.privacy-content {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: $spacing-3xl $spacing-md;
+}
+
+.legal-section {
+    display: flex;
+    gap: $spacing-lg;
+    margin-bottom: $spacing-2xl;
+    padding-bottom: $spacing-2xl;
+    border-bottom: 1px solid rgba($color-border, 0.3);
+
+    &:last-child {
+        border-bottom: none;
+    }
+
+    @media (max-width: $breakpoint-sm) {
+        flex-direction: column;
+        gap: $spacing-md;
+    }
+
+    &__icon {
+        flex-shrink: 0;
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        background: rgba($color-primary, 0.08);
+        color: $color-primary;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    &__body {
+        flex: 1;
+
+        h2 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: $color-text;
             margin-bottom: $spacing-sm;
-            font-weight: $font-weight-bold;
         }
 
         p {
-            font-size: $font-size-md;
-            color: rgba(255, 255, 255, 0.8);
-            margin: 0;
+            font-size: 0.95rem;
+            line-height: 1.7;
+            color: $color-text-body;
+            margin-bottom: $spacing-md;
+
+            &:last-child {
+                margin-bottom: 0;
+            }
         }
-    }
 
-    .terms-content {
-        max-width: 800px;
-        margin: 0 auto;
-        padding: $spacing-3xl $spacing-md;
-        flex: 1;
+        ul {
+            list-style: none;
+            padding: 0;
+            margin: $spacing-sm 0 0;
 
-        section {
-            margin-bottom: $spacing-2xl;
-
-            h2 {
-                font-size: $font-size-xl;
-                color: $color-text;
-                margin-bottom: $spacing-md;
+            li {
                 position: relative;
-                padding-bottom: $spacing-xs;
+                padding-left: $spacing-lg;
+                margin-bottom: $spacing-sm;
+                font-size: 0.95rem;
+                color: $color-text-body;
+                line-height: 1.6;
 
-                &::after {
+                &::before {
                     content: '';
                     position: absolute;
-                    bottom: 0;
                     left: 0;
-                    width: 40px;
-                    height: 3px;
-                    background-color: $color-primary;
-                    border-radius: $border-radius-full;
+                    top: 10px;
+                    width: 6px;
+                    height: 6px;
+                    border-radius: 50%;
+                    background: $color-primary;
                 }
-            }
-
-            p {
-                font-size: $font-size-md;
-                line-height: $line-height-relaxed;
-                color: $color-text-muted;
-                margin-bottom: $spacing-md;
-            }
-
-            strong {
-                color: $color-text;
-                font-weight: $font-weight-bold;
             }
         }
     }

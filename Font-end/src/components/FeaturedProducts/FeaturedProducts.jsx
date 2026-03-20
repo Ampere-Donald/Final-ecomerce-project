@@ -8,7 +8,7 @@ import { Link } from 'react-router-dom';
 import './FeaturedProducts.scss';
 
 
-const PLACEHOLDER_IMG = 'https://images.unsplash.com/photo-1608564697071-ddf911d81370?q=80&w=400&auto=format&fit=crop';
+
 
 // ── Countdown Hook (calcule depuis une date de fin réelle) ──────────────
 const useCountdown = (targetDate) => {

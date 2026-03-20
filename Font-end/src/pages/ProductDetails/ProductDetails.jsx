@@ -24,7 +24,7 @@ const ProductDetails = () => {
             try {
                 setLoading(true);
                 const res = await axios.get('/api/produits');
-                const allProducts = res.data;
+                const allProducts = Array.isArray(res.data) ? res.data : res.data.data || [];
 
                 // Match the route :code param against the short code derived from the UUID
                 const upperCode = code.toUpperCase();

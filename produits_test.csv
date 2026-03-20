@@ -1,0 +1,6 @@
+nomProduit;marque;prixDetail;prixGros;quantiteStock;description
+"Carte Mère Intel";"Intel";150000;135000;10;"Carte mère très performante pour systèmes industriels"
+"Résistance 10K Ohms";"Newoteg";500;300;500;"Résistance standard 1/4W 5%"
+"Capteur de Température LM35";"Texas Inst";1500;1200;50;"Capteur de température analogique précis"
+"Fer à souder 60W";"Weller";25000;20000;15;"Fer professionnel avec régulation de température"
+"Microcontrôleur ESP32";"Espressif";5000;4500;100;"Module WiFi/Bluetooth intégré"

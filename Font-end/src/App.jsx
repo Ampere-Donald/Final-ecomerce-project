@@ -10,7 +10,6 @@ import Terms from './pages/Terms/Terms'
 import Privacy from './pages/Privacy/Privacy'
 import Login from './pages/Auth/Login'
 import Signup from './pages/Auth/Signup'
-import VerifyOTP from './pages/Auth/VerifyOTP'
 import Profile from './pages/Profile/Profile'
 import Favorites from './pages/Favorites/Favorites'
 import ProtectedRoute from './components/ProtectedRoute/ProtectedRoute'
@@ -26,7 +25,7 @@ function App() {
             <Route path="/" element={<Home />} />
             <Route path="/catalogue" element={<Catalogue />} />
             <Route path="/product/:code" element={<ProductDetails />} />
-            <Route path="/checkout" element={<ProtectedRoute><Checkout /></ProtectedRoute>} />
+            <Route path="/checkout" element={<Checkout />} />
             <Route path="/about" element={<About />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/terms" element={<Terms />} />
@@ -35,7 +34,6 @@ function App() {
             {/* Auth */}
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
-            <Route path="/verify-otp" element={<VerifyOTP />} />
 
             {/* Protected */}
             <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />

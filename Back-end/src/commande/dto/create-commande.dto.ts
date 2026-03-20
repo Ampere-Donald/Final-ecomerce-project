@@ -3,6 +3,7 @@ import {
   IsNumber,
   IsUUID,
   IsArray,
+  IsEmail,
   IsEnum,
   IsNotEmpty,
   IsOptional,
@@ -52,6 +53,16 @@ export class CreateCommandeDto {
   @IsOptional()
   @IsUUID()
   clientId?: string;
+
+  /** Inline account creation fields (checkout flow) */
+  @IsOptional()
+  @IsEmail({}, { message: 'Email invalide' })
+  email?: string;
+
+  @IsOptional()
+  @IsString()
+  @MinLength(6, { message: 'Le mot de passe doit contenir au moins 6 caractères' })
+  motDePasse?: string;
 
   @IsArray()
   @ValidateNested({ each: true })

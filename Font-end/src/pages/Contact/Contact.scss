@@ -134,12 +134,37 @@
     transition: all 0.3s ease;
     border: 1px solid rgba(var(--primary-rgb), 0.05);
 
+    &--clickable {
+        text-decoration: none;
+        cursor: pointer;
+
+        .contact-card__content span {
+            color: var(--primary);
+            font-weight: 600;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        &:hover .contact-card__content span {
+            opacity: 1;
+        }
+    }
+
+    &--whatsapp:hover {
+        border-color: rgba(37, 211, 102, 0.3);
+
+        .contact-card__icon--whatsapp {
+            background-color: #25d366 !important;
+            color: white !important;
+        }
+    }
+
     &:hover {
         transform: translateY(-5px);
         box-shadow: 0 15px 40px rgba(0, 0, 0, 0.08);
         border-color: rgba(var(--primary-rgb), 0.2);
 
-        .contact-card__icon {
+        .contact-card__icon:not(.contact-card__icon--whatsapp) {
             background-color: var(--primary);
             color: var(--white);
             transform: scale(1.1);
@@ -157,6 +182,11 @@
         justify-content: center;
         flex-shrink: 0;
         transition: all 0.3s ease;
+
+        &--whatsapp {
+            background-color: rgba(37, 211, 102, 0.1);
+            color: #25d366;
+        }
     }
 
     &__content {
@@ -235,8 +265,35 @@
         color: var(--text-dark);
     }
 
+    &__input-wrapper {
+        position: relative;
+        display: flex;
+        align-items: center;
+
+        &--textarea {
+            align-items: flex-start;
+        }
+    }
+
+    &__icon {
+        position: absolute;
+        left: 14px;
+        color: #94a3b8;
+        pointer-events: none;
+        z-index: 1;
+        transition: color 0.3s ease;
+
+        &--textarea {
+            top: 16px;
+        }
+    }
+
+    &__input-wrapper:focus-within .form-group__icon {
+        color: var(--primary);
+    }
+
     input, textarea {
-        padding: 14px 18px;
+        padding: 14px 18px 14px 40px;
         border: 2px solid var(--border-color, #e2e8f0);
         border-radius: 10px;
         font-family: inherit;
@@ -244,6 +301,7 @@
         color: var(--text-color);
         transition: all 0.3s ease;
         background-color: #f8fafc;
+        width: 100%;
 
         &:focus {
             outline: none;

@@ -165,7 +165,8 @@
         line-height: 1.1;
         margin-bottom: $spacing-md;
         letter-spacing: -1px;
-        text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+        color: #fbbf24; // Yellow-gold for max visibility
+        text-shadow: 0 2px 12px rgba(0, 0, 0, 0.6), 0 0 40px rgba(251, 191, 36, 0.3);
     }
 
     &__desc {
@@ -479,6 +480,11 @@
         cursor: pointer;
         transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
         letter-spacing: 0.02em;
+
+        @media (max-width: $breakpoint-md) {
+            min-height: 48px;
+            font-size: 13px;
+        }
 
         &:hover {
             background-color: $color-primary-dark;

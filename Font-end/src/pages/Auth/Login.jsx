@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, ShieldCheck, Eye, EyeOff } from 'lucide-react';
+import { GoogleLogin } from '@react-oauth/google';
 import { useAuth } from '../../context/AuthContext';
 import './Auth.scss';
 
@@ -8,7 +9,7 @@ const Login = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const returnTo = searchParams.get('returnTo') || '/';
-  const { login } = useAuth();
+  const { login, googleLogin } = useAuth();
 
   const [identifiant, setIdentifiant] = useState('');
   const [motDePasse, setMotDePasse] = useState('');
@@ -29,20 +30,29 @@ const Login = () => {
       await login(identifiant, motDePasse);
       navigate(returnTo, { replace: true });
     } catch (err) {
-      const status = err.response?.status;
       const data = err.response?.data;
       let msg = 'Identifiants invalides.';
-
       if (data?.message) {
         msg = Array.isArray(data.message) ? data.message.join('. ') : data.message;
       }
+      setError(msg);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-      // If backend says email not verified, redirect to verify-otp
-      if (status === 401 && msg.includes('vérifier votre email')) {
-        navigate(`/verify-otp?email=${encodeURIComponent(identifiant)}`);
-        return;
+  const handleGoogleSuccess = async (credentialResponse) => {
+    setError('');
+    setLoading(true);
+    try {
+      await googleLogin(credentialResponse.credential);
+      navigate(returnTo, { replace: true });
+    } catch (err) {
+      const data = err.response?.data;
+      let msg = 'Erreur lors de la connexion avec Google.';
+      if (data?.message) {
+        msg = Array.isArray(data.message) ? data.message.join('. ') : data.message;
       }
-
       setError(msg);
     } finally {
       setLoading(false);
@@ -101,10 +111,17 @@ const Login = () => {
           <span>OU CONTINUER AVEC</span>
         </div>
 
-        <button className="auth-page__google" type="button" disabled>
-          <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" />
-          Google
-        </button>
+        <div style={{ display: 'flex', justifyContent: 'center' }}>
+          <GoogleLogin
+            onSuccess={handleGoogleSuccess}
+            onError={() => setError('Erreur lors de la connexion avec Google.')}
+            text="signin_with"
+            shape="rectangular"
+            size="large"
+            width="100%"
+            locale="fr"
+          />
+        </div>
 
         <p className="auth-page__footer">
           Pas encore de compte ? <Link to="/signup">S'inscrire</Link>
