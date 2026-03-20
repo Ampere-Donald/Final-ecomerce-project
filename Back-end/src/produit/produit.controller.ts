@@ -28,6 +28,7 @@ export class ProduitController {
   @Post()
   @UseInterceptors(
     FilesInterceptor('files', 3, {
+      // TODO: passer sur Cloudinary en prod (pour scaler).
       storage: diskStorage({
         destination: './uploads',
         filename: (req, file, cb) => {
@@ -145,6 +146,7 @@ export class ProduitController {
   @Post(':id/image')
   @UseInterceptors(
     FileInterceptor('file', {
+      // TODO: passer sur Cloudinary en prod (pour scaler).
       storage: diskStorage({
         destination: './uploads',
         filename: (req, file, cb) => {
@@ -166,6 +168,7 @@ export class ProduitController {
   @Patch(':id')
   @UseInterceptors(
     FilesInterceptor('files', 3, {
+      // TODO: passer sur Cloudinary en prod (pour scaler).
       storage: diskStorage({
         destination: './uploads',
         filename: (req, file, cb) => {

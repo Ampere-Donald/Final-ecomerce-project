@@ -17,27 +17,19 @@ async function bootstrap() {
     prefix: '/uploads/',
   });
 
-  // --- CORS dynamique pour Railway + Vercel (multi-origines) ---
+  // --- CORS dynamique pour Railway + Vercel (multi-origines ou wildcards) ---
   const rawOrigins = process.env.FRONTEND_URLS || '';
-  const allowedOrigins: (string | RegExp)[] = [
-    'http://localhost:5173',
-    'http://localhost:5174',
-    'http://localhost:3001',
-    ...rawOrigins
-      .split(',')
-      .map((u) => u.trim())
-      .filter(Boolean),
-  ];
+  const envOrigins = rawOrigins.split(',').map((u) => u.trim()).filter(Boolean);
 
   app.enableCors({
-    origin: (origin, callback) => {
-      // Allow requests with no origin (mobile apps, curl, etc.)
-      if (!origin) return callback(null, true);
-      if (allowedOrigins.includes(origin)) {
-        return callback(null, true);
-      }
-      callback(new Error(`CORS: origin ${origin} not allowed`));
-    },
+    origin: [
+      'http://localhost:5173',
+      'http://localhost:5174',
+      'http://localhost:3001',
+      /\\.vercel\\.app$/,
+      /\\.up\\.railway\\.app$/,
+      ...envOrigins,
+    ],
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true,
