@@ -1,32 +1,10 @@
-# Dependencies
 node_modules/
-
-# Build
-dist/
-build/
-
-# Environment
 .env
 .env.local
 .env.*.local
-
-# Uploads (images stockées localement)
-Back-end/uploads/
-
-# IDE
-.vscode/
-.idea/
-
-# OS
-.DS_Store
-Thumbs.db
-
-# Logs
+dist/
+coverage/
 *.log
-npm-debug.log*
-
-# Prisma
-Back-end/prisma/migrations/
-
-# Temp / Debug
-*.tmp
+uploads/
+.DS_Store
+*.env
