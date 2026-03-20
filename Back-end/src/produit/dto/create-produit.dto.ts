@@ -22,6 +22,18 @@ export class CreateProduitDto {
   imageUrl?: string;
 
   @IsOptional()
+  @IsString()
+  imageUrl2?: string;
+
+  @IsOptional()
+  @IsString()
+  imageUrl3?: string;
+
+  // Virtual field to receive the list of images kept by the user
+  @IsOptional()
+  existingImages?: string | string[];
+
+  @IsOptional()
   @IsNumber()
   @Min(0)
   @Type(() => Number)

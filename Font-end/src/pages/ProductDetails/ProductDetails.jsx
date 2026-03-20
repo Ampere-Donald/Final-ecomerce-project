@@ -16,6 +16,7 @@ const ProductDetails = () => {
     const { addToCart } = useCart();
     const [quantity, setQuantity] = useState(1);
     const [activeTab, setActiveTab] = useState('specs');
+    const [activeImageIndex, setActiveImageIndex] = useState(0);
 
     const [product, setProduct] = useState(null);
     const [relatedProducts, setRelatedProducts] = useState([]);
@@ -106,19 +107,19 @@ const ProductDetails = () => {
                         {/* ── Left: Image Gallery ────────────────── */}
                         <div className="product-details__image-col">
                             <div className="product-details__image-main">
-                                <img src={product.image} alt={product.model} />
+                                <img src={product.images[activeImageIndex] || product.image} alt={product.model} />
                             </div>
-                            {/* Mock thumbnails based on Oraimo design */}
                             <div className="product-details__thumbnails">
-                                <div className="product-details__thumb product-details__thumb--active">
-                                    <img src={product.image} alt="Thumbnail 1" />
-                                </div>
-                                <div className="product-details__thumb">
-                                    <div className="product-details__thumb-placeholder" />
-                                </div>
-                                <div className="product-details__thumb">
-                                    <div className="product-details__thumb-placeholder" />
-                                </div>
+                                {product.images.map((img, index) => (
+                                    <div 
+                                        key={index} 
+                                        className={`product-details__thumb ${activeImageIndex === index ? 'product-details__thumb--active' : ''}`}
+                                        onClick={() => setActiveImageIndex(index)}
+                                    >
+                                        <img src={img} alt={`${product.model} ${index + 1}`} />
+                                    </div>
+                                ))}
+                                {/* Fill remaining slots up to 3 visually if needed, though not strictly required */}
                             </div>
                         </div>
 

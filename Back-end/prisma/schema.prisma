@@ -30,6 +30,8 @@ model Produit {
   nomProduit     String           @map("nom_produit") @db.VarChar(150)
   marque         String           @db.VarChar(100)
   imageUrl       String?          @map("image_url") @db.Text
+  imageUrl2      String?          @map("image_url2") @db.Text
+  imageUrl3      String?          @map("image_url3") @db.Text
   description    String?          @db.Text
   prixGros       Float?           @map("prix_gros")
   prixDetail     Float?           @map("prix_detail")

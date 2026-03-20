@@ -16,6 +16,8 @@ interface Produit {
   marque: string;
   description?: string;
   imageUrl?: string;
+  imageUrl2?: string;
+  imageUrl3?: string;
   prixDetail?: number;
   prixGros?: number;
   quantiteStock?: number;
@@ -53,8 +55,19 @@ export const Produits = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduit, setEditingProduit] = useState<Produit | null>(null);
   const [formData, setFormData] = useState({ ...FORM_INITIAL });
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  
+  type ImageSlot = {
+    url: string | null;      // Local Preview or Full HTTP URL
+    file: File | null;       // New file
+    isExisting: boolean;     // Whether it's from BDD
+    dbUrl: string | null;    // The actual raw URL from DB
+  };
+  const [imageSlots, setImageSlots] = useState<ImageSlot[]>([
+    { url: null, file: null, isExisting: false, dbUrl: null },
+    { url: null, file: null, isExisting: false, dbUrl: null },
+    { url: null, file: null, isExisting: false, dbUrl: null },
+  ]);
+  const [activeSlot, setActiveSlot] = useState<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -105,8 +118,11 @@ export const Produits = () => {
   const openAddModal = () => {
     setEditingProduit(null);
     setFormData({ ...FORM_INITIAL });
-    setImageFile(null);
-    setImagePreview(null);
+    setImageSlots([
+      { url: null, file: null, isExisting: false, dbUrl: null },
+      { url: null, file: null, isExisting: false, dbUrl: null },
+      { url: null, file: null, isExisting: false, dbUrl: null },
+    ]);
     setIsModalOpen(true);
   };
 
@@ -126,8 +142,12 @@ export const Produits = () => {
       finPromo: prod.finPromo ? prod.finPromo.slice(0, 16) : '', // format datetime-local
       isPopulaire: prod.isPopulaire ?? false,
     });
-    setImageFile(null);
-    setImagePreview(prod.imageUrl ? `${(import.meta.env.VITE_API_URL || 'http://localhost:3000/api').replace('/api', '')}${prod.imageUrl}` : null);
+    const API_BASE = (import.meta.env.VITE_API_URL || 'http://localhost:3000/api').replace('/api', '');
+    setImageSlots([
+      { url: prod.imageUrl ? `${API_BASE}${prod.imageUrl.startsWith('/') ? '' : '/'}${prod.imageUrl}` : null, file: null, isExisting: !!prod.imageUrl, dbUrl: prod.imageUrl || null },
+      { url: prod.imageUrl2 ? `${API_BASE}${prod.imageUrl2.startsWith('/') ? '' : '/'}${prod.imageUrl2}` : null, file: null, isExisting: !!prod.imageUrl2, dbUrl: prod.imageUrl2 || null },
+      { url: prod.imageUrl3 ? `${API_BASE}${prod.imageUrl3.startsWith('/') ? '' : '/'}${prod.imageUrl3}` : null, file: null, isExisting: !!prod.imageUrl3, dbUrl: prod.imageUrl3 || null },
+    ]);
     setIsModalOpen(true);
   };
 
@@ -136,17 +156,29 @@ export const Produits = () => {
     setIsModalOpen(false);
     setEditingProduit(null);
     setFormData({ ...FORM_INITIAL });
-    setImageFile(null);
-    setImagePreview(null);
+    setImageSlots([
+      { url: null, file: null, isExisting: false, dbUrl: null },
+      { url: null, file: null, isExisting: false, dbUrl: null },
+      { url: null, file: null, isExisting: false, dbUrl: null },
+    ]);
   };
 
   // ─── Champ image ──────────────────────────────────────────────────────────
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files?.[0]) {
+    if (e.target.files?.[0] && activeSlot !== null) {
       const file = e.target.files[0];
-      setImageFile(file);
-      setImagePreview(URL.createObjectURL(file));
+      setImageSlots(prev => {
+        const newSlots = [...prev];
+        newSlots[activeSlot] = {
+          url: URL.createObjectURL(file),
+          file: file,
+          isExisting: false,
+          dbUrl: null
+        };
+        return newSlots;
+      });
     }
+    if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
   // ─── Soumission formulaire (Création ou Édition) ──────────────────────────
@@ -168,7 +200,17 @@ export const Produits = () => {
       dataToSend.append('prixPromo', formData.prixPromo);
       dataToSend.append('finPromo', formData.finPromo ? new Date(formData.finPromo).toISOString() : '');
       dataToSend.append('isPopulaire', String(formData.isPopulaire));
-      if (imageFile) dataToSend.append('file', imageFile);
+      
+      const existing = imageSlots.filter(s => s.isExisting && s.dbUrl).map(s => s.dbUrl);
+      if (existing.length > 0) {
+        dataToSend.append('existingImages', JSON.stringify(existing));
+      } else {
+        dataToSend.append('existingImages', '[]');
+      }
+      
+      imageSlots.forEach(s => {
+        if (s.file) dataToSend.append('files', s.file);
+      });
 
       if (editingProduit) {
         // ─── Mise à jour ─────────────────────────────────────────────────
@@ -394,23 +436,49 @@ export const Produits = () => {
 
               {/* Formulaire */}
               <form onSubmit={handleSubmit} className="p-6 space-y-4 overflow-y-auto">
-                {/* Image */}
+                {/* Images (jusqu'à 3) */}
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
-                    Image du Produit
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    Images du Produit (jusqu'à 3)
                   </label>
-                  <div
-                    onClick={() => fileInputRef.current?.click()}
-                    className="w-full h-32 bg-slate-50 border-2 border-dashed border-slate-200 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:bg-slate-100 hover:border-primary/50 transition-all overflow-hidden"
-                  >
-                    {imagePreview ? (
-                      <img src={imagePreview} alt="Aperçu" className="w-full h-full object-contain" />
-                    ) : (
-                      <>
-                        <Upload className="text-slate-400 mb-2" size={24} />
-                        <span className="text-sm text-slate-500">Cliquez pour ajouter une image</span>
-                      </>
-                    )}
+                  <div className="grid grid-cols-3 gap-4">
+                    {imageSlots.map((slot, idx) => (
+                      <div key={idx} className="relative">
+                        <div
+                          onClick={() => {
+                            setActiveSlot(idx);
+                            fileInputRef.current?.click();
+                          }}
+                          className={`w-full aspect-square bg-slate-50 border-2 border-dashed ${slot.url ? 'border-primary/20 bg-primary/5' : 'border-slate-200'} rounded-lg flex flex-col items-center justify-center cursor-pointer hover:bg-slate-100 hover:border-primary/50 transition-all overflow-hidden group`}
+                        >
+                          {slot.url ? (
+                            <img src={slot.url} alt={`Aperçu ${idx + 1}`} className="w-full h-full object-contain group-hover:opacity-75 transition-opacity" />
+                          ) : (
+                            <>
+                              <Upload className="text-slate-400 mb-1 group-hover:text-primary transition-colors" size={20} />
+                              <span className="text-xs text-slate-500 font-medium whitespace-nowrap">Image {idx + 1}</span>
+                            </>
+                          )}
+                        </div>
+                        {slot.url && (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setImageSlots(prev => {
+                                const newSlots = [...prev];
+                                newSlots[idx] = { url: null, file: null, isExisting: false, dbUrl: null };
+                                return newSlots;
+                              });
+                            }}
+                            className="absolute -top-2 -right-2 bg-red-100 text-red-600 p-1.5 rounded-full hover:bg-red-200 transition-colors shadow-sm ring-2 ring-white"
+                            title="Supprimer l'image"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        )}
+                      </div>
+                    ))}
                   </div>
                   <input
                     type="file"
@@ -419,19 +487,9 @@ export const Produits = () => {
                     accept="image/*"
                     className="hidden"
                   />
-                  {imagePreview && (
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setImageFile(null);
-                        setImagePreview(null);
-                      }}
-                      className="text-xs text-red-500 mt-1 hover:underline flex items-center gap-1"
-                    >
-                      <X size={12} /> Retirer l'image
-                    </button>
-                  )}
+                  <p className="text-xs text-slate-500 mt-2 font-medium">
+                    Cliquez sur une case pour ajouter/remplacer. Utilisez la suppression pour effacer une image.
+                  </p>
                 </div>
 
                 {/* Nom */}

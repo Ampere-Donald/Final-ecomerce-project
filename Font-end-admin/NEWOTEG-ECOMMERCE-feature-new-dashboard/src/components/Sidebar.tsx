@@ -50,8 +50,8 @@ export const Sidebar = () => {
   return (
     <aside className="w-64 flex-shrink-0 border-r border-slate-200 bg-white flex flex-col h-screen sticky top-0">
       <div className="p-6 border-b border-slate-100 flex items-center gap-3">
-        <div className="size-8 bg-primary rounded-lg flex items-center justify-center text-white">
-          <Package2 size={20} />
+        <div className="w-10 h-10 flex items-center justify-center">
+          <img src="/logo.png" alt="Newoteg" className="w-full h-full object-contain drop-shadow-sm" />
         </div>
         <h1 className="text-xl font-bold tracking-tight text-primary">NEWOTEG</h1>
       </div>

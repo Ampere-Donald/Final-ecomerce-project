@@ -9,10 +9,11 @@ import {
   ParseUUIDPipe,
   UseInterceptors,
   UploadedFile,
+  UploadedFiles,
   Query,
   BadRequestException,
 } from '@nestjs/common';
-import { FileInterceptor } from '@nestjs/platform-express';
+import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname, join } from 'path';
 import { existsSync } from 'fs';
@@ -26,7 +27,7 @@ export class ProduitController {
 
   @Post()
   @UseInterceptors(
-    FileInterceptor('file', {
+    FilesInterceptor('files', 3, {
       storage: diskStorage({
         destination: './uploads',
         filename: (req, file, cb) => {
@@ -39,11 +40,31 @@ export class ProduitController {
   )
   create(
     @Body() createProduitDto: CreateProduitDto,
-    @UploadedFile() file?: Express.Multer.File,
+    @UploadedFiles() files?: Express.Multer.File[],
   ) {
-    if (file) {
-      createProduitDto.imageUrl = `/uploads/${file.filename}`;
+    // 1. Gérer les images existantes
+    let existingImages: string[] = [];
+    if (createProduitDto.existingImages) {
+      try {
+        existingImages = typeof createProduitDto.existingImages === 'string' 
+          ? JSON.parse(createProduitDto.existingImages) 
+          : createProduitDto.existingImages;
+      } catch (e) {
+        existingImages = Array.isArray(createProduitDto.existingImages) 
+          ? createProduitDto.existingImages 
+          : [createProduitDto.existingImages as string];
+      }
     }
+    
+    // 2. Gérer les nouvelles images
+    const newFileUrls = (files || []).map(f => `/uploads/${f.filename}`);
+    
+    // 3. Fusionner et assigner aux 3 slots
+    const finalImages = [...existingImages, ...newFileUrls].slice(0, 3);
+    createProduitDto.imageUrl = finalImages[0] || undefined;
+    createProduitDto.imageUrl2 = finalImages[1] || undefined;
+    createProduitDto.imageUrl3 = finalImages[2] || undefined;
+    delete createProduitDto.existingImages;
     // Parsing manuel de sécurité pour les champs envoyés en FormData (strings)
     if (createProduitDto.prixGros != null) createProduitDto.prixGros = parseFloat(String(createProduitDto.prixGros));
     if (createProduitDto.prixDetail != null) createProduitDto.prixDetail = parseFloat(String(createProduitDto.prixDetail));
@@ -144,7 +165,7 @@ export class ProduitController {
 
   @Patch(':id')
   @UseInterceptors(
-    FileInterceptor('file', {
+    FilesInterceptor('files', 3, {
       storage: diskStorage({
         destination: './uploads',
         filename: (req, file, cb) => {
@@ -158,10 +179,35 @@ export class ProduitController {
   update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() updateProduitDto: UpdateProduitDto,
-    @UploadedFile() file?: Express.Multer.File,
+    @UploadedFiles() files?: Express.Multer.File[],
   ) {
-    if (file) {
-      updateProduitDto.imageUrl = `/uploads/${file.filename}`;
+    // 1. Gérer les images existantes (ce que le front-end a décidé de garder)
+    let existingImages: string[] = [];
+    if (updateProduitDto.existingImages !== undefined) {
+      try {
+        existingImages = typeof updateProduitDto.existingImages === 'string' && updateProduitDto.existingImages.startsWith('[')
+          ? JSON.parse(updateProduitDto.existingImages) 
+          : updateProduitDto.existingImages;
+      } catch (e) {
+        existingImages = Array.isArray(updateProduitDto.existingImages) 
+          ? updateProduitDto.existingImages 
+          : (updateProduitDto.existingImages ? [updateProduitDto.existingImages as string] : []);
+      }
+      
+      // 2. Nouvelles images
+      const newFileUrls = (files || []).map(f => `/uploads/${f.filename}`);
+      
+      // 3. Assigner aux slots (jusqu'à 3 images)
+      const finalImages = [...existingImages, ...newFileUrls].slice(0, 3);
+      (updateProduitDto as any).imageUrl = finalImages[0] || null;
+      (updateProduitDto as any).imageUrl2 = finalImages[1] || null;
+      (updateProduitDto as any).imageUrl3 = finalImages[2] || null;
+      delete updateProduitDto.existingImages;
+    } else if (files && files.length > 0) {
+      // Fallback si front-end n'envoie pas existingImages mais envoie juste des files (au cas où)
+      updateProduitDto.imageUrl = `/uploads/${files[0].filename}`;
+      if (files[1]) updateProduitDto.imageUrl2 = `/uploads/${files[1].filename}`;
+      if (files[2]) updateProduitDto.imageUrl3 = `/uploads/${files[2].filename}`;
     }
     // Parsing manuel de sécurité pour les champs envoyés en FormData (strings)
     if (updateProduitDto.prixGros != null) updateProduitDto.prixGros = parseFloat(String(updateProduitDto.prixGros));

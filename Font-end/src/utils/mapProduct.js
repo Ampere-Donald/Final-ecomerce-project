@@ -47,5 +47,10 @@ export function mapProduct(p) {
         image: p.imageUrl
             ? `${API_BASE}${p.imageUrl}`
             : PLACEHOLDER_IMG,
+        images: [
+            p.imageUrl ? `${API_BASE}${p.imageUrl}` : PLACEHOLDER_IMG,
+            p.imageUrl2 ? `${API_BASE}${p.imageUrl2}` : null,
+            p.imageUrl3 ? `${API_BASE}${p.imageUrl3}` : null,
+        ].filter(Boolean),
     };
 }

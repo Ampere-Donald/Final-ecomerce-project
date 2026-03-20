@@ -70,8 +70,8 @@ const Login = () => {
 
         <p className="auth-page__brand">{t('auth.brand')}</p>
 
-        <div className="auth-page__icon-block">
-          <ShieldCheck size={32} />
+        <div className="auth-page__icon-block" style={{ width: '64px', height: '64px', margin: '0 auto 1.5rem auto' }}>
+          <img src="/logo.png" alt="Newoteg" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
         </div>
 
         <h1 className="auth-page__title" style={{ textAlign: 'center' }}>{t('auth.welcomeTitle')}</h1>
