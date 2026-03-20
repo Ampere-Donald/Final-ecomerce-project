@@ -116,7 +116,7 @@ const Catalogue = () => {
                     parentCategory: 'ÉQUIPEMENTS',
                     urlDatasheet: p.urlDatasheet || null,
                     image: p.imageUrl 
-                        ? `http://localhost:3000${p.imageUrl}` 
+                        ? `${(import.meta.env.VITE_API_URL || 'http://localhost:3000/api').replace('/api', '')}${p.imageUrl}` 
                         : 'https://images.unsplash.com/photo-1505843490538-5133c6c7d0e1?q=80&w=400&auto=format&fit=crop'
                 }));
 

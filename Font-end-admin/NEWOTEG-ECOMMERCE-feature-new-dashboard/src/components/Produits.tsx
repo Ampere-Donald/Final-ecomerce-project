@@ -127,7 +127,7 @@ export const Produits = () => {
       isPopulaire: prod.isPopulaire ?? false,
     });
     setImageFile(null);
-    setImagePreview(prod.imageUrl ? `http://localhost:3000${prod.imageUrl}` : null);
+    setImagePreview(prod.imageUrl ? `${(import.meta.env.VITE_API_URL || 'http://localhost:3000/api').replace('/api', '')}${prod.imageUrl}` : null);
     setIsModalOpen(true);
   };
 
@@ -703,11 +703,11 @@ export const Produits = () => {
                     <div className="size-12 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center overflow-hidden shrink-0">
                           {prod.imageUrl ? (
                             <img
-                              src={`http://localhost:3000${prod.imageUrl.startsWith('/') ? '' : '/'}${prod.imageUrl}`}
+                              src={`${(import.meta.env.VITE_API_URL || 'http://localhost:3000/api').replace('/api', '')}${prod.imageUrl.startsWith('/') ? '' : '/'}${prod.imageUrl}`}
                               alt={prod.nomProduit}
                               className="w-full h-full object-cover"
                               onError={(e) => {
-                                console.warn('[IMAGE ERROR]', `http://localhost:3000${prod.imageUrl}`);
+                                console.warn('[IMAGE ERROR]', `${(import.meta.env.VITE_API_URL || 'http://localhost:3000/api').replace('/api', '')}${prod.imageUrl}`);
                                 (e.target as HTMLImageElement).style.display = 'none';
                               }}
                             />

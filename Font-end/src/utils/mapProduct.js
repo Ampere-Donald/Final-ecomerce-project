@@ -7,7 +7,7 @@
  * future mismatches between pages.
  */
 
-export const API_BASE = 'http://localhost:3000';
+export const API_BASE = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:3000';
 
 export const PLACEHOLDER_IMG =
     'https://images.unsplash.com/photo-1608564697071-ddf911d81370?q=80&w=400&auto=format&fit=crop';

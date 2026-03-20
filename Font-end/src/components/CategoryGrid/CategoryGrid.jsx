@@ -99,7 +99,7 @@ const CategoryGrid = () => {
                 <div className="category-grid">
                     {displayedCategories.map((cat, index) => {
                         const hasImage = cat.imageUrl && cat.imageUrl.length > 5;
-                        const defaultImage = hasImage ? `http://localhost:3000${cat.imageUrl}` : PLACEHOLDER_IMG;
+                        const defaultImage = hasImage ? `${(import.meta.env.VITE_API_URL || 'http://localhost:3000/api').replace('/api', '')}${cat.imageUrl}` : PLACEHOLDER_IMG;
                         
                         return (
                             <Link 

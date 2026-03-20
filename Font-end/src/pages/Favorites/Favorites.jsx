@@ -16,7 +16,7 @@ const Favorites = () => {
   const getImageUrl = (product) => {
     if (!product.image) return '/placeholder.png';
     if (product.image.startsWith('http')) return product.image;
-    return `http://localhost:3000${product.image}`;
+    return `${(import.meta.env.VITE_API_URL || 'http://localhost:3000/api').replace('/api', '')}${product.image}`;
   };
 
   return (

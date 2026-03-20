@@ -228,7 +228,7 @@ const FeaturedProducts = () => {
                         finPromo: p.finPromo,
                         badge: discount > 0 ? `-${discount}%` : '',
                         image: p.imageUrl
-                            ? `http://localhost:3000${p.imageUrl}`
+                            ? `${(import.meta.env.VITE_API_URL || 'http://localhost:3000/api').replace('/api', '')}${p.imageUrl}`
                             : PLACEHOLDER_IMG,
                     };
                 });
@@ -254,7 +254,7 @@ const FeaturedProducts = () => {
                     wholesalePrice: parseFloat(p.prixGros) || 0,
                     stock: p.quantiteStock ?? 0,
                     image: p.imageUrl
-                        ? `http://localhost:3000${p.imageUrl}`
+                        ? `${(import.meta.env.VITE_API_URL || 'http://localhost:3000/api').replace('/api', '')}${p.imageUrl}`
                         : PLACEHOLDER_IMG,
                 }));
                 setBestSellers(popData);
