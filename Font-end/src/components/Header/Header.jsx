@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
-import { ShoppingCart, User, Menu, Heart, X, Search, LogOut } from 'lucide-react';
+import { ShoppingCart, User, Menu, Heart, X, Search, LogOut, Globe } from 'lucide-react';
 import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
 import { useI18n } from '../../context/I18nContext';
@@ -107,8 +107,9 @@ const Header = () => {
 
                     {/* Desktop Actions */}
                     <div className="header__actions">
-                        <button onClick={toggleLang} className="header__lang-toggle" aria-label="Changer de langue">
-                            {lang === 'fr' ? 'EN' : 'FR'}
+                        <button onClick={toggleLang} className="header__action-btn header__action-btn--lang" aria-label="Switch language">
+                            <Globe size={18} />
+                            <span className="header__lang-label">{lang.toUpperCase()}</span>
                         </button>
                         <SearchBar />
                         <button onClick={handleFavoritesClick} className="header__action-btn header__action-btn--icon-only" aria-label="Favoris">
@@ -175,7 +176,7 @@ const Header = () => {
                         <input
                             type="text"
                             className="header__mobile-search-input"
-                            placeholder="Rechercher un composant..."
+                            placeholder={t('common.searchPlaceholder')}
                             value={mobileSearchTerm}
                             onChange={(e) => setMobileSearchTerm(e.target.value)}
                         />
@@ -276,7 +277,7 @@ const Header = () => {
                     <li className="header__drawer-divider" />
                     <li>
                         <button className="header__drawer-link header__drawer-link--lang" onClick={toggleLang}>
-                            🌐 {lang === 'fr' ? 'Switch to English' : 'Passer en Français'}
+                            <Globe size={18} /> {lang === 'fr' ? 'English (EN)' : 'Français (FR)'}
                         </button>
                     </li>
 
@@ -294,7 +295,7 @@ const Header = () => {
 
                 {/* Drawer Footer */}
                 <div className="header__drawer-footer">
-                    <p>© {new Date().getFullYear()} Newoteg SARL</p>
+                    <p>© {new Date().getFullYear()} NEWOTEG SARL. {t('footer.rights')}</p>
                 </div>
             </nav>
         </>

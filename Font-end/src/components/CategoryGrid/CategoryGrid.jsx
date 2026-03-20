@@ -1,13 +1,44 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { Box, ChevronDown } from 'lucide-react';
 import axios from 'axios';
+import { useI18n } from '../../context/I18nContext';
 import './CategoryGrid.scss';
 
 const PLACEHOLDER_IMG = 'https://images.unsplash.com/photo-1518770660439-4636190af475?q=80&w=600&auto=format&fit=crop';
 
 const CategoryGrid = () => {
+    const { t } = useI18n();
     const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(true);
+
+    const getInitialCount = (width) => {
+        if (width < 768) return 4; // Mobile: 2x2
+        if (width < 992) return 6; // Tablet: 3x2
+        if (width < 1200) return 8; // Small desktop: 4x2
+        return 6; // Desktop: 6x1
+    };
+
+    const getStepCount = (width) => {
+        if (width < 768) return 4;
+        if (width < 992) return 3;
+        if (width < 1200) return 4;
+        return 6;
+    };
+
+    const [visibleCount, setVisibleCount] = useState(6);
+
+    useEffect(() => {
+        const handleResize = () => {
+            const currentInitial = getInitialCount(window.innerWidth);
+            setVisibleCount(prev => Math.max(prev, currentInitial));
+        };
+        
+        // Initial setup
+        setVisibleCount(getInitialCount(window.innerWidth));
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
 
     useEffect(() => {
         const fetchCategories = async () => {
@@ -28,7 +59,7 @@ const CategoryGrid = () => {
             <section className="category-section">
                 <div className="container">
                     <div className="category-section__header">
-                        <h2 className="category-section__title">Composants par Catégorie</h2>
+                        <h2 className="category-section__title">{t('home.categoriesTitle')}</h2>
                     </div>
                     <div className="category-grid">
                         {[1, 2, 3, 4, 5, 6].map(i => (
@@ -50,33 +81,61 @@ const CategoryGrid = () => {
 
     if (categories.length === 0) return null;
 
+    const displayedCategories = categories.slice(0, visibleCount);
+
+    const handleShowMore = () => {
+        const step = getStepCount(window.innerWidth);
+        setVisibleCount(prev => prev + step);
+    };
+
     return (
         <section className="category-section">
             <div className="container">
                 <div className="category-section__header">
-                    <h2 className="category-section__title">Composants par Catégorie</h2>
-                    <Link to="/catalogue" className="category-section__view-all">Explorer le Catalogue &rarr;</Link>
+                    <h2 className="category-section__title">{t('home.categoriesTitle')}</h2>
+                    <Link to="/catalogue" className="category-section__view-all">{t('home.exploreCatalogue')}</Link>
                 </div>
 
                 <div className="category-grid">
-                    {categories.map((cat) => (
-                        <Link to={`/catalogue?categorie=${cat.id}`} key={cat.id} className="category-card-premium">
-                            <div className="category-card-premium__image-container">
-                                <img
-                                    src={cat.imageUrl ? `http://localhost:3000${cat.imageUrl}` : PLACEHOLDER_IMG}
-                                    alt={cat.nom}
-                                    className="category-card-premium__image"
-                                    onError={(e) => { e.target.src = PLACEHOLDER_IMG; }}
-                                />
-                                <div className="category-card-premium__overlay"></div>
-                            </div>
-                            <div className="category-card-premium__content">
-                                <h3 className="category-card-premium__title">{cat.nom}</h3>
-                                <p className="category-card-premium__subtitle">{cat.description || 'Voir les produits'}</p>
-                            </div>
-                        </Link>
-                    ))}
+                    {displayedCategories.map((cat, index) => {
+                        const hasImage = cat.imageUrl && cat.imageUrl.length > 5;
+                        const defaultImage = hasImage ? `http://localhost:3000${cat.imageUrl}` : PLACEHOLDER_IMG;
+                        
+                        return (
+                            <Link 
+                                to={`/catalogue?categorie=${cat.id}`} 
+                                key={cat.id} 
+                                className={`category-card-premium anim-slide-up anim-delay-${(index % 8) + 1}`}
+                            >
+                                <div className="category-card-premium__image-container">
+                                    <img
+                                        src={defaultImage}
+                                        alt={cat.nom}
+                                        className="category-card-premium__image"
+                                        onError={(e) => {
+                                            e.target.onerror = null;
+                                            e.target.src = PLACEHOLDER_IMG;
+                                            e.target.style.opacity = '0.5';
+                                        }}
+                                    />
+                                    <div className="category-card-premium__overlay"></div>
+                                </div>
+                                <div className="category-card-premium__content">
+                                    <h3 className="category-card-premium__title">{cat.nom}</h3>
+                                    <p className="category-card-premium__subtitle">{cat.description || t('home.viewProducts')}</p>
+                                </div>
+                            </Link>
+                        );
+                    })}
                 </div>
+
+                {visibleCount < categories.length && (
+                    <div className="category-section__show-more">
+                        <button className="category-section__show-more-btn" onClick={handleShowMore}>
+                            {t('home.showMore')} <ChevronDown size={18} />
+                        </button>
+                    </div>
+                )}
             </div>
         </section>
     );

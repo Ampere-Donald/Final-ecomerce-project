@@ -4,7 +4,9 @@ import axios from 'axios';
 import { formatFCFA } from '../../utils/formatFCFA';
 import { mapProduct, PLACEHOLDER_IMG } from '../../utils/mapProduct';
 import { useCart } from '../../context/CartContext';
+import { useI18n } from '../../context/I18nContext';
 import { Link } from 'react-router-dom';
+import useScrollReveal from '../../hooks/useScrollReveal';
 import './FeaturedProducts.scss';
 
 
@@ -72,12 +74,13 @@ const useSlider = (itemCount, visibleCount = 2, autoPlayInterval = 4000) => {
 
 // ── Product Card (Flash) ────────────────────────────────────────────────
 const FlashProductCard = ({ product, addToCart }) => {
+    const { t } = useI18n();
     const outOfStock = (product.stock ?? 0) <= 0;
     return (
         <Link to={`/product/${product.id}`} className={`product-card ${outOfStock ? 'product-card--out-of-stock' : ''}`}>
             <div className="product-card__image-wrapper">
                 <span className={`product-card__stock-badge ${outOfStock ? 'product-card__stock-badge--rupture' : ''}`}>
-                    {outOfStock ? 'RUPTURE' : 'EN STOCK'}
+                    {outOfStock ? t('product.outOfStock') : t('product.inStock')}
                 </span>
                 {product.badge && (
                     <span className="product-card__promo-badge">{product.badge}</span>
@@ -98,13 +101,13 @@ const FlashProductCard = ({ product, addToCart }) => {
 
                 <div className="product-card__pricing">
                     <div className="product-card__retail">
-                        <span className="product-card__retail-label">Prix</span>
+                        <span className="product-card__retail-label">{t('product.priceLabel')}</span>
                         <span className="product-card__retail-price" style={{ textDecoration: 'line-through', opacity: 0.5, fontSize: '0.85em' }}>
                             {formatFCFA(product.retailPrice)}
                         </span>
                     </div>
                     <div className="product-card__wholesale">
-                        <span className="product-card__wholesale-label" style={{ color: '#ef4444', fontWeight: 700 }}>Promo</span>
+                        <span className="product-card__wholesale-label" style={{ color: '#ef4444', fontWeight: 700 }}>{t('product.promoLabel')}</span>
                         <span className="product-card__wholesale-price" style={{ color: '#ef4444', fontWeight: 800, fontSize: '1.1em' }}>
                             {formatFCFA(product.promoPrice)}
                         </span>
@@ -112,7 +115,7 @@ const FlashProductCard = ({ product, addToCart }) => {
                 </div>
 
                 <p className={`product-card__stock-info ${outOfStock ? 'product-card__stock-info--danger' : ''}`}>
-                    {outOfStock ? 'Rupture de stock' : `En stock : ${product.stock} unités`}
+                    {outOfStock ? t('product.outOfStockLong') : t('product.inStockCount', { count: product.stock })}
                 </p>
 
                 <button
@@ -120,7 +123,7 @@ const FlashProductCard = ({ product, addToCart }) => {
                     onClick={(e) => { e.preventDefault(); if (!outOfStock) addToCart({ ...product, retailPrice: product.promoPrice }, 1); }}
                     disabled={outOfStock}
                 >
-                    {outOfStock ? 'Indisponible' : 'Ajouter au panier'}
+                    {outOfStock ? t('product.unavailable') : t('product.addToCart')}
                 </button>
             </div>
         </Link>
@@ -129,12 +132,13 @@ const FlashProductCard = ({ product, addToCart }) => {
 
 // ── Product Card (Populaire) ────────────────────────────────────────────
 const PopularProductCard = ({ product, addToCart }) => {
+    const { t } = useI18n();
     const outOfStock = (product.stock ?? 0) <= 0;
     return (
         <Link to={`/product/${product.id}`} className={`product-card ${outOfStock ? 'product-card--out-of-stock' : ''}`}>
             <div className="product-card__image-wrapper">
                 <span className={`product-card__stock-badge ${outOfStock ? 'product-card__stock-badge--rupture' : ''}`}>
-                    {outOfStock ? 'RUPTURE' : 'EN STOCK'}
+                    {outOfStock ? t('product.outOfStock') : t('product.inStock')}
                 </span>
                 <div className="product-card__image">
                     <img
@@ -152,17 +156,17 @@ const PopularProductCard = ({ product, addToCart }) => {
 
                 <div className="product-card__pricing">
                     <div className="product-card__retail">
-                        <span className="product-card__retail-label">Détail</span>
+                        <span className="product-card__retail-label">{t('product.retailPrice')}</span>
                         <span className="product-card__retail-price">{formatFCFA(product.retailPrice)}</span>
                     </div>
                     <div className="product-card__wholesale">
-                        <span className="product-card__wholesale-label">Gros</span>
+                        <span className="product-card__wholesale-label">{t('product.wholesalePrice')}</span>
                         <span className="product-card__wholesale-price">{formatFCFA(product.wholesalePrice)}</span>
                     </div>
                 </div>
 
                 <p className={`product-card__stock-info ${outOfStock ? 'product-card__stock-info--danger' : ''}`}>
-                    {outOfStock ? 'Rupture de stock' : `En stock : ${product.stock} unités`}
+                    {outOfStock ? t('product.outOfStockLong') : t('product.inStockCount', { count: product.stock })}
                 </p>
 
                 <button
@@ -170,7 +174,7 @@ const PopularProductCard = ({ product, addToCart }) => {
                     onClick={(e) => { e.preventDefault(); if (!outOfStock) addToCart(product, 1); }}
                     disabled={outOfStock}
                 >
-                    {outOfStock ? 'Indisponible' : 'Ajouter au panier'}
+                    {outOfStock ? t('product.unavailable') : t('product.addToCart')}
                 </button>
             </div>
         </Link>
@@ -179,6 +183,7 @@ const PopularProductCard = ({ product, addToCart }) => {
 
 // ── Main Component ─────────────────────────────────────────────
 const FeaturedProducts = () => {
+    const { t } = useI18n();
     const { addToCart } = useCart();
     const [flashProducts, setFlashProducts] = useState([]);
     const [bestSellers, setBestSellers] = useState([]);
@@ -190,6 +195,10 @@ const FeaturedProducts = () => {
 
     const flashTrackRef = useRef(null);
     const popTrackRef = useRef(null);
+    
+    const revealOptions = { threshold: 0.15, rootMargin: '0px 0px -50px 0px' };
+    const flashRevealRef = useScrollReveal(revealOptions);
+    const popRevealRef = useScrollReveal(revealOptions);
 
     // ── Fetch flash deals & populaires from dedicated API routes ──
     useEffect(() => {
@@ -267,7 +276,7 @@ const FeaturedProducts = () => {
         return (
             <section className="promo-catalogue">
                 <div className="container" style={{ textAlign: 'center', padding: '4rem 0', color: '#94a3b8' }}>
-                    Chargement des produits vedettes...
+                    {t('home.loadingFeatured')}
                 </div>
             </section>
         );
@@ -282,31 +291,31 @@ const FeaturedProducts = () => {
 
                 {/* ━━ Flash Deal Banner B2B ━━━━━━━━━━━━━━━━━━━━ */}
                 {flashProducts.length > 0 && (
-                <div className="flash-deal-b2b">
+                <div className="flash-deal-b2b reveal-up" ref={flashRevealRef}>
                     <div className="flash-deal-b2b__left">
                         <span className="flash-deal-b2b__badge">
                             <Zap size={14} fill="currentColor" />
-                            FLASH DEAL
+                            {t('home.flashDeal')}
                         </span>
-                        <h2 className="flash-deal-b2b__title">Ventes Flash</h2>
+                        <h2 className="flash-deal-b2b__title">{t('home.flashSales')}</h2>
                         <p className="flash-deal-b2b__desc">
-                            Profitez des prix promotionnels exceptionnels sur nos composants électroniques. Offre limitée dans le temps !
+                            {t('home.flashSalesDesc')}
                         </p>
 
                         <div className="flash-deal-b2b__timer">
                             <div className="flash-deal-b2b__timer-block">
                                 <span className="flash-deal-b2b__timer-value">{pad(countdown.h)}</span>
-                                <span className="flash-deal-b2b__timer-label">HRS</span>
+                                <span className="flash-deal-b2b__timer-label">{t('home.hrs')}</span>
                             </div>
                             <span className="flash-deal-b2b__timer-sep">:</span>
                             <div className="flash-deal-b2b__timer-block">
                                 <span className="flash-deal-b2b__timer-value">{pad(countdown.m)}</span>
-                                <span className="flash-deal-b2b__timer-label">MIN</span>
+                                <span className="flash-deal-b2b__timer-label">{t('home.min')}</span>
                             </div>
                             <span className="flash-deal-b2b__timer-sep">:</span>
                             <div className="flash-deal-b2b__timer-block">
                                 <span className="flash-deal-b2b__timer-value">{pad(countdown.s)}</span>
-                                <span className="flash-deal-b2b__timer-label">SEC</span>
+                                <span className="flash-deal-b2b__timer-label">{t('home.sec')}</span>
                             </div>
                         </div>
 
@@ -317,7 +326,7 @@ const FeaturedProducts = () => {
                                     className={`slider-nav__btn ${!flashSlider.canGoPrev ? 'slider-nav__btn--disabled' : ''}`}
                                     onClick={flashSlider.goPrev}
                                     disabled={!flashSlider.canGoPrev}
-                                    aria-label="Précédent"
+                                    aria-label={t('common.prev')}
                                 >
                                     <ChevronLeft size={20} />
                                 </button>
@@ -328,7 +337,7 @@ const FeaturedProducts = () => {
                                     className={`slider-nav__btn ${!flashSlider.canGoNext ? 'slider-nav__btn--disabled' : ''}`}
                                     onClick={flashSlider.goNext}
                                     disabled={!flashSlider.canGoNext}
-                                    aria-label="Suivant"
+                                    aria-label={t('common.next')}
                                 >
                                     <ChevronRight size={20} />
                                 </button>
@@ -356,9 +365,9 @@ const FeaturedProducts = () => {
 
                 {/* ━━ Best Sellers Grid / Slider ━━━━━━━━━━━━━━━━━━━━━━━ */}
                 {bestSellers.length > 0 && (
-                <div className="bestsellers section-margin">
+                <div className="bestsellers section-margin reveal-up" ref={popRevealRef}>
                     <div className="bestsellers__header">
-                        <h2 className="bestsellers__title">Composants les Plus Demandés</h2>
+                        <h2 className="bestsellers__title">{t('home.bestSellers')}</h2>
                         <div className="bestsellers__header-right">
                             {popSlider.needsSlider && (
                                 <div className="slider-nav">
@@ -366,7 +375,7 @@ const FeaturedProducts = () => {
                                         className={`slider-nav__btn ${!popSlider.canGoPrev ? 'slider-nav__btn--disabled' : ''}`}
                                         onClick={popSlider.goPrev}
                                         disabled={!popSlider.canGoPrev}
-                                        aria-label="Précédent"
+                                        aria-label={t('common.prev')}
                                     >
                                         <ChevronLeft size={18} />
                                     </button>
@@ -377,13 +386,13 @@ const FeaturedProducts = () => {
                                         className={`slider-nav__btn ${!popSlider.canGoNext ? 'slider-nav__btn--disabled' : ''}`}
                                         onClick={popSlider.goNext}
                                         disabled={!popSlider.canGoNext}
-                                        aria-label="Suivant"
+                                        aria-label={t('common.next')}
                                     >
                                         <ChevronRight size={18} />
                                     </button>
                                 </div>
                             )}
-                            <Link to="/catalogue" className="bestsellers__view-all">Voir tout &rarr;</Link>
+                            <Link to="/catalogue" className="bestsellers__view-all">{t('common.viewAll')} &rarr;</Link>
                         </div>
                     </div>
 

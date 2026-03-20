@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, Mail } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { useI18n } from '../../context/I18nContext';
 import './Auth.scss';
 
 const VerifyOTP = () => {
@@ -9,6 +10,7 @@ const VerifyOTP = () => {
   const [searchParams] = useSearchParams();
   const email = searchParams.get('email') || '';
   const { verifyOtp, resendOtp } = useAuth();
+  const { t } = useI18n();
 
   const [digits, setDigits] = useState(['', '', '', '', '', '']);
   const [error, setError] = useState('');
@@ -49,15 +51,15 @@ const VerifyOTP = () => {
   const handleVerify = async (e) => {
     e.preventDefault();
     const code = digits.join('');
-    if (code.length !== 6) return setError('Veuillez saisir les 6 chiffres.');
+    if (code.length !== 6) return setError(t('auth.verifyReqDigits'));
     setError('');
     setLoading(true);
     try {
       await verifyOtp(email, code);
-      setSuccess('Email vérifié ! Redirection vers la connexion...');
+      setSuccess(t('auth.verifySuccess'));
       setTimeout(() => navigate('/login', { replace: true }), 1500);
     } catch (err) {
-      setError(err.response?.data?.message || 'Code incorrect.');
+      setError(err.response?.data?.message || t('auth.verifyInvalidCode'));
     } finally {
       setLoading(false);
     }
@@ -68,11 +70,11 @@ const VerifyOTP = () => {
     try {
       await resendOtp(email);
       setCooldown(60);
-      setSuccess('Nouveau code envoyé !');
+      setSuccess(t('auth.verifyResendSuccess'));
       setDigits(['', '', '', '', '', '']);
       setTimeout(() => setSuccess(''), 3000);
     } catch (err) {
-      setError(err.response?.data?.message || 'Erreur lors du renvoi.');
+      setError(err.response?.data?.message || t('auth.verifyResendErr'));
     }
   };
 
@@ -80,18 +82,18 @@ const VerifyOTP = () => {
     <div className="auth-page">
       <div className="auth-page__card">
         <button className="auth-page__back" onClick={() => navigate(-1)}>
-          <ArrowLeft size={16} /> Retour
+          <ArrowLeft size={16} /> {t('auth.back')}
         </button>
 
-        <p className="auth-page__brand">NEWOTEG SARL</p>
+        <p className="auth-page__brand">{t('auth.brand')}</p>
 
         <div className="auth-page__icon-block">
           <Mail size={32} />
         </div>
 
-        <h1 className="auth-page__title" style={{ textAlign: 'center' }}>Vérification</h1>
+        <h1 className="auth-page__title" style={{ textAlign: 'center' }}>{t('auth.verifyTitle')}</h1>
         <p className="auth-page__subtitle" style={{ textAlign: 'center' }}>
-          Un code à 6 chiffres a été envoyé à<br />
+          {t('auth.verifySubtitleText')}<br />
           <strong>{email}</strong>
         </p>
 
@@ -116,15 +118,15 @@ const VerifyOTP = () => {
           </div>
 
           <button type="submit" className="auth-page__submit" disabled={loading}>
-            {loading ? 'Vérification...' : 'Vérifier'}
+            {loading ? t('auth.verifying') : t('auth.verifyBtn')}
           </button>
         </form>
 
         <div className="auth-page__resend" style={{ marginTop: '1.5rem' }}>
           {cooldown > 0 ? (
-            <span>Renvoyer le code dans {cooldown}s</span>
+            <span>{t('auth.resendIn')} {cooldown}s</span>
           ) : (
-            <span>Vous n'avez pas reçu le code ? <button onClick={handleResend}>Renvoyer</button></span>
+            <span>{t('auth.notReceived')} <button onClick={handleResend}>{t('auth.resendBtn')}</button></span>
           )}
         </div>
       </div>

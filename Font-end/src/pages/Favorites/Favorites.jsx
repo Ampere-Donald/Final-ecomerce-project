@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Heart, ShoppingCart, Trash2 } from 'lucide-react';
 import { useFavorites } from '../../context/FavoritesContext';
 import { useCart } from '../../context/CartContext';
+import { useI18n } from '../../context/I18nContext';
 import { formatFCFA } from '../../utils/formatFCFA';
 import Footer from '../../components/Footer/Footer';
 import './Favorites.scss';
@@ -10,6 +11,7 @@ import './Favorites.scss';
 const Favorites = () => {
   const { favorites, toggleFavorite } = useFavorites();
   const { addToCart } = useCart();
+  const { t } = useI18n();
 
   const getImageUrl = (product) => {
     if (!product.image) return '/placeholder.png';
@@ -19,19 +21,19 @@ const Favorites = () => {
 
   return (
     <>
-      <Helmet><title>Mes Favoris — NEWOTEG</title></Helmet>
+      <Helmet><title>{t('favorites.metaTitle')}</title></Helmet>
       <div className="favorites container">
         <div className="favorites__header">
-          <h1>Mes Favoris</h1>
-          <p>{favorites.length} produit{favorites.length !== 1 ? 's' : ''}</p>
+          <h1>{t('favorites.title')}</h1>
+          <p>{favorites.length === 1 ? t('favorites.productCount_one', { count: favorites.length }) : t('favorites.productCount_other', { count: favorites.length })}</p>
         </div>
 
         {favorites.length === 0 ? (
           <div className="favorites__empty">
             <Heart size={48} />
-            <h3>Aucun favori</h3>
-            <p>Explorez notre catalogue et ajoutez vos produits préférés.</p>
-            <Link to="/catalogue">Voir le catalogue</Link>
+            <h3>{t('favorites.emptyTitle')}</h3>
+            <p>{t('favorites.emptyDesc')}</p>
+            <Link to="/catalogue">{t('favorites.browseCatalogue')}</Link>
           </div>
         ) : (
           <div className="favorites__grid">
@@ -56,13 +58,13 @@ const Favorites = () => {
                       className="favorites__btn favorites__btn--primary"
                       onClick={() => addToCart(product, 1)}
                     >
-                      <ShoppingCart size={14} /> Ajouter
+                      <ShoppingCart size={14} /> {t('favorites.addBtn')}
                     </button>
                     <button
                       className="favorites__btn favorites__btn--remove"
                       onClick={() => toggleFavorite(product)}
                     >
-                      <Trash2 size={14} /> Retirer
+                      <Trash2 size={14} /> {t('favorites.removeBtn')}
                     </button>
                   </div>
                 </div>

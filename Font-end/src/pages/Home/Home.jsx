@@ -1,4 +1,5 @@
 import { Helmet } from 'react-helmet-async';
+import { useI18n } from '../../context/I18nContext';
 import HeroBanner from '../../components/HeroBanner/HeroBanner';
 import Features from '../../components/Features/Features';
 import CategoryGrid from '../../components/CategoryGrid/CategoryGrid';
@@ -9,6 +10,7 @@ import './Home.scss';
 
 // Partner Logos (using simple text/svg for B2B electronic brands vibe)
 const PartnerBrands = () => {
+    const { t } = useI18n();
     const brands = [
         "STMicroelectronics", "Texas Instruments", "Microchip", "Arduino",
         "Raspberry Pi", "NXP", "Analog Devices"
@@ -17,7 +19,7 @@ const PartnerBrands = () => {
     return (
         <section className="partner-brands">
             <div className="container">
-                <p className="partner-brands__title">NOS MARQUES PARTENAIRES & FOURNISSEURS</p>
+                <p className="partner-brands__title">{t('home.partnerBrands')}</p>
                 <div className="partner-brands__marquee">
                     <div className="partner-brands__track">
                         {[...brands, ...brands, ...brands].map((brand, i) => (
@@ -31,11 +33,12 @@ const PartnerBrands = () => {
 };
 
 const Home = () => {
+    const { t } = useI18n();
     return (
         <div className="home-page">
             <Helmet>
-                <title>NEWOTEG SARL — Équipements Électroniques & Composants Industriels à Douala</title>
-                <meta name="description" content="Découvrez notre catalogue d'équipements électroniques, composants industriels et matériel technique. Importation directe d'Europe, Chine et Canada. Livraison au Cameroun et en Afrique Centrale." />
+                <title>{t('home.metaTitle')}</title>
+                <meta name="description" content={t('home.metaDesc')} />
             </Helmet>
             <HeroBanner />
             <PartnerBrands />

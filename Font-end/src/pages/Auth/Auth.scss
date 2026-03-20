@@ -9,7 +9,11 @@ $header-height-mobile: 102px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: $color-background;
+  background: 
+    radial-gradient(circle at 15% 50%, rgba($color-primary-light, 0.15), transparent 25%),
+    radial-gradient(circle at 85% 30%, rgba($color-primary, 0.1), transparent 25%),
+    $color-background;
+  background-attachment: fixed;
   padding: $spacing-lg;
   padding-top: calc(#{$header-height-desktop} + #{$spacing-xl});
 
@@ -21,11 +25,15 @@ $header-height-mobile: 102px;
   &__card {
     width: 100%;
     max-width: 480px;
-    background: $color-surface;
+    background: rgba($color-surface, 0.85);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid rgba(255, 255, 255, 0.8);
     border-radius: $border-radius-xl;
-    box-shadow: $shadow-lg;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.02);
     padding: $spacing-2xl $spacing-xl;
     position: relative;
+    animation: scaleIn 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both;
   }
 
   &__back {
@@ -98,16 +106,18 @@ $header-height-mobile: 102px;
 
     input {
       width: 100%;
-      padding: $spacing-sm $spacing-md;
-      border: $border-width solid $color-border;
+      padding: 14px $spacing-md;
+      border: 1px solid rgba($color-border, 0.8);
       border-radius: $border-radius-md;
       font-size: $font-size-base;
-      transition: border-color $transition-fast, box-shadow $transition-fast;
-      background: $color-surface;
+      transition: all $transition-fast;
+      background: rgba($color-surface, 0.6);
 
       &:focus {
         border-color: $color-primary;
-        box-shadow: 0 0 0 3px rgba($color-primary, 0.12);
+        background: $color-surface;
+        box-shadow: 0 0 0 3px rgba($color-primary, 0.15);
+        transform: translateY(-1px);
       }
 
       &::placeholder { color: $color-secondary-light; }
@@ -175,25 +185,31 @@ $header-height-mobile: 102px;
 
   &__submit {
     width: 100%;
-    padding: $spacing-sm $spacing-lg;
-    background: $color-primary;
+    padding: 16px $spacing-lg;
+    background: linear-gradient(135deg, $color-primary 0%, $color-primary-dark 100%);
+    background-size: 200% auto;
     color: #fff;
     border: none;
     border-radius: $border-radius-md;
     font-size: $font-size-base;
-    font-weight: $font-weight-semibold;
+    font-weight: 800; // Inter Extrabold
+    letter-spacing: 0.05em;
     cursor: pointer;
-    transition: background $transition-fast, transform $transition-fast;
+    transition: all 0.3s ease;
     margin-top: $spacing-xs;
+    box-shadow: 0 4px 15px rgba($color-primary, 0.25);
 
     &:hover:not(:disabled) {
-      background: $color-primary-dark;
-      transform: translateY(-1px);
+      background-position: right center;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba($color-primary, 0.35);
     }
 
     &:disabled {
       opacity: 0.6;
       cursor: not-allowed;
+      box-shadow: none;
+      transform: none;
     }
   }
 

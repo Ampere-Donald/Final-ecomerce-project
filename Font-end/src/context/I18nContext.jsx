@@ -1,45 +1,65 @@
-import React, { createContext, useState, useContext } from 'react';
+import React, { createContext, useState, useContext, useEffect } from 'react';
+import fr from '../i18n/fr';
+import en from '../i18n/en';
 
-const translations = {
-  fr: {
-    nav: { home: 'ACCUEIL', catalogue: 'CATALOGUE', about: 'À PROPOS', contact: 'CONTACT' },
-    drawer: { home: 'Accueil', catalogue: 'Catalogue', about: 'À Propos', contact: 'Contact', cart: 'Panier', favorites: 'Favoris', profile: 'Mon Profil', login: 'Se Connecter', logout: 'Déconnexion' },
-    mobileStrip: { home: 'Accueil', catalogue: 'Catalogue', about: 'À Propos', contact: 'Contact' },
-    search: 'Rechercher un composant...',
-    addToCart: 'Ajouter au panier',
-    outOfStock: 'Indisponible',
-    inStock: 'En stock',
-    viewAll: 'Voir tout',
-    footer: { rights: 'Tous droits réservés', terms: "Conditions d'utilisation", privacy: 'Politique de Confidentialité' },
-  },
-  en: {
-    nav: { home: 'HOME', catalogue: 'CATALOGUE', about: 'ABOUT', contact: 'CONTACT' },
-    drawer: { home: 'Home', catalogue: 'Catalogue', about: 'About', contact: 'Contact', cart: 'Cart', favorites: 'Favorites', profile: 'My Profile', login: 'Sign In', logout: 'Sign Out' },
-    mobileStrip: { home: 'Home', catalogue: 'Catalogue', about: 'About', contact: 'Contact' },
-    search: 'Search a component...',
-    addToCart: 'Add to cart',
-    outOfStock: 'Out of stock',
-    inStock: 'In stock',
-    viewAll: 'View all',
-    footer: { rights: 'All rights reserved', terms: 'Terms of Use', privacy: 'Privacy Policy' },
-  },
-};
+const translations = { fr, en };
 
 const I18nContext = createContext();
 
 export const I18nProvider = ({ children }) => {
-  const [lang, setLang] = useState('fr');
-  const t = (key) => {
+  const [lang, setLangState] = useState('en');
+
+  useEffect(() => {
+    const savedLang = localStorage.getItem('appLang');
+    if (savedLang && (savedLang === 'fr' || savedLang === 'en')) {
+      setLangState(savedLang);
+      document.documentElement.lang = savedLang;
+    } else {
+      const browserLang = navigator.language || navigator.userLanguage;
+      const initialLang = browserLang.toLowerCase().startsWith('fr') ? 'fr' : 'en';
+      setLangState(initialLang);
+      document.documentElement.lang = initialLang;
+    }
+  }, []);
+
+  const setLang = (newLang) => {
+    setLangState(newLang);
+    localStorage.setItem('appLang', newLang);
+    document.documentElement.lang = newLang;
+  };
+
+  const t = (key, variables = {}) => {
     const keys = key.split('.');
     let val = translations[lang];
     for (const k of keys) {
-      val = val?.[k];
+      if (val === undefined) break;
+      val = val[k];
     }
-    return val || key;
+    
+    // Fallback to English if key missing in French, then fallback to key itself
+    if (val === undefined && lang !== 'en') {
+        val = translations['en'];
+        for (const k of keys) {
+            if (val === undefined) break;
+            val = val[k];
+        }
+    }
+
+    if (val === undefined) return key;
+
+    // Handle string interpolation
+    if (typeof val === 'string' && Object.keys(variables).length > 0) {
+      return val.replace(/\{\{\s*(\w+)\s*\}\}/g, (match, p1) => {
+        return variables[p1] !== undefined ? variables[p1] : match;
+      });
+    }
+    return val;
   };
-  const toggleLang = () => setLang(prev => prev === 'fr' ? 'en' : 'fr');
+
+  const toggleLang = () => setLang(lang === 'fr' ? 'en' : 'fr');
+
   return (
-    <I18nContext.Provider value={{ lang, t, toggleLang }}>
+    <I18nContext.Provider value={{ lang, t, toggleLang, setLang }}>
       {children}
     </I18nContext.Provider>
   );

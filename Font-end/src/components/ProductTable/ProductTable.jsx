@@ -1,12 +1,14 @@
 import { Link } from 'react-router-dom';
 import { ShoppingCart, FileText } from 'lucide-react';
 import { useCart } from '../../context/CartContext';
+import { useI18n } from '../../context/I18nContext';
 import { formatFCFA } from '../../utils/formatFCFA';
 import './ProductTable.scss';
 
 const PLACEHOLDER_IMG = 'https://images.unsplash.com/photo-1608564697071-ddf911d81370?q=80&w=400&auto=format&fit=crop';
 
 const ProductTable = ({ products }) => {
+    const { t } = useI18n();
     const { addToCart } = useCart();
 
     return (
@@ -14,13 +16,13 @@ const ProductTable = ({ products }) => {
             <table className="product-table">
                 <thead>
                     <tr>
-                        <th className="product-table__th-img">Image</th>
-                        <th className="product-table__th-ref">Référence & Marque</th>
-                        <th className="product-table__th-desc">Description courte</th>
-                        <th className="product-table__th-stock">Stock</th>
-                        <th className="product-table__th-price">Prix (Détail)</th>
-                        <th className="product-table__th-price">Prix (Gros)</th>
-                        <th className="product-table__th-action">Achat</th>
+                        <th className="product-table__th-img">{t('productTable.image')}</th>
+                        <th className="product-table__th-ref">{t('productTable.refBrand')}</th>
+                        <th className="product-table__th-desc">{t('productTable.shortDesc')}</th>
+                        <th className="product-table__th-stock">{t('productTable.stock')}</th>
+                        <th className="product-table__th-price">{t('productTable.priceRetail')}</th>
+                        <th className="product-table__th-price">{t('productTable.priceWholesale')}</th>
+                        <th className="product-table__th-action">{t('productTable.action')}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -49,17 +51,17 @@ const ProductTable = ({ products }) => {
                                     <Link to={`/product/${product.code}`} className="product-table__ref-link">
                                         <strong>{product.model}</strong>
                                     </Link>
-                                    <span className="product-table__brand">{product.brand || 'Générique'}</span>
+                                    <span className="product-table__brand">{product.brand || t('productTable.genericBrand')}</span>
                                     <span className="product-table__category">{product.categoryName}</span>
                                 </td>
                                 <td className="product-table__cell product-table__desc">
-                                    {product.description?.substring(0, 50) || 'Aucune description'}...
+                                    {product.description?.substring(0, 50) || t('productTable.noDesc')}...
                                 </td>
                                 <td className="product-table__cell">
                                     {isBackorder ? (
-                                        <span className="badge badge-warning" style={{ backgroundColor: '#f59e0b', color: 'white', padding: '4px 8px', borderRadius: '4px', fontSize: '11px', fontWeight: 'bold' }}>Sur commande (14j)</span>
+                                        <span className="badge badge-warning" style={{ backgroundColor: '#f59e0b', color: 'white', padding: '4px 8px', borderRadius: '4px', fontSize: '11px', fontWeight: 'bold' }}>{t('productTable.preorder')}</span>
                                     ) : (
-                                        <span className="badge badge-stock">{product.stock} en stock</span>
+                                        <span className="badge badge-stock">{t('productTable.inStock', { count: product.stock })}</span>
                                     )}
                                 </td>
                                 <td className="product-table__cell product-table__price product-table__price--retail">
@@ -76,7 +78,7 @@ const ProductTable = ({ products }) => {
                                                 target="_blank" 
                                                 rel="noopener noreferrer" 
                                                 className="btn-datasheet-table"
-                                                title="Fiche Technique"
+                                                title={t('product.datasheet')}
                                                 onClick={e => e.stopPropagation()}
                                             >
                                                 <FileText size={18} />
@@ -85,8 +87,8 @@ const ProductTable = ({ products }) => {
                                         <button 
                                             className="btn-add-table" 
                                             onClick={handleAddToCart}
-                                            aria-label="Ajouter au panier / Précommander"
-                                            title={isBackorder ? "Précommander avec délai (14j)" : "Ajouter au panier"}
+                                            aria-label={t('productTable.addPreorderAria')}
+                                            title={isBackorder ? t('product.preorderBtnTitle') : t('product.addToCart')}
                                         >
                                             <ShoppingCart size={18} />
                                         </button>

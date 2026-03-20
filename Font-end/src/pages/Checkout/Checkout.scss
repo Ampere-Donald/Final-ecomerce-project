@@ -54,11 +54,13 @@
     }
 
     &--active {
-        color: $color-text;
+        color: $color-primary;
 
         .checkout__step-num {
             background-color: $color-primary;
-            color: white;
+            color: $color-surface;
+            box-shadow: 0 0 0 4px rgba($color-primary, 0.2);
+            animation: pulseGlow 2s infinite;
         }
     }
 
@@ -129,14 +131,18 @@
 // ── Section Generics ──────────────────────────────────────
 .checkout__section {
     background-color: $color-surface;
-    border-radius: $border-radius-lg;
+    border-radius: $border-radius-xl;
     padding: $spacing-xl;
-    box-shadow: $shadow-sm;
-    border: 1px solid $color-border;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+    border: 1px solid rgba($color-border, 0.5);
+    border-left: 4px solid $color-primary-light;
+    position: relative;
+    overflow: hidden;
 
     @media (max-width: $breakpoint-sm) {
         padding: $spacing-md;
         border-radius: $border-radius-md;
+        border-left-width: 3px;
     }
 }
 
@@ -560,22 +566,28 @@
 
 .checkout__place-order-btn {
     width: 100%;
-    padding: 1rem;
-    background-color: $color-primary-dark; // Same as Add to Cart
+    padding: 1.2rem;
+    background: linear-gradient(135deg, $color-primary 0%, $color-primary-dark 100%);
+    background-size: 200% auto;
     color: $color-surface;
-    font-weight: $font-weight-bold;
+    font-weight: 800; // Inter Extrabold
     font-size: 15px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
     border-radius: $border-radius-md;
+    border: none;
     display: flex;
     align-items: center;
     justify-content: center;
     gap: $spacing-sm;
-    transition: background $transition-fast, transform $transition-fast;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba($color-primary, 0.25);
+    cursor: pointer;
 
-    &:hover {
-        background-color: #20249E;
+    &:hover:not(:disabled) {
+        background-position: right center;
         transform: translateY(-2px);
-        box-shadow: $shadow-md;
+        box-shadow: 0 8px 25px rgba($color-primary, 0.35);
     }
 }
 

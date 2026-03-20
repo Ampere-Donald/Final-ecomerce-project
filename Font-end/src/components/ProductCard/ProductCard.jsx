@@ -3,12 +3,14 @@ import { Link } from 'react-router-dom';
 import { Heart, ShoppingCart, FileText, Info, Eye, X } from 'lucide-react';
 import { useFavorites } from '../../context/FavoritesContext';
 import { useCart } from '../../context/CartContext';
+import { useI18n } from '../../context/I18nContext';
 import { formatFCFA } from '../../utils/formatFCFA';
 import './ProductCard.scss';
 
 const PLACEHOLDER_IMG = 'https://images.unsplash.com/photo-1608564697071-ddf911d81370?q=80&w=400&auto=format&fit=crop';
 
 const ProductCard = ({ product, badge }) => {
+    const { t } = useI18n();
     const { toggleFavorite, isFavorite } = useFavorites();
     const { addToCart } = useCart();
     const isLiked = isFavorite(product.code);
@@ -54,9 +56,9 @@ const ProductCard = ({ product, badge }) => {
                 />
                 {/* Stock Badge */}
                 {isBackorder ? (
-                    <span className="product-card__badge product-card__badge--preorder">SUR COMMANDE</span>
+                    <span className="product-card__badge product-card__badge--preorder">{t('product.preorder')}</span>
                 ) : (
-                    <span className="product-card__badge product-card__badge--stock">EN STOCK</span>
+                    <span className="product-card__badge product-card__badge--stock">{t('product.inStock')}</span>
                 )}
                 {badge && (
                     <span className="product-card__badge product-card__badge--promo">{badge}</span>
@@ -66,8 +68,8 @@ const ProductCard = ({ product, badge }) => {
                 <button
                     className={`product-card__heart ${isLiked ? 'product-card__heart--active' : ''}`}
                     onClick={handleFavorite}
-                    aria-label={isLiked ? 'Retirer des favoris' : 'Ajouter aux favoris'}
-                    title={isLiked ? 'Retirer des favoris' : 'Ajouter aux favoris'}
+                    aria-label={isLiked ? t('product.removeFavorite') : t('product.addFavorite')}
+                    title={isLiked ? t('product.removeFavorite') : t('product.addFavorite')}
                 >
                     <Heart size={16} fill={isLiked ? 'currentColor' : 'none'} />
                 </button>
@@ -76,31 +78,31 @@ const ProductCard = ({ product, badge }) => {
                 <button
                     className="product-card__quick-view"
                     onClick={handleQuickView}
-                    title="Vue rapide"
+                    title={t('product.quickView')}
                 >
                     <Eye size={14} />
-                    Vue rapide
+                    {t('product.quickView')}
                 </button>
             </Link>
 
             {/* Content */}
             <Link to={`/product/${product.code}`} className="product-card__content">
                 <p className="product-card__category">
-                    {product.categoryName || product.parentCategory || 'COMPOSANT'}
+                    {product.categoryName || product.parentCategory || t('product.defaultCategory')}
                 </p>
 
                 <h3 className="product-card__name">{product.model}</h3>
 
                 {/* Prix */}
                 <div className="product-card__price-row product-card__price-row--retail">
-                    <span className="product-card__price-label">Détail</span>
+                    <span className="product-card__price-label">{t('product.retailPrice')}</span>
                     <span className="product-card__price product-card__price--retail">
                         {formatFCFA(product.retailPrice)}
                     </span>
                 </div>
 
                 <div className="product-card__price-row product-card__price-row--wholesale">
-                    <span className="product-card__price-label">Gros</span>
+                    <span className="product-card__price-label">{t('product.wholesalePrice')}</span>
                     <span className="product-card__price product-card__price--wholesale">
                         {formatFCFA(product.wholesalePrice)}
                     </span>
@@ -109,8 +111,8 @@ const ProductCard = ({ product, badge }) => {
                 {/* Stock info */}
                 <p className={`product-card__stock-info ${isBackorder ? 'product-card__stock-info--warning' : ''}`}>
                     {isBackorder
-                        ? 'Sur commande (Délai : ~14 jours)'
-                        : `En stock : ${product.stock} unités`
+                        ? t('product.preorderDelay')
+                        : t('product.inStockCount', { count: product.stock })
                     }
                 </p>
             </Link>
@@ -123,17 +125,17 @@ const ProductCard = ({ product, badge }) => {
                     rel="noopener noreferrer" 
                     className="product-card__datasheet" 
                     onClick={e => e.stopPropagation()}
-                    title="Télécharger la fiche technique (PDF)"
+                    title={t('product.downloadDatasheet')}
                 >
                     <FileText size={14} />
-                    Fiche Technique
+                    {t('product.datasheet')}
                 </a>
             )}
 
             {/* Info Prix Dégressif si applicable */}
             {(product.wholesalePrice > 0 && product.wholesalePrice < product.retailPrice) && (
                 <div className="product-card__discount-banner">
-                    <Info size={12} /> Prix de gros disponible
+                    <Info size={12} /> {t('product.wholesaleAvailable')}
                 </div>
             )}
 
@@ -141,10 +143,10 @@ const ProductCard = ({ product, badge }) => {
             <button
                 className={`product-card__add-btn ${isBackorder ? 'product-card__add-btn--preorder' : ''}`}
                 onClick={handleAddToCart}
-                title={isBackorder ? 'Commander avec délai (14j)' : 'Ajouter au panier'}
+                title={isBackorder ? t('product.preorderBtnTitle') : t('product.addToCart')}
             >
                 <ShoppingCart size={14} />
-                {isBackorder ? 'Commander' : 'Ajouter au panier'}
+                {isBackorder ? t('product.preorderBtn') : t('product.addToCart')}
             </button>
         </div>
 
@@ -161,33 +163,33 @@ const ProductCard = ({ product, badge }) => {
                         </div>
                         <div className="quick-view-modal__info">
                             <p className="quick-view-modal__category">
-                                {product.categoryName || product.parentCategory || 'COMPOSANT'}
+                                {product.categoryName || product.parentCategory || t('product.defaultCategory')}
                             </p>
                             <h2 className="quick-view-modal__name">{product.model}</h2>
-                            {product.brand && <p className="quick-view-modal__brand">Marque : {product.brand}</p>}
+                            {product.brand && <p className="quick-view-modal__brand">{t('product.brandLabel', { brand: product.brand })}</p>}
 
                             <div className="quick-view-modal__prices">
                                 <div className="quick-view-modal__price-row">
-                                    <span>Détail</span>
+                                    <span>{t('product.retailPrice')}</span>
                                     <strong>{formatFCFA(product.retailPrice)}</strong>
                                 </div>
                                 <div className="quick-view-modal__price-row quick-view-modal__price-row--wholesale">
-                                    <span>Gros</span>
+                                    <span>{t('product.wholesalePrice')}</span>
                                     <strong>{formatFCFA(product.wholesalePrice)}</strong>
                                 </div>
                             </div>
 
                             <p className={`quick-view-modal__stock ${isBackorder ? 'quick-view-modal__stock--warning' : ''}`}>
-                                {isBackorder ? 'Sur commande (Délai : ~14 jours)' : `En stock : ${product.stock} unités`}
+                                {isBackorder ? t('product.preorderDelay') : t('product.inStockCount', { count: product.stock })}
                             </p>
 
                             <div className="quick-view-modal__actions">
                                 <button className="quick-view-modal__add-btn" onClick={handleAddToCart}>
                                     <ShoppingCart size={16} />
-                                    Ajouter au panier
+                                    {t('product.addToCart')}
                                 </button>
                                 <Link to={`/product/${product.code}`} className="quick-view-modal__detail-link">
-                                    Voir la fiche complète →
+                                    {t('product.viewFullDetails')}
                                 </Link>
                             </div>
                         </div>

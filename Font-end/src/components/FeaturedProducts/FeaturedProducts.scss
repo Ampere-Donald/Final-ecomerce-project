@@ -79,6 +79,10 @@
         width: calc(100% / 2);
         padding: 0 $spacing-sm;
 
+        @media (max-width: $breakpoint-md) {
+            width: 100%;
+        }
+
         .product-card__image {
             height: 200px;
             display: flex;

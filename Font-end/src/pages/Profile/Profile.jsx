@@ -5,25 +5,13 @@ import { LogOut, Package, Heart, ShoppingBag, AlertTriangle, CheckCircle2 } from
 import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
 import { useFavorites } from '../../context/FavoritesContext';
+import { useI18n } from '../../context/I18nContext';
 import { formatFCFA } from '../../utils/formatFCFA';
 import Footer from '../../components/Footer/Footer';
 import './Profile.scss';
 
 const API = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 const WHATSAPP_NUMBER = '237699966160';
-
-const STATUS_LABELS = {
-  EN_ATTENTE: 'En attente',
-  CONFIRMEE: 'Confirmée / Reçue',
-  EN_LIVRAISON: 'En livraison',
-  LIVREE: 'Livrée',
-  ANNULEE: 'Annulée',
-};
-
-const MODE_LABELS = {
-  LIVRAISON: 'Livraison',
-  RETRAIT_MAGASIN: 'Retrait au magasin',
-};
 
 // WhatsApp SVG icon inline
 const WhatsAppIcon = ({ size = 18 }) => (
@@ -35,7 +23,21 @@ const WhatsAppIcon = ({ size = 18 }) => (
 const Profile = () => {
   const { user, token, loading, logout } = useAuth();
   const { favoritesCount } = useFavorites();
+  const { t } = useI18n();
   const navigate = useNavigate();
+
+  const STATUS_LABELS = {
+    EN_ATTENTE: t('profile.statusPending'),
+    CONFIRMEE: t('profile.statusConfirmed'),
+    EN_LIVRAISON: t('profile.statusDelivering'),
+    LIVREE: t('profile.statusDelivered'),
+    ANNULEE: t('profile.statusCancelled'),
+  };
+
+  const MODE_LABELS = {
+    LIVRAISON: t('profile.modeDelivery'),
+    RETRAIT_MAGASIN: t('profile.modePickup'),
+  };
 
   const [orders, setOrders] = useState([]);
   const [loadingOrders, setLoadingOrders] = useState(true);
@@ -71,7 +73,7 @@ const Profile = () => {
   }, [token, loading, fetchOrders]);
 
   const handleCancel = async (id) => {
-    if (!window.confirm('Êtes-vous sûr de vouloir annuler cette commande ?')) return;
+    if (!window.confirm(t('profile.confirmCancel'))) return;
     setCancellingId(id);
     setCancelError('');
     try {
@@ -80,7 +82,7 @@ const Profile = () => {
       });
       fetchOrders();
     } catch (err) {
-      setCancelError(err.response?.data?.message || "Impossible d'annuler cette commande.");
+      setCancelError(err.response?.data?.message || t('profile.errCancel'));
     } finally {
       setCancellingId(null);
     }
@@ -88,7 +90,7 @@ const Profile = () => {
 
   // ── Mission 2: Confirm reception ──────────────────────
   const handleConfirmReception = async (id) => {
-    if (!window.confirm('Confirmez-vous avoir bien reçu cette commande ?')) return;
+    if (!window.confirm(t('profile.confirmReception'))) return;
     setConfirmingId(id);
     setCancelError('');
     try {
@@ -97,7 +99,7 @@ const Profile = () => {
       });
       fetchOrders();
     } catch (err) {
-      setCancelError(err.response?.data?.message || 'Erreur lors de la confirmation.');
+      setCancelError(err.response?.data?.message || t('profile.errReception'));
     } finally {
       setConfirmingId(null);
     }
@@ -105,7 +107,11 @@ const Profile = () => {
 
   // ── Mission 2: WhatsApp link builder ──────────────────
   const buildWhatsAppLink = (order) => {
-    const message = `Bonjour NEWOTEG, je vous contacte au sujet de ma commande N°${order.numeroSuivi} d'un montant de ${Number(order.montantTotal).toLocaleString()} FCFA. Statut actuel : ${STATUS_LABELS[order.statut] || order.statut}.`;
+    const statusText = STATUS_LABELS[order.statut] || order.statut;
+    const message = t('profile.whatsappMsg')
+      .replace('{{id}}', order.numeroSuivi)
+      .replace('{{amount}}', Number(order.montantTotal).toLocaleString())
+      .replace('{{status}}', statusText);
     return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
   };
 
@@ -120,7 +126,7 @@ const Profile = () => {
 
   return (
     <>
-      <Helmet><title>Mon Profil — NEWOTEG</title></Helmet>
+      <Helmet><title>{t('profile.metaTitle')}</title></Helmet>
       <div className="profile container">
         {/* Header */}
         <div className="profile__header">
@@ -128,10 +134,10 @@ const Profile = () => {
           <div className="profile__info">
             <h1>{user?.nom}</h1>
             <p>{user?.email} {user?.telephone && `· ${user.telephone}`}</p>
-            <p style={{ marginTop: 4 }}>Client {user?.typeClient === 'PROFESSIONNEL' ? 'Professionnel' : 'Particulier'}</p>
+            <p style={{ marginTop: 4 }}>{user?.typeClient === 'PROFESSIONNEL' ? t('profile.clientPro') : t('profile.clientIndiv')}</p>
           </div>
           <button className="profile__logout" onClick={handleLogout}>
-            <LogOut size={16} /> Déconnexion
+            <LogOut size={16} /> {t('profile.logoutBtn')}
           </button>
         </div>
 
@@ -140,24 +146,24 @@ const Profile = () => {
           <div className="profile__card">
             <div className="profile__card-icon profile__card-icon--primary"><ShoppingBag size={20} /></div>
             <span className="profile__card-value">{orders.length}</span>
-            <span className="profile__card-label">Commandes</span>
+            <span className="profile__card-label">{t('profile.orders')}</span>
           </div>
           <div className="profile__card">
             <div className="profile__card-icon profile__card-icon--danger"><Heart size={20} /></div>
             <span className="profile__card-value">{favoritesCount}</span>
-            <span className="profile__card-label">Favoris</span>
-            <Link to="/favourites">Voir mes favoris →</Link>
+            <span className="profile__card-label">{t('profile.favorites')}</span>
+            <Link to="/favourites">{t('profile.viewFavorites')}</Link>
           </div>
           <div className="profile__card">
             <div className="profile__card-icon profile__card-icon--success"><Package size={20} /></div>
             <span className="profile__card-value">{orders.filter(o => o.statut === 'LIVREE' || o.statut === 'CONFIRMEE').length}</span>
-            <span className="profile__card-label">Livrées / Reçues</span>
+            <span className="profile__card-label">{t('profile.delivered')}</span>
           </div>
         </div>
 
         {/* Orders */}
         <div className="profile__section">
-          <h2><Package size={20} /> Historique des commandes</h2>
+          <h2><Package size={20} /> {t('profile.historyTitle')}</h2>
 
           {cancelError && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#EF4444', fontSize: 14, marginBottom: 16, background: '#FEE2E2', padding: '8px 16px', borderRadius: 8 }}>
@@ -167,23 +173,23 @@ const Profile = () => {
 
           <div className="profile__table-wrap">
             {loadingOrders ? (
-              <div className="profile__empty">Chargement...</div>
+              <div className="profile__empty">{t('profile.loading')}</div>
             ) : orders.length === 0 ? (
               <div className="profile__empty">
-                Aucune commande pour le moment.
+                {t('profile.noOrders')}
                 <br />
-                <Link to="/catalogue" style={{ marginTop: 8, display: 'inline-block' }}>Explorer le catalogue →</Link>
+                <Link to="/catalogue" style={{ marginTop: 8, display: 'inline-block' }}>{t('profile.exploreCatalogue')}</Link>
               </div>
             ) : (
               <table className="profile__table">
                 <thead>
                   <tr>
-                    <th>N° Suivi</th>
-                    <th>Date</th>
-                    <th>Montant</th>
-                    <th>Mode</th>
-                    <th>Statut</th>
-                    <th>Actions</th>
+                    <th>{t('profile.colTrack')}</th>
+                    <th>{t('profile.colDate')}</th>
+                    <th>{t('profile.colAmount')}</th>
+                    <th>{t('profile.colMode')}</th>
+                    <th>{t('profile.colStatus')}</th>
+                    <th>{t('profile.colActions')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -223,7 +229,7 @@ const Profile = () => {
                             }}
                           >
                             <WhatsAppIcon size={14} />
-                            WhatsApp
+                            {t('profile.whatsappBtn')}
                           </a>
 
                           {/* Confirm Reception — only when EN_LIVRAISON */}
@@ -249,7 +255,7 @@ const Profile = () => {
                               }}
                             >
                               <CheckCircle2 size={14} />
-                              {confirmingId === order.id ? '...' : 'Reçu'}
+                              {confirmingId === order.id ? '...' : t('profile.receivedBtn')}
                             </button>
                           )}
 
@@ -260,7 +266,7 @@ const Profile = () => {
                               onClick={() => handleCancel(order.id)}
                               disabled={cancellingId === order.id}
                             >
-                              {cancellingId === order.id ? '...' : 'Annuler'}
+                              {cancellingId === order.id ? '...' : t('profile.cancelBtn')}
                             </button>
                           )}
                         </div>

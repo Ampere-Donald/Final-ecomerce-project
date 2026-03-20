@@ -4,6 +4,7 @@ import { Helmet } from 'react-helmet-async';
 import { SlidersHorizontal, X, ChevronLeft, ChevronRight, Search, LayoutGrid, List } from 'lucide-react';
 import axios from 'axios';
 import { useDebounce } from '../../hooks/useDebounce';
+import { useI18n } from '../../context/I18nContext';
 import Footer from '../../components/Footer/Footer';
 import Sidebar from '../../components/Sidebar/Sidebar';
 import ProductCard from '../../components/ProductCard/ProductCard';
@@ -15,6 +16,7 @@ import './Catalogue.scss';
 const ITEMS_PER_PAGE = 24;
 
 const Catalogue = () => {
+    const { t } = useI18n();
     const [searchParams, setSearchParams] = useSearchParams();
 
     // ── State ──────────────────────────────────────────────
@@ -164,6 +166,7 @@ const Catalogue = () => {
             setSelectedSubCategory('');
             setExpandedCategories(prev => ({ ...prev, [catSlug]: true }));
         }
+        if (window.innerWidth < 992) setSidebarOpen(false);
     };
 
     const handleSubCategorySelect = (subSlug, parentSlug) => {
@@ -173,6 +176,7 @@ const Catalogue = () => {
             setSelectedCategory(parentSlug);
             setSelectedSubCategory(subSlug);
         }
+        if (window.innerWidth < 992) setSidebarOpen(false);
     };
 
     const handleViewModeToggle = (mode) => {
@@ -187,6 +191,7 @@ const Catalogue = () => {
         setSortBy('name-asc');
         setPriceRange([0, 1000000]);
         setInStockOnly(false);
+        if (window.innerWidth < 992) setSidebarOpen(false);
     };
 
     const hasActiveFilters = searchQuery || selectedCategory || selectedSubCategory || sortBy !== 'name-asc' || inStockOnly || priceRange[1] < 1000000;
@@ -218,16 +223,20 @@ const Catalogue = () => {
     return (
         <div className="catalogue-page">
             <Helmet>
-                <title>{activeCategoryName ? `${activeCategoryName} — Catalogue NEWOTEG` : 'Catalogue — Équipements & Composants | NEWOTEG SARL'}</title>
-                <meta name="description" content={activeCategoryName ? `Découvrez nos produits ${activeCategoryName} chez NEWOTEG SARL. Prix compétitifs, qualité industrielle, livraison au Cameroun.` : 'Parcourez notre catalogue complet d\'équipements électroniques et composants industriels. Plus de 10 000 références disponibles chez NEWOTEG SARL.'} />
+                <title>{activeCategoryName ? t('catalogue.metaTitleCat', { category: activeCategoryName }) : t('catalogue.metaTitle')}</title>
+                <meta name="description" content={activeCategoryName ? t('catalogue.metaDescCat', { category: activeCategoryName }) : t('catalogue.metaDesc')} />
             </Helmet>
             {/* ── Page Header ───────────────────────────────── */}
             <div className="catalogue-page__header">
                 <div className="container">
                     <div className="catalogue-page__breadcrumb">
-                        <Link to="/">Accueil</Link>
+                        <Link to="/">{t('catalogue.homeBreadcrumb')}</Link>
                         <span>/</span>
-                        <span className="catalogue-page__breadcrumb-active">Catalogue</span>
+                        {activeCategoryName ? (
+                            <Link to="/catalogue">{t('catalogue.catalogueBreadcrumb')}</Link>
+                        ) : (
+                            <span className="catalogue-page__breadcrumb-active">{t('catalogue.catalogueBreadcrumb')}</span>
+                        )}
                         {activeCategoryName && (
                             <>
                                 <span>/</span>
@@ -238,10 +247,10 @@ const Catalogue = () => {
                     <div className="catalogue-page__title-row">
                         <div>
                             <h1 className="catalogue-page__title">
-                                {activeCategoryName || 'Catalogue'}
+                                {activeCategoryName || t('catalogue.catalogueBreadcrumb')}
                             </h1>
                             <p className="catalogue-page__count">
-                                {totalProducts.toLocaleString('fr-FR')} produit{totalProducts > 1 ? 's' : ''} trouvé{totalProducts > 1 ? 's' : ''}
+                                {t('catalogue.productsFound', { count: totalProducts.toLocaleString() })}
                             </p>
                         </div>
                         <button
@@ -249,7 +258,7 @@ const Catalogue = () => {
                             onClick={() => setSidebarOpen(!sidebarOpen)}
                         >
                             <SlidersHorizontal size={18} />
-                            Filtres
+                            {t('catalogue.filters')}
                         </button>
                     </div>
                 </div>
@@ -288,7 +297,7 @@ const Catalogue = () => {
                             <div className="catalogue-main__chips">
                                 {searchQuery && (
                                     <span className="catalogue-chip">
-                                        Recherche: « {searchQuery} »
+                                        {t('catalogue.searchActive', { query: searchQuery })}
                                         <button onClick={() => setSearchQuery('')}><X size={12} /></button>
                                     </span>
                                 )}
@@ -304,24 +313,24 @@ const Catalogue = () => {
                                     <button 
                                         className={`view-btn ${viewMode === 'grid' ? 'active' : ''}`}
                                         onClick={() => handleViewModeToggle('grid')}
-                                        title="Vue Grille"
+                                        title={t('catalogue.gridView')}
                                     >
                                         <LayoutGrid size={18} />
                                     </button>
                                     <button 
                                         className={`view-btn ${viewMode === 'table' ? 'active' : ''}`}
                                         onClick={() => handleViewModeToggle('table')}
-                                        title="Vue Liste (B2B)"
+                                        title={t('catalogue.listView')}
                                     >
                                         <List size={18} />
                                     </button>
                                 </div>
-                                <label>Trier par:</label>
+                                <label>{t('catalogue.sortBy')}</label>
                                 <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
-                                    <option value="name-asc">Nom A → Z</option>
-                                    <option value="name-desc">Nom Z → A</option>
-                                    <option value="price-asc">Prix ↑ croissant</option>
-                                    <option value="price-desc">Prix ↓ décroissant</option>
+                                    <option value="name-asc">{t('catalogue.sortNameAsc')}</option>
+                                    <option value="name-desc">{t('catalogue.sortNameDesc')}</option>
+                                    <option value="price-asc">{t('catalogue.sortPriceAsc')}</option>
+                                    <option value="price-desc">{t('catalogue.sortPriceDesc')}</option>
                                 </select>
                             </div>
                         </div>
@@ -330,8 +339,8 @@ const Catalogue = () => {
                         {isLoading ? (
                             <div className="catalogue-empty">
                                 <Search size={48} strokeWidth={1} className="animate-pulse text-slate-300" />
-                                <h3>Chargement des produits...</h3>
-                                <p>Connexion à la base de données en cours</p>
+                                <h3>{t('catalogue.loadingTitle')}</h3>
+                                <p>{t('catalogue.loadingDesc')}</p>
                             </div>
                         ) : sortedProducts.length > 0 ? (
                             <>
@@ -348,10 +357,10 @@ const Catalogue = () => {
                         ) : (
                             <div className="catalogue-empty">
                                 <Search size={48} strokeWidth={1} />
-                                <h3>Aucun produit trouvé</h3>
-                                <p>Essayez de modifier vos filtres ou votre recherche</p>
+                                <h3>{t('catalogue.emptyTitle')}</h3>
+                                <p>{t('catalogue.emptyDesc')}</p>
                                 <button onClick={clearFilters} className="catalogue-empty__btn">
-                                    Effacer les filtres
+                                    {t('catalogue.clearFilters')}
                                 </button>
                             </div>
                         )}
@@ -365,7 +374,7 @@ const Catalogue = () => {
                                     disabled={currentPage === 1}
                                 >
                                     <ChevronLeft size={16} />
-                                    Précédent
+                                    {t('common.prev')}
                                 </button>
 
                                 <div className="catalogue-pagination__pages">
@@ -403,7 +412,7 @@ const Catalogue = () => {
                                     onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                                     disabled={currentPage === totalPages}
                                 >
-                                    Suivant
+                                    {t('common.next')}
                                     <ChevronRight size={16} />
                                 </button>
                             </div>

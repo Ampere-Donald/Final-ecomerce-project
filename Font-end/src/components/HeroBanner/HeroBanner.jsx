@@ -1,57 +1,60 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { useI18n } from '../../context/I18nContext';
 import './HeroBanner.scss';
 
-const heroSlides = [
+const getHeroSlides = (t) => [
     {
         id: 1,
         image: '/images/hero_1.png',
-        badge: 'NOUVELLE GÉNÉRATION TECH',
-        title: 'Solutions Industrielles\nÉvolutives',
-        subtitle: 'Des microcontrôleurs de haute précision aux serveurs de grade industriel. Propulsez l\'avenir de l\'industrie africaine.',
-        primaryAction: { label: 'Explorer le Catalogue', link: '/catalogue' },
-        secondaryAction: { label: 'Nos Composants', link: '/about' }
+        badge: t('hero.slide1.badge'),
+        title: t('hero.slide1.title'),
+        subtitle: t('hero.slide1.subtitle'),
+        primaryAction: { label: t('hero.slide1.primaryAction'), link: '/catalogue' },
+        secondaryAction: { label: t('hero.slide1.secondaryAction'), link: '/about' }
     },
     {
         id: 2,
         image: '/images/hero_2.png',
-        badge: 'COMPOSANTS PREMIUM',
-        title: 'Électronique de\nGrade Industriel',
-        subtitle: 'Condensateurs, résistances et transistors haut de gamme pour vos projets les plus exigeants.',
-        primaryAction: { label: 'Voir les Composants', link: '/catalogue?category=components' },
-        secondaryAction: { label: 'Spécifications', link: '/product/101001' }
+        badge: t('hero.slide2.badge'),
+        title: t('hero.slide2.title'),
+        subtitle: t('hero.slide2.subtitle'),
+        primaryAction: { label: t('hero.slide2.primaryAction'), link: '/catalogue?category=components' },
+        secondaryAction: { label: t('hero.slide2.secondaryAction'), link: '/product/101001' }
     },
     {
         id: 3,
         image: '/images/hero_4.png',
-        badge: 'MICROPROCESSEURS AVANCÉS',
-        title: 'Puissance de\nTraitement Next-Gen',
-        subtitle: 'Processeurs modernes ultra-détaillés. Découvrez le sommet de la performance et de la fiabilité.',
-        primaryAction: { label: 'Découvrir les Processeurs', link: '/catalogue?category=microchips' },
-        secondaryAction: { label: 'En Savoir Plus', link: '/about' }
+        badge: t('hero.slide3.badge'),
+        title: t('hero.slide3.title'),
+        subtitle: t('hero.slide3.subtitle'),
+        primaryAction: { label: t('hero.slide3.primaryAction'), link: '/catalogue?category=microchips' },
+        secondaryAction: { label: t('hero.slide3.secondaryAction'), link: '/about' }
     },
     {
         id: 4,
         image: '/images/hero_3.png',
-        badge: 'SYSTÈMES D\'AUTOMATISATION',
-        title: 'Automatisation\nIndustrielle & Robotique',
-        subtitle: 'Outils de fabrication électronique de précision et bras robotiques pour laboratoires et usines modernes.',
-        primaryAction: { label: 'Voir l\'Automatisation', link: '/catalogue?category=automation' },
-        secondaryAction: { label: 'Nos Technologies', link: '/about' }
+        badge: t('hero.slide4.badge'),
+        title: t('hero.slide4.title'),
+        subtitle: t('hero.slide4.subtitle'),
+        primaryAction: { label: t('hero.slide4.primaryAction'), link: '/catalogue?category=automation' },
+        secondaryAction: { label: t('hero.slide4.secondaryAction'), link: '/about' }
     },
     {
         id: 5,
         image: '/images/hero-tech.png',
-        badge: 'LIVRAISON RAPIDE',
-        title: 'Logistique Express\n& Disponibilité',
-        subtitle: 'Notre logistique tech moderne garantit la disponibilité des stocks et une livraison rapide partout en Afrique.',
-        primaryAction: { label: 'Suivre ma Commande', link: '/checkout' },
-        secondaryAction: { label: 'Nous Contacter', link: '/about' }
+        badge: t('hero.slide5.badge'),
+        title: t('hero.slide5.title'),
+        subtitle: t('hero.slide5.subtitle'),
+        primaryAction: { label: t('hero.slide5.primaryAction'), link: '/checkout' },
+        secondaryAction: { label: t('hero.slide5.secondaryAction'), link: '/about' }
     }
 ];
 
 const HeroBanner = () => {
+    const { t } = useI18n();
+    const heroSlides = getHeroSlides(t);
     const [currentSlide, setCurrentSlide] = useState(0);
 
     // Auto-advance

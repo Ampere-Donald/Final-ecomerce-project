@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import axios from 'axios';
 import { Send, CheckCircle, AlertCircle } from 'lucide-react';
+import { useI18n } from '../../context/I18nContext';
 import './Newsletter.scss';
 
 const Newsletter = () => {
+    const { t } = useI18n();
     const [email, setEmail] = useState('');
     const [loading, setLoading] = useState(false);
     const [status, setStatus] = useState(null); // 'success' | 'duplicate' | 'error'
@@ -33,25 +35,25 @@ const Newsletter = () => {
         <section className="newsletter-section">
             <div className="container newsletter-section__inner">
                 <div className="newsletter-section__content">
-                    <h2 className="newsletter-section__title">Ne manquez pas nos prochaines offres</h2>
+                    <h2 className="newsletter-section__title">{t('newsletter.title')}</h2>
                     <p className="newsletter-section__desc">
-                        Inscrivez-vous à notre newsletter et recevez en exclusivité nos promotions, nos nouveaux arrivages et des offres spéciales.
+                        {t('newsletter.desc')}
                     </p>
                     
                     {status === 'success' ? (
                         <div className="newsletter-section__alert newsletter-section__alert--success">
                             <CheckCircle size={20} />
-                            <span>Merci ! Vous êtes maintenant inscrit à notre newsletter.</span>
+                            <span>{t('newsletter.success')}</span>
                         </div>
                     ) : status === 'duplicate' ? (
                         <div className="newsletter-section__alert newsletter-section__alert--info">
                             <AlertCircle size={20} />
-                            <span>Cet email est déjà inscrit à notre newsletter.</span>
+                            <span>{t('newsletter.duplicate')}</span>
                         </div>
                     ) : status === 'error' ? (
                         <div className="newsletter-section__alert newsletter-section__alert--error">
                             <AlertCircle size={20} />
-                            <span>Une erreur est survenue. Veuillez réessayer.</span>
+                            <span>{t('newsletter.error')}</span>
                         </div>
                     ) : null}
 
@@ -59,7 +61,7 @@ const Newsletter = () => {
                         <div className="newsletter-section__input-group">
                             <input
                                 type="email"
-                                placeholder="Votre adresse email"
+                                placeholder={t('newsletter.placeholder')}
                                 className="newsletter-section__input"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
@@ -67,17 +69,17 @@ const Newsletter = () => {
                                 disabled={loading}
                             />
                             <button type="submit" className="newsletter-section__btn" disabled={loading}>
-                                {loading ? 'Envoi...' : (
+                                {loading ? t('newsletter.sending') : (
                                     <>
                                         <Send size={16} />
-                                        S'inscrire
+                                        {t('newsletter.subscribe')}
                                     </>
                                 )}
                             </button>
                         </div>
                     </form>
                     <p className="newsletter-section__legal">
-                        En vous inscrivant, vous acceptez nos <a href="/terms">Conditions d'Utilisation</a> et notre <a href="/privacy">Politique de Confidentialité</a>.
+                        {t('newsletter.legal1')}<a href="/terms">{t('newsletter.legalTerms')}</a>{t('newsletter.legal2')}<a href="/privacy">{t('newsletter.legalPrivacy')}</a>{t('newsletter.legal3')}
                     </p>
                 </div>
             </div>

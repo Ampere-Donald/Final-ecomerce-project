@@ -45,6 +45,10 @@
     gap: $spacing-lg;
 
     @media (max-width: $breakpoint-xl) {
+        grid-template-columns: repeat(4, 1fr);
+    }
+
+    @media (max-width: $breakpoint-lg) {
         grid-template-columns: repeat(3, 1fr);
     }
 
@@ -52,26 +56,24 @@
         grid-template-columns: repeat(2, 1fr);
         gap: $spacing-md;
     }
-
-    @media (max-width: $breakpoint-sm) {
-        grid-template-columns: 1fr;
-    }
 }
 
 .category-card-premium {
     display: flex;
     flex-direction: column;
     text-decoration: none;
-    border-radius: $border-radius-lg;
+    border-radius: $border-radius-xl;
     overflow: hidden;
     background: $color-surface;
     border: 1px solid rgba($color-border, 0.4);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
-    transition: transform $transition-base, box-shadow $transition-base;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.02);
+    transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+    position: relative;
 
     &:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 16px 32px rgba(0, 0, 0, 0.08);
+        transform: translateY(-6px);
+        box-shadow: 0 16px 40px rgba(0, 0, 0, 0.08), 0 4px 12px rgba(0, 0, 0, 0.04);
+        border-color: rgba($color-primary, 0.2);
 
         .category-card-premium__image {
             transform: scale(1.08);
@@ -84,31 +86,35 @@
 
     &__image-container {
         position: relative;
-        width: 100%;
         height: 160px;
+        width: 100%;
+        background-color: $color-surface-hover;
+        display: flex;
+        align-items: center;
+        justify-content: center;
         overflow: hidden;
-        background-color: #f1f5f9;
+        padding: $spacing-lg;
     }
 
     &__image {
         width: 100%;
         height: 100%;
-        object-fit: cover;
-        transition: transform 0.6s cubic-bezier(0.25, 0.8, 0.25, 1);
+        object-fit: contain;
+        mix-blend-mode: multiply;
+        transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
     }
 
     &__overlay {
-        position: absolute;
-        inset: 0;
-        background: linear-gradient(0deg, rgba(0, 0, 0, 0.1) 0%, transparent 100%);
+        display: none; // Unused in new design
     }
 
     &__content {
-        padding: $spacing-md;
+        padding: $spacing-md $spacing-lg $spacing-lg;
+        display: flex;
+        flex-direction: column;
+        flex: 1;
         text-align: center;
-        background: $color-surface;
-        position: relative;
-        z-index: 2;
+        border-top: 1px solid rgba($color-border, 0.3);
     }
 
     &__title {
@@ -153,6 +159,34 @@
         background: #e2e8f0;
         border-radius: 4px;
         margin: 0 auto;
+    }
+}
+
+.category-section__show-more {
+    display: flex;
+    justify-content: center;
+    margin-top: 32px;
+    width: 100%;
+}
+
+.category-section__show-more-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 24px;
+    background-color: transparent;
+    color: $color-primary;
+    border: 2px solid $color-primary;
+    border-radius: 30px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+
+    &:hover {
+        background-color: $color-primary;
+        color: $color-surface;
+        transform: translateY(-2px);
     }
 }
 

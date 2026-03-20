@@ -1,30 +1,34 @@
 import { ShieldCheck, Truck, BadgePercent, LifeBuoy } from 'lucide-react';
+import { useI18n } from '../../context/I18nContext';
 import './Features.scss';
 
-const features = [
+const getFeatures = (t) => [
     {
         icon: ShieldCheck,
-        title: 'Authentic Quality',
-        description: 'Directly sourced from trusted manufacturers like Adafruit, SparkFun, and Arduino.'
+        title: t('features.qualityTitle'),
+        description: t('features.qualityDesc')
     },
     {
         icon: BadgePercent,
-        title: 'Wholesale Pricing',
-        description: 'Competitive B2B prices for high-volume orders and local technical resellers.'
+        title: t('features.wholesaleTitle'),
+        description: t('features.wholesaleDesc')
     },
     {
         icon: Truck,
-        title: 'Local Delivery',
-        description: 'Fast and reliable delivery within Douala and same-day shipping across Cameroon.'
+        title: t('features.deliveryTitle'),
+        description: t('features.deliveryDesc')
     },
     {
         icon: LifeBuoy,
-        title: 'Technical Support',
-        description: 'Expert advice to help you choose the right components for your complex projects.'
+        title: t('features.supportTitle'),
+        description: t('features.supportDesc')
     }
 ];
 
 const Features = () => {
+    const { t } = useI18n();
+    const features = getFeatures(t);
+
     return (
         <section className="features-section">
             <div className="container">

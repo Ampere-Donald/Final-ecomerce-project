@@ -1,4 +1,5 @@
 import { Search, SlidersHorizontal, X, ChevronRight, ChevronDown } from 'lucide-react';
+import { useI18n } from '../../context/I18nContext';
 import './Sidebar.scss';
 
 const Sidebar = ({
@@ -22,12 +23,19 @@ const Sidebar = ({
     globalMinPrice,
     globalMaxPrice
 }) => {
+    const { t } = useI18n();
     return (
-        <aside className={`catalogue-sidebar ${sidebarOpen ? 'catalogue-sidebar--open' : ''}`}>
+        <>
+            <div 
+                className={`catalogue-sidebar-overlay ${sidebarOpen ? 'catalogue-sidebar-overlay--open' : ''}`}
+                onClick={() => setSidebarOpen(false)}
+                aria-hidden="true"
+            />
+            <aside className={`catalogue-sidebar ${sidebarOpen ? 'catalogue-sidebar--open' : ''}`}>
             <div className="catalogue-sidebar__header">
                 <h3 className="catalogue-sidebar__title">
                     <SlidersHorizontal size={16} />
-                    Filtres
+                    {t('catalogue.filters')}
                 </h3>
                 <button
                     className="catalogue-sidebar__close"
@@ -43,7 +51,7 @@ const Sidebar = ({
                     <Search size={16} />
                     <input
                         type="text"
-                        placeholder="Rechercher un produit..."
+                        placeholder={t('catalogue.searchPlaceholder')}
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                     />
@@ -57,14 +65,14 @@ const Sidebar = ({
 
             {/* Famille (Categories) */}
             <div className="catalogue-sidebar__section">
-                <h4 className="catalogue-sidebar__section-title">FAMILLE</h4>
+                <h4 className="catalogue-sidebar__section-title">{t('catalogue.family')}</h4>
                 <ul className="catalogue-sidebar__categories">
                     <li className="catalogue-sidebar__cat-item catalogue-sidebar__cat-item--all">
                         <button
                             className={`catalogue-sidebar__cat-name ${!selectedCategory ? 'catalogue-sidebar__cat-name--active' : ''}`}
                             onClick={() => { handleCategorySelect(''); }}
                         >
-                            Toutes les catégories
+                            {t('catalogue.allCategories')}
                             {!selectedCategory && <ChevronRight size={14} />}
                         </button>
                     </li>
@@ -111,7 +119,7 @@ const Sidebar = ({
 
             {/* Price Range */}
             <div className="catalogue-sidebar__section">
-                <h4 className="catalogue-sidebar__section-title">PRIX MAXIMUM (FCFA)</h4>
+                <h4 className="catalogue-sidebar__section-title">{t('catalogue.maxPrice')}</h4>
                 <div className="catalogue-sidebar__price-range">
                     <input 
                         type="range" 
@@ -131,7 +139,7 @@ const Sidebar = ({
 
             {/* Stock Availability */}
             <div className="catalogue-sidebar__section">
-                <h4 className="catalogue-sidebar__section-title">DISPONIBILITÉ</h4>
+                <h4 className="catalogue-sidebar__section-title">{t('catalogue.availability')}</h4>
                 <div className="catalogue-sidebar__stock">
                     <label className="stock-radio">
                         <input 
@@ -141,7 +149,7 @@ const Sidebar = ({
                            onChange={() => setInStockOnly(true)} 
                         />
                         <span className="radio-custom"></span>
-                        En stock uniquement
+                        {t('catalogue.inStockOnly')}
                     </label>
                     <label className="stock-radio">
                         <input 
@@ -151,26 +159,27 @@ const Sidebar = ({
                            onChange={() => setInStockOnly(false)} 
                         />
                         <span className="radio-custom"></span>
-                        Tous les articles
+                        {t('catalogue.allItems')}
                     </label>
                 </div>
             </div>
 
             {/* Bulk Orders */}
             <div className="catalogue-sidebar__bulk">
-                <h5>Commandes en gros ?</h5>
-                <p>Contactez notre équipe commerciale pour des devis grossiste personnalisés.</p>
-                <button className="bulk-btn">Contacter le support</button>
+                <h5>{t('catalogue.bulkOrdersTitle')}</h5>
+                <p>{t('catalogue.bulkOrdersDesc')}</p>
+                <button className="bulk-btn">{t('catalogue.contactSupport')}</button>
             </div>
 
             {/* Clear Filters */}
             {hasActiveFilters && (
                 <button className="catalogue-sidebar__clear" onClick={clearFilters}>
                     <X size={14} />
-                    Effacer les filtres
+                    {t('catalogue.clearFilters')}
                 </button>
             )}
         </aside>
+        </>
     );
 };
 

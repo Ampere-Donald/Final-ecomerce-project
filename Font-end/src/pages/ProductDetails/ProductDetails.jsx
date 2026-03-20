@@ -6,10 +6,12 @@ import axios from 'axios';
 import { formatFCFA } from '../../utils/formatFCFA';
 import { mapProduct, getProductCode } from '../../utils/mapProduct';
 import { useCart } from '../../context/CartContext';
+import { useI18n } from '../../context/I18nContext';
 import Footer from '../../components/Footer/Footer';
 import './ProductDetails.scss';
 
 const ProductDetails = () => {
+    const { t } = useI18n();
     const { code } = useParams();
     const { addToCart } = useCart();
     const [quantity, setQuantity] = useState(1);
@@ -53,7 +55,7 @@ const ProductDetails = () => {
     }, [code]);
 
     if (loading) {
-        return <div className="p-20 text-center">Chargement du produit...</div>;
+        return <div className="p-20 text-center">{t('productDetails.loading')}</div>;
     }
 
     if (!product) {
@@ -61,10 +63,10 @@ const ProductDetails = () => {
             <div className="product-details-page">
                 <div className="product-details__not-found">
                     <Package size={64} strokeWidth={1} />
-                    <h2>Produit introuvable</h2>
-                    <p>Le produit avec le code « {code} » n'existe pas dans notre catalogue.</p>
+                    <h2>{t('productDetails.notFoundTitle')}</h2>
+                    <p>{t('productDetails.notFoundDesc', { code })}</p>
                     <Link to="/catalogue" className="product-details__back-btn">
-                        Retour au catalogue
+                        {t('productDetails.backToCatalogue')}
                     </Link>
                 </div>
                 <Footer />
@@ -79,16 +81,16 @@ const ProductDetails = () => {
     return (
         <div className="product-details-page">
             <Helmet>
-                <title>{`${product.model} — ${product.categoryName} | NEWOTEG SARL`}</title>
-                <meta name="description" content={`Achetez ${product.model} (${product.categoryName}) chez NEWOTEG SARL. Prix détail: ${formatFCFA(product.retailPrice)}. Qualité industrielle, livraison au Cameroun.`} />
+                <title>{t('productDetails.metaTitle', { model: product.model, category: product.categoryName })}</title>
+                <meta name="description" content={t('productDetails.metaDesc', { model: product.model, category: product.categoryName, price: formatFCFA(product.retailPrice) })} />
             </Helmet>
             {/* ── Breadcrumb ──────────────────────────────── */}
             <div className="product-details__breadcrumb-bar">
                 <div className="container">
                     <nav className="product-details__breadcrumb">
-                        <Link to="/">Accueil</Link>
+                        <Link to="/">{t('catalogue.homeBreadcrumb')}</Link>
                         <ChevronRight size={14} />
-                        <Link to="/catalogue">Catalogue</Link>
+                        <Link to="/catalogue">{t('catalogue.catalogueBreadcrumb')}</Link>
                         <ChevronRight size={14} />
                         <Link to={`/catalogue?category=${product.categorySlug}`}>{product.categoryName}</Link>
                         <ChevronRight size={14} />
@@ -124,46 +126,46 @@ const ProductDetails = () => {
                         <div className="product-details__info-col">
 
                             <div className={`product-details__badge-stock ${isOutOfStock ? 'product-details__badge-stock--out' : ''}`}>
-                                {isOutOfStock ? 'RUPTURE DE STOCK' : 'IN STOCK'}
+                                {isOutOfStock ? t('productDetails.outOfStockBadge') : t('productDetails.inStockBadge')}
 
                             </div>
 
                             <h1 className="product-details__name">{product.model}</h1>
 
                             <div className="product-details__reference">
-                                Référence : <strong>NTG-{product.code}-TR</strong>
+                                {t('productDetails.reference')} <strong>NTG-{product.code}-TR</strong>
                             </div>
 
                             <div className="product-details__logistics">
                                 <div className={`product-details__logistics-item ${isOutOfStock ? '' : 'product-details__logistics-item--success'}`}>
                                     <CheckCircle2 size={16} />
 
-                                    <span>{isOutOfStock ? 'Rupture de stock' : `${product.stock.toLocaleString('fr-FR')} units available for immediate dispatch`}</span>
+                                    <span>{isOutOfStock ? t('product.outOfStockLong') : t('productDetails.unitsAvailable', { count: product.stock.toLocaleString() })}</span>
 
                                 </div>
                                 <div className="product-details__logistics-item">
                                     <Truck size={16} />
-                                    <span>Entrepôt : Hub Logistique Afrique</span>
+                                    <span>{t('productDetails.warehouseHq')}</span>
                                 </div>
                             </div>
 
                             {/* ── Pricing Block (Oraimo Style) ──────── */}
                             <div className="product-details__pricing-box">
                                 <div className="product-details__price-retail">
-                                    <span className="product-details__price-label">PRIX DÉTAIL</span>
+                                    <span className="product-details__price-label">{t('productDetails.retailPriceLabel')}</span>
                                     <div className="product-details__price-value">
                                         <span className="amount">{formatFCFA(product.retailPrice)}</span>
-                                        <span className="unit">/ unité</span>
+                                        <span className="unit">{t('productDetails.perUnit')}</span>
                                     </div>
                                 </div>
                                 <div className="product-details__price-divider" />
                                 <div className="product-details__price-wholesale">
-                                    <span className="product-details__price-label">PRIX DE GROS</span>
+                                    <span className="product-details__price-label">{t('productDetails.wholesalePriceLabel')}</span>
                                     <div className="product-details__price-value product-details__price-value--primary">
                                         <span className="amount">{formatFCFA(product.wholesalePrice)}</span>
-                                        <span className="unit">/ unité</span>
+                                        <span className="unit">{t('productDetails.perUnit')}</span>
                                     </div>
-                                    <span className="product-details__price-min">Commande minimum : 100 unités</span>
+                                    <span className="product-details__price-min">{t('productDetails.minOrder')}</span>
                                 </div>
                             </div>
 
@@ -181,7 +183,7 @@ const ProductDetails = () => {
                                 >
                                     <ShoppingCart size={18} fill="currentColor" />
 
-                                    {isOutOfStock ? 'Indisponible' : 'Add to Cart'}
+                                    {isOutOfStock ? t('product.unavailable') : t('product.addToCart')}
 
                                 </button>
                             </div>
@@ -199,21 +201,21 @@ const ProductDetails = () => {
                             onClick={() => setActiveTab('specs')}
                         >
                             <FileText size={16} />
-                            Spécifications Techniques
+                            {t('productDetails.tabSpecs')}
                         </button>
                         <button
                             className={`product-details__tab ${activeTab === 'sales' ? 'product-details__tab--active' : ''}`}
                             onClick={() => setActiveTab('sales')}
                         >
                             <Box size={16} />
-                            Unité de Vente
+                            {t('productDetails.tabSales')}
                         </button>
                         <button
                             className={`product-details__tab ${activeTab === 'return' ? 'product-details__tab--active' : ''}`}
                             onClick={() => setActiveTab('return')}
                         >
                             <ShieldCheck size={16} />
-                            Politique de Retour
+                            {t('productDetails.tabReturn')}
                         </button>
                     </div>
 
@@ -222,41 +224,41 @@ const ProductDetails = () => {
                         {activeTab === 'specs' && (
                             <div className="product-details__specs-grid">
                                 <div className="product-details__specs-group">
-                                    <h4>Paramètres Généraux</h4>
+                                    <h4>{t('productDetails.generalParams')}</h4>
                                     <div className="product-details__spec-row">
-                                        <span>Catégorie</span>
+                                        <span>{t('productDetails.category')}</span>
                                         <strong>{product.categoryName}</strong>
                                     </div>
                                     <div className="product-details__spec-row">
 
-                                        <span>Code Famille</span>
+                                        <span>{t('productDetails.familyCode')}</span>
                                         <strong>{product.familleId}</strong>
                                     </div>
                                     <div className="product-details__spec-row">
-                                        <span>Référence</span>
+                                        <span>{t('productDetails.reference')}</span>
 
                                         <strong>{product.code}</strong>
                                     </div >
                                 </div >
                                 <div className="product-details__specs-group">
-                                    <h4>Propriétés</h4>
+                                    <h4>{t('productDetails.properties')}</h4>
                                     <div className="product-details__spec-row">
-                                        <span>Marque</span>
+                                        <span>{t('productDetails.brand')}</span>
                                         <strong>{product.marque || product.brand || 'NEWOTEG Standard'}</strong>
                                     </div>
                                     <div className="product-details__spec-row">
-                                        <span>Grade Qualité</span>
-                                        <strong>Industriel</strong>
+                                        <span>{t('productDetails.qualityGrade')}</span>
+                                        <strong>{t('productDetails.industrial')}</strong>
                                     </div>
                                 </div>
                                 <div className="product-details__specs-group">
-                                    <h4>Emballage & Forme</h4>
+                                    <h4>{t('productDetails.packaging')}</h4>
                                     <div className="product-details__spec-row">
-                                        <span>Type d'emballage</span>
-                                        <strong>Boîte Standard</strong>
+                                        <span>{t('productDetails.packagingType')}</span>
+                                        <strong>{t('productDetails.standardBox')}</strong>
                                     </div>
                                     <div className="product-details__spec-row">
-                                        <span>Type de Montage</span>
+                                        <span>{t('productDetails.mountingType')}</span>
                                         <strong>N/A</strong>
                                     </div>
                                 </div>
@@ -265,14 +267,14 @@ const ProductDetails = () => {
                         {
                             activeTab === 'sales' && (
                                 <div className="product-details__tab-pane">
-                                    <p>Cet article est actuellement vendu à l'unité et en cartons. Les prix de gros s'appliquent à partir de 100 unités. Contactez notre service commercial pour des configurations palette.</p>
+                                    <p>{t('productDetails.salesText')}</p>
                                 </div>
                             )
                         }
                         {
                             activeTab === 'return' && (
                                 <div className="product-details__tab-pane">
-                                    <p>Nous offrons une garantie d'1 an sur les composants de grade industriel. Remplacement uniquement, pas de réparation. Consultez notre politique de retour complète pour les conditions d'éligibilité.</p>
+                                    <p>{t('productDetails.returnText')}</p>
                                 </div>
                             )
                         }
@@ -285,7 +287,7 @@ const ProductDetails = () => {
                 relatedProducts.length > 0 && (
                     <section className="product-details__related">
                         <div className="container">
-                            <h2 className="product-details__related-title">Fréquemment achetés ensemble</h2>
+                            <h2 className="product-details__related-title">{t('productDetails.frequentlyBought')}</h2>
                             <div className="product-details__related-grid">
                                 {relatedProducts.map(p => (
                                     <Link to={`/product/${p.code}`} key={p.code} className="product-card-light">
