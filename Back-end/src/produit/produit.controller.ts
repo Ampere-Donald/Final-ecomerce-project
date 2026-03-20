@@ -9,6 +9,8 @@ import {
   ParseUUIDPipe,
   UseInterceptors,
   UploadedFile,
+  Query,
+  BadRequestException,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
@@ -45,12 +47,66 @@ export class ProduitController {
     if (createProduitDto.prixGros != null) createProduitDto.prixGros = parseFloat(String(createProduitDto.prixGros));
     if (createProduitDto.prixDetail != null) createProduitDto.prixDetail = parseFloat(String(createProduitDto.prixDetail));
     if (createProduitDto.quantiteStock != null) createProduitDto.quantiteStock = parseInt(String(createProduitDto.quantiteStock), 10);
+    // prixPromo : chaîne vide → undefined (pas de promo)
+    const prixPromoStr = String(createProduitDto.prixPromo ?? '');
+    createProduitDto.prixPromo = prixPromoStr !== '' ? parseFloat(prixPromoStr) : undefined;
+    if (createProduitDto.prixPromo !== undefined && isNaN(createProduitDto.prixPromo)) createProduitDto.prixPromo = undefined;
+    // finPromo : chaîne vide → undefined
+    const finPromoStr = String(createProduitDto.finPromo ?? '');
+    createProduitDto.finPromo = finPromoStr !== '' ? finPromoStr : undefined;
+    // isPopulaire : string 'true'/'false' → boolean
+    createProduitDto.isPopulaire = String(createProduitDto.isPopulaire) === 'true';
     return this.produitService.create(createProduitDto);
   }
 
   @Get()
-  findAll() {
-    return this.produitService.findAll();
+  findAll(
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+    @Query('search') search?: string,
+    @Query('categoryId') categoryId?: string,
+    @Query('minPrice') minPrice?: string,
+    @Query('maxPrice') maxPrice?: string,
+    @Query('inStock') inStock?: string,
+    @Query('sort') sort?: string,
+  ) {
+    console.log('--- GET /api/produits CALLED WITH PARAMS ---', { page, limit, search, categoryId, minPrice, maxPrice, inStock, sort });
+    return this.produitService.findAll({
+      page: page ? parseInt(page, 10) : 1,
+      limit: limit ? parseInt(limit, 10) : 1000,
+      search,
+      categoryId,
+      minPrice: minPrice ? parseFloat(minPrice) : undefined,
+      maxPrice: maxPrice ? parseFloat(maxPrice) : undefined,
+      inStock: inStock === 'true',
+      sort,
+    });
+  }
+
+  @Get('metadata')
+  getMetadata() {
+    return this.produitService.getMetadata();
+  }
+
+  // ── Routes spécifiques AVANT :id ─────────────────────────────────────────
+  @Get('flash')
+  findFlash() {
+    return this.produitService.findFlash();
+  }
+
+  @Get('populaires')
+  findPopulaires() {
+    return this.produitService.findPopulaires();
+  }
+
+  // ── Import CSV en masse ─────────────────────────────────────────────────
+  @Post('import')
+  @UseInterceptors(FileInterceptor('file', { storage: require('multer').memoryStorage() }))
+  async importCsv(@UploadedFile() file: Express.Multer.File) {
+    if (!file) {
+      throw new BadRequestException('Aucun fichier CSV fourni.');
+    }
+    return this.produitService.importCsv(file.buffer);
   }
 
   @Get(':id')
@@ -104,6 +160,15 @@ export class ProduitController {
     if (updateProduitDto.prixGros != null) updateProduitDto.prixGros = parseFloat(String(updateProduitDto.prixGros));
     if (updateProduitDto.prixDetail != null) updateProduitDto.prixDetail = parseFloat(String(updateProduitDto.prixDetail));
     if (updateProduitDto.quantiteStock != null) updateProduitDto.quantiteStock = parseInt(String(updateProduitDto.quantiteStock), 10);
+    // prixPromo : chaîne vide → null (retirer la promo)
+    const prixPromoStr = String(updateProduitDto.prixPromo ?? '');
+    (updateProduitDto as any).prixPromo = prixPromoStr !== '' ? parseFloat(prixPromoStr) : null;
+    if (typeof (updateProduitDto as any).prixPromo === 'number' && isNaN((updateProduitDto as any).prixPromo)) (updateProduitDto as any).prixPromo = null;
+    // finPromo : chaîne vide → null
+    const finPromoStr = String(updateProduitDto.finPromo ?? '');
+    (updateProduitDto as any).finPromo = finPromoStr !== '' ? finPromoStr : null;
+    // isPopulaire : string 'true'/'false' → boolean
+    updateProduitDto.isPopulaire = String(updateProduitDto.isPopulaire) === 'true';
     return this.produitService.update(id, updateProduitDto);
   }
 

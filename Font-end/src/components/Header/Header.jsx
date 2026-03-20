@@ -93,13 +93,16 @@ const Header = () => {
                     <nav className="header__nav">
                         <ul className="header__nav-list">
                             <li className="header__nav-item">
-                                <NavLink to="/" className={({ isActive }) => `header__nav-link ${isActive ? 'header__nav-link--active' : ''}`}>HOME</NavLink>
+                                <NavLink to="/" className={({ isActive }) => `header__nav-link ${isActive ? 'header__nav-link--active' : ''}`}>ACCUEIL</NavLink>
                             </li>
                             <li className="header__nav-item">
                                 <NavLink to="/catalogue" className={({ isActive }) => `header__nav-link ${isActive ? 'header__nav-link--active' : ''}`}>CATALOGUE</NavLink>
                             </li>
                             <li className="header__nav-item">
                                 <NavLink to="/about" className={({ isActive }) => `header__nav-link ${isActive ? 'header__nav-link--active' : ''}`}>À PROPOS</NavLink>
+                            </li>
+                            <li className="header__nav-item">
+                                <NavLink to="/contact" className={({ isActive }) => `header__nav-link ${isActive ? 'header__nav-link--active' : ''}`}>CONTACT</NavLink>
                             </li>
                         </ul>
                     </nav>
@@ -157,6 +160,9 @@ const Header = () => {
                         </NavLink>
                         <NavLink to="/about" className={({ isActive }) => `header__mobile-strip-link ${isActive ? 'header__mobile-strip-link--active' : ''}`}>
                             À Propos
+                        </NavLink>
+                        <NavLink to="/contact" className={({ isActive }) => `header__mobile-strip-link ${isActive ? 'header__mobile-strip-link--active' : ''}`}>
+                            Contact
                         </NavLink>
                     </nav>
                 </div>
@@ -232,6 +238,11 @@ const Header = () => {
                     <li>
                         <NavLink to="/about" className={({ isActive }) => `header__drawer-link ${isActive ? 'header__drawer-link--active' : ''}`} onClick={closeMobileMenu}>
                             À Propos
+                        </NavLink>
+                    </li>
+                    <li>
+                        <NavLink to="/contact" className={({ isActive }) => `header__drawer-link ${isActive ? 'header__drawer-link--active' : ''}`} onClick={closeMobileMenu}>
+                            Contact
                         </NavLink>
                     </li>
 

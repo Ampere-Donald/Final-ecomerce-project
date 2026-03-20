@@ -109,6 +109,18 @@
         gap: $spacing-xs;
     }
 
+    &__newsletter-cta {
+        font-size: 12px;
+        color: $color-primary;
+        font-weight: $font-weight-medium;
+        line-height: $line-height-relaxed;
+        margin: 0;
+        padding: $spacing-xs $spacing-sm;
+        background: rgba($color-primary, 0.06);
+        border-radius: $border-radius-sm;
+        border-left: 3px solid $color-primary;
+    }
+
     &__input {
         width: 100%;
         padding: 0.6rem 0.75rem;

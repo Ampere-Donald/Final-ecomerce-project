@@ -9,6 +9,114 @@
     margin-top: $spacing-3xl;
 }
 
+// ── Slider Navigation ─────────────────────────────────────────
+.slider-nav {
+    display: flex;
+    align-items: center;
+    gap: $spacing-sm;
+
+    &--flash {
+        margin-top: $spacing-lg;
+    }
+
+    &__btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 36px;
+        height: 36px;
+        border-radius: $border-radius-full;
+        border: 1.5px solid rgba($color-surface, 0.3);
+        background: rgba($color-surface, 0.1);
+        color: $color-surface;
+        cursor: pointer;
+        transition: all 0.2s ease;
+
+        &:hover:not(&--disabled) {
+            background: rgba($color-surface, 0.2);
+            border-color: rgba($color-surface, 0.5);
+        }
+
+        &--disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+    }
+
+    &__counter {
+        font-size: 12px;
+        font-weight: $font-weight-bold;
+        color: rgba($color-surface, 0.7);
+        font-variant-numeric: tabular-nums;
+        min-width: 60px;
+        text-align: center;
+    }
+}
+
+// Bestsellers slider nav (dark text on light bg)
+.bestsellers .slider-nav {
+    .slider-nav__btn {
+        border-color: rgba($color-text, 0.15);
+        background: rgba($color-text, 0.04);
+        color: $color-text;
+
+        &:hover:not(.slider-nav__btn--disabled) {
+            background: rgba($color-text, 0.08);
+            border-color: rgba($color-text, 0.3);
+        }
+    }
+
+    .slider-nav__counter {
+        color: $color-secondary;
+    }
+}
+
+// ── Slider Card Wrapper ───────────────────────────────────────
+.slider-card-wrapper {
+    flex-shrink: 0;
+
+    &--flash {
+        width: calc(100% / 2);
+        padding: 0 $spacing-sm;
+
+        .product-card__image {
+            height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+
+            img {
+                width: 100%;
+                height: 100%;
+                object-fit: contain;
+            }
+        }
+    }
+
+    &--pop {
+        width: calc(100% / 4);
+        padding: 0 $spacing-sm;
+
+        @media (max-width: $breakpoint-xl) {
+            width: calc(100% / 3);
+        }
+
+        @media (max-width: $breakpoint-md) {
+            width: calc(100% / 2);
+        }
+
+        @media (max-width: $breakpoint-sm) {
+            width: 100%;
+        }
+    }
+
+    .product-card {
+        width: 100%;
+    }
+}
+
+
 // ── B2B Flash Deal ───────────────────────────────────────────
 .flash-deal-b2b {
     display: grid;
@@ -57,6 +165,7 @@
         line-height: 1.1;
         margin-bottom: $spacing-md;
         letter-spacing: -1px;
+        text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
     }
 
     &__desc {
@@ -118,13 +227,19 @@
         }
     }
 
+    &__products-wrapper {
+        overflow: hidden;
+        position: relative;
+    }
+
     &__products {
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        gap: $spacing-lg;
+        &--slider {
+            display: flex;
+            transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
 
         @media (max-width: $breakpoint-md) {
-            grid-template-columns: 1fr;
+            // On mobile, each card takes full width
         }
     }
 }
@@ -135,7 +250,7 @@
     &__header {
         display: flex;
         justify-content: space-between;
-        align-items: flex-end;
+        align-items: center;
         margin-bottom: $spacing-xl;
 
         @media (max-width: $breakpoint-sm) {
@@ -143,6 +258,12 @@
             align-items: flex-start;
             gap: $spacing-sm;
         }
+    }
+
+    &__header-right {
+        display: flex;
+        align-items: center;
+        gap: $spacing-lg;
     }
 
     &__title {
@@ -159,6 +280,7 @@
         color: $color-primary;
         text-decoration: none;
         transition: color $transition-fast;
+        white-space: nowrap;
 
         &:hover {
             color: $color-primary-dark;
@@ -166,22 +288,15 @@
         }
     }
 
+    &__slider-wrapper {
+        overflow: hidden;
+        position: relative;
+    }
+
     &__grid {
-        display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: $spacing-lg;
-
-        @media (max-width: $breakpoint-xl) {
-            grid-template-columns: repeat(3, 1fr);
-        }
-
-        @media (max-width: $breakpoint-md) {
-            grid-template-columns: repeat(2, 1fr);
-            gap: $spacing-md;
-        }
-
-        @media (max-width: $breakpoint-sm) {
-            grid-template-columns: 1fr;
+        &--slider {
+            display: flex;
+            transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
         }
     }
 }
@@ -210,7 +325,7 @@
         }
 
         .product-card__image {
-            transform: scale(1.08); // Fixed pseudo classes application
+            transform: scale(1.08);
         }
     }
 

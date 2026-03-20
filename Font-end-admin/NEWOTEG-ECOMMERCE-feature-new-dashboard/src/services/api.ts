@@ -10,7 +10,7 @@ const api = axios.create({
 
 // Produits
 export const produitApi = {
-  getAll: () => api.get('/produits').then(res => res.data),
+  getAll: () => api.get('/produits?limit=1000').then(res => res.data.data ? res.data.data : res.data),
   getOne: (id: string) => api.get(`/produits/${id}`).then(res => res.data),
   create: (data: any) => {
     if (data instanceof FormData) {
@@ -29,6 +29,13 @@ export const produitApi = {
     return api.patch(`/produits/${id}`, data).then(res => res.data);
   },
   delete: (id: string) => api.delete(`/produits/${id}`).then(res => res.data),
+  importCsv: (file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return api.post('/produits/import', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    }).then(res => res.data);
+  },
   uploadImage: (id: string, file: File) => {
     const formData = new FormData();
     formData.append('file', file);
