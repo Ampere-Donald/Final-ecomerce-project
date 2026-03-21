@@ -1,8 +1,11 @@
 import axios from 'axios';
 
-// Utiliser le proxy configuré dans vite.config.ts
+// En production, VITE_API_URL pointe vers le backend Railway (ex: https://xxx.up.railway.app/api)
+// En dev local, le proxy Vite redirige /api vers localhost:3000
+const BASE_URL = import.meta.env.VITE_API_URL || '/api';
+
 const api = axios.create({
-  baseURL: '/api',
+  baseURL: BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },
