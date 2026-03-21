@@ -131,7 +131,8 @@ export const MouvementsStock = () => {
               className="w-full pl-10 pr-4 py-2 bg-slate-50 border-none rounded-lg text-sm focus:ring-2 focus:ring-primary/20 outline-none" />
           </div>
         </div>
-        <div className="overflow-x-auto">
+        {/* ── Table (desktop) ── */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-slate-50 text-slate-500 text-xs font-bold uppercase tracking-wider">
@@ -173,6 +174,47 @@ export const MouvementsStock = () => {
               )}
             </tbody>
           </table>
+        </div>
+
+        {/* ── Cards (mobile) ── */}
+        <div className="md:hidden divide-y divide-slate-100">
+          {loading ? (
+            <p className="py-8 text-center text-slate-500">Chargement...</p>
+          ) : filtered.length === 0 ? (
+            <div className="py-12 text-center">
+              <Activity size={36} className="mx-auto text-slate-300 mb-3" />
+              <p className="text-slate-500">Aucun mouvement enregistré.</p>
+            </div>
+          ) : (
+            filtered.map(m => {
+              const isPositive = m.typeMouvement === 'ENTREE' || m.typeMouvement === 'RETOUR';
+              return (
+                <div key={m.id} className="p-4 flex items-center gap-3">
+                  <div className={`size-10 rounded-xl flex items-center justify-center shrink-0 ${isPositive ? 'bg-emerald-100' : 'bg-red-100'}`}>
+                    {isPositive
+                      ? <ArrowDownRight size={18} className="text-emerald-700" />
+                      : <ArrowUpRight size={18} className="text-red-700" />
+                    }
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="font-mono font-bold text-slate-900 text-sm truncate">{m.produit?.nomProduit || 'N/A'}</p>
+                      <span className={`text-lg font-bold shrink-0 ${isPositive ? 'text-emerald-600' : 'text-red-600'}`}>
+                        {isPositive ? '+' : '-'}{m.quantite}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${isPositive ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'}`}>
+                        {m.typeMouvement}
+                      </span>
+                      <span className="text-xs text-slate-400">{new Date(m.dateMouvement).toLocaleDateString('fr-FR')}</span>
+                    </div>
+                    {m.motif && <p className="text-xs text-slate-500 mt-0.5 truncate">{m.motif}</p>}
+                  </div>
+                </div>
+              );
+            })
+          )}
         </div>
       </div>
     </motion.div>

@@ -36,26 +36,23 @@ export const Ventes = () => {
       </div>
 
       <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
-        <div className="p-4 border-b border-slate-100 flex items-center justify-between">
-            <div className="flex gap-2">
-            <button className="p-2 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors text-slate-500">
-                <Filter size={18} />
-            </button>
-            <button className="p-2 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors text-slate-500">
-                <Download size={18} />
-            </button>
-            </div>
-          <div className="relative w-full max-w-sm">
+        <div className="p-4 border-b border-slate-100 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <div className="flex gap-2">
+            <button className="p-2 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors text-slate-500"><Filter size={18} /></button>
+            <button className="p-2 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors text-slate-500"><Download size={18} /></button>
+          </div>
+          <div className="relative w-full sm:max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-            <input 
-              type="text" 
-              placeholder="Rechercher une vente ID..." 
+            <input
+              type="text"
+              placeholder="Rechercher une vente..."
               className="w-full pl-10 pr-4 py-2 bg-slate-50 border-none rounded-lg text-sm focus:ring-2 focus:ring-primary/20 outline-none"
             />
           </div>
         </div>
-        
-        <div className="overflow-x-auto">
+
+        {/* ── Table (desktop) ── */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-slate-50 text-slate-500 text-xs font-bold uppercase tracking-wider">
@@ -69,13 +66,9 @@ export const Ventes = () => {
             </thead>
             <tbody className="divide-y divide-slate-100">
               {loading ? (
-                <tr>
-                  <td colSpan={6} className="px-6 py-8 text-center text-slate-500">Chargement...</td>
-                </tr>
+                <tr><td colSpan={6} className="px-6 py-8 text-center text-slate-500">Chargement...</td></tr>
               ) : ventes.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="px-6 py-8 text-center text-slate-500">Aucune vente trouvée.</td>
-                </tr>
+                <tr><td colSpan={6} className="px-6 py-8 text-center text-slate-500">Aucune vente trouvée.</td></tr>
               ) : (
                 ventes.map((v) => (
                   <tr key={v.id} className="hover:bg-slate-50 transition-colors">
@@ -86,17 +79,47 @@ export const Ventes = () => {
                     <td className="px-6 py-4 font-bold text-slate-900">{v.montantTotal} FCFA</td>
                     <td className="px-6 py-4">
                       <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
-                        v.statutPaiement === 'PAYE' ? 'bg-emerald-100 text-emerald-800' : 
-                        v.statutPaiement === 'PARTIEL' ? 'bg-amber-100 text-amber-800' : 'bg-red-100 text-red-800'
-                      }`}>
-                        {v.statutPaiement}
-                      </span>
+                        v.statutPaiement === 'PAYE' ? 'bg-emerald-100 text-emerald-800'
+                          : v.statutPaiement === 'PARTIEL' ? 'bg-amber-100 text-amber-800'
+                          : 'bg-red-100 text-red-800'
+                      }`}>{v.statutPaiement}</span>
                     </td>
                   </tr>
                 ))
               )}
             </tbody>
           </table>
+        </div>
+
+        {/* ── Cards (mobile) ── */}
+        <div className="md:hidden divide-y divide-slate-100">
+          {loading ? (
+            <p className="py-8 text-center text-slate-500">Chargement...</p>
+          ) : ventes.length === 0 ? (
+            <p className="py-8 text-center text-slate-500">Aucune vente trouvée.</p>
+          ) : (
+            ventes.map((v) => (
+              <div key={v.id} className="p-4 space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <span className="font-mono font-bold text-primary text-sm">{v.id.substring(0, 8)}</span>
+                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                    v.statutPaiement === 'PAYE' ? 'bg-emerald-100 text-emerald-800'
+                      : v.statutPaiement === 'PARTIEL' ? 'bg-amber-100 text-amber-800'
+                      : 'bg-red-100 text-red-800'
+                  }`}>{v.statutPaiement}</span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="font-medium text-slate-700">{v.client ? `${v.client.nom} ${v.client.prenom || ''}` : 'Client Anonyme'}</span>
+                  <span className="font-bold text-slate-900">{v.montantTotal} FCFA</span>
+                </div>
+                <div className="flex items-center gap-2 text-xs text-slate-400">
+                  <span>{new Date(v.dateVente).toLocaleDateString()}</span>
+                  <span>·</span>
+                  <span className="uppercase font-semibold">{v.methodePaiement}</span>
+                </div>
+              </div>
+            ))
+          )}
         </div>
       </div>
     </motion.div>
