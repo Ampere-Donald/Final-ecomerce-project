@@ -63,8 +63,9 @@
     margin-bottom: $spacing-3xl;
     overflow: hidden;
 
+    // Mobile: header = 64px top bar + 38px nav strip = 102px total
     @media (max-width: calc(#{$breakpoint-lg} - 1px)) {
-        margin-top: -102px; // header (64px) + mobile nav strip (38px)
+        margin-top: -102px;
         padding-top: 102px;
     }
 
@@ -86,8 +87,12 @@
         padding: 200px 0 140px;
         animation: contactFadeUp 0.8s ease backwards;
 
+        @media (max-width: calc(#{$breakpoint-lg} - 1px)) {
+            padding: 170px 0 100px;
+        }
+
         @media (max-width: $breakpoint-md) {
-            padding: 140px 0 100px;
+            padding: 160px 0 80px;
         }
     }
 
