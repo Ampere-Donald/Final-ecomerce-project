@@ -8,9 +8,17 @@ const api = axios.create({
   },
 });
 
+// Normalise toute réponse en tableau (gère { data: [...] } et [...] )
+const toArray = (res: any): any[] => {
+  const d = res.data;
+  if (Array.isArray(d)) return d;
+  if (d && Array.isArray(d.data)) return d.data;
+  return [];
+};
+
 // Produits
 export const produitApi = {
-  getAll: () => api.get('/produits?limit=1000').then(res => res.data.data ? res.data.data : res.data),
+  getAll: () => api.get('/produits?limit=1000').then(toArray),
   getOne: (id: string) => api.get(`/produits/${id}`).then(res => res.data),
   create: (data: any) => {
     if (data instanceof FormData) {
@@ -47,7 +55,7 @@ export const produitApi = {
 
 // Catégories
 export const categorieApi = {
-  getAll: () => api.get('/categories').then(res => res.data),
+  getAll: () => api.get('/categories').then(toArray),
   getOne: (id: string) => api.get(`/categories/${id}`).then(res => res.data),
   create: (data: any) => api.post('/categories', data).then(res => res.data),
   update: (id: string, data: any) => api.patch(`/categories/${id}`, data).then(res => res.data),
@@ -56,50 +64,50 @@ export const categorieApi = {
 
 // Mouvements de stock
 export const mouvementStockApi = {
-  getAll: () => api.get('/mouvements-stock').then(res => res.data),
+  getAll: () => api.get('/mouvements-stock').then(toArray),
   create: (data: any) => api.post('/mouvements-stock', data).then(res => res.data),
 };
 
 // Ventes
 export const venteApi = {
-  getAll: () => api.get('/ventes').then(res => res.data),
+  getAll: () => api.get('/ventes').then(toArray),
   create: (data: any) => api.post('/ventes', data).then(res => res.data),
 };
 
 // Achats
 export const achatApi = {
-  getAll: () => api.get('/achats').then(res => res.data),
+  getAll: () => api.get('/achats').then(toArray),
   create: (data: any) => api.post('/achats', data).then(res => res.data),
 };
 
 // Clients
 export const clientApi = {
-  getAll: () => api.get('/clients').then(res => res.data),
+  getAll: () => api.get('/clients').then(toArray),
   getOne: (id: string) => api.get(`/clients/${id}`).then(res => res.data),
   create: (data: any) => api.post('/clients', data).then(res => res.data),
 };
 
 // Fournisseurs
 export const fournisseurApi = {
-  getAll: () => api.get('/fournisseurs').then(res => res.data),
+  getAll: () => api.get('/fournisseurs').then(toArray),
   create: (data: any) => api.post('/fournisseurs', data).then(res => res.data),
 };
 
 // Caisse
 export const caisseApi = {
-  getAll: () => api.get('/caisse').then(res => res.data),
+  getAll: () => api.get('/caisse').then(toArray),
 };
 
 // Commandes (e-commerce orders)
 export const commandeApi = {
-  getAll: () => api.get('/commandes').then(res => res.data),
+  getAll: () => api.get('/commandes').then(toArray),
   getOne: (id: string) => api.get(`/commandes/${id}`).then(res => res.data),
   update: (id: string, data: any) => api.patch(`/commandes/${id}`, data).then(res => res.data),
 };
 
 // Notifications
 export const notificationApi = {
-  getAll: () => api.get('/notifications').then(res => res.data),
+  getAll: () => api.get('/notifications').then(toArray),
   unreadCount: () => api.get('/notifications/unread-count').then(res => res.data),
   markAsRead: (id: string) => api.patch(`/notifications/${id}/read`).then(res => res.data),
   markAllAsRead: () => api.patch('/notifications/read-all').then(res => res.data),

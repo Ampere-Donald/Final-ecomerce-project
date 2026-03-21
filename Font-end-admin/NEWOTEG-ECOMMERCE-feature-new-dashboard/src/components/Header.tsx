@@ -1,7 +1,11 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Bell, X, Check, CheckCheck, ShoppingCart, Package, Tags, TrendingUp, TrendingDown, AlertCircle } from 'lucide-react';
+import { Search, Bell, X, Check, CheckCheck, ShoppingCart, Package, Tags, TrendingUp, TrendingDown, AlertCircle, Menu } from 'lucide-react';
 import { notificationApi, searchApi } from '../services/api';
+
+interface HeaderProps {
+  onMenuClick: () => void;
+}
 
 /* ── Type map for notification icons ────────────────────────────── */
 const NOTIF_ICON: Record<string, React.ReactNode> = {
@@ -35,7 +39,7 @@ function relativeTime(dateStr: string) {
   return `il y a ${Math.floor(hrs / 24)}j`;
 }
 
-export const Header = () => {
+export const Header = ({ onMenuClick }: HeaderProps) => {
   const navigate = useNavigate();
 
   /* ── Notifications state ──────────────────────────────────────── */
@@ -117,7 +121,16 @@ export const Header = () => {
   };
 
   return (
-    <header className="h-16 border-b border-slate-200 bg-white flex items-center justify-between px-8 sticky top-0 z-10">
+    <header className="h-16 border-b border-slate-200 bg-white flex items-center justify-between px-4 md:px-8 sticky top-0 z-10 gap-2">
+      {/* ── Hamburger (mobile only) ───────────────────────────────── */}
+      <button
+        onClick={onMenuClick}
+        className="md:hidden p-2 text-slate-500 hover:text-primary hover:bg-slate-100 rounded-lg transition-colors flex-shrink-0"
+        aria-label="Menu"
+      >
+        <Menu size={22} />
+      </button>
+
       {/* ── Search ───────────────────────────────────────────────── */}
       <div ref={searchRef} className="flex items-center gap-4 flex-1 max-w-xl relative">
         <div className="relative w-full group">
@@ -126,7 +139,7 @@ export const Header = () => {
             type="text"
             value={query}
             onChange={e => setQuery(e.target.value)}
-            placeholder="Rechercher commandes, produits, clients..."
+            placeholder="Rechercher..."
             className="w-full pl-10 pr-4 py-2 bg-slate-100 border-none rounded-lg focus:ring-2 focus:ring-primary/20 text-sm transition-all outline-none"
           />
           {query && (
@@ -181,7 +194,7 @@ export const Header = () => {
         </button>
 
         {bellOpen && (
-          <div className="absolute top-full right-0 mt-2 w-[380px] bg-white border border-slate-200 rounded-xl shadow-xl z-50 overflow-hidden">
+          <div className="absolute top-full right-0 mt-2 w-[calc(100vw-2rem)] max-w-[380px] bg-white border border-slate-200 rounded-xl shadow-xl z-50 overflow-hidden">
             <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100">
               <h4 className="font-bold text-sm text-slate-800">Notifications</h4>
               {unread > 0 && (

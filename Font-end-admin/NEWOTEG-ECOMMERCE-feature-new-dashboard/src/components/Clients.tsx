@@ -67,7 +67,8 @@ export const Clients = () => {
               className="w-full pl-10 pr-4 py-2 bg-slate-50 border-none rounded-lg text-sm focus:ring-2 focus:ring-primary/20 outline-none" />
           </div>
         </div>
-        <div className="overflow-x-auto">
+        {/* ── Table (desktop) ── */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-slate-50 text-slate-500 text-xs font-bold uppercase tracking-wider">
@@ -96,9 +97,7 @@ export const Clients = () => {
                         <div className="size-9 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-sm">
                           {c.nom?.charAt(0).toUpperCase()}
                         </div>
-                        <div>
-                          <p className="font-bold text-slate-900">{c.nom} {c.prenom || ''}</p>
-                        </div>
+                        <p className="font-bold text-slate-900">{c.nom} {c.prenom || ''}</p>
                       </div>
                     </td>
                     <td className="px-6 py-4 space-y-1">
@@ -116,17 +115,10 @@ export const Clients = () => {
                         : <span className="inline-flex items-center gap-1 text-xs font-bold text-amber-500"><ShieldOff size={14} /> Non vérifié</span>
                       }
                     </td>
-                    <td className="px-6 py-4 text-sm font-semibold text-slate-700">
-                      {c._count?.commandes ?? 0}
-                    </td>
-                    <td className="px-6 py-4 text-sm text-slate-500">
-                      {c.createdAt ? new Date(c.createdAt).toLocaleDateString('fr-FR') : '—'}
-                    </td>
+                    <td className="px-6 py-4 text-sm font-semibold text-slate-700">{c._count?.commandes ?? 0}</td>
+                    <td className="px-6 py-4 text-sm text-slate-500">{c.createdAt ? new Date(c.createdAt).toLocaleDateString('fr-FR') : '—'}</td>
                     <td className="px-6 py-4 text-right">
-                      <button
-                        onClick={() => openDetails(c.id)}
-                        className="inline-flex items-center gap-1.5 text-sm font-bold text-primary hover:underline underline-offset-4"
-                      >
+                      <button onClick={() => openDetails(c.id)} className="inline-flex items-center gap-1.5 text-sm font-bold text-primary hover:underline underline-offset-4">
                         <Eye size={14} /> Voir détails
                       </button>
                     </td>
@@ -135,6 +127,50 @@ export const Clients = () => {
               )}
             </tbody>
           </table>
+        </div>
+
+        {/* ── Cards (mobile) ── */}
+        <div className="md:hidden divide-y divide-slate-100">
+          {loading ? (
+            <p className="py-8 text-center text-slate-500">Chargement...</p>
+          ) : filtered.length === 0 ? (
+            <div className="py-12 text-center">
+              <Users size={36} className="mx-auto text-slate-300 mb-3" />
+              <p className="text-slate-500">Aucun client trouvé.</p>
+            </div>
+          ) : (
+            filtered.map(c => (
+              <div key={c.id} className="p-4 flex items-start gap-3">
+                <div className="size-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-sm shrink-0">
+                  {c.nom?.charAt(0).toUpperCase()}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="font-bold text-slate-900 text-sm">{c.nom} {c.prenom || ''}</p>
+                    <span className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold ${c.typeClient === 'PROFESSIONNEL' ? 'bg-blue-50 text-blue-700' : 'bg-slate-100 text-slate-600'}`}>
+                      {c.typeClient === 'PROFESSIONNEL' ? 'Pro' : 'Part.'}
+                    </span>
+                  </div>
+                  <div className="mt-0.5 space-y-0.5">
+                    {c.telephone && <p className="flex items-center gap-1.5 text-xs text-slate-500"><Phone size={11} />{c.telephone}</p>}
+                    {c.email && <p className="flex items-center gap-1.5 text-xs text-slate-500 truncate"><Mail size={11} />{c.email}</p>}
+                  </div>
+                  <div className="flex items-center justify-between mt-1.5">
+                    <div className="flex items-center gap-2">
+                      {c.emailVerifie
+                        ? <span className="flex items-center gap-0.5 text-[10px] font-bold text-emerald-600"><ShieldCheck size={11} />Vérifié</span>
+                        : <span className="flex items-center gap-0.5 text-[10px] font-bold text-amber-500"><ShieldOff size={11} />Non vérifié</span>
+                      }
+                      <span className="text-[10px] text-slate-400">{c._count?.commandes ?? 0} commande{(c._count?.commandes ?? 0) !== 1 ? 's' : ''}</span>
+                    </div>
+                    <button onClick={() => openDetails(c.id)} className="text-xs font-bold text-primary hover:underline">
+                      Voir →
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
         </div>
       </div>
 

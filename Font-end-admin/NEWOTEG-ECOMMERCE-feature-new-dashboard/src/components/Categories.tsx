@@ -157,7 +157,8 @@ export const Categories = () => {
               className="w-full pl-10 pr-4 py-2 bg-slate-50 border-none rounded-lg text-sm focus:ring-2 focus:ring-primary/20 outline-none" />
           </div>
         </div>
-        <div className="overflow-x-auto">
+        {/* ── Table (desktop) ── */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-slate-50 text-slate-500 text-xs font-bold uppercase tracking-wider">
@@ -180,9 +181,7 @@ export const Categories = () => {
                   <tr key={cat.id} className="hover:bg-slate-50 transition-colors">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
-                        <div className="size-9 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
-                          <Tags size={18} />
-                        </div>
+                        <div className="size-9 rounded-lg bg-primary/10 flex items-center justify-center text-primary"><Tags size={18} /></div>
                         <span className="font-bold text-slate-900">{cat.nom}</span>
                       </div>
                     </td>
@@ -199,6 +198,35 @@ export const Categories = () => {
               )}
             </tbody>
           </table>
+        </div>
+
+        {/* ── Cards (mobile) ── */}
+        <div className="md:hidden divide-y divide-slate-100">
+          {loading ? (
+            <p className="py-8 text-center text-slate-500">Chargement...</p>
+          ) : filtered.length === 0 ? (
+            <div className="py-12 text-center">
+              <Tags size={36} className="mx-auto text-slate-300 mb-3" />
+              <p className="text-slate-500">Aucune catégorie trouvée.</p>
+            </div>
+          ) : (
+            filtered.map(cat => (
+              <div key={cat.id} className="p-4 flex items-center gap-3">
+                <div className="size-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary shrink-0">
+                  <Tags size={18} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-bold text-slate-900">{cat.nom}</p>
+                  {cat.description && <p className="text-xs text-slate-500 truncate">{cat.description}</p>}
+                  <p className="text-xs font-semibold text-primary mt-0.5">{cat._count?.produits ?? cat.produits?.length ?? 0} produit{(cat._count?.produits ?? 0) !== 1 ? 's' : ''}</p>
+                </div>
+                <div className="flex items-center gap-1 shrink-0">
+                  <button onClick={() => openEdit(cat)} className="p-1.5 text-slate-400 hover:text-primary hover:bg-slate-100 rounded-lg"><Edit2 size={16} /></button>
+                  <button onClick={() => handleDelete(cat.id)} className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg"><Trash2 size={16} /></button>
+                </div>
+              </div>
+            ))
+          )}
         </div>
       </div>
     </motion.div>

@@ -137,7 +137,8 @@ export const Orders = () => {
           </div>
         </div>
 
-        <div className="overflow-x-auto">
+        {/* ── Table (desktop) ── */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-slate-50 text-slate-500 text-xs font-bold uppercase tracking-wider">
@@ -181,21 +182,16 @@ export const Orders = () => {
                           disabled={updatingId === order.id || order.statut === 'CONFIRMEE' || order.statut === 'ANNULEE'}
                           className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border-0 cursor-pointer ${st.bg} ${st.text} outline-none ${order.statut === 'CONFIRMEE' || order.statut === 'ANNULEE' ? 'opacity-80 cursor-not-allowed' : ''}`}
                         >
-                          {/* If terminal state, show it as the only option */}
                           {['CONFIRMEE', 'ANNULEE'].includes(order.statut) && (
                             <option value={order.statut}>{STATUS_CONFIG[order.statut].label}</option>
                           )}
-                          {/* Otherwise show admin options */}
                           {!['CONFIRMEE', 'ANNULEE'].includes(order.statut) && ADMIN_STATUSES.map(s => (
                             <option key={s} value={s}>{STATUS_CONFIG[s].label}</option>
                           ))}
                         </select>
                       </td>
                       <td className="px-6 py-4 text-right">
-                        <button
-                          onClick={() => setSelectedOrder(order)}
-                          className="text-sm font-bold text-primary hover:underline underline-offset-4"
-                        >
+                        <button onClick={() => setSelectedOrder(order)} className="text-sm font-bold text-primary hover:underline underline-offset-4">
                           Détails
                         </button>
                       </td>
@@ -206,7 +202,62 @@ export const Orders = () => {
             </tbody>
           </table>
         </div>
-        <div className="p-4 border-t border-slate-100 flex items-center justify-between">
+
+        {/* ── Cards (mobile) ── */}
+        <div className="md:hidden divide-y divide-slate-100">
+          {loading ? (
+            <p className="px-4 py-8 text-center text-slate-500">Chargement...</p>
+          ) : filtered.length === 0 ? (
+            <p className="px-4 py-8 text-center text-slate-500">Aucune commande trouvée.</p>
+          ) : (
+            filtered.map(order => {
+              const st = STATUS_CONFIG[order.statut];
+              const mode = MODE_LABELS[order.modeReception];
+              const ModeIcon = mode.icon;
+              return (
+                <div key={order.id} className="p-4 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="font-mono font-bold text-primary text-sm">{order.numeroSuivi}</span>
+                    <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium ${st.bg} ${st.text}`}>
+                      <span className={`w-1.5 h-1.5 rounded-full ${st.dot}`}></span>
+                      {st.label}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="font-medium text-slate-700">{order.nomClient}</span>
+                    <span className="font-bold text-slate-900">{parseFloat(String(order.montantTotal)).toLocaleString()} FCFA</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-slate-400">
+                      {new Date(order.dateCommande).toLocaleDateString('fr-FR')} ·{' '}
+                      <span className="inline-flex items-center gap-0.5"><ModeIcon size={12} /> {mode.label}</span>
+                    </span>
+                    <div className="flex items-center gap-3">
+                      <select
+                        value={order.statut}
+                        onChange={e => handleStatusChange(order.id, e.target.value as StatutCommande)}
+                        disabled={updatingId === order.id || order.statut === 'CONFIRMEE' || order.statut === 'ANNULEE'}
+                        className={`px-2 py-0.5 rounded-full text-xs font-medium border-0 cursor-pointer ${st.bg} ${st.text} outline-none`}
+                      >
+                        {['CONFIRMEE', 'ANNULEE'].includes(order.statut) && (
+                          <option value={order.statut}>{STATUS_CONFIG[order.statut].label}</option>
+                        )}
+                        {!['CONFIRMEE', 'ANNULEE'].includes(order.statut) && ADMIN_STATUSES.map(s => (
+                          <option key={s} value={s}>{STATUS_CONFIG[s].label}</option>
+                        ))}
+                      </select>
+                      <button onClick={() => setSelectedOrder(order)} className="text-xs font-bold text-primary hover:underline">
+                        Détails →
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+
+        <div className="p-4 border-t border-slate-100">
           <p className="text-sm text-slate-500">
             {filtered.length} commande{filtered.length !== 1 ? 's' : ''} trouvée{filtered.length !== 1 ? 's' : ''}
           </p>

@@ -124,7 +124,8 @@ export const Fournisseurs = () => {
               className="w-full pl-10 pr-4 py-2 bg-slate-50 border-none rounded-lg text-sm focus:ring-2 focus:ring-primary/20 outline-none" />
           </div>
         </div>
-        <div className="overflow-x-auto">
+        {/* ── Table (desktop) ── */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-slate-50 text-slate-500 text-xs font-bold uppercase tracking-wider">
@@ -147,9 +148,7 @@ export const Fournisseurs = () => {
                   <tr key={f.id} className="hover:bg-slate-50 transition-colors">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
-                        <div className="size-10 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600">
-                          <Factory size={20} />
-                        </div>
+                        <div className="size-10 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600"><Factory size={20} /></div>
                         <span className="font-bold text-slate-900">{f.nomEntreprise}</span>
                       </div>
                     </td>
@@ -169,6 +168,38 @@ export const Fournisseurs = () => {
               )}
             </tbody>
           </table>
+        </div>
+
+        {/* ── Cards (mobile) ── */}
+        <div className="md:hidden divide-y divide-slate-100">
+          {loading ? (
+            <p className="py-8 text-center text-slate-500">Chargement...</p>
+          ) : filtered.length === 0 ? (
+            <div className="py-12 text-center">
+              <Factory size={36} className="mx-auto text-slate-300 mb-3" />
+              <p className="text-slate-500">Aucun fournisseur trouvé.</p>
+            </div>
+          ) : (
+            filtered.map(f => (
+              <div key={f.id} className="p-4 flex items-start gap-3">
+                <div className="size-10 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600 shrink-0">
+                  <Factory size={20} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-start justify-between gap-2">
+                    <p className="font-bold text-slate-900">{f.nomEntreprise}</p>
+                    <button className="text-xs font-bold text-primary hover:underline shrink-0">Historique</button>
+                  </div>
+                  <p className="text-sm text-slate-600 mt-0.5">{f.contactNom || 'Contact non spécifié'}</p>
+                  <div className="flex flex-col mt-1 space-y-0.5">
+                    {f.telephone && <span className="flex items-center gap-1.5 text-xs text-slate-500"><Phone size={11} />{f.telephone}</span>}
+                    {f.email && <span className="flex items-center gap-1.5 text-xs text-slate-500 truncate"><Mail size={11} />{f.email}</span>}
+                    {f.adresse && <span className="text-xs text-slate-400 truncate">{f.adresse}</span>}
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
         </div>
       </div>
     </motion.div>
