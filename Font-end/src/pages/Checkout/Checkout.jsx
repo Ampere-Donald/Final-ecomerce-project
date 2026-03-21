@@ -10,7 +10,8 @@ import axios from 'axios';
 import Footer from '../../components/Footer/Footer';
 import './Checkout.scss';
 
-const API = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+const _rawApi = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+const API = _rawApi.endsWith('/api') ? _rawApi : `${_rawApi}/api`;
 
 const Checkout = () => {
     const { t } = useI18n();

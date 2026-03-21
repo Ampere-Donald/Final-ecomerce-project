@@ -10,7 +10,8 @@ import { formatFCFA } from '../../utils/formatFCFA';
 import Footer from '../../components/Footer/Footer';
 import './Profile.scss';
 
-const API = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+const _rawApi = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+const API = _rawApi.endsWith('/api') ? _rawApi : `${_rawApi}/api`;
 const WHATSAPP_NUMBER = '237699966160';
 
 // WhatsApp SVG icon inline
