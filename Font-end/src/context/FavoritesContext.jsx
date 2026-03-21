@@ -8,7 +8,10 @@ const STORAGE_KEY = 'newoteg_favorites';
 const initFavorites = () => {
     try {
         const stored = localStorage.getItem(STORAGE_KEY);
-        if (stored) return JSON.parse(stored);
+        if (stored) {
+            const parsed = JSON.parse(stored);
+            return Array.isArray(parsed) ? parsed : [];
+        }
     } catch { }
     return [];
 };

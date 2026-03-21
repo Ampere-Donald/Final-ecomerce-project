@@ -21,7 +21,8 @@ const SearchBar = () => {
         const handler = setTimeout(async () => {
             try {
                 const res = await axios.get('/api/produits');
-                const filtered = res.data
+                const products = Array.isArray(res.data) ? res.data : res.data?.data || [];
+                const filtered = products
                     .filter((p) =>
                         p.nomProduit.toLowerCase().includes(searchQuery.toLowerCase()) ||
                         (p.marque && p.marque.toLowerCase().includes(searchQuery.toLowerCase()))

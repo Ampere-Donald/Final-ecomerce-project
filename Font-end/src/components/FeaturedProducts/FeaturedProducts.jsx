@@ -211,7 +211,8 @@ const FeaturedProducts = () => {
                 ]);
 
                 // ── Flash deals ──
-                const flashData = (flashRes.data || []).map((p) => {
+                const flashRaw = Array.isArray(flashRes.data) ? flashRes.data : flashRes.data?.data || [];
+                const flashData = flashRaw.map((p) => {
                     const retailPrice = parseFloat(p.prixDetail) || 0;
                     const promoPrice = parseFloat(p.prixPromo) || 0;
                     const discount = retailPrice > 0 ? Math.round(((retailPrice - promoPrice) / retailPrice) * 100) : 0;
@@ -244,7 +245,8 @@ const FeaturedProducts = () => {
                 }
 
                 // ── Populaires ──
-                const popData = (popRes.data || []).map(p => ({
+                const popRaw = Array.isArray(popRes.data) ? popRes.data : popRes.data?.data || [];
+                const popData = popRaw.map(p => ({
                     id: p.id,
                     model: p.nomProduit,
                     code: p.id.split('-')[0].toUpperCase(),
