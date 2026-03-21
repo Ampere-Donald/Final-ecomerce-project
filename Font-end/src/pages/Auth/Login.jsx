@@ -120,7 +120,6 @@ const Login = () => {
             text="signin_with"
             shape="rectangular"
             size="large"
-            width="100%"
             locale="fr"
           />
         </div>
