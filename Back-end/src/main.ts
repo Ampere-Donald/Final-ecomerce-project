@@ -6,6 +6,16 @@ import { join } from 'path';
 import 'dotenv/config';
 
 async function bootstrap() {
+  // --- Force prisma migrations execution on startup ---
+  try {
+    const { execSync } = require('child_process');
+    console.log('Running Prisma migrations...');
+    execSync('npx prisma migrate deploy', { stdio: 'inherit' });
+    console.log('Prisma migrations applied successfully.');
+  } catch (error) {
+    console.error('Failed to run Prisma migrations:', error);
+  }
+
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
   app.useGlobalPipes(new ValidationPipe({
