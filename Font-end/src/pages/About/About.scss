@@ -91,10 +91,10 @@
         animation: fadeInUP 0.8s ease backwards;
 
         @media (max-width: $breakpoint-md) {
-            padding: 170px 0 110px;
+            padding: 180px 0 110px;
         }
         @media (max-width: $breakpoint-sm) {
-            padding: 200px 15px 120px;
+            padding: 250px 15px 100px; // Significantly increased top padding to avoid header clash
         }
     }
 
@@ -145,9 +145,9 @@
         }
         
         @media (max-width: $breakpoint-sm) {
-            font-size: 1.65rem;
-            line-height: 1.2;
-            margin-bottom: $spacing-md;
+            font-size: 1.85rem; // Slightly larger for impact
+            line-height: 1.35; // Better breathability
+            margin-bottom: $spacing-lg; // More space before text
             padding: 0 10px;
         }
     }
@@ -239,8 +239,10 @@
         @media (max-width: $breakpoint-sm) {
             flex-direction: column;
             align-items: stretch;
-            gap: $spacing-sm;
-            padding: 0 15px;
+            gap: $spacing-md; // Increased gap between buttons for better touch targets
+            padding: 0 20px;
+            margin-top: $spacing-lg; // Space above buttons
+            margin-bottom: $spacing-xl; // Space below buttons
         }
 
         .btn {
