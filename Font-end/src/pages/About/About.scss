@@ -58,13 +58,18 @@
     align-items: center;
     justify-content: center;
     padding: 80px 20px 0; // Visual header compensation
-    
+
     // Replace watermarked image with a premium deep radial gradient
     background: radial-gradient(circle at 50% 10%, #1e1b4b 0%, #0f172a 60%, #020617 100%);
     text-align: center;
     margin-top: -80px; // To go under the header
     margin-bottom: $spacing-3xl;
     overflow: hidden;
+
+    @media (max-width: calc(#{$breakpoint-lg} - 1px)) {
+        margin-top: -102px; // header (64px) + mobile nav strip (38px)
+        padding-top: 102px;
+    }
 
     // Deep gradient overlay & subtle accent mesh
     &::before {

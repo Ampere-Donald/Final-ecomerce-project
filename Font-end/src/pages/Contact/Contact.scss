@@ -63,6 +63,11 @@
     margin-bottom: $spacing-3xl;
     overflow: hidden;
 
+    @media (max-width: calc(#{$breakpoint-lg} - 1px)) {
+        margin-top: -102px; // header (64px) + mobile nav strip (38px)
+        padding-top: 102px;
+    }
+
     &::before {
         content: '';
         position: absolute;

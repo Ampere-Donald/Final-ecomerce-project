@@ -93,6 +93,12 @@ export default {
         legalPrivacy: "Privacy Policy",
         legal3: "."
     },
+    mobileStrip: {
+        home: "Home",
+        catalogue: "Catalogue",
+        about: "About",
+        contact: "Contact",
+    },
     drawer: {
         home: "Home",
         catalogue: "Catalogue",

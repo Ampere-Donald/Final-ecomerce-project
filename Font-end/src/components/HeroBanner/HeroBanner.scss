@@ -15,7 +15,7 @@
     @media (max-width: $breakpoint-md) {
         width: calc(100% - 2rem);
         height: 520px;
-        margin: calc(102px + #{$spacing-sm}) auto $spacing-md; // header (64px) + nav strip (38px)
+        margin: $spacing-sm auto $spacing-md; // parent .home-page handles header offset
     }
 
     @media (max-width: 400px) {

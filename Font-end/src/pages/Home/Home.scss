@@ -4,6 +4,10 @@
     background-color: $color-background;
     padding-top: 80px;
 
+    @media (max-width: calc(#{$breakpoint-lg} - 1px)) {
+        padding-top: 102px; // header (64px) + mobile nav strip (38px)
+    }
+
     &__divider {
         height: 1px;
         background: linear-gradient(90deg, transparent 0%, rgba($color-border, 0.5) 50%, transparent 100%);

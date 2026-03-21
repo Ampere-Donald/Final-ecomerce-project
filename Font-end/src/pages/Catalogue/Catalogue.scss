@@ -9,6 +9,10 @@
     background-color: $color-background;
     min-height: 100vh;
 
+    @media (max-width: calc(#{$breakpoint-lg} - 1px)) {
+        padding-top: 102px; // header (64px) + mobile nav strip (38px)
+    }
+
     // ── Page Header ──────────────────────────────────────────
     &__header {
         padding: $spacing-xl 0 $spacing-lg;
