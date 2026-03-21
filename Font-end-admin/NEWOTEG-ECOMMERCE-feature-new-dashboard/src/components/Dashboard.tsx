@@ -213,14 +213,16 @@ export const Dashboard = () => {
 
       {/* ═══ Recent Orders Table ══════════════════════════════════ */}
       <section className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
-        <div className="p-6 border-b border-slate-100 flex items-center justify-between">
+        <div className="p-4 md:p-6 border-b border-slate-100 flex items-center justify-between">
           <h3 className="font-bold text-lg text-slate-900">Historique Récent des Commandes</h3>
           <div className="flex gap-2">
             <button className="p-2 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors text-slate-500"><Filter size={18} /></button>
             <button className="p-2 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors text-slate-500"><Download size={18} /></button>
           </div>
         </div>
-        <div className="overflow-x-auto">
+
+        {/* ── Table (desktop) ── */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-slate-50 text-slate-500 text-xs font-bold uppercase tracking-wider">
@@ -263,6 +265,38 @@ export const Dashboard = () => {
               )}
             </tbody>
           </table>
+        </div>
+
+        {/* ── Cards (mobile) ── */}
+        <div className="md:hidden divide-y divide-slate-100">
+          {loading ? (
+            <p className="px-4 py-8 text-center text-slate-500">Chargement...</p>
+          ) : recentOrders.length === 0 ? (
+            <p className="px-4 py-8 text-center text-slate-500">Aucune commande trouvée.</p>
+          ) : (
+            recentOrders.map((order) => {
+              const st = STATUS_CFG[order.statut];
+              return (
+                <div key={order.id} className="p-4 flex flex-col gap-2">
+                  <div className="flex items-center justify-between">
+                    <span className="font-mono font-bold text-primary text-sm">{order.numeroSuivi}</span>
+                    <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium ${st.bg} ${st.text}`}>
+                      <span className={`w-1.5 h-1.5 rounded-full ${st.dot}`}></span>
+                      {st.label}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="font-medium text-slate-700">{order.nomClient}</span>
+                    <span className="font-semibold text-slate-900">{parseFloat(String(order.montantTotal)).toLocaleString()} FCFA</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-slate-400">{new Date(order.dateCommande).toLocaleDateString('fr-FR')} · {order.modeReception === 'LIVRAISON' ? 'Livraison' : 'Retrait'}</span>
+                    <a href="/orders" className="text-xs font-bold text-primary hover:underline">Voir →</a>
+                  </div>
+                </div>
+              );
+            })
+          )}
         </div>
       </section>
     </motion.div>

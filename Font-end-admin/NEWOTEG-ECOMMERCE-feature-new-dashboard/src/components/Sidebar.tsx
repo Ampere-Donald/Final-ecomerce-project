@@ -1,7 +1,7 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { 
-  LayoutDashboard, 
+import {
+  LayoutDashboard,
   Package,
   Tags,
   Layers,
@@ -11,13 +11,19 @@ import {
   Users,
   Factory,
   Wallet,
-  Settings, 
-  LifeBuoy, 
+  Settings,
+  LifeBuoy,
   LogOut,
   Package2,
-  ClipboardList
+  ClipboardList,
+  X,
 } from 'lucide-react';
 import { motion } from 'motion/react';
+
+interface SidebarProps {
+  open: boolean;
+  onClose: () => void;
+}
 
 const catalogueItems = [
   { label: 'Tableau de bord', icon: LayoutDashboard, path: '/' },
@@ -46,10 +52,22 @@ const secondaryItems = [
   { label: 'Support', icon: LifeBuoy, path: '/support' },
 ];
 
-export const Sidebar = () => {
+export const Sidebar = ({ open, onClose }: SidebarProps) => {
   return (
-    <aside className="w-64 flex-shrink-0 border-r border-slate-200 bg-white flex flex-col h-screen sticky top-0">
+    <aside className={`
+      fixed md:sticky top-0 left-0 z-40 h-screen
+      w-64 flex-shrink-0 border-r border-slate-200 bg-white flex flex-col
+      transition-transform duration-300 ease-in-out
+      ${open ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+    `}>
       <div className="p-6 border-b border-slate-100 flex items-center gap-3">
+        {/* Bouton fermer visible uniquement sur mobile */}
+        <button
+          onClick={onClose}
+          className="md:hidden absolute right-4 top-4 p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+        >
+          <X size={20} />
+        </button>
         <div className="w-10 h-10 flex items-center justify-center">
           <img src="/logo.png" alt="Newoteg" className="w-full h-full object-contain drop-shadow-sm" />
         </div>
@@ -57,7 +75,7 @@ export const Sidebar = () => {
       </div>
 
       <nav className="flex-1 overflow-y-auto p-4 space-y-6">
-        
+
         {/* CATALOGUE */}
         <div>
           <p className="px-3 text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Catalogue</p>
@@ -66,6 +84,7 @@ export const Sidebar = () => {
               <NavLink
                 key={item.path}
                 to={item.path}
+                onClick={onClose}
                 className={({ isActive }) =>
                   `flex items-center gap-3 px-3 py-2 rounded-lg transition-colors font-medium ${
                     isActive ? 'bg-primary/10 text-primary' : 'text-slate-600 hover:bg-slate-50 hover:text-primary'
@@ -87,6 +106,7 @@ export const Sidebar = () => {
               <NavLink
                 key={item.path}
                 to={item.path}
+                onClick={onClose}
                 className={({ isActive }) =>
                   `flex items-center gap-3 px-3 py-2 rounded-lg transition-colors font-medium ${
                     isActive ? 'bg-primary/10 text-primary' : 'text-slate-600 hover:bg-slate-50 hover:text-primary'
@@ -108,6 +128,7 @@ export const Sidebar = () => {
               <NavLink
                 key={item.path}
                 to={item.path}
+                onClick={onClose}
                 className={({ isActive }) =>
                   `flex items-center gap-3 px-3 py-2 rounded-lg transition-colors font-medium ${
                     isActive ? 'bg-primary/10 text-primary' : 'text-slate-600 hover:bg-slate-50 hover:text-primary'
@@ -126,6 +147,7 @@ export const Sidebar = () => {
             <NavLink
               key={item.path}
               to={item.path}
+              onClick={onClose}
               className={({ isActive }) =>
                 `flex items-center gap-3 px-3 py-2 rounded-lg transition-colors font-medium ${
                   isActive ? 'bg-primary/10 text-primary' : 'text-slate-600 hover:bg-slate-50 hover:text-primary'
