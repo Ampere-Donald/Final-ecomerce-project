@@ -4,7 +4,7 @@ WORKDIR /app
 
 COPY package*.json ./
 
-# Copy prisma FIRST
+# Copy prisma FIRST (cache bust v2)
 COPY prisma ./prisma
 COPY prisma.config.ts ./
 
