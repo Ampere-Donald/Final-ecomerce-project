@@ -1,0 +1,789 @@
+{
+  "total_familles": 150,
+  "top_30_familles_by_count": [
+    {
+      "id": "103",
+      "count": 1099
+    },
+    {
+      "id": "102",
+      "count": 706
+    },
+    {
+      "id": "123",
+      "count": 380
+    },
+    {
+      "id": "215",
+      "count": 355
+    },
+    {
+      "id": "501",
+      "count": 277
+    },
+    {
+      "id": "106",
+      "count": 273
+    },
+    {
+      "id": "118",
+      "count": 259
+    },
+    {
+      "id": "117",
+      "count": 220
+    },
+    {
+      "id": "101",
+      "count": 166
+    },
+    {
+      "id": "128",
+      "count": 131
+    },
+    {
+      "id": "242",
+      "count": 130
+    },
+    {
+      "id": "108",
+      "count": 124
+    },
+    {
+      "id": "132",
+      "count": 124
+    },
+    {
+      "id": "268",
+      "count": 119
+    },
+    {
+      "id": "111",
+      "count": 102
+    },
+    {
+      "id": "107",
+      "count": 85
+    },
+    {
+      "id": "241",
+      "count": 78
+    },
+    {
+      "id": "237",
+      "count": 73
+    },
+    {
+      "id": "208",
+      "count": 72
+    },
+    {
+      "id": "616",
+      "count": 71
+    },
+    {
+      "id": "115",
+      "count": 69
+    },
+    {
+      "id": "112",
+      "count": 64
+    },
+    {
+      "id": "233",
+      "count": 61
+    },
+    {
+      "id": "243",
+      "count": 60
+    },
+    {
+      "id": "104",
+      "count": 57
+    },
+    {
+      "id": "620",
+      "count": 55
+    },
+    {
+      "id": "211",
+      "count": 50
+    },
+    {
+      "id": "113",
+      "count": 46
+    },
+    {
+      "id": "705",
+      "count": 44
+    },
+    {
+      "id": "255",
+      "count": 43
+    }
+  ],
+  "all_familles": {
+    "103": 1099,
+    "102": 706,
+    "123": 380,
+    "215": 355,
+    "501": 277,
+    "106": 273,
+    "118": 259,
+    "117": 220,
+    "101": 166,
+    "128": 131,
+    "242": 130,
+    "108": 124,
+    "132": 124,
+    "268": 119,
+    "111": 102,
+    "107": 85,
+    "241": 78,
+    "237": 73,
+    "208": 72,
+    "616": 71,
+    "115": 69,
+    "112": 64,
+    "233": 61,
+    "243": 60,
+    "104": 57,
+    "620": 55,
+    "211": 50,
+    "113": 46,
+    "705": 44,
+    "255": 43,
+    "212": 42,
+    "125": 37,
+    "210": 36,
+    "218": 35,
+    "702": 32,
+    "114": 32,
+    "129": 32,
+    "707": 31,
+    "217": 30,
+    "116": 28,
+    "250": 27,
+    "119": 27,
+    "228": 26,
+    "223": 25,
+    "230": 25,
+    "404": 25,
+    "602": 24,
+    "609": 24,
+    "266": 24,
+    "120": 23,
+    "240": 22,
+    "105": 22,
+    "225": 22,
+    "202": 22,
+    "236": 22,
+    "239": 22,
+    "206": 20,
+    "109": 19,
+    "203": 19,
+    "221": 18,
+    "247": 18,
+    "264": 18,
+    "710": 18,
+    "209": 17,
+    "220": 17,
+    "258": 17,
+    "219": 16,
+    "701": 16,
+    "303": 15,
+    "235": 15,
+    "248": 15,
+    "131": 15,
+    "205": 15,
+    "213": 14,
+    "214": 14,
+    "222": 14,
+    "122": 14,
+    "256": 14,
+    "238": 13,
+    "226": 12,
+    "622": 12,
+    "130": 12,
+    "201": 12,
+    "216": 11,
+    "126": 11,
+    "403": 11,
+    "224": 10,
+    "231": 10,
+    "265": 10,
+    "311": 9,
+    "617": 9,
+    "261": 9,
+    "204": 9,
+    "706": 8,
+    "124": 8,
+    "245": 8,
+    "618": 8,
+    "262": 8,
+    "263": 8,
+    "607": 7,
+    "244": 7,
+    "251": 7,
+    "127": 7,
+    "207": 7,
+    "605": 6,
+    "246": 6,
+    "310": 6,
+    "253": 6,
+    "121": 6,
+    "304": 5,
+    "613": 5,
+    "252": 5,
+    "254": 5,
+    "312": 5,
+    "259": 5,
+    "621": 5,
+    "709": 4,
+    "302": 4,
+    "608": 4,
+    "708": 4,
+    "604": 4,
+    "257": 4,
+    "267": 4,
+    "619": 4,
+    "603": 3,
+    "301": 3,
+    "227": 3,
+    "306": 3,
+    "234": 3,
+    "308": 3,
+    "614": 3,
+    "305": 3,
+    "309": 3,
+    "606": 3,
+    "260": 3,
+    "601": 3,
+    "401": 2,
+    "610": 2,
+    "229": 2,
+    "232": 2,
+    "402": 2,
+    "612": 2,
+    "249": 2,
+    "704": 1,
+    "615": 1,
+    "307": 1,
+    "110": 1,
+    "703": 1,
+    "313": 1,
+    "611": 1
+  },
+  "sample_products_per_famille": {
+    "215": [
+      {
+        "model": " LECTEUR MP3 + BLUETOOTH X1783  AUTO",
+        "code": "215194",
+        "marque": "NULL"
+      },
+      {
+        "model": "A 980",
+        "code": "215339",
+        "marque": "NULL"
+      },
+      {
+        "model": "A980",
+        "code": "215257",
+        "marque": "NULL"
+      }
+    ],
+    "101": [
+      {
+        "model": "100N03",
+        "code": "101001",
+        "marque": "NULL"
+      },
+      {
+        "model": "10N40 PM",
+        "code": "101002",
+        "marque": "NULL"
+      },
+      {
+        "model": "10N60 GM",
+        "code": "101003",
+        "marque": "NULL"
+      }
+    ],
+    "103": [
+      {
+        "model": "12N60",
+        "code": "1031074",
+        "marque": "NULL"
+      },
+      {
+        "model": "2N 1711",
+        "code": "103004",
+        "marque": "NULL"
+      },
+      {
+        "model": "2N 2217",
+        "code": "103005",
+        "marque": "NULL"
+      }
+    ],
+    "102": [
+      {
+        "model": "24C02",
+        "code": "102001",
+        "marque": "NULL"
+      },
+      {
+        "model": "24C04",
+        "code": "102002",
+        "marque": "NULL"
+      },
+      {
+        "model": "24C08 A",
+        "code": "102003",
+        "marque": "NULL"
+      }
+    ],
+    "117": [
+      {
+        "model": "74HC17",
+        "code": "117001",
+        "marque": "NULL"
+      },
+      {
+        "model": "74HC373",
+        "code": "117002",
+        "marque": "NULL"
+      },
+      {
+        "model": "74HC4520",
+        "code": "117003",
+        "marque": "NULL"
+      }
+    ],
+    "208": [
+      {
+        "model": "ADAPT 1 RCA EN FICHE F",
+        "code": "208011",
+        "marque": "NULL"
+      },
+      {
+        "model": "ADAPT 1 RCA FEM / 2 RCA FEM",
+        "code": "208055",
+        "marque": "NULL"
+      },
+      {
+        "model": "ADAPT 1 RCA FEM/ 1 RCA EN FER",
+        "code": "208012",
+        "marque": "NULL"
+      }
+    ],
+    "211": [
+      {
+        "model": "AMPOULE 220V AMPLI",
+        "code": "211002",
+        "marque": "NULL"
+      },
+      {
+        "model": "AMPOULE 6V AMPLI",
+        "code": "211003",
+        "marque": "NULL"
+      },
+      {
+        "model": "AMPOULE 8V0.2A",
+        "code": "211007",
+        "marque": "NULL"
+      }
+    ],
+    "501": [
+      {
+        "model": "ANTENE TV",
+        "code": "501097",
+        "marque": "NULL"
+      },
+      {
+        "model": "ANTI TRANSPIRANT CIEN",
+        "code": "501027",
+        "marque": "NULL"
+      },
+      {
+        "model": "ASIETTE EN VERRE",
+        "code": "501193",
+        "marque": "NULL"
+      }
+    ],
+    "242": [
+      {
+        "model": "BAFLE BLUETHOOT MINI",
+        "code": "242062",
+        "marque": "NULL"
+      },
+      {
+        "model": "HP + AUTO TWEETER 5P CX502",
+        "code": "242122",
+        "marque": "NULL"
+      },
+      {
+        "model": "HP + TWEETER AUTO 5P SILTRON LF-502-2",
+        "code": "242002",
+        "marque": "NULL"
+      }
+    ],
+    "233": [
+      {
+        "model": "CHARGER  5V-3A",
+        "code": "233014",
+        "marque": "NULL"
+      },
+      {
+        "model": "CHARGER  9V 200MA",
+        "code": "233015",
+        "marque": "NULL"
+      },
+      {
+        "model": "CHARGER (24V-1A) + (8V-300MA)",
+        "code": "233003",
+        "marque": "NULL"
+      }
+    ],
+    "123": [
+      {
+        "model": "CONDO 0.01UF 400V",
+        "code": "123011",
+        "marque": "NULL"
+      },
+      {
+        "model": "CONDO 0.1UF 100V",
+        "code": "123013",
+        "marque": "NULL"
+      },
+      {
+        "model": "CONDO 0.1UF 10V",
+        "code": "123012",
+        "marque": "NULL"
+      }
+    ],
+    "104": [
+      {
+        "model": "CONDO CBT 100PF=0.01NF 10-100V",
+        "code": "104001",
+        "marque": "NULL"
+      },
+      {
+        "model": "CONDO CBT 101PF=0.1NF 10-100V",
+        "code": "104002",
+        "marque": "NULL"
+      },
+      {
+        "model": "CONDO CBT 102PF=1NF 10-100V",
+        "code": "104003",
+        "marque": "NULL"
+      }
+    ],
+    "237": [
+      {
+        "model": "CORDON 1 JK 3.5 BI ST M/ 3RCA M",
+        "code": "237025",
+        "marque": "NULL"
+      },
+      {
+        "model": "CORDON 1 JK 3.5 BI ST M/ 3RCA M 30M",
+        "code": "237026",
+        "marque": "NULL"
+      },
+      {
+        "model": "CORDON 1 JK 3.5 ST M/ 1 JK 3.5 ST FEM 1.5M",
+        "code": "237011",
+        "marque": "NULL"
+      }
+    ],
+    "111": [
+      {
+        "model": "DIODE AMPLI KENWOOD 2FILS",
+        "code": "111001",
+        "marque": "NULL"
+      },
+      {
+        "model": "DIODE AMPLI KENWOOD SANS FIL GM",
+        "code": "111002",
+        "marque": "NULL"
+      },
+      {
+        "model": "DIODE AMPLI KENWOOD SANS FIL PM",
+        "code": "111003",
+        "marque": "NULL"
+      }
+    ],
+    "241": [
+      {
+        "model": "FCHE SPEAKON FEM 4PAT CARRE",
+        "code": "241060",
+        "marque": "NULL"
+      },
+      {
+        "model": "FICH JK 3.5 ST M EN ARGENT",
+        "code": "241019",
+        "marque": "NULL"
+      },
+      {
+        "model": "FICH JK 3.5 ST M EN FER",
+        "code": "241020",
+        "marque": "NULL"
+      }
+    ],
+    "616": [
+      {
+        "model": "FFRIGO 2B CB ZANUSSI MM",
+        "code": "616019",
+        "marque": "NULL"
+      },
+      {
+        "model": "FIGO 2B CB BEKO GRIS  MM",
+        "code": "616043",
+        "marque": "NULL"
+      },
+      {
+        "model": "FRIG 2B CB BEKO GM",
+        "code": "616036",
+        "marque": "NULL"
+      }
+    ],
+    "112": [
+      {
+        "model": "FUSIBLE 0.5A PM",
+        "code": "112014",
+        "marque": "NULL"
+      },
+      {
+        "model": "FUSIBLE 0.6A PM",
+        "code": "112015",
+        "marque": "NULL"
+      },
+      {
+        "model": "FUSIBLE 0.8A PM",
+        "code": "112016",
+        "marque": "NULL"
+      }
+    ],
+    "243": [
+      {
+        "model": "INT  ON/OFF TRIPLE ALUMAGE 9PAT",
+        "code": "243043",
+        "marque": "NULL"
+      },
+      {
+        "model": "INT ON/OFF 3PAT 3 POS PM",
+        "code": "243005",
+        "marque": "NULL"
+      },
+      {
+        "model": "INT ON/OFF 4PAT NOIR PM",
+        "code": "243004",
+        "marque": "NULL"
+      }
+    ],
+    "113": [
+      {
+        "model": "LED BARET 10 AMP 50\" 94V",
+        "code": "113042",
+        "marque": "NULL"
+      },
+      {
+        "model": "LED BARET 10 AMP 94V",
+        "code": "113036",
+        "marque": "NULL"
+      },
+      {
+        "model": "LED BARET 10AMP 94V",
+        "code": "113001",
+        "marque": "NULL"
+      }
+    ],
+    "108": [
+      {
+        "model": "MA 1050",
+        "code": "108001",
+        "marque": "NULL"
+      },
+      {
+        "model": "MA 2830",
+        "code": "108002",
+        "marque": "NULL"
+      },
+      {
+        "model": "MB 3205",
+        "code": "108004",
+        "marque": "NULL"
+      }
+    ],
+    "705": [
+      {
+        "model": "MAT 140X190X15 BROC",
+        "code": "705032",
+        "marque": "NULL"
+      },
+      {
+        "model": "MAT 140X190X18 BROC",
+        "code": "705024",
+        "marque": "NULL"
+      },
+      {
+        "model": "MAT 140X190X20 BROC",
+        "code": "705036",
+        "marque": "NULL"
+      }
+    ],
+    "255": [
+      {
+        "model": "PIL 1.5V DURACEL 2A ORG",
+        "code": "255001",
+        "marque": "NULL"
+      },
+      {
+        "model": "PIL 1.5V DURACEL 3A ORG",
+        "code": "255002",
+        "marque": "NULL"
+      },
+      {
+        "model": "PIL 1.5V GOLSTAR 3A JEUX 4/2",
+        "code": "255005",
+        "marque": "NULL"
+      }
+    ],
+    "115": [
+      {
+        "model": "POT AMPLI 8PAT 100K",
+        "code": "115002",
+        "marque": "NULL"
+      },
+      {
+        "model": "POT AMPLI 8PAT 50K",
+        "code": "115003",
+        "marque": "NULL"
+      },
+      {
+        "model": "POT B100K ST 6P",
+        "code": "115004",
+        "marque": "NULL"
+      }
+    ],
+    "106": [
+      {
+        "model": "RESIST CARBON 1/2W 0.22KR",
+        "code": "106005",
+        "marque": "NULL"
+      },
+      {
+        "model": "RESIST CARBON 1/2W 0.22R",
+        "code": "106014",
+        "marque": "NULL"
+      },
+      {
+        "model": "RESIST CARBON 1/2W 0.33KR",
+        "code": "106006",
+        "marque": "NULL"
+      }
+    ],
+    "128": [
+      {
+        "model": "RESIST CHAUFTE 10W 0.22R",
+        "code": "128006",
+        "marque": "NULL"
+      },
+      {
+        "model": "RESIST CHAUFTE 10W 0.47R",
+        "code": "128007",
+        "marque": "NULL"
+      },
+      {
+        "model": "RESIST CHAUFTE 10W 100R",
+        "code": "128008",
+        "marque": "NULL"
+      }
+    ],
+    "118": [
+      {
+        "model": "STA 540 GM",
+        "code": "118002",
+        "marque": "NULL"
+      },
+      {
+        "model": "STA 540 PM",
+        "code": "118001",
+        "marque": "NULL"
+      },
+      {
+        "model": "TDA 1010",
+        "code": "118003",
+        "marque": "NULL"
+      }
+    ],
+    "107": [
+      {
+        "model": "STK 0025",
+        "code": "107001",
+        "marque": "NULL"
+      },
+      {
+        "model": "STK 0035",
+        "code": "107002",
+        "marque": "NULL"
+      },
+      {
+        "model": "STK 0039",
+        "code": "107003",
+        "marque": "NULL"
+      }
+    ],
+    "132": [
+      {
+        "model": "TA 1521",
+        "code": "132001",
+        "marque": "NULL"
+      },
+      {
+        "model": "TA 194",
+        "code": "132002",
+        "marque": "NULL"
+      },
+      {
+        "model": "TA 2003",
+        "code": "132003",
+        "marque": "NULL"
+      }
+    ],
+    "268": [
+      {
+        "model": "TELECMDE AIWA OCAS",
+        "code": "268002",
+        "marque": "NULL"
+      },
+      {
+        "model": "TELECMDE BUSH LED AD44/AMD 128E",
+        "code": "268009",
+        "marque": "NULL"
+      },
+      {
+        "model": "TELECMDE CATOD BEKO  12.1",
+        "code": "268003",
+        "marque": "NULL"
+      }
+    ],
+    "620": [
+      {
+        "model": "TV  21\" CATHODIQUE",
+        "code": "620017",
+        "marque": "NULL"
+      },
+      {
+        "model": "TV  GRUNDIG 37\"",
+        "code": "620004",
+        "marque": "NULL"
+      },
+      {
+        "model": "TV  SMAT PHILLIP 43 ''",
+        "code": "620049",
+        "marque": "NULL"
+      }
+    ]
+  }
+}

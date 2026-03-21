@@ -1,0 +1,176 @@
+.product-table-container {
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    overflow-x: auto;
+    margin-bottom: 2rem;
+
+    .product-table {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 800px; // Assure le défilement horizontal sur mobile
+
+        th, td {
+            text-align: left;
+            padding: 1rem;
+            border-bottom: 1px solid #f0f0f0;
+            vertical-align: middle;
+        }
+
+        th {
+            background: #f8f9fa;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #64748b;
+            font-weight: 600;
+
+            &.product-table__th-img {
+                width: 80px;
+            }
+            &.product-table__th-action {
+                text-align: center;
+                width: 80px;
+            }
+        }
+
+        .product-table__row {
+            transition: background-color 0.2s;
+
+            &:hover {
+                background: #fdfdfd;
+            }
+
+            &--backorder {
+                background: #fffdf0;
+            }
+        }
+
+        .product-table__cell-img {
+            img {
+                width: 60px;
+                height: 60px;
+                object-fit: cover;
+                border-radius: 4px;
+                border: 1px solid #eee;
+            }
+        }
+
+        .product-table__ref-link {
+            color: #1e293b;
+            text-decoration: none;
+            display: block;
+            margin-bottom: 0.2rem;
+            font-size: 1.05rem;
+
+            &:hover {
+                color: #e30613; // Couleur principale NEWOTEG
+            }
+        }
+
+        .product-table__brand,
+        .product-table__category {
+            display: block;
+            font-size: 0.8rem;
+            color: #64748b;
+        }
+        
+        .product-table__brand {
+            font-weight: 600;
+        }
+
+        .product-table__desc {
+            font-size: 0.85rem;
+            color: #475569;
+            max-width: 250px;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.35rem 0.6rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+
+            &-stock {
+                background: #ecfcf5;
+                color: #10b981;
+                border: 1px solid #d1fae5;
+            }
+
+            &-warning {
+                background: #fffbeb;
+                color: #d97706;
+                border: 1px solid #fef3c7;
+            }
+        }
+
+        .product-table__price {
+            font-family: 'JetBrains Mono', monospace; // Police monospace très pro pour les chiffres
+            font-weight: 600;
+
+            &--retail {
+                color: #0f172a;
+            }
+
+            &--wholesale {
+                color: #e30613;
+                font-size: 1.05rem;
+            }
+        }
+
+        .btn-add-table {
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #0f172a;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin: 0 auto;
+
+            &:hover:not(:disabled) {
+                background: #e30613;
+                border-color: #e30613;
+                color: #fff;
+            }
+
+            &:disabled {
+                opacity: 0.5;
+                cursor: not-allowed;
+                background: #f1f5f9;
+            }
+        }
+
+        .product-table__action-group {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 8px;
+        }
+
+        .btn-datasheet-table {
+            background: #f1f5f9;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #475569;
+            cursor: pointer;
+            transition: all 0.2s;
+
+            &:hover {
+                background: #fee2e2;
+                border-color: #fca5a5;
+                color: #e30613;
+            }
+        }
+    }
+}

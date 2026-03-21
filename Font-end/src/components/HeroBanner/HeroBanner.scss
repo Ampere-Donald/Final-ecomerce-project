@@ -1,0 +1,276 @@
+@use '../../styles/variables' as *;
+
+.hero-banner {
+    position: relative;
+    height: 600px;
+    width: calc(100% - 4rem);
+    max-width: 1400px;
+    margin: calc(#{$spacing-xl} + 50px) auto $spacing-xl; // Espacement réduit du haut (nav)
+    border-radius: 32px; // Rayon plus arrondi
+    overflow: hidden;
+    background-color: #0d1117; // Dark almost black
+    display: flex;
+    align-items: center;
+
+    @media (max-width: $breakpoint-md) {
+        width: calc(100% - 2rem);
+        height: 520px;
+        margin: calc(102px + #{$spacing-sm}) auto $spacing-md; // header (64px) + nav strip (38px)
+    }
+
+    @media (max-width: 400px) {
+        height: 460px;
+        border-radius: 16px;
+    }
+
+    // ── Slides ───────────────────────────────────────────────
+    &__slide {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 1s ease-in-out, visibility 1s, transform 6s linear;
+        transform: scale(1.05); // Zoom lent
+
+        &--active {
+            opacity: 1;
+            visibility: visible;
+            transform: scale(1);
+            z-index: 1;
+        }
+    }
+
+    &__overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg,
+                rgba(13, 17, 23, 0.95) 0%,
+                rgba(13, 17, 23, 0.85) 40%,
+                rgba(13, 17, 23, 0.2) 100%);
+
+        @media (max-width: $breakpoint-md) {
+            background: linear-gradient(180deg,
+                    rgba(13, 17, 23, 0.5) 0%,
+                    rgba(13, 17, 23, 0.95) 100%);
+        }
+    }
+
+    // ── Content ───────────────────────────────────────────────
+    &__content {
+        position: relative;
+        z-index: 2;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        height: 100%;
+        padding-left: $spacing-3xl;
+
+        @media (max-width: $breakpoint-md) {
+            padding-left: $spacing-xl;
+            padding-right: $spacing-xl;
+        }
+    }
+
+    &__text-block {
+        max-width: 600px;
+        color: $color-surface;
+
+        @media (max-width: $breakpoint-md) {
+            text-align: center;
+            margin: 0 auto;
+            margin-top: auto;
+            padding-bottom: $spacing-2xl;
+        }
+    }
+
+    // ── Typography & Elements ────────────────────────────────
+    &__badge {
+        display: inline-block;
+        font-size: 11px;
+        font-weight: $font-weight-extrabold;
+        letter-spacing: 0.15em;
+        color: #60a5fa; // Lighter blue to pop on dark
+        margin-bottom: $spacing-sm;
+        text-transform: uppercase;
+        opacity: 0;
+    }
+
+    &__title {
+        font-size: clamp(2.5rem, 4vw, 3.5rem);
+        font-weight: $font-weight-extrabold;
+        color: $color-surface; // Pure white
+        line-height: 1.1;
+        margin-bottom: $spacing-md;
+        letter-spacing: -1px;
+        opacity: 0;
+    }
+
+    &__subtitle {
+        font-size: 14px;
+        color: #9CA3AF; // Light grey
+        line-height: $line-height-relaxed;
+        margin-bottom: $spacing-xl;
+        max-width: 500px;
+        opacity: 0;
+
+        @media (max-width: $breakpoint-md) {
+            margin-left: auto;
+            margin-right: auto;
+        }
+    }
+
+    &__actions {
+        display: flex;
+        gap: $spacing-md;
+        opacity: 0;
+
+        @media (max-width: $breakpoint-sm) {
+            flex-direction: column;
+        }
+    }
+
+    // ── CSS Animations for Text ──────────────────────────────
+    .animate-up-1 {
+        animation: slideUpFade 0.8s ease forwards 0.3s;
+    }
+
+    .animate-up-2 {
+        animation: slideUpFade 0.8s ease forwards 0.5s;
+    }
+
+    .animate-up-3 {
+        animation: slideUpFade 0.8s ease forwards 0.7s;
+    }
+
+    .animate-up-4 {
+        animation: slideUpFade 0.8s ease forwards 0.9s;
+    }
+
+    @keyframes slideUpFade {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    // ── Buttons ───────────────────────────────────────────────
+    &__button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.9rem 1.6rem;
+        font-size: 12px;
+        font-weight: $font-weight-bold;
+        border-radius: $border-radius-md;
+        transition: all $transition-fast;
+        text-decoration: none;
+        cursor: pointer;
+
+        &--primary {
+            background-color: #2563eb; // Modern blue
+            color: $color-surface;
+            border: 1px solid #2563eb;
+
+            &:hover {
+                background-color: #1d4ed8;
+                border-color: #1d4ed8;
+                transform: translateY(-2px);
+                box-shadow: 0 10px 20px rgba(37, 99, 235, 0.3);
+            }
+        }
+
+        &--secondary {
+            background-color: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(8px);
+            color: $color-surface;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+
+            &:hover {
+                background-color: rgba(255, 255, 255, 0.2);
+                border-color: rgba(255, 255, 255, 0.3);
+                transform: translateY(-2px);
+            }
+        }
+    }
+
+    // ── Slider Navigation & Dots ─────────────────────────────
+    &__nav-btn {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        z-index: 10;
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        background-color: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(4px);
+        color: white;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+
+        &:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+            transform: translateY(-50%) scale(1.1);
+        }
+
+        &--prev {
+            left: $spacing-xl;
+
+            @media (max-width: $breakpoint-md) {
+                display: none;
+            }
+        }
+
+        &--next {
+            right: $spacing-xl;
+
+            @media (max-width: $breakpoint-md) {
+                display: none;
+            }
+        }
+    }
+
+    &__dots {
+        position: absolute;
+        bottom: $spacing-xl;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 10;
+        display: flex;
+        gap: 12px;
+    }
+
+    &__dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 4px;
+        background-color: rgba(255, 255, 255, 0.3);
+        border: none;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        padding: 0;
+
+        &--active {
+            width: 24px;
+            background-color: #2563eb;
+        }
+    }
+}

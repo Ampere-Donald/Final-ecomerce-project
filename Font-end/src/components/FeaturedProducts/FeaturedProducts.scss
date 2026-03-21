@@ -1,0 +1,500 @@
+@use '../../styles/variables' as *;
+
+.promo-catalogue {
+    padding: $spacing-2xl 0 $spacing-3xl;
+    background-color: $color-background;
+}
+
+.section-margin {
+    margin-top: $spacing-3xl;
+}
+
+// ── Slider Navigation ─────────────────────────────────────────
+.slider-nav {
+    display: flex;
+    align-items: center;
+    gap: $spacing-sm;
+
+    &--flash {
+        margin-top: $spacing-lg;
+    }
+
+    &__btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 36px;
+        height: 36px;
+        border-radius: $border-radius-full;
+        border: 1.5px solid rgba($color-surface, 0.3);
+        background: rgba($color-surface, 0.1);
+        color: $color-surface;
+        cursor: pointer;
+        transition: all 0.2s ease;
+
+        &:hover:not(&--disabled) {
+            background: rgba($color-surface, 0.2);
+            border-color: rgba($color-surface, 0.5);
+        }
+
+        &--disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+    }
+
+    &__counter {
+        font-size: 12px;
+        font-weight: $font-weight-bold;
+        color: rgba($color-surface, 0.7);
+        font-variant-numeric: tabular-nums;
+        min-width: 60px;
+        text-align: center;
+    }
+}
+
+// Bestsellers slider nav (dark text on light bg)
+.bestsellers .slider-nav {
+    .slider-nav__btn {
+        border-color: rgba($color-text, 0.15);
+        background: rgba($color-text, 0.04);
+        color: $color-text;
+
+        &:hover:not(.slider-nav__btn--disabled) {
+            background: rgba($color-text, 0.08);
+            border-color: rgba($color-text, 0.3);
+        }
+    }
+
+    .slider-nav__counter {
+        color: $color-secondary;
+    }
+}
+
+// ── Slider Card Wrapper ───────────────────────────────────────
+.slider-card-wrapper {
+    flex-shrink: 0;
+
+    &--flash {
+        width: calc(100% / 2);
+        padding: 0 $spacing-sm;
+
+        @media (max-width: $breakpoint-md) {
+            width: 100%;
+        }
+
+        .product-card__image {
+            height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+
+            img {
+                width: 100%;
+                height: 100%;
+                object-fit: contain;
+            }
+        }
+    }
+
+    &--pop {
+        width: calc(100% / 4);
+        padding: 0 $spacing-sm;
+
+        @media (max-width: $breakpoint-xl) {
+            width: calc(100% / 3);
+        }
+
+        @media (max-width: $breakpoint-md) {
+            width: calc(100% / 2);
+        }
+
+        @media (max-width: $breakpoint-sm) {
+            width: 100%;
+        }
+    }
+
+    .product-card {
+        width: 100%;
+    }
+}
+
+
+// ── B2B Flash Deal ───────────────────────────────────────────
+.flash-deal-b2b {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: $spacing-xl;
+    background: linear-gradient(135deg, $color-text 0%, #1e1b4b 100%);
+    border-radius: $border-radius-xl;
+    padding: $spacing-2xl;
+    box-shadow: $shadow-lg;
+
+    @media (max-width: $breakpoint-lg) {
+        grid-template-columns: 1fr;
+    }
+
+    @media (max-width: $breakpoint-md) {
+        padding: $spacing-xl $spacing-lg;
+        border-radius: $border-radius-lg;
+    }
+
+    &__left {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        color: $color-surface;
+    }
+
+    &__badge {
+        display: inline-flex;
+        align-items: center;
+        gap: $spacing-xs;
+        background: rgba(#818cf8, 0.2);
+        color: #818cf8; // Indigo clair
+        border: 1px solid rgba(#818cf8, 0.4);
+        padding: 0.4rem 0.8rem;
+        border-radius: $border-radius-full;
+        font-size: 11px;
+        font-weight: $font-weight-extrabold;
+        letter-spacing: 0.1em;
+        width: fit-content;
+        margin-bottom: $spacing-lg;
+    }
+
+    &__title {
+        font-size: clamp(2rem, 3vw, 2.8rem);
+        font-weight: $font-weight-extrabold;
+        line-height: 1.1;
+        margin-bottom: $spacing-md;
+        letter-spacing: -1px;
+        color: #fbbf24; // Yellow-gold for max visibility
+        text-shadow: 0 2px 12px rgba(0, 0, 0, 0.6), 0 0 40px rgba(251, 191, 36, 0.3);
+    }
+
+    &__desc {
+        color: rgba($color-surface, 0.8);
+        font-size: 16px;
+        line-height: $line-height-relaxed;
+        margin-bottom: $spacing-xl;
+        max-width: 400px;
+    }
+
+    &__timer {
+        display: flex;
+        align-items: center;
+        gap: $spacing-sm;
+        flex-wrap: wrap;
+
+        @media (max-width: 400px) {
+            gap: $spacing-2xs;
+        }
+
+        &-block {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: rgba($color-surface, 0.1);
+            border: 1px solid rgba($color-surface, 0.2);
+            padding: 0.8rem 1.2rem;
+            border-radius: $border-radius-md;
+            min-width: 70px;
+
+            @media (max-width: 400px) {
+                padding: 0.6rem 0.8rem;
+                min-width: 56px;
+            }
+        }
+
+        &-value {
+            font-size: 24px;
+            font-weight: $font-weight-bold;
+            font-family: monospace;
+            line-height: 1;
+
+            @media (max-width: 400px) {
+                font-size: 20px;
+            }
+        }
+
+        &-label {
+            font-size: 10px;
+            color: rgba($color-surface, 0.6);
+            margin-top: $spacing-2xs;
+            letter-spacing: 0.1em;
+        }
+
+        &-sep {
+            font-size: 24px;
+            font-weight: $font-weight-bold;
+            color: rgba($color-surface, 0.4);
+        }
+    }
+
+    &__products-wrapper {
+        overflow: hidden;
+        position: relative;
+    }
+
+    &__products {
+        &--slider {
+            display: flex;
+            transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+
+        @media (max-width: $breakpoint-md) {
+            // On mobile, each card takes full width
+        }
+    }
+}
+
+
+// ── Best Sellers ───────────────────────────────────────────
+.bestsellers {
+    &__header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: $spacing-xl;
+
+        @media (max-width: $breakpoint-sm) {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: $spacing-sm;
+        }
+    }
+
+    &__header-right {
+        display: flex;
+        align-items: center;
+        gap: $spacing-lg;
+    }
+
+    &__title {
+        font-size: $font-size-2xl;
+        font-weight: $font-weight-extrabold;
+        color: $color-text;
+        margin: 0;
+        letter-spacing: -0.5px;
+    }
+
+    &__view-all {
+        font-size: 14px;
+        font-weight: $font-weight-bold;
+        color: $color-primary;
+        text-decoration: none;
+        transition: color $transition-fast;
+        white-space: nowrap;
+
+        &:hover {
+            color: $color-primary-dark;
+            text-decoration: underline;
+        }
+    }
+
+    &__slider-wrapper {
+        overflow: hidden;
+        position: relative;
+    }
+
+    &__grid {
+        &--slider {
+            display: flex;
+            transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+    }
+}
+
+// ══════════════════════════════════════════════════════════════
+// Product Card (Premium Clean Theme - Copié du Catalogue)
+// ══════════════════════════════════════════════════════════════
+.product-card {
+    display: flex;
+    flex-direction: column;
+    background: $color-surface;
+    border-radius: $border-radius-lg;
+    border: 1px solid rgba($color-border, 0.4);
+    text-decoration: none;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1), box-shadow 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+
+    &:hover {
+        transform: translateY(-6px);
+        box-shadow: 0 16px 40px rgba(0, 0, 0, 0.08), 0 4px 12px rgba(0, 0, 0, 0.04);
+
+        .product-card__add-btn {
+            background-color: $color-primary-dark;
+            color: $color-surface;
+        }
+
+        .product-card__image {
+            transform: scale(1.08);
+        }
+    }
+
+    &__image-wrapper {
+        position: relative;
+    }
+
+    &__stock-badge {
+        position: absolute;
+        top: $spacing-sm;
+        left: $spacing-sm;
+        background: $color-primary-dark;
+        color: $color-surface;
+        font-size: 9px;
+        font-weight: $font-weight-extrabold;
+        padding: 0.2rem 0.5rem;
+        border-radius: $border-radius-sm;
+        letter-spacing: 0.08em;
+        z-index: 1;
+        text-transform: uppercase;
+    }
+
+    &__promo-badge {
+        position: absolute;
+        top: $spacing-sm;
+        right: $spacing-sm;
+        background: $color-danger;
+        color: $color-surface;
+        font-size: 11px;
+        font-weight: $font-weight-extrabold;
+        padding: 0.2rem 0.5rem;
+        border-radius: $border-radius-sm;
+        z-index: 1;
+    }
+
+    &__image {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 180px;
+        padding: $spacing-lg;
+        background: $color-surface;
+        overflow: hidden;
+        transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+
+        img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            mix-blend-mode: multiply;
+        }
+    }
+
+    &__body {
+        padding: $spacing-md $spacing-lg $spacing-lg;
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+        border-top: 1px solid rgba($color-border, 0.3);
+    }
+
+    &__ref {
+        font-size: 10px;
+        font-weight: $font-weight-bold;
+        color: $color-secondary-light;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        margin-bottom: $spacing-2xs;
+    }
+
+    &__title-link {
+        text-decoration: none;
+        margin-bottom: $spacing-sm;
+
+        &:hover .product-card__name {
+            color: $color-primary;
+        }
+    }
+
+    &__name {
+        font-size: 13px;
+        font-weight: $font-weight-bold;
+        color: $color-text;
+        line-height: $line-height-tight;
+        margin: 0;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        transition: color $transition-fast;
+    }
+
+    &__pricing {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        margin-top: auto;
+        margin-bottom: $spacing-md;
+        padding-top: $spacing-sm;
+    }
+
+    &__retail,
+    &__wholesale {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+
+    &__retail {
+        &-label {
+            font-size: 9px;
+            color: $color-secondary;
+            line-height: 1.3;
+        }
+
+        &-price {
+            font-size: 13px;
+            font-weight: $font-weight-extrabold;
+            color: $color-primary;
+        }
+    }
+
+    &__wholesale {
+        text-align: right;
+        align-items: flex-end;
+
+        &-label {
+            font-size: 9px;
+            color: $color-secondary;
+            line-height: 1.3;
+        }
+
+        &-price {
+            font-size: 15px;
+            font-weight: $font-weight-extrabold;
+            color: $color-text;
+            letter-spacing: -0.3px;
+        }
+    }
+
+    &__add-btn {
+        width: 100%;
+        background-color: $color-surface-hover;
+        color: $color-text-body;
+        font-size: 12px;
+        font-weight: $font-weight-bold;
+        padding: 0.65rem;
+        border: none;
+        border-radius: $border-radius-md;
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        letter-spacing: 0.02em;
+
+        @media (max-width: $breakpoint-md) {
+            min-height: 48px;
+            font-size: 13px;
+        }
+
+        &:hover {
+            background-color: $color-primary-dark;
+            color: $color-surface;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 16px rgba($color-primary, 0.25);
+        }
+    }
+}

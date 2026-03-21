@@ -1,0 +1,138 @@
+# Plan : Dashboard Admin NEWOTEG — Intégration Backend Complète
+
+## Contexte
+
+Le projet contient 3 parties :
+- **Backend** (`Back-end/`) — NestJS + Prisma + PostgreSQL. 15 modules (produits, variantes, stock, ventes, achats, clients, fournisseurs, catégories, caisse, rôles...). Docker Compose déjà configuré.
+- **Frontend e-commerce** (`Font-end/`) — Site vitrine client (déjà partiellement intégré).
+- **Dashboard Admin** (`Font-end-admin/NEWOTEG-ECOMMERCE-feature-new-dashboard/`) — React + Vite + TailwindCSS v4 + Lucide + Motion. **Actuellement avec uniquement des données mock**. Il faut le transformer en vrai dashboard admin connecté au backend.
+
+Le dashboard admin actuel a ces pages : Dashboard, Commandes, Factures, Adresses, Paramètres, Support. **Il manque complètement les pages de gestion opérationnelle** : produits, stock, ventes, achats, clients, fournisseurs, catégories, caisse.
+
+---
+
+## Proposed Changes
+
+### Phase 1 — Infrastructure Docker + Backend
+
+**Commandes à exécuter séquentiellement :**
+1. `docker-compose up -d` dans `Back-end/`
+2. `npx prisma migrate deploy` dans `Back-end/`
+3. `npm run start:dev` dans `Back-end/`
+
+---
+
+### Phase 2 — Dashboard Admin : Service API
+
+#### [NEW] api.ts
+**Chemin :** `Font-end-admin/NEWOTEG-ECOMMERCE-feature-new-dashboard/src/services/api.ts`
+
+Service centralisé axios/fetch pour toutes les entités :
+- `produitApi` — CRUD `/api/produits`
+- `categorieApi` — CRUD `/api/categories`
+- `varianteApi` — CRUD `/api/variantes-produit`
+- `mouvementStockApi` — CRUD `/api/mouvements-stock`
+- `venteApi` — CRUD `/api/ventes`
+- `achatApi` — CRUD `/api/achats`
+- `clientApi` — CRUD `/api/clients`
+- `fournisseurApi` — CRUD `/api/fournisseurs`
+- `caisseApi` — GET `/api/caisses`
+
+---
+
+### Phase 3 — Dashboard Admin : Nouveaux composants
+
+#### [MODIFY] [vite.config.ts](file:///c:/Users/Donald/OneDrive/Bureau/e-commerce-papa/NEWOTEG-ECOMMERCE-main%20(1)/Font-end-admin/NEWOTEG-ECOMMERCE-feature-new-dashboard/vite.config.ts)
+Ajouter un proxy Vite vers `http://localhost:3000` pour toutes les requêtes `/api`.
+
+#### [MODIFY] [App.tsx](file:///c:/Users/Donald/OneDrive/Bureau/e-commerce-papa/NEWOTEG-ECOMMERCE-main%20(1)/Font-end-admin/NEWOTEG-ECOMMERCE-feature-new-dashboard/src/App.tsx)
+Ajouter les routes manquantes :
+- `/produits`, `/categories`, `/variantes`, `/stock`, `/ventes`, `/achats`, `/clients`, `/fournisseurs`, `/caisse`
+
+#### [MODIFY] [Sidebar.tsx](file:///c:/Users/Donald/OneDrive/Bureau/e-commerce-papa/NEWOTEG-ECOMMERCE-main%20(1)/Font-end-admin/NEWOTEG-ECOMMERCE-feature-new-dashboard/src/components/Sidebar.tsx)
+Ajouter les liens de navigation vers les nouvelles pages dans la sidebar avec groupes logiques :
+- **Catalogue** : Produits, Catégories, Variantes & Stock
+- **Opérations** : Ventes, Achats, Mouvements Stock
+- **Tiers** : Clients, Fournisseurs
+- **Finance** : Caisse
+
+#### [NEW] Produits.tsx
+Page liste + formulaire d'ajout de produit avec catégorie/marque/description.
+
+#### [NEW] Categories.tsx
+Page CRUD catégories.
+
+#### [NEW] Variantes.tsx
+Page gestion des variantes avec mise à jour du stock/prix.
+
+#### [NEW] MouvementsStock.tsx
+Page pour enregistrer entrées/sorties/ajustements de stock.
+
+#### [NEW] Ventes.tsx
+Liste des ventes avec montant, date, client, méthode de paiement.
+
+#### [NEW] Achats.tsx
+Liste des achats avec fournisseur, montant, statut de paiement.
+
+#### [NEW] Clients.tsx
+Liste et gestion des clients.
+
+#### [NEW] Fournisseurs.tsx
+Liste et gestion des fournisseurs.
+
+#### [NEW] Caisse.tsx
+Tableau de bord caisse : solde, entrées/sorties récentes.
+
+#### [MODIFY] [Dashboard.tsx](file:///c:/Users/Donald/OneDrive/Bureau/e-commerce-papa/NEWOTEG-ECOMMERCE-main%20(1)/Font-end-admin/NEWOTEG-ECOMMERCE-feature-new-dashboard/src/components/Dashboard.tsx)
+Remplacer les données mock par des appels API réels pour :
+- KPI ventes du jour (depuis `/api/ventes`)
+- État des stocks (depuis `/api/variantes-produit`)
+- Historique commandes récentes
+
+---
+
+## Verification Plan
+
+### Automated Tests
+Aucun test unitaire existant dans le dashboard admin. Le backend a des tests dans `Back-end/test/`.
+
+```bash
+# Backend tests
+cd "Back-end"
+npm run test
+```
+
+### Démarrage et test manuel
+
+1. **Démarrer la base de données :**
+```bash
+cd "Back-end"
+docker-compose up -d
+```
+
+2. **Appliquer les migrations :**
+```bash
+cd "Back-end"
+npx prisma migrate deploy
+```
+
+3. **Démarrer le backend :**
+```bash
+cd "Back-end"
+npm run start:dev
+```
+
+4. **Démarrer le dashboard admin :**
+```bash
+cd "Font-end-admin/NEWOTEG-ECOMMERCE-feature-new-dashboard"
+npm install
+npm run dev
+```
+
+5. **Tests manuels dans le navigateur (http://localhost:3000) :**
+   - ✅ Accéder à la page Produits → liste vide ou données réelles
+   - ✅ Créer un produit → apparaît dans la liste
+   - ✅ Accéder à Variantes → créer une variante avec prix/stock
+   - ✅ Accéder à Mouvements Stock → enregistrer une entrée de stock
+   - ✅ Accéder à Ventes → liste des ventes
+   - ✅ Dashboard → KPIs chargent depuis l'API
