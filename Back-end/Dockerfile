@@ -6,6 +6,7 @@ COPY package*.json ./
 
 # Copy prisma FIRST
 COPY prisma ./prisma
+COPY prisma.config.ts ./
 
 # Install dependencies
 RUN npm ci
@@ -34,6 +35,7 @@ COPY --from=builder /app/dist ./dist
 # Copy Prisma files
 COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
+COPY --from=builder /app/prisma.config.ts ./
 
 EXPOSE 3000
 
