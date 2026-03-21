@@ -1,7 +1,10 @@
 {
   "permissions": {
     "allow": [
-      "Bash(npm run:*)"
+      "Bash(npm run:*)",
+      "Bash(cat:*)",
+      "Bash(ls \"C:\\\\Users\\\\Donald\\\\OneDrive\\\\Bureau\\\\e-commerce-papa\\\\NEWOTEG-ECOMMERCE-main \\(1\\)/Back-end/\")",
+      "Bash(ls \"C:\\\\Users\\\\Donald\\\\OneDrive\\\\Bureau\\\\e-commerce-papa\\\\NEWOTEG-ECOMMERCE-main \\(1\\)/Back-end/dist/\")"
     ]
   }
 }
