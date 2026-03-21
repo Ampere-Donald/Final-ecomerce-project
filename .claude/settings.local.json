@@ -5,7 +5,10 @@
       "Bash(npm run:*)",
       "Bash(cat:*)",
       "Bash(ls \"C:\\\\Users\\\\Donald\\\\OneDrive\\\\Bureau\\\\e-commerce-papa\\\\NEWOTEG-ECOMMERCE-main \\(1\\)/Back-end/\")",
-      "Bash(ls \"C:\\\\Users\\\\Donald\\\\OneDrive\\\\Bureau\\\\e-commerce-papa\\\\NEWOTEG-ECOMMERCE-main \\(1\\)/Back-end/dist/\")"
+      "Bash(ls \"C:\\\\Users\\\\Donald\\\\OneDrive\\\\Bureau\\\\e-commerce-papa\\\\NEWOTEG-ECOMMERCE-main \\(1\\)/Back-end/dist/\")",
+      "Bash(ls \"/c/Users/Donald/OneDrive/Bureau/e-commerce-papa/NEWOTEG-ECOMMERCE-main \\(1\\)/Font-end-admin/NEWOTEG-ECOMMERCE-feature-new-dashboard/\"*.env*)",
+      "Bash(ls \"/c/Users/Donald/OneDrive/Bureau/e-commerce-papa/NEWOTEG-ECOMMERCE-main \\(1\\)/Font-end-admin/NEWOTEG-ECOMMERCE-feature-new-dashboard/\".env*)",
+      "Bash(find:*)"
     ]
   }
 }

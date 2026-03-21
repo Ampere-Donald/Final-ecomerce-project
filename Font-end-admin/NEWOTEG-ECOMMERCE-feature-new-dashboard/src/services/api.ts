@@ -1,8 +1,10 @@
 import axios from 'axios';
 
-// En production, VITE_API_URL pointe vers le backend Railway (ex: https://xxx.up.railway.app/api)
+// En production, VITE_API_URL pointe vers le backend (ex: https://api.newoteg.com)
 // En dev local, le proxy Vite redirige /api vers localhost:3000
-const BASE_URL = import.meta.env.VITE_API_URL || '/api';
+// On s'assure que le préfixe /api est toujours présent
+const rawUrl = import.meta.env.VITE_API_URL || '/api';
+const BASE_URL = rawUrl.endsWith('/api') ? rawUrl : `${rawUrl}/api`;
 
 const api = axios.create({
   baseURL: BASE_URL,
