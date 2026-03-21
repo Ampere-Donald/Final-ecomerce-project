@@ -91,7 +91,10 @@
         animation: fadeInUP 0.8s ease backwards;
 
         @media (max-width: $breakpoint-md) {
-            padding: 140px 0 100px;
+            padding: 170px 0 110px;
+        }
+        @media (max-width: $breakpoint-sm) {
+            padding: 200px 15px 120px;
         }
     }
 
@@ -138,27 +141,35 @@
 
         @media (max-width: $breakpoint-md) {
             font-size: 2.2rem;
+            line-height: 1.25;
         }
         
         @media (max-width: $breakpoint-sm) {
-            font-size: 1.75rem;
-            line-height: 1.3;
+            font-size: 1.65rem;
+            line-height: 1.2;
             margin-bottom: $spacing-md;
+            padding: 0 10px;
         }
     }
 
     &__text-wrapper {
-        max-height: 0;
+        max-height: 85px;
         overflow: hidden;
         transition: max-height 0.5s cubic-bezier(0.25, 0.8, 0.25, 1);
+        -webkit-mask-image: linear-gradient(to bottom, black 50%, transparent 100%);
+        mask-image: linear-gradient(to bottom, black 50%, transparent 100%);
 
         @media (min-width: $breakpoint-md) {
             max-height: none !important;
             overflow: visible;
+            -webkit-mask-image: none;
+            mask-image: none;
         }
 
         &--expanded {
             max-height: 500px;
+            -webkit-mask-image: none;
+            mask-image: none;
         }
 
         p {
@@ -200,9 +211,13 @@
         cursor: pointer;
         margin-bottom: $spacing-xl;
         backdrop-filter: blur(4px);
+        margin-left: auto;
+        margin-right: auto;
 
         @media (max-width: $breakpoint-md) {
             display: inline-flex;
+            margin-bottom: $spacing-2xl;
+            margin-top: $spacing-xs;
         }
     }
 
@@ -224,6 +239,8 @@
         @media (max-width: $breakpoint-sm) {
             flex-direction: column;
             align-items: stretch;
+            gap: $spacing-sm;
+            padding: 0 15px;
         }
 
         .btn {

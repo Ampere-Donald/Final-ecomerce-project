@@ -1,10 +1,9 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, InternalServerErrorException } from '@nestjs/common';
 import { DatabaseService } from 'src/database/database.service';
 import { NotificationService } from 'src/notification/notification.service';
 import { CreateProduitDto } from './dto/create-produit.dto';
 import { UpdateProduitDto } from './dto/update-produit.dto';
-import { Readable } from 'stream';
-import { existsSync } from 'fs';
+import { createReadStream, existsSync, promises as fsPromises } from 'fs';
 import { join, basename } from 'path';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const csvParser = require('csv-parser');
@@ -218,95 +217,197 @@ export class ProduitService {
     });
   }
 
-  // ── Import CSV en masse ────────────────────────────────────────────────
-  async importCsv(buffer: Buffer) {
-    // 1. Parse CSV buffer into rows
-    const rows: Record<string, string>[] = await new Promise((resolve, reject) => {
-      const results: Record<string, string>[] = [];
-      const stream = Readable.from(buffer);
-      stream
-        .pipe(csvParser({ separator: ';' }))
-        .on('data', (row) => results.push(row))
-        .on('end', () => resolve(results))
-        .on('error', (err) => reject(err));
-    });
+  // ── Import CSV en masse (streaming + batching) ────────────────────────
+  async importCsv(filePath: string) {
+    // Taille de chaque lot d'insertion Prisma.
+    // 200 lignes × ~10 champs = ~2 000 params → bien en dessous du plafond Postgres (65 535).
+    const BATCH_SIZE = 200;
 
-    if (rows.length === 0) {
-      throw new BadRequestException('Le fichier CSV est vide ou illisible.');
-    }
-
-    // 2. Build category map (name lowercase → id)
-    const existingCategories = await this.db.categorie.findMany();
-    const categoryMap = new Map<string, string>();
-    for (const cat of existingCategories) {
-      categoryMap.set(cat.nom.toLowerCase().trim(), cat.id);
-    }
-
-    // Ensure a fallback "Divers" category exists
-    if (!categoryMap.has('divers')) {
-      const divers = await this.db.categorie.create({ data: { nom: 'Divers' } });
-      categoryMap.set('divers', divers.id);
-    }
-
-    const newCategoriesCreated: string[] = [];
-
-    // 3. Map each row to product data
-    const productsData: any[] = [];
-    for (const row of rows) {
-      // Flexible column name matching (handles various CSV formats)
-      const nomProduit = row['nomProduit'] || row['nom_produit'] || row['NomProduit'] || row['Nom'] || row['nom'] || '';
-      const marque = row['marque'] || row['Marque'] || '';
-      const description = row['description'] || row['Description'] || '';
-      const prixDetail = parseFloat(row['prixDetail'] || row['prix_detail'] || row['PrixDetail'] || row['Prix'] || row['prix'] || '0');
-      const prixGros = parseFloat(row['prixGros'] || row['prix_gros'] || row['PrixGros'] || '0');
-      const quantiteStock = parseInt(row['quantiteStock'] || row['quantite_stock'] || row['QuantiteStock'] || row['Stock'] || row['stock'] || '0', 10);
-      const nomImage = row['nomImage'] || row['nom_image'] || row['NomImage'] || row['Image'] || row['image'] || '';
-      const categorieNom = (row['categorieNom'] || row['categorie_nom'] || row['CategorieNom'] || row['Categorie'] || row['categorie'] || row['Catégorie'] || row['catégorie'] || '').trim();
-
-      // Skip rows with no product name
-      if (!nomProduit.trim()) continue;
-
-      // Resolve category
-      const catKey = categorieNom.toLowerCase() || 'divers';
-      let categorieId = categoryMap.get(catKey);
-
-      if (!categorieId) {
-        // Create category on-the-fly
-        const newCat = await this.db.categorie.create({ data: { nom: categorieNom || 'Divers' } });
-        categoryMap.set(catKey, newCat.id);
-        categorieId = newCat.id;
-        newCategoriesCreated.push(categorieNom);
+    try {
+      // ── 1. Charger la map des catégories existantes en une seule requête ──
+      const existingCategories = await this.db.categorie.findMany({
+        select: { id: true, nom: true },
+      });
+      const categoryMap = new Map<string, string>();
+      for (const cat of existingCategories) {
+        categoryMap.set(cat.nom.toLowerCase().trim(), cat.id);
       }
 
-      productsData.push({
-        nomProduit: nomProduit.trim(),
-        marque: marque.trim() || null,
-        description: description.trim() || null,
-        prixDetail: isNaN(prixDetail) ? 0 : prixDetail,
-        prixGros: isNaN(prixGros) ? 0 : prixGros,
-        quantiteStock: isNaN(quantiteStock) ? 0 : quantiteStock,
-        imageUrl: nomImage.trim() ? `/uploads/${nomImage.trim()}` : null,
-        categorieId,
+      // Catégorie de secours "Divers" créée si absente
+      if (!categoryMap.has('divers')) {
+        const divers = await this.db.categorie.create({ data: { nom: 'Divers' } });
+        categoryMap.set('divers', divers.id);
+      }
+
+      // ── 2. Lire le CSV depuis le disque (stream → jamais le fichier brut en RAM) ──
+      // Les lignes parsées (objets JS légers) sont collectées puis traitées par lots.
+      const allRows: Record<string, string>[] = await new Promise((resolve, reject) => {
+        const rows: Record<string, string>[] = [];
+        createReadStream(filePath)
+          .pipe(csvParser({ separator: ';' }))
+          .on('data', (row) => rows.push(row))
+          .on('end', () => resolve(rows))
+          .on('error', reject);
       });
+
+      if (allRows.length === 0) {
+        throw new BadRequestException('Le fichier CSV est vide ou illisible.');
+      }
+
+
+      // ── 3. Traitement par lots de BATCH_SIZE lignes ────────────────────
+      let totalImportes = 0;
+      let totalIgnores = 0;
+      const newCategoriesCreated: string[] = [];
+
+      for (let i = 0; i < allRows.length; i += BATCH_SIZE) {
+        const batch = allRows.slice(i, i + BATCH_SIZE);
+
+        // ── 3a. Résolution des catégories inconnues du lot en UNE requête ──
+        // On collecte toutes les catégories inconnues du lot, on les crée
+        // en masse (createMany), puis on récupère leurs IDs en une fois.
+        // Remplace le pattern anti-perf "await create() dans un for...of".
+        const unknownCatNames = [
+          ...new Set(
+            batch
+              .map((row) =>
+                (
+                  row['categorieNom'] || row['categorie_nom'] || row['CategorieNom'] ||
+                  row['Categorie']    || row['categorie']     || row['Catégorie']     ||
+                  row['catégorie']    || ''
+                ).trim(),
+              )
+              // Filtre les catégories inconnues (pas encore dans la map)
+              .filter((nom) => nom && !categoryMap.has(nom.toLowerCase())),
+          ),
+        ];
+
+        if (unknownCatNames.length > 0) {
+          await this.db.categorie.createMany({
+            data: unknownCatNames.map((nom) => ({ nom })),
+            skipDuplicates: true, // sécurité contre les races conditions
+          });
+          // Récupérer les IDs en une requête pour mettre à jour la map
+          const created = await this.db.categorie.findMany({
+            where: { nom: { in: unknownCatNames } },
+            select: { id: true, nom: true },
+          });
+          for (const cat of created) {
+            const key = cat.nom.toLowerCase().trim();
+            if (!categoryMap.has(key)) newCategoriesCreated.push(cat.nom);
+            categoryMap.set(key, cat.id);
+          }
+        }
+
+        // ── 3b. Mapper les lignes en produits valides ──────────────────────
+        const productsData: any[] = [];
+        for (const row of batch) {
+          try {
+            // Correspondance flexible des noms de colonnes CSV
+            const nomProduit = (
+              row['nomProduit'] || row['nom_produit'] || row['NomProduit'] ||
+              row['Nom']        || row['nom']          || ''
+            ).trim();
+
+            // Ligne sans nom de produit → ignorée (ne fait pas planter le lot)
+            if (!nomProduit) { totalIgnores++; continue; }
+
+            const prixDetail    = parseFloat(row['prixDetail']    || row['prix_detail']    || row['PrixDetail'] || row['Prix'] || row['prix'] || '0');
+            const prixGros      = parseFloat(row['prixGros']      || row['prix_gros']      || row['PrixGros']   || '0');
+            const quantiteStock = parseInt(  row['quantiteStock'] || row['quantite_stock'] || row['QuantiteStock'] || row['Stock'] || row['stock'] || '0', 10);
+
+            // Image principale : supporte "image1", "nomImage", "image"…
+            const nomImage  = (row['image1']    || row['nomImage']  || row['nom_image'] || row['NomImage'] || row['Image'] || row['image']  || '').trim();
+            // Images supplémentaires : supporte "image2" / "image3"
+            const nomImage2 = (row['image2']    || row['nomImage2'] || row['imageUrl2'] || '').trim();
+            const nomImage3 = (row['image3']    || row['nomImage3'] || row['imageUrl3'] || '').trim();
+
+            const categorieNom = (
+              row['categorieNom'] || row['categorie_nom'] || row['CategorieNom'] ||
+              row['Categorie']    || row['categorie']     || row['Catégorie']    ||
+              row['catégorie']    || ''
+            ).trim();
+
+            // Fiche technique : supporte "lienFicheTechnique" et "urlDatasheet"
+            const urlDatasheet = (row['urlDatasheet'] || row['lienFicheTechnique'] || row['datasheet'] || '').trim() || null;
+
+            // Prix promo : supporte "prixPromotionnel" et "prixPromo"
+            const prixPromoRaw = parseFloat(row['prixPromo'] || row['prixPromotionnel'] || row['prix_promo'] || '');
+            const prixPromo    = (!isNaN(prixPromoRaw) && prixPromoRaw > 0) ? prixPromoRaw : null;
+
+            // Date fin promo : supporte "dateFinPromo" et "finPromo" (DateTime Prisma)
+            const finPromoRaw = (row['finPromo'] || row['dateFinPromo'] || row['fin_promo'] || '').trim();
+            let finPromo: Date | null = null;
+            if (finPromoRaw) {
+              const d = new Date(finPromoRaw);
+              if (!isNaN(d.getTime())) finPromo = d;
+            }
+
+            // Mise en avant : supporte "mettreEnAvant" et "isPopulaire"
+            const enAvantRaw  = (row['isPopulaire'] || row['mettreEnAvant'] || row['is_populaire'] || '').trim().toLowerCase();
+            const isPopulaire = enAvantRaw === 'true' || enAvantRaw === '1' || enAvantRaw === 'oui';
+
+            const catKey    = categorieNom.toLowerCase() || 'divers';
+            const categorieId = categoryMap.get(catKey) ?? categoryMap.get('divers')!;
+
+            productsData.push({
+              nomProduit,
+              // marque : '' au lieu de null — le champ est non-nullable dans le schéma Prisma
+              marque:        (row['marque'] || row['Marque'] || '').trim() || '',
+              description:   (row['description'] || row['Description'] || '').trim() || null,
+              prixDetail:    isNaN(prixDetail)    ? 0 : prixDetail,
+              prixGros:      isNaN(prixGros)      ? 0 : prixGros,
+              quantiteStock: isNaN(quantiteStock) ? 0 : quantiteStock,
+              imageUrl:      nomImage  ? `/uploads/${nomImage}`  : null,
+              imageUrl2:     nomImage2 ? `/uploads/${nomImage2}` : null,
+              imageUrl3:     nomImage3 ? `/uploads/${nomImage3}` : null,
+              urlDatasheet,
+              prixPromo,
+              finPromo,
+              isPopulaire,
+              categorieId,
+            });
+          } catch (rowErr) {
+            // Ligne malformée → ignorée sans tuer le reste du lot
+            totalIgnores++;
+            console.warn('[CSV Import] Ligne ignorée (parsing):', rowErr);
+          }
+        }
+
+        // ── 3c. Insertion du lot en base (transaction courte et maîtrisée) ──
+        if (productsData.length > 0) {
+          const result = await this.db.produit.createMany({
+            data: productsData,
+            skipDuplicates: true,
+          });
+          totalImportes += result.count;
+          totalIgnores  += productsData.length - result.count;
+        }
+      }
+
+      return {
+        message: totalImportes > 0
+          ? 'Import terminé avec succès'
+          : 'Aucun nouveau produit importé (tous existent déjà ou ont été ignorés)',
+        totalLignesCsv:    allRows.length,
+        produitsImportes:  totalImportes,
+        produitsIgnores:   totalIgnores,
+        nouvellesCategories: newCategoriesCreated,
+      };
+
+    } catch (err: any) {
+      // Toute exception (Prisma, parsing…) est re-lancée comme exception NestJS.
+      // Ceci garantit que NestJS contrôle la réponse HTTP avec les bons en-têtes
+      // CORS → le frontend ne voit plus de "Network Error" générique.
+      if (err instanceof BadRequestException) throw err;
+      console.error('[CSV Import] Erreur critique:', err);
+      throw new InternalServerErrorException(
+        `Erreur lors de l'import CSV : ${err?.message ?? 'Erreur inconnue'}`,
+      );
+    } finally {
+      // Nettoyage garanti du fichier temporaire sur disque, succès ou échec.
+      await fsPromises.unlink(filePath).catch(() => {});
     }
-
-    if (productsData.length === 0) {
-      throw new BadRequestException('Le fichier ne contient aucun produit valide.');
-    }
-
-    // 4. Bulk insert
-    const result = await this.db.produit.createMany({
-      data: productsData,
-      skipDuplicates: true,
-    });
-
-    return {
-      message: `Import terminé avec succès`,
-      totalLignesCsv: rows.length,
-      produitsImportes: result.count,
-      produitsIgnores: productsData.length - result.count,
-      nouvellesCategories: newCategoriesCreated,
-    };
   }
 
   // ── Nettoyage des imageUrl invalides (fichier absent du disque) ──────

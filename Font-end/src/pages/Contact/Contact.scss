@@ -3,6 +3,7 @@
 .contact-page {
     background-color: $color-surface;
     font-family: $font-family-base;
+    overflow-x: hidden;
 
     .container {
         max-width: 1200px;
@@ -49,10 +50,10 @@
     }
 }
 
-// ── Hero ─────────────────────────────────────────────────────
+// ── Hero (même design que About hero) ────────────────────────
 .contact-hero {
     position: relative;
-    min-height: 75vh;
+    min-height: 95vh;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -63,7 +64,6 @@
     margin-bottom: $spacing-3xl;
     overflow: hidden;
 
-    // Mobile: header = 64px top bar + 38px nav strip = 102px total
     @media (max-width: calc(#{$breakpoint-lg} - 1px)) {
         margin-top: -102px;
         padding-top: 102px;
@@ -84,15 +84,14 @@
         z-index: 2;
         max-width: 900px;
         margin: 0 auto;
-        padding: 200px 0 140px;
+        padding: 240px 0 160px;
         animation: contactFadeUp 0.8s ease backwards;
 
-        @media (max-width: calc(#{$breakpoint-lg} - 1px)) {
-            padding: 170px 0 100px;
-        }
-
         @media (max-width: $breakpoint-md) {
-            padding: 160px 0 80px;
+            padding: 170px 0 110px;
+        }
+        @media (max-width: $breakpoint-sm) {
+            padding: 200px 15px 120px;
         }
     }
 
@@ -130,22 +129,88 @@
             text-shadow: 0 0 20px rgba(96, 165, 250, 0.4);
         }
 
-        @media (max-width: $breakpoint-md) { font-size: 2.2rem; }
-        @media (max-width: $breakpoint-sm) { font-size: 1.75rem; }
+        @media (max-width: $breakpoint-md) {
+            font-size: 2.2rem;
+            line-height: 1.25;
+        }
+        @media (max-width: $breakpoint-sm) {
+            font-size: 1.65rem;
+            line-height: 1.2;
+            margin-bottom: $spacing-md;
+            padding: 0 10px;
+        }
+    }
+
+    &__text-wrapper {
+        max-height: 85px;
+        overflow: hidden;
+        transition: max-height 0.5s cubic-bezier(0.25, 0.8, 0.25, 1);
+        -webkit-mask-image: linear-gradient(to bottom, black 50%, transparent 100%);
+        mask-image: linear-gradient(to bottom, black 50%, transparent 100%);
+
+        @media (min-width: $breakpoint-md) {
+            max-height: none !important;
+            overflow: visible;
+            -webkit-mask-image: none;
+            mask-image: none;
+        }
+
+        &--expanded {
+            max-height: 500px;
+            -webkit-mask-image: none;
+            mask-image: none;
+        }
+
+        p {
+            font-size: 1.15rem;
+            line-height: 1.7;
+            color: rgba(255, 255, 255, 0.85);
+            margin-bottom: $spacing-lg;
+            max-width: 750px;
+            margin-left: auto;
+            margin-right: auto;
+
+            @media (max-width: $breakpoint-sm) {
+                font-size: 1rem;
+                line-height: 1.6;
+                padding: 0 10px;
+            }
+        }
+    }
+
+    &__read-more {
+        display: none;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        color: #93C5FD;
+        padding: 8px 20px;
+        border-radius: 20px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        margin-bottom: $spacing-xl;
+        backdrop-filter: blur(4px);
+        margin-left: auto;
+        margin-right: auto;
+
+        @media (max-width: $breakpoint-md) {
+            display: inline-flex;
+            margin-bottom: $spacing-2xl;
+            margin-top: $spacing-xs;
+        }
     }
 
     p {
         font-size: 1.15rem;
         line-height: 1.7;
-        color: rgba(255, 255, 255, 0.80);
+        color: #E5E7EB;
         margin-bottom: $spacing-2xl;
-        max-width: 720px;
+        max-width: 750px;
         margin-left: auto;
         margin-right: auto;
-
-        @media (max-width: $breakpoint-sm) {
-            font-size: 1rem;
-        }
     }
 
     &__actions {
@@ -156,6 +221,8 @@
         @media (max-width: $breakpoint-sm) {
             flex-direction: column;
             align-items: stretch;
+            gap: $spacing-sm;
+            padding: 0 15px;
         }
 
         .btn {

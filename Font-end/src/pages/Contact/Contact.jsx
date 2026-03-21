@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Helmet } from 'react-helmet-async';
-import { MapPin, Phone, Mail, Send, CheckCircle, User, MessageSquare, FileText, Clock, ArrowRight, Globe } from 'lucide-react';
+import { MapPin, Phone, Mail, Send, CheckCircle, User, MessageSquare, FileText, Clock, ArrowRight, Globe, ChevronDown, ChevronUp } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import Footer from '../../components/Footer/Footer';
 import useScrollReveal from '../../hooks/useScrollReveal';
@@ -12,6 +12,7 @@ const Contact = () => {
     const [formData, setFormData] = useState({ name: '', email: '', subject: '', message: '' });
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isSuccess, setIsSuccess] = useState(false);
+    const [heroExpanded, setHeroExpanded] = useState(false);
 
     const revealOptions = { threshold: 0.15, rootMargin: '0px 0px -50px 0px' };
     const cardsRef   = useScrollReveal(revealOptions);
@@ -46,7 +47,12 @@ const Contact = () => {
                 <div className="container contact-hero__content">
                     <span className="contact-hero__tag">{t('contact.heroTag')}</span>
                     <h1 dangerouslySetInnerHTML={{ __html: t('contact.heroTitle') }} />
-                    <p>{t('contact.heroText')}</p>
+                    <div className={`contact-hero__text-wrapper ${heroExpanded ? 'contact-hero__text-wrapper--expanded' : ''}`}>
+                        <p>{t('contact.heroText')}</p>
+                    </div>
+                    <button className="contact-hero__read-more" onClick={() => setHeroExpanded(!heroExpanded)}>
+                        {heroExpanded ? (<><ChevronUp size={16} /> {t('about.showLess')}</>) : (<><ChevronDown size={16} /> {t('about.readMore')}</>)}
+                    </button>
                     <div className="contact-hero__actions">
                         <a href="https://wa.me/237699966160" target="_blank" rel="noopener noreferrer" className="btn btn--gradient">
                             <Phone size={18} />

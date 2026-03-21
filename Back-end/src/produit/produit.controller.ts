@@ -123,13 +123,34 @@ export class ProduitController {
   }
 
   // ── Import CSV en masse ─────────────────────────────────────────────────
+  // diskStorage : le CSV est écrit sur disque avant d'être lu en streaming.
+  // Cela évite de charger le fichier brut en RAM (OOM sur les gros fichiers).
   @Post('import')
-  @UseInterceptors(FileInterceptor('file', { storage: require('multer').memoryStorage() }))
+  @UseInterceptors(
+    FileInterceptor('file', {
+      storage: diskStorage({
+        destination: './uploads',
+        filename: (_req, _file, cb) =>
+          cb(null, `csv-import-${Date.now()}-${Math.round(Math.random() * 1e6)}.csv`),
+      }),
+      fileFilter: (_req, file, cb) => {
+        if (!file.originalname.match(/\.csv$/i)) {
+          return cb(
+            new BadRequestException('Seuls les fichiers .csv sont acceptés.'),
+            false,
+          );
+        }
+        cb(null, true);
+      },
+      limits: { fileSize: 15 * 1024 * 1024 }, // 15 Mo max
+    }),
+  )
   async importCsv(@UploadedFile() file: Express.Multer.File) {
     if (!file) {
       throw new BadRequestException('Aucun fichier CSV fourni.');
     }
-    return this.produitService.importCsv(file.buffer);
+    // On passe le chemin disque au service (jamais le buffer en RAM)
+    return this.produitService.importCsv(file.path);
   }
 
   // ── Nettoyage des imageUrl invalides (fichiers absents du disque) ────────

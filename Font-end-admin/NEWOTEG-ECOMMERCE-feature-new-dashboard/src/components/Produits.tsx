@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef, useMemo } from 'react';
-import { PlusCircle, Search, Edit2, Trash2, Tag, X, Upload, Image as ImageIcon, AlertTriangle, Zap, Star, FileSpreadsheet, CheckCircle2, XCircle } from 'lucide-react';
+import { PlusCircle, Search, Edit2, Trash2, Tag, X, Upload, Image as ImageIcon, AlertTriangle, Zap, Star, FileSpreadsheet, CheckCircle2, XCircle, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { produitApi, categorieApi } from '../services/api';
 import Papa from 'papaparse';
@@ -285,7 +285,7 @@ export const Produits = () => {
               setCsvResult(null);
               Papa.parse(file, {
                 header: true,
-                preview: 5,
+                delimiter: ';',
                 skipEmptyLines: true,
                 complete: (results) => {
                   setCsvColumns(results.meta.fields || []);
@@ -321,7 +321,7 @@ export const Produits = () => {
                 <div>
                   <h2 className="text-xl font-bold text-slate-800">Prévisualisation Import CSV</h2>
                   <p className="text-sm text-slate-500 mt-1">
-                    {csvFile?.name} — {csvColumns.length} colonnes détectées
+                    {csvFile?.name} — {csvColumns.length} colonnes — <span className="font-semibold text-emerald-600">{csvPreview.length} produit(s) détecté(s)</span>
                   </p>
                 </div>
                 <button
@@ -332,37 +332,42 @@ export const Produits = () => {
                 </button>
               </div>
 
-              <div className="p-6 overflow-auto">
+              <div className="p-6 overflow-auto flex-1 min-h-0">
                 {csvPreview.length > 0 ? (
-                  <div className="overflow-x-auto rounded-lg border border-slate-200">
-                    <table className="w-full text-sm">
-                      <thead>
-                        <tr className="bg-slate-50">
-                          <th className="px-3 py-2 text-left text-xs font-bold text-slate-500 uppercase">#</th>
-                          {csvColumns.map((col) => (
-                            <th key={col} className="px-3 py-2 text-left text-xs font-bold text-slate-500 uppercase whitespace-nowrap">{col}</th>
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {csvPreview.map((row, i) => (
-                          <tr key={i} className={i % 2 === 0 ? 'bg-white' : 'bg-slate-50/50'}>
-                            <td className="px-3 py-2 text-slate-400 font-mono text-xs">{i + 1}</td>
+                  <div className="flex flex-col h-full">
+                    <p className="text-xs text-slate-400 mb-2">
+                      {csvPreview.length} produit(s) détecté(s) — {csvColumns.length} colonnes
+                    </p>
+                    <div className="overflow-auto rounded-lg border border-slate-200 max-h-[50vh]">
+                      <table className="w-full text-sm">
+                        <thead className="sticky top-0 z-10">
+                          <tr className="bg-slate-50">
+                            <th className="px-3 py-2 text-left text-xs font-bold text-slate-500 uppercase">#</th>
                             {csvColumns.map((col) => (
-                              <td key={col} className="px-3 py-2 text-slate-700 whitespace-nowrap max-w-[200px] truncate">{row[col] ?? ''}</td>
+                              <th key={col} className="px-3 py-2 text-left text-xs font-bold text-slate-500 uppercase whitespace-nowrap">{col}</th>
                             ))}
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                        </thead>
+                        <tbody>
+                          {csvPreview.map((row, i) => (
+                            <tr key={i} className={i % 2 === 0 ? 'bg-white' : 'bg-slate-50/50'}>
+                              <td className="px-3 py-2 text-slate-400 font-mono text-xs">{i + 1}</td>
+                              {csvColumns.map((col) => (
+                                <td key={col} className="px-3 py-2 text-slate-700 whitespace-nowrap max-w-[200px] truncate">{row[col] ?? ''}</td>
+                              ))}
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
                   </div>
                 ) : (
                   <p className="text-center text-slate-500 py-8">Aucune donnée détectée dans le fichier.</p>
                 )}
 
                 {csvResult && (
-                  <div className={`mt-4 p-4 rounded-lg flex items-start gap-3 ${csvResult.includes('succès') ? 'bg-emerald-50 text-emerald-800' : 'bg-red-50 text-red-800'}`}>
-                    {csvResult.includes('succès') ? <CheckCircle2 size={20} className="flex-shrink-0 mt-0.5" /> : <XCircle size={20} className="flex-shrink-0 mt-0.5" />}
+                  <div className={`mt-4 p-4 rounded-lg flex items-start gap-3 ${csvResult.startsWith('Erreur') ? 'bg-red-50 text-red-800' : csvResult.includes('Aucun nouveau') ? 'bg-amber-50 text-amber-800' : 'bg-emerald-50 text-emerald-800'}`}>
+                    {csvResult.startsWith('Erreur') ? <XCircle size={20} className="flex-shrink-0 mt-0.5" /> : <CheckCircle2 size={20} className="flex-shrink-0 mt-0.5" />}
                     <p className="text-sm font-medium">{csvResult}</p>
                   </div>
                 )}
@@ -383,27 +388,35 @@ export const Produits = () => {
                     setCsvResult(null);
                     try {
                       const result = await produitApi.importCsv(csvFile);
-                      setCsvResult(`Import terminé avec succès ! ${result.produitsImportes} produit(s) importé(s), ${result.produitsIgnores} ignoré(s).${result.nouvellesCategories?.length ? ' Nouvelles catégories : ' + result.nouvellesCategories.join(', ') : ''}`);
+                      const msg = result?.message || 'Import terminé';
+                      const importes = result?.produitsImportes ?? 0;
+                      const ignores = result?.produitsIgnores ?? 0;
+                      const newCats = result?.nouvellesCategories ?? [];
+                      setCsvResult(importes > 0
+                        ? `Import terminé avec succès ! ${importes} produit(s) importé(s), ${ignores} ignoré(s).${newCats.length ? ' Nouvelles catégories : ' + newCats.join(', ') : ''}`
+                        : `Aucun nouveau produit importé — les ${ignores} produit(s) du fichier existent déjà en base.`);
                       // Refresh products list
-                      const [produitsData, categoriesData] = await Promise.all([
-                        produitApi.getAll(),
-                        categorieApi.getAll(),
-                      ]);
-                      setProduits(produitsData);
-                      setCategories(categoriesData);
+                      try {
+                        const [produitsData, categoriesData] = await Promise.all([
+                          produitApi.getAll(),
+                          categorieApi.getAll(),
+                        ]);
+                        setProduits(produitsData);
+                        setCategories(categoriesData);
+                      } catch { /* refresh failed — not critical */ }
                     } catch (err: any) {
-                      setCsvResult(`Erreur : ${err.response?.data?.message || err.message || 'Import échoué.'}`);
+                      const errMsg = err?.response?.data?.message || err?.message || 'Import échoué.';
+                      setCsvResult(`Erreur : ${typeof errMsg === 'string' ? errMsg : JSON.stringify(errMsg)}`);
                     } finally {
                       setCsvImporting(false);
                     }
                   }}
                   className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 font-semibold transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {csvImporting ? (
-                    <><span className="animate-spin">⏳</span> Import en cours...</>
-                  ) : (
-                    <><Upload size={18} /> Confirmer l'import</>
-                  )}
+                  <span className="flex items-center gap-2">
+                    {csvImporting ? <Loader2 size={18} className="animate-spin" /> : <Upload size={18} />}
+                    {csvImporting ? 'Import en cours...' : "Confirmer l'import"}
+                  </span>
                 </button>
               </div>
             </motion.div>
