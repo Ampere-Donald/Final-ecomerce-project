@@ -34,16 +34,7 @@ const ProductCard = ({ product, badge }) => {
         setImgSrc(PLACEHOLDER_IMG);
     };
 
-    const [showQuickView, setShowQuickView] = useState(false);
-
-    const handleQuickView = (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        setShowQuickView(true);
-    };
-
     return (
-    <>
         <div className={`product-card ${isBackorder ? 'product-card--backorder' : ''}`}>
             {/* Image area */}
             <Link to={`/product/${product.code}`} className="product-card__image-area">
@@ -79,16 +70,6 @@ const ProductCard = ({ product, badge }) => {
                     title={isLiked ? t('product.removeFavorite') : t('product.addFavorite')}
                 >
                     <Heart size={16} fill={isLiked ? 'currentColor' : 'none'} />
-                </button>
-
-                {/* Quick View Button */}
-                <button
-                    className="product-card__quick-view"
-                    onClick={handleQuickView}
-                    title={t('product.quickView')}
-                >
-                    <Eye size={14} />
-                    {t('product.quickView')}
                 </button>
             </Link>
 
@@ -145,55 +126,6 @@ const ProductCard = ({ product, badge }) => {
                 )}
             </div>
         </div>
-
-        {/* ── Quick View Modal ───────────────────────────── */}
-        {showQuickView && (
-            <div className="quick-view-overlay" onClick={() => setShowQuickView(false)}>
-                <div className="quick-view-modal" onClick={(e) => e.stopPropagation()}>
-                    <button className="quick-view-modal__close" onClick={() => setShowQuickView(false)}>
-                        <X size={20} />
-                    </button>
-                    <div className="quick-view-modal__layout">
-                        <div className="quick-view-modal__image">
-                            <img src={imgSrc} alt={product.model} onError={handleImageError} />
-                        </div>
-                        <div className="quick-view-modal__info">
-                            <p className="quick-view-modal__category">
-                                {product.categoryName || product.parentCategory || t('product.defaultCategory')}
-                            </p>
-                            <h2 className="quick-view-modal__name">{product.model}</h2>
-                            {product.brand && <p className="quick-view-modal__brand">{t('product.brandLabel', { brand: product.brand })}</p>}
-
-                            <div className="quick-view-modal__prices">
-                                <div className="quick-view-modal__price-row">
-                                    <span>{t('product.retailPrice')}</span>
-                                    <strong>{formatFCFA(product.retailPrice)}</strong>
-                                </div>
-                                <div className="quick-view-modal__price-row quick-view-modal__price-row--wholesale">
-                                    <span>{t('product.wholesalePrice')}</span>
-                                    <strong>{formatFCFA(product.wholesalePrice)}</strong>
-                                </div>
-                            </div>
-
-                            <p className={`quick-view-modal__stock ${isBackorder ? 'quick-view-modal__stock--warning' : ''}`}>
-                                {isBackorder ? t('product.preorderDelay') : t('product.inStockCount', { count: product.stock })}
-                            </p>
-
-                            <div className="quick-view-modal__actions">
-                                <button className="quick-view-modal__add-btn" onClick={handleAddToCart}>
-                                    <ShoppingCart size={16} />
-                                    {t('product.addToCart')}
-                                </button>
-                                <Link to={`/product/${product.code}`} className="quick-view-modal__detail-link">
-                                    {t('product.viewFullDetails')}
-                                </Link>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        )}
-    </>
     );
 };
 
