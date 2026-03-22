@@ -748,6 +748,10 @@ export class ProduitService {
       const lookupKey = `${(marque || '').toLowerCase()}::${nomProduit.toLowerCase()}`;
       const existing = existingMap.get(lookupKey) || null;
 
+      const image1 = this.getCol(row, 'image1', 'Image1', 'nomImage', 'nom_image', 'NomImage', 'Image', 'image').trim();
+      const image2 = this.getCol(row, 'image2', 'Image2', 'nomImage2', 'imageUrl2').trim();
+      const image3 = this.getCol(row, 'image3', 'Image3', 'nomImage3', 'imageUrl3').trim();
+
       // Resolve images using the pre-uploaded cache (no network calls here)
       const imageUrls = this.resolveImportImagesCached(
         [image1, image2, image3],
@@ -811,7 +815,7 @@ export class ProduitService {
     this.importStatus.message = 'Écriture en base de données (créations)...';
     this.importStatus.progress = 80;
 
-    const BATCH_SIZE = 200;
+    // Use BATCH_SIZE declared above
     let created = 0;
     let updated = 0;
 
