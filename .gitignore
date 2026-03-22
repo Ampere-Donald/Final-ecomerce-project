@@ -10,3 +10,11 @@ uploads/
 *.env
 *.xlsx
 *.csv
+
+# Fichiers et dossiers de test d'import
+import-test/
+import-test.zip
+produit_import_v4.csv
+implementation_plan.md
+task.md
+import_analysis.md
