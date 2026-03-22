@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useI18n } from '../../context/I18nContext';
+import useSwipe from '../../hooks/useSwipe';
 import './HeroBanner.scss';
 
 const getHeroSlides = (t) => [
@@ -77,8 +78,10 @@ const HeroBanner = () => {
         setCurrentSlide(index);
     };
 
+    const swipeHandlers = useSwipe(nextSlide, prevSlide);
+
     return (
-        <section className="hero-banner">
+        <section className="hero-banner" {...swipeHandlers} style={{ touchAction: 'pan-y' }}>
             {/* Slides container */}
             {heroSlides.map((slide, index) => (
                 <div

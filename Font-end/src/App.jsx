@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom'
 import Header from './components/Header/Header'
 import Home from './pages/Home/Home'
 import Catalogue from './pages/Catalogue/Catalogue'
@@ -14,14 +14,18 @@ import Profile from './pages/Profile/Profile'
 import Favorites from './pages/Favorites/Favorites'
 import ProtectedRoute from './components/ProtectedRoute/ProtectedRoute'
 import Toast from './components/Toast/Toast'
+import BottomNav from './components/BottomNav/BottomNav'
+import MiniCart from './components/MiniCart/MiniCart'
 
-function App() {
+function AppContent() {
+  const location = useLocation()
+
   return (
-    <Router>
-      <div className="app">
-        <Header />
-        <main className="app__content">
-          <Routes>
+    <div className="app">
+      <Header />
+      <main className="app__content">
+        <div key={location.pathname} className="page-enter">
+          <Routes location={location}>
             <Route path="/" element={<Home />} />
             <Route path="/catalogue" element={<Catalogue />} />
             <Route path="/product/:code" element={<ProductDetails />} />
@@ -39,9 +43,19 @@ function App() {
             <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
             <Route path="/favourites" element={<ProtectedRoute><Favorites /></ProtectedRoute>} />
           </Routes>
-        </main>
-        <Toast />
-      </div>
+        </div>
+      </main>
+      <Toast />
+      <MiniCart />
+      <BottomNav />
+    </div>
+  )
+}
+
+function App() {
+  return (
+    <Router>
+      <AppContent />
     </Router>
   )
 }

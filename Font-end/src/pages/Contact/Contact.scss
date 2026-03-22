@@ -65,8 +65,8 @@
     overflow: hidden;
 
     @media (max-width: calc(#{$breakpoint-lg} - 1px)) {
-        margin-top: -102px;
-        padding-top: 102px;
+        margin-top: -64px;
+        padding-top: 64px;
     }
 
     &::before {

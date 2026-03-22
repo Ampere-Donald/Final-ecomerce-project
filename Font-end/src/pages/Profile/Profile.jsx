@@ -177,105 +177,107 @@ const Profile = () => {
               <div className="profile__empty">{t('profile.loading')}</div>
             ) : orders.length === 0 ? (
               <div className="profile__empty">
-                {t('profile.noOrders')}
-                <br />
+                <svg width="100" height="100" viewBox="0 0 100 100" fill="none" style={{ margin: '0 auto 1rem', opacity: 0.6 }}>
+                  <circle cx="50" cy="50" r="46" stroke="#E5E7EB" strokeWidth="2" strokeDasharray="6 4" />
+                  <rect x="25" y="30" width="50" height="38" rx="4" stroke="#2A2FCE" strokeWidth="2" fill="rgba(42,47,206,0.04)" />
+                  <line x1="32" y1="42" x2="68" y2="42" stroke="#E5E7EB" strokeWidth="1.5" />
+                  <line x1="32" y1="50" x2="58" y2="50" stroke="#E5E7EB" strokeWidth="1.5" />
+                  <line x1="32" y1="58" x2="50" y2="58" stroke="#E5E7EB" strokeWidth="1.5" />
+                </svg>
+                <p>{t('profile.noOrders')}</p>
                 <Link to="/catalogue" style={{ marginTop: 8, display: 'inline-block' }}>{t('profile.exploreCatalogue')}</Link>
               </div>
             ) : (
-              <table className="profile__table">
-                <thead>
-                  <tr>
-                    <th>{t('profile.colTrack')}</th>
-                    <th>{t('profile.colDate')}</th>
-                    <th>{t('profile.colAmount')}</th>
-                    <th>{t('profile.colMode')}</th>
-                    <th>{t('profile.colStatus')}</th>
-                    <th>{t('profile.colActions')}</th>
-                  </tr>
-                </thead>
-                <tbody>
+              <>
+                {/* Desktop table */}
+                <table className="profile__table profile__table--desktop">
+                  <thead>
+                    <tr>
+                      <th>{t('profile.colTrack')}</th>
+                      <th>{t('profile.colDate')}</th>
+                      <th>{t('profile.colAmount')}</th>
+                      <th>{t('profile.colMode')}</th>
+                      <th>{t('profile.colStatus')}</th>
+                      <th>{t('profile.colActions')}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {orders.map(order => (
+                      <tr key={order.id}>
+                        <td style={{ fontFamily: 'monospace', fontWeight: 600 }}>{order.numeroSuivi}</td>
+                        <td>{new Date(order.dateCommande).toLocaleDateString('fr-FR')}</td>
+                        <td style={{ fontWeight: 600 }}>{formatFCFA(Number(order.montantTotal))}</td>
+                        <td>{MODE_LABELS[order.modeReception] || order.modeReception}</td>
+                        <td>
+                          <span className={`profile__status profile__status--${order.statut.toLowerCase()}`}>
+                            {STATUS_LABELS[order.statut] || order.statut}
+                          </span>
+                        </td>
+                        <td>
+                          <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
+                            <a href={buildWhatsAppLink(order)} target="_blank" rel="noopener noreferrer" className="profile__action-btn profile__action-btn--whatsapp">
+                              <WhatsAppIcon size={14} /> {t('profile.whatsappBtn')}
+                            </a>
+                            {order.statut === 'EN_LIVRAISON' && (
+                              <button onClick={() => handleConfirmReception(order.id)} disabled={confirmingId === order.id} className="profile__action-btn profile__action-btn--confirm">
+                                <CheckCircle2 size={14} /> {confirmingId === order.id ? '...' : t('profile.receivedBtn')}
+                              </button>
+                            )}
+                            {canCancel(order.statut) && (
+                              <button className="profile__cancel-btn profile__cancel-btn--allowed" onClick={() => handleCancel(order.id)} disabled={cancellingId === order.id}>
+                                {cancellingId === order.id ? '...' : t('profile.cancelBtn')}
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+
+                {/* Mobile cards */}
+                <div className="profile__mobile-orders">
                   {orders.map(order => (
-                    <tr key={order.id}>
-                      <td style={{ fontFamily: 'monospace', fontWeight: 600 }}>{order.numeroSuivi}</td>
-                      <td>{new Date(order.dateCommande).toLocaleDateString('fr-FR')}</td>
-                      <td style={{ fontWeight: 600 }}>{formatFCFA(Number(order.montantTotal))}</td>
-                      <td>{MODE_LABELS[order.modeReception] || order.modeReception}</td>
-                      <td>
+                    <div key={order.id} className="profile__order-card">
+                      <div className="profile__order-card-header">
+                        <span className="profile__order-card-track">{order.numeroSuivi}</span>
                         <span className={`profile__status profile__status--${order.statut.toLowerCase()}`}>
                           {STATUS_LABELS[order.statut] || order.statut}
                         </span>
-                      </td>
-                      <td>
-                        <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
-                          {/* WhatsApp button */}
-                          <a
-                            href={buildWhatsAppLink(order)}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            title="Contacter NEWOTEG via WhatsApp"
-                            style={{
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              gap: 4,
-                              padding: '4px 10px',
-                              borderRadius: 6,
-                              background: '#25D366',
-                              color: '#fff',
-                              fontSize: 13,
-                              fontWeight: 600,
-                              textDecoration: 'none',
-                              border: 'none',
-                              cursor: 'pointer',
-                              whiteSpace: 'nowrap',
-                            }}
-                          >
-                            <WhatsAppIcon size={14} />
-                            {t('profile.whatsappBtn')}
-                          </a>
-
-                          {/* Confirm Reception — only when EN_LIVRAISON */}
-                          {order.statut === 'EN_LIVRAISON' && (
-                            <button
-                              onClick={() => handleConfirmReception(order.id)}
-                              disabled={confirmingId === order.id}
-                              title="Confirmer la réception de la marchandise"
-                              style={{
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: 4,
-                                padding: '4px 10px',
-                                borderRadius: 6,
-                                background: '#10B981',
-                                color: '#fff',
-                                fontSize: 13,
-                                fontWeight: 600,
-                                border: 'none',
-                                cursor: 'pointer',
-                                whiteSpace: 'nowrap',
-                                opacity: confirmingId === order.id ? 0.6 : 1,
-                              }}
-                            >
-                              <CheckCircle2 size={14} />
-                              {confirmingId === order.id ? '...' : t('profile.receivedBtn')}
-                            </button>
-                          )}
-
-                          {/* Cancel button — existing */}
-                          {canCancel(order.statut) && (
-                            <button
-                              className="profile__cancel-btn profile__cancel-btn--allowed"
-                              onClick={() => handleCancel(order.id)}
-                              disabled={cancellingId === order.id}
-                            >
-                              {cancellingId === order.id ? '...' : t('profile.cancelBtn')}
-                            </button>
-                          )}
+                      </div>
+                      <div className="profile__order-card-body">
+                        <div className="profile__order-card-row">
+                          <span className="profile__order-card-label">{t('profile.colDate')}</span>
+                          <span>{new Date(order.dateCommande).toLocaleDateString('fr-FR')}</span>
                         </div>
-                      </td>
-                    </tr>
+                        <div className="profile__order-card-row">
+                          <span className="profile__order-card-label">{t('profile.colAmount')}</span>
+                          <span style={{ fontWeight: 600 }}>{formatFCFA(Number(order.montantTotal))}</span>
+                        </div>
+                        <div className="profile__order-card-row">
+                          <span className="profile__order-card-label">{t('profile.colMode')}</span>
+                          <span>{MODE_LABELS[order.modeReception] || order.modeReception}</span>
+                        </div>
+                      </div>
+                      <div className="profile__order-card-actions">
+                        <a href={buildWhatsAppLink(order)} target="_blank" rel="noopener noreferrer" className="profile__action-btn profile__action-btn--whatsapp">
+                          <WhatsAppIcon size={14} /> {t('profile.whatsappBtn')}
+                        </a>
+                        {order.statut === 'EN_LIVRAISON' && (
+                          <button onClick={() => handleConfirmReception(order.id)} disabled={confirmingId === order.id} className="profile__action-btn profile__action-btn--confirm">
+                            <CheckCircle2 size={14} /> {confirmingId === order.id ? '...' : t('profile.receivedBtn')}
+                          </button>
+                        )}
+                        {canCancel(order.statut) && (
+                          <button className="profile__cancel-btn profile__cancel-btn--allowed" onClick={() => handleCancel(order.id)} disabled={cancellingId === order.id}>
+                            {cancellingId === order.id ? '...' : t('profile.cancelBtn')}
+                          </button>
+                        )}
+                      </div>
+                    </div>
                   ))}
-                </tbody>
-              </table>
+                </div>
+              </>
             )}
           </div>
         </div>

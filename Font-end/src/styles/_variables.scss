@@ -38,9 +38,13 @@ $font-size-sm: 0.875rem; // 14px
 $font-size-base: 1rem; // 16px
 $font-size-md: 1.125rem; // 18px
 $font-size-lg: 1.25rem; // 20px
-$font-size-xl: 1.5rem; // 24px
-$font-size-2xl: 1.75rem; // 28px
-$font-size-3xl: 2.25rem; // 36px
+$font-size-xl: clamp(1.25rem, 2vw, 1.5rem); // 20–24px fluid
+$font-size-2xl: clamp(1.5rem, 2.5vw, 1.75rem); // 24–28px fluid
+$font-size-3xl: clamp(1.75rem, 4vw, 2.25rem); // 28–36px fluid
+
+// ── Fluid hero typography ────────────────────────────────
+$font-size-hero: clamp(2rem, 5vw, 3.5rem);
+$font-size-section-title: clamp(1.5rem, 3vw, 2.25rem);
 
 $font-weight-regular: 400;
 $font-weight-medium: 500;
@@ -94,6 +98,11 @@ $breakpoint-md: 768px;
 $breakpoint-lg: 992px;
 $breakpoint-xl: 1200px;
 $breakpoint-2xl: 1400px;
+
+// ── Glassmorphism ────────────────────────────────────────────
+$glass-bg: rgba(255, 255, 255, 0.7);
+$glass-blur: blur(16px);
+$glass-border: 1px solid rgba(255, 255, 255, 0.18);
 
 // ── Z-index ────────────────────────────────────────────────
 $z-dropdown: 100;

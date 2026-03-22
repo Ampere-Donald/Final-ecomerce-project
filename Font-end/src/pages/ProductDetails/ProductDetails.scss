@@ -257,11 +257,21 @@
     align-items: center;
     padding: $spacing-lg;
     gap: $spacing-lg;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
 
     @media (max-width: 400px) {
-        gap: $spacing-md;
-        padding: $spacing-md;
+        gap: $spacing-sm;
+        padding: $spacing-md $spacing-sm;
+
+        .product-details__price-value .amount {
+            font-size: 20px;
+        }
+        
+        .product-details__price-label {
+            font-size: 9px;
+        }
     }
 }
 

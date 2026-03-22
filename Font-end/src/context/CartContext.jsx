@@ -73,24 +73,32 @@ const initCart = () => {
 
 export function CartProvider({ children }) {
     const [cartItems, dispatch] = useReducer(cartReducer, [], initCart);
-    const [toast, setToast] = useState(null); // { id, message }
+    const [toasts, setToasts] = useState([]); // [{ id, message, type }]
+    const [isCartOpen, setIsCartOpen] = useState(false);
+
+    const openCart = useCallback(() => setIsCartOpen(true), []);
+    const closeCart = useCallback(() => setIsCartOpen(false), []);
 
     // Sync cart to localStorage whenever it changes
     useEffect(() => {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(cartItems));
     }, [cartItems]);
 
-    // ── Toast helper ──────────────────────────────────────────
-    const showToast = useCallback((message) => {
-        const id = Date.now();
-        setToast({ id, message });
-        setTimeout(() => setToast(prev => prev?.id === id ? null : prev), 3000);
+    // ── Toast helper (queue, max 3 visible) ───────────────────
+    const showToast = useCallback((message, type = 'success') => {
+        const id = Date.now() + Math.random();
+        setToasts(prev => [...prev.slice(-2), { id, message, type }]);
+        setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 3000);
+    }, []);
+
+    const dismissToast = useCallback((id) => {
+        setToasts(prev => prev.filter(t => t.id !== id));
     }, []);
 
     // ── Cart Actions ──────────────────────────────────────────
     const addToCart = useCallback((product, quantity = 1) => {
         dispatch({ type: 'ADD_ITEM', payload: { product, quantity } });
-        showToast(`"${product.model}" ajouté au panier`);
+        showToast(`"${product.model}" +${quantity}`, 'cart');
     }, [showToast]);
 
     const removeFromCart = useCallback((code) => {
@@ -117,7 +125,12 @@ export function CartProvider({ children }) {
         removeFromCart,
         updateQuantity,
         clearCart,
-        toast,
+        toasts,
+        showToast,
+        dismissToast,
+        isCartOpen,
+        openCart,
+        closeCart,
     };
 
     return (

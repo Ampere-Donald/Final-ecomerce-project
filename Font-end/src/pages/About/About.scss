@@ -67,8 +67,8 @@
     overflow: hidden;
 
     @media (max-width: calc(#{$breakpoint-lg} - 1px)) {
-        margin-top: -102px; // header (64px) + mobile nav strip (38px)
-        padding-top: 102px;
+        margin-top: -64px;
+        padding-top: 64px;
     }
 
     // Deep gradient overlay & subtle accent mesh

@@ -583,5 +583,10 @@ export default {
         s8L1: "<strong>Email :</strong> contact@newoteg.com",
         s8L2: "<strong>Téléphone :</strong> +237 699 966 160 / 670 478 228",
         s8L3: "<strong>Adresse :</strong> NEWOTEG SARL — Akwa, Rue Foch, Douala, Cameroun"
+    },
+    cart: {
+        added: "ajouté au panier",
+        removed: "Produit retiré du panier",
+        error: "Erreur lors de l'ajout au panier",
     }
 };
