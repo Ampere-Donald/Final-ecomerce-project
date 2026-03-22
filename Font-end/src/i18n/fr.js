@@ -353,7 +353,7 @@ export default {
         locationTitle: "Une Présence Stratégique",
         locationSubtitle: "Pour assurer la proximité avec nos clients, NEWOTEG s'appuie sur deux sites névralgiques :",
         hqTitle: "Direction Générale & Showroom",
-        hqAddress: "Akwa, Rue Foch, Douala",
+        hqAddress: "Akwa, Campyabass, Douala",
         hqDesc: "Centre de nos activités administratives et commerciales",
         logisticsTitle: "Point de Service & Logistique",
         logisticsAddress: "Akwa, Lieu-dit Camp Yabassi",
@@ -376,7 +376,7 @@ export default {
         infoTitle: "Nos Coordonnées",
         infoDesc: "Retrouvez-nous dans nos différents sites à Douala ou contactez-nous directement par téléphone ou par email.",
         hqTitle: "Direction Générale & Showroom",
-        hqAddress: "Akwa, Rue Foch, Douala",
+        hqAddress: "Akwa, Campyabass, Douala",
         openMaps: "Cliquez pour ouvrir dans Maps →",
         logisticsTitle: "Point de Service & Logistique",
         logisticsAddress: "Akwa, Lieu-dit Camp Yabassi",
@@ -412,6 +412,8 @@ export default {
         hoursBadge: "Lun–Sam"
     },
     auth: {
+        loginTitle: "Connexion",
+        signupTitle: "Inscription",
         loginReqEmail: "L'email ou le téléphone est requis.",
         loginReqPwd: "Le mot de passe est requis.",
         loginInvalid: "Identifiants invalides.",
@@ -525,7 +527,7 @@ export default {
         lastUpdate: "Dernière mise à jour : {{date}}",
         s1Title: "1. Identification de l'Éditeur",
         s1P1: "Le présent site web est édité par <strong>NEWOTEG (New World Technologie Group) SARL</strong>, société à responsabilité limitée de droit camerounais, immatriculée au Registre du Commerce et du Crédit Mobilier (RCCM) de Douala.",
-        s1L1: "<strong>Siège social :</strong> Akwa, Rue Foch, Douala, Cameroun",
+        s1L1: "<strong>Siège social :</strong> Akwa, Campyabass, Douala, Cameroun",
         s1L2: "<strong>Point de Service :</strong> Akwa, Lieu-dit Camp Yabassi, Douala",
         s1L3: "<strong>Fondateur & Représentant légal :</strong> M. Jude FOGUENG",
         s1L4: "<strong>Contact :</strong> contact@newoteg.com | +237 699 966 160",
@@ -545,7 +547,7 @@ export default {
         s8P1: "Pour toute question relative aux présentes CGU, veuillez nous contacter :",
         s8L1: "<strong>Email :</strong> contact@newoteg.com",
         s8L2: "<strong>Téléphone :</strong> +237 699 966 160 / 670 478 228",
-        s8L3: "<strong>Adresse :</strong> Akwa, Rue Foch, Douala, Cameroun"
+        s8L3: "<strong>Adresse :</strong> Akwa, Campyabass, Douala, Cameroun"
     },
     privacy: {
         metaTitle: "Politique de Confidentialité — NEWOTEG SARL",
@@ -582,11 +584,18 @@ export default {
         s8P1: "Pour exercer vos droits ou pour toute question relative à notre politique de confidentialité :",
         s8L1: "<strong>Email :</strong> contact@newoteg.com",
         s8L2: "<strong>Téléphone :</strong> +237 699 966 160 / 670 478 228",
-        s8L3: "<strong>Adresse :</strong> NEWOTEG SARL — Akwa, Rue Foch, Douala, Cameroun"
+        s8L3: "<strong>Adresse :</strong> NEWOTEG SARL — Akwa, Campyabass, Douala, Cameroun"
     },
     cart: {
         added: "ajouté au panier",
         removed: "Produit retiré du panier",
         error: "Erreur lors de l'ajout au panier",
+    },
+    notFound: {
+        title: "Page introuvable",
+        subtitle: "PAGE NON TROUVÉE",
+        desc: "La page que vous cherchez n'existe pas ou a été déplacée. Vérifiez l'URL ou retournez à l'accueil.",
+        homeBtn: "Retour à l'accueil",
+        catalogueBtn: "Voir le catalogue",
     }
 };

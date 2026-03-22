@@ -337,9 +337,9 @@
     flex-wrap: wrap;
 
     @media (max-width: $breakpoint-sm) {
-        flex-direction: column;
+        flex-direction: row;
         align-items: stretch;
-        gap: $spacing-md;
+        gap: $spacing-sm;
     }
 }
 
@@ -396,13 +396,48 @@
 
     @media (max-width: $breakpoint-sm) {
         min-width: unset;
-        width: 100%;
+        width: auto;
     }
 
-    &:hover {
+    &:hover:not(&--disabled) {
         background-color: #20249E;
         transform: translateY(-1px);
         box-shadow: $shadow-md;
+    }
+
+    &--disabled {
+        background-color: $color-surface-hover;
+        color: $color-text-muted;
+        cursor: not-allowed;
+        border: 1px solid $color-border;
+        opacity: 0.8;
+    }
+}
+
+.product-details__favorite-btn {
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: transparent;
+    border: 1px solid $color-border;
+    border-radius: $border-radius-sm;
+    color: $color-secondary-light;
+    cursor: pointer;
+    transition: all $transition-fast;
+    flex-shrink: 0; // Ensures it does not squash on narrow mobiles
+
+    &:hover {
+        background-color: rgba($color-danger, 0.05);
+        color: $color-danger;
+        border-color: rgba($color-danger, 0.2);
+    }
+
+    &--active {
+        color: $color-danger;
+        border-color: rgba($color-danger, 0.2);
+        background-color: rgba($color-danger, 0.05);
     }
 }
 
@@ -442,6 +477,7 @@
     border-bottom: 2px solid transparent;
     cursor: pointer;
     transition: all $transition-fast;
+    white-space: nowrap;
 
     &--active {
         color: $color-primary;

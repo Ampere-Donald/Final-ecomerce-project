@@ -88,6 +88,8 @@ const HeroBanner = () => {
                     key={slide.id}
                     className={`hero-banner__slide ${index === currentSlide ? 'hero-banner__slide--active' : ''}`}
                     style={{ backgroundImage: `url('${slide.image}')` }}
+                    role="img"
+                    aria-label={slide.title}
                 >
                     <div className="hero-banner__overlay"></div>
 

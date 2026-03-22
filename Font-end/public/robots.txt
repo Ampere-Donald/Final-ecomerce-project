@@ -1,0 +1,10 @@
+# NEWOTEG SARL — robots.txt
+User-agent: *
+Allow: /
+Disallow: /checkout
+Disallow: /profile
+Disallow: /favourites
+Disallow: /login
+Disallow: /signup
+
+Sitemap: https://newoteg.com/sitemap.xml

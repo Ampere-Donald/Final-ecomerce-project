@@ -43,7 +43,7 @@ const Checkout = () => {
     const [submitError, setSubmitError] = useState('');
 
     const subtotal = cart.reduce((acc, item) => acc + item.retailPrice * item.quantity, 0);
-    const shippingCost = shipping === 'standard' ? 5000 : 0;
+    const shippingCost = shipping === 'standard' ? 1000 : 0;
     const total = subtotal + shippingCost;
 
     // ── Validation ──────────────────────────────────────────
@@ -278,11 +278,11 @@ const Checkout = () => {
                                         <div className="checkout__option-header">
                                             <div>
                                                 <h4>{t('checkout.standardShipping')}</h4>
-                                                <p>{t('checkout.standardDays')}</p>
+                                                <p>{t('checkout.standardDays')} (Dès 1 000 FCFA selon distance)</p>
                                             </div>
                                             {shipping === 'standard' ? <CheckCircle2 size={20} className="text-primary" /> : <Circle size={20} className="text-muted" />}
                                         </div>
-                                        <div className="checkout__option-price text-primary">5 000 FCFA</div>
+                                        <div className="checkout__option-price text-primary">Dès 1 000 FCFA</div>
                                     </div>
 
                                     <div
@@ -409,7 +409,7 @@ const Checkout = () => {
                                     </div>
                                     <div className="checkout__summary-line">
                                         <span>{t('checkout.stepShipping')}</span>
-                                        <strong>{formatFCFA(shippingCost)}</strong>
+                                        <strong>{shipping === 'standard' ? 'Dès 1 000 FCFA' : '0 FCFA'}</strong>
                                     </div>
                                     <div className="checkout__summary-line">
                                         <span>{t('checkout.taxes')}</span>

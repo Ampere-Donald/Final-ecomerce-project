@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import { ChevronRight, ShoppingCart, CheckCircle2, Truck, FileText, Package, Plus, Minus, ShieldCheck, Box } from 'lucide-react';
+import { ChevronRight, ShoppingCart, CheckCircle2, Truck, FileText, Package, Plus, Minus, ShieldCheck, Box, Heart } from 'lucide-react';
 import apiClient from '../../utils/apiClient';
 import { formatFCFA } from '../../utils/formatFCFA';
 import { mapProduct, getProductCode } from '../../utils/mapProduct';
 import { useCart } from '../../context/CartContext';
+import { useFavorites } from '../../context/FavoritesContext';
 import { useI18n } from '../../context/I18nContext';
 import Footer from '../../components/Footer/Footer';
 import './ProductDetails.scss';
@@ -14,6 +15,7 @@ const ProductDetails = () => {
     const { t } = useI18n();
     const { code } = useParams();
     const { addToCart } = useCart();
+    const { toggleFavorite, isFavorite } = useFavorites();
     const [quantity, setQuantity] = useState(1);
     const [activeTab, setActiveTab] = useState('specs');
     const [activeImageIndex, setActiveImageIndex] = useState(0);
@@ -84,6 +86,29 @@ const ProductDetails = () => {
             <Helmet>
                 <title>{t('productDetails.metaTitle', { model: product.model, category: product.categoryName })}</title>
                 <meta name="description" content={t('productDetails.metaDesc', { model: product.model, category: product.categoryName, price: formatFCFA(product.retailPrice) })} />
+                <link rel="canonical" href={`https://newoteg.com/product/${product.code}`} />
+                <meta property="og:title" content={product.model} />
+                <meta property="og:description" content={t('productDetails.metaDesc', { model: product.model, category: product.categoryName, price: formatFCFA(product.retailPrice) })} />
+                <meta property="og:url" content={`https://newoteg.com/product/${product.code}`} />
+                <meta property="og:type" content="product" />
+                <meta property="og:image" content={product.images?.[0] || product.image} />
+                <script type="application/ld+json">{JSON.stringify({
+                    "@context": "https://schema.org",
+                    "@type": "Product",
+                    "name": product.model,
+                    "image": product.images?.length ? product.images : [product.image],
+                    "description": product.description || `${product.model} — ${product.categoryName}`,
+                    "sku": `NTG-${product.code}-TR`,
+                    "brand": { "@type": "Brand", "name": product.marque || product.brand || "NEWOTEG" },
+                    "offers": {
+                        "@type": "Offer",
+                        "url": `https://newoteg.com/product/${product.code}`,
+                        "priceCurrency": "XAF",
+                        "price": product.retailPrice,
+                        "availability": product.stock > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
+                        "seller": { "@type": "Organization", "name": "NEWOTEG SARL" }
+                    }
+                })}</script>
             </Helmet>
             {/* ── Breadcrumb ──────────────────────────────── */}
             <div className="product-details__breadcrumb-bar">
@@ -186,6 +211,13 @@ const ProductDetails = () => {
 
                                     {isOutOfStock ? t('product.unavailable') : t('product.addToCart')}
 
+                                </button>
+                                <button
+                                    className={`product-details__favorite-btn ${isFavorite(product.code) ? 'product-details__favorite-btn--active' : ''}`}
+                                    onClick={() => toggleFavorite(product)}
+                                    aria-label="Toggle favorite"
+                                >
+                                    <Heart size={20} fill={isFavorite(product.code) ? "currentColor" : "none"} />
                                 </button>
                             </div>
                         </div>

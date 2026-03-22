@@ -9,8 +9,8 @@ import { useI18n } from '../../context/I18nContext';
 import Footer from '../../components/Footer/Footer';
 import Sidebar from '../../components/Sidebar/Sidebar';
 import ProductCard from '../../components/ProductCard/ProductCard';
-
 import ProductTable from '../../components/ProductTable/ProductTable';
+import CategoryGrid from '../../components/CategoryGrid/CategoryGrid';
 import { ProductCardSkeletonGrid } from '../../components/ProductCard/ProductCardSkeleton';
 
 import './Catalogue.scss';
@@ -41,6 +41,22 @@ const Catalogue = () => {
     const [viewMode, setViewMode] = useState(localStorage.getItem('catalogueViewMode') || 'grid');
     const [globalMinPrice, setGlobalMinPrice] = useState(0);
     const [globalMaxPrice, setGlobalMaxPrice] = useState(1000000);
+
+    const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' ? window.innerWidth < 1024 : false);
+
+    useEffect(() => {
+        const handleResize = () => setIsMobile(window.innerWidth < 1024);
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
+    // Force grid layout if the user's viewport is mobile, overriding previous Table view cache
+    useEffect(() => {
+        if (isMobile && viewMode !== 'grid') {
+            setViewMode('grid');
+            localStorage.setItem('catalogueViewMode', 'grid');
+        }
+    }, [isMobile, viewMode]);
 
     const debouncedSearch = useDebounce(searchQuery, 500);
     const debouncedPrice = useDebounce(priceRange, 500);
@@ -133,7 +149,19 @@ const Catalogue = () => {
         fetchData();
     }, [currentPage, debouncedSearch, selectedCategory, debouncedPrice, inStockOnly, sortBy, globalMinPrice, globalMaxPrice]);
 
-    // Sync URL params
+    // Update local state if URL changes externally (e.g., via <Link> clicks)
+    useEffect(() => {
+        const urlCat = searchParams.get('category') || '';
+        if (urlCat !== selectedCategory) setSelectedCategory(urlCat);
+
+        const urlSearch = searchParams.get('search') || '';
+        if (urlSearch !== searchQuery) setSearchQuery(urlSearch);
+
+        const urlPage = Number(searchParams.get('page')) || 1;
+        if (urlPage !== currentPage) setCurrentPage(urlPage);
+    }, [searchParams, selectedCategory, searchQuery, currentPage]);
+
+    // Sync URL params (Push local state to URL)
     useEffect(() => {
         const params = {};
         if (searchQuery) params.search = searchQuery;
@@ -221,11 +249,27 @@ const Catalogue = () => {
         return null;
     }, [selectedCategory, dynamicCategories]);
 
+    const isVisualGridMode = isMobile && !selectedCategory && !searchQuery;
+
     return (
         <div className="catalogue-page">
             <Helmet>
                 <title>{activeCategoryName ? t('catalogue.metaTitleCat', { category: activeCategoryName }) : t('catalogue.metaTitle')}</title>
                 <meta name="description" content={activeCategoryName ? t('catalogue.metaDescCat', { category: activeCategoryName }) : t('catalogue.metaDesc')} />
+                <link rel="canonical" href={`https://newoteg.com/catalogue${selectedCategory ? `?category=${selectedCategory}` : ''}`} />
+                <meta property="og:title" content={activeCategoryName ? t('catalogue.metaTitleCat', { category: activeCategoryName }) : t('catalogue.metaTitle')} />
+                <meta property="og:description" content={activeCategoryName ? t('catalogue.metaDescCat', { category: activeCategoryName }) : t('catalogue.metaDesc')} />
+                <meta property="og:url" content={`https://newoteg.com/catalogue${selectedCategory ? `?category=${selectedCategory}` : ''}`} />
+                <meta property="og:image" content="https://newoteg.com/logo.png" />
+                <script type="application/ld+json">{JSON.stringify({
+                    "@context": "https://schema.org",
+                    "@type": "BreadcrumbList",
+                    "itemListElement": [
+                        { "@type": "ListItem", "position": 1, "name": "Accueil", "item": "https://newoteg.com/" },
+                        { "@type": "ListItem", "position": 2, "name": "Catalogue", "item": "https://newoteg.com/catalogue" },
+                        ...(activeCategoryName ? [{ "@type": "ListItem", "position": 3, "name": activeCategoryName, "item": `https://newoteg.com/catalogue?category=${selectedCategory}` }] : [])
+                    ]
+                })}</script>
             </Helmet>
             {/* ── Page Header ───────────────────────────────── */}
             <div className="catalogue-page__header">
@@ -250,173 +294,183 @@ const Catalogue = () => {
                             <h1 className="catalogue-page__title">
                                 {activeCategoryName || t('catalogue.catalogueBreadcrumb')}
                             </h1>
-                            <p className="catalogue-page__count">
-                                {t('catalogue.productsFound', { count: totalProducts.toLocaleString() })}
-                            </p>
+                            {!isVisualGridMode && (
+                                <p className="catalogue-page__count">
+                                    {t('catalogue.productsFound', { count: totalProducts.toLocaleString() })}
+                                </p>
+                            )}
                         </div>
-                        <button
-                            className="catalogue-page__filter-toggle"
-                            onClick={() => setSidebarOpen(!sidebarOpen)}
-                        >
-                            <SlidersHorizontal size={18} />
-                            {t('catalogue.filters')}
-                        </button>
+                        {!isVisualGridMode && (
+                            <button
+                                className="catalogue-page__filter-toggle"
+                                onClick={() => setSidebarOpen(!sidebarOpen)}
+                            >
+                                <SlidersHorizontal size={18} />
+                                {t('catalogue.filters')}
+                            </button>
+                        )}
                     </div>
                 </div>
             </div>
 
-            <div className="container">
-                <div className="catalogue-page__layout">
-                    {/* ── Sidebar Component ───────────────────────────────── */}
-                    <Sidebar
-                        sidebarOpen={sidebarOpen}
-                        setSidebarOpen={setSidebarOpen}
-                        searchQuery={searchQuery}
-                        setSearchQuery={setSearchQuery}
-                        categories={dynamicCategories}
-                        selectedCategory={selectedCategory}
-                        handleCategorySelect={handleCategorySelect}
-                        selectedSubCategory={selectedSubCategory}
-                        handleSubCategorySelect={handleSubCategorySelect}
-                        expandedCategories={expandedCategories}
-                        toggleCategory={toggleCategory}
-                        clearFilters={clearFilters}
-                        hasActiveFilters={hasActiveFilters}
-                        priceRange={priceRange}
-                        setPriceRange={setPriceRange}
-                        inStockOnly={inStockOnly}
-                        setInStockOnly={setInStockOnly}
-                        globalMinPrice={globalMinPrice}
-                        globalMaxPrice={globalMaxPrice}
-                    />
-
-                    {/* ── Main Content ──────────────────────────── */}
-                    <main className="catalogue-main">
-                        {/* Sort Bar */}
-                        <div className="catalogue-main__toolbar">
-                            {/* Active Filter Chips */}
-                            <div className="catalogue-main__chips">
-                                {searchQuery && (
-                                    <span className="catalogue-chip">
-                                        {t('catalogue.searchActive', { query: searchQuery })}
-                                        <button onClick={() => setSearchQuery('')}><X size={12} /></button>
-                                    </span>
-                                )}
-                                {activeCategoryName && (
-                                    <span className="catalogue-chip">
-                                        {activeCategoryName}
-                                        <button onClick={() => { setSelectedCategory(''); setSelectedSubCategory(''); }}><X size={12} /></button>
-                                    </span>
-                                )}
-                            </div>
-                            <div className="catalogue-main__sort">
-                                <div className="catalogue-main__view-toggle">
-                                    <button 
-                                        className={`view-btn ${viewMode === 'grid' ? 'active' : ''}`}
-                                        onClick={() => handleViewModeToggle('grid')}
-                                        title={t('catalogue.gridView')}
-                                    >
-                                        <LayoutGrid size={18} />
-                                    </button>
-                                    <button 
-                                        className={`view-btn ${viewMode === 'table' ? 'active' : ''}`}
-                                        onClick={() => handleViewModeToggle('table')}
-                                        title={t('catalogue.listView')}
-                                    >
-                                        <List size={18} />
-                                    </button>
-                                </div>
-                                <label>{t('catalogue.sortBy')}</label>
-                                <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
-                                    <option value="name-asc">{t('catalogue.sortNameAsc')}</option>
-                                    <option value="name-desc">{t('catalogue.sortNameDesc')}</option>
-                                    <option value="price-asc">{t('catalogue.sortPriceAsc')}</option>
-                                    <option value="price-desc">{t('catalogue.sortPriceDesc')}</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        {/* Product Grid */}
-                        {isLoading ? (
-                            <ProductCardSkeletonGrid count={8} />
-                        ) : sortedProducts.length > 0 ? (
-                            <>
-                                {viewMode === 'grid' ? (
-                                    <div className="catalogue-grid">
-                                        {sortedProducts.map((product) => (
-                                            <ProductCard key={product.code} product={product} />
-                                        ))}
-                                    </div>
-                                ) : (
-                                    <ProductTable products={sortedProducts} />
-                                )}
-                            </>
-                        ) : (
-                            <div className="catalogue-empty">
-                                <Search size={48} strokeWidth={1} />
-                                <h3>{t('catalogue.emptyTitle')}</h3>
-                                <p>{t('catalogue.emptyDesc')}</p>
-                                <button onClick={clearFilters} className="catalogue-empty__btn">
-                                    {t('catalogue.clearFilters')}
-                                </button>
-                            </div>
-                        )}
-
-                        {/* Pagination */}
-                        {totalPages > 1 && (
-                            <div className="catalogue-pagination">
-                                <button
-                                    className="catalogue-pagination__btn"
-                                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                                    disabled={currentPage === 1}
-                                >
-                                    <ChevronLeft size={16} />
-                                    {t('common.prev')}
-                                </button>
-
-                                <div className="catalogue-pagination__pages">
-                                    {getPageNumbers()[0] > 1 && (
-                                        <>
-                                            <button
-                                                className="catalogue-pagination__page"
-                                                onClick={() => setCurrentPage(1)}
-                                            >1</button>
-                                            {getPageNumbers()[0] > 2 && <span className="catalogue-pagination__ellipsis">...</span>}
-                                        </>
-                                    )}
-                                    {getPageNumbers().map(page => (
-                                        <button
-                                            key={page}
-                                            className={`catalogue-pagination__page ${currentPage === page ? 'catalogue-pagination__page--active' : ''}`}
-                                            onClick={() => setCurrentPage(page)}
-                                        >
-                                            {page}
-                                        </button>
-                                    ))}
-                                    {getPageNumbers().at(-1) < totalPages && (
-                                        <>
-                                            {getPageNumbers().at(-1) < totalPages - 1 && <span className="catalogue-pagination__ellipsis">...</span>}
-                                            <button
-                                                className="catalogue-pagination__page"
-                                                onClick={() => setCurrentPage(totalPages)}
-                                            >{totalPages}</button>
-                                        </>
-                                    )}
-                                </div>
-
-                                <button
-                                    className="catalogue-pagination__btn"
-                                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                                    disabled={currentPage === totalPages}
-                                >
-                                    {t('common.next')}
-                                    <ChevronRight size={16} />
-                                </button>
-                            </div>
-                        )}
-                    </main>
+            {isVisualGridMode ? (
+                <div className="catalogue-page__visual-grid">
+                    <CategoryGrid mode="catalogue" />
                 </div>
-            </div>
+            ) : (
+                <div className="container">
+                    <div className="catalogue-page__layout">
+                        {/* ── Sidebar Component ───────────────────────────────── */}
+                        <Sidebar
+                            sidebarOpen={sidebarOpen}
+                            setSidebarOpen={setSidebarOpen}
+                            searchQuery={searchQuery}
+                            setSearchQuery={setSearchQuery}
+                            categories={dynamicCategories}
+                            selectedCategory={selectedCategory}
+                            handleCategorySelect={handleCategorySelect}
+                            selectedSubCategory={selectedSubCategory}
+                            handleSubCategorySelect={handleSubCategorySelect}
+                            expandedCategories={expandedCategories}
+                            toggleCategory={toggleCategory}
+                            clearFilters={clearFilters}
+                            hasActiveFilters={hasActiveFilters}
+                            priceRange={priceRange}
+                            setPriceRange={setPriceRange}
+                            inStockOnly={inStockOnly}
+                            setInStockOnly={setInStockOnly}
+                            globalMinPrice={globalMinPrice}
+                            globalMaxPrice={globalMaxPrice}
+                        />
+
+                        {/* ── Main Content ──────────────────────────── */}
+                        <main className="catalogue-main">
+                            {/* Sort Bar */}
+                            <div className="catalogue-main__toolbar">
+                                {/* Active Filter Chips */}
+                                <div className="catalogue-main__chips">
+                                    {searchQuery && (
+                                        <span className="catalogue-chip">
+                                            {t('catalogue.searchActive', { query: searchQuery })}
+                                            <button onClick={() => setSearchQuery('')}><X size={12} /></button>
+                                        </span>
+                                    )}
+                                    {activeCategoryName && (
+                                        <span className="catalogue-chip">
+                                            {activeCategoryName}
+                                            <button onClick={() => { setSelectedCategory(''); setSelectedSubCategory(''); }}><X size={12} /></button>
+                                        </span>
+                                    )}
+                                </div>
+                                <div className="catalogue-main__sort">
+                                    <div className="catalogue-main__view-toggle">
+                                        <button 
+                                            className={`view-btn ${viewMode === 'grid' ? 'active' : ''}`}
+                                            onClick={() => handleViewModeToggle('grid')}
+                                            title={t('catalogue.gridView')}
+                                        >
+                                            <LayoutGrid size={18} />
+                                        </button>
+                                        <button 
+                                            className={`view-btn ${viewMode === 'table' ? 'active' : ''}`}
+                                            onClick={() => handleViewModeToggle('table')}
+                                            title={t('catalogue.listView')}
+                                        >
+                                            <List size={18} />
+                                        </button>
+                                    </div>
+                                    <label>{t('catalogue.sortBy')}</label>
+                                    <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
+                                        <option value="name-asc">{t('catalogue.sortNameAsc')}</option>
+                                        <option value="name-desc">{t('catalogue.sortNameDesc')}</option>
+                                        <option value="price-asc">{t('catalogue.sortPriceAsc')}</option>
+                                        <option value="price-desc">{t('catalogue.sortPriceDesc')}</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            {/* Product Grid */}
+                            {isLoading ? (
+                                <ProductCardSkeletonGrid count={8} />
+                            ) : sortedProducts.length > 0 ? (
+                                <>
+                                    {viewMode === 'grid' ? (
+                                        <div className="catalogue-grid">
+                                            {sortedProducts.map((product) => (
+                                                <ProductCard key={product.code} product={product} />
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <ProductTable products={sortedProducts} />
+                                    )}
+                                </>
+                            ) : (
+                                <div className="catalogue-empty">
+                                    <Search size={48} strokeWidth={1} />
+                                    <h3>{t('catalogue.emptyTitle')}</h3>
+                                    <p>{t('catalogue.emptyDesc')}</p>
+                                    <button onClick={clearFilters} className="catalogue-empty__btn">
+                                        {t('catalogue.clearFilters')}
+                                    </button>
+                                </div>
+                            )}
+
+                            {/* Pagination */}
+                            {totalPages > 1 && (
+                                <div className="catalogue-pagination">
+                                    <button
+                                        className="catalogue-pagination__btn"
+                                        onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                                        disabled={currentPage === 1}
+                                    >
+                                        <ChevronLeft size={16} />
+                                        {t('common.prev')}
+                                    </button>
+
+                                    <div className="catalogue-pagination__pages">
+                                        {getPageNumbers()[0] > 1 && (
+                                            <>
+                                                <button
+                                                    className="catalogue-pagination__page"
+                                                    onClick={() => setCurrentPage(1)}
+                                                >1</button>
+                                                {getPageNumbers()[0] > 2 && <span className="catalogue-pagination__ellipsis">...</span>}
+                                            </>
+                                        )}
+                                        {getPageNumbers().map(page => (
+                                            <button
+                                                key={page}
+                                                className={`catalogue-pagination__page ${currentPage === page ? 'catalogue-pagination__page--active' : ''}`}
+                                                onClick={() => setCurrentPage(page)}
+                                            >
+                                                {page}
+                                            </button>
+                                        ))}
+                                        {getPageNumbers().at(-1) < totalPages && (
+                                            <>
+                                                {getPageNumbers().at(-1) < totalPages - 1 && <span className="catalogue-pagination__ellipsis">...</span>}
+                                                <button
+                                                    className="catalogue-pagination__page"
+                                                    onClick={() => setCurrentPage(totalPages)}
+                                                >{totalPages}</button>
+                                            </>
+                                        )}
+                                    </div>
+
+                                    <button
+                                        className="catalogue-pagination__btn"
+                                        onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                                        disabled={currentPage === totalPages}
+                                    >
+                                        {t('common.next')}
+                                        <ChevronRight size={16} />
+                                    </button>
+                                </div>
+                            )}
+                        </main>
+                    </div>
+                </div>
+            )}
 
             <Footer />
         </div>

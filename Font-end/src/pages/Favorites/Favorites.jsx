@@ -21,7 +21,10 @@ const Favorites = () => {
 
   return (
     <>
-      <Helmet><title>{t('favorites.metaTitle')}</title></Helmet>
+      <Helmet>
+        <title>{t('favorites.metaTitle')}</title>
+        <meta name="robots" content="noindex, nofollow" />
+      </Helmet>
       <div className="favorites container">
         <div className="favorites__header">
           <h1>{t('favorites.title')}</h1>

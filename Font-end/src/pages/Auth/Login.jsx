@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 import { ArrowLeft, ShieldCheck, Eye, EyeOff } from 'lucide-react';
 import { GoogleLogin } from '@react-oauth/google';
 import { useAuth } from '../../context/AuthContext';
@@ -62,6 +63,11 @@ const Login = () => {
   };
 
   return (
+    <>
+    <Helmet>
+      <title>{t('auth.loginTitle')} — NEWOTEG SARL</title>
+      <meta name="robots" content="noindex, nofollow" />
+    </Helmet>
     <div className="auth-page">
       <div className="auth-page__card">
         <button className="auth-page__back" onClick={() => navigate(-1)}>
@@ -129,6 +135,7 @@ const Login = () => {
         </p>
       </div>
     </div>
+    </>
   );
 };
 

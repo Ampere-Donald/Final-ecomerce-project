@@ -8,16 +8,16 @@ import './CategoryGrid.scss';
 
 const PLACEHOLDER_IMG = 'https://images.unsplash.com/photo-1518770660439-4636190af475?q=80&w=600&auto=format&fit=crop';
 
-const CategoryGrid = () => {
+const CategoryGrid = ({ mode = 'home' }) => {
     const { t } = useI18n();
     const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(true);
 
     const getInitialCount = (width) => {
-        if (width < 768) return 4; // Mobile: 2x2
-        if (width < 992) return 6; // Tablet: 3x2
-        if (width < 1200) return 8; // Small desktop: 4x2
-        return 6; // Desktop: 6x1
+        if (width < 768) return 4;
+        if (width < 992) return 6;
+        if (width < 1200) return 8;
+        return 6;
     };
 
     const getStepCount = (width) => {
@@ -58,11 +58,13 @@ const CategoryGrid = () => {
 
     if (loading) {
         return (
-            <section className="category-section">
+            <section className={mode === 'home' ? "category-section" : "category-section category-section--catalogue"}>
                 <div className="container">
-                    <div className="category-section__header">
-                        <h2 className="category-section__title">{t('home.categoriesTitle')}</h2>
-                    </div>
+                    {mode === 'home' && (
+                        <div className="category-section__header">
+                            <h2 className="category-section__title">{t('home.categoriesTitle')}</h2>
+                        </div>
+                    )}
                     <div className="category-grid">
                         {[1, 2, 3, 4, 5, 6].map(i => (
                             <div key={i} className="category-card-premium category-card-premium--skeleton">
@@ -83,7 +85,7 @@ const CategoryGrid = () => {
 
     if (categories.length === 0) return null;
 
-    const displayedCategories = categories.slice(0, visibleCount);
+    const displayedCategories = mode === 'catalogue' ? categories : categories.slice(0, visibleCount);
 
     const handleShowMore = () => {
         const step = getStepCount(window.innerWidth);
@@ -91,12 +93,15 @@ const CategoryGrid = () => {
     };
 
     return (
-        <section className="category-section">
-            <div className="container">
-                <div className="category-section__header">
-                    <h2 className="category-section__title">{t('home.categoriesTitle')}</h2>
-                    <Link to="/catalogue" className="category-section__view-all">{t('home.exploreCatalogue')}</Link>
-                </div>
+        <section className={mode === 'home' ? "category-section" : "category-section category-section--catalogue"}>
+            <div className={`container ${mode === 'catalogue' ? 'container--fluid' : ''}`}>
+                
+                {mode === 'home' && (
+                    <div className="category-section__header">
+                        <h2 className="category-section__title">{t('home.categoriesTitle')}</h2>
+                        <Link to="/catalogue" className="category-section__view-all">{t('home.exploreCatalogue')}</Link>
+                    </div>
+                )}
 
                 <div className="category-grid">
                     {displayedCategories.map((cat, index) => {
@@ -105,7 +110,7 @@ const CategoryGrid = () => {
                         
                         return (
                             <Link 
-                                to={`/catalogue?categorie=${cat.id}`} 
+                                to={`/catalogue?category=${cat.id}`} 
                                 key={cat.id} 
                                 className={`category-card-premium anim-slide-up anim-delay-${(index % 8) + 1}`}
                             >
@@ -131,7 +136,7 @@ const CategoryGrid = () => {
                     })}
                 </div>
 
-                {visibleCount < categories.length && (
+                {mode === 'home' && visibleCount < categories.length && (
                     <div className="category-section__show-more">
                         <button className="category-section__show-more-btn" onClick={handleShowMore}>
                             {t('home.showMore')} <ChevronDown size={18} />
