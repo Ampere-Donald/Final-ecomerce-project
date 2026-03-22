@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef, useMemo } from 'react';
-import { PlusCircle, Search, Edit2, Trash2, Tag, X, Upload, Image as ImageIcon, AlertTriangle, Zap, Star, FileSpreadsheet, CheckCircle2, XCircle, Loader2 } from 'lucide-react';
+import { PlusCircle, Search, Edit2, Trash2, Tag, X, Upload, Image as ImageIcon, AlertTriangle, Zap, Star, FileSpreadsheet, CheckCircle2, XCircle, Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { produitApi, categorieApi } from '../services/api';
 import Papa from 'papaparse';
@@ -58,6 +58,56 @@ export const Produits = () => {
   const [categories, setCategories] = useState<Categorie[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('');
+  const [sortOrder, setSortOrder] = useState('newest');
+
+  // ─── State Pagination & Global Import ─────────────────────────────────────
+  const [isGlobalImporting, setIsGlobalImporting] = useState(false);
+  const [globalImportProgress, setGlobalImportProgress] = useState(0);
+  const [globalImportMessage, setGlobalImportMessage] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 50;
+
+  useEffect(() => {
+    let timeoutId: NodeJS.Timeout | null = null;
+    let localImporting = false; // keeps track of previous true state
+
+    const checkStatus = async () => {
+      try {
+        const s = await produitApi.getImportStatus();
+        if (s?.isImporting) {
+          localImporting = true;
+          setIsGlobalImporting(true);
+          setGlobalImportProgress(s.progress || 0);
+          if (s.message) setGlobalImportMessage(s.message);
+        } else {
+          // Backend finished or isn't importing
+          if (localImporting) {
+            localImporting = false;
+            setGlobalImportProgress(100);
+            if (s?.message) setGlobalImportMessage(s.message);
+            
+            // Wait 10 seconds before hiding
+            if (timeoutId) clearTimeout(timeoutId);
+            timeoutId = setTimeout(() => {
+              setIsGlobalImporting(false);
+              timeoutId = null;
+            }, 10000);
+          } else {
+            // Already false, ensure it stays hidden if not counting down
+            if (!timeoutId) setIsGlobalImporting(false);
+          }
+        }
+      } catch {}
+    };
+    
+    checkStatus();
+    const iv = setInterval(checkStatus, 3000);
+    return () => {
+      clearInterval(iv);
+      if (timeoutId) clearTimeout(timeoutId);
+    };
+  }, []);
 
   // ─── State modale (état local isolé → pas de re-rendu du tableau) ─────────
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -92,6 +142,7 @@ export const Produits = () => {
   const [uploadProgress, setUploadProgress] = useState<number>(0);
   const [importIsZip, setImportIsZip] = useState(false);
   const [zipImageCount, setZipImageCount] = useState(0);
+  const [doublonsCart, setDoublonsCart] = useState<any[]>([]);
   const csvInputRef = useRef<HTMLInputElement>(null);
 
   // ─── Chargement initial unique ([] strict) ────────────────────────────────
@@ -116,14 +167,37 @@ export const Produits = () => {
 
   // ─── Liste filtrée mémoïsée (0 appel API, insensible à la casse) ─────────
   const filteredProduits = useMemo(() => {
-    if (!searchTerm.trim()) return produits;
-    const term = searchTerm.toLowerCase();
-    return produits.filter(
-      (p) =>
-        (p.nomProduit ?? '').toLowerCase().includes(term) ||
-        (p.marque ?? '').toLowerCase().includes(term)
-    );
-  }, [produits, searchTerm]);
+    let result = produits;
+
+    if (categoryFilter) {
+      result = result.filter(p => p.categorie?.id === categoryFilter);
+    }
+
+    if (searchTerm.trim()) {
+      const term = searchTerm.toLowerCase();
+      result = result.filter(
+        (p) =>
+          (p.nomProduit ?? '').toLowerCase().includes(term) ||
+          (p.marque ?? '').toLowerCase().includes(term)
+      );
+    }
+
+    if (sortOrder === 'az') {
+      result = [...result].sort((a, b) => (a.nomProduit || '').localeCompare(b.nomProduit || ''));
+    } else if (sortOrder === 'za') {
+      result = [...result].sort((a, b) => (b.nomProduit || '').localeCompare(a.nomProduit || ''));
+    }
+
+    return result;
+  }, [produits, searchTerm, categoryFilter, sortOrder]);
+
+  // ─── Pagination ──────────────────────────────────────────────────────────
+  useEffect(() => { setCurrentPage(1); }, [searchTerm, categoryFilter, sortOrder]);
+  const totalPages = Math.max(1, Math.ceil(filteredProduits.length / itemsPerPage));
+  const paginatedProduits = useMemo(() => {
+    const start = (currentPage - 1) * itemsPerPage;
+    return filteredProduits.slice(start, start + itemsPerPage);
+  }, [filteredProduits, currentPage]);
 
   // ─── Ouvrir modale Ajout ──────────────────────────────────────────────────
   const openAddModal = () => {
@@ -278,10 +352,11 @@ export const Produits = () => {
         <div className="flex items-center gap-3">
           <button
             onClick={() => csvInputRef.current?.click()}
-            className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-all font-semibold shadow-sm"
+            disabled={isGlobalImporting}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all font-semibold shadow-sm ${isGlobalImporting ? 'bg-slate-200 text-slate-400 cursor-not-allowed' : 'bg-emerald-600 text-white hover:bg-emerald-700'}`}
           >
             <FileSpreadsheet size={18} />
-            <span>Import CSV / ZIP</span>
+            <span>{isGlobalImporting ? 'Import en cours...' : 'Import CSV / ZIP'}</span>
           </button>
           <input
             ref={csvInputRef}
@@ -303,14 +378,14 @@ export const Produits = () => {
                 try {
                   const JSZip = (await import('jszip')).default;
                   const zip = await JSZip.loadAsync(file);
-                  let csvContent: string | null = null;
+                  const csvContents: string[] = [];
                   let imgCount = 0;
 
                   for (const [name, entry] of Object.entries(zip.files)) {
                     if (entry.dir || name.startsWith('__MACOSX')) continue;
                     const lower = name.toLowerCase();
                     if (lower.endsWith('.csv')) {
-                      csvContent = await entry.async('text');
+                      csvContents.push(await entry.async('text'));
                     } else if (/\.(jpg|jpeg|png|gif|webp|svg|bmp)$/.test(lower)) {
                       imgCount++;
                     }
@@ -318,24 +393,23 @@ export const Produits = () => {
 
                   setZipImageCount(imgCount);
 
-                  if (!csvContent) {
+                  if (csvContents.length === 0) {
                     alert('Aucun fichier CSV trouvé dans le ZIP.');
                     e.target.value = '';
                     return;
                   }
 
-                  Papa.parse(csvContent, {
-                    header: true,
-                    preview: 5,
-                    delimiter: ';',
-                    skipEmptyLines: true,
-                    complete: (results) => {
-                      setCsvColumns(results.meta.fields || []);
-                      setCsvPreview(results.data as Record<string, string>[]);
-                      setIsCsvModalOpen(true);
-                    },
-                    error: () => alert('Erreur de lecture du CSV dans le ZIP.'),
-                  });
+                  // Merge all CSVs: parse each, combine rows, union columns
+                  const allRows: Record<string, string>[] = [];
+                  const allCols = new Set<string>();
+                  for (const content of csvContents) {
+                    const parsed = Papa.parse(content, { header: true, skipEmptyLines: true });
+                    (parsed.meta.fields || []).forEach(f => allCols.add(f));
+                    allRows.push(...(parsed.data as Record<string, string>[]));
+                  }
+                  setCsvColumns(Array.from(allCols));
+                  setCsvPreview(allRows.slice(0, 5));
+                  setIsCsvModalOpen(true);
                 } catch {
                   alert('Impossible de lire le fichier ZIP.');
                 }
@@ -345,7 +419,6 @@ export const Produits = () => {
                 Papa.parse(file, {
                   header: true,
                   preview: 5,
-                  delimiter: ';',
                   skipEmptyLines: true,
                   complete: (results) => {
                     setCsvColumns(results.meta.fields || []);
@@ -360,13 +433,32 @@ export const Produits = () => {
           />
           <button
             onClick={openAddModal}
-            className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-opacity-90 transition-all font-semibold shadow-sm"
+            disabled={isGlobalImporting}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all font-semibold shadow-sm ${isGlobalImporting ? 'bg-slate-200 text-slate-400 cursor-not-allowed' : 'bg-primary text-white hover:bg-opacity-90'}`}
           >
             <PlusCircle size={18} />
             <span>Nouveau Produit</span>
           </button>
         </div>
       </div>
+
+      {isGlobalImporting && (
+        <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="bg-blue-50 border border-blue-200 rounded-xl p-4 shadow-sm">
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-sm font-bold text-blue-800 flex items-center gap-2">
+              <Loader2 size={16} className="animate-spin" />
+              Importation en arrière-plan en cours...
+            </span>
+            <span className="text-sm font-bold text-blue-700">{Math.round(globalImportProgress)}%</span>
+          </div>
+          <div className="w-full bg-blue-200/50 rounded-full h-3 overflow-hidden">
+            <div className="bg-blue-600 h-3 rounded-full transition-all duration-500 ease-out" style={{ width: `${globalImportProgress}%` }}></div>
+          </div>
+          {globalImportMessage && (
+            <p className="text-xs text-blue-600 mt-2 font-medium">{globalImportMessage}</p>
+          )}
+        </motion.div>
+      )}
 
       {/* Modale Import CSV ─────────────────────────────────────────────────── */}
       <AnimatePresence>
@@ -393,7 +485,7 @@ export const Produits = () => {
                   </p>
                 </div>
                 <button
-                  onClick={() => { setIsCsvModalOpen(false); setCsvResult(null); }}
+                  onClick={() => { setIsCsvModalOpen(false); setCsvResult(null); setDoublonsCart([]); }}
                   className="text-slate-400 hover:text-slate-600 transition-colors"
                 >
                   <X size={24} />
@@ -436,17 +528,63 @@ export const Produits = () => {
                 {csvResult && (
                   <div className={`mt-4 p-4 rounded-lg flex items-start gap-3 ${csvResult.startsWith('Erreur') ? 'bg-red-50 text-red-800' : csvResult.includes('Aucun nouveau') ? 'bg-amber-50 text-amber-800' : 'bg-emerald-50 text-emerald-800'}`}>
                     {csvResult.startsWith('Erreur') ? <XCircle size={20} className="flex-shrink-0 mt-0.5" /> : <CheckCircle2 size={20} className="flex-shrink-0 mt-0.5" />}
-                    <p className="text-sm font-medium">{csvResult}</p>
+                    <p className="text-sm font-medium whitespace-pre-line">{csvResult}</p>
+                  </div>
+                )}
+
+                {/* ─── PANIER DE DOUBLONS (CART) ─── */}
+                {doublonsCart.length > 0 && (
+                  <div className="mt-6 border border-amber-200 rounded-xl overflow-hidden">
+                    <div className="bg-amber-50 px-4 py-3 border-b border-amber-200 flex items-center justify-between">
+                      <h3 className="font-bold text-amber-800 flex items-center gap-2">
+                        <AlertTriangle size={18} />
+                        Panier de Doublons ({doublonsCart.length}) détectés lors de l'import
+                      </h3>
+                      <button onClick={() => setDoublonsCart([])} className="text-sm font-semibold text-amber-700 hover:text-amber-900 transition-colors">Vider le panier</button>
+                    </div>
+                    <div className="divide-y divide-amber-100 max-h-64 overflow-y-auto bg-white">
+                      {doublonsCart.map((d, i) => (
+                        <div key={i} className="p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                          <div>
+                            <p className="font-bold text-slate-800 text-sm">{d.existing.nomProduit}</p>
+                            <p className="text-xs text-slate-500">Marque: {d.existing.marque || 'N/A'} — Ce produit existe déjà dans le catalogue.</p>
+                          </div>
+                          <div className="flex gap-2">
+                            <button 
+                              onClick={() => {
+                                setIsCsvModalOpen(false);
+                                // Pré-remplir l'édition avec l'existant + fusionner les nouvelles valeurs pertinentes
+                                openEditModal({
+                                  ...d.existing,
+                                  prixDetail: d.newData.prixDetail || d.existing.prixDetail,
+                                  prixGros: d.newData.prixGros || d.existing.prixGros,
+                                  quantiteStock: (d.existing.quantiteStock || 0) + (d.newData.quantiteStock || 0),
+                                });
+                              }}
+                              className="px-3 py-1.5 bg-white border border-slate-200 shadow-sm rounded-lg text-xs font-semibold hover:bg-slate-50 text-slate-700 transition-colors"
+                            >
+                              Éditer / Fusionner
+                            </button>
+                            <button 
+                              onClick={() => setDoublonsCart(prev => prev.filter((_, idx) => idx !== i))}
+                              className="px-3 py-1.5 bg-red-50 text-red-600 rounded-lg text-xs font-semibold hover:bg-red-100 transition-colors"
+                            >
+                              Ignorer
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 )}
               </div>
 
               <div className="flex justify-end gap-3 p-6 border-t border-slate-100">
                 <button
-                  onClick={() => { setIsCsvModalOpen(false); setCsvResult(null); }}
+                  onClick={() => { setIsCsvModalOpen(false); setCsvResult(null); setDoublonsCart([]); }}
                   className="px-4 py-2 text-slate-600 bg-slate-100 rounded-lg hover:bg-slate-200 font-semibold transition-all"
                 >
-                  Annuler
+                  Fermer
                 </button>
                 <button
                   disabled={csvImporting || !csvFile || csvPreview.length === 0}
@@ -459,21 +597,18 @@ export const Produits = () => {
                       let result: any;
                       if (importIsZip) {
                         result = await produitApi.importZip(csvFile, (pct) => setUploadProgress(pct));
-                        const parts = [`Import ZIP terminé avec succès !`];
-                        if (result.produitsCreés) parts.push(`${result.produitsCreés} créé(s)`);
-                        if (result.produitsMisAJour) parts.push(`${result.produitsMisAJour} mis à jour`);
-                        if (result.produitsIgnorés) parts.push(`${result.produitsIgnorés} ignoré(s)`);
-                        if (result.imagesUploadées) parts.push(`${result.imagesUploadées} image(s) uploadée(s)`);
-                        if (result.nouvellesCategories?.length) parts.push(`Nouvelles catégories : ${result.nouvellesCategories.join(', ')}`);
-                        setCsvResult(parts.join(' — '));
                       } else {
                         result = await produitApi.importCsv(csvFile);
-                        const importes = result?.produitsImportes ?? 0;
-                        const ignores = result?.produitsIgnores ?? 0;
-                        const newCats = result?.nouvellesCategories ?? [];
-                        setCsvResult(importes > 0
-                          ? `Import terminé avec succès ! ${importes} produit(s) importé(s), ${ignores} ignoré(s).${newCats.length ? ' Nouvelles catégories : ' + newCats.join(', ') : ''}`
-                          : `Aucun nouveau produit importé — les ${ignores} produit(s) du fichier existent déjà en base.`);
+                      }
+                      setCsvResult(result?.message || "Importation lancée en arrière-plan.");
+                      if (result?.doublons && result.doublons.length > 0) {
+                        setDoublonsCart(result.doublons);
+                      } else {
+                        setDoublonsCart([]);
+                        setTimeout(() => {
+                           setIsCsvModalOpen(false);
+                           setCsvResult(null);
+                        }, 3000);
                       }
                       // Refresh products list
                       try {
@@ -711,7 +846,7 @@ export const Produits = () => {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-slate-700 mb-1">
-                      Stock
+                      Quantité
                     </label>
                     <input
                       type="number"
@@ -807,8 +942,8 @@ export const Produits = () => {
 
       {/* Tableau ──────────────────────────────────────────────────────────── */}
       <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
-        {/* Barre de recherche */}
-        <div className="p-4 border-b border-slate-100">
+        {/* Barre de recherche et Filtres */}
+        <div className="p-4 border-b border-slate-100 flex flex-col md:flex-row gap-3">
           <div className="relative w-full max-w-md">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
             <input
@@ -816,9 +951,26 @@ export const Produits = () => {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Rechercher par nom ou marque..."
-              className="w-full pl-10 pr-4 py-2 bg-slate-50 border-none rounded-lg text-sm focus:ring-2 focus:ring-primary/20 outline-none"
+              className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all"
             />
           </div>
+          <select 
+            value={categoryFilter} 
+            onChange={(e) => setCategoryFilter(e.target.value)}
+            className="px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-primary/20 text-slate-600 transition-all font-medium"
+          >
+            <option value="">Toutes les catégories</option>
+            {categories.map(c => <option key={c.id} value={c.id}>{c.nom}</option>)}
+          </select>
+          <select 
+            value={sortOrder} 
+            onChange={(e) => setSortOrder(e.target.value)}
+            className="px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-primary/20 text-slate-600 transition-all font-medium"
+          >
+            <option value="newest">Les plus récents</option>
+            <option value="az">Alphabétique (A-Z)</option>
+            <option value="za">Alphabétique (Z-A)</option>
+          </select>
         </div>
 
         {/* ── Table (desktop) ── */}
@@ -831,9 +983,9 @@ export const Produits = () => {
                 <th className="px-6 py-4">Marque</th>
                 <th className="px-6 py-4">Prix Détail</th>
                 <th className="px-6 py-4">Prix Gros</th>
-                <th className="px-6 py-4">Stock</th>
+                <th className="px-6 py-4">Quantité</th>
                 <th className="px-6 py-4">Statut</th>
-                <th className="px-6 py-4 text-right">Actions</th>
+                <th className="px-6 py-4 text-right">Actes</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -846,14 +998,14 @@ export const Produits = () => {
                     </div>
                   </td>
                 </tr>
-              ) : filteredProduits.length === 0 ? (
+              ) : paginatedProduits.length === 0 ? (
                 <tr>
                   <td colSpan={8} className="px-6 py-10 text-center text-slate-400">
                     Aucun produit trouvé.
                   </td>
                 </tr>
               ) : (
-                filteredProduits.map((prod) => {
+                paginatedProduits.map((prod) => {
                   const hasActivePromo = prod.prixPromo != null && prod.finPromo && new Date(prod.finPromo) > new Date();
                   return (
                     <tr key={prod.id} className="hover:bg-slate-50 transition-colors">
@@ -944,10 +1096,10 @@ export const Produits = () => {
               <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
               Chargement...
             </div>
-          ) : filteredProduits.length === 0 ? (
+          ) : paginatedProduits.length === 0 ? (
             <p className="py-10 text-center text-slate-400">Aucun produit trouvé.</p>
           ) : (
-            filteredProduits.map((prod) => {
+            paginatedProduits.map((prod) => {
               const hasActivePromo = prod.prixPromo != null && prod.finPromo && new Date(prod.finPromo) > new Date();
               return (
                 <div key={prod.id} className="p-4 flex items-start gap-3">
@@ -1022,9 +1174,47 @@ export const Produits = () => {
 
         {/* Footer compteur */}
         {!loading && (
-          <div className="px-4 md:px-6 py-3 border-t border-slate-100 text-xs text-slate-400">
-            {filteredProduits.length} produit{filteredProduits.length !== 1 ? 's' : ''} affiché{filteredProduits.length !== 1 ? 's' : ''}
-            {searchTerm && ` sur ${produits.length} au total`}
+          <div className="flex flex-col sm:flex-row items-center justify-between px-4 md:px-6 py-3 border-t border-slate-100 text-xs text-slate-500 bg-slate-50/50">
+            <div>
+              Affichage {filteredProduits.length === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1} à {Math.min(currentPage * itemsPerPage, filteredProduits.length)} sur {filteredProduits.length} produit(s)
+              {searchTerm && ` (filtrés sur ${produits.length} au total)`}
+            </div>
+            
+            {totalPages > 1 && (
+              <div className="flex items-center gap-1 mt-3 sm:mt-0">
+                <button 
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                  className="p-1 rounded-md hover:bg-slate-200 disabled:opacity-50 disabled:cursor-not-allowed text-slate-600"
+                >
+                  <ChevronLeft size={16} />
+                </button>
+                <div className="flex gap-1 mx-2">
+                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                     let pageNum = i + 1;
+                     if (totalPages > 5 && currentPage > 3) {
+                       pageNum = Math.min(totalPages - 4 + i, currentPage - 2 + i);
+                     }
+                     return (
+                       <button
+                         key={pageNum}
+                         onClick={() => setCurrentPage(pageNum)}
+                         className={`w-7 h-7 flex items-center justify-center rounded-lg text-xs font-bold transition-colors ${currentPage === pageNum ? 'bg-primary text-white shadow-sm' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+                       >
+                         {pageNum}
+                       </button>
+                     );
+                  })}
+                </div>
+                <button 
+                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages}
+                  className="p-1 rounded-md hover:bg-slate-200 disabled:opacity-50 disabled:cursor-not-allowed text-slate-600"
+                >
+                  <ChevronRight size={16} />
+                </button>
+              </div>
+            )}
           </div>
         )}
       </div>

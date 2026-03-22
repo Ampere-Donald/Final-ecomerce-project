@@ -125,6 +125,11 @@ export class ProduitController {
     return this.produitService.findPopulaires();
   }
 
+  @Get('import/status')
+  getImportStatus() {
+    return this.produitService.getImportStatus();
+  }
+
   // ── Import ZIP (CSV + images) or plain CSV en masse ─────────────────────
   // diskStorage : les fichiers sont écrits sur le disque. Le ZIP sera chargé
   // en mémoire pour extraction, et le CSV sera lu en flux.
@@ -160,21 +165,21 @@ export class ProduitController {
 
     if (isZip) {
       try {
-        // Read file into memory to pass buffer to AdmZip in the service
         const buffer = await fs.readFile(file.path);
-        const result = await this.produitService.importZip(buffer);
-        // Clean up the temp zip file from disk
-        await fs.unlink(file.path).catch(() => {});
-        return result;
+        // Start background job safely
+        this.produitService.importZip(buffer)
+          .catch((err) => console.error('[Import ZIP Error caught at controller]', err))
+          .finally(() => fs.unlink(file.path).catch(() => {}));
+        return { message: "L'importation ZIP est en cours d'exécution en arrière-plan. Vous recevrez une notification une fois terminée." };
       } catch (err) {
-        // Clean up even on failure
         await fs.unlink(file.path).catch(() => {});
         throw err;
       }
     }
 
-    // CSV direct (Streaming - passe le chemin du disque au service)
-    return this.produitService.importCsv(file.path);
+    // CSV direct (Streaming - la suppression est gérée dans le service)
+    this.produitService.importCsv(file.path).catch((e) => console.error(e));
+    return { message: "L'importation CSV est en cours d'exécution en arrière-plan. Vous recevrez une notification une fois terminée." };
   }
 
   // ── Cleanup invalid images ────────────────────────────────────────────────

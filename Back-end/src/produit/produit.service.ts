@@ -21,6 +21,17 @@ export class ProduitService {
     private readonly cloudinary: CloudinaryService,
   ) {}
 
+  private importStatus = {
+    isImporting: false,
+    progress: 0,
+    message: '',
+    error: null as string | null
+  };
+
+  getImportStatus() {
+    return this.importStatus;
+  }
+
   async create(createProduitDto: CreateProduitDto) {
     const { categorieId, ...rest } = createProduitDto;
 
@@ -231,9 +242,14 @@ export class ProduitService {
   private parseCsv(buffer: Buffer): Promise<Record<string, string>[]> {
     return new Promise((resolve, reject) => {
       const results: Record<string, string>[] = [];
+      const firstLine = buffer.toString('utf8', 0, Math.min(buffer.length, 1024)).split('\n')[0] || '';
+      const separator = firstLine.includes(';') ? ';' : ',';
       const stream = Readable.from(buffer);
       stream
-        .pipe(csvParser({ separator: ';' }))
+        .pipe(csvParser({
+          separator,
+          mapHeaders: ({ header }: { header: string }) => header.trim().replace(/^\uFEFF/g, '')
+        }))
         .on('data', (row: Record<string, string>) => results.push(row))
         .on('end', () => resolve(results))
         .on('error', (err: Error) => reject(err));
@@ -241,11 +257,31 @@ export class ProduitService {
   }
 
   // ── Flexible column getter ────────────────────────────────────────────────
+  // Handles PapaParse-renamed duplicate columns (e.g., PrixPromo_1, marque_2)
+  // and always returns '' instead of undefined to prevent Prisma crashes.
   private getCol(row: Record<string, string>, ...keys: string[]): string {
     for (const k of keys) {
+      // Exact match first
       if (row[k] !== undefined && row[k] !== '') return row[k];
     }
+    // Fallback: check for PapaParse-suffixed variants (_1, _2, ... _9)
+    const rowKeys = Object.keys(row);
+    for (const k of keys) {
+      const kLower = k.toLowerCase();
+      for (const rk of rowKeys) {
+        if (rk === k) continue; // already checked
+        // Match "key_1", "key_2", etc. (case-insensitive)
+        if (rk.toLowerCase().replace(/_\d+$/, '') === kLower) {
+          if (row[rk] !== undefined && row[rk] !== '') return row[rk];
+        }
+      }
+    }
     return '';
+  }
+
+  // ── Helper to normalize accents ───────────────────────────────────────────
+  private normalizeString(s: string): string {
+    return (s || '').normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
   }
 
   // ── Resolve or create category ────────────────────────────────────────────
@@ -254,17 +290,32 @@ export class ProduitService {
     categoryMap: Map<string, string>,
     newCategoriesCreated: string[],
   ): Promise<string> {
-    const catKey = name.toLowerCase().trim() || 'divers';
+    const catKey = this.normalizeString(name) || 'divers';
     let categorieId = categoryMap.get(catKey);
 
     if (!categorieId) {
-      const newCat = await this.db.categorie.create({ data: { nom: name || 'Divers' } });
-      categoryMap.set(catKey, newCat.id);
-      categorieId = newCat.id;
-      newCategoriesCreated.push(name);
+      try {
+        const newCat = await this.db.categorie.create({ data: { nom: name || 'Divers' } });
+        categoryMap.set(catKey, newCat.id);
+        categorieId = newCat.id;
+        newCategoriesCreated.push(name);
+      } catch (err: any) {
+        if (err.code === 'P2002') {
+          const allCats = await this.db.categorie.findMany();
+          const existingCat = allCats.find((c) => this.normalizeString(c.nom) === catKey);
+          if (existingCat) {
+            categoryMap.set(catKey, existingCat.id);
+            categorieId = existingCat.id;
+          } else {
+            throw err;
+          }
+        } else {
+          throw err;
+        }
+      }
     }
 
-    return categorieId;
+    return categorieId!;
   }
 
   // ── Build category map ────────────────────────────────────────────────────
@@ -272,7 +323,7 @@ export class ProduitService {
     const existingCategories = await this.db.categorie.findMany();
     const categoryMap = new Map<string, string>();
     for (const cat of existingCategories) {
-      categoryMap.set(cat.nom.toLowerCase().trim(), cat.id);
+      categoryMap.set(this.normalizeString(cat.nom), cat.id);
     }
 
     // Ensure fallback "Divers" category
@@ -287,8 +338,8 @@ export class ProduitService {
   // ── Import CSV en masse (streaming + batching) ────────────────────────
   async importCsv(filePath: string) {
     // Taille de chaque lot d'insertion Prisma.
-    // 200 lignes × ~10 champs = ~2 000 params → bien en dessous du plafond Postgres (65 535).
     const BATCH_SIZE = 200;
+    this.importStatus = { isImporting: true, progress: 0, message: 'Initialisation import CSV...', error: null };
 
     try {
       // ── 1. Charger la map des catégories existantes en une seule requête ──
@@ -307,16 +358,26 @@ export class ProduitService {
       }
 
       // ── 2. Lire le CSV depuis le disque (stream → jamais le fichier brut en RAM) ──
-      // Les lignes parsées (objets JS légers) sont collectées puis traitées par lots.
+      const fd = await fsPromises.open(filePath, 'r');
+      const buff = Buffer.alloc(1024);
+      await fd.read(buff, 0, 1024, 0);
+      await fd.close();
+      const firstLine = buff.toString('utf8').split('\n')[0] || '';
+      const separator = firstLine.includes(';') ? ';' : ',';
+
       const allRows: Record<string, string>[] = await new Promise((resolve, reject) => {
         const rows: Record<string, string>[] = [];
         createReadStream(filePath)
-          .pipe(csvParser({ separator: ';' }))
+          .pipe(csvParser({
+            separator,
+            mapHeaders: ({ header }: { header: string }) => header.trim().replace(/^\uFEFF/g, '')
+          }))
           .on('data', (row) => rows.push(row))
           .on('end', () => resolve(rows))
           .on('error', reject);
       });
 
+      this.importStatus = { isImporting: true, progress: 10, message: 'Lecture des lignes CSV...', error: null };
       if (allRows.length === 0) {
         throw new BadRequestException('Le fichier CSV est vide ou illisible.');
       }
@@ -329,6 +390,8 @@ export class ProduitService {
 
       for (let i = 0; i < allRows.length; i += BATCH_SIZE) {
         const batch = allRows.slice(i, i + BATCH_SIZE);
+        this.importStatus.progress = 10 + Math.round((i / allRows.length) * 80);
+        this.importStatus.message = `Traitement du lot ${Math.ceil(i/BATCH_SIZE) + 1} / ${Math.ceil(allRows.length/BATCH_SIZE)}...`;
 
         // ── 3a. Résolution des catégories inconnues du lot en UNE requête ──
         // On collecte toutes les catégories inconnues du lot, on les crée
@@ -452,10 +515,15 @@ export class ProduitService {
         }
       }
 
+      const finalMessage = totalImportes > 0
+        ? `Import CSV terminé : ${totalImportes} produit(s) importé(s), ${totalIgnores} ignoré(s).`
+        : 'Aucun nouveau produit importé (tous existent déjà).';
+      
+      this.notifications.create('PRODUIT_MAJ', finalMessage).catch(() => {});
+      this.importStatus = { isImporting: false, progress: 100, message: finalMessage, error: null };
+
       return {
-        message: totalImportes > 0
-          ? 'Import terminé avec succès'
-          : 'Aucun nouveau produit importé (tous existent déjà ou ont été ignorés)',
+        message: finalMessage,
         totalLignesCsv:    allRows.length,
         produitsImportes:  totalImportes,
         produitsIgnores:   totalIgnores,
@@ -466,8 +534,12 @@ export class ProduitService {
       // Toute exception (Prisma, parsing…) est re-lancée comme exception NestJS.
       // Ceci garantit que NestJS contrôle la réponse HTTP avec les bons en-têtes
       // CORS → le frontend ne voit plus de "Network Error" générique.
-      if (err instanceof BadRequestException) throw err;
+      if (err instanceof BadRequestException) {
+        this.importStatus = { isImporting: false, progress: 0, message: 'Erreur de requête', error: err.message };
+        throw err;
+      }
       console.error('[CSV Import] Erreur critique:', err);
+      this.importStatus = { isImporting: false, progress: 0, message: 'Erreur fatale serveur', error: err.message };
       throw new InternalServerErrorException(
         `Erreur lors de l'import CSV : ${err?.message ?? 'Erreur inconnue'}`,
       );
@@ -505,14 +577,16 @@ export class ProduitService {
   }
 
   async importZip(buffer: Buffer) {
-    const zip = new AdmZip(buffer);
-    const entries = zip.getEntries();
+    this.importStatus = { isImporting: true, progress: 0, message: 'Extraction du ZIP...', error: null };
+    try {
+      const zip = new AdmZip(buffer);
+      const entries = zip.getEntries();
 
-    // 1. Find the CSV file inside the ZIP
-    const csvEntry = entries.find(
+    // 1. Find ALL CSV files inside the ZIP
+    const csvEntries = entries.filter(
       (e) => !e.isDirectory && e.entryName.toLowerCase().endsWith('.csv') && !e.entryName.startsWith('__MACOSX'),
     );
-    if (!csvEntry) {
+    if (csvEntries.length === 0) {
       throw new BadRequestException('Aucun fichier CSV trouvé dans le ZIP.');
     }
 
@@ -521,22 +595,34 @@ export class ProduitService {
     const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg', '.bmp'];
     for (const entry of entries) {
       if (entry.isDirectory || entry.entryName.startsWith('__MACOSX')) continue;
-      const name = entry.entryName.split('/').pop()!.toLowerCase();
+      const name = entry.entryName.split(/[/\\]/).pop()!.toLowerCase();
       if (imageExtensions.some((ext) => name.endsWith(ext))) {
         imageMap.set(name, entry.getData());
       }
     }
 
-    // 3. Parse the CSV
-    const csvBuffer = csvEntry.getData();
-    const rows = await this.parseCsv(csvBuffer);
+    // 3. Parse ALL CSVs and inject filename as category
+    const rows: Record<string, string>[] = [];
+    for (const csvEntry of csvEntries) {
+      const csvBuffer = csvEntry.getData();
+      const filename = csvEntry.entryName.split('/').pop() || '';
+      const catFromName = filename.replace(/\.csv$/i, '');
+      const parsed = await this.parseCsv(csvBuffer);
+      
+      for (const row of parsed) {
+        row['_filenameCategory'] = catFromName; // Provide fallback category
+        rows.push(row);
+      }
+    }
 
     if (rows.length === 0) {
-      throw new BadRequestException('Le fichier CSV dans le ZIP est vide ou illisible.');
+      throw new BadRequestException('Les fichiers CSV dans le ZIP sont vides ou illisibles.');
     }
 
     const categoryMap = await this.buildCategoryMap();
     const newCategoriesCreated: string[] = [];
+
+    this.importStatus = { isImporting: true, progress: 10, message: 'Analyse des images et produits...', error: null };
 
     // ── OPTIMIZATION 1: Deduplicate images & upload all in parallel ──
     // Collect all unique image filenames that need uploading
@@ -561,10 +647,15 @@ export class ProduitService {
 
     // Upload all unique images in parallel (10 concurrent uploads)
     this.logger.log(`Uploading ${imagesToUpload.length} unique images with concurrency=10...`);
+    this.importStatus = { isImporting: true, progress: 20, message: `Upload de ${imagesToUpload.length} images...`, error: null };
+    let cFinished = 0;
+
     const uploadTasks = imagesToUpload.map((key) => async () => {
       const imageBuffer = imageMap.get(key)!;
       try {
         const url = await this.cloudinary.uploadBuffer(imageBuffer, { folder: 'produits' });
+        cFinished++;
+        this.importStatus.progress = 20 + Math.round((cFinished / imagesToUpload.length) * 30);
         return { key, url };
       } catch (err) {
         this.logger.warn(`Failed to upload image "${key}": ${err}`);
@@ -580,10 +671,7 @@ export class ProduitService {
 
     // ── OPTIMIZATION 2: Bulk-fetch existing products in one query ──
     const existingProducts = await this.db.produit.findMany({
-      select: {
-        id: true, nomProduit: true, marque: true,
-        imageUrl: true, imageUrl2: true, imageUrl3: true,
-      },
+      include: { categorie: true }
     });
     const existingMap = new Map<string, typeof existingProducts[0]>();
     for (const p of existingProducts) {
@@ -593,11 +681,18 @@ export class ProduitService {
 
     // ── OPTIMIZATION 3: Build all product data, then batch DB writes ──
     const toCreate: any[] = [];
-    const toUpdate: { id: string; data: any }[] = [];
+    const toUpdate: any[] = [];
+    const pendingDuplicates: any[] = []; // Stockage temporaire pour historique UI
     let skipped = 0;
     let imagesUploaded = 0;
 
-    for (const row of rows) {
+    for (let i = 0; i < rows.length; i++) {
+      const row = rows[i];
+      if (i % 100 === 0) {
+        this.importStatus.progress = 50 + Math.round((i / rows.length) * 30);
+        this.importStatus.message = `Préparation du produit ${i}/${rows.length}...`;
+      }
+      
       const nomProduit = this.getCol(row, 'nomProduit', 'nom_produit', 'NomProduit', 'Nom', 'nom').trim();
       const marque = this.getCol(row, 'marque', 'Marque').trim();
 
@@ -615,7 +710,8 @@ export class ProduitService {
       const prixPromoStr = this.getCol(row, 'prixPromotionnel', 'prixPromo', 'prix_promo', 'PrixPromo');
       const dateFinPromoStr = this.getCol(row, 'dateFinPromo', 'finPromo', 'fin_promo', 'FinPromo');
       const mettreEnAvantStr = this.getCol(row, 'mettreEnAvant', 'isPopulaire', 'is_populaire', 'IsPopulaire', 'populaire');
-      const categorieNom = this.getCol(row, 'categorieNom', 'categorie_nom', 'CategorieNom', 'Categorie', 'categorie', 'Catégorie', 'catégorie');
+      // If the defined columns are empty, fallback to the ZIP CSV filename mapped category
+      const categorieNom = this.getCol(row, 'categorieNom', 'categorie_nom', 'CategorieNom', 'Categorie', 'categorie', 'Catégorie', 'catégorie') || row['_filenameCategory'] || '';
 
       const image1 = this.getCol(row, 'image1', 'Image1', 'nomImage', 'nom_image', 'NomImage', 'Image', 'image').trim();
       const image2 = this.getCol(row, 'image2', 'Image2').trim();
@@ -673,7 +769,8 @@ export class ProduitService {
       }
 
       if (existing) {
-        toUpdate.push({ id: existing.id, data: { ...productData, version: { increment: 1 } } });
+        toUpdate.push({ id: existing.id, data: productData });
+        pendingDuplicates.push({ existing, newData: productData });
       } else {
         toCreate.push({
           ...productData,
@@ -685,6 +782,9 @@ export class ProduitService {
     }
 
     // ── Batch DB writes in a transaction (chunks of 200) ──
+    this.importStatus.message = 'Écriture en base de données (créations)...';
+    this.importStatus.progress = 80;
+
     const BATCH_SIZE = 200;
     let created = 0;
     let updated = 0;
@@ -695,25 +795,61 @@ export class ProduitService {
       created += result.count;
     }
 
-    for (let i = 0; i < toUpdate.length; i += BATCH_SIZE) {
-      const batch = toUpdate.slice(i, i + BATCH_SIZE);
-      await this.db.$transaction(
-        batch.map((item) =>
-          this.db.produit.update({ where: { id: item.id }, data: item.data }),
-        ),
-      );
+    this.importStatus.message = `Mise à jour de ${toUpdate.length} produits existants...`;
+    for (let i = 0; i < toUpdate.length; i += 50) {
+      const batch = toUpdate.slice(i, i + 50);
+      await Promise.all(batch.map((u) => this.db.produit.update({ where: { id: u.id }, data: u.data })));
       updated += batch.length;
+      this.importStatus.progress = 80 + Math.round((updated / toUpdate.length) * 10);
     }
 
+    this.importStatus.message = `Enregistrement des doublons...`;
+    this.importStatus.progress = 90;
+
+    const MAX_DUPLICATES_SAVED = 1000;
+    const MAX_DUPLICATES_UI = 100;
+
+    let pendingId: string | null = null;
+    const totalDuplicates = pendingDuplicates.length;
+    const duplicatesToSave = pendingDuplicates.slice(0, MAX_DUPLICATES_SAVED);
+    const extraIgnored = totalDuplicates > MAX_DUPLICATES_SAVED ? totalDuplicates - MAX_DUPLICATES_SAVED : 0;
+    
+    skipped += extraIgnored; // We definitively skip the ones we don't save
+
+    if (duplicatesToSave.length > 0) {
+      // Chunk JSON payloads into groups of 300 to avoid DB connection drop via WebSocket payload limits
+      for (let i = 0; i < duplicatesToSave.length; i += 300) {
+        const batch = duplicatesToSave.slice(i, i + 300);
+        const pendingRecord = await this.db.pendingImport.create({
+          data: {
+            data: batch
+          }
+        });
+        if (!pendingId) pendingId = pendingRecord.id; // We return at least the first reference
+      }
+    }
+
+    const finalMessage = `Import ZIP terminé : ${created} créés, ${updated} mis à jour, ${duplicatesToSave.length} ajoutés au panier des doublons${extraIgnored > 0 ? ` (+ ${extraIgnored} ignorés silencieusement)` : ''}, ${imagesUploaded} images uploadées.`;
+    this.notifications.create('PRODUIT_MAJ', finalMessage).catch(() => {});
+    this.importStatus = { isImporting: false, progress: 100, message: finalMessage, error: null };
+
     return {
-      message: 'Import ZIP terminé avec succès',
+      message: finalMessage,
       totalLignesCsv: rows.length,
       produitsCreés: created,
       produitsMisAJour: updated,
+      produitsEnConflit: duplicatesToSave.length,
+      pendingImportId: pendingId, // Allows admin to fetch cart (first batch)
+      doublons: pendingDuplicates.slice(0, MAX_DUPLICATES_UI), // Prevent React UI freezes by hard-limiting to 100 items
       produitsIgnorés: skipped,
       imagesUploadées: imagesUploaded,
       nouvellesCategories: newCategoriesCreated,
     };
+    } catch (err: any) {
+      console.error('[ZIP Import] Erreur critique:', err);
+      this.importStatus = { isImporting: false, progress: 0, message: 'Erreur fatale', error: err.message };
+      throw err;
+    }
   }
 
   /**

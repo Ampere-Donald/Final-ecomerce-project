@@ -23,7 +23,7 @@ const toArray = (res: any): any[] => {
 
 // Produits
 export const produitApi = {
-  getAll: () => api.get('/produits?limit=1000').then(toArray),
+  getAll: () => api.get('/produits?limit=20000').then(toArray),
   getOne: (id: string) => api.get(`/produits/${id}`).then(res => res.data),
   create: (data: any) => {
     if (data instanceof FormData) {
@@ -67,6 +67,7 @@ export const produitApi = {
       headers: { 'Content-Type': 'multipart/form-data' },
     }).then(res => res.data);
   },
+  getImportStatus: () => api.get('/produits/import/status').then(res => res.data),
 };
 
 // Catégories

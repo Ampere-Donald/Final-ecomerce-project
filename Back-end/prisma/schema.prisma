@@ -20,7 +20,7 @@ model Produit {
   id              String           @id @default(uuid())
   categorieId     String           @map("id_categorie")
   nomProduit      String           @map("nom_produit") @db.VarChar(150)
-  marque          String           @db.VarChar(100)
+  marque          String?          @db.VarChar(100)
   description     String?
   dateAjout       DateTime         @default(now()) @map("date_ajout")
   version         Int              @default(1)
@@ -322,4 +322,12 @@ enum TypeNotification {
   CATEGORIE_MAJ
   VENTE_CREEE
   ACHAT_CREE
+}
+
+model PendingImport {
+  id        String   @id @default(uuid())
+  data      Json
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("pending_import")
 }

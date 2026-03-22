@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Bell, X, Check, CheckCheck, ShoppingCart, Package, Tags, TrendingUp, TrendingDown, AlertCircle, Menu } from 'lucide-react';
-import { notificationApi, searchApi } from '../services/api';
+import { Search, Bell, X, Check, CheckCheck, ShoppingCart, Package, Tags, TrendingUp, TrendingDown, AlertCircle, Menu, Loader2 } from 'lucide-react';
+import { notificationApi, searchApi, produitApi } from '../services/api';
 
 interface HeaderProps {
   onMenuClick: () => void;
@@ -42,6 +42,9 @@ function relativeTime(dateStr: string) {
 export const Header = ({ onMenuClick }: HeaderProps) => {
   const navigate = useNavigate();
 
+  /* ── Import Status ────────────────────────────────────────────── */
+  const [importStatus, setImportStatus] = useState<{ isImporting: boolean; progress: number; message: string; error: string | null } | null>(null);
+
   /* ── Notifications state ──────────────────────────────────────── */
   const [unread, setUnread] = useState(0);
   const [notifs, setNotifs] = useState<any[]>([]);
@@ -59,8 +62,26 @@ export const Header = ({ onMenuClick }: HeaderProps) => {
   useEffect(() => {
     fetchUnread();
     const iv = setInterval(fetchUnread, 30000);
-    return () => clearInterval(iv);
-  }, [fetchUnread]);
+
+    // Fetch import status more aggressively if needed
+    const fetchImportStatus = async () => {
+      try {
+        const s = await produitApi.getImportStatus();
+        setImportStatus(s);
+        // Si l'import vient de se terminer (passage à 100%), on relance les notifs pour chopper l'alerte !
+        if (s && !s.isImporting && s.progress === 100 && (importStatus?.isImporting)) {
+          fetchUnread();
+        }
+      } catch {}
+    };
+    fetchImportStatus();
+    const ivImport = setInterval(fetchImportStatus, 2500);
+
+    return () => {
+      clearInterval(iv);
+      clearInterval(ivImport);
+    };
+  }, [fetchUnread, importStatus?.isImporting]);
 
   const openBell = async () => {
     setBellOpen(prev => !prev);
@@ -121,7 +142,24 @@ export const Header = ({ onMenuClick }: HeaderProps) => {
   };
 
   return (
-    <header className="h-16 border-b border-slate-200 bg-white flex items-center justify-between px-4 md:px-8 sticky top-0 z-10 gap-2">
+    <div className="flex flex-col sticky top-0 z-50 w-full shrink-0">
+      {importStatus?.isImporting && (
+        <div className="bg-blue-50 border-b border-blue-100 flex flex-col justify-center px-4 py-1.5 shrink-0 z-20">
+           <div className="flex items-center justify-between text-xs text-blue-800 font-bold mb-1 w-full">
+             <span className="flex items-center gap-2">
+               <Loader2 size={12} className="animate-spin shrink-0" />
+               <span className="truncate">{importStatus.message || 'Importation en cours...'}</span>
+             </span>
+             <span className="shrink-0">{importStatus.progress}%</span>
+           </div>
+           <div className="w-full h-1.5 bg-blue-200/50 rounded-full overflow-hidden">
+             <div className="h-full bg-blue-500 transition-all duration-500 ease-out relative overflow-hidden" style={{ width: `${importStatus.progress}%` }}>
+                <div className="absolute inset-0 bg-white/20 animate-[pulse_1s_ease-in-out_infinite]"></div>
+             </div>
+           </div>
+        </div>
+      )}
+      <header className="h-16 border-b border-slate-200 bg-white flex items-center justify-between px-4 md:px-8 gap-2 shrink-0">
       {/* ── Hamburger (mobile only) ───────────────────────────────── */}
       <button
         onClick={onMenuClick}
@@ -233,5 +271,6 @@ export const Header = ({ onMenuClick }: HeaderProps) => {
         )}
       </div>
     </header>
+    </div>
   );
 };
