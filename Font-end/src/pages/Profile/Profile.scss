@@ -5,9 +5,10 @@
   padding-top: calc(80px + #{$spacing-2xl}); // offset for fixed navbar (desktop)
   min-height: 70vh;
 
-  @media (max-width: 768px) {
-    padding-top: calc(102px + #{$spacing-xl}); // taller navbar on mobile
-  }
+    @media (max-width: 768px) {
+        padding-top: calc(102px + #{$spacing-xl}); // taller navbar on mobile
+        padding-bottom: 100px;
+    }
 
   &__header {
     display: flex;
@@ -16,6 +17,11 @@
     margin-bottom: $spacing-2xl;
     padding-bottom: $spacing-lg;
     border-bottom: 1px solid $color-border;
+    flex-wrap: wrap;
+
+    @media (max-width: 768px) {
+      gap: $spacing-md;
+    }
   }
 
   &__avatar {
@@ -62,6 +68,13 @@
     &:hover {
       background: rgba($color-danger, 0.06);
     }
+    
+    @media (max-width: 768px) {
+      margin-left: 0;
+      width: 100%;
+      justify-content: center;
+      margin-top: $spacing-sm;
+    }
   }
 
   &__cards {
@@ -69,6 +82,10 @@
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: $spacing-md;
     margin-bottom: $spacing-2xl;
+
+    @media (max-width: 768px) {
+      grid-template-columns: 1fr 1fr;
+    }
   }
 
   &__card {
