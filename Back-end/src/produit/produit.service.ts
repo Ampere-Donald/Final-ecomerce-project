@@ -621,8 +621,41 @@ export class ProduitService {
 
     const categoryMap = await this.buildCategoryMap();
     const newCategoriesCreated: string[] = [];
+    const missingImages = new Set<string>(); // For summary logging later
 
-    this.importStatus = { isImporting: true, progress: 10, message: 'Analyse des images et produits...', error: null };
+    this.importStatus = { isImporting: true, progress: 10, message: 'Analyse des catégories...', error: null };
+
+    // ── OPTIMIZATION 0: Batch Category Resolution (Identical to importCsv) ──
+    const BATCH_SIZE = 200;
+    for (let i = 0; i < rows.length; i += BATCH_SIZE) {
+      const batch = rows.slice(i, i + BATCH_SIZE);
+      const unknownCatNames = [
+        ...new Set(
+          batch
+            .map((row) => {
+               const name = (this.getCol(row, 'categorieNom', 'categorie_nom', 'CategorieNom', 'Categorie', 'categorie', 'Catégorie', 'catégorie') || row['_filenameCategory'] || '').trim();
+               return name;
+            })
+            .filter((nom) => nom && !categoryMap.has(this.normalizeString(nom))),
+        ),
+      ];
+
+      if (unknownCatNames.length > 0) {
+        await this.db.categorie.createMany({
+          data: unknownCatNames.map((nom) => ({ nom })),
+          skipDuplicates: true,
+        });
+        const created = await this.db.categorie.findMany({
+          where: { nom: { in: unknownCatNames } },
+          select: { id: true, nom: true },
+        });
+        for (const cat of created) {
+          const key = this.normalizeString(cat.nom);
+          if (!categoryMap.has(key)) newCategoriesCreated.push(cat.nom);
+          categoryMap.set(key, cat.id);
+        }
+      }
+    }
 
     // ── OPTIMIZATION 1: Deduplicate images & upload all in parallel ──
     // Collect all unique image filenames that need uploading
@@ -710,14 +743,9 @@ export class ProduitService {
       const prixPromoStr = this.getCol(row, 'prixPromotionnel', 'prixPromo', 'prix_promo', 'PrixPromo');
       const dateFinPromoStr = this.getCol(row, 'dateFinPromo', 'finPromo', 'fin_promo', 'FinPromo');
       const mettreEnAvantStr = this.getCol(row, 'mettreEnAvant', 'isPopulaire', 'is_populaire', 'IsPopulaire', 'populaire');
-      // If the defined columns are empty, fallback to the ZIP CSV filename mapped category
       const categorieNom = this.getCol(row, 'categorieNom', 'categorie_nom', 'CategorieNom', 'Categorie', 'categorie', 'Catégorie', 'catégorie') || row['_filenameCategory'] || '';
-
-      const image1 = this.getCol(row, 'image1', 'Image1', 'nomImage', 'nom_image', 'NomImage', 'Image', 'image').trim();
-      const image2 = this.getCol(row, 'image2', 'Image2').trim();
-      const image3 = this.getCol(row, 'image3', 'Image3').trim();
-
-      const categorieId = await this.resolveCategory(categorieNom, categoryMap, newCategoriesCreated);
+      const catKey = this.normalizeString(categorieNom);
+      const categorieId = categoryMap.get(catKey) ?? categoryMap.get('divers')!;
 
       // Look up existing product from pre-fetched map
       const lookupKey = `${(marque || '').toLowerCase()}::${nomProduit.toLowerCase()}`;
@@ -729,6 +757,7 @@ export class ProduitService {
         imageUploadCache,
         imageMap,
         existing ? [existing.imageUrl, existing.imageUrl2, existing.imageUrl3] : [null, null, null],
+        missingImages // Pass the set to collect missing instead of logging
       );
       imagesUploaded += imageUrls.filter((u) => u !== null && u !== undefined).length;
 
@@ -829,6 +858,10 @@ export class ProduitService {
       }
     }
 
+    if (missingImages.size > 0) {
+      this.logger.warn(`${missingImages.size} unique images were missing from the ZIP archive.`);
+    }
+
     const finalMessage = `Import ZIP terminé : ${created} créés, ${updated} mis à jour, ${duplicatesToSave.length} ajoutés au panier des doublons${extraIgnored > 0 ? ` (+ ${extraIgnored} ignorés silencieusement)` : ''}, ${imagesUploaded} images uploadées.`;
     this.notifications.create('PRODUIT_MAJ', finalMessage).catch(() => {});
     this.importStatus = { isImporting: false, progress: 100, message: finalMessage, error: null };
@@ -860,6 +893,7 @@ export class ProduitService {
     uploadCache: Map<string, string>,
     imageMap: Map<string, Buffer>,
     existingUrls: (string | null | undefined)[],
+    missingImages?: Set<string>,
   ): (string | null)[] {
     const result: (string | null)[] = [];
 
@@ -882,10 +916,10 @@ export class ProduitService {
           if (existing) this.cloudinary.deleteByUrl(existing).catch(() => {});
           result.push(cachedUrl);
         } else if (imageMap.has(val.toLowerCase())) {
-          this.logger.warn(`Image "${val}" upload failed earlier, keeping existing`);
+          // No log here to avoid flood
           result.push(existing);
         } else {
-          this.logger.warn(`Image "${val}" not found in ZIP archive`);
+          if (missingImages) missingImages.add(val);
           result.push(existing);
         }
       }
