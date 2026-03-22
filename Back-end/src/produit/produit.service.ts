@@ -803,15 +803,23 @@ export class ProduitService {
         pendingDuplicates.push({ existing, newData: productData });
       } else {
         toCreate.push({
-          ...productData,
+          id: require('crypto').randomUUID(),
+          categorieId,
+          nomProduit,
+          marque: marque || null,
           description: productData.description ?? null,
-          urlDatasheet: productData.urlDatasheet ?? null,
-          prixPromo: productData.prixPromo ?? null,
-          finPromo: productData.finPromo ?? null,
+          dateAjout: new Date(),
+          version: 1,
+          imageUrl: imageUrls[0] ?? null,
           prixDetail: productData.prixDetail ?? 0,
           prixGros: productData.prixGros ?? 0,
           quantiteStock: productData.quantiteStock ?? 0,
+          urlDatasheet: productData.urlDatasheet ?? null,
+          finPromo: productData.finPromo ?? null,
           isPopulaire: productData.isPopulaire ?? false,
+          prixPromo: productData.prixPromo ?? null,
+          imageUrl2: imageUrls[1] ?? null,
+          imageUrl3: imageUrls[2] ?? null,
         });
       }
     }
