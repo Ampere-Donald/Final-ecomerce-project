@@ -70,17 +70,19 @@
     transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1);
     position: relative;
 
-    &:hover {
-        transform: translateY(-6px);
-        box-shadow: 0 16px 40px rgba(0, 0, 0, 0.08), 0 4px 12px rgba(0, 0, 0, 0.04);
-        border-color: rgba($color-primary, 0.2);
+    @media (hover: hover) {
+        &:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 16px 40px rgba(0, 0, 0, 0.08), 0 4px 12px rgba(0, 0, 0, 0.04);
+            border-color: rgba($color-primary, 0.2);
 
-        .category-card-premium__image {
-            transform: scale(1.08);
-        }
+            .category-card-premium__image {
+                transform: scale(1.08);
+            }
 
-        .category-card-premium__title {
-            color: $color-primary;
+            .category-card-premium__title {
+                color: $color-primary;
+            }
         }
     }
 

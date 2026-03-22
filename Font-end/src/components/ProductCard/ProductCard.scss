@@ -69,7 +69,7 @@
         padding: 4px 8px;
         border-radius: $border-radius-full;
         text-transform: uppercase;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
         display: flex;
         align-items: center;
         gap: 4px;
@@ -106,7 +106,7 @@
         height: 36px;
         border-radius: $border-radius-circle;
         background-color: rgba($color-surface, 0.9);
-        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
         color: $color-text-muted;
         border: none;
         display: flex;
@@ -252,6 +252,7 @@
 
         &--preorder {
             color: $color-warning;
+
             &:hover {
                 background: $color-warning;
                 box-shadow: 0 4px 12px rgba($color-warning, 0.3);
@@ -284,4 +285,261 @@
         }
     }
 
+    // ── Quick View Button (appears on hover) ──────────────
+    &__quick-view {
+        @media (max-width: $breakpoint-md) {
+            display: none !important;
+        }
+        position: absolute;
+        bottom: 12px;
+        left: 50%;
+        transform: translateX(-50%) translateY(8px);
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        padding: 6px 14px;
+        background: rgba($color-primary, 0.95);
+        color: $color-surface;
+        border: none;
+        border-radius: $border-radius-full;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.03em;
+        cursor: pointer;
+        opacity: 0;
+        transition: all 0.25s ease;
+        z-index: 5;
+        white-space: nowrap;
+        backdrop-filter: blur(4px);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+
+        &:hover {
+            background: $color-primary-dark;
+            transform: translateX(-50%) translateY(6px);
+        }
+    }
+
+    &:hover .product-card__quick-view {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
+}
+
+// ── Quick View Modal ───────────────────────────────────────
+.quick-view-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: fadeIn 0.2s ease;
+    padding: $spacing-lg;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+.quick-view-modal {
+    background: $color-surface;
+    border-radius: $border-radius-xl;
+    max-width: 700px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+    position: relative;
+    animation: slideUp 0.3s ease;
+
+    @keyframes slideUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    &__close {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        width: 36px;
+        height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: $border-radius-circle;
+        background: $color-background;
+        border: 1px solid $color-border;
+        color: $color-text;
+        cursor: pointer;
+        z-index: 2;
+        transition: all 0.2s;
+
+        &:hover {
+            background: $color-danger;
+            color: $color-surface;
+            border-color: $color-danger;
+        }
+    }
+
+    &__layout {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0;
+
+        @media (max-width: 600px) {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    &__image {
+        background: $color-background;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: $spacing-xl;
+        border-radius: $border-radius-xl 0 0 $border-radius-xl;
+
+        @media (max-width: 600px) {
+            border-radius: $border-radius-xl $border-radius-xl 0 0;
+            padding: $spacing-lg;
+        }
+
+        img {
+            max-width: 100%;
+            max-height: 280px;
+            object-fit: contain;
+        }
+    }
+
+    &__info {
+        padding: $spacing-xl;
+        display: flex;
+        flex-direction: column;
+        gap: $spacing-sm;
+    }
+
+    &__category {
+        font-size: 10px;
+        font-weight: 700;
+        color: $color-secondary;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        margin: 0;
+    }
+
+    &__name {
+        font-size: 18px;
+        font-weight: $font-weight-extrabold;
+        color: $color-text;
+        line-height: 1.2;
+        margin: 0;
+    }
+
+    &__brand {
+        font-size: 12px;
+        color: $color-secondary-light;
+        margin: 0;
+    }
+
+    &__prices {
+        display: flex;
+        flex-direction: column;
+        gap: $spacing-xs;
+        padding: $spacing-sm 0;
+        border-top: 1px dashed $color-border;
+        border-bottom: 1px dashed $color-border;
+    }
+
+    &__price-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 13px;
+
+        span {
+            color: $color-secondary-light;
+        }
+
+        strong {
+            font-size: 15px;
+            color: $color-text;
+        }
+
+        &--wholesale strong {
+            color: $color-primary;
+            font-size: 17px;
+        }
+    }
+
+    &__stock {
+        font-size: 12px;
+        font-weight: $font-weight-medium;
+        color: $color-success;
+        margin: 0;
+
+        &--warning {
+            color: $color-warning;
+        }
+    }
+
+    &__actions {
+        display: flex;
+        flex-direction: column;
+        gap: $spacing-xs;
+        margin-top: auto;
+        padding-top: $spacing-sm;
+    }
+
+    &__add-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        padding: $spacing-sm $spacing-md;
+        background-color: $color-primary;
+        color: $color-surface;
+        border: none;
+        border-radius: $border-radius-sm;
+        font-size: 13px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: background-color 0.2s;
+
+        &:hover {
+            background-color: darken($color-primary, 8%);
+        }
+    }
+
+    &__detail-link {
+        text-align: center;
+        font-size: 12px;
+        color: $color-primary;
+        font-weight: $font-weight-medium;
+        text-decoration: none;
+        padding: $spacing-xs;
+        transition: color 0.2s;
+
+        &:hover {
+            color: $color-primary-dark;
+            text-decoration: underline;
+        }
+    }
 }

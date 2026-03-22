@@ -41,6 +41,14 @@ const Catalogue = () => {
     const [globalMinPrice, setGlobalMinPrice] = useState(0);
     const [globalMaxPrice, setGlobalMaxPrice] = useState(1000000);
 
+    const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' ? window.innerWidth < 1024 : false);
+
+    useEffect(() => {
+        const handleResize = () => setIsMobile(window.innerWidth < 1024);
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
     const debouncedSearch = useDebounce(searchQuery, 500);
     const debouncedPrice = useDebounce(priceRange, 500);
 
@@ -221,7 +229,7 @@ const Catalogue = () => {
         return null;
     }, [selectedCategory, dynamicCategories]);
 
-    const isVisualGridMode = !selectedCategory && !searchQuery;
+    const isVisualGridMode = isMobile && !selectedCategory && !searchQuery;
 
     return (
         <div className="catalogue-page">
