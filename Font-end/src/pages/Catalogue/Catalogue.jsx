@@ -141,7 +141,19 @@ const Catalogue = () => {
         fetchData();
     }, [currentPage, debouncedSearch, selectedCategory, debouncedPrice, inStockOnly, sortBy, globalMinPrice, globalMaxPrice]);
 
-    // Sync URL params
+    // Update local state if URL changes externally (e.g., via <Link> clicks)
+    useEffect(() => {
+        const urlCat = searchParams.get('category') || '';
+        if (urlCat !== selectedCategory) setSelectedCategory(urlCat);
+
+        const urlSearch = searchParams.get('search') || '';
+        if (urlSearch !== searchQuery) setSearchQuery(urlSearch);
+
+        const urlPage = Number(searchParams.get('page')) || 1;
+        if (urlPage !== currentPage) setCurrentPage(urlPage);
+    }, [searchParams, selectedCategory, searchQuery, currentPage]);
+
+    // Sync URL params (Push local state to URL)
     useEffect(() => {
         const params = {};
         if (searchQuery) params.search = searchQuery;
