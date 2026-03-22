@@ -49,6 +49,14 @@ const Catalogue = () => {
         return () => window.removeEventListener('resize', handleResize);
     }, []);
 
+    // Force grid layout if the user's viewport is mobile, overriding previous Table view cache
+    useEffect(() => {
+        if (isMobile && viewMode !== 'grid') {
+            setViewMode('grid');
+            localStorage.setItem('catalogueViewMode', 'grid');
+        }
+    }, [isMobile, viewMode]);
+
     const debouncedSearch = useDebounce(searchQuery, 500);
     const debouncedPrice = useDebounce(priceRange, 500);
 
