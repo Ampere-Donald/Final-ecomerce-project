@@ -482,7 +482,6 @@ export class ProduitService {
 
             productsData.push({
               nomProduit,
-              // marque : '' au lieu de null — le champ est non-nullable dans le schéma Prisma
               marque:        (row['marque'] || row['Marque'] || '').trim() || '',
               description:   (row['description'] || row['Description'] || '').trim() || null,
               prixDetail:    isNaN(prixDetail)    ? 0 : prixDetail,
@@ -498,9 +497,7 @@ export class ProduitService {
               categorieId,
             });
           } catch (rowErr) {
-            // Ligne malformée → ignorée sans tuer le reste du lot
             totalIgnores++;
-            console.warn('[CSV Import] Ligne ignorée (parsing):', rowErr);
           }
         }
 
@@ -691,7 +688,7 @@ export class ProduitService {
         this.importStatus.progress = 20 + Math.round((cFinished / imagesToUpload.length) * 30);
         return { key, url };
       } catch (err) {
-        this.logger.warn(`Failed to upload image "${key}": ${err}`);
+        // Silent failure to avoid log flood
         return { key, url: null as string | null };
       }
     });
@@ -846,9 +843,9 @@ export class ProduitService {
     skipped += extraIgnored; // We definitively skip the ones we don't save
 
     if (duplicatesToSave.length > 0) {
-      // Chunk JSON payloads into groups of 300 to avoid DB connection drop via WebSocket payload limits
-      for (let i = 0; i < duplicatesToSave.length; i += 300) {
-        const batch = duplicatesToSave.slice(i, i + 300);
+      // Chunk JSON payloads into groups of 100 to avoid DB connection drop via payload limits
+      for (let i = 0; i < duplicatesToSave.length; i += 100) {
+        const batch = duplicatesToSave.slice(i, i + 100);
         const pendingRecord = await this.db.pendingImport.create({
           data: {
             data: batch

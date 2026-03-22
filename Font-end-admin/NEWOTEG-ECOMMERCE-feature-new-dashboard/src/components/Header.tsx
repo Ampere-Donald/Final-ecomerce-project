@@ -147,14 +147,16 @@ export const Header = ({ onMenuClick }: HeaderProps) => {
         <div className="bg-blue-50 border-b border-blue-100 flex flex-col justify-center px-4 py-1.5 shrink-0 z-20">
            <div className="flex items-center justify-between text-xs text-blue-800 font-bold mb-1 w-full">
              <span className="flex items-center gap-2">
-               <Loader2 size={12} className="animate-spin shrink-0" />
-               <span className="truncate">{importStatus.message || 'Importation en cours...'}</span>
+               <Loader2 size={12} className={`shrink-0 ${importStatus.error ? 'text-red-500' : 'animate-spin'}`} />
+               <span className={`truncate ${importStatus.error ? 'text-red-600 font-bold' : ''}`}>
+                 {importStatus.error ? `ERREUR : ${importStatus.error}` : (importStatus.message || 'Importation en cours...')}
+               </span>
              </span>
              <span className="shrink-0">{importStatus.progress}%</span>
            </div>
-           <div className="w-full h-1.5 bg-blue-200/50 rounded-full overflow-hidden">
-             <div className="h-full bg-blue-500 transition-all duration-500 ease-out relative overflow-hidden" style={{ width: `${importStatus.progress}%` }}>
-                <div className="absolute inset-0 bg-white/20 animate-[pulse_1s_ease-in-out_infinite]"></div>
+           <div className={`w-full h-1.5 rounded-full overflow-hidden ${importStatus.error ? 'bg-red-100' : 'bg-blue-200/50'}`}>
+             <div className={`h-full transition-all duration-500 ease-out relative overflow-hidden ${importStatus.error ? 'bg-red-500' : 'bg-blue-500'}`} style={{ width: `${importStatus.error ? 100 : importStatus.progress}%` }}>
+                {!importStatus.error && <div className="absolute inset-0 bg-white/20 animate-[pulse_1s_ease-in-out_infinite]"></div>}
              </div>
            </div>
         </div>
