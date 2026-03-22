@@ -135,7 +135,7 @@ const Footer = () => {
                             </li>
                             <li className="footer__contact-item">
                                 <MapPin size={16} strokeWidth={1.5} />
-                                <span>Akwa, Rue Foch, Douala</span>
+                                <span>Akwa, Campyabass, Douala</span>
                             </li>
                         </ul>
                     </div>

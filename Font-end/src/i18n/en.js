@@ -353,7 +353,7 @@ export default {
         locationTitle: "A Strategic Presence",
         locationSubtitle: "To ensure proximity to our customers, NEWOTEG relies on two key locations:",
         hqTitle: "Head Office & Showroom",
-        hqAddress: "Akwa, Foch Street, Douala",
+        hqAddress: "Akwa, Campyabass, Douala",
         hqDesc: "Center for our administrative and commercial activities",
         logisticsTitle: "Service & Logistics Point",
         logisticsAddress: "Akwa, Locality Camp Yabassi",
@@ -376,7 +376,7 @@ export default {
         infoTitle: "Our Contact Details",
         infoDesc: "Find us at our various sites in Douala or contact us directly by phone or email.",
         hqTitle: "Head Office & Showroom",
-        hqAddress: "Akwa, Foch Street, Douala",
+        hqAddress: "Akwa, Campyabass, Douala",
         openMaps: "Click to open in Maps →",
         logisticsTitle: "Service & Logistics Point",
         logisticsAddress: "Akwa, Locality Camp Yabassi",
@@ -527,7 +527,7 @@ export default {
         lastUpdate: "Last updated: {{date}}",
         s1Title: "1. Publisher Identification",
         s1P1: "This website is published by <strong>NEWOTEG (New World Technologie Group) SARL</strong>, a limited liability company governed by Cameroonian law, registered with the Trade and Personal Property Credit Register (RCCM) of Douala.",
-        s1L1: "<strong>Head Office:</strong> Akwa, Rue Foch, Douala, Cameroon",
+        s1L1: "<strong>Head Office:</strong> Akwa, Campyabass, Douala, Cameroon",
         s1L2: "<strong>Service Point:</strong> Akwa, Lieu-dit Camp Yabassi, Douala",
         s1L3: "<strong>Founder & Legal Representative:</strong> Mr. Jude FOGUENG",
         s1L4: "<strong>Contact:</strong> contact@newoteg.com | +237 699 966 160",
@@ -547,7 +547,7 @@ export default {
         s8P1: "If you have any questions regarding these TOS, please contact us:",
         s8L1: "<strong>Email:</strong> contact@newoteg.com",
         s8L2: "<strong>Phone:</strong> +237 699 966 160 / 670 478 228",
-        s8L3: "<strong>Address:</strong> Akwa, Rue Foch, Douala, Cameroon"
+        s8L3: "<strong>Address:</strong> Akwa, Campyabass, Douala, Cameroon"
     },
     privacy: {
         metaTitle: "Privacy Policy — NEWOTEG SARL",
@@ -584,7 +584,7 @@ export default {
         s8P1: "To exercise your rights or for any questions regarding our privacy policy:",
         s8L1: "<strong>Email:</strong> contact@newoteg.com",
         s8L2: "<strong>Phone:</strong> +237 699 966 160 / 670 478 228",
-        s8L3: "<strong>Address:</strong> NEWOTEG SARL — Akwa, Rue Foch, Douala, Cameroon"
+        s8L3: "<strong>Address:</strong> NEWOTEG SARL — Akwa, Campyabass, Douala, Cameroon"
     },
     cart: {
         added: "added to cart",

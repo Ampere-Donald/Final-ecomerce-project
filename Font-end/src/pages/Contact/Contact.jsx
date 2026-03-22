@@ -55,7 +55,7 @@ const Contact = () => {
                     "description": "Fournisseur de composants électroniques et équipements industriels à Douala, Cameroun",
                     "address": {
                         "@type": "PostalAddress",
-                        "streetAddress": "Rue Foch, Akwa",
+                        "streetAddress": "Campyabass (Camp Yabassi), Akwa",
                         "addressLocality": "Douala",
                         "addressRegion": "Littoral",
                         "addressCountry": "CM"
@@ -130,7 +130,7 @@ const Contact = () => {
                     <h2>{t('contact.infoDesc')}</h2>
                 </div>
                 <div className="contact-cards-grid">
-                    <a href="https://maps.google.com/?q=Akwa+Rue+Foch+Douala+Cameroun" target="_blank" rel="noopener noreferrer" className="contact-info-card">
+                    <a href="https://maps.google.com/?q=Campyabass+Akwa+Douala+Cameroun" target="_blank" rel="noopener noreferrer" className="contact-info-card">
                         <div className="contact-info-card__icon">
                             <MapPin size={28} />
                         </div>

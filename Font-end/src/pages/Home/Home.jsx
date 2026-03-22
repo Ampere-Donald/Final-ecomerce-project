@@ -54,7 +54,7 @@ const Home = () => {
                     "description": "Fournisseur de composants électroniques et équipements industriels au Cameroun",
                     "address": {
                         "@type": "PostalAddress",
-                        "streetAddress": "Rue Foch, Akwa",
+                        "streetAddress": "Campyabass (Camp Yabassi), Akwa",
                         "addressLocality": "Douala",
                         "addressCountry": "CM"
                     },
