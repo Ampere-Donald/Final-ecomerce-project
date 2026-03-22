@@ -52,29 +52,48 @@
     }
 
     // ── Badges ────────────────────────────────────────────────
-    &__badge {
+    &__badges-container {
         position: absolute;
-        top: 16px;
-        right: 16px;
-        font-size: 10px;
+        top: 12px;
+        right: 12px;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 6px;
+        z-index: 4;
+    }
+
+    &__badge {
+        font-size: 9px;
         font-weight: 800;
-        letter-spacing: 0.1em;
-        padding: 6px 10px;
+        letter-spacing: 0.05em;
+        padding: 4px 8px;
         border-radius: $border-radius-full;
         text-transform: uppercase;
-        z-index: 2;
         box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        display: flex;
+        align-items: center;
+        gap: 4px;
 
         &--stock {
             background-color: $color-success;
             color: $color-surface;
-            animation: pulseGlow 3s infinite;
+        }
+
+        &--preorder {
+            background-color: $color-warning;
+            color: $color-surface;
         }
 
         &--promo {
-            top: 40px;
             background-color: $color-danger;
             color: $color-surface;
+        }
+
+        &--wholesale {
+            background-color: $color-primary;
+            color: $color-surface;
+            animation: pulseGlow 3s infinite;
         }
     }
 
@@ -123,28 +142,36 @@
     }
 
     // ── Content ───────────────────────────────────────────────
-    &__content {
+    &__body {
         padding: $spacing-md;
         display: flex;
         flex-direction: column;
+        justify-content: space-between;
         flex: 1;
+        gap: $spacing-sm;
+    }
+
+    &__info-link {
         text-decoration: none;
+        display: flex;
+        flex-direction: column;
+        gap: $spacing-xs;
     }
 
     &__category {
-        font-size: 11px;
+        font-size: 10px;
         font-weight: 700;
         color: $color-secondary;
         text-transform: uppercase;
         letter-spacing: 0.05em;
-        margin: 0 0 $spacing-xs 0;
+        margin: 0;
     }
 
     &__name {
-        font-size: 15px;
+        font-size: 14px;
         font-weight: 800; // Inter Extrabold
         color: $color-text;
-        margin: 0 0 $spacing-md 0;
+        margin: 0;
         line-height: 1.4;
         display: -webkit-box;
         -webkit-line-clamp: 2;
@@ -152,50 +179,19 @@
         -webkit-box-orient: vertical;
         overflow: hidden;
         transition: color 0.2s;
-        min-height: 42px; // 2 lignes toujours
+        min-height: 40px; // 2 lignes toujours
 
         &:hover {
             color: $color-primary;
         }
     }
 
-    // ── Pricing Rows ──────────────────────────────────────────
-    &__price-row {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: $spacing-xs 0;
-
-        &--retail {
-            border-bottom: 1px dashed $color-border;
-        }
-    }
-
-    &__price-label {
-        font-size: 11px;
-        color: $color-secondary-light;
-        font-weight: $font-weight-medium;
-    }
-
-    &__price {
-        font-weight: $font-weight-bold;
-        font-size: 15px;
-
-        &--retail {
-            color: $color-text;
-        }
-
-        &--wholesale {
-            color: $color-primary;
-        }
-    }
-
     // ── Stock Info ─────────────────────────────────────────────
     &__stock-info {
-        font-size: 11px;
+        font-size: 10px;
         font-weight: $font-weight-medium;
         color: $color-success;
-        margin-top: $spacing-sm;
+        margin: 0;
 
         &--warning {
             color: $color-warning;
@@ -203,86 +199,84 @@
         }
     }
 
-    // ── Preorder Badge ─────────────────────────────────────────
-    &__badge--preorder {
-        background-color: $color-warning;
-        color: $color-surface;
+    // ── Bottom Row (Price & Action) ──────────────────────────
+    &__bottom-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-top: auto;
+        padding-top: $spacing-sm;
+        border-top: 1px solid rgba($color-border, 0.5);
     }
 
-    // ── Add to Cart Button ────────────────────────────────────
-    &__add-btn {
+    &__price-block {
+        display: flex;
+        flex-direction: column;
+        text-decoration: none;
+    }
+
+    &__price-primary {
+        font-size: 16px;
+        font-weight: 800;
+        color: $color-primary;
+    }
+
+    &__price-secondary {
+        font-size: 11px;
+        color: $color-secondary-light;
+        text-decoration: line-through;
+        font-weight: 600;
+        margin-top: -2px;
+    }
+
+    // ── Quick Action Button ──────────────────────────────────
+    &__action-btn {
+        width: 36px;
+        height: 36px;
+        border-radius: $border-radius-circle;
+        background: $color-surface-hover;
+        color: $color-primary;
+        border: none;
         display: flex;
         align-items: center;
         justify-content: center;
-        gap: 8px;
-        width: calc(100% - #{$spacing-lg} * 2);
-        margin: 0 $spacing-lg $spacing-lg;
-        padding: 12px $spacing-md;
-        background: linear-gradient(135deg, $color-primary 0%, $color-primary-dark 100%);
-        background-size: 200% auto;
-        color: $color-surface;
-        border: none;
-        border-radius: $border-radius-md;
-        font-size: 13px;
-        font-weight: 800;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
         cursor: pointer;
-        transition: all 0.3s ease;
-        box-shadow: 0 4px 12px rgba($color-primary, 0.3);
+        transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        flex-shrink: 0;
 
-        &:hover:not(:disabled) {
-            background-position: right center;
-            transform: translateY(-2px);
-            box-shadow: 0 6px 16px rgba($color-primary, 0.4);
+        &:hover {
+            background: $color-primary;
+            color: $color-surface;
+            transform: scale(1.1);
+            box-shadow: 0 4px 12px rgba($color-primary, 0.3);
         }
 
         &--preorder {
-            background: linear-gradient(135deg, $color-warning 0%, color.adjust($color-warning, $lightness: -15%) 100%);
-            box-shadow: 0 4px 12px rgba($color-warning, 0.3);
+            color: $color-warning;
             &:hover {
-                background-position: right center;
-                box-shadow: 0 6px 16px rgba($color-warning, 0.4);
+                background: linear-gradient(135deg, $color-warning 0%, color.adjust($color-warning, $lightness: -15%) 100%);
+                color: $color-surface;
+                box-shadow: 0 4px 12px rgba($color-warning, 0.3);
             }
         }
     }
 
-    // ── Datasheet & Discount Banner ───────────────────────────
+    // ── Datasheet ─────────────────────────────────────────────
     &__datasheet {
         display: flex;
         align-items: center;
-        justify-content: center;
-        gap: 6px;
-        width: 100%;
-        padding: 8px;
-        background-color: $color-surface;
-        color: $color-text;
-        font-size: 11px;
-        font-weight: 700;
-        text-transform: uppercase;
-        text-decoration: none;
-        border-top: 1px solid $color-border;
-        transition: all 0.2s;
-
-        &:hover {
-            color: $color-danger;
-            background-color: rgba($color-danger, 0.05);
-        }
-    }
-
-    &__discount-banner {
-        display: flex;
-        align-items: center;
-        justify-content: center;
         gap: 4px;
-        width: 100%;
-        padding: 6px;
-        background-color: rgba($color-success, 0.1);
-        color: $color-success;
         font-size: 10px;
         font-weight: 700;
+        color: $color-secondary-light;
+        text-decoration: none;
         text-transform: uppercase;
-        border-top: 1px solid rgba($color-success, 0.2);
+        transition: color 0.2s;
+        margin-top: $spacing-2xs;
+
+        &:hover {
+            color: $color-primary;
+        }
     }
 
     // ── Backorder Card ─────────────────────────────────────

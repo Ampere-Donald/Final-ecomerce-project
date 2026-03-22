@@ -1,44 +1,116 @@
 @use '../../styles/variables' as *;
 
+.toast-stack {
+  position: fixed;
+  top: 1.5rem;
+  right: 1.5rem;
+  z-index: $z-tooltip;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-xs;
+  max-width: 360px;
+  width: calc(100vw - 2rem);
+
+  @media (min-width: $breakpoint-md) {
+    width: 360px;
+  }
+}
+
 .toast {
-    position: fixed;
-    top: 1.5rem;
-    right: 1.5rem;
-    z-index: $z-tooltip;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.875rem 1.25rem;
+  background: $color-surface;
+  border-left: 3px solid $color-primary;
+  border-radius: $border-radius-md;
+  box-shadow: $shadow-lg;
+  animation: toast-slide-in 0.3s ease forwards;
+  position: relative;
+  overflow: hidden;
+  cursor: grab;
+
+  // ── Type variants ──
+  &--success {
+    border-left-color: $color-success;
+    .toast__icon { color: $color-success; }
+    .toast__progress { background: $color-success; }
+  }
+
+  &--error {
+    border-left-color: $color-danger;
+    .toast__icon { color: $color-danger; }
+    .toast__progress { background: $color-danger; }
+  }
+
+  &--info {
+    border-left-color: $color-info;
+    .toast__icon { color: $color-info; }
+    .toast__progress { background: $color-info; }
+  }
+
+  &--cart {
+    border-left-color: $color-primary;
+    .toast__icon { color: $color-primary; }
+    .toast__progress { background: $color-primary; }
+  }
+
+  &__icon {
+    flex-shrink: 0;
     display: flex;
     align-items: center;
-    gap: 0.75rem;
-    padding: 0.875rem 1.25rem;
-    background: $color-surface;
-    border-left: 3px solid $color-primary;
-    border-radius: $border-radius-md;
-    box-shadow: $shadow-lg;
-    max-width: 340px;
-    animation: toast-slide-in $transition-base forwards;
+    color: $color-primary;
+  }
 
-    &__icon {
-        flex-shrink: 0;
-        color: $color-primary;
-        display: flex;
-        align-items: center;
-    }
+  &__message {
+    flex: 1;
+    font-size: $font-size-sm;
+    font-weight: $font-weight-medium;
+    color: $color-text-body;
+    line-height: $line-height-base;
+  }
 
-    &__message {
-        font-size: $font-size-sm;
-        font-weight: $font-weight-medium;
-        color: $color-text-body;
-        line-height: $line-height-base;
+  &__close {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border-radius: $border-radius-sm;
+    color: $color-text-muted;
+    opacity: 0.5;
+    transition: opacity $transition-fast, background $transition-fast;
+
+    &:hover {
+      opacity: 1;
+      background: $color-surface-muted;
     }
+  }
+
+  // ── Progress bar ──
+  &__progress {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 2px;
+    background: $color-primary;
+    animation: toast-progress 3s linear forwards;
+  }
 }
 
 @keyframes toast-slide-in {
-    from {
-        opacity: 0;
-        transform: translateX(120%);
-    }
+  from {
+    opacity: 0;
+    transform: translateX(120%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
 
-    to {
-        opacity: 1;
-        transform: translateX(0);
-    }
+@keyframes toast-progress {
+  from { width: 100%; }
+  to { width: 0%; }
 }

@@ -54,15 +54,22 @@ const ProductCard = ({ product, badge }) => {
                     loading="lazy"
                     onError={handleImageError}
                 />
-                {/* Stock Badge */}
-                {isBackorder ? (
-                    <span className="product-card__badge product-card__badge--preorder">{t('product.preorder')}</span>
-                ) : (
-                    <span className="product-card__badge product-card__badge--stock">{t('product.inStock')}</span>
-                )}
-                {badge && (
-                    <span className="product-card__badge product-card__badge--promo">{badge}</span>
-                )}
+                {/* Badges container */}
+                <div className="product-card__badges-container">
+                    {isBackorder ? (
+                        <span className="product-card__badge product-card__badge--preorder">{t('product.preorder')}</span>
+                    ) : (
+                        <span className="product-card__badge product-card__badge--stock">{t('product.inStock')}</span>
+                    )}
+                    {badge && (
+                        <span className="product-card__badge product-card__badge--promo">{badge}</span>
+                    )}
+                    {(product.wholesalePrice > 0 && product.wholesalePrice < product.retailPrice) && (
+                        <span className="product-card__badge product-card__badge--wholesale">
+                            <Info size={10} /> {t('product.wholesaleAvailable')}
+                        </span>
+                    )}
+                </div>
 
                 {/* Heart button (Favorite) */}
                 <button
@@ -85,69 +92,58 @@ const ProductCard = ({ product, badge }) => {
                 </button>
             </Link>
 
-            {/* Content */}
-            <Link to={`/product/${product.code}`} className="product-card__content">
-                <p className="product-card__category">
-                    {product.categoryName || product.parentCategory || t('product.defaultCategory')}
-                </p>
+            <div className="product-card__body">
+                <Link to={`/product/${product.code}`} className="product-card__info-link">
+                    <p className="product-card__category">
+                        {product.categoryName || product.parentCategory || t('product.defaultCategory')}
+                    </p>
+                    <h3 className="product-card__name">{product.model}</h3>
 
-                <h3 className="product-card__name">{product.model}</h3>
+                    <p className={`product-card__stock-info ${isBackorder ? 'product-card__stock-info--warning' : ''}`}>
+                        {isBackorder
+                            ? t('product.preorderDelay')
+                            : t('product.inStockCount', { count: product.stock })
+                        }
+                    </p>
+                </Link>
 
-                {/* Prix */}
-                <div className="product-card__price-row product-card__price-row--retail">
-                    <span className="product-card__price-label">{t('product.retailPrice')}</span>
-                    <span className="product-card__price product-card__price--retail">
-                        {formatFCFA(product.retailPrice)}
-                    </span>
+                <div className="product-card__bottom-row">
+                    <Link to={`/product/${product.code}`} className="product-card__price-block">
+                        <span className="product-card__price-primary">
+                            {formatFCFA(product.wholesalePrice || product.retailPrice)}
+                        </span>
+                        {(product.wholesalePrice > 0 && product.wholesalePrice < product.retailPrice) && (
+                            <span className="product-card__price-secondary">
+                                {formatFCFA(product.retailPrice)}
+                            </span>
+                        )}
+                    </Link>
+
+                    <button
+                        className={`product-card__action-btn ${isBackorder ? 'product-card__action-btn--preorder' : ''}`}
+                        onClick={handleAddToCart}
+                        aria-label={isBackorder ? t('product.preorderBtnTitle') : t('product.addToCart')}
+                        title={isBackorder ? t('product.preorderBtnTitle') : t('product.addToCart')}
+                    >
+                        <ShoppingCart size={18} />
+                    </button>
                 </div>
 
-                <div className="product-card__price-row product-card__price-row--wholesale">
-                    <span className="product-card__price-label">{t('product.wholesalePrice')}</span>
-                    <span className="product-card__price product-card__price--wholesale">
-                        {formatFCFA(product.wholesalePrice)}
-                    </span>
-                </div>
-
-                {/* Stock info */}
-                <p className={`product-card__stock-info ${isBackorder ? 'product-card__stock-info--warning' : ''}`}>
-                    {isBackorder
-                        ? t('product.preorderDelay')
-                        : t('product.inStockCount', { count: product.stock })
-                    }
-                </p>
-            </Link>
-
-            {/* Fiche Technique (Datasheet B2B) */}
-            {product.urlDatasheet && (
-                <a 
-                    href={product.urlDatasheet} 
-                    target="_blank" 
-                    rel="noopener noreferrer" 
-                    className="product-card__datasheet" 
-                    onClick={e => e.stopPropagation()}
-                    title={t('product.downloadDatasheet')}
-                >
-                    <FileText size={14} />
-                    {t('product.datasheet')}
-                </a>
-            )}
-
-            {/* Info Prix Dégressif si applicable */}
-            {(product.wholesalePrice > 0 && product.wholesalePrice < product.retailPrice) && (
-                <div className="product-card__discount-banner">
-                    <Info size={12} /> {t('product.wholesaleAvailable')}
-                </div>
-            )}
-
-            {/* Add to Cart Button */}
-            <button
-                className={`product-card__add-btn ${isBackorder ? 'product-card__add-btn--preorder' : ''}`}
-                onClick={handleAddToCart}
-                title={isBackorder ? t('product.preorderBtnTitle') : t('product.addToCart')}
-            >
-                <ShoppingCart size={14} />
-                {isBackorder ? t('product.preorderBtn') : t('product.addToCart')}
-            </button>
+                {/* Fiche Technique (Datasheet B2B) */}
+                {product.urlDatasheet && (
+                    <a 
+                        href={product.urlDatasheet} 
+                        target="_blank" 
+                        rel="noopener noreferrer" 
+                        className="product-card__datasheet" 
+                        onClick={e => e.stopPropagation()}
+                        title={t('product.downloadDatasheet')}
+                    >
+                        <FileText size={12} />
+                        {t('product.datasheet')}
+                    </a>
+                )}
+            </div>
         </div>
 
         {/* ── Quick View Modal ───────────────────────────── */}

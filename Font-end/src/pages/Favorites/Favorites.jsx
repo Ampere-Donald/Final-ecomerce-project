@@ -30,7 +30,10 @@ const Favorites = () => {
 
         {favorites.length === 0 ? (
           <div className="favorites__empty">
-            <Heart size={48} />
+            <svg width="120" height="120" viewBox="0 0 120 120" fill="none" style={{ margin: '0 auto 1rem', opacity: 0.7 }}>
+              <circle cx="60" cy="60" r="56" stroke="#E5E7EB" strokeWidth="2" strokeDasharray="6 4" />
+              <path d="M60 85L38 63C32 57 32 47 38 41C44 35 54 35 60 43C66 35 76 35 82 41C88 47 88 57 82 63L60 85Z" stroke="#2A2FCE" strokeWidth="2" fill="rgba(42,47,206,0.06)" strokeLinejoin="round" />
+            </svg>
             <h3>{t('favorites.emptyTitle')}</h3>
             <p>{t('favorites.emptyDesc')}</p>
             <Link to="/catalogue">{t('favorites.browseCatalogue')}</Link>

@@ -2,9 +2,8 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
+# Force rebuild — v3 2026-03-21
 COPY package*.json ./
-
-# Copy prisma FIRST
 COPY prisma ./prisma
 COPY prisma.config.ts ./
 
@@ -17,7 +16,7 @@ COPY . .
 # Build app
 RUN npm run build
 
-# Generate Prisma client AFTER schema exists
+# Generate Prisma client
 RUN npx prisma generate
 
 FROM node:20-alpine AS production
@@ -37,7 +36,12 @@ COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=builder /app/prisma.config.ts ./
 
+# Copy startup script (ensures tables exist even if migrations fail)
+COPY --from=builder /app/scripts ./scripts
+
 EXPOSE 3000
 
-# Run migrations at startup + start app
-CMD ["sh", "-c", "npx prisma migrate deploy && node dist/src/main"]
+# 1) ensure-schema creates missing tables directly via SQL
+# 2) prisma migrate deploy marks migrations as applied
+# 3) start the app
+CMD ["sh", "-c", "node scripts/ensure-schema.js && npx prisma migrate deploy && node dist/src/main"]

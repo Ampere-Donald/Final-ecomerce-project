@@ -44,7 +44,7 @@ const Signup = () => {
         typeClient: form.typeClient,
         motDePasse: form.motDePasse,
       });
-      navigate(`/verify-otp?email=${encodeURIComponent(form.email)}`);
+      navigate('/');
     } catch (err) {
       const status = err.response?.status;
       const data = err.response?.data;

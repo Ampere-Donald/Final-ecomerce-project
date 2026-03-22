@@ -59,6 +59,11 @@ body {
     color: $color-text;
     background-color: $color-background;
     min-height: 100vh;
+
+    // Space for BottomNav on mobile
+    @media (max-width: $breakpoint-lg - 1) {
+        padding-bottom: 64px;
+    }
 }
 
 // ── Typographie ────────────────────────────────────────────
@@ -210,6 +215,11 @@ select {
     0% { background-position: 0% 50%; }
     50% { background-position: 100% 50%; }
     100% { background-position: 0% 50%; }
+}
+
+// ── Page enter transition ──
+.page-enter {
+    animation: fadeIn 0.3s ease both;
 }
 
 .anim-fade-in {

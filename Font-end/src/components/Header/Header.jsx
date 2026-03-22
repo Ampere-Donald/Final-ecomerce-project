@@ -9,7 +9,7 @@ import SearchBar from '../SearchBar/SearchBar';
 import './Header.scss';
 
 const Header = () => {
-    const { cartCount, cartTotal } = useCart();
+    const { cartCount, cartTotal, openCart } = useCart();
     const { isAuthenticated, user, logout } = useAuth();
     const { lang, t, toggleLang } = useI18n();
     const navigate = useNavigate();
@@ -63,7 +63,7 @@ const Header = () => {
     };
 
     const handleCartClick = () => {
-        navigate('/checkout');
+        openCart();
     };
 
     const handleLogout = () => {
@@ -151,23 +151,7 @@ const Header = () => {
                     </div>
                 </div>
 
-                {/* Mobile Quick Nav – always visible horizontal strip */}
-                <div className="header__mobile-strip">
-                    <nav className="header__mobile-strip-nav">
-                        <NavLink to="/" end className={({ isActive }) => `header__mobile-strip-link ${isActive ? 'header__mobile-strip-link--active' : ''}`}>
-                            {t('mobileStrip.home')}
-                        </NavLink>
-                        <NavLink to="/catalogue" className={({ isActive }) => `header__mobile-strip-link ${isActive ? 'header__mobile-strip-link--active' : ''}`}>
-                            {t('mobileStrip.catalogue')}
-                        </NavLink>
-                        <NavLink to="/about" className={({ isActive }) => `header__mobile-strip-link ${isActive ? 'header__mobile-strip-link--active' : ''}`}>
-                            {t('mobileStrip.about')}
-                        </NavLink>
-                        <NavLink to="/contact" className={({ isActive }) => `header__mobile-strip-link ${isActive ? 'header__mobile-strip-link--active' : ''}`}>
-                            {t('mobileStrip.contact')}
-                        </NavLink>
-                    </nav>
-                </div>
+
 
                 {/* Mobile Expandable Search */}
                 <div className={`header__mobile-search ${isMobileSearchOpen ? 'header__mobile-search--open' : ''}`}>

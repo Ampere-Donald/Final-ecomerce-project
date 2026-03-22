@@ -2,15 +2,16 @@ version: '3.9'
 services:
   db:
     image: postgres:16-alpine
+    container_name: newoteg_db_new
     restart: always
     environment:
       POSTGRES_DB: ${DB_NAME:-ecommerce}
       POSTGRES_USER: ${DB_USER:-postgres}
       POSTGRES_PASSWORD: ${DB_PASS:-password}
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - postgres_data_v2:/var/lib/postgresql/data
     ports:
-      - "5432:5432"
+      - "5435:5432"
 
   app:
     build: .
@@ -28,4 +29,4 @@ services:
       sh -c "npx prisma migrate deploy && npm run start:prod"
 
 volumes:
-  postgres_data:
+  postgres_data_v2:

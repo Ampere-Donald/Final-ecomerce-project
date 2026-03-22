@@ -14,7 +14,8 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
-import { memoryStorage } from 'multer';
+import { memoryStorage, diskStorage } from 'multer';
+import { promises as fs } from 'fs';
 import { ProduitService } from './produit.service';
 import { CreateProduitDto } from './dto/create-produit.dto';
 import { UpdateProduitDto } from './dto/update-produit.dto';
@@ -124,25 +125,56 @@ export class ProduitController {
     return this.produitService.findPopulaires();
   }
 
-  // ── Import ZIP (CSV + images) or plain CSV ────────────────────────────────
+  // ── Import ZIP (CSV + images) or plain CSV en masse ─────────────────────
+  // diskStorage : les fichiers sont écrits sur le disque. Le ZIP sera chargé
+  // en mémoire pour extraction, et le CSV sera lu en flux.
   @Post('import')
-  @UseInterceptors(FileInterceptor('file', { storage: memoryStorage(), limits: { fileSize: 50 * 1024 * 1024 } }))
+  @UseInterceptors(
+    FileInterceptor('file', {
+      storage: diskStorage({
+        destination: './uploads',
+        filename: (_req, file, cb) => {
+          const isZip = file.originalname.toLowerCase().endsWith('.zip');
+          const ext = isZip ? '.zip' : '.csv';
+          cb(null, `import-${Date.now()}-${Math.round(Math.random() * 1e6)}${ext}`);
+        },
+      }),
+      fileFilter: (_req, file, cb) => {
+        if (!file.originalname.match(/\.(csv|zip)$/i)) {
+          return cb(
+            new BadRequestException('Seuls les fichiers .csv ou .zip sont acceptés.'),
+            false,
+          );
+        }
+        cb(null, true);
+      },
+      limits: { fileSize: 250 * 1024 * 1024 }, // 250 Mo max (ZIP avec images HD)
+    }),
+  )
   async importProducts(@UploadedFile() file: Express.Multer.File) {
     if (!file) {
       throw new BadRequestException('Aucun fichier fourni.');
     }
 
-    const isZip =
-      file.originalname.toLowerCase().endsWith('.zip') ||
-      file.mimetype === 'application/zip' ||
-      file.mimetype === 'application/x-zip-compressed';
+    const isZip = file.originalname.toLowerCase().endsWith('.zip');
 
     if (isZip) {
-      return this.produitService.importZip(file.buffer);
+      try {
+        // Read file into memory to pass buffer to AdmZip in the service
+        const buffer = await fs.readFile(file.path);
+        const result = await this.produitService.importZip(buffer);
+        // Clean up the temp zip file from disk
+        await fs.unlink(file.path).catch(() => {});
+        return result;
+      } catch (err) {
+        // Clean up even on failure
+        await fs.unlink(file.path).catch(() => {});
+        throw err;
+      }
     }
 
-    // Fallback: plain CSV (backward compatible)
-    return this.produitService.importCsv(file.buffer);
+    // CSV direct (Streaming - passe le chemin du disque au service)
+    return this.produitService.importCsv(file.path);
   }
 
   // ── Cleanup invalid images ────────────────────────────────────────────────

@@ -1,0 +1,83 @@
+@use '../../styles/variables' as *;
+
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: $z-fixed;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  height: 64px;
+  background: rgba($color-surface, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-top: 1px solid $color-border;
+  padding-bottom: env(safe-area-inset-bottom, 0);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+  // Only show on mobile/tablet
+  @media (min-width: $breakpoint-lg) {
+    display: none;
+  }
+
+  &--hidden {
+    transform: translateY(100%);
+  }
+
+  &__tab {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    flex: 1;
+    height: 100%;
+    color: $color-text-muted;
+    text-decoration: none;
+    transition: color $transition-fast;
+    -webkit-tap-highlight-color: transparent;
+    position: relative;
+
+    &--active {
+      color: $color-primary;
+    }
+
+    &:active {
+      transform: scale(0.92);
+    }
+  }
+
+  &__icon-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+  }
+
+  &__badge {
+    position: absolute;
+    top: -4px;
+    right: -8px;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 4px;
+    border-radius: $border-radius-full;
+    background: $color-danger;
+    color: #fff;
+    font-size: 10px;
+    font-weight: $font-weight-bold;
+    line-height: 18px;
+    text-align: center;
+  }
+
+  &__label {
+    font-size: 10px;
+    font-weight: $font-weight-medium;
+    line-height: 1;
+    white-space: nowrap;
+  }
+}

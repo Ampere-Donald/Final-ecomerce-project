@@ -7,6 +7,8 @@ import { useCart } from '../../context/CartContext';
 import { useI18n } from '../../context/I18nContext';
 import { Link } from 'react-router-dom';
 import useScrollReveal from '../../hooks/useScrollReveal';
+import useSwipe from '../../hooks/useSwipe';
+import ProductCardSkeleton from '../ProductCard/ProductCardSkeleton';
 import './FeaturedProducts.scss';
 
 
@@ -89,6 +91,7 @@ const FlashProductCard = ({ product, addToCart }) => {
                     <img
                         src={product.image}
                         alt={product.model}
+                        loading="lazy"
                         onError={(e) => { e.target.src = PLACEHOLDER_IMG; }}
                     />
                 </div>
@@ -144,6 +147,7 @@ const PopularProductCard = ({ product, addToCart }) => {
                     <img
                         src={product.image}
                         alt={product.model}
+                        loading="lazy"
                         onError={(e) => { e.target.src = PLACEHOLDER_IMG; }}
                     />
                 </div>
@@ -195,7 +199,10 @@ const FeaturedProducts = () => {
 
     const flashTrackRef = useRef(null);
     const popTrackRef = useRef(null);
-    
+
+    const flashSwipe = useSwipe(flashSlider.goNext, flashSlider.goPrev);
+    const popSwipe = useSwipe(popSlider.goNext, popSlider.goPrev);
+
     const revealOptions = { threshold: 0.15, rootMargin: '0px 0px -50px 0px' };
     const flashRevealRef = useScrollReveal(revealOptions);
     const popRevealRef = useScrollReveal(revealOptions);
@@ -277,8 +284,10 @@ const FeaturedProducts = () => {
     if (loading) {
         return (
             <section className="promo-catalogue">
-                <div className="container" style={{ textAlign: 'center', padding: '4rem 0', color: '#94a3b8' }}>
-                    {t('home.loadingFeatured')}
+                <div className="container" style={{ padding: '3rem 0' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '1.5rem' }}>
+                        {Array.from({ length: 4 }, (_, i) => <ProductCardSkeleton key={i} />)}
+                    </div>
                 </div>
             </section>
         );
@@ -347,7 +356,7 @@ const FeaturedProducts = () => {
                         )}
                     </div>
 
-                    <div className="flash-deal-b2b__products-wrapper" {...flashSlider.hoverHandlers}>
+                    <div className="flash-deal-b2b__products-wrapper" {...flashSlider.hoverHandlers} {...flashSwipe} style={{ touchAction: 'pan-y' }}>
                         <div
                             ref={flashTrackRef}
                             className="flash-deal-b2b__products flash-deal-b2b__products--slider"
@@ -398,7 +407,7 @@ const FeaturedProducts = () => {
                         </div>
                     </div>
 
-                    <div className="bestsellers__slider-wrapper" {...popSlider.hoverHandlers}>
+                    <div className="bestsellers__slider-wrapper" {...popSlider.hoverHandlers} {...popSwipe} style={{ touchAction: 'pan-y' }}>
                         <div
                             ref={popTrackRef}
                             className="bestsellers__grid bestsellers__grid--slider"

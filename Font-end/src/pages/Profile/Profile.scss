@@ -204,4 +204,98 @@
     color: $color-text-muted;
     font-size: $font-size-sm;
   }
+
+  // ── Action buttons (shared) ──
+  &__action-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    white-space: nowrap;
+    text-decoration: none;
+
+    &--whatsapp {
+      background: #25D366;
+      color: #fff;
+    }
+
+    &--confirm {
+      background: $color-success;
+      color: #fff;
+    }
+  }
+
+  // ── Desktop table / Mobile cards toggle ──
+  &__table--desktop {
+    @media (max-width: $breakpoint-md - 1) {
+      display: none;
+    }
+  }
+
+  &__mobile-orders {
+    display: none;
+
+    @media (max-width: $breakpoint-md - 1) {
+      display: flex;
+      flex-direction: column;
+      gap: $spacing-sm;
+      padding: $spacing-sm;
+    }
+  }
+
+  &__order-card {
+    background: $color-surface;
+    border: 1px solid $color-border;
+    border-radius: $border-radius-lg;
+    padding: $spacing-md;
+
+    &-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: $spacing-sm;
+    }
+
+    &-track {
+      font-family: monospace;
+      font-weight: 600;
+      font-size: $font-size-sm;
+      color: $color-text;
+    }
+
+    &-body {
+      display: flex;
+      flex-direction: column;
+      gap: $spacing-2xs;
+      margin-bottom: $spacing-sm;
+      padding-bottom: $spacing-sm;
+      border-bottom: 1px solid $color-border;
+    }
+
+    &-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: $font-size-sm;
+      color: $color-text-body;
+    }
+
+    &-label {
+      font-size: $font-size-xs;
+      color: $color-text-muted;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    &-actions {
+      display: flex;
+      gap: $spacing-xs;
+      flex-wrap: wrap;
+    }
+  }
 }

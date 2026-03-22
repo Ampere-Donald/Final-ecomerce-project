@@ -11,6 +11,7 @@ import Sidebar from '../../components/Sidebar/Sidebar';
 import ProductCard from '../../components/ProductCard/ProductCard';
 
 import ProductTable from '../../components/ProductTable/ProductTable';
+import { ProductCardSkeletonGrid } from '../../components/ProductCard/ProductCardSkeleton';
 
 import './Catalogue.scss';
 
@@ -337,11 +338,7 @@ const Catalogue = () => {
 
                         {/* Product Grid */}
                         {isLoading ? (
-                            <div className="catalogue-empty">
-                                <Search size={48} strokeWidth={1} className="animate-pulse text-slate-300" />
-                                <h3>{t('catalogue.loadingTitle')}</h3>
-                                <p>{t('catalogue.loadingDesc')}</p>
-                            </div>
+                            <ProductCardSkeletonGrid count={8} />
                         ) : sortedProducts.length > 0 ? (
                             <>
                                 {viewMode === 'grid' ? (

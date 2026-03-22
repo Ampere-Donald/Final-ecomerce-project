@@ -1,23 +1,53 @@
+import { ShoppingBag, CheckCircle2, AlertTriangle, Info, X } from 'lucide-react';
 import { useCart } from '../../context/CartContext';
+import useSwipe from '../../hooks/useSwipe';
 import './Toast.scss';
 
+const ICONS = {
+  success: <CheckCircle2 size={18} />,
+  error: <AlertTriangle size={18} />,
+  info: <Info size={18} />,
+  cart: <ShoppingBag size={18} />,
+};
+
+const ToastItem = ({ toast, onDismiss }) => {
+  const swipeHandlers = useSwipe(
+    () => onDismiss(toast.id),
+    () => onDismiss(toast.id),
+    40
+  );
+
+  return (
+    <div
+      className={`toast toast--${toast.type || 'success'}`}
+      role="alert"
+      aria-live="polite"
+      {...swipeHandlers}
+    >
+      <div className="toast__icon">
+        {ICONS[toast.type] || ICONS.success}
+      </div>
+      <span className="toast__message">{toast.message}</span>
+      <button className="toast__close" onClick={() => onDismiss(toast.id)} aria-label="Fermer">
+        <X size={14} />
+      </button>
+      <div className="toast__progress" />
+    </div>
+  );
+};
+
 const Toast = () => {
-    const { toast } = useCart();
+  const { toasts, dismissToast } = useCart();
 
-    if (!toast) return null;
+  if (!toasts || toasts.length === 0) return null;
 
-    return (
-        <div className="toast" role="alert" aria-live="polite">
-            <div className="toast__icon">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
-                    <line x1="3" y1="6" x2="21" y2="6" />
-                    <path d="M16 10a4 4 0 0 1-8 0" />
-                </svg>
-            </div>
-            <span className="toast__message">{toast.message}</span>
-        </div>
-    );
+  return (
+    <div className="toast-stack">
+      {toasts.map((t) => (
+        <ToastItem key={t.id} toast={t} onDismiss={dismissToast} />
+      ))}
+    </div>
+  );
 };
 
 export default Toast;

@@ -6,7 +6,19 @@
       "Bash(cat:*)",
       "Bash(ls \"C:\\\\Users\\\\Donald\\\\OneDrive\\\\Bureau\\\\e-commerce-papa\\\\NEWOTEG-ECOMMERCE-main \\(1\\)/Back-end/\")",
       "Bash(ls \"C:\\\\Users\\\\Donald\\\\OneDrive\\\\Bureau\\\\e-commerce-papa\\\\NEWOTEG-ECOMMERCE-main \\(1\\)/Back-end/dist/\")",
-      "Bash(npm install:*)"
+      "Bash(ls \"C:\\\\Users\\\\Donald\\\\OneDrive\\\\Bureau\\\\e-commerce-papa\\\\NEWOTEG-ECOMMERCE-main \\(1\\)/Font-end-admin/NEWOTEG-ECOMMERCE-feature-new-dashboard/\"*.env*)",
+      "Bash(ls \"C:\\\\Users\\\\Donald\\\\OneDrive\\\\Bureau\\\\e-commerce-papa\\\\NEWOTEG-ECOMMERCE-main \\(1\\)/Font-end-admin/NEWOTEG-ECOMMERCE-feature-new-dashboard/\".env*)",
+      "Bash(find:*)",
+      "Bash(npx prisma:*)",
+      "Bash(head:*)",
+      "Bash(grep -r \"scrollY\\\\|scrollTo\\\\|scroll-behavior\" '/c/Users/Donald/OneDrive/Bureau/e-commerce-papa/NEWOTEG-ECOMMERCE-main \\(1\\)/Font-end/src' --include=*.jsx --include=*.scss)",
+      "Bash(ls:*)",
+      "Bash(wc:*)",
+      "Bash(npx vite:*)",
+      "Bash(robots \")",
+      "Bash(ls \"C:\\\\Users\\\\Donald\\\\OneDrive\\\\Bureau\\\\e-commerce-papa\\\\NEWOTEG-ECOMMERCE-main \\(1\\)/Back-end/dist/\")",
+      "Bash(npm install:*)",
+      "Bash(find /d/Games/final/Final-ecomerce-project-main -type f \\\\\\(-iname *import* -o -iname *upload* -o -iname *bulk* -o -iname *csv* -o -iname *zip* \\\\\\))"
     ]
   }
 }

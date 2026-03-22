@@ -10,7 +10,8 @@ import axios from 'axios';
 import Footer from '../../components/Footer/Footer';
 import './Checkout.scss';
 
-const API = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+const _rawApi = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+const API = _rawApi.endsWith('/api') ? _rawApi : `${_rawApi}/api`;
 
 const Checkout = () => {
     const { t } = useI18n();
@@ -222,10 +223,17 @@ const Checkout = () => {
                             <section className="checkout__section">
                                 <h2 className="checkout__section-title">{t('checkout.yourCart')}</h2>
                                 {cart.length === 0 ? (
-                                    <div className="checkout__empty-state" style={{ textAlign: 'center', padding: '3rem 1rem', color: '#52525B' }}>
-                                        <ShoppingCart size={48} strokeWidth={1} style={{ margin: '0 auto 1rem', color: '#A1A1AA' }} />
+                                    <div className="checkout__empty-state" style={{ textAlign: 'center', padding: '3rem 1rem' }}>
+                                        <svg width="120" height="120" viewBox="0 0 120 120" fill="none" style={{ margin: '0 auto 1.5rem', opacity: 0.7 }}>
+                                            <circle cx="60" cy="60" r="56" stroke="#E5E7EB" strokeWidth="2" strokeDasharray="6 4" />
+                                            <rect x="32" y="42" width="56" height="40" rx="6" stroke="#2A2FCE" strokeWidth="2" fill="rgba(42,47,206,0.04)" />
+                                            <path d="M28 42L38 28H82L92 42" stroke="#2A2FCE" strokeWidth="2" strokeLinecap="round" />
+                                            <line x1="60" y1="42" x2="60" y2="82" stroke="#E5E7EB" strokeWidth="1.5" strokeDasharray="3 3" />
+                                            <circle cx="50" cy="62" r="6" stroke="#2A2FCE" strokeWidth="1.5" fill="none" />
+                                            <circle cx="70" cy="62" r="6" stroke="#2A2FCE" strokeWidth="1.5" fill="none" />
+                                        </svg>
                                         <h3 style={{ marginBottom: '0.5rem', color: '#18181B' }}>{t('checkout.errCartEmpty')}</h3>
-                                        <p style={{ marginBottom: '1.5rem' }}>{t('checkout.emptyCartDesc')}</p>
+                                        <p style={{ marginBottom: '1.5rem', color: '#52525B' }}>{t('checkout.emptyCartDesc')}</p>
                                         <Link to="/catalogue" className="checkout__place-order-btn" style={{ display: 'inline-flex', width: 'auto', textDecoration: 'none' }}>
                                             {t('checkout.browseCatalogue')}
                                         </Link>
