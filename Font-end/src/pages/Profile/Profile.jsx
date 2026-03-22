@@ -127,7 +127,10 @@ const Profile = () => {
 
   return (
     <>
-      <Helmet><title>{t('profile.metaTitle')}</title></Helmet>
+      <Helmet>
+        <title>{t('profile.metaTitle')}</title>
+        <meta name="robots" content="noindex, nofollow" />
+      </Helmet>
       <div className="profile container">
         {/* Header */}
         <div className="profile__header">

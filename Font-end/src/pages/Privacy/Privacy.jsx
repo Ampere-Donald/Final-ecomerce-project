@@ -13,6 +13,11 @@ const Privacy = () => {
             <Helmet>
                 <title>{t('privacy.metaTitle')}</title>
                 <meta name="description" content={t('privacy.metaDesc')} />
+                <link rel="canonical" href="https://newoteg.com/privacy" />
+                <meta property="og:title" content={t('privacy.metaTitle')} />
+                <meta property="og:description" content={t('privacy.metaDesc')} />
+                <meta property="og:url" content="https://newoteg.com/privacy" />
+                <meta property="og:image" content="https://newoteg.com/logo.png" />
             </Helmet>
             <div className="privacy-header">
                 <div className="container">

@@ -412,6 +412,8 @@ export default {
         hoursBadge: "Mon–Sat"
     },
     auth: {
+        loginTitle: "Login",
+        signupTitle: "Sign Up",
         loginReqEmail: "Email or phone is required.",
         loginReqPwd: "Password is required.",
         loginInvalid: "Invalid credentials.",
@@ -588,5 +590,12 @@ export default {
         added: "added to cart",
         removed: "Product removed from cart",
         error: "Error adding to cart",
+    },
+    notFound: {
+        title: "Page not found",
+        subtitle: "PAGE NOT FOUND",
+        desc: "The page you're looking for doesn't exist or has been moved. Check the URL or go back to the homepage.",
+        homeBtn: "Back to Home",
+        catalogueBtn: "Browse Catalogue",
     }
 };

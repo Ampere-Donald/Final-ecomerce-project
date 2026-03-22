@@ -84,6 +84,29 @@ const ProductDetails = () => {
             <Helmet>
                 <title>{t('productDetails.metaTitle', { model: product.model, category: product.categoryName })}</title>
                 <meta name="description" content={t('productDetails.metaDesc', { model: product.model, category: product.categoryName, price: formatFCFA(product.retailPrice) })} />
+                <link rel="canonical" href={`https://newoteg.com/product/${product.code}`} />
+                <meta property="og:title" content={product.model} />
+                <meta property="og:description" content={t('productDetails.metaDesc', { model: product.model, category: product.categoryName, price: formatFCFA(product.retailPrice) })} />
+                <meta property="og:url" content={`https://newoteg.com/product/${product.code}`} />
+                <meta property="og:type" content="product" />
+                <meta property="og:image" content={product.images?.[0] || product.image} />
+                <script type="application/ld+json">{JSON.stringify({
+                    "@context": "https://schema.org",
+                    "@type": "Product",
+                    "name": product.model,
+                    "image": product.images?.length ? product.images : [product.image],
+                    "description": product.description || `${product.model} — ${product.categoryName}`,
+                    "sku": `NTG-${product.code}-TR`,
+                    "brand": { "@type": "Brand", "name": product.marque || product.brand || "NEWOTEG" },
+                    "offers": {
+                        "@type": "Offer",
+                        "url": `https://newoteg.com/product/${product.code}`,
+                        "priceCurrency": "XAF",
+                        "price": product.retailPrice,
+                        "availability": product.stock > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
+                        "seller": { "@type": "Organization", "name": "NEWOTEG SARL" }
+                    }
+                })}</script>
             </Helmet>
             {/* ── Breadcrumb ──────────────────────────────── */}
             <div className="product-details__breadcrumb-bar">

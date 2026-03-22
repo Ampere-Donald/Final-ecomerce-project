@@ -13,6 +13,11 @@ const Terms = () => {
             <Helmet>
                 <title>{t('terms.metaTitle')}</title>
                 <meta name="description" content={t('terms.metaDesc')} />
+                <link rel="canonical" href="https://newoteg.com/terms" />
+                <meta property="og:title" content={t('terms.metaTitle')} />
+                <meta property="og:description" content={t('terms.metaDesc')} />
+                <meta property="og:url" content="https://newoteg.com/terms" />
+                <meta property="og:image" content="https://newoteg.com/logo.png" />
             </Helmet>
             <div className="terms-header">
                 <div className="container">

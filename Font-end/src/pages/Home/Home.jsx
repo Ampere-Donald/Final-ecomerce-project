@@ -39,6 +39,32 @@ const Home = () => {
             <Helmet>
                 <title>{t('home.metaTitle')}</title>
                 <meta name="description" content={t('home.metaDesc')} />
+                <link rel="canonical" href="https://newoteg.com/" />
+                <meta property="og:title" content={t('home.metaTitle')} />
+                <meta property="og:description" content={t('home.metaDesc')} />
+                <meta property="og:url" content="https://newoteg.com/" />
+                <meta property="og:type" content="website" />
+                <meta property="og:image" content="https://newoteg.com/logo.png" />
+                <script type="application/ld+json">{JSON.stringify({
+                    "@context": "https://schema.org",
+                    "@type": "Organization",
+                    "name": "NEWOTEG SARL",
+                    "url": "https://newoteg.com",
+                    "logo": "https://newoteg.com/logo.png",
+                    "description": "Fournisseur de composants électroniques et équipements industriels au Cameroun",
+                    "address": {
+                        "@type": "PostalAddress",
+                        "streetAddress": "Rue Foch, Akwa",
+                        "addressLocality": "Douala",
+                        "addressCountry": "CM"
+                    },
+                    "contactPoint": {
+                        "@type": "ContactPoint",
+                        "telephone": "+237699966160",
+                        "contactType": "customer service",
+                        "availableLanguage": ["French", "English"]
+                    }
+                })}</script>
             </Helmet>
             <HeroBanner />
             <PartnerBrands />

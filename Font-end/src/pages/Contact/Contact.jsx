@@ -40,6 +40,39 @@ const Contact = () => {
             <Helmet>
                 <title>{t('contact.metaTitle')}</title>
                 <meta name="description" content={t('contact.metaDesc')} />
+                <link rel="canonical" href="https://newoteg.com/contact" />
+                <meta property="og:title" content={t('contact.metaTitle')} />
+                <meta property="og:description" content={t('contact.metaDesc')} />
+                <meta property="og:url" content="https://newoteg.com/contact" />
+                <meta property="og:image" content="https://newoteg.com/logo.png" />
+                <script type="application/ld+json">{JSON.stringify({
+                    "@context": "https://schema.org",
+                    "@type": "LocalBusiness",
+                    "name": "NEWOTEG SARL",
+                    "url": "https://newoteg.com",
+                    "logo": "https://newoteg.com/logo.png",
+                    "image": "https://newoteg.com/logo.png",
+                    "description": "Fournisseur de composants électroniques et équipements industriels à Douala, Cameroun",
+                    "address": {
+                        "@type": "PostalAddress",
+                        "streetAddress": "Rue Foch, Akwa",
+                        "addressLocality": "Douala",
+                        "addressRegion": "Littoral",
+                        "addressCountry": "CM"
+                    },
+                    "geo": {
+                        "@type": "GeoCoordinates",
+                        "latitude": 4.0435,
+                        "longitude": 9.6966
+                    },
+                    "telephone": "+237699966160",
+                    "email": "contact@newoteg.com",
+                    "openingHoursSpecification": [
+                        { "@type": "OpeningHoursSpecification", "dayOfWeek": ["Monday","Tuesday","Wednesday","Thursday","Friday"], "opens": "08:00", "closes": "18:00" },
+                        { "@type": "OpeningHoursSpecification", "dayOfWeek": "Saturday", "opens": "09:00", "closes": "14:00" }
+                    ],
+                    "priceRange": "$$"
+                })}</script>
             </Helmet>
 
             {/* ── Hero ──────────────────────────────────────── */}

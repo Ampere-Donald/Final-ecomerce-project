@@ -412,6 +412,8 @@ export default {
         hoursBadge: "Lun–Sam"
     },
     auth: {
+        loginTitle: "Connexion",
+        signupTitle: "Inscription",
         loginReqEmail: "L'email ou le téléphone est requis.",
         loginReqPwd: "Le mot de passe est requis.",
         loginInvalid: "Identifiants invalides.",
@@ -588,5 +590,12 @@ export default {
         added: "ajouté au panier",
         removed: "Produit retiré du panier",
         error: "Erreur lors de l'ajout au panier",
+    },
+    notFound: {
+        title: "Page introuvable",
+        subtitle: "PAGE NON TROUVÉE",
+        desc: "La page que vous cherchez n'existe pas ou a été déplacée. Vérifiez l'URL ou retournez à l'accueil.",
+        homeBtn: "Retour à l'accueil",
+        catalogueBtn: "Voir le catalogue",
     }
 };

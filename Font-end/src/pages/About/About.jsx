@@ -28,6 +28,11 @@ const About = () => {
             <Helmet>
                 <title>{t('about.metaTitle')}</title>
                 <meta name="description" content={t('about.metaDesc')} />
+                <link rel="canonical" href="https://newoteg.com/about" />
+                <meta property="og:title" content={t('about.metaTitle')} />
+                <meta property="og:description" content={t('about.metaDesc')} />
+                <meta property="og:url" content="https://newoteg.com/about" />
+                <meta property="og:image" content="https://newoteg.com/logo.png" />
             </Helmet>
             {/* ── Hero Section ────────────────────────────── */}
             <section className="about-hero">

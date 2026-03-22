@@ -16,6 +16,7 @@ import ProtectedRoute from './components/ProtectedRoute/ProtectedRoute'
 import Toast from './components/Toast/Toast'
 import BottomNav from './components/BottomNav/BottomNav'
 import MiniCart from './components/MiniCart/MiniCart'
+import NotFound from './pages/NotFound/NotFound'
 
 function AppContent() {
   const location = useLocation()
@@ -42,6 +43,9 @@ function AppContent() {
             {/* Protected */}
             <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
             <Route path="/favourites" element={<ProtectedRoute><Favorites /></ProtectedRoute>} />
+
+            {/* 404 */}
+            <Route path="*" element={<NotFound />} />
           </Routes>
         </div>
       </main>
