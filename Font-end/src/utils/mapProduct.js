@@ -13,6 +13,16 @@ export const PLACEHOLDER_IMG =
     'https://images.unsplash.com/photo-1608564697071-ddf911d81370?q=80&w=400&auto=format&fit=crop';
 
 /**
+ * Resolve an image URL: absolute URLs (Cloudinary) are returned as-is,
+ * legacy /uploads/ paths are prepended with API_BASE.
+ */
+export function resolveImageUrl(raw) {
+    if (!raw) return null;
+    if (raw.startsWith('http://') || raw.startsWith('https://')) return raw;
+    return `${API_BASE}${raw}`;
+}
+
+/**
  * Generate the short product code from a UUID.
  * Takes the first segment of the UUID and upper-cases it.
  *
@@ -44,13 +54,11 @@ export function mapProduct(p) {
         stock: p.quantiteStock ?? 0,
         oldPrice: null,
         parentCategory: 'ÉQUIPEMENTS',
-        image: p.imageUrl
-            ? `${API_BASE}${p.imageUrl}`
-            : PLACEHOLDER_IMG,
+        image: resolveImageUrl(p.imageUrl) || PLACEHOLDER_IMG,
         images: [
-            p.imageUrl ? `${API_BASE}${p.imageUrl}` : PLACEHOLDER_IMG,
-            p.imageUrl2 ? `${API_BASE}${p.imageUrl2}` : null,
-            p.imageUrl3 ? `${API_BASE}${p.imageUrl3}` : null,
+            resolveImageUrl(p.imageUrl) || PLACEHOLDER_IMG,
+            resolveImageUrl(p.imageUrl2),
+            resolveImageUrl(p.imageUrl3),
         ].filter(Boolean),
     };
 }

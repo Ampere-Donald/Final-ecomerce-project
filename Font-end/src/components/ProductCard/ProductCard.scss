@@ -1,3 +1,4 @@
+@use 'sass:color';
 @use '../../styles/variables' as *;
 
 .product-card {
@@ -237,7 +238,7 @@
         }
 
         &--preorder {
-            background: linear-gradient(135deg, $color-warning 0%, darken($color-warning, 15%) 100%);
+            background: linear-gradient(135deg, $color-warning 0%, color.adjust($color-warning, $lightness: -15%) 100%);
             box-shadow: 0 4px 12px rgba($color-warning, 0.3);
             &:hover {
                 background-position: right center;
@@ -509,7 +510,7 @@
         transition: background-color 0.2s;
 
         &:hover {
-            background-color: darken($color-primary, 8%);
+            background-color: color.adjust($color-primary, $lightness: -8%);
         }
     }
 

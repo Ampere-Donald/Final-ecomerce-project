@@ -14,71 +14,75 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
-import { diskStorage } from 'multer';
-import { extname, join } from 'path';
-import { existsSync } from 'fs';
+import { memoryStorage } from 'multer';
 import { ProduitService } from './produit.service';
 import { CreateProduitDto } from './dto/create-produit.dto';
 import { UpdateProduitDto } from './dto/update-produit.dto';
+import { CloudinaryService } from '../cloudinary/cloudinary.service';
+
+const memStore = { storage: memoryStorage() };
+const memStore3 = { storage: memoryStorage(), limits: { files: 3 } };
 
 @Controller('produits')
 export class ProduitController {
-  constructor(private readonly produitService: ProduitService) {}
+  constructor(
+    private readonly produitService: ProduitService,
+    private readonly cloudinary: CloudinaryService,
+  ) {}
+
+  // ── Helper: upload multer files to Cloudinary, return URLs ────────────────
+  private async uploadFilesToCloudinary(files: Express.Multer.File[]): Promise<string[]> {
+    const urls: string[] = [];
+    for (const file of files) {
+      const url = await this.cloudinary.uploadBuffer(file.buffer, { folder: 'produits' });
+      urls.push(url);
+    }
+    return urls;
+  }
 
   @Post()
-  @UseInterceptors(
-    FilesInterceptor('files', 3, {
-      // TODO: passer sur Cloudinary en prod (pour scaler).
-      storage: diskStorage({
-        destination: './uploads',
-        filename: (req, file, cb) => {
-          const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-          const ext = extname(file.originalname);
-          cb(null, `${file.fieldname}-${uniqueSuffix}${ext}`);
-        },
-      }),
-    }),
-  )
-  create(
+  @UseInterceptors(FilesInterceptor('files', 3, memStore))
+  async create(
     @Body() createProduitDto: CreateProduitDto,
     @UploadedFiles() files?: Express.Multer.File[],
   ) {
-    // 1. Gérer les images existantes
+    // 1. Handle existing images (Cloudinary URLs kept by frontend)
     let existingImages: string[] = [];
     if (createProduitDto.existingImages) {
       try {
-        existingImages = typeof createProduitDto.existingImages === 'string' 
-          ? JSON.parse(createProduitDto.existingImages) 
+        existingImages = typeof createProduitDto.existingImages === 'string'
+          ? JSON.parse(createProduitDto.existingImages)
           : createProduitDto.existingImages;
-      } catch (e) {
-        existingImages = Array.isArray(createProduitDto.existingImages) 
-          ? createProduitDto.existingImages 
+      } catch {
+        existingImages = Array.isArray(createProduitDto.existingImages)
+          ? createProduitDto.existingImages
           : [createProduitDto.existingImages as string];
       }
     }
-    
-    // 2. Gérer les nouvelles images
-    const newFileUrls = (files || []).map(f => `/uploads/${f.filename}`);
-    
-    // 3. Fusionner et assigner aux 3 slots
+
+    // 2. Upload new files to Cloudinary
+    const newFileUrls = files?.length
+      ? await this.uploadFilesToCloudinary(files)
+      : [];
+
+    // 3. Merge and assign to 3 slots
     const finalImages = [...existingImages, ...newFileUrls].slice(0, 3);
     createProduitDto.imageUrl = finalImages[0] || undefined;
     createProduitDto.imageUrl2 = finalImages[1] || undefined;
     createProduitDto.imageUrl3 = finalImages[2] || undefined;
     delete createProduitDto.existingImages;
-    // Parsing manuel de sécurité pour les champs envoyés en FormData (strings)
+
+    // FormData string parsing
     if (createProduitDto.prixGros != null) createProduitDto.prixGros = parseFloat(String(createProduitDto.prixGros));
     if (createProduitDto.prixDetail != null) createProduitDto.prixDetail = parseFloat(String(createProduitDto.prixDetail));
     if (createProduitDto.quantiteStock != null) createProduitDto.quantiteStock = parseInt(String(createProduitDto.quantiteStock), 10);
-    // prixPromo : chaîne vide → undefined (pas de promo)
     const prixPromoStr = String(createProduitDto.prixPromo ?? '');
     createProduitDto.prixPromo = prixPromoStr !== '' ? parseFloat(prixPromoStr) : undefined;
     if (createProduitDto.prixPromo !== undefined && isNaN(createProduitDto.prixPromo)) createProduitDto.prixPromo = undefined;
-    // finPromo : chaîne vide → undefined
     const finPromoStr = String(createProduitDto.finPromo ?? '');
     createProduitDto.finPromo = finPromoStr !== '' ? finPromoStr : undefined;
-    // isPopulaire : string 'true'/'false' → boolean
     createProduitDto.isPopulaire = String(createProduitDto.isPopulaire) === 'true';
+
     return this.produitService.create(createProduitDto);
   }
 
@@ -93,7 +97,6 @@ export class ProduitController {
     @Query('inStock') inStock?: string,
     @Query('sort') sort?: string,
   ) {
-    console.log('--- GET /api/produits CALLED WITH PARAMS ---', { page, limit, search, categoryId, minPrice, maxPrice, inStock, sort });
     return this.produitService.findAll({
       page: page ? parseInt(page, 10) : 1,
       limit: limit ? parseInt(limit, 10) : 1000,
@@ -111,7 +114,6 @@ export class ProduitController {
     return this.produitService.getMetadata();
   }
 
-  // ── Routes spécifiques AVANT :id ─────────────────────────────────────────
   @Get('flash')
   findFlash() {
     return this.produitService.findFlash();
@@ -122,17 +124,28 @@ export class ProduitController {
     return this.produitService.findPopulaires();
   }
 
-  // ── Import CSV en masse ─────────────────────────────────────────────────
+  // ── Import ZIP (CSV + images) or plain CSV ────────────────────────────────
   @Post('import')
-  @UseInterceptors(FileInterceptor('file', { storage: require('multer').memoryStorage() }))
-  async importCsv(@UploadedFile() file: Express.Multer.File) {
+  @UseInterceptors(FileInterceptor('file', { storage: memoryStorage(), limits: { fileSize: 50 * 1024 * 1024 } }))
+  async importProducts(@UploadedFile() file: Express.Multer.File) {
     if (!file) {
-      throw new BadRequestException('Aucun fichier CSV fourni.');
+      throw new BadRequestException('Aucun fichier fourni.');
     }
+
+    const isZip =
+      file.originalname.toLowerCase().endsWith('.zip') ||
+      file.mimetype === 'application/zip' ||
+      file.mimetype === 'application/x-zip-compressed';
+
+    if (isZip) {
+      return this.produitService.importZip(file.buffer);
+    }
+
+    // Fallback: plain CSV (backward compatible)
     return this.produitService.importCsv(file.buffer);
   }
 
-  // ── Nettoyage des imageUrl invalides (fichiers absents du disque) ────────
+  // ── Cleanup invalid images ────────────────────────────────────────────────
   @Post('cleanup-images')
   async cleanupImages() {
     return this.produitService.cleanupInvalidImages();
@@ -144,88 +157,80 @@ export class ProduitController {
   }
 
   @Post(':id/image')
-  @UseInterceptors(
-    FileInterceptor('file', {
-      // TODO: passer sur Cloudinary en prod (pour scaler).
-      storage: diskStorage({
-        destination: './uploads',
-        filename: (req, file, cb) => {
-          const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-          const ext = extname(file.originalname);
-          cb(null, `${file.fieldname}-${uniqueSuffix}${ext}`);
-        },
-      }),
-    }),
-  )
-  uploadImage(
+  @UseInterceptors(FileInterceptor('file', memStore))
+  async uploadImage(
     @Param('id', ParseUUIDPipe) id: string,
     @UploadedFile() file: Express.Multer.File,
   ) {
-    const imageUrl = `/uploads/${file.filename}`;
-    return this.produitService.uploadImage(id, imageUrl);
+    const oldProduit = await this.produitService.findOne(id);
+    const imageUrl = await this.cloudinary.uploadBuffer(file.buffer, { folder: 'produits' });
+    const result = await this.produitService.uploadImage(id, imageUrl);
+    if (oldProduit.imageUrl && oldProduit.imageUrl !== imageUrl) {
+      this.cloudinary.deleteByUrl(oldProduit.imageUrl).catch(() => {});
+    }
+    return result;
   }
 
   @Patch(':id')
-  @UseInterceptors(
-    FilesInterceptor('files', 3, {
-      // TODO: passer sur Cloudinary en prod (pour scaler).
-      storage: diskStorage({
-        destination: './uploads',
-        filename: (req, file, cb) => {
-          const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-          const ext = extname(file.originalname);
-          cb(null, `${file.fieldname}-${uniqueSuffix}${ext}`);
-        },
-      }),
-    }),
-  )
-  update(
+  @UseInterceptors(FilesInterceptor('files', 3, memStore))
+  async update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() updateProduitDto: UpdateProduitDto,
     @UploadedFiles() files?: Express.Multer.File[],
   ) {
-    // 1. Gérer les images existantes (ce que le front-end a décidé de garder)
+    const oldProduit = await this.produitService.findOne(id);
+    const oldImages = [oldProduit.imageUrl, oldProduit.imageUrl2, oldProduit.imageUrl3].filter(Boolean) as string[];
+
+    // 1. Handle existing images (Cloudinary URLs kept by frontend)
     let existingImages: string[] = [];
     if (updateProduitDto.existingImages !== undefined) {
       try {
         existingImages = typeof updateProduitDto.existingImages === 'string' && updateProduitDto.existingImages.startsWith('[')
-          ? JSON.parse(updateProduitDto.existingImages) 
+          ? JSON.parse(updateProduitDto.existingImages)
           : updateProduitDto.existingImages;
-      } catch (e) {
-        existingImages = Array.isArray(updateProduitDto.existingImages) 
-          ? updateProduitDto.existingImages 
+      } catch {
+        existingImages = Array.isArray(updateProduitDto.existingImages)
+          ? updateProduitDto.existingImages
           : (updateProduitDto.existingImages ? [updateProduitDto.existingImages as string] : []);
       }
-      
-      // 2. Nouvelles images
-      const newFileUrls = (files || []).map(f => `/uploads/${f.filename}`);
-      
-      // 3. Assigner aux slots (jusqu'à 3 images)
+
+      // 2. Upload new files to Cloudinary
+      const newFileUrls = files?.length
+        ? await this.uploadFilesToCloudinary(files)
+        : [];
+
+      // 3. Assign to slots (up to 3 images)
       const finalImages = [...existingImages, ...newFileUrls].slice(0, 3);
       (updateProduitDto as any).imageUrl = finalImages[0] || null;
       (updateProduitDto as any).imageUrl2 = finalImages[1] || null;
       (updateProduitDto as any).imageUrl3 = finalImages[2] || null;
       delete updateProduitDto.existingImages;
     } else if (files && files.length > 0) {
-      // Fallback si front-end n'envoie pas existingImages mais envoie juste des files (au cas où)
-      updateProduitDto.imageUrl = `/uploads/${files[0].filename}`;
-      if (files[1]) updateProduitDto.imageUrl2 = `/uploads/${files[1].filename}`;
-      if (files[2]) updateProduitDto.imageUrl3 = `/uploads/${files[2].filename}`;
+      const newFileUrls = await this.uploadFilesToCloudinary(files);
+      updateProduitDto.imageUrl = newFileUrls[0] || undefined;
+      if (newFileUrls[1]) updateProduitDto.imageUrl2 = newFileUrls[1];
+      if (newFileUrls[2]) updateProduitDto.imageUrl3 = newFileUrls[2];
     }
-    // Parsing manuel de sécurité pour les champs envoyés en FormData (strings)
+
+    // FormData string parsing
     if (updateProduitDto.prixGros != null) updateProduitDto.prixGros = parseFloat(String(updateProduitDto.prixGros));
     if (updateProduitDto.prixDetail != null) updateProduitDto.prixDetail = parseFloat(String(updateProduitDto.prixDetail));
     if (updateProduitDto.quantiteStock != null) updateProduitDto.quantiteStock = parseInt(String(updateProduitDto.quantiteStock), 10);
-    // prixPromo : chaîne vide → null (retirer la promo)
     const prixPromoStr = String(updateProduitDto.prixPromo ?? '');
     (updateProduitDto as any).prixPromo = prixPromoStr !== '' ? parseFloat(prixPromoStr) : null;
     if (typeof (updateProduitDto as any).prixPromo === 'number' && isNaN((updateProduitDto as any).prixPromo)) (updateProduitDto as any).prixPromo = null;
-    // finPromo : chaîne vide → null
     const finPromoStr = String(updateProduitDto.finPromo ?? '');
     (updateProduitDto as any).finPromo = finPromoStr !== '' ? finPromoStr : null;
-    // isPopulaire : string 'true'/'false' → boolean
-    updateProduitDto.isPopulaire = String(updateProduitDto.isPopulaire) === 'true';
-    return this.produitService.update(id, updateProduitDto);
+    if (updateProduitDto.isPopulaire !== undefined) updateProduitDto.isPopulaire = String(updateProduitDto.isPopulaire) === 'true';
+
+    const result = await this.produitService.update(id, updateProduitDto);
+    
+    // Cleanup orphaned images
+    const newImages = [result.imageUrl, result.imageUrl2, result.imageUrl3].filter(Boolean) as string[];
+    const imagesToDelete = oldImages.filter(url => !newImages.includes(url));
+    imagesToDelete.forEach(url => this.cloudinary.deleteByUrl(url).catch(() => {}));
+
+    return result;
   }
 
   @Delete(':id')

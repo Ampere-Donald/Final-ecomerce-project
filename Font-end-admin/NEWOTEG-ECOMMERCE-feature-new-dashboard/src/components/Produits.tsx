@@ -43,6 +43,14 @@ const FORM_INITIAL = {
   isPopulaire: false,
 };
 
+// ─── Helper: resolve image URL (Cloudinary absolute or legacy /uploads/) ─────
+const resolveImgUrl = (raw: string | null | undefined): string | null => {
+  if (!raw) return null;
+  if (raw.startsWith('http://') || raw.startsWith('https://')) return raw;
+  const API_BASE = (import.meta.env.VITE_API_URL || 'http://localhost:3000/api').replace('/api', '');
+  return `${API_BASE}${raw.startsWith('/') ? '' : '/'}${raw}`;
+};
+
 // ─── Composant principal ──────────────────────────────────────────────────────
 export const Produits = () => {
   // ─── State liste & recherche (état global stable) ─────────────────────────
@@ -55,7 +63,7 @@ export const Produits = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduit, setEditingProduit] = useState<Produit | null>(null);
   const [formData, setFormData] = useState({ ...FORM_INITIAL });
-  
+
   type ImageSlot = {
     url: string | null;      // Local Preview or Full HTTP URL
     file: File | null;       // New file
@@ -74,13 +82,16 @@ export const Produits = () => {
   // ─── State confirmation suppression ───────────────────────────────────────
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  // ─── State Import CSV ─────────────────────────────────────────────────────
+  // ─── State Import CSV / ZIP ──────────────────────────────────────────────
   const [isCsvModalOpen, setIsCsvModalOpen] = useState(false);
   const [csvPreview, setCsvPreview] = useState<Record<string, string>[]>([]);
   const [csvColumns, setCsvColumns] = useState<string[]>([]);
   const [csvFile, setCsvFile] = useState<File | null>(null);
   const [csvImporting, setCsvImporting] = useState(false);
   const [csvResult, setCsvResult] = useState<string | null>(null);
+  const [uploadProgress, setUploadProgress] = useState<number>(0);
+  const [importIsZip, setImportIsZip] = useState(false);
+  const [zipImageCount, setZipImageCount] = useState(0);
   const csvInputRef = useRef<HTMLInputElement>(null);
 
   // ─── Chargement initial unique ([] strict) ────────────────────────────────
@@ -142,11 +153,10 @@ export const Produits = () => {
       finPromo: prod.finPromo ? prod.finPromo.slice(0, 16) : '', // format datetime-local
       isPopulaire: prod.isPopulaire ?? false,
     });
-    const API_BASE = (import.meta.env.VITE_API_URL || 'http://localhost:3000/api').replace('/api', '');
     setImageSlots([
-      { url: prod.imageUrl ? `${API_BASE}${prod.imageUrl.startsWith('/') ? '' : '/'}${prod.imageUrl}` : null, file: null, isExisting: !!prod.imageUrl, dbUrl: prod.imageUrl || null },
-      { url: prod.imageUrl2 ? `${API_BASE}${prod.imageUrl2.startsWith('/') ? '' : '/'}${prod.imageUrl2}` : null, file: null, isExisting: !!prod.imageUrl2, dbUrl: prod.imageUrl2 || null },
-      { url: prod.imageUrl3 ? `${API_BASE}${prod.imageUrl3.startsWith('/') ? '' : '/'}${prod.imageUrl3}` : null, file: null, isExisting: !!prod.imageUrl3, dbUrl: prod.imageUrl3 || null },
+      { url: resolveImgUrl(prod.imageUrl), file: null, isExisting: !!prod.imageUrl, dbUrl: prod.imageUrl || null },
+      { url: resolveImgUrl(prod.imageUrl2), file: null, isExisting: !!prod.imageUrl2, dbUrl: prod.imageUrl2 || null },
+      { url: resolveImgUrl(prod.imageUrl3), file: null, isExisting: !!prod.imageUrl3, dbUrl: prod.imageUrl3 || null },
     ]);
     setIsModalOpen(true);
   };
@@ -200,14 +210,14 @@ export const Produits = () => {
       dataToSend.append('prixPromo', formData.prixPromo);
       dataToSend.append('finPromo', formData.finPromo ? new Date(formData.finPromo).toISOString() : '');
       dataToSend.append('isPopulaire', String(formData.isPopulaire));
-      
+
       const existing = imageSlots.filter(s => s.isExisting && s.dbUrl).map(s => s.dbUrl);
       if (existing.length > 0) {
         dataToSend.append('existingImages', JSON.stringify(existing));
       } else {
         dataToSend.append('existingImages', '[]');
       }
-      
+
       imageSlots.forEach(s => {
         if (s.file) dataToSend.append('files', s.file);
       });
@@ -271,29 +281,79 @@ export const Produits = () => {
             className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-all font-semibold shadow-sm"
           >
             <FileSpreadsheet size={18} />
-            <span>Import CSV</span>
+            <span>Import CSV / ZIP</span>
           </button>
           <input
             ref={csvInputRef}
             type="file"
-            accept=".csv"
+            accept=".csv,.zip"
             className="hidden"
-            onChange={(e) => {
+            onChange={async (e) => {
               const file = e.target.files?.[0];
               if (!file) return;
               setCsvFile(file);
               setCsvResult(null);
-              Papa.parse(file, {
-                header: true,
-                preview: 5,
-                skipEmptyLines: true,
-                complete: (results) => {
-                  setCsvColumns(results.meta.fields || []);
-                  setCsvPreview(results.data as Record<string, string>[]);
-                  setIsCsvModalOpen(true);
-                },
-                error: () => alert('Erreur de lecture du fichier CSV.'),
-              });
+              setUploadProgress(0);
+
+              const isZip = file.name.toLowerCase().endsWith('.zip');
+              setImportIsZip(isZip);
+
+              if (isZip) {
+                // Parse ZIP: extract CSV for preview + count images
+                try {
+                  const JSZip = (await import('jszip')).default;
+                  const zip = await JSZip.loadAsync(file);
+                  let csvContent: string | null = null;
+                  let imgCount = 0;
+
+                  for (const [name, entry] of Object.entries(zip.files)) {
+                    if (entry.dir || name.startsWith('__MACOSX')) continue;
+                    const lower = name.toLowerCase();
+                    if (lower.endsWith('.csv')) {
+                      csvContent = await entry.async('text');
+                    } else if (/\.(jpg|jpeg|png|gif|webp|svg|bmp)$/.test(lower)) {
+                      imgCount++;
+                    }
+                  }
+
+                  setZipImageCount(imgCount);
+
+                  if (!csvContent) {
+                    alert('Aucun fichier CSV trouvé dans le ZIP.');
+                    e.target.value = '';
+                    return;
+                  }
+
+                  Papa.parse(csvContent, {
+                    header: true,
+                    preview: 5,
+                    delimiter: ';',
+                    skipEmptyLines: true,
+                    complete: (results) => {
+                      setCsvColumns(results.meta.fields || []);
+                      setCsvPreview(results.data as Record<string, string>[]);
+                      setIsCsvModalOpen(true);
+                    },
+                    error: () => alert('Erreur de lecture du CSV dans le ZIP.'),
+                  });
+                } catch {
+                  alert('Impossible de lire le fichier ZIP.');
+                }
+              } else {
+                // Plain CSV
+                setZipImageCount(0);
+                Papa.parse(file, {
+                  header: true,
+                  preview: 5,
+                  skipEmptyLines: true,
+                  complete: (results) => {
+                    setCsvColumns(results.meta.fields || []);
+                    setCsvPreview(results.data as Record<string, string>[]);
+                    setIsCsvModalOpen(true);
+                  },
+                  error: () => alert('Erreur de lecture du fichier CSV.'),
+                });
+              }
               e.target.value = '';
             }}
           />
@@ -319,9 +379,16 @@ export const Produits = () => {
             >
               <div className="flex items-center justify-between p-6 border-b border-slate-100">
                 <div>
-                  <h2 className="text-xl font-bold text-slate-800">Prévisualisation Import CSV</h2>
+                  <h2 className="text-xl font-bold text-slate-800">
+                    {importIsZip ? 'Import ZIP (CSV + Images)' : 'Prévisualisation Import CSV'}
+                  </h2>
                   <p className="text-sm text-slate-500 mt-1">
                     {csvFile?.name} — {csvColumns.length} colonnes détectées
+                    {importIsZip && zipImageCount > 0 && (
+                      <span className="ml-2 inline-flex items-center gap-1 px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full text-xs font-semibold">
+                        <ImageIcon size={12} /> {zipImageCount} image{zipImageCount > 1 ? 's' : ''}
+                      </span>
+                    )}
                   </p>
                 </div>
                 <button
@@ -381,9 +448,22 @@ export const Produits = () => {
                     if (!csvFile) return;
                     setCsvImporting(true);
                     setCsvResult(null);
+                    setUploadProgress(0);
                     try {
-                      const result = await produitApi.importCsv(csvFile);
-                      setCsvResult(`Import terminé avec succès ! ${result.produitsImportes} produit(s) importé(s), ${result.produitsIgnores} ignoré(s).${result.nouvellesCategories?.length ? ' Nouvelles catégories : ' + result.nouvellesCategories.join(', ') : ''}`);
+                      let result: any;
+                      if (importIsZip) {
+                        result = await produitApi.importZip(csvFile, (pct) => setUploadProgress(pct));
+                        const parts = [`Import ZIP terminé avec succès !`];
+                        if (result.produitsCreés) parts.push(`${result.produitsCreés} créé(s)`);
+                        if (result.produitsMisAJour) parts.push(`${result.produitsMisAJour} mis à jour`);
+                        if (result.produitsIgnorés) parts.push(`${result.produitsIgnorés} ignoré(s)`);
+                        if (result.imagesUploadées) parts.push(`${result.imagesUploadées} image(s) uploadée(s)`);
+                        if (result.nouvellesCategories?.length) parts.push(`Nouvelles catégories : ${result.nouvellesCategories.join(', ')}`);
+                        setCsvResult(parts.join(' — '));
+                      } else {
+                        result = await produitApi.importCsv(csvFile);
+                        setCsvResult(`Import terminé avec succès ! ${result.produitsImportes} produit(s) importé(s), ${result.produitsIgnores} ignoré(s).${result.nouvellesCategories?.length ? ' Nouvelles catégories : ' + result.nouvellesCategories.join(', ') : ''}`);
+                      }
                       // Refresh products list
                       const [produitsData, categoriesData] = await Promise.all([
                         produitApi.getAll(),
@@ -395,14 +475,21 @@ export const Produits = () => {
                       setCsvResult(`Erreur : ${err.response?.data?.message || err.message || 'Import échoué.'}`);
                     } finally {
                       setCsvImporting(false);
+                      setUploadProgress(0);
                     }
                   }}
                   className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 font-semibold transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {csvImporting ? (
-                    <><span className="animate-spin">⏳</span> Import en cours...</>
+                    <span className="flex items-center gap-2">
+                      <span className="animate-spin">⏳</span>
+                      <span>{uploadProgress > 0 && uploadProgress < 100 ? `Upload ${uploadProgress}%...` : 'Traitement en cours...'}</span>
+                    </span>
                   ) : (
-                    <><Upload size={18} /> Confirmer l'import</>
+                    <span className="flex items-center gap-2">
+                      <Upload size={18} />
+                      <span>Confirmer l'import</span>
+                    </span>
                   )}
                 </button>
               </div>
@@ -755,81 +842,80 @@ export const Produits = () => {
                 filteredProduits.map((prod) => {
                   const hasActivePromo = prod.prixPromo != null && prod.finPromo && new Date(prod.finPromo) > new Date();
                   return (
-                  <tr key={prod.id} className="hover:bg-slate-50 transition-colors">
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="size-12 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center overflow-hidden shrink-0">
-                          {prod.imageUrl ? (
-                            <img
-                              src={`${(import.meta.env.VITE_API_URL || 'http://localhost:3000/api').replace('/api', '')}${prod.imageUrl.startsWith('/') ? '' : '/'}${prod.imageUrl}`}
-                              alt={prod.nomProduit}
-                              className="w-full h-full object-cover"
-                              onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                            />
+                    <tr key={prod.id} className="hover:bg-slate-50 transition-colors">
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="size-12 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center overflow-hidden shrink-0">
+                            {prod.imageUrl ? (
+                              <img
+                                src={resolveImgUrl(prod.imageUrl)!}
+                                alt={prod.nomProduit}
+                                className="w-full h-full object-cover"
+                                onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                              />
+                            ) : (
+                              <ImageIcon size={20} className="text-slate-400 opacity-50" />
+                            )}
+                          </div>
+                          <div>
+                            <p className="font-bold text-slate-900">{prod.nomProduit}</p>
+                            <p className="text-xs text-slate-500 max-w-[200px] truncate">{prod.description}</p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-slate-100 text-slate-600">
+                          <Tag size={12} />
+                          {prod.categorie?.nom || 'N/A'}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 font-medium text-slate-700">{prod.marque}</td>
+                      <td className="px-6 py-4 text-sm font-semibold text-emerald-600">
+                        {prod.prixDetail != null ? `${prod.prixDetail.toLocaleString('fr-FR')} FCFA` : '—'}
+                      </td>
+                      <td className="px-6 py-4 text-sm font-medium text-slate-600">
+                        {prod.prixGros != null ? `${prod.prixGros.toLocaleString('fr-FR')} FCFA` : '—'}
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className={`inline-flex items-center px-2 py-1 rounded-md text-xs font-bold ${(prod.quantiteStock ?? 0) > 10 ? 'bg-emerald-50 text-emerald-700'
+                          : (prod.quantiteStock ?? 0) > 0 ? 'bg-amber-50 text-amber-700'
+                            : 'bg-red-50 text-red-700'
+                          }`}>
+                          {prod.quantiteStock ?? 0}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex flex-col gap-1">
+                          {hasActivePromo && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-700">
+                              <Zap size={10} className="fill-amber-500" />PROMO {prod.prixPromo?.toLocaleString('fr-FR')} FCFA
+                            </span>
+                          )}
+                          {prod.isPopulaire && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-700">
+                              <Star size={10} className="fill-blue-500" />POPULAIRE
+                            </span>
+                          )}
+                          {!hasActivePromo && !prod.isPopulaire && <span className="text-xs text-slate-300">—</span>}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <button onClick={() => openEditModal(prod)} title="Modifier" className="p-1.5 text-slate-400 hover:text-primary transition-colors hover:bg-slate-100 rounded-lg">
+                            <Edit2 size={16} />
+                          </button>
+                          {deletingId === prod.id ? (
+                            <button onClick={() => handleDelete(prod.id)} className="flex items-center gap-1 px-2 py-1 text-xs font-bold text-white bg-red-500 rounded-lg hover:bg-red-600 transition-colors animate-pulse">
+                              <AlertTriangle size={12} />Confirmer
+                            </button>
                           ) : (
-                            <ImageIcon size={20} className="text-slate-400 opacity-50" />
+                            <button onClick={() => handleDelete(prod.id)} title="Supprimer" className="p-1.5 text-slate-400 hover:text-red-500 transition-colors hover:bg-red-50 rounded-lg">
+                              <Trash2 size={16} />
+                            </button>
                           )}
                         </div>
-                        <div>
-                          <p className="font-bold text-slate-900">{prod.nomProduit}</p>
-                          <p className="text-xs text-slate-500 max-w-[200px] truncate">{prod.description}</p>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-slate-100 text-slate-600">
-                        <Tag size={12} />
-                        {prod.categorie?.nom || 'N/A'}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 font-medium text-slate-700">{prod.marque}</td>
-                    <td className="px-6 py-4 text-sm font-semibold text-emerald-600">
-                      {prod.prixDetail != null ? `${prod.prixDetail.toLocaleString('fr-FR')} FCFA` : '—'}
-                    </td>
-                    <td className="px-6 py-4 text-sm font-medium text-slate-600">
-                      {prod.prixGros != null ? `${prod.prixGros.toLocaleString('fr-FR')} FCFA` : '—'}
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className={`inline-flex items-center px-2 py-1 rounded-md text-xs font-bold ${
-                        (prod.quantiteStock ?? 0) > 10 ? 'bg-emerald-50 text-emerald-700'
-                          : (prod.quantiteStock ?? 0) > 0 ? 'bg-amber-50 text-amber-700'
-                          : 'bg-red-50 text-red-700'
-                      }`}>
-                        {prod.quantiteStock ?? 0}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex flex-col gap-1">
-                        {hasActivePromo && (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-700">
-                            <Zap size={10} className="fill-amber-500" />PROMO {prod.prixPromo?.toLocaleString('fr-FR')} FCFA
-                          </span>
-                        )}
-                        {prod.isPopulaire && (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-700">
-                            <Star size={10} className="fill-blue-500" />POPULAIRE
-                          </span>
-                        )}
-                        {!hasActivePromo && !prod.isPopulaire && <span className="text-xs text-slate-300">—</span>}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <button onClick={() => openEditModal(prod)} title="Modifier" className="p-1.5 text-slate-400 hover:text-primary transition-colors hover:bg-slate-100 rounded-lg">
-                          <Edit2 size={16} />
-                        </button>
-                        {deletingId === prod.id ? (
-                          <button onClick={() => handleDelete(prod.id)} className="flex items-center gap-1 px-2 py-1 text-xs font-bold text-white bg-red-500 rounded-lg hover:bg-red-600 transition-colors animate-pulse">
-                            <AlertTriangle size={12} />Confirmer
-                          </button>
-                        ) : (
-                          <button onClick={() => handleDelete(prod.id)} title="Supprimer" className="p-1.5 text-slate-400 hover:text-red-500 transition-colors hover:bg-red-50 rounded-lg">
-                            <Trash2 size={16} />
-                          </button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
+                      </td>
+                    </tr>
                   );
                 })
               )}
@@ -854,7 +940,7 @@ export const Produits = () => {
                   <div className="size-14 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center overflow-hidden shrink-0">
                     {prod.imageUrl ? (
                       <img
-                        src={`${(import.meta.env.VITE_API_URL || 'http://localhost:3000/api').replace('/api', '')}${prod.imageUrl.startsWith('/') ? '' : '/'}${prod.imageUrl}`}
+                        src={resolveImgUrl(prod.imageUrl)!}
                         alt={prod.nomProduit}
                         className="w-full h-full object-cover"
                         onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
@@ -886,11 +972,10 @@ export const Produits = () => {
                         <Tag size={10} />{prod.categorie?.nom || 'N/A'}
                       </span>
                       <span className="text-[11px] text-slate-500">{prod.marque}</span>
-                      <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-bold ${
-                        (prod.quantiteStock ?? 0) > 10 ? 'bg-emerald-50 text-emerald-700'
-                          : (prod.quantiteStock ?? 0) > 0 ? 'bg-amber-50 text-amber-700'
+                      <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-bold ${(prod.quantiteStock ?? 0) > 10 ? 'bg-emerald-50 text-emerald-700'
+                        : (prod.quantiteStock ?? 0) > 0 ? 'bg-amber-50 text-amber-700'
                           : 'bg-red-50 text-red-700'
-                      }`}>
+                        }`}>
                         Stock: {prod.quantiteStock ?? 0}
                       </span>
                     </div>

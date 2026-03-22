@@ -3,6 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { SlidersHorizontal, X, ChevronLeft, ChevronRight, Search, LayoutGrid, List } from 'lucide-react';
 import apiClient from '../../utils/apiClient';
+import { resolveImageUrl } from '../../utils/mapProduct';
 import { useDebounce } from '../../hooks/useDebounce';
 import { useI18n } from '../../context/I18nContext';
 import Footer from '../../components/Footer/Footer';
@@ -115,9 +116,8 @@ const Catalogue = () => {
                     oldPrice: null,
                     parentCategory: 'ÉQUIPEMENTS',
                     urlDatasheet: p.urlDatasheet || null,
-                    image: p.imageUrl 
-                        ? `${(import.meta.env.VITE_API_URL || 'http://localhost:3000/api').replace('/api', '')}${p.imageUrl}` 
-                        : 'https://images.unsplash.com/photo-1505843490538-5133c6c7d0e1?q=80&w=400&auto=format&fit=crop'
+                    image: resolveImageUrl(p.imageUrl)
+                        || 'https://images.unsplash.com/photo-1505843490538-5133c6c7d0e1?q=80&w=400&auto=format&fit=crop'
                 }));
 
 

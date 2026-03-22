@@ -1,3 +1,4 @@
+@use 'sass:color';
 @use '../../styles/variables' as *;
 
 .about-page {
@@ -270,7 +271,7 @@
                 box-shadow: 0 10px 25px rgba($color-primary, 0.4);
 
                 &:hover {
-                    background: lighten($color-primary, 5%);
+                    background: color.adjust($color-primary, $lightness: 5%);
                     transform: translateY(-2px);
                     box-shadow: 0 15px 30px rgba($color-primary, 0.6);
                 }

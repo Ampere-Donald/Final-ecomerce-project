@@ -1,0 +1,16 @@
+version: '3.9'
+services:
+  db-test:
+    image: postgres:16-alpine
+    restart: always
+    environment:
+      POSTGRES_DB: newoteg_db
+      POSTGRES_USER: newoteg_user
+      POSTGRES_PASSWORD: newoteg_password
+    volumes:
+      - postgres_test_data:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"
+
+volumes:
+  postgres_test_data:

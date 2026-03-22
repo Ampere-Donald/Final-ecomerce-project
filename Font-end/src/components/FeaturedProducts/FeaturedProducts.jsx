@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { Zap, ChevronLeft, ChevronRight } from 'lucide-react';
 import apiClient from '../../utils/apiClient';
 import { formatFCFA } from '../../utils/formatFCFA';
-import { mapProduct, PLACEHOLDER_IMG } from '../../utils/mapProduct';
+import { mapProduct, resolveImageUrl, PLACEHOLDER_IMG } from '../../utils/mapProduct';
 import { useCart } from '../../context/CartContext';
 import { useI18n } from '../../context/I18nContext';
 import { Link } from 'react-router-dom';
@@ -229,7 +229,7 @@ const FeaturedProducts = () => {
                         finPromo: p.finPromo,
                         badge: discount > 0 ? `-${discount}%` : '',
                         image: p.imageUrl
-                            ? `${(import.meta.env.VITE_API_URL || 'http://localhost:3000/api').replace('/api', '')}${p.imageUrl}`
+                            ? resolveImageUrl(p.imageUrl)
                             : PLACEHOLDER_IMG,
                     };
                 });
@@ -256,7 +256,7 @@ const FeaturedProducts = () => {
                     wholesalePrice: parseFloat(p.prixGros) || 0,
                     stock: p.quantiteStock ?? 0,
                     image: p.imageUrl
-                        ? `${(import.meta.env.VITE_API_URL || 'http://localhost:3000/api').replace('/api', '')}${p.imageUrl}`
+                        ? resolveImageUrl(p.imageUrl)
                         : PLACEHOLDER_IMG,
                 }));
                 setBestSellers(popData);

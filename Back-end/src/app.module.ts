@@ -24,6 +24,7 @@ import { AuthModule } from './auth/auth.module';
 import { FavoriModule } from './favori/favori.module';
 import { DatabaseModule } from './database/database.module';
 import { NewsletterModule } from './newsletter/newsletter.module';
+import { CloudinaryModule } from './cloudinary/cloudinary.module';
 
 @Module({
   imports: [
@@ -52,6 +53,7 @@ import { NewsletterModule } from './newsletter/newsletter.module';
     FavoriModule,
     DatabaseModule,
     NewsletterModule,
+    CloudinaryModule,
   ],
   controllers: [AppController],
   providers: [AppService],

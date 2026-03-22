@@ -47,6 +47,17 @@ export const produitApi = {
       headers: { 'Content-Type': 'multipart/form-data' },
     }).then(res => res.data);
   },
+  importZip: (file: File, onProgress?: (pct: number) => void) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return api.post('/produits/import', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      timeout: 300000, // 5 min for large ZIPs
+      onUploadProgress: (e) => {
+        if (onProgress && e.total) onProgress(Math.round((e.loaded * 100) / e.total));
+      },
+    }).then(res => res.data);
+  },
   uploadImage: (id: string, file: File) => {
     const formData = new FormData();
     formData.append('file', file);

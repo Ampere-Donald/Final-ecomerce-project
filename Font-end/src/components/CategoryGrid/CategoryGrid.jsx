@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Box, ChevronDown } from 'lucide-react';
 import apiClient from '../../utils/apiClient';
+import { resolveImageUrl } from '../../utils/mapProduct';
 import { useI18n } from '../../context/I18nContext';
 import './CategoryGrid.scss';
 
@@ -100,7 +101,7 @@ const CategoryGrid = () => {
                 <div className="category-grid">
                     {displayedCategories.map((cat, index) => {
                         const hasImage = cat.imageUrl && cat.imageUrl.length > 5;
-                        const defaultImage = hasImage ? `${(import.meta.env.VITE_API_URL || 'http://localhost:3000/api').replace('/api', '')}${cat.imageUrl}` : PLACEHOLDER_IMG;
+                        const defaultImage = hasImage ? (resolveImageUrl(cat.imageUrl) || PLACEHOLDER_IMG) : PLACEHOLDER_IMG;
                         
                         return (
                             <Link 
