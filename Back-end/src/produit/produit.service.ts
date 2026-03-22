@@ -804,9 +804,14 @@ export class ProduitService {
       } else {
         toCreate.push({
           ...productData,
+          description: productData.description ?? null,
+          urlDatasheet: productData.urlDatasheet ?? null,
+          prixPromo: productData.prixPromo ?? null,
+          finPromo: productData.finPromo ?? null,
           prixDetail: productData.prixDetail ?? 0,
           prixGros: productData.prixGros ?? 0,
           quantiteStock: productData.quantiteStock ?? 0,
+          isPopulaire: productData.isPopulaire ?? false,
         });
       }
     }
