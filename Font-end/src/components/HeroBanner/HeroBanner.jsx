@@ -22,7 +22,7 @@ const getHeroSlides = (t) => [
         title: t('hero.slide2.title'),
         subtitle: t('hero.slide2.subtitle'),
         primaryAction: { label: t('hero.slide2.primaryAction'), link: '/catalogue?category=components' },
-        secondaryAction: { label: t('hero.slide2.secondaryAction'), link: '/product/101001' }
+        secondaryAction: { label: t('hero.slide2.secondaryAction'), link: '/catalogue' }
     },
     {
         id: 3,

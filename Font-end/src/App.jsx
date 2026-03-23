@@ -29,7 +29,7 @@ function AppContent() {
           <Routes location={location}>
             <Route path="/" element={<Home />} />
             <Route path="/catalogue" element={<Catalogue />} />
-            <Route path="/product/:code" element={<ProductDetails />} />
+            <Route path="/product/:id" element={<ProductDetails />} />
             <Route path="/checkout" element={<Checkout />} />
             <Route path="/about" element={<About />} />
             <Route path="/contact" element={<Contact />} />

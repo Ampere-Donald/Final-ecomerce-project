@@ -49,7 +49,7 @@ const ProductCard = ({ product, badge }) => {
         <>
             <div className={`product-card ${isBackorder ? 'product-card--backorder' : ''}`}>
                 {/* Image area */}
-                <Link to={`/product/${product.code}`} className="product-card__image-area">
+                <Link to={`/product/${product.id}`} className="product-card__image-area">
                     <img
                         src={imgSrc}
                         alt={product.model}
@@ -96,7 +96,7 @@ const ProductCard = ({ product, badge }) => {
                 </Link>
 
                 <div className="product-card__body">
-                    <Link to={`/product/${product.code}`} className="product-card__info-link">
+                    <Link to={`/product/${product.id}`} className="product-card__info-link">
                         <p className="product-card__category">
                             {product.categoryName || product.parentCategory || t('product.defaultCategory')}
                         </p>
@@ -111,7 +111,7 @@ const ProductCard = ({ product, badge }) => {
                     </Link>
 
                     <div className="product-card__bottom-row">
-                        <Link to={`/product/${product.code}`} className="product-card__price-block">
+                        <Link to={`/product/${product.id}`} className="product-card__price-block">
                             <span className="product-card__price-primary">
                                 {formatFCFA(product.wholesalePrice || product.retailPrice)}
                             </span>
@@ -187,7 +187,7 @@ const ProductCard = ({ product, badge }) => {
                                         <ShoppingCart size={16} />
                                         {t('product.addToCart')}
                                     </button>
-                                    <Link to={`/product/${product.code}`} className="quick-view-modal__detail-link">
+                                    <Link to={`/product/${product.id}`} className="quick-view-modal__detail-link">
                                         {t('product.viewFullDetails')}
                                     </Link>
                                 </div>

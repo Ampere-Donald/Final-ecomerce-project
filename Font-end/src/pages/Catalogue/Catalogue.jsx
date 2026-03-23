@@ -120,6 +120,7 @@ const Catalogue = () => {
                 setTotalProducts(meta.total);
 
                 const formattedProducts = backendProducts.map(p => ({
+                    id: p.id,
                     model: p.nomProduit,
                     code: p.id.split('-')[0].toUpperCase(),
                     brand: p.marque,

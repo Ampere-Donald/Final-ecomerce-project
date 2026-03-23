@@ -79,7 +79,7 @@ const FlashProductCard = ({ product, addToCart }) => {
     const { t } = useI18n();
     const outOfStock = (product.stock ?? 0) <= 0;
     return (
-        <Link to={`/product/${product.code}`} className={`product-card ${outOfStock ? 'product-card--out-of-stock' : ''}`}>
+        <Link to={`/product/${product.id}`} className={`product-card ${outOfStock ? 'product-card--out-of-stock' : ''}`}>
             <div className="product-card__image-wrapper">
                 <span className={`product-card__stock-badge ${outOfStock ? 'product-card__stock-badge--rupture' : ''}`}>
                     {outOfStock ? t('product.outOfStock') : t('product.inStock')}
@@ -138,7 +138,7 @@ const PopularProductCard = ({ product, addToCart }) => {
     const { t } = useI18n();
     const outOfStock = (product.stock ?? 0) <= 0;
     return (
-        <Link to={`/product/${product.code}`} className={`product-card ${outOfStock ? 'product-card--out-of-stock' : ''}`}>
+        <Link to={`/product/${product.id}`} className={`product-card ${outOfStock ? 'product-card--out-of-stock' : ''}`}>
             <div className="product-card__image-wrapper">
                 <span className={`product-card__stock-badge ${outOfStock ? 'product-card__stock-badge--rupture' : ''}`}>
                     {outOfStock ? t('product.outOfStock') : t('product.inStock')}

@@ -31,6 +31,7 @@ export function FavoritesProvider({ children }) {
                 return prev.filter(f => f.code !== product.code);
             }
             return [...prev, {
+                id: product.id,
                 code: product.code,
                 model: product.model,
                 image: product.image,

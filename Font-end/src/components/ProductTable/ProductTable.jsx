@@ -38,7 +38,7 @@ const ProductTable = ({ products }) => {
                         return (
                             <tr key={product.code} className={`product-table__row ${isBackorder ? 'product-table__row--backorder' : ''}`}>
                                 <td className="product-table__cell product-table__cell-img">
-                                    <Link to={`/product/${product.code}`}>
+                                    <Link to={`/product/${product.id}`}>
                                         <img 
                                             src={product.image || PLACEHOLDER_IMG} 
                                             alt={product.model} 
@@ -48,7 +48,7 @@ const ProductTable = ({ products }) => {
                                     </Link>
                                 </td>
                                 <td className="product-table__cell">
-                                    <Link to={`/product/${product.code}`} className="product-table__ref-link">
+                                    <Link to={`/product/${product.id}`} className="product-table__ref-link">
                                         <strong>{product.model}</strong>
                                     </Link>
                                     <span className="product-table__brand">{product.brand || t('productTable.genericBrand')}</span>

@@ -4,7 +4,7 @@ import { Helmet } from 'react-helmet-async';
 import { ChevronRight, ShoppingCart, CheckCircle2, Truck, FileText, Package, Plus, Minus, ShieldCheck, Box, Heart } from 'lucide-react';
 import apiClient from '../../utils/apiClient';
 import { formatFCFA } from '../../utils/formatFCFA';
-import { mapProduct, getProductCode } from '../../utils/mapProduct';
+import { mapProduct } from '../../utils/mapProduct';
 import { useCart } from '../../context/CartContext';
 import { useFavorites } from '../../context/FavoritesContext';
 import { useI18n } from '../../context/I18nContext';
@@ -13,7 +13,7 @@ import './ProductDetails.scss';
 
 const ProductDetails = () => {
     const { t } = useI18n();
-    const { code } = useParams();
+    const { id } = useParams();
     const { addToCart } = useCart();
     const { toggleFavorite, isFavorite } = useFavorites();
     const [quantity, setQuantity] = useState(1);
@@ -28,34 +28,37 @@ const ProductDetails = () => {
         const fetchProduct = async () => {
             try {
                 setLoading(true);
-                const res = await apiClient.get('/produits');
-                const allProducts = Array.isArray(res.data) ? res.data : res.data.data || [];
 
-                // Match the route :code param against the short code derived from the UUID
-                const upperCode = code.toUpperCase();
-                const foundRaw = allProducts.find(p => getProductCode(p.id) === upperCode);
+                // Fetch single product by UUID
+                const res = await apiClient.get(`/produits/${id}`);
+                const foundRaw = res.data;
 
                 if (foundRaw) {
                     const formattedProd = mapProduct(foundRaw);
                     setProduct(formattedProd);
 
-                    // Related products — same category, exclude current
-                    const related = allProducts
-                        .filter(p => p.id !== foundRaw.id && p.categorieId === foundRaw.categorieId)
-                        .slice(0, 4)
-                        .map(mapProduct);
-                    setRelatedProducts(related);
+                    // Fetch related products from the same category
+                    if (foundRaw.categorieId) {
+                        const relRes = await apiClient.get(`/produits?categoryId=${foundRaw.categorieId}&limit=5`);
+                        const relRaw = Array.isArray(relRes.data) ? relRes.data : relRes.data.data || [];
+                        const related = relRaw
+                            .filter(p => p.id !== foundRaw.id)
+                            .slice(0, 4)
+                            .map(mapProduct);
+                        setRelatedProducts(related);
+                    }
                 } else {
                     setProduct(null);
                 }
             } catch (err) {
                 console.error("Erreur de chargement du produit", err);
+                setProduct(null);
             } finally {
                 setLoading(false);
             }
         };
         fetchProduct();
-    }, [code]);
+    }, [id]);
 
     if (loading) {
         return (
@@ -82,7 +85,7 @@ const ProductDetails = () => {
                 <div className="product-details__not-found">
                     <Package size={64} strokeWidth={1} />
                     <h2>{t('productDetails.notFoundTitle')}</h2>
-                    <p>{t('productDetails.notFoundDesc', { code })}</p>
+                    <p>{t('productDetails.notFoundDesc', { code: id })}</p>
                     <Link to="/catalogue" className="product-details__back-btn">
                         {t('productDetails.backToCatalogue')}
                     </Link>
@@ -101,10 +104,10 @@ const ProductDetails = () => {
             <Helmet>
                 <title>{t('productDetails.metaTitle', { model: product.model, category: product.categoryName })}</title>
                 <meta name="description" content={t('productDetails.metaDesc', { model: product.model, category: product.categoryName, price: formatFCFA(product.retailPrice) })} />
-                <link rel="canonical" href={`https://newoteg.com/product/${product.code}`} />
+                <link rel="canonical" href={`https://newoteg.com/product/${product.id}`} />
                 <meta property="og:title" content={product.model} />
                 <meta property="og:description" content={t('productDetails.metaDesc', { model: product.model, category: product.categoryName, price: formatFCFA(product.retailPrice) })} />
-                <meta property="og:url" content={`https://newoteg.com/product/${product.code}`} />
+                <meta property="og:url" content={`https://newoteg.com/product/${product.id}`} />
                 <meta property="og:type" content="product" />
                 <meta property="og:image" content={product.images?.[0] || product.image} />
                 <script type="application/ld+json">{JSON.stringify({
@@ -117,7 +120,7 @@ const ProductDetails = () => {
                     "brand": { "@type": "Brand", "name": product.marque || product.brand || "NEWOTEG" },
                     "offers": {
                         "@type": "Offer",
-                        "url": `https://newoteg.com/product/${product.code}`,
+                        "url": `https://newoteg.com/product/${product.id}`,
                         "priceCurrency": "XAF",
                         "price": product.retailPrice,
                         "availability": product.stock > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
@@ -338,7 +341,7 @@ const ProductDetails = () => {
                             <h2 className="product-details__related-title">{t('productDetails.frequentlyBought')}</h2>
                             <div className="product-details__related-grid">
                                 {relatedProducts.map(p => (
-                                    <Link to={`/product/${p.code}`} key={p.code} className="product-card-light">
+                                    <Link to={`/product/${p.id}`} key={p.id} className="product-card-light">
                                         <div className="product-card-light__image">
                                             <img src={p.image} alt={p.model} loading="lazy" />
                                         </div>

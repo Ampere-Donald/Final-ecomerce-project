@@ -45,7 +45,7 @@ const Favorites = () => {
           <div className="favorites__grid">
             {favorites.map(product => (
               <div key={product.code} className="favorites__card">
-                <Link to={`/product/${product.code}`}>
+                <Link to={`/product/${product.id}`}>
                   <img
                     src={getImageUrl(product)}
                     alt={product.model}
@@ -55,7 +55,7 @@ const Favorites = () => {
                 </Link>
                 <div className="favorites__body">
                   <p className="favorites__category">{product.categoryName}</p>
-                  <Link to={`/product/${product.code}`}>
+                  <Link to={`/product/${product.id}`}>
                     <p className="favorites__name">{product.model}</p>
                   </Link>
                   <p className="favorites__price">{formatFCFA(product.retailPrice)}</p>
