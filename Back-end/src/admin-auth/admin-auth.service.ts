@@ -1,7 +1,10 @@
-import { Injectable, UnauthorizedException, BadRequestException, Logger } from '@nestjs/common';
+import { Injectable, UnauthorizedException, BadRequestException, ForbiddenException, NotFoundException, Logger } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { DatabaseService } from 'src/database/database.service';
+import { NotificationService, NotificationActor } from 'src/notification/notification.service';
+import { CreateAdminDto } from './dto/create-admin.dto';
+import { UpdateAdminDto } from './dto/update-admin.dto';
 
 @Injectable()
 export class AdminAuthService {
@@ -10,6 +13,7 @@ export class AdminAuthService {
   constructor(
     private readonly db: DatabaseService,
     private readonly jwt: JwtService,
+    private readonly notifications: NotificationService,
   ) {}
 
   async login(email: string, password: string) {
@@ -82,5 +86,116 @@ export class AdminAuthService {
 
     this.logger.log(`First admin seeded: ${email}`);
     return { id: admin.id, email: admin.email, nom: admin.nom, role: admin.role };
+  }
+
+  // ── CRUD Comptes Admin (SUPER_ADMIN only) ──────────────────────────────
+
+  async findAllAdmins() {
+    return this.db.adminUser.findMany({
+      select: {
+        id: true,
+        email: true,
+        nom: true,
+        role: true,
+        isActive: true,
+        lastLoginAt: true,
+        createdAt: true,
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  async createAdmin(dto: CreateAdminDto, actor: NotificationActor) {
+    const existing = await this.db.adminUser.findUnique({ where: { email: dto.email } });
+    if (existing) {
+      throw new BadRequestException('Un compte avec cet email existe déjà.');
+    }
+
+    const hashed = await bcrypt.hash(dto.motDePasse, 12);
+    const admin = await this.db.adminUser.create({
+      data: {
+        email: dto.email,
+        motDePasse: hashed,
+        nom: dto.nom,
+        role: dto.role,
+      },
+    });
+
+    this.logger.log(`Admin created: ${admin.email} (${admin.role}) by ${actor.nom}`);
+    await this.notifications.create(
+      'COMPTE_CREE',
+      `Nouveau compte ${admin.role} créé : ${admin.nom} (${admin.email})`,
+      actor,
+    );
+
+    return { id: admin.id, email: admin.email, nom: admin.nom, role: admin.role, isActive: admin.isActive, createdAt: admin.createdAt };
+  }
+
+  async updateAdmin(id: string, dto: UpdateAdminDto, actor: NotificationActor) {
+    const admin = await this.db.adminUser.findUnique({ where: { id } });
+    if (!admin) throw new NotFoundException('Compte introuvable');
+
+    const updated = await this.db.adminUser.update({
+      where: { id },
+      data: dto,
+      select: {
+        id: true,
+        email: true,
+        nom: true,
+        role: true,
+        isActive: true,
+        lastLoginAt: true,
+        createdAt: true,
+      },
+    });
+
+    this.logger.log(`Admin updated: ${updated.email} by ${actor.nom}`);
+    await this.notifications.create(
+      'COMPTE_MAJ',
+      `Compte ${updated.nom} (${updated.role}) modifié`,
+      actor,
+    );
+
+    return updated;
+  }
+
+  async resetPassword(id: string, newPassword: string, actor: NotificationActor) {
+    const admin = await this.db.adminUser.findUnique({ where: { id } });
+    if (!admin) throw new NotFoundException('Compte introuvable');
+
+    const hashed = await bcrypt.hash(newPassword, 12);
+    await this.db.adminUser.update({
+      where: { id },
+      data: { motDePasse: hashed },
+    });
+
+    this.logger.log(`Password reset for ${admin.email} by ${actor.nom}`);
+    await this.notifications.create(
+      'COMPTE_MAJ',
+      `Mot de passe réinitialisé pour ${admin.nom} (${admin.role})`,
+      actor,
+    );
+
+    return { message: 'Mot de passe réinitialisé avec succès' };
+  }
+
+  async deleteAdmin(id: string, currentAdminId: string, actor: NotificationActor) {
+    if (id === currentAdminId) {
+      throw new ForbiddenException('Vous ne pouvez pas supprimer votre propre compte.');
+    }
+
+    const admin = await this.db.adminUser.findUnique({ where: { id } });
+    if (!admin) throw new NotFoundException('Compte introuvable');
+
+    await this.db.adminUser.delete({ where: { id } });
+
+    this.logger.log(`Admin deleted: ${admin.email} by ${actor.nom}`);
+    await this.notifications.create(
+      'COMPTE_SUPPRIME',
+      `Compte ${admin.nom} (${admin.role}) supprimé`,
+      actor,
+    );
+
+    return { message: 'Compte supprimé' };
   }
 }

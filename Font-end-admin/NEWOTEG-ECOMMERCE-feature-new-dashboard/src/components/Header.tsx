@@ -1,7 +1,9 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Bell, X, Check, CheckCheck, ShoppingCart, Package, Tags, TrendingUp, TrendingDown, AlertCircle, Menu, Loader2 } from 'lucide-react';
+import { Search, Bell, X, Check, CheckCheck, ShoppingCart, Package, Tags, TrendingUp, TrendingDown, AlertCircle, Menu, Loader2, UserCog, Factory, Wallet, Activity } from 'lucide-react';
 import { notificationApi, searchApi, produitApi } from '../services/api';
+import { useAdminAuth } from '../context/AdminAuthContext';
+import { can } from '../utils/permissions';
 
 interface HeaderProps {
   onMenuClick: () => void;
@@ -9,15 +11,30 @@ interface HeaderProps {
 
 /* ── Type map for notification icons ────────────────────────────── */
 const NOTIF_ICON: Record<string, React.ReactNode> = {
-  COMMANDE_CREEE:  <ShoppingCart size={16} className="text-blue-500" />,
-  COMMANDE_STATUT: <ShoppingCart size={16} className="text-indigo-500" />,
-  PRODUIT_CREE:    <Package size={16} className="text-emerald-500" />,
-  PRODUIT_MAJ:     <Package size={16} className="text-amber-500" />,
-  STOCK_CHANGE:    <AlertCircle size={16} className="text-red-500" />,
-  CATEGORIE_CREEE: <Tags size={16} className="text-violet-500" />,
-  CATEGORIE_MAJ:   <Tags size={16} className="text-violet-400" />,
-  VENTE_CREEE:     <TrendingUp size={16} className="text-emerald-600" />,
-  ACHAT_CREE:      <TrendingDown size={16} className="text-orange-500" />,
+  COMMANDE_CREEE:      <ShoppingCart size={16} className="text-blue-500" />,
+  COMMANDE_STATUT:     <ShoppingCart size={16} className="text-indigo-500" />,
+  PRODUIT_CREE:        <Package size={16} className="text-emerald-500" />,
+  PRODUIT_MAJ:         <Package size={16} className="text-amber-500" />,
+  PRODUIT_SUPPRIME:    <Package size={16} className="text-red-500" />,
+  STOCK_CHANGE:        <AlertCircle size={16} className="text-red-500" />,
+  CATEGORIE_CREEE:     <Tags size={16} className="text-violet-500" />,
+  CATEGORIE_MAJ:       <Tags size={16} className="text-violet-400" />,
+  CATEGORIE_SUPPRIMEE: <Tags size={16} className="text-red-400" />,
+  VENTE_CREEE:         <TrendingUp size={16} className="text-emerald-600" />,
+  VENTE_MAJ:           <TrendingUp size={16} className="text-amber-500" />,
+  ACHAT_CREE:          <TrendingDown size={16} className="text-orange-500" />,
+  ACHAT_MAJ:           <TrendingDown size={16} className="text-amber-500" />,
+  ACHAT_SUPPRIME:      <TrendingDown size={16} className="text-red-500" />,
+  COMPTE_CREE:         <UserCog size={16} className="text-violet-600" />,
+  COMPTE_MAJ:          <UserCog size={16} className="text-blue-500" />,
+  COMPTE_SUPPRIME:     <UserCog size={16} className="text-red-500" />,
+  FOURNISSEUR_CREE:    <Factory size={16} className="text-blue-500" />,
+  FOURNISSEUR_MAJ:     <Factory size={16} className="text-amber-500" />,
+  FOURNISSEUR_SUPPRIME:<Factory size={16} className="text-red-500" />,
+  CAISSE_CREEE:        <Wallet size={16} className="text-emerald-500" />,
+  CAISSE_MAJ:          <Wallet size={16} className="text-amber-500" />,
+  CAISSE_SUPPRIMEE:    <Wallet size={16} className="text-red-500" />,
+  MOUVEMENT_STOCK_CREE:<Activity size={16} className="text-blue-500" />,
 };
 
 /* ── Route map for search results ───────────────────────────────── */
@@ -41,6 +58,7 @@ function relativeTime(dateStr: string) {
 
 export const Header = ({ onMenuClick }: HeaderProps) => {
   const navigate = useNavigate();
+  const { admin } = useAdminAuth();
 
   /* ── Import Status ────────────────────────────────────────────── */
   const [importStatus, setImportStatus] = useState<{ isImporting: boolean; progress: number; message: string; error: string | null } | null>(null);
@@ -258,7 +276,14 @@ export const Header = ({ onMenuClick }: HeaderProps) => {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className={`text-sm leading-snug ${n.lue ? 'text-slate-500' : 'text-slate-800 font-medium'}`}>{n.message}</p>
-                      <p className="text-[11px] text-slate-400 mt-0.5">{relativeTime(n.createdAt)}</p>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <p className="text-[11px] text-slate-400">{relativeTime(n.createdAt)}</p>
+                        {n.actorName && (
+                          <span className="text-[10px] font-semibold text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded">
+                            {n.actorName} ({n.actorRole})
+                          </span>
+                        )}
+                      </div>
                     </div>
                     {!n.lue && (
                       <button onClick={e => { e.stopPropagation(); markRead(n.id); }} className="mt-1 shrink-0 text-slate-400 hover:text-primary">
@@ -269,6 +294,14 @@ export const Header = ({ onMenuClick }: HeaderProps) => {
                 ))
               )}
             </div>
+            {can.accessNotificationsPage(admin?.role) && (
+              <button
+                onClick={() => { setBellOpen(false); navigate('/notifications'); }}
+                className="w-full px-4 py-2.5 text-center text-xs font-bold text-primary hover:bg-primary/5 border-t border-slate-100 transition-colors"
+              >
+                Voir tout l'historique
+              </button>
+            )}
           </div>
         )}
       </div>

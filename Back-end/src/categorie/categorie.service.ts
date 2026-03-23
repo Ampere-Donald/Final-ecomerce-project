@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { DatabaseService } from 'src/database/database.service';
-import { NotificationService } from 'src/notification/notification.service';
+import { NotificationService, NotificationActor } from 'src/notification/notification.service';
 import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
 import { CreateCategorieDto } from './dto/create-categorie.dto';
 import { UpdateCategorieDto } from './dto/update-categorie.dto';
@@ -13,11 +13,11 @@ export class CategorieService {
     private readonly cloudinary: CloudinaryService,
   ) {}
 
-  async create(createCategorieDto: CreateCategorieDto) {
+  async create(createCategorieDto: CreateCategorieDto, actor?: NotificationActor) {
     const cat = await this.db.categorie.create({
       data: createCategorieDto,
     });
-    this.notifications.create('CATEGORIE_CREEE', `Catégorie "${cat.nom}" créée`).catch(() => {});
+    this.notifications.create('CATEGORIE_CREEE', `Catégorie "${cat.nom}" créée`, actor).catch(() => {});
     return cat;
   }
 
@@ -43,7 +43,7 @@ export class CategorieService {
     return categorie;
   }
 
-  async update(id: string, updateCategorieDto: UpdateCategorieDto) {
+  async update(id: string, updateCategorieDto: UpdateCategorieDto, actor?: NotificationActor) {
     await this.findOne(id);
     const cat = await this.db.categorie.update({
       where: { id },
@@ -52,7 +52,7 @@ export class CategorieService {
         version: { increment: 1 },
       },
     });
-    this.notifications.create('CATEGORIE_MAJ', `Catégorie "${cat.nom}" mise à jour`).catch(() => {});
+    this.notifications.create('CATEGORIE_MAJ', `Catégorie "${cat.nom}" mise à jour`, actor).catch(() => {});
     return cat;
   }
 
@@ -64,7 +64,7 @@ export class CategorieService {
     });
   }
 
-  async remove(id: string) {
+  async remove(id: string, actor?: NotificationActor) {
     const categorie = await this.findOne(id);
     const result = await this.db.categorie.delete({
       where: { id },
@@ -72,6 +72,7 @@ export class CategorieService {
     if (categorie.imageUrl) {
       this.cloudinary.deleteByUrl(categorie.imageUrl).catch(() => {});
     }
+    this.notifications.create('CATEGORIE_SUPPRIMEE', `Catégorie "${categorie.nom}" supprimée`, actor).catch(() => {});
     return result;
   }
 }

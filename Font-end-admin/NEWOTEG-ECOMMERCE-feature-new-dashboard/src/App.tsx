@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AdminAuthProvider } from './context/AdminAuthContext';
 import { AdminProtectedRoute } from './components/AdminProtectedRoute';
+import { RoleProtectedRoute } from './components/RoleProtectedRoute';
 import { Layout } from './components/Layout';
 import { Dashboard } from './components/Dashboard';
 import { Orders } from './components/Orders';
@@ -19,6 +20,8 @@ import { MouvementsStock } from './components/MouvementsStock';
 import { Caisse } from './components/Caisse';
 import { Roles } from './components/Roles';
 import { Attributs } from './components/Attributs';
+import { AdminAccounts } from './components/AdminAccounts';
+import { NotificationsPage } from './components/NotificationsPage';
 
 export default function App() {
   return (
@@ -40,9 +43,13 @@ export default function App() {
             <Route path="achats" element={<Achats />} />
             <Route path="clients" element={<Clients />} />
             <Route path="fournisseurs" element={<Fournisseurs />} />
-            <Route path="caisse" element={<Caisse />} />
-            <Route path="roles" element={<Roles />} />
             <Route path="attributs" element={<Attributs />} />
+
+            {/* Routes protégées par rôle */}
+            <Route path="caisse" element={<RoleProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN']}><Caisse /></RoleProtectedRoute>} />
+            <Route path="roles" element={<RoleProtectedRoute allowedRoles={['SUPER_ADMIN']}><Roles /></RoleProtectedRoute>} />
+            <Route path="comptes" element={<RoleProtectedRoute allowedRoles={['SUPER_ADMIN']}><AdminAccounts /></RoleProtectedRoute>} />
+            <Route path="notifications" element={<RoleProtectedRoute allowedRoles={['SUPER_ADMIN']}><NotificationsPage /></RoleProtectedRoute>} />
 
             <Route path="settings" element={<Settings />} />
             <Route path="support" element={<Support />} />

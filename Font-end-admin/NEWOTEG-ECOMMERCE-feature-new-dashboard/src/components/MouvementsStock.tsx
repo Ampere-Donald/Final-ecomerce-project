@@ -2,10 +2,16 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { PlusCircle, Search, ArrowDownRight, ArrowUpRight, Activity, X, Pencil, Trash2, Download, Calendar } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { mouvementStockApi, produitApi } from '../services/api';
+import { useAdminAuth } from '../context/AdminAuthContext';
+import { can } from '../utils/permissions';
 
 const TYPES_MOUVEMENT = ['ENTREE', 'SORTIE', 'AJUSTEMENT', 'RETOUR'];
 
 export const MouvementsStock = () => {
+  const { admin } = useAdminAuth();
+  const canDelete = can.deleteEntities(admin?.role);
+  const canExport = can.exportCsv(admin?.role);
+
   const [mouvements, setMouvements] = useState<any[]>([]);
   const [produits, setProduits] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -196,10 +202,12 @@ export const MouvementsStock = () => {
               <input type="text" placeholder="Rechercher par produit ou motif..." value={search} onChange={e => setSearch(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 bg-slate-50 border-none rounded-lg text-sm focus:ring-2 focus:ring-primary/20 outline-none" />
             </div>
-            <button onClick={handleExportCSV} disabled={filtered.length === 0}
-              className="flex items-center gap-2 px-4 py-2 border border-slate-200 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap">
-              <Download size={18} /><span>Exporter CSV</span>
-            </button>
+            {canExport && (
+              <button onClick={handleExportCSV} disabled={filtered.length === 0}
+                className="flex items-center gap-2 px-4 py-2 border border-slate-200 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap">
+                <Download size={18} /><span>Exporter CSV</span>
+              </button>
+            )}
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <Calendar size={16} className="text-slate-400" />
@@ -256,9 +264,11 @@ export const MouvementsStock = () => {
                           <button onClick={() => handleEdit(m)} className="p-1.5 text-slate-400 hover:text-primary hover:bg-primary/10 rounded-lg transition-colors" title="Modifier">
                             <Pencil size={16} />
                           </button>
-                          <button onClick={() => handleDelete(m)} className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="Supprimer">
-                            <Trash2 size={16} />
-                          </button>
+                          {canDelete && (
+                            <button onClick={() => handleDelete(m)} className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="Supprimer">
+                              <Trash2 size={16} />
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -308,9 +318,11 @@ export const MouvementsStock = () => {
                     <button onClick={() => handleEdit(m)} className="p-1.5 text-slate-400 hover:text-primary hover:bg-primary/10 rounded-lg transition-colors" title="Modifier">
                       <Pencil size={16} />
                     </button>
-                    <button onClick={() => handleDelete(m)} className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="Supprimer">
-                      <Trash2 size={16} />
-                    </button>
+                    {canDelete && (
+                      <button onClick={() => handleDelete(m)} className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="Supprimer">
+                        <Trash2 size={16} />
+                      </button>
+                    )}
                   </div>
                 </div>
               );

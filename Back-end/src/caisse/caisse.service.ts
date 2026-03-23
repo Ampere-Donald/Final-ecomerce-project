@@ -1,17 +1,23 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { DatabaseService } from 'src/database/database.service';
+import { NotificationService, NotificationActor } from 'src/notification/notification.service';
 import { CreateCaisseDto } from './dto/create-caisse.dto';
 import { UpdateCaisseDto } from './dto/update-caisse.dto';
 
 @Injectable()
 export class CaisseService {
-  constructor(private readonly db: DatabaseService) {}
+  constructor(
+    private readonly db: DatabaseService,
+    private readonly notifications: NotificationService,
+  ) {}
 
-  async create(createCaisseDto: CreateCaisseDto) {
-    return await this.db.caisse.create({
+  async create(createCaisseDto: CreateCaisseDto, actor?: NotificationActor) {
+    const caisse = await this.db.caisse.create({
       data: createCaisseDto,
       include: { vente: true, achat: true },
     });
+    this.notifications.create('CAISSE_CREEE', `Opération caisse ${caisse.typeOperation} — ${caisse.montant} FCFA`, actor).catch(() => {});
+    return caisse;
   }
 
   async findAll() {
@@ -34,9 +40,9 @@ export class CaisseService {
     return caisse;
   }
 
-  async update(id: string, updateCaisseDto: UpdateCaisseDto) {
+  async update(id: string, updateCaisseDto: UpdateCaisseDto, actor?: NotificationActor) {
     await this.findOne(id);
-    return await this.db.caisse.update({
+    const caisse = await this.db.caisse.update({
       where: { id },
       data: {
         ...updateCaisseDto,
@@ -44,13 +50,17 @@ export class CaisseService {
       },
       include: { vente: true, achat: true },
     });
+    this.notifications.create('CAISSE_MAJ', `Opération caisse modifiée — ${caisse.montant} FCFA`, actor).catch(() => {});
+    return caisse;
   }
 
-  async remove(id: string) {
-    await this.findOne(id);
-    return await this.db.caisse.delete({
+  async remove(id: string, actor?: NotificationActor) {
+    const caisse = await this.findOne(id);
+    const result = await this.db.caisse.delete({
       where: { id },
     });
+    this.notifications.create('CAISSE_SUPPRIMEE', `Opération caisse supprimée — ${caisse.motif}`, actor).catch(() => {});
+    return result;
   }
 
   async getSolde() {

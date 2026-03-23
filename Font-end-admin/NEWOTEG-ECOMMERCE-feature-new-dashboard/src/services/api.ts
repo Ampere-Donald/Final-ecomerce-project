@@ -176,9 +176,23 @@ export const commandeApi = {
 // Notifications
 export const notificationApi = {
   getAll: () => api.get('/notifications').then(toArray),
+  getAllPaginated: (params: { page?: number; limit?: number; type?: string; actorName?: string; search?: string; lue?: string }) =>
+    api.get('/notifications/all', { params }).then(res => res.data),
   unreadCount: () => api.get('/notifications/unread-count').then(res => res.data),
   markAsRead: (id: string) => api.patch(`/notifications/${id}/read`).then(res => res.data),
+  markAsUnread: (id: string) => api.patch(`/notifications/${id}/unread`).then(res => res.data),
   markAllAsRead: () => api.patch('/notifications/read-all').then(res => res.data),
+};
+
+// Admin Account Management (SUPER_ADMIN only)
+export const adminAccountApi = {
+  getAll: () => api.get('/admin-auth/admins').then(res => res.data),
+  create: (data: { email: string; motDePasse: string; nom: string; role: string }) =>
+    api.post('/admin-auth/admins', data).then(res => res.data),
+  update: (id: string, data: any) => api.patch(`/admin-auth/admins/${id}`, data).then(res => res.data),
+  resetPassword: (id: string, newPassword: string) =>
+    api.patch(`/admin-auth/admins/${id}/reset-password`, { newPassword }).then(res => res.data),
+  delete: (id: string) => api.delete(`/admin-auth/admins/${id}`).then(res => res.data),
 };
 
 // Search

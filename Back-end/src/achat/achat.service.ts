@@ -2,7 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateAchatDto } from './dto/create-achat.dto';
 import { UpdateAchatDto } from './dto/update-achat.dto';
 import { DatabaseService } from 'src/database/database.service';
-import { NotificationService } from 'src/notification/notification.service';
+import { NotificationService, NotificationActor } from 'src/notification/notification.service';
 @Injectable()
 export class AchatService {
   constructor(
@@ -10,7 +10,7 @@ export class AchatService {
     private readonly notifications: NotificationService,
   ) {}
 
-  async create(createAchatDto: CreateAchatDto) {
+  async create(createAchatDto: CreateAchatDto, actor?: NotificationActor) {
     const { lignesAchat, ...achatData } = createAchatDto;
 
     const result = await this.db.$transaction(async (tx: any) => {
@@ -57,7 +57,7 @@ export class AchatService {
       return achat;
     });
 
-    this.notifications.create('ACHAT_CREE', `Achat enregistré — ${result.montantTotal} FCFA`).catch(() => {});
+    this.notifications.create('ACHAT_CREE', `Achat enregistré — ${result.montantTotal} FCFA`, actor).catch(() => {});
     return result;
   }
 
@@ -84,9 +84,9 @@ export class AchatService {
     return achat;
   }
 
-  async update(id: string, updateAchatDto: UpdateAchatDto) {
+  async update(id: string, updateAchatDto: UpdateAchatDto, actor?: NotificationActor) {
     await this.findOne(id);
-    return await this.db.achat.update({
+    const achat = await this.db.achat.update({
       where: { id },
       data: {
         ...updateAchatDto,
@@ -97,12 +97,16 @@ export class AchatService {
         lignesAchat: { include: { produit: true } },
       },
     });
+    this.notifications.create('ACHAT_MAJ', `Achat modifié — ${achat.montantTotal} FCFA`, actor).catch(() => {});
+    return achat;
   }
 
-  async remove(id: string) {
-    await this.findOne(id);
-    return await this.db.achat.delete({
+  async remove(id: string, actor?: NotificationActor) {
+    const achat = await this.findOne(id);
+    const result = await this.db.achat.delete({
       where: { id },
     });
+    this.notifications.create('ACHAT_SUPPRIME', `Achat supprimé — ${achat.montantTotal} FCFA`, actor).catch(() => {});
+    return result;
   }
 }

@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { PlusCircle, Search, Edit2, Trash2, Tags, X, ImagePlus } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { categorieApi } from '../services/api';
+import { useAdminAuth } from '../context/AdminAuthContext';
+import { can } from '../utils/permissions';
 
 /* ── Standalone Modal Form ────────────────────────────────────────────
    Extracted OUTSIDE the Categories component so React doesn't unmount
@@ -89,6 +91,8 @@ const ModalForm: React.FC<ModalFormProps> = ({ title, formData, setFormData, isS
 );
 
 export const Categories = () => {
+  const { admin } = useAdminAuth();
+  const canDelete = can.deleteEntities(admin?.role);
   const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -254,7 +258,7 @@ export const Categories = () => {
                     <td className="px-6 py-4 text-right">
                       <div className="flex items-center justify-end gap-2">
                         <button onClick={() => openEdit(cat)} className="p-1.5 text-slate-400 hover:text-primary transition-colors hover:bg-slate-100 rounded-lg"><Edit2 size={16} /></button>
-                        <button onClick={() => handleDelete(cat.id)} className="p-1.5 text-slate-400 hover:text-red-500 transition-colors hover:bg-slate-100 rounded-lg"><Trash2 size={16} /></button>
+                        {canDelete && (<button onClick={() => handleDelete(cat.id)} className="p-1.5 text-slate-400 hover:text-red-500 transition-colors hover:bg-slate-100 rounded-lg"><Trash2 size={16} /></button>)}
                       </div>
                     </td>
                   </tr>
@@ -290,7 +294,7 @@ export const Categories = () => {
                 </div>
                 <div className="flex items-center gap-1 shrink-0">
                   <button onClick={() => openEdit(cat)} className="p-1.5 text-slate-400 hover:text-primary hover:bg-slate-100 rounded-lg"><Edit2 size={16} /></button>
-                  <button onClick={() => handleDelete(cat.id)} className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg"><Trash2 size={16} /></button>
+                  {canDelete && (<button onClick={() => handleDelete(cat.id)} className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg"><Trash2 size={16} /></button>)}
                 </div>
               </div>
             ))

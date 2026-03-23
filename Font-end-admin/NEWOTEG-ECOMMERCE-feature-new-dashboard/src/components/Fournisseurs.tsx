@@ -2,8 +2,14 @@ import React, { useEffect, useState } from 'react';
 import { PlusCircle, Search, Mail, Phone, Factory, X, Pencil, Trash2, Download } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { fournisseurApi } from '../services/api';
+import { useAdminAuth } from '../context/AdminAuthContext';
+import { can } from '../utils/permissions';
 
 export const Fournisseurs = () => {
+  const { admin } = useAdminAuth();
+  const canDelete = can.deleteEntities(admin?.role);
+  const canExport = can.exportCsv(admin?.role);
+
   const [fournisseurs, setFournisseurs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -169,10 +175,12 @@ export const Fournisseurs = () => {
             <input type="text" placeholder="Rechercher une entreprise..." value={search} onChange={e => setSearch(e.target.value)}
               className="w-full pl-10 pr-4 py-2 bg-slate-50 border-none rounded-lg text-sm focus:ring-2 focus:ring-primary/20 outline-none" />
           </div>
-          <button onClick={handleExportCSV} disabled={filtered.length === 0}
-            className="flex items-center gap-2 px-4 py-2 border border-slate-200 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap">
-            <Download size={18} /><span>Exporter CSV</span>
-          </button>
+          {canExport && (
+            <button onClick={handleExportCSV} disabled={filtered.length === 0}
+              className="flex items-center gap-2 px-4 py-2 border border-slate-200 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap">
+              <Download size={18} /><span>Exporter CSV</span>
+            </button>
+          )}
         </div>
         {/* ── Table (desktop) ── */}
         <div className="hidden md:block overflow-x-auto">
@@ -215,9 +223,11 @@ export const Fournisseurs = () => {
                         <button onClick={() => handleEdit(f)} className="p-1.5 text-slate-400 hover:text-primary hover:bg-primary/10 rounded-lg transition-colors" title="Modifier">
                           <Pencil size={16} />
                         </button>
-                        <button onClick={() => handleDelete(f)} className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="Supprimer">
-                          <Trash2 size={16} />
-                        </button>
+                        {canDelete && (
+                          <button onClick={() => handleDelete(f)} className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="Supprimer">
+                            <Trash2 size={16} />
+                          </button>
+                        )}
                         <button className="text-sm font-bold text-primary hover:underline">Voir Historique</button>
                       </div>
                     </td>
@@ -250,9 +260,11 @@ export const Fournisseurs = () => {
                       <button onClick={() => handleEdit(f)} className="p-1.5 text-slate-400 hover:text-primary hover:bg-primary/10 rounded-lg transition-colors" title="Modifier">
                         <Pencil size={14} />
                       </button>
-                      <button onClick={() => handleDelete(f)} className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="Supprimer">
-                        <Trash2 size={14} />
-                      </button>
+                      {canDelete && (
+                        <button onClick={() => handleDelete(f)} className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="Supprimer">
+                          <Trash2 size={14} />
+                        </button>
+                      )}
                       <button className="text-xs font-bold text-primary hover:underline">Historique</button>
                     </div>
                   </div>

@@ -1,19 +1,22 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { DatabaseService } from 'src/database/database.service';
+import { NotificationService, NotificationActor } from 'src/notification/notification.service';
 import { CreateMouvementStockDto } from './dto/create-mouvement-stock.dto';
 import { UpdateMouvementStockDto } from './dto/update-mouvement-stock.dto';
 
 @Injectable()
 export class MouvementStockService {
-  constructor(private readonly db: DatabaseService) {}
+  constructor(
+    private readonly db: DatabaseService,
+    private readonly notifications: NotificationService,
+  ) {}
 
-  async create(createMouvementStockDto: CreateMouvementStockDto) {
+  async create(createMouvementStockDto: CreateMouvementStockDto, actor?: NotificationActor) {
     const { produitId, typeMouvement, quantite, ...rest } =
       createMouvementStockDto;
 
-    return await this.db.$transaction(async (tx: any) => {
-      // Créer le mouvement
-      const mouvement = await tx.mouvementStock.create({
+    const mouvement = await this.db.$transaction(async (tx: any) => {
+      const m = await tx.mouvementStock.create({
         data: {
           produitId,
           typeMouvement,
@@ -23,7 +26,6 @@ export class MouvementStockService {
         include: { produit: true },
       });
 
-      // Mettre à jour le stock selon le type de mouvement
       let stockChange = 0;
       switch (typeMouvement) {
         case 'ENTREE':
@@ -34,7 +36,6 @@ export class MouvementStockService {
           stockChange = -quantite;
           break;
         case 'AJUSTEMENT':
-          // L'ajustement peut être positif ou négatif
           stockChange = quantite;
           break;
       }
@@ -47,8 +48,16 @@ export class MouvementStockService {
         },
       });
 
-      return mouvement;
+      return m;
     });
+
+    this.notifications.create(
+      'MOUVEMENT_STOCK_CREE',
+      `Mouvement stock ${typeMouvement} — ${quantite} unités (${mouvement.produit?.nomProduit || produitId})`,
+      actor,
+    ).catch(() => {});
+
+    return mouvement;
   }
 
   async findAll() {
@@ -76,9 +85,9 @@ export class MouvementStockService {
     return mouvement;
   }
 
-  async update(id: string, updateMouvementStockDto: UpdateMouvementStockDto) {
+  async update(id: string, updateMouvementStockDto: UpdateMouvementStockDto, actor?: NotificationActor) {
     await this.findOne(id);
-    return await this.db.mouvementStock.update({
+    const mouvement = await this.db.mouvementStock.update({
       where: { id },
       data: {
         ...updateMouvementStockDto,
@@ -86,12 +95,16 @@ export class MouvementStockService {
       },
       include: { produit: true },
     });
+    this.notifications.create('STOCK_CHANGE', `Mouvement stock modifié — ${mouvement.produit?.nomProduit || id}`, actor).catch(() => {});
+    return mouvement;
   }
 
-  async remove(id: string) {
-    await this.findOne(id);
-    return await this.db.mouvementStock.delete({
+  async remove(id: string, actor?: NotificationActor) {
+    const mouvement = await this.findOne(id);
+    const result = await this.db.mouvementStock.delete({
       where: { id },
     });
+    this.notifications.create('STOCK_CHANGE', `Mouvement stock supprimé — ${mouvement.produit?.nomProduit || id}`, actor).catch(() => {});
+    return result;
   }
 }

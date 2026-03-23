@@ -1,16 +1,22 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { DatabaseService } from 'src/database/database.service';
+import { NotificationService, NotificationActor } from 'src/notification/notification.service';
 import { CreateFournisseurDto } from './dto/create-fournisseur.dto';
 import { UpdateFournisseurDto } from './dto/update-fournisseur.dto';
 
 @Injectable()
 export class FournisseurService {
-  constructor(private readonly db: DatabaseService) {}
+  constructor(
+    private readonly db: DatabaseService,
+    private readonly notifications: NotificationService,
+  ) {}
 
-  async create(createFournisseurDto: CreateFournisseurDto) {
-    return await this.db.fournisseur.create({
+  async create(createFournisseurDto: CreateFournisseurDto, actor?: NotificationActor) {
+    const fournisseur = await this.db.fournisseur.create({
       data: createFournisseurDto,
     });
+    this.notifications.create('FOURNISSEUR_CREE', `Fournisseur "${fournisseur.nomEntreprise}" ajouté`, actor).catch(() => {});
+    return fournisseur;
   }
 
   async findAll() {
@@ -30,21 +36,25 @@ export class FournisseurService {
     return fournisseur;
   }
 
-  async update(id: string, updateFournisseurDto: UpdateFournisseurDto) {
+  async update(id: string, updateFournisseurDto: UpdateFournisseurDto, actor?: NotificationActor) {
     await this.findOne(id);
-    return await this.db.fournisseur.update({
+    const fournisseur = await this.db.fournisseur.update({
       where: { id },
       data: {
         ...updateFournisseurDto,
         version: { increment: 1 },
       },
     });
+    this.notifications.create('FOURNISSEUR_MAJ', `Fournisseur "${fournisseur.nomEntreprise}" modifié`, actor).catch(() => {});
+    return fournisseur;
   }
 
-  async remove(id: string) {
-    await this.findOne(id);
-    return await this.db.fournisseur.delete({
+  async remove(id: string, actor?: NotificationActor) {
+    const fournisseur = await this.findOne(id);
+    const result = await this.db.fournisseur.delete({
       where: { id },
     });
+    this.notifications.create('FOURNISSEUR_SUPPRIME', `Fournisseur "${fournisseur.nomEntreprise}" supprimé`, actor).catch(() => {});
+    return result;
   }
 }

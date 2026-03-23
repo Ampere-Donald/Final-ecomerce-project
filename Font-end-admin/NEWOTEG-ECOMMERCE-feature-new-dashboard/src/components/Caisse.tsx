@@ -2,10 +2,16 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { PlusCircle, Search, ArrowUpRight, ArrowDownRight, Wallet, X, TrendingUp, TrendingDown, Pencil, Trash2, Download, Calendar } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { caisseApi } from '../services/api';
+import { useAdminAuth } from '../context/AdminAuthContext';
+import { can } from '../utils/permissions';
 
 const TYPES_OPERATION = ['ENTREE', 'SORTIE'];
 
 export const Caisse = () => {
+  const { admin } = useAdminAuth();
+  const canDelete = can.deleteEntities(admin?.role);
+  const canExport = can.exportCsv(admin?.role);
+
   const [operations, setOperations] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [solde, setSolde] = useState(0);
@@ -218,10 +224,12 @@ export const Caisse = () => {
               <input type="text" placeholder="Rechercher un motif d'opération..." value={search} onChange={e => setSearch(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 bg-slate-50 border-none rounded-lg text-sm focus:ring-2 focus:ring-primary/20 outline-none" />
             </div>
-            <button onClick={handleExportCSV} disabled={filtered.length === 0}
-              className="flex items-center gap-2 px-4 py-2 border border-slate-200 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap">
-              <Download size={18} /><span>Exporter CSV</span>
-            </button>
+            {canExport && (
+              <button onClick={handleExportCSV} disabled={filtered.length === 0}
+                className="flex items-center gap-2 px-4 py-2 border border-slate-200 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap">
+                <Download size={18} /><span>Exporter CSV</span>
+              </button>
+            )}
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <Calendar size={16} className="text-slate-400" />
@@ -278,7 +286,9 @@ export const Caisse = () => {
                       <td className="px-6 py-4 text-right">
                         <div className="flex items-center justify-end gap-2">
                           <button onClick={() => openEdit(op)} className="p-1.5 text-slate-400 hover:text-primary transition-colors hover:bg-slate-100 rounded-lg"><Pencil size={16} /></button>
-                          <button onClick={() => handleDelete(op.id)} className="p-1.5 text-slate-400 hover:text-red-500 transition-colors hover:bg-slate-100 rounded-lg"><Trash2 size={16} /></button>
+                          {canDelete && (
+                            <button onClick={() => handleDelete(op.id)} className="p-1.5 text-slate-400 hover:text-red-500 transition-colors hover:bg-slate-100 rounded-lg"><Trash2 size={16} /></button>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -315,7 +325,9 @@ export const Caisse = () => {
                   </div>
                   <div className="flex items-center gap-1 shrink-0">
                     <button onClick={() => openEdit(op)} className="p-1.5 text-slate-400 hover:text-primary hover:bg-slate-100 rounded-lg"><Pencil size={16} /></button>
-                    <button onClick={() => handleDelete(op.id)} className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg"><Trash2 size={16} /></button>
+                    {canDelete && (
+                      <button onClick={() => handleDelete(op.id)} className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg"><Trash2 size={16} /></button>
+                    )}
                   </div>
                 </div>
               );

@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, BadRequestException, Logger, InternalServerErrorException } from '@nestjs/common';
 import { DatabaseService } from 'src/database/database.service';
-import { NotificationService } from 'src/notification/notification.service';
+import { NotificationService, NotificationActor } from 'src/notification/notification.service';
 import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
 import { CreateProduitDto } from './dto/create-produit.dto';
 import { UpdateProduitDto } from './dto/update-produit.dto';
@@ -32,7 +32,7 @@ export class ProduitService {
     return this.importStatus;
   }
 
-  async create(createProduitDto: CreateProduitDto) {
+  async create(createProduitDto: CreateProduitDto, actor?: NotificationActor) {
     const { categorieId, ...rest } = createProduitDto;
 
     const data: any = { ...rest };
@@ -50,7 +50,7 @@ export class ProduitService {
     });
 
     this.notifications
-      .create('PRODUIT_CREE', `Produit "${produit.nomProduit}" ajouté au catalogue`)
+      .create('PRODUIT_CREE', `Produit "${produit.nomProduit}" ajouté au catalogue`, actor)
       .catch(() => {});
 
     return produit;
@@ -180,7 +180,7 @@ export class ProduitService {
     return produit;
   }
 
-  async update(id: string, updateProduitDto: UpdateProduitDto) {
+  async update(id: string, updateProduitDto: UpdateProduitDto, actor?: NotificationActor) {
     await this.findOne(id);
 
     const { categorieId, ...rest } = updateProduitDto;
@@ -206,7 +206,7 @@ export class ProduitService {
       });
 
       this.notifications
-        .create('PRODUIT_MAJ', `Produit "${produit.nomProduit}" mis à jour`)
+        .create('PRODUIT_MAJ', `Produit "${produit.nomProduit}" mis à jour`, actor)
         .catch(() => {});
 
       return produit;
@@ -224,17 +224,18 @@ export class ProduitService {
     });
   }
 
-  async remove(id: string) {
+  async remove(id: string, actor?: NotificationActor) {
     const produit = await this.findOne(id);
     const result = await this.db.produit.delete({
       where: { id },
     });
-    
+
     // Clean up images from Cloudinary
     if (produit.imageUrl) this.cloudinary.deleteByUrl(produit.imageUrl).catch(() => {});
     if (produit.imageUrl2) this.cloudinary.deleteByUrl(produit.imageUrl2).catch(() => {});
     if (produit.imageUrl3) this.cloudinary.deleteByUrl(produit.imageUrl3).catch(() => {});
-    
+
+    this.notifications.create('PRODUIT_SUPPRIME', `Produit "${produit.nomProduit}" supprimé`, actor).catch(() => {});
     return result;
   }
 

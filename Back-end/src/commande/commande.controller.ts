@@ -61,6 +61,7 @@ export class CommandeController {
   @Patch(':id')
   update(
     @Param('id', ParseUUIDPipe) id: string,
+    @Request() req: any,
     @Body() updateCommandeDto: UpdateCommandeDto,
   ) {
     if (updateCommandeDto.statut && !['EN_ATTENTE', 'EN_LIVRAISON'].includes(updateCommandeDto.statut)) {
@@ -68,7 +69,8 @@ export class CommandeController {
         'L\'administrateur ne peut définir que les statuts "En attente" ou "En livraison". L\'annulation et la confirmation sont réservées au client.',
       );
     }
-    return this.commandeService.update(id, updateCommandeDto);
+    const actor = { id: req.user.id, nom: req.user.nom, role: req.user.role };
+    return this.commandeService.update(id, updateCommandeDto, actor);
   }
 
   /** Client cancels their own order */

@@ -19,46 +19,21 @@ import {
   X,
   Shield,
   Palette,
+  UserCog,
+  Bell,
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useAdminAuth } from '../context/AdminAuthContext';
+import { can } from '../utils/permissions';
 
 interface SidebarProps {
   open: boolean;
   onClose: () => void;
 }
 
-const catalogueItems = [
-  { label: 'Tableau de bord', icon: LayoutDashboard, path: '/' },
-  { label: 'Produits', icon: Package, path: '/produits' },
-  { label: 'Catégories', icon: Tags, path: '/categories' },
-  { label: 'Attributs', icon: Palette, path: '/attributs' },
-];
-
-const operationItems = [
-  { label: 'Commandes', icon: ClipboardList, path: '/orders' },
-  { label: 'Mouvements Stock', icon: Activity, path: '/stock' },
-  { label: 'Ventes', icon: ShoppingCart, path: '/ventes' },
-  { label: 'Achats (Réappro)', icon: Truck, path: '/achats' },
-];
-
-const tiersItems = [
-  { label: 'Clients', icon: Users, path: '/clients' },
-  { label: 'Fournisseurs', icon: Factory, path: '/fournisseurs' },
-];
-
-const financeItems = [
-  { label: 'Caisse', icon: Wallet, path: '/caisse' },
-  { label: 'Rôles', icon: Shield, path: '/roles' },
-];
-
-const secondaryItems = [
-  { label: 'Paramètres', icon: Settings, path: '/settings' },
-  { label: 'Support', icon: LifeBuoy, path: '/support' },
-];
-
 export const Sidebar = ({ open, onClose }: SidebarProps) => {
   const { admin, logout } = useAdminAuth();
+  const role = admin?.role;
 
   const adminName = admin?.nom || admin?.email || 'Admin';
   const initials = adminName
@@ -67,6 +42,59 @@ export const Sidebar = ({ open, onClose }: SidebarProps) => {
     .join('')
     .toUpperCase()
     .slice(0, 2);
+
+  const catalogueItems = [
+    { label: 'Tableau de bord', icon: LayoutDashboard, path: '/' },
+    { label: 'Produits', icon: Package, path: '/produits' },
+    { label: 'Catégories', icon: Tags, path: '/categories' },
+    { label: 'Attributs', icon: Palette, path: '/attributs' },
+  ];
+
+  const operationItems = [
+    { label: 'Commandes', icon: ClipboardList, path: '/orders' },
+    { label: 'Mouvements Stock', icon: Activity, path: '/stock' },
+    { label: 'Ventes', icon: ShoppingCart, path: '/ventes' },
+    { label: 'Achats (Réappro)', icon: Truck, path: '/achats' },
+  ];
+
+  const tiersItems = [
+    { label: 'Clients', icon: Users, path: '/clients' },
+    { label: 'Fournisseurs', icon: Factory, path: '/fournisseurs' },
+  ];
+
+  // Finance items - filtered by role
+  const financeItems = [
+    ...(can.accessCaisse(role) ? [{ label: 'Caisse', icon: Wallet, path: '/caisse' }] : []),
+    ...(can.accessRoles(role) ? [{ label: 'Rôles', icon: Shield, path: '/roles' }] : []),
+  ];
+
+  // Admin-only items
+  const adminItems = [
+    ...(can.accessAccounts(role) ? [{ label: 'Comptes Admin', icon: UserCog, path: '/comptes' }] : []),
+    ...(can.accessNotificationsPage(role) ? [{ label: 'Notifications', icon: Bell, path: '/notifications' }] : []),
+  ];
+
+  const secondaryItems = [
+    { label: 'Paramètres', icon: Settings, path: '/settings' },
+    { label: 'Support', icon: LifeBuoy, path: '/support' },
+  ];
+
+  const renderNavItems = (items: typeof catalogueItems) =>
+    items.map((item) => (
+      <NavLink
+        key={item.path}
+        to={item.path}
+        onClick={onClose}
+        className={({ isActive }) =>
+          `flex items-center gap-3 px-3 py-2 rounded-lg transition-colors font-medium ${
+            isActive ? 'bg-primary/10 text-primary' : 'text-slate-600 hover:bg-slate-50 hover:text-primary'
+          }`
+        }
+      >
+        <item.icon size={20} />
+        <span>{item.label}</span>
+      </NavLink>
+    ));
 
   return (
     <aside className={`
@@ -95,21 +123,7 @@ export const Sidebar = ({ open, onClose }: SidebarProps) => {
         <div>
           <p className="px-3 text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Catalogue</p>
           <div className="space-y-1">
-            {catalogueItems.map((item) => (
-              <NavLink
-                key={item.path}
-                to={item.path}
-                onClick={onClose}
-                className={({ isActive }) =>
-                  `flex items-center gap-3 px-3 py-2 rounded-lg transition-colors font-medium ${
-                    isActive ? 'bg-primary/10 text-primary' : 'text-slate-600 hover:bg-slate-50 hover:text-primary'
-                  }`
-                }
-              >
-                <item.icon size={20} />
-                <span>{item.label}</span>
-              </NavLink>
-            ))}
+            {renderNavItems(catalogueItems)}
           </div>
         </div>
 
@@ -117,21 +131,7 @@ export const Sidebar = ({ open, onClose }: SidebarProps) => {
         <div>
           <p className="px-3 text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Opérations</p>
           <div className="space-y-1">
-            {operationItems.map((item) => (
-              <NavLink
-                key={item.path}
-                to={item.path}
-                onClick={onClose}
-                className={({ isActive }) =>
-                  `flex items-center gap-3 px-3 py-2 rounded-lg transition-colors font-medium ${
-                    isActive ? 'bg-primary/10 text-primary' : 'text-slate-600 hover:bg-slate-50 hover:text-primary'
-                  }`
-                }
-              >
-                <item.icon size={20} />
-                <span>{item.label}</span>
-              </NavLink>
-            ))}
+            {renderNavItems(operationItems)}
           </div>
         </div>
 
@@ -139,40 +139,22 @@ export const Sidebar = ({ open, onClose }: SidebarProps) => {
         <div>
           <p className="px-3 text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Tiers & Finance</p>
           <div className="space-y-1">
-            {[...tiersItems, ...financeItems].map((item) => (
-              <NavLink
-                key={item.path}
-                to={item.path}
-                onClick={onClose}
-                className={({ isActive }) =>
-                  `flex items-center gap-3 px-3 py-2 rounded-lg transition-colors font-medium ${
-                    isActive ? 'bg-primary/10 text-primary' : 'text-slate-600 hover:bg-slate-50 hover:text-primary'
-                  }`
-                }
-              >
-                <item.icon size={20} />
-                <span>{item.label}</span>
-              </NavLink>
-            ))}
+            {renderNavItems([...tiersItems, ...financeItems])}
           </div>
         </div>
 
+        {/* ADMINISTRATION (SUPER_ADMIN only) */}
+        {adminItems.length > 0 && (
+          <div>
+            <p className="px-3 text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Administration</p>
+            <div className="space-y-1">
+              {renderNavItems(adminItems)}
+            </div>
+          </div>
+        )}
+
         <div className="pt-4 border-t border-slate-100 space-y-1">
-          {secondaryItems.map((item) => (
-            <NavLink
-              key={item.path}
-              to={item.path}
-              onClick={onClose}
-              className={({ isActive }) =>
-                `flex items-center gap-3 px-3 py-2 rounded-lg transition-colors font-medium ${
-                  isActive ? 'bg-primary/10 text-primary' : 'text-slate-600 hover:bg-slate-50 hover:text-primary'
-                }`
-              }
-            >
-              <item.icon size={20} />
-              <span>{item.label}</span>
-            </NavLink>
-          ))}
+          {renderNavItems(secondaryItems)}
         </div>
       </nav>
 

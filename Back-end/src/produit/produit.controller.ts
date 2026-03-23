@@ -13,6 +13,7 @@ import {
   Query,
   BadRequestException,
   UseGuards,
+  Request,
 } from '@nestjs/common';
 import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import { memoryStorage, diskStorage } from 'multer';
@@ -22,6 +23,8 @@ import { CreateProduitDto } from './dto/create-produit.dto';
 import { UpdateProduitDto } from './dto/update-produit.dto';
 import { CloudinaryService } from '../cloudinary/cloudinary.service';
 import { AdminAuthGuard } from '../admin-auth/admin-auth.guard';
+import { RolesGuard } from '../admin-auth/roles.guard';
+import { Roles } from '../admin-auth/roles.decorator';
 
 const imageFileFilter = (_req: any, file: Express.Multer.File, cb: any) => {
   if (!file.mimetype.match(/^image\/(jpeg|png|gif|webp)$/)) {
@@ -50,10 +53,11 @@ export class ProduitController {
     return urls;
   }
 
-  @UseGuards(AdminAuthGuard)
+  @UseGuards(AdminAuthGuard, RolesGuard)
   @Post()
   @UseInterceptors(FilesInterceptor('files', 3, memStore))
   async create(
+    @Request() req: any,
     @Body() createProduitDto: CreateProduitDto,
     @UploadedFiles() files?: Express.Multer.File[],
   ) {
@@ -94,7 +98,8 @@ export class ProduitController {
     createProduitDto.finPromo = finPromoStr !== '' ? finPromoStr : undefined;
     createProduitDto.isPopulaire = String(createProduitDto.isPopulaire) === 'true';
 
-    return this.produitService.create(createProduitDto);
+    const actor = { id: req.user.id, nom: req.user.nom, role: req.user.role };
+    return this.produitService.create(createProduitDto, actor);
   }
 
   @Get()
@@ -221,11 +226,12 @@ export class ProduitController {
     return result;
   }
 
-  @UseGuards(AdminAuthGuard)
+  @UseGuards(AdminAuthGuard, RolesGuard)
   @Patch(':id')
   @UseInterceptors(FilesInterceptor('files', 3, memStore))
   async update(
     @Param('id', ParseUUIDPipe) id: string,
+    @Request() req: any,
     @Body() updateProduitDto: UpdateProduitDto,
     @UploadedFiles() files?: Express.Multer.File[],
   ) {
@@ -274,7 +280,8 @@ export class ProduitController {
     (updateProduitDto as any).finPromo = finPromoStr !== '' ? finPromoStr : null;
     if (updateProduitDto.isPopulaire !== undefined) updateProduitDto.isPopulaire = String(updateProduitDto.isPopulaire) === 'true';
 
-    const result = await this.produitService.update(id, updateProduitDto);
+    const actor = { id: req.user.id, nom: req.user.nom, role: req.user.role };
+    const result = await this.produitService.update(id, updateProduitDto, actor);
     
     // Cleanup orphaned images
     const newImages = [result.imageUrl, result.imageUrl2, result.imageUrl3].filter(Boolean) as string[];
@@ -284,9 +291,11 @@ export class ProduitController {
     return result;
   }
 
-  @UseGuards(AdminAuthGuard)
+  @UseGuards(AdminAuthGuard, RolesGuard)
+  @Roles('SUPER_ADMIN', 'ADMIN')
   @Delete(':id')
-  remove(@Param('id', ParseUUIDPipe) id: string) {
-    return this.produitService.remove(id);
+  remove(@Param('id', ParseUUIDPipe) id: string, @Request() req: any) {
+    const actor = { id: req.user.id, nom: req.user.nom, role: req.user.role };
+    return this.produitService.remove(id, actor);
   }
 }

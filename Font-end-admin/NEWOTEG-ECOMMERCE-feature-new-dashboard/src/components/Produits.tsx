@@ -2,6 +2,8 @@ import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { PlusCircle, Search, Edit2, Trash2, Tag, X, Upload, Image as ImageIcon, AlertTriangle, Zap, Star, FileSpreadsheet, CheckCircle2, XCircle, Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { produitApi, categorieApi } from '../services/api';
+import { useAdminAuth } from '../context/AdminAuthContext';
+import { can } from '../utils/permissions';
 import Papa from 'papaparse';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -53,6 +55,8 @@ const resolveImgUrl = (raw: string | null | undefined): string | null => {
 
 // ─── Composant principal ──────────────────────────────────────────────────────
 export const Produits = () => {
+  const { admin } = useAdminAuth();
+  const canDelete = can.deleteEntities(admin?.role);
   // ─── State liste & recherche (état global stable) ─────────────────────────
   const [produits, setProduits] = useState<Produit[]>([]);
   const [categories, setCategories] = useState<Categorie[]>([]);
@@ -1070,7 +1074,7 @@ export const Produits = () => {
                           <button onClick={() => openEditModal(prod)} title="Modifier" className="p-1.5 text-slate-400 hover:text-primary transition-colors hover:bg-slate-100 rounded-lg">
                             <Edit2 size={16} />
                           </button>
-                          {deletingId === prod.id ? (
+                          {canDelete && (deletingId === prod.id ? (
                             <button onClick={() => handleDelete(prod.id)} className="flex items-center gap-1 px-2 py-1 text-xs font-bold text-white bg-red-500 rounded-lg hover:bg-red-600 transition-colors animate-pulse">
                               <AlertTriangle size={12} />Confirmer
                             </button>
@@ -1078,7 +1082,7 @@ export const Produits = () => {
                             <button onClick={() => handleDelete(prod.id)} title="Supprimer" className="p-1.5 text-slate-400 hover:text-red-500 transition-colors hover:bg-red-50 rounded-lg">
                               <Trash2 size={16} />
                             </button>
-                          )}
+                          ))}
                         </div>
                       </td>
                     </tr>
@@ -1122,7 +1126,7 @@ export const Produits = () => {
                         <button onClick={() => openEditModal(prod)} className="p-1.5 text-slate-400 hover:text-primary hover:bg-slate-100 rounded-lg">
                           <Edit2 size={15} />
                         </button>
-                        {deletingId === prod.id ? (
+                        {canDelete && (deletingId === prod.id ? (
                           <button onClick={() => handleDelete(prod.id)} className="flex items-center gap-1 px-2 py-1 text-[10px] font-bold text-white bg-red-500 rounded-lg animate-pulse">
                             <AlertTriangle size={10} />OK
                           </button>
@@ -1130,7 +1134,7 @@ export const Produits = () => {
                           <button onClick={() => handleDelete(prod.id)} className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg">
                             <Trash2 size={15} />
                           </button>
-                        )}
+                        ))}
                       </div>
                     </div>
                     <div className="flex flex-wrap items-center gap-1.5 mt-1">

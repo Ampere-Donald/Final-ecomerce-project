@@ -252,6 +252,9 @@ model Notification {
   message   String
   lue       Boolean          @default(false)
   createdAt DateTime         @default(now()) @map("created_at")
+  actorId   String?          @map("actor_id")
+  actorName String?          @map("actor_name") @db.VarChar(100)
+  actorRole String?          @map("actor_role") @db.VarChar(20)
 
   @@map("notification")
 }
@@ -318,11 +321,26 @@ enum TypeNotification {
   COMMANDE_STATUT
   PRODUIT_CREE
   PRODUIT_MAJ
+  PRODUIT_SUPPRIME
   STOCK_CHANGE
   CATEGORIE_CREEE
   CATEGORIE_MAJ
+  CATEGORIE_SUPPRIMEE
   VENTE_CREEE
+  VENTE_MAJ
   ACHAT_CREE
+  ACHAT_MAJ
+  ACHAT_SUPPRIME
+  COMPTE_CREE
+  COMPTE_MAJ
+  COMPTE_SUPPRIME
+  FOURNISSEUR_CREE
+  FOURNISSEUR_MAJ
+  FOURNISSEUR_SUPPRIME
+  CAISSE_CREEE
+  CAISSE_MAJ
+  CAISSE_SUPPRIMEE
+  MOUVEMENT_STOCK_CREE
 }
 
 model PendingImport {

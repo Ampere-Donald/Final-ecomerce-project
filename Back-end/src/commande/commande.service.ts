@@ -5,7 +5,7 @@ import {
   ConflictException,
 } from '@nestjs/common';
 import { DatabaseService } from 'src/database/database.service';
-import { NotificationService } from 'src/notification/notification.service';
+import { NotificationService, NotificationActor } from 'src/notification/notification.service';
 import { AuthService } from 'src/auth/auth.service';
 import { CreateCommandeDto } from './dto/create-commande.dto';
 import { UpdateCommandeDto } from './dto/update-commande.dto';
@@ -267,7 +267,7 @@ export class CommandeService {
     return commande;
   }
 
-  async update(id: string, dto: UpdateCommandeDto) {
+  async update(id: string, dto: UpdateCommandeDto, actor?: NotificationActor) {
     await this.findOne(id);
     const commande = await this.db.commande.update({
       where: { id },
@@ -281,7 +281,7 @@ export class CommandeService {
     });
     if (dto.statut) {
       this.notifications
-        .create('COMMANDE_STATUT', `Commande ${commande.numeroSuivi} → ${dto.statut}`)
+        .create('COMMANDE_STATUT', `Commande ${commande.numeroSuivi} → ${dto.statut}`, actor)
         .catch(() => {});
     }
     return commande;

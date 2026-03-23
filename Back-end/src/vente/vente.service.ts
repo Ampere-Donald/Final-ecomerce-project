@@ -4,7 +4,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { DatabaseService } from 'src/database/database.service';
-import { NotificationService } from 'src/notification/notification.service';
+import { NotificationService, NotificationActor } from 'src/notification/notification.service';
 import { CreateVenteDto } from './dto/create-vente.dto';
 import { UpdateVenteDto } from './dto/update-vente.dto';
 
@@ -15,7 +15,7 @@ export class VenteService {
     private readonly notifications: NotificationService,
   ) {}
 
-  async create(createVenteDto: CreateVenteDto) {
+  async create(createVenteDto: CreateVenteDto, actor?: NotificationActor) {
     const { lignesVente, ...venteData } = createVenteDto;
 
     const result = await this.db.$transaction(async (tx: any) => {
@@ -89,7 +89,7 @@ export class VenteService {
       return vente;
     });
 
-    this.notifications.create('VENTE_CREEE', `Vente enregistrée — ${result.montantTotal} FCFA`).catch(() => {});
+    this.notifications.create('VENTE_CREEE', `Vente enregistrée — ${result.montantTotal} FCFA`, actor).catch(() => {});
     return result;
   }
 
@@ -116,9 +116,9 @@ export class VenteService {
     return vente;
   }
 
-  async update(id: string, updateVenteDto: UpdateVenteDto) {
+  async update(id: string, updateVenteDto: UpdateVenteDto, actor?: NotificationActor) {
     await this.findOne(id);
-    return await this.db.vente.update({
+    const vente = await this.db.vente.update({
       where: { id },
       data: {
         ...updateVenteDto,
@@ -129,12 +129,16 @@ export class VenteService {
         lignesVente: { include: { produit: true } },
       },
     });
+    this.notifications.create('VENTE_MAJ', `Vente modifiée — ${vente.montantTotal} FCFA`, actor).catch(() => {});
+    return vente;
   }
 
-  async remove(id: string) {
-    await this.findOne(id);
-    return await this.db.vente.delete({
+  async remove(id: string, actor?: NotificationActor) {
+    const vente = await this.findOne(id);
+    const result = await this.db.vente.delete({
       where: { id },
     });
+    this.notifications.create('VENTE_MAJ', `Vente supprimée — ${vente.montantTotal} FCFA`, actor).catch(() => {});
+    return result;
   }
 }

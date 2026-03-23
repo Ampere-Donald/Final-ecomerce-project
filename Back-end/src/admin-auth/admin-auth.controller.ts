@@ -1,7 +1,22 @@
-import { Controller, Post, Get, Patch, Body, UseGuards, Request } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Get,
+  Patch,
+  Delete,
+  Body,
+  Param,
+  ParseUUIDPipe,
+  UseGuards,
+  Request,
+} from '@nestjs/common';
 import { AdminAuthService } from './admin-auth.service';
 import { AdminLoginDto } from './dto/admin-login.dto';
+import { CreateAdminDto } from './dto/create-admin.dto';
+import { UpdateAdminDto, ResetPasswordDto } from './dto/update-admin.dto';
 import { AdminAuthGuard } from './admin-auth.guard';
+import { RolesGuard } from './roles.guard';
+import { Roles } from './roles.decorator';
 
 @Controller('admin-auth')
 export class AdminAuthController {
@@ -30,5 +45,57 @@ export class AdminAuthController {
   @Post('seed')
   async seed(@Body() body: { email: string; motDePasse: string; nom: string }) {
     return this.adminAuthService.seedFirstAdmin(body.email, body.motDePasse, body.nom);
+  }
+
+  // ── CRUD Comptes Admin (SUPER_ADMIN only) ──────────────────────────────
+
+  @UseGuards(AdminAuthGuard, RolesGuard)
+  @Roles('SUPER_ADMIN')
+  @Get('admins')
+  findAllAdmins() {
+    return this.adminAuthService.findAllAdmins();
+  }
+
+  @UseGuards(AdminAuthGuard, RolesGuard)
+  @Roles('SUPER_ADMIN')
+  @Post('admins')
+  createAdmin(@Request() req: any, @Body() dto: CreateAdminDto) {
+    const actor = { id: req.user.id, nom: req.user.nom, role: req.user.role };
+    return this.adminAuthService.createAdmin(dto, actor);
+  }
+
+  @UseGuards(AdminAuthGuard, RolesGuard)
+  @Roles('SUPER_ADMIN')
+  @Patch('admins/:id')
+  updateAdmin(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Request() req: any,
+    @Body() dto: UpdateAdminDto,
+  ) {
+    const actor = { id: req.user.id, nom: req.user.nom, role: req.user.role };
+    return this.adminAuthService.updateAdmin(id, dto, actor);
+  }
+
+  @UseGuards(AdminAuthGuard, RolesGuard)
+  @Roles('SUPER_ADMIN')
+  @Patch('admins/:id/reset-password')
+  resetPassword(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Request() req: any,
+    @Body() dto: ResetPasswordDto,
+  ) {
+    const actor = { id: req.user.id, nom: req.user.nom, role: req.user.role };
+    return this.adminAuthService.resetPassword(id, dto.newPassword, actor);
+  }
+
+  @UseGuards(AdminAuthGuard, RolesGuard)
+  @Roles('SUPER_ADMIN')
+  @Delete('admins/:id')
+  deleteAdmin(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Request() req: any,
+  ) {
+    const actor = { id: req.user.id, nom: req.user.nom, role: req.user.role };
+    return this.adminAuthService.deleteAdmin(id, req.user.id, actor);
   }
 }
