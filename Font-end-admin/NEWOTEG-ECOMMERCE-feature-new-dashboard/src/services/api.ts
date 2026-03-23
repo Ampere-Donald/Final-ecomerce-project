@@ -77,6 +77,13 @@ export const categorieApi = {
   create: (data: any) => api.post('/categories', data).then(res => res.data),
   update: (id: string, data: any) => api.patch(`/categories/${id}`, data).then(res => res.data),
   delete: (id: string) => api.delete(`/categories/${id}`).then(res => res.data),
+  uploadImage: (id: string, file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return api.post(`/categories/${id}/image`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    }).then(res => res.data);
+  },
 };
 
 // Mouvements de stock

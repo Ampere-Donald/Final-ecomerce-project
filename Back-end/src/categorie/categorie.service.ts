@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { DatabaseService } from 'src/database/database.service';
 import { NotificationService } from 'src/notification/notification.service';
+import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
 import { CreateCategorieDto } from './dto/create-categorie.dto';
 import { UpdateCategorieDto } from './dto/update-categorie.dto';
 
@@ -9,6 +10,7 @@ export class CategorieService {
   constructor(
     private readonly db: DatabaseService,
     private readonly notifications: NotificationService,
+    private readonly cloudinary: CloudinaryService,
   ) {}
 
   async create(createCategorieDto: CreateCategorieDto) {
@@ -54,10 +56,22 @@ export class CategorieService {
     return cat;
   }
 
-  async remove(id: string) {
+  async uploadImage(id: string, imageUrl: string) {
     await this.findOne(id);
-    return await this.db.categorie.delete({
+    return await this.db.categorie.update({
+      where: { id },
+      data: { imageUrl, version: { increment: 1 } },
+    });
+  }
+
+  async remove(id: string) {
+    const categorie = await this.findOne(id);
+    const result = await this.db.categorie.delete({
       where: { id },
     });
+    if (categorie.imageUrl) {
+      this.cloudinary.deleteByUrl(categorie.imageUrl).catch(() => {});
+    }
+    return result;
   }
 }
