@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { PlusCircle, Search, ArrowDownRight, ArrowUpRight, Activity, X } from 'lucide-react';
+import React, { useEffect, useState, useMemo } from 'react';
+import { PlusCircle, Search, ArrowDownRight, ArrowUpRight, Activity, X, Pencil, Trash2, Download, Calendar } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { mouvementStockApi, produitApi } from '../services/api';
 
@@ -12,6 +12,9 @@ export const MouvementsStock = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [search, setSearch] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [editingMouvement, setEditingMouvement] = useState<any>(null);
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
   const [formData, setFormData] = useState({
     produitId: '',
     typeMouvement: 'ENTREE',
@@ -37,25 +40,87 @@ export const MouvementsStock = () => {
     e.preventDefault();
     try {
       setIsSubmitting(true);
-      await mouvementStockApi.create({
+      const payload = {
         ...formData,
         quantite: parseInt(formData.quantite, 10),
-      });
-      await fetchData();
+      };
+      if (editingMouvement) {
+        const updated = await mouvementStockApi.update(editingMouvement.id, payload);
+        setMouvements(prev => prev.map(m => m.id === editingMouvement.id ? { ...m, ...updated } : m));
+      } else {
+        await mouvementStockApi.create(payload);
+        await fetchData();
+      }
       setIsModalOpen(false);
+      setEditingMouvement(null);
       setFormData({ produitId: '', typeMouvement: 'ENTREE', quantite: '', motif: '' });
     } catch (err) {
       console.error(err);
-      alert('Erreur lors de la création du mouvement.');
+      alert(editingMouvement ? 'Erreur lors de la modification du mouvement.' : 'Erreur lors de la création du mouvement.');
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const filtered = mouvements.filter(m =>
-    (m.produit?.nomProduit || '').toLowerCase().includes(search.toLowerCase()) ||
-    (m.motif || '').toLowerCase().includes(search.toLowerCase())
-  );
+  const handleEdit = (m: any) => {
+    setEditingMouvement(m);
+    setFormData({
+      produitId: m.produitId || m.produit?.id || '',
+      typeMouvement: m.typeMouvement,
+      quantite: String(m.quantite),
+      motif: m.motif || '',
+    });
+    setIsModalOpen(true);
+  };
+
+  const handleDelete = async (m: any) => {
+    if (!confirm(`Supprimer ce mouvement de stock (${m.typeMouvement} - ${m.quantite} unités) ?`)) return;
+    try {
+      setMouvements(prev => prev.filter(item => item.id !== m.id));
+      await mouvementStockApi.delete(m.id);
+    } catch (err) {
+      console.error(err);
+      alert('Erreur lors de la suppression du mouvement.');
+      await fetchData();
+    }
+  };
+
+  const filtered = useMemo(() => {
+    let result = mouvements;
+    if (dateFrom) {
+      const from = new Date(dateFrom); from.setHours(0, 0, 0, 0);
+      result = result.filter(m => new Date(m.dateMouvement) >= from);
+    }
+    if (dateTo) {
+      const to = new Date(dateTo); to.setHours(23, 59, 59, 999);
+      result = result.filter(m => new Date(m.dateMouvement) <= to);
+    }
+    if (search.trim()) {
+      result = result.filter(m =>
+        (m.produit?.nomProduit || '').toLowerCase().includes(search.toLowerCase()) ||
+        (m.motif || '').toLowerCase().includes(search.toLowerCase())
+      );
+    }
+    return result;
+  }, [mouvements, search, dateFrom, dateTo]);
+
+  const handleExportCSV = () => {
+    if (filtered.length === 0) return;
+    const headers = ['Date', 'Type', 'Produit', 'Quantité', 'Motif'];
+    const rows = filtered.map(m => [
+      new Date(m.dateMouvement).toLocaleString('fr-FR'),
+      m.typeMouvement,
+      `"${m.produit?.nomProduit || 'N/A'}"`,
+      `${m.typeMouvement === 'ENTREE' || m.typeMouvement === 'RETOUR' ? '+' : '-'}${m.quantite}`,
+      `"${m.motif || ''}"`,
+    ]);
+    const csv = '\ufeff' + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `mouvements_stock_${new Date().toISOString().split('T')[0]}.csv`;
+    document.body.appendChild(link); link.click(); document.body.removeChild(link);
+  };
 
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
@@ -78,8 +143,8 @@ export const MouvementsStock = () => {
               className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden"
             >
               <div className="flex items-center justify-between p-6 border-b border-slate-100">
-                <h2 className="text-xl font-bold text-slate-800">Saisir un mouvement de stock</h2>
-                <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-600 transition-colors"><X size={24} /></button>
+                <h2 className="text-xl font-bold text-slate-800">{editingMouvement ? 'Modifier le mouvement' : 'Saisir un mouvement de stock'}</h2>
+                <button onClick={() => { setIsModalOpen(false); setEditingMouvement(null); setFormData({ produitId: '', typeMouvement: 'ENTREE', quantite: '', motif: '' }); }} className="text-slate-400 hover:text-slate-600 transition-colors"><X size={24} /></button>
               </div>
               <form onSubmit={handleSubmit} className="p-6 space-y-4">
                 <div>
@@ -112,9 +177,9 @@ export const MouvementsStock = () => {
                     placeholder="Ex: Réception commande fournisseur, Vente au comptoir..." />
                 </div>
                 <div className="pt-4 border-t border-slate-100 flex justify-end gap-3">
-                  <button type="button" onClick={() => setIsModalOpen(false)} className="px-5 py-2 text-sm font-bold text-slate-600 bg-slate-100 rounded-lg hover:bg-slate-200">Annuler</button>
+                  <button type="button" onClick={() => { setIsModalOpen(false); setEditingMouvement(null); setFormData({ produitId: '', typeMouvement: 'ENTREE', quantite: '', motif: '' }); }} className="px-5 py-2 text-sm font-bold text-slate-600 bg-slate-100 rounded-lg hover:bg-slate-200">Annuler</button>
                   <button type="submit" disabled={isSubmitting} className="px-5 py-2 text-sm font-bold text-white bg-primary rounded-lg hover:bg-opacity-90 disabled:opacity-50">
-                    {isSubmitting ? 'Enregistrement...' : 'Enregistrer'}
+                    {isSubmitting ? 'Enregistrement...' : editingMouvement ? 'Modifier' : 'Enregistrer'}
                   </button>
                 </div>
               </form>
@@ -124,11 +189,28 @@ export const MouvementsStock = () => {
       </AnimatePresence>
 
       <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
-        <div className="p-4 border-b border-slate-100">
-          <div className="relative w-full max-w-sm">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-            <input type="text" placeholder="Rechercher par produit ou motif..." value={search} onChange={e => setSearch(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 bg-slate-50 border-none rounded-lg text-sm focus:ring-2 focus:ring-primary/20 outline-none" />
+        <div className="p-4 border-b border-slate-100 flex flex-col gap-3">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <div className="relative w-full sm:max-w-sm">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+              <input type="text" placeholder="Rechercher par produit ou motif..." value={search} onChange={e => setSearch(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 bg-slate-50 border-none rounded-lg text-sm focus:ring-2 focus:ring-primary/20 outline-none" />
+            </div>
+            <button onClick={handleExportCSV} disabled={filtered.length === 0}
+              className="flex items-center gap-2 px-4 py-2 border border-slate-200 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap">
+              <Download size={18} /><span>Exporter CSV</span>
+            </button>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <Calendar size={16} className="text-slate-400" />
+            <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)}
+              className="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-primary/20 outline-none" />
+            <span className="text-sm text-slate-400">→</span>
+            <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)}
+              className="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-primary/20 outline-none" />
+            {(dateFrom || dateTo) && (
+              <button onClick={() => { setDateFrom(''); setDateTo(''); }} className="text-xs text-red-500 hover:text-red-700 font-medium">Réinitialiser</button>
+            )}
           </div>
         </div>
         {/* ── Table (desktop) ── */}
@@ -141,13 +223,14 @@ export const MouvementsStock = () => {
                 <th className="px-6 py-4">Produit</th>
                 <th className="px-6 py-4">Quantité</th>
                 <th className="px-6 py-4">Motif</th>
+                <th className="px-6 py-4">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {loading ? (
-                <tr><td colSpan={5} className="px-6 py-8 text-center text-slate-500">Chargement...</td></tr>
+                <tr><td colSpan={6} className="px-6 py-8 text-center text-slate-500">Chargement...</td></tr>
               ) : filtered.length === 0 ? (
-                <tr><td colSpan={5} className="px-6 py-12 text-center">
+                <tr><td colSpan={6} className="px-6 py-12 text-center">
                   <Activity size={36} className="mx-auto text-slate-300 mb-3" />
                   <p className="text-slate-500">Aucun mouvement récent enregistré.</p>
                 </td></tr>
@@ -168,6 +251,16 @@ export const MouvementsStock = () => {
                         {isPositive ? '+' : '-'}{m.quantite}
                       </td>
                       <td className="px-6 py-4 text-sm text-slate-600">{m.motif || '-'}</td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-2">
+                          <button onClick={() => handleEdit(m)} className="p-1.5 text-slate-400 hover:text-primary hover:bg-primary/10 rounded-lg transition-colors" title="Modifier">
+                            <Pencil size={16} />
+                          </button>
+                          <button onClick={() => handleDelete(m)} className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="Supprimer">
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
+                      </td>
                     </tr>
                   );
                 })
@@ -210,6 +303,14 @@ export const MouvementsStock = () => {
                       <span className="text-xs text-slate-400">{new Date(m.dateMouvement).toLocaleDateString('fr-FR')}</span>
                     </div>
                     {m.motif && <p className="text-xs text-slate-500 mt-0.5 truncate">{m.motif}</p>}
+                  </div>
+                  <div className="flex flex-col gap-1 shrink-0">
+                    <button onClick={() => handleEdit(m)} className="p-1.5 text-slate-400 hover:text-primary hover:bg-primary/10 rounded-lg transition-colors" title="Modifier">
+                      <Pencil size={16} />
+                    </button>
+                    <button onClick={() => handleDelete(m)} className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="Supprimer">
+                      <Trash2 size={16} />
+                    </button>
                   </div>
                 </div>
               );

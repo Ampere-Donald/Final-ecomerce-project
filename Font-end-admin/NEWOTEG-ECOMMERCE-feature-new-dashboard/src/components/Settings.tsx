@@ -1,35 +1,89 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'motion/react';
-import { User, Bell, Shield, Wallet, Globe, Smartphone } from 'lucide-react';
+import { User, Bell, Shield, Wallet, Globe, Smartphone, CheckCircle2, AlertCircle, Eye, EyeOff } from 'lucide-react';
+import { useAdminAuth } from '../context/AdminAuthContext';
+import { adminAuthApi } from '../services/api';
+
+type Tab = 'profile' | 'security';
 
 export const Settings = () => {
+  const { admin } = useAdminAuth();
+  const [activeTab, setActiveTab] = useState<Tab>('profile');
+
+  // Password change state
+  const [oldPassword, setOldPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showOld, setShowOld] = useState(false);
+  const [showNew, setShowNew] = useState(false);
+  const [pwLoading, setPwLoading] = useState(false);
+  const [pwMessage, setPwMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
+  const adminName = admin?.nom || 'Admin';
+  const initials = adminName
+    .split(' ')
+    .map((w: string) => w[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2);
+
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setPwMessage(null);
+
+    if (newPassword.length < 8) {
+      setPwMessage({ type: 'error', text: 'Le nouveau mot de passe doit contenir au moins 8 caractères.' });
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setPwMessage({ type: 'error', text: 'Les mots de passe ne correspondent pas.' });
+      return;
+    }
+
+    setPwLoading(true);
+    try {
+      await adminAuthApi.changePassword(oldPassword, newPassword);
+      setPwMessage({ type: 'success', text: 'Mot de passe modifié avec succès.' });
+      setOldPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+    } catch (err: any) {
+      const msg = err.response?.data?.message || err.message || 'Erreur lors du changement de mot de passe.';
+      setPwMessage({ type: 'error', text: Array.isArray(msg) ? msg.join(', ') : msg });
+    } finally {
+      setPwLoading(false);
+    }
+  };
+
+  const tabs = [
+    { key: 'profile' as Tab, label: 'Infos Profil', icon: User },
+    { key: 'security' as Tab, label: 'Sécurité', icon: Shield },
+  ];
+
+  const inputClass = 'w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all';
+
   return (
-    <motion.div 
+    <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       className="space-y-8"
     >
       <div>
         <h2 className="text-2xl font-bold text-slate-900">Paramètres du Compte</h2>
-        <p className="text-slate-500 text-sm">Gérez votre profil, votre sécurité et vos préférences</p>
+        <p className="text-slate-500 text-sm">Gérez votre profil et votre sécurité</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+        {/* Sidebar tabs */}
         <aside className="lg:col-span-1">
           <nav className="space-y-1">
-            {[
-              { label: 'Infos Profil', icon: User, active: true },
-              { label: 'Notifications', icon: Bell },
-              { label: 'Sécurité', icon: Shield },
-              { label: 'Détails Facturation', icon: Wallet },
-              { label: 'Régional', icon: Globe },
-              { label: 'Appareils', icon: Smartphone },
-            ].map((item) => (
-              <button 
-                key={item.label}
+            {tabs.map((item) => (
+              <button
+                key={item.key}
+                onClick={() => setActiveTab(item.key)}
                 className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all ${
-                  item.active 
-                    ? 'bg-primary text-white shadow-md shadow-primary/20' 
+                  activeTab === item.key
+                    ? 'bg-primary text-white shadow-md shadow-primary/20'
                     : 'text-slate-600 hover:bg-slate-100'
                 }`}
               >
@@ -41,82 +95,144 @@ export const Settings = () => {
         </aside>
 
         <div className="lg:col-span-3 space-y-6">
-          <div className="bg-white rounded-2xl border border-slate-200 p-8 shadow-sm">
-            <h3 className="font-bold text-lg mb-6 text-slate-900">Profil Public</h3>
-            <div className="flex items-center gap-6 mb-8">
-              <div className="relative group">
-                <div className="size-20 rounded-2xl bg-slate-100 overflow-hidden border-2 border-slate-200">
-                  <img 
-                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuD5OgupmfclAPLVOnbiV602OFuJw6J5K_Xt8bZFTIzDltY7lQi4oElZeEtxmZuQ7NmFCuuYhBhKDS0lVNEnEWhmqPdzG5xse_7cc5GJdl8P-Vy44gsHT5zobUwWNUI9wHVCsQvPm2yhFAGbboefSnWVz59UG-NlBaAMD73R8i4L02i698xxOPRHWV9c7U6L2MmyBdPpfWtMqQeessPxUgwJI7yT_mLVntXahoDHd_nfjNNJl_wkjVnQUHp3j9Hbp8q9aaVRRsHyTYA" 
-                    alt="Avatar"
-                    className="w-full h-full object-cover"
-                    referrerPolicy="no-referrer"
+          {/* Profile Tab */}
+          {activeTab === 'profile' && (
+            <div className="bg-white rounded-2xl border border-slate-200 p-8 shadow-sm">
+              <h3 className="font-bold text-lg mb-6 text-slate-900">Profil Administrateur</h3>
+              <div className="flex items-center gap-6 mb-8">
+                <div className="size-20 rounded-2xl bg-primary/10 flex items-center justify-center text-primary font-bold text-2xl border-2 border-primary/20">
+                  {initials}
+                </div>
+                <div>
+                  <p className="font-bold text-slate-900 text-lg">{adminName}</p>
+                  <p className="text-sm text-slate-500">{admin?.role || 'Administrateur'}</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-slate-600">Nom</label>
+                  <input
+                    type="text"
+                    value={admin?.nom || ''}
+                    readOnly
+                    className={`${inputClass} bg-slate-100 cursor-not-allowed`}
                   />
                 </div>
-                <button className="absolute -bottom-2 -right-2 p-1.5 bg-white border border-slate-200 rounded-lg text-primary shadow-sm hover:bg-slate-50 transition-colors">
-                  <Smartphone size={14} />
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-slate-600">Email</label>
+                  <input
+                    type="email"
+                    value={admin?.email || ''}
+                    readOnly
+                    className={`${inputClass} bg-slate-100 cursor-not-allowed`}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-slate-600">Rôle</label>
+                  <input
+                    type="text"
+                    value={admin?.role || 'Administrateur'}
+                    readOnly
+                    className={`${inputClass} bg-slate-100 cursor-not-allowed`}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-slate-600">ID</label>
+                  <input
+                    type="text"
+                    value={admin?.id || ''}
+                    readOnly
+                    className={`${inputClass} bg-slate-100 cursor-not-allowed text-xs`}
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Security Tab */}
+          {activeTab === 'security' && (
+            <div className="bg-white rounded-2xl border border-slate-200 p-8 shadow-sm">
+              <h3 className="font-bold text-lg mb-6 text-slate-900">Changer le mot de passe</h3>
+
+              {pwMessage && (
+                <div className={`flex items-center gap-2 p-3 rounded-lg mb-6 text-sm font-medium ${
+                  pwMessage.type === 'success'
+                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                    : 'bg-red-50 text-red-700 border border-red-200'
+                }`}>
+                  {pwMessage.type === 'success' ? <CheckCircle2 size={16} /> : <AlertCircle size={16} />}
+                  {pwMessage.text}
+                </div>
+              )}
+
+              <form onSubmit={handleChangePassword} className="space-y-5 max-w-md">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-slate-600">Mot de passe actuel</label>
+                  <div className="relative">
+                    <input
+                      type={showOld ? 'text' : 'password'}
+                      value={oldPassword}
+                      onChange={(e) => setOldPassword(e.target.value)}
+                      required
+                      className={inputClass}
+                      placeholder="Entrez votre mot de passe actuel"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowOld(!showOld)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                    >
+                      {showOld ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-slate-600">Nouveau mot de passe</label>
+                  <div className="relative">
+                    <input
+                      type={showNew ? 'text' : 'password'}
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      required
+                      minLength={8}
+                      className={inputClass}
+                      placeholder="Minimum 8 caractères"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowNew(!showNew)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                    >
+                      {showNew ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-slate-600">Confirmer le nouveau mot de passe</label>
+                  <input
+                    type="password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    required
+                    minLength={8}
+                    className={inputClass}
+                    placeholder="Répétez le nouveau mot de passe"
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={pwLoading}
+                  className="px-6 py-2.5 bg-slate-900 text-white rounded-lg text-sm font-bold hover:bg-slate-800 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {pwLoading ? 'Modification...' : 'Mettre à jour le mot de passe'}
                 </button>
-              </div>
-              <div>
-                <p className="font-bold text-slate-900">Jean Dupont</p>
-                <p className="text-sm text-slate-500">Membre Grossiste VIP depuis 2023</p>
-                <div className="flex gap-3 mt-2">
-                  <button className="text-xs font-bold text-primary hover:underline">Changer la photo</button>
-                  <button className="text-xs font-bold text-red-500 hover:underline">Supprimer</button>
-                </div>
-              </div>
+              </form>
             </div>
-
-            <form className="grid grid-cols-1 md:grid-cols-2 gap-6" onSubmit={(e) => e.preventDefault()}>
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-600">Prénom</label>
-                <input type="text" defaultValue="Jean" className="w-full bg-slate-50 border-slate-200 rounded-lg px-4 py-2 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all" />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-600">Nom</label>
-                <input type="text" defaultValue="Dupont" className="w-full bg-slate-50 border-slate-200 rounded-lg px-4 py-2 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all" />
-              </div>
-              <div className="space-y-2 md:col-span-2">
-                <label className="text-sm font-medium text-slate-600">Adresse Email</label>
-                <input type="email" defaultValue="jean.dupont@ecommerce-solutions.sa" className="w-full bg-slate-50 border-slate-200 rounded-lg px-4 py-2 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all" />
-              </div>
-              <div className="space-y-2 md:col-span-2">
-                <label className="text-sm font-medium text-slate-600">Nom de l'entreprise</label>
-                <input type="text" defaultValue="E-commerce Solutions S.A." className="w-full bg-slate-50 border-slate-200 rounded-lg px-4 py-2 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all" />
-              </div>
-              <div className="md:col-span-2 flex justify-end gap-3 pt-4">
-                <button type="button" className="px-6 py-2 border border-slate-200 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-colors">Annuler</button>
-                <button type="submit" className="px-6 py-2 bg-primary text-white rounded-lg text-sm font-semibold hover:bg-opacity-90 transition-all shadow-sm shadow-primary/20">Mettre à jour le profil</button>
-              </div>
-            </form>
-          </div>
-
-          <div className="bg-white rounded-2xl border border-slate-200 p-8 shadow-sm">
-            <h3 className="font-bold text-lg mb-6 text-slate-900">Sécurité</h3>
-            <div className="space-y-6">
-              <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl border border-slate-100">
-                <div className="flex items-center gap-4">
-                  <div className="p-2 bg-white rounded-lg text-slate-400 border border-slate-100">
-                    <Shield size={20} />
-                  </div>
-                  <div>
-                    <p className="font-bold text-slate-900">Authentification à deux facteurs</p>
-                    <p className="text-xs text-slate-500">Ajoutez une couche de sécurité supplémentaire à votre compte</p>
-                  </div>
-                </div>
-                <button className="px-4 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-50 transition-colors">Activer</button>
-              </div>
-              
-              <div className="space-y-4">
-                <h4 className="text-sm font-bold text-slate-900">Changer le mot de passe</h4>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <input type="password" placeholder="Mot de passe actuel" className="w-full bg-slate-50 border-slate-200 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all" />
-                  <input type="password" placeholder="Nouveau mot de passe" className="w-full bg-slate-50 border-slate-200 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all" />
-                  <button className="px-4 py-2 bg-slate-900 text-white rounded-lg text-sm font-bold hover:bg-slate-800 transition-all">Mettre à jour</button>
-                </div>
-              </div>
-            </div>
-          </div>
+          )}
         </div>
       </div>
     </motion.div>

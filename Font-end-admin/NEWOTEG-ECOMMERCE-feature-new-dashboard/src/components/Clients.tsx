@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Search, Mail, Phone, Users, X, MapPin, ShieldCheck, ShieldOff, ShoppingBag, Calendar, Eye } from 'lucide-react';
+import { Search, Mail, Phone, Users, X, MapPin, ShieldCheck, ShieldOff, ShoppingBag, Calendar, Eye, Download } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { clientApi } from '../services/api';
 
@@ -50,6 +50,24 @@ export const Clients = () => {
     (c.telephone || '').includes(search)
   );
 
+  const handleExportCSV = () => {
+    if (filtered.length === 0) return;
+    const headers = ['Nom', 'Prénom', 'Email', 'Téléphone', 'Type', 'Email vérifié', 'Commandes', 'Inscrit le'];
+    const rows = filtered.map(c => [
+      `"${c.nom || ''}"`, `"${c.prenom || ''}"`, `"${c.email || ''}"`, `"${c.telephone || ''}"`,
+      c.typeClient === 'PROFESSIONNEL' ? 'Pro' : 'Particulier',
+      c.emailVerifie ? 'Oui' : 'Non',
+      c._count?.commandes ?? 0,
+      c.createdAt ? new Date(c.createdAt).toLocaleDateString('fr-FR') : '',
+    ]);
+    const csv = '\ufeff' + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `clients_${new Date().toISOString().split('T')[0]}.csv`;
+    document.body.appendChild(link); link.click(); document.body.removeChild(link);
+  };
+
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
       <div>
@@ -60,12 +78,16 @@ export const Clients = () => {
       </div>
 
       <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
-        <div className="p-4 border-b border-slate-100">
-          <div className="relative w-full max-w-sm">
+        <div className="p-4 border-b border-slate-100 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <div className="relative w-full sm:max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
             <input type="text" placeholder="Rechercher par nom, email ou téléphone..." value={search} onChange={e => setSearch(e.target.value)}
               className="w-full pl-10 pr-4 py-2 bg-slate-50 border-none rounded-lg text-sm focus:ring-2 focus:ring-primary/20 outline-none" />
           </div>
+          <button onClick={handleExportCSV} disabled={filtered.length === 0}
+            className="flex items-center gap-2 px-4 py-2 border border-slate-200 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap">
+            <Download size={18} /><span>Exporter CSV</span>
+          </button>
         </div>
         {/* ── Table (desktop) ── */}
         <div className="hidden md:block overflow-x-auto">

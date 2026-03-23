@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Search, Filter, Download, ExternalLink, Calendar, X, Truck, MapPin, Phone, User, Package } from 'lucide-react';
 import { Commande, StatutCommande, ModeReception } from '../types';
@@ -29,6 +29,8 @@ export const Orders = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedOrder, setSelectedOrder] = useState<Commande | null>(null);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
 
   const fetchOrders = async () => {
     try {
@@ -58,12 +60,26 @@ export const Orders = () => {
   };
 
   // ── Filtering ─────────────────────────────────────────
-  const filtered = orders.filter(o => {
-    const q = searchQuery.toLowerCase();
-    return o.numeroSuivi.toLowerCase().includes(q)
-      || o.nomClient.toLowerCase().includes(q)
-      || o.lignes.some(l => l.nomProduit.toLowerCase().includes(q));
-  });
+  const filtered = useMemo(() => {
+    let result = orders;
+    if (dateFrom) {
+      const from = new Date(dateFrom); from.setHours(0, 0, 0, 0);
+      result = result.filter(o => new Date(o.dateCommande) >= from);
+    }
+    if (dateTo) {
+      const to = new Date(dateTo); to.setHours(23, 59, 59, 999);
+      result = result.filter(o => new Date(o.dateCommande) <= to);
+    }
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      result = result.filter(o =>
+        o.numeroSuivi.toLowerCase().includes(q)
+        || o.nomClient.toLowerCase().includes(q)
+        || o.lignes.some(l => l.nomProduit.toLowerCase().includes(q))
+      );
+    }
+    return result;
+  }, [orders, searchQuery, dateFrom, dateTo]);
 
   // ── Line items summary ────────────────────────────────
   const itemsSummary = (o: Commande) => {
@@ -124,7 +140,7 @@ export const Orders = () => {
       </div>
 
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-        <div className="p-4 border-b border-slate-100 flex flex-col md:flex-row md:items-center gap-4">
+        <div className="p-4 border-b border-slate-100 flex flex-col gap-3">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
             <input
@@ -134,6 +150,17 @@ export const Orders = () => {
               onChange={e => setSearchQuery(e.target.value)}
               className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none text-sm transition-all"
             />
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <Calendar size={16} className="text-slate-400" />
+            <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)}
+              className="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-primary/20 outline-none" />
+            <span className="text-sm text-slate-400">→</span>
+            <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)}
+              className="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-primary/20 outline-none" />
+            {(dateFrom || dateTo) && (
+              <button onClick={() => { setDateFrom(''); setDateTo(''); }} className="text-xs text-red-500 hover:text-red-700 font-medium">Réinitialiser</button>
+            )}
           </div>
         </div>
 

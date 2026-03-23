@@ -17,6 +17,8 @@ import { Clients } from './components/Clients';
 import { Fournisseurs } from './components/Fournisseurs';
 import { MouvementsStock } from './components/MouvementsStock';
 import { Caisse } from './components/Caisse';
+import { Roles } from './components/Roles';
+import { Attributs } from './components/Attributs';
 
 export default function App() {
   return (
@@ -39,6 +41,8 @@ export default function App() {
             <Route path="clients" element={<Clients />} />
             <Route path="fournisseurs" element={<Fournisseurs />} />
             <Route path="caisse" element={<Caisse />} />
+            <Route path="roles" element={<Roles />} />
+            <Route path="attributs" element={<Attributs />} />
 
             <Route path="settings" element={<Settings />} />
             <Route path="support" element={<Support />} />

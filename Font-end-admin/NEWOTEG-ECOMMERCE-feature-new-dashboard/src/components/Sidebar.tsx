@@ -17,8 +17,11 @@ import {
   Package2,
   ClipboardList,
   X,
+  Shield,
+  Palette,
 } from 'lucide-react';
 import { motion } from 'motion/react';
+import { useAdminAuth } from '../context/AdminAuthContext';
 
 interface SidebarProps {
   open: boolean;
@@ -29,6 +32,7 @@ const catalogueItems = [
   { label: 'Tableau de bord', icon: LayoutDashboard, path: '/' },
   { label: 'Produits', icon: Package, path: '/produits' },
   { label: 'Catégories', icon: Tags, path: '/categories' },
+  { label: 'Attributs', icon: Palette, path: '/attributs' },
 ];
 
 const operationItems = [
@@ -45,6 +49,7 @@ const tiersItems = [
 
 const financeItems = [
   { label: 'Caisse', icon: Wallet, path: '/caisse' },
+  { label: 'Rôles', icon: Shield, path: '/roles' },
 ];
 
 const secondaryItems = [
@@ -53,6 +58,16 @@ const secondaryItems = [
 ];
 
 export const Sidebar = ({ open, onClose }: SidebarProps) => {
+  const { admin, logout } = useAdminAuth();
+
+  const adminName = admin?.nom || admin?.email || 'Admin';
+  const initials = adminName
+    .split(' ')
+    .map((w: string) => w[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2);
+
   return (
     <aside className={`
       fixed md:sticky top-0 left-0 z-40 h-screen
@@ -163,14 +178,18 @@ export const Sidebar = ({ open, onClose }: SidebarProps) => {
 
       <div className="p-4 border-t border-slate-100">
         <div className="flex items-center gap-3 bg-slate-50 p-2 rounded-xl border border-slate-100">
-          <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold">
-            JD
+          <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold text-sm">
+            {initials}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold truncate">Jean Dupont</p>
-            <p className="text-xs text-slate-500">VIP Member</p>
+            <p className="text-sm font-semibold truncate">{adminName}</p>
+            <p className="text-xs text-slate-500">{admin?.role || 'Administrateur'}</p>
           </div>
-          <button className="text-slate-400 hover:text-primary transition-colors">
+          <button
+            onClick={logout}
+            title="Se déconnecter"
+            className="text-slate-400 hover:text-red-500 transition-colors"
+          >
             <LogOut size={16} />
           </button>
         </div>

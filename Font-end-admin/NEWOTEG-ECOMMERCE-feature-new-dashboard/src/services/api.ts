@@ -122,18 +122,25 @@ export const categorieApi = {
 export const mouvementStockApi = {
   getAll: () => api.get('/mouvements-stock').then(toArray),
   create: (data: any) => api.post('/mouvements-stock', data).then(res => res.data),
+  update: (id: string, data: any) => api.patch(`/mouvements-stock/${id}`, data).then(res => res.data),
+  delete: (id: string) => api.delete(`/mouvements-stock/${id}`).then(res => res.data),
 };
 
 // Ventes
 export const venteApi = {
   getAll: () => api.get('/ventes').then(toArray),
+  getOne: (id: string) => api.get(`/ventes/${id}`).then(res => res.data),
   create: (data: any) => api.post('/ventes', data).then(res => res.data),
+  update: (id: string, data: any) => api.patch(`/ventes/${id}`, data).then(res => res.data),
 };
 
 // Achats
 export const achatApi = {
   getAll: () => api.get('/achats').then(toArray),
+  getOne: (id: string) => api.get(`/achats/${id}`).then(res => res.data),
   create: (data: any) => api.post('/achats', data).then(res => res.data),
+  update: (id: string, data: any) => api.patch(`/achats/${id}`, data).then(res => res.data),
+  delete: (id: string) => api.delete(`/achats/${id}`).then(res => res.data),
 };
 
 // Clients
@@ -147,11 +154,16 @@ export const clientApi = {
 export const fournisseurApi = {
   getAll: () => api.get('/fournisseurs').then(toArray),
   create: (data: any) => api.post('/fournisseurs', data).then(res => res.data),
+  update: (id: string, data: any) => api.patch(`/fournisseurs/${id}`, data).then(res => res.data),
+  delete: (id: string) => api.delete(`/fournisseurs/${id}`).then(res => res.data),
 };
 
 // Caisse
 export const caisseApi = {
   getAll: () => api.get('/caisse').then(toArray),
+  create: (data: any) => api.post('/caisse', data).then(res => res.data),
+  update: (id: string, data: any) => api.patch(`/caisse/${id}`, data).then(res => res.data),
+  delete: (id: string) => api.delete(`/caisse/${id}`).then(res => res.data),
 };
 
 // Commandes (e-commerce orders)
@@ -172,6 +184,30 @@ export const notificationApi = {
 // Search
 export const searchApi = {
   search: (q: string) => api.get('/search', { params: { q } }).then(res => res.data),
+};
+
+// Roles
+export const roleApi = {
+  getAll: () => api.get('/roles').then(toArray),
+  create: (data: any) => api.post('/roles', data).then(res => res.data),
+  update: (id: string, data: any) => api.patch(`/roles/${id}`, data).then(res => res.data),
+  delete: (id: string) => api.delete(`/roles/${id}`).then(res => res.data),
+};
+
+// Attributs
+export const attributApi = {
+  getAll: () => api.get('/attributs').then(toArray),
+  create: (data: any) => api.post('/attributs', data).then(res => res.data),
+  update: (id: string, data: any) => api.patch(`/attributs/${id}`, data).then(res => res.data),
+  delete: (id: string) => api.delete(`/attributs/${id}`).then(res => res.data),
+};
+
+// Valeurs d'attributs
+export const valeurAttributApi = {
+  getAll: () => api.get('/valeur-attributs').then(toArray),
+  create: (data: any) => api.post('/valeur-attributs', data).then(res => res.data),
+  update: (id: string, data: any) => api.patch(`/valeur-attributs/${id}`, data).then(res => res.data),
+  delete: (id: string) => api.delete(`/valeur-attributs/${id}`).then(res => res.data),
 };
 
 export default api;
