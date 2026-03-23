@@ -7,11 +7,14 @@ import {
   Param,
   Delete,
   ParseUUIDPipe,
+  UseGuards,
 } from '@nestjs/common';
 import { VenteService } from './vente.service';
 import { CreateVenteDto } from './dto/create-vente.dto';
 import { UpdateVenteDto } from './dto/update-vente.dto';
+import { AdminAuthGuard } from '../admin-auth/admin-auth.guard';
 
+@UseGuards(AdminAuthGuard)
 @Controller('ventes')
 export class VenteController {
   constructor(private readonly venteService: VenteService) {}

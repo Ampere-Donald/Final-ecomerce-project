@@ -8,11 +8,14 @@ import {
   Delete,
   ParseUUIDPipe,
   Query,
+  UseGuards,
 } from '@nestjs/common';
 import { MouvementStockService } from './mouvement-stock.service';
 import { CreateMouvementStockDto } from './dto/create-mouvement-stock.dto';
 import { UpdateMouvementStockDto } from './dto/update-mouvement-stock.dto';
+import { AdminAuthGuard } from '../admin-auth/admin-auth.guard';
 
+@UseGuards(AdminAuthGuard)
 @Controller('mouvements-stock')
 export class MouvementStockController {
   constructor(private readonly mouvementStockService: MouvementStockService) {}

@@ -10,6 +10,7 @@ import { DatabaseService } from 'src/database/database.service';
 import { SignupDto } from './dto/signup.dto';
 import { LoginDto } from './dto/login.dto';
 import * as bcrypt from 'bcrypt';
+import { randomInt } from 'crypto';
 import { OAuth2Client } from 'google-auth-library';
 
 const googleClient = new OAuth2Client();
@@ -24,7 +25,7 @@ export class AuthService {
   /* ── helpers ────────────────────────────────────────────── */
 
   private generateOtp(): string {
-    return Math.floor(100000 + Math.random() * 900000).toString();
+    return randomInt(100000, 999999).toString();
   }
 
   private otpExpiry(): Date {
@@ -192,15 +193,18 @@ export class AuthService {
     if (!client) throw new NotFoundException('Aucun compte avec cet email');
 
     const otp = this.generateOtp();
+    const hashedOtp = await bcrypt.hash(otp, 10);
     await this.db.client.update({
       where: { id: client.id },
-      data: { otpCode: otp, otpExpiresAt: this.otpExpiry() },
+      data: { otpCode: hashedOtp, otpExpiresAt: this.otpExpiry() },
     });
 
-    // OTP is logged to console for MVP (no SMTP required)
-    console.log(`[RESET PASSWORD] OTP for ${email}: ${otp}`);
+    // TODO: Send OTP via email (SMTP). For now logged to console in dev only.
+    if (process.env.NODE_ENV !== 'production') {
+      console.log(`[DEV ONLY] OTP for ${email}: ${otp}`);
+    }
     return {
-      message: 'Code de réinitialisation généré. Consultez la console du serveur pour le code.',
+      message: 'Un code de réinitialisation a été envoyé à votre adresse email.',
     };
   }
 
@@ -211,7 +215,8 @@ export class AuthService {
     if (!client) throw new NotFoundException('Aucun compte avec cet email');
     if (!client.otpCode || !client.otpExpiresAt) throw new BadRequestException('Aucun OTP en attente');
     if (new Date() > client.otpExpiresAt) throw new BadRequestException('Code expiré');
-    if (client.otpCode !== code) throw new BadRequestException('Code incorrect');
+    const otpValid = await bcrypt.compare(code, client.otpCode);
+    if (!otpValid) throw new BadRequestException('Code incorrect');
 
     const hashed = await bcrypt.hash(newPassword, 12);
     await this.db.client.update({

@@ -1,4 +1,4 @@
-import { IsEmail, IsNotEmpty, IsOptional, IsIn, MinLength } from 'class-validator';
+import { IsEmail, IsNotEmpty, IsOptional, IsIn, MinLength, Matches } from 'class-validator';
 
 export class SignupDto {
   @IsNotEmpty({ message: 'Le nom complet est requis' })
@@ -15,6 +15,9 @@ export class SignupDto {
   typeClient?: 'PARTICULIER' | 'PROFESSIONNEL';
 
   @IsNotEmpty({ message: 'Le mot de passe est requis' })
-  @MinLength(6, { message: 'Le mot de passe doit contenir au moins 6 caractères' })
+  @MinLength(8, { message: 'Le mot de passe doit contenir au moins 8 caractères' })
+  @Matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/, {
+    message: 'Le mot de passe doit contenir au moins une majuscule, une minuscule et un chiffre',
+  })
   motDePasse: string;
 }

@@ -7,11 +7,14 @@ import {
   Param,
   Delete,
   ParseUUIDPipe,
+  UseGuards,
 } from '@nestjs/common';
 import { FournisseurService } from './fournisseur.service';
 import { CreateFournisseurDto } from './dto/create-fournisseur.dto';
 import { UpdateFournisseurDto } from './dto/update-fournisseur.dto';
+import { AdminAuthGuard } from '../admin-auth/admin-auth.guard';
 
+@UseGuards(AdminAuthGuard)
 @Controller('fournisseurs')
 export class FournisseurController {
   constructor(private readonly fournisseurService: FournisseurService) {}

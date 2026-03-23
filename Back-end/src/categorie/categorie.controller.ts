@@ -9,6 +9,7 @@ import {
   ParseUUIDPipe,
   UseInterceptors,
   UploadedFile,
+  UseGuards,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
@@ -16,6 +17,7 @@ import { CategorieService } from './categorie.service';
 import { CreateCategorieDto } from './dto/create-categorie.dto';
 import { UpdateCategorieDto } from './dto/update-categorie.dto';
 import { CloudinaryService } from '../cloudinary/cloudinary.service';
+import { AdminAuthGuard } from '../admin-auth/admin-auth.guard';
 
 const memStore = { storage: memoryStorage() };
 
@@ -26,6 +28,7 @@ export class CategorieController {
     private readonly cloudinary: CloudinaryService,
   ) {}
 
+  @UseGuards(AdminAuthGuard)
   @Post()
   create(@Body() createCategorieDto: CreateCategorieDto) {
     return this.categorieService.create(createCategorieDto);
@@ -41,6 +44,7 @@ export class CategorieController {
     return this.categorieService.findOne(id);
   }
 
+  @UseGuards(AdminAuthGuard)
   @Post(':id/image')
   @UseInterceptors(FileInterceptor('file', memStore))
   async uploadImage(
@@ -58,6 +62,7 @@ export class CategorieController {
     return result;
   }
 
+  @UseGuards(AdminAuthGuard)
   @Patch(':id')
   update(
     @Param('id', ParseUUIDPipe) id: string,
@@ -66,6 +71,7 @@ export class CategorieController {
     return this.categorieService.update(id, updateCategorieDto);
   }
 
+  @UseGuards(AdminAuthGuard)
   @Delete(':id')
   remove(@Param('id', ParseUUIDPipe) id: string) {
     return this.categorieService.remove(id);

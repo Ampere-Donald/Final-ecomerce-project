@@ -1,5 +1,7 @@
 import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
 import { ServeStaticModule } from '@nestjs/serve-static';
+import { ThrottlerModule } from '@nestjs/throttler';
 import { join } from 'path';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -21,6 +23,7 @@ import { CommandeModule } from './commande/commande.module';
 import { NotificationModule } from './notification/notification.module';
 import { SearchModule } from './search/search.module';
 import { AuthModule } from './auth/auth.module';
+import { AdminAuthModule } from './admin-auth/admin-auth.module';
 import { FavoriModule } from './favori/favori.module';
 import { DatabaseModule } from './database/database.module';
 import { NewsletterModule } from './newsletter/newsletter.module';
@@ -28,6 +31,11 @@ import { CloudinaryModule } from './cloudinary/cloudinary.module';
 
 @Module({
   imports: [
+    ConfigModule.forRoot({ isGlobal: true }),
+    ThrottlerModule.forRoot([{
+      ttl: 60000,
+      limit: 100,
+    }]),
     ServeStaticModule.forRoot({
       rootPath: join(__dirname, '..', 'uploads'),
       serveRoot: '/uploads',
@@ -50,6 +58,7 @@ import { CloudinaryModule } from './cloudinary/cloudinary.module';
     NotificationModule,
     SearchModule,
     AuthModule,
+    AdminAuthModule,
     FavoriModule,
     DatabaseModule,
     NewsletterModule,

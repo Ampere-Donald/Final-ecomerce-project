@@ -5,7 +5,7 @@ import { ExtractJwt, Strategy } from 'passport-jwt';
 import { DatabaseService } from 'src/database/database.service';
 
 @Injectable()
-export class JwtStrategy extends PassportStrategy(Strategy) {
+export class AdminJwtStrategy extends PassportStrategy(Strategy, 'jwt-admin') {
   constructor(
     private readonly db: DatabaseService,
     configService: ConfigService,
@@ -17,9 +17,14 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     });
   }
 
-  async validate(payload: { sub: string; email: string; nom: string }) {
-    const user = await this.db.client.findUnique({ where: { id: payload.sub } });
-    if (!user) throw new UnauthorizedException();
-    return { id: user.id, email: user.email, nom: user.nom, type: 'client' };
+  async validate(payload: { sub: string; email: string; role: string; type: string }) {
+    if (payload.type !== 'admin') {
+      throw new UnauthorizedException('Accès admin requis');
+    }
+    const admin = await this.db.adminUser.findUnique({ where: { id: payload.sub } });
+    if (!admin || !admin.isActive) {
+      throw new UnauthorizedException('Compte admin désactivé ou introuvable');
+    }
+    return { id: admin.id, email: admin.email, nom: admin.nom, role: admin.role, type: 'admin' };
   }
 }

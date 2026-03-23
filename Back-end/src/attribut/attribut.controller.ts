@@ -8,15 +8,18 @@ import {
   Delete,
   ParseUUIDPipe,
   Query,
+  UseGuards,
 } from '@nestjs/common';
 import { AttributService } from './attribut.service';
 import { CreateAttributDto } from './dto/create-attribut.dto';
 import { UpdateAttributDto } from './dto/update-attribut.dto';
+import { AdminAuthGuard } from '../admin-auth/admin-auth.guard';
 
 @Controller('attributs')
 export class AttributController {
   constructor(private readonly attributService: AttributService) {}
 
+  @UseGuards(AdminAuthGuard)
   @Post()
   create(@Body() createAttributDto: CreateAttributDto) {
     return this.attributService.create(createAttributDto);
@@ -35,6 +38,7 @@ export class AttributController {
     return this.attributService.findOne(id);
   }
 
+  @UseGuards(AdminAuthGuard)
   @Patch(':id')
   update(
     @Param('id', ParseUUIDPipe) id: string,
@@ -43,6 +47,7 @@ export class AttributController {
     return this.attributService.update(id, updateAttributDto);
   }
 
+  @UseGuards(AdminAuthGuard)
   @Delete(':id')
   remove(@Param('id', ParseUUIDPipe) id: string) {
     return this.attributService.remove(id);

@@ -2,6 +2,7 @@ import React from 'react';
 import { Helmet } from 'react-helmet-async';
 import { Shield, FileText, Scale, Building2, Globe, AlertTriangle, Phone } from 'lucide-react';
 import { useI18n } from '../../context/I18nContext';
+import { renderBoldText } from '../../utils/renderBoldText';
 import Footer from '../../components/Footer/Footer';
 import './Terms.scss';
 
@@ -31,12 +32,12 @@ const Terms = () => {
                     <div className="legal-section__icon"><Building2 size={24} /></div>
                     <div className="legal-section__body">
                         <h2>{t('terms.s1Title')}</h2>
-                        <p dangerouslySetInnerHTML={{ __html: t('terms.s1P1') }}></p>
+                        <p>{renderBoldText(t('terms.s1P1'))}</p>
                         <ul>
-                            <li dangerouslySetInnerHTML={{ __html: t('terms.s1L1') }}></li>
-                            <li dangerouslySetInnerHTML={{ __html: t('terms.s1L2') }}></li>
-                            <li dangerouslySetInnerHTML={{ __html: t('terms.s1L3') }}></li>
-                            <li dangerouslySetInnerHTML={{ __html: t('terms.s1L4') }}></li>
+                            <li>{renderBoldText(t('terms.s1L1'))}</li>
+                            <li>{renderBoldText(t('terms.s1L2'))}</li>
+                            <li>{renderBoldText(t('terms.s1L3'))}</li>
+                            <li>{renderBoldText(t('terms.s1L4'))}</li>
                         </ul>
                     </div>
                 </section>
@@ -45,7 +46,7 @@ const Terms = () => {
                     <div className="legal-section__icon"><FileText size={24} /></div>
                     <div className="legal-section__body">
                         <h2>{t('terms.s2Title')}</h2>
-                        <p dangerouslySetInnerHTML={{ __html: t('terms.s2P1') }}></p>
+                        <p>{renderBoldText(t('terms.s2P1'))}</p>
                     </div>
                 </section>
 
@@ -53,7 +54,7 @@ const Terms = () => {
                     <div className="legal-section__icon"><Globe size={24} /></div>
                     <div className="legal-section__body">
                         <h2>{t('terms.s3Title')}</h2>
-                        <p dangerouslySetInnerHTML={{ __html: t('terms.s3P1') }}></p>
+                        <p>{renderBoldText(t('terms.s3P1'))}</p>
                     </div>
                 </section>
 
@@ -61,7 +62,7 @@ const Terms = () => {
                     <div className="legal-section__icon"><Shield size={24} /></div>
                     <div className="legal-section__body">
                         <h2>{t('terms.s4Title')}</h2>
-                        <p dangerouslySetInnerHTML={{ __html: t('terms.s4P1') }}></p>
+                        <p>{renderBoldText(t('terms.s4P1'))}</p>
                     </div>
                 </section>
 
@@ -69,7 +70,7 @@ const Terms = () => {
                     <div className="legal-section__icon"><Scale size={24} /></div>
                     <div className="legal-section__body">
                         <h2>{t('terms.s5Title')}</h2>
-                        <p dangerouslySetInnerHTML={{ __html: t('terms.s5P1') }}></p>
+                        <p>{renderBoldText(t('terms.s5P1'))}</p>
                     </div>
                 </section>
 
@@ -77,7 +78,7 @@ const Terms = () => {
                     <div className="legal-section__icon"><AlertTriangle size={24} /></div>
                     <div className="legal-section__body">
                         <h2>{t('terms.s6Title')}</h2>
-                        <p dangerouslySetInnerHTML={{ __html: t('terms.s6P1') }}></p>
+                        <p>{renderBoldText(t('terms.s6P1'))}</p>
                     </div>
                 </section>
 
@@ -85,7 +86,7 @@ const Terms = () => {
                     <div className="legal-section__icon"><Scale size={24} /></div>
                     <div className="legal-section__body">
                         <h2>{t('terms.s7Title')}</h2>
-                        <p dangerouslySetInnerHTML={{ __html: t('terms.s7P1') }}></p>
+                        <p>{renderBoldText(t('terms.s7P1'))}</p>
                     </div>
                 </section>
 
@@ -93,11 +94,11 @@ const Terms = () => {
                     <div className="legal-section__icon"><Phone size={24} /></div>
                     <div className="legal-section__body">
                         <h2>{t('terms.s8Title')}</h2>
-                        <p dangerouslySetInnerHTML={{ __html: t('terms.s8P1') }}></p>
+                        <p>{renderBoldText(t('terms.s8P1'))}</p>
                         <ul>
-                            <li dangerouslySetInnerHTML={{ __html: t('terms.s8L1') }}></li>
-                            <li dangerouslySetInnerHTML={{ __html: t('terms.s8L2') }}></li>
-                            <li dangerouslySetInnerHTML={{ __html: t('terms.s8L3') }}></li>
+                            <li>{renderBoldText(t('terms.s8L1'))}</li>
+                            <li>{renderBoldText(t('terms.s8L2'))}</li>
+                            <li>{renderBoldText(t('terms.s8L3'))}</li>
                         </ul>
                     </div>
                 </section>

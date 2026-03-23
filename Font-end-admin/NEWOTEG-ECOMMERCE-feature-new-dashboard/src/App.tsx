@@ -1,4 +1,6 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { AdminAuthProvider } from './context/AdminAuthContext';
+import { AdminProtectedRoute } from './components/AdminProtectedRoute';
 import { Layout } from './components/Layout';
 import { Dashboard } from './components/Dashboard';
 import { Orders } from './components/Orders';
@@ -19,28 +21,30 @@ import { Caisse } from './components/Caisse';
 export default function App() {
   return (
     <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Layout />}>
-          <Route index element={<Dashboard />} />
-          <Route path="orders" element={<Orders />} />
-          <Route path="invoices" element={<Invoices />} />
-          <Route path="addresses" element={<Addresses />} />
-          
-          {/* Nouveaux écrans connectés au backend */}
-          <Route path="produits" element={<Produits />} />
-          <Route path="categories" element={<Categories />} />
+      <AdminAuthProvider>
+        <Routes>
+          <Route path="/" element={<AdminProtectedRoute><Layout /></AdminProtectedRoute>}>
+            <Route index element={<Dashboard />} />
+            <Route path="orders" element={<Orders />} />
+            <Route path="invoices" element={<Invoices />} />
+            <Route path="addresses" element={<Addresses />} />
 
-          <Route path="stock" element={<MouvementsStock />} />
-          <Route path="ventes" element={<Ventes />} />
-          <Route path="achats" element={<Achats />} />
-          <Route path="clients" element={<Clients />} />
-          <Route path="fournisseurs" element={<Fournisseurs />} />
-          <Route path="caisse" element={<Caisse />} />
+            {/* Nouveaux écrans connectés au backend */}
+            <Route path="produits" element={<Produits />} />
+            <Route path="categories" element={<Categories />} />
 
-          <Route path="settings" element={<Settings />} />
-          <Route path="support" element={<Support />} />
-        </Route>
-      </Routes>
+            <Route path="stock" element={<MouvementsStock />} />
+            <Route path="ventes" element={<Ventes />} />
+            <Route path="achats" element={<Achats />} />
+            <Route path="clients" element={<Clients />} />
+            <Route path="fournisseurs" element={<Fournisseurs />} />
+            <Route path="caisse" element={<Caisse />} />
+
+            <Route path="settings" element={<Settings />} />
+            <Route path="support" element={<Support />} />
+          </Route>
+        </Routes>
+      </AdminAuthProvider>
     </BrowserRouter>
   );
 }

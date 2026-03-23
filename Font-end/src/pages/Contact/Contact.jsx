@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom';
 import Footer from '../../components/Footer/Footer';
 import useScrollReveal from '../../hooks/useScrollReveal';
 import { useI18n } from '../../context/I18nContext';
+import { renderBoldText } from '../../utils/renderBoldText';
 import './Contact.scss';
 
 const Contact = () => {
@@ -79,7 +80,7 @@ const Contact = () => {
             <section className="contact-hero">
                 <div className="container contact-hero__content">
                     <span className="contact-hero__tag">{t('contact.heroTag')}</span>
-                    <h1 dangerouslySetInnerHTML={{ __html: t('contact.heroTitle') }} />
+                    <h1>{renderBoldText(t('contact.heroTitle'))}</h1>
                     <div className={`contact-hero__text-wrapper ${heroExpanded ? 'contact-hero__text-wrapper--expanded' : ''}`}>
                         <p>{t('contact.heroText')}</p>
                     </div>

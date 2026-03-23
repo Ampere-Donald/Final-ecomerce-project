@@ -14,23 +14,26 @@ import { CommandeService } from './commande.service';
 import { CreateCommandeDto } from './dto/create-commande.dto';
 import { UpdateCommandeDto } from './dto/update-commande.dto';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
+import { AdminAuthGuard } from '../admin-auth/admin-auth.guard';
 
 @Controller('commandes')
 export class CommandeController {
   constructor(private readonly commandeService: CommandeService) {}
 
-  /** Standard order creation */
+  /** Standard order creation (public) */
   @Post()
   create(@Body() createCommandeDto: CreateCommandeDto) {
     return this.commandeService.create(createCommandeDto);
   }
 
-  /** Checkout with inline account creation */
+  /** Checkout with inline account creation (public) */
   @Post('checkout')
   checkout(@Body() dto: CreateCommandeDto) {
     return this.commandeService.createWithAccount(dto);
   }
 
+  /** Admin: list all orders */
+  @UseGuards(AdminAuthGuard)
   @Get()
   findAll() {
     return this.commandeService.findAll();
@@ -43,6 +46,8 @@ export class CommandeController {
     return this.commandeService.findByClient(req.user.id);
   }
 
+  /** Admin: view single order */
+  @UseGuards(AdminAuthGuard)
   @Get(':id')
   findOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.commandeService.findOne(id);
@@ -52,6 +57,7 @@ export class CommandeController {
    * Admin status update.
    * ANTI-FRAUD: Admin can ONLY set status to EN_ATTENTE or EN_LIVRAISON.
    */
+  @UseGuards(AdminAuthGuard)
   @Patch(':id')
   update(
     @Param('id', ParseUUIDPipe) id: string,

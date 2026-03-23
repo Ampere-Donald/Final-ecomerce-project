@@ -8,11 +8,14 @@ import {
   Delete,
   ParseUUIDPipe,
   Query,
+  UseGuards,
 } from '@nestjs/common';
 import { LigneVenteService } from './ligne-vente.service';
 import { CreateLigneVenteDto } from './dto/create-ligne-vente.dto';
 import { UpdateLigneVenteDto } from './dto/update-ligne-vente.dto';
+import { AdminAuthGuard } from '../admin-auth/admin-auth.guard';
 
+@UseGuards(AdminAuthGuard)
 @Controller('lignes-vente')
 export class LigneVenteController {
   constructor(private readonly ligneVenteService: LigneVenteService) {}

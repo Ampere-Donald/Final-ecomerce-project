@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom';
 import Footer from '../../components/Footer/Footer';
 import useScrollReveal from '../../hooks/useScrollReveal';
 import { useI18n } from '../../context/I18nContext';
+import { renderBoldText } from '../../utils/renderBoldText';
 import './About.scss';
 
 const About = () => {
@@ -38,7 +39,7 @@ const About = () => {
             <section className="about-hero">
                 <div className="container about-hero__content">
                     <span className="about-hero__tag">{t('about.heroTag')}</span>
-                    <h1 dangerouslySetInnerHTML={{ __html: t('about.heroTitle') }} />
+                    <h1>{renderBoldText(t('about.heroTitle'))}</h1>
                     <div className={`about-hero__text-wrapper ${heroExpanded ? 'about-hero__text-wrapper--expanded' : ''}`}>
                         <p>
                             {t('about.heroText')}
@@ -71,7 +72,7 @@ const About = () => {
                         {t('about.expertiseP2')}
                     </p>
                     <h2>{t('about.expertiseTitle2')}</h2>
-                    <p dangerouslySetInnerHTML={{ __html: t('about.expertiseP3') }} />
+                    <p>{renderBoldText(t('about.expertiseP3'))}</p>
                     <p>
                         {t('about.expertiseP4')}
                     </p>

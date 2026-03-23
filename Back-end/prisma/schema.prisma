@@ -96,7 +96,7 @@ model Client {
   createdAt    DateTime   @default(now()) @map("created_at")
   emailVerifie Boolean    @default(false) @map("email_verifie")
   motDePasse   String?    @map("mot_de_passe")
-  otpCode      String?    @map("otp_code") @db.VarChar(6)
+  otpCode      String?    @map("otp_code")
   otpExpiresAt DateTime?  @map("otp_expires_at")
   typeClient   TypeClient @default(PARTICULIER) @map("type_client")
   googleId     String?    @unique @map("google_id")
@@ -331,4 +331,23 @@ model PendingImport {
   createdAt DateTime @default(now()) @map("created_at")
 
   @@map("pending_import")
+}
+
+model AdminUser {
+  id          String    @id @default(uuid())
+  email       String    @unique @db.VarChar(100)
+  motDePasse  String    @map("mot_de_passe")
+  nom         String    @db.VarChar(100)
+  role        AdminRole @default(ADMIN)
+  isActive    Boolean   @default(true) @map("is_active")
+  lastLoginAt DateTime? @map("last_login_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  @@map("admin_user")
+}
+
+enum AdminRole {
+  SUPER_ADMIN
+  ADMIN
+  MANAGER
 }

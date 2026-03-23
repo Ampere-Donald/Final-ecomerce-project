@@ -12,6 +12,7 @@ import {
   UploadedFiles,
   Query,
   BadRequestException,
+  UseGuards,
 } from '@nestjs/common';
 import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import { memoryStorage, diskStorage } from 'multer';
@@ -20,9 +21,17 @@ import { ProduitService } from './produit.service';
 import { CreateProduitDto } from './dto/create-produit.dto';
 import { UpdateProduitDto } from './dto/update-produit.dto';
 import { CloudinaryService } from '../cloudinary/cloudinary.service';
+import { AdminAuthGuard } from '../admin-auth/admin-auth.guard';
 
-const memStore = { storage: memoryStorage() };
-const memStore3 = { storage: memoryStorage(), limits: { files: 3 } };
+const imageFileFilter = (_req: any, file: Express.Multer.File, cb: any) => {
+  if (!file.mimetype.match(/^image\/(jpeg|png|gif|webp)$/)) {
+    return cb(new BadRequestException('Seuls les fichiers image (jpg, png, gif, webp) sont acceptés'), false);
+  }
+  cb(null, true);
+};
+
+const memStore = { storage: memoryStorage(), fileFilter: imageFileFilter, limits: { fileSize: 5 * 1024 * 1024 } };
+const memStore3 = { storage: memoryStorage(), fileFilter: imageFileFilter, limits: { files: 3, fileSize: 5 * 1024 * 1024 } };
 
 @Controller('produits')
 export class ProduitController {
@@ -41,6 +50,7 @@ export class ProduitController {
     return urls;
   }
 
+  @UseGuards(AdminAuthGuard)
   @Post()
   @UseInterceptors(FilesInterceptor('files', 3, memStore))
   async create(
@@ -133,6 +143,7 @@ export class ProduitController {
   // ── Import ZIP (CSV + images) or plain CSV en masse ─────────────────────
   // diskStorage : les fichiers sont écrits sur le disque. Le ZIP sera chargé
   // en mémoire pour extraction, et le CSV sera lu en flux.
+  @UseGuards(AdminAuthGuard)
   @Post('import')
   @UseInterceptors(
     FileInterceptor('file', {
@@ -153,7 +164,7 @@ export class ProduitController {
         }
         cb(null, true);
       },
-      limits: { fileSize: 250 * 1024 * 1024 }, // 250 Mo max (ZIP avec images HD)
+      limits: { fileSize: 50 * 1024 * 1024 }, // 50 Mo max
     }),
   )
   async importProducts(@UploadedFile() file: Express.Multer.File) {
@@ -183,6 +194,7 @@ export class ProduitController {
   }
 
   // ── Cleanup invalid images ────────────────────────────────────────────────
+  @UseGuards(AdminAuthGuard)
   @Post('cleanup-images')
   async cleanupImages() {
     return this.produitService.cleanupInvalidImages();
@@ -193,6 +205,7 @@ export class ProduitController {
     return this.produitService.findOne(id);
   }
 
+  @UseGuards(AdminAuthGuard)
   @Post(':id/image')
   @UseInterceptors(FileInterceptor('file', memStore))
   async uploadImage(
@@ -208,6 +221,7 @@ export class ProduitController {
     return result;
   }
 
+  @UseGuards(AdminAuthGuard)
   @Patch(':id')
   @UseInterceptors(FilesInterceptor('files', 3, memStore))
   async update(
@@ -270,6 +284,7 @@ export class ProduitController {
     return result;
   }
 
+  @UseGuards(AdminAuthGuard)
   @Delete(':id')
   remove(@Param('id', ParseUUIDPipe) id: string) {
     return this.produitService.remove(id);

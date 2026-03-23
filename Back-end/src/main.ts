@@ -1,33 +1,51 @@
 import { NestFactory } from '@nestjs/core';
-import { ValidationPipe } from '@nestjs/common';
+import { ValidationPipe, Logger } from '@nestjs/common';
 import { AppModule } from './app.module';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { join } from 'path';
+import helmet from 'helmet';
+import cookieParser from 'cookie-parser';
+import { AllExceptionsFilter } from './common/filters/http-exception.filter';
+import { AuditLogInterceptor } from './common/interceptors/audit-log.interceptor';
 import 'dotenv/config';
 
 async function bootstrap() {
+  const logger = new Logger('Bootstrap');
+
   // --- Force prisma migrations execution on startup ---
   try {
     const { execSync } = require('child_process');
-    console.log('Running Prisma migrations...');
+    logger.log('Running Prisma migrations...');
     execSync('npx prisma migrate deploy', { stdio: 'inherit' });
-    console.log('Prisma migrations applied successfully.');
+    logger.log('Prisma migrations applied successfully.');
   } catch (error) {
-    console.error('Failed to run Prisma migrations:', error);
+    logger.error('Failed to run Prisma migrations:', error);
   }
 
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
+  // ── Security headers ───────────────────────────────────────────────────
+  app.use(helmet({
+    contentSecurityPolicy: false,
+    crossOriginEmbedderPolicy: false,
+  }));
+
+  // ── Cookie parser (for future httpOnly cookie auth) ────────────────────
+  app.use(cookieParser());
+
+  // ── Global pipes & filters ─────────────────────────────────────────────
   app.useGlobalPipes(new ValidationPipe({
     transform: true,
     whitelist: true,
   }));
+  app.useGlobalFilters(new AllExceptionsFilter());
+  app.useGlobalInterceptors(new AuditLogInterceptor());
 
   app.useStaticAssets(join(process.cwd(), 'uploads'), {
     prefix: '/uploads/',
   });
 
-  // --- CORS dynamique pour Railway + Vercel (multi-origines ou wildcards) ---
+  // --- CORS ---
   const rawOrigins = process.env.FRONTEND_URLS || '';
   const envOrigins = rawOrigins.split(',').map((u) => u.trim()).filter(Boolean);
 
@@ -39,8 +57,6 @@ async function bootstrap() {
       'https://newoteg.com',
       'https://www.newoteg.com',
       'https://admin.newoteg.com',
-      /\\.vercel\\.app$/,
-      /\\.up\\.railway\\.app$/,
       ...envOrigins,
     ],
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
@@ -51,8 +67,7 @@ async function bootstrap() {
   app.setGlobalPrefix('api');
 
   const port = process.env.PORT || 3000;
-  // Bind to 0.0.0.0 so Railway can reach the service
   await app.listen(port, '0.0.0.0');
-  console.log(`🚀 Backend NEWOTEG démarré sur le port ${port}`);
+  logger.log(`Backend NEWOTEG started on port ${port}`);
 }
 bootstrap();

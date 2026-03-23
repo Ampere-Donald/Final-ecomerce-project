@@ -2,6 +2,7 @@ import React from 'react';
 import { Helmet } from 'react-helmet-async';
 import { Shield, Lock, Eye, UserCheck, Database, Globe, Phone, FileText } from 'lucide-react';
 import { useI18n } from '../../context/I18nContext';
+import { renderBoldText } from '../../utils/renderBoldText';
 import Footer from '../../components/Footer/Footer';
 import './Privacy.scss';
 
@@ -31,7 +32,7 @@ const Privacy = () => {
                     <div className="legal-section__icon"><Shield size={24} /></div>
                     <div className="legal-section__body">
                         <h2>{t('privacy.s1Title')}</h2>
-                        <p dangerouslySetInnerHTML={{ __html: t('privacy.s1P1') }}></p>
+                        <p>{renderBoldText(t('privacy.s1P1'))}</p>
                     </div>
                 </section>
 
@@ -39,12 +40,12 @@ const Privacy = () => {
                     <div className="legal-section__icon"><Database size={24} /></div>
                     <div className="legal-section__body">
                         <h2>{t('privacy.s2Title')}</h2>
-                        <p dangerouslySetInnerHTML={{ __html: t('privacy.s2P1') }}></p>
+                        <p>{renderBoldText(t('privacy.s2P1'))}</p>
                         <ul>
-                            <li dangerouslySetInnerHTML={{ __html: t('privacy.s2L1') }}></li>
-                            <li dangerouslySetInnerHTML={{ __html: t('privacy.s2L2') }}></li>
-                            <li dangerouslySetInnerHTML={{ __html: t('privacy.s2L3') }}></li>
-                            <li dangerouslySetInnerHTML={{ __html: t('privacy.s2L4') }}></li>
+                            <li>{renderBoldText(t('privacy.s2L1'))}</li>
+                            <li>{renderBoldText(t('privacy.s2L2'))}</li>
+                            <li>{renderBoldText(t('privacy.s2L3'))}</li>
+                            <li>{renderBoldText(t('privacy.s2L4'))}</li>
                         </ul>
                     </div>
                 </section>
@@ -53,12 +54,12 @@ const Privacy = () => {
                     <div className="legal-section__icon"><Eye size={24} /></div>
                     <div className="legal-section__body">
                         <h2>{t('privacy.s3Title')}</h2>
-                        <p dangerouslySetInnerHTML={{ __html: t('privacy.s3P1') }}></p>
+                        <p>{renderBoldText(t('privacy.s3P1'))}</p>
                         <ul>
-                            <li dangerouslySetInnerHTML={{ __html: t('privacy.s3L1') }}></li>
-                            <li dangerouslySetInnerHTML={{ __html: t('privacy.s3L2') }}></li>
-                            <li dangerouslySetInnerHTML={{ __html: t('privacy.s3L3') }}></li>
-                            <li dangerouslySetInnerHTML={{ __html: t('privacy.s3L4') }}></li>
+                            <li>{renderBoldText(t('privacy.s3L1'))}</li>
+                            <li>{renderBoldText(t('privacy.s3L2'))}</li>
+                            <li>{renderBoldText(t('privacy.s3L3'))}</li>
+                            <li>{renderBoldText(t('privacy.s3L4'))}</li>
                         </ul>
                     </div>
                 </section>
@@ -67,7 +68,7 @@ const Privacy = () => {
                     <div className="legal-section__icon"><Lock size={24} /></div>
                     <div className="legal-section__body">
                         <h2>{t('privacy.s4Title')}</h2>
-                        <p dangerouslySetInnerHTML={{ __html: t('privacy.s4P1') }}></p>
+                        <p>{renderBoldText(t('privacy.s4P1'))}</p>
                     </div>
                 </section>
 
@@ -75,7 +76,7 @@ const Privacy = () => {
                     <div className="legal-section__icon"><Globe size={24} /></div>
                     <div className="legal-section__body">
                         <h2>{t('privacy.s5Title')}</h2>
-                        <p dangerouslySetInnerHTML={{ __html: t('privacy.s5P1') }}></p>
+                        <p>{renderBoldText(t('privacy.s5P1'))}</p>
                     </div>
                 </section>
 
@@ -83,12 +84,12 @@ const Privacy = () => {
                     <div className="legal-section__icon"><UserCheck size={24} /></div>
                     <div className="legal-section__body">
                         <h2>{t('privacy.s6Title')}</h2>
-                        <p dangerouslySetInnerHTML={{ __html: t('privacy.s6P1') }}></p>
+                        <p>{renderBoldText(t('privacy.s6P1'))}</p>
                         <ul>
-                            <li dangerouslySetInnerHTML={{ __html: t('privacy.s6L1') }}></li>
-                            <li dangerouslySetInnerHTML={{ __html: t('privacy.s6L2') }}></li>
-                            <li dangerouslySetInnerHTML={{ __html: t('privacy.s6L3') }}></li>
-                            <li dangerouslySetInnerHTML={{ __html: t('privacy.s6L4') }}></li>
+                            <li>{renderBoldText(t('privacy.s6L1'))}</li>
+                            <li>{renderBoldText(t('privacy.s6L2'))}</li>
+                            <li>{renderBoldText(t('privacy.s6L3'))}</li>
+                            <li>{renderBoldText(t('privacy.s6L4'))}</li>
                         </ul>
                     </div>
                 </section>
@@ -97,7 +98,7 @@ const Privacy = () => {
                     <div className="legal-section__icon"><FileText size={24} /></div>
                     <div className="legal-section__body">
                         <h2>{t('privacy.s7Title')}</h2>
-                        <p dangerouslySetInnerHTML={{ __html: t('privacy.s7P1') }}></p>
+                        <p>{renderBoldText(t('privacy.s7P1'))}</p>
                     </div>
                 </section>
 
@@ -105,11 +106,11 @@ const Privacy = () => {
                     <div className="legal-section__icon"><Phone size={24} /></div>
                     <div className="legal-section__body">
                         <h2>{t('privacy.s8Title')}</h2>
-                        <p dangerouslySetInnerHTML={{ __html: t('privacy.s8P1') }}></p>
+                        <p>{renderBoldText(t('privacy.s8P1'))}</p>
                         <ul>
-                            <li dangerouslySetInnerHTML={{ __html: t('privacy.s8L1') }}></li>
-                            <li dangerouslySetInnerHTML={{ __html: t('privacy.s8L2') }}></li>
-                            <li dangerouslySetInnerHTML={{ __html: t('privacy.s8L3') }}></li>
+                            <li>{renderBoldText(t('privacy.s8L1'))}</li>
+                            <li>{renderBoldText(t('privacy.s8L2'))}</li>
+                            <li>{renderBoldText(t('privacy.s8L3'))}</li>
                         </ul>
                     </div>
                 </section>
