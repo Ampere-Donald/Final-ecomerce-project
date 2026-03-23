@@ -93,6 +93,21 @@
         @media (min-width: $breakpoint-lg) {
             display: none;
         }
+
+        .filter-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 20px;
+            height: 20px;
+            padding: 0 6px;
+            border-radius: 10px;
+            background: $color-primary;
+            color: $color-surface;
+            font-size: 11px;
+            font-weight: $font-weight-bold;
+            line-height: 1;
+        }
     }
 
     // ── Layout ───────────────────────────────────────────────
@@ -282,8 +297,8 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        height: 36px;
-        min-width: 36px;
+        height: 44px;
+        min-width: 44px;
         background: $color-surface;
         border: 1px solid $color-border;
         border-radius: $border-radius-sm;

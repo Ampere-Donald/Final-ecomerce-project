@@ -58,7 +58,22 @@ const ProductDetails = () => {
     }, [code]);
 
     if (loading) {
-        return <div className="p-20 text-center">{t('productDetails.loading')}</div>;
+        return (
+            <div className="product-details-page">
+                <div className="product-details__skeleton">
+                    <div className="product-details__skeleton-grid">
+                        <div className="skeleton-block skeleton-image" />
+                        <div className="skeleton-info">
+                            <div className="skeleton-block skeleton-breadcrumb" />
+                            <div className="skeleton-block skeleton-title" />
+                            <div className="skeleton-block skeleton-ref" />
+                            <div className="skeleton-block skeleton-price" />
+                            <div className="skeleton-block skeleton-btn" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
     }
 
     if (!product) {

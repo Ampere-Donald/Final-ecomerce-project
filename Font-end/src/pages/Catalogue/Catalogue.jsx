@@ -181,6 +181,11 @@ const Catalogue = () => {
         setCurrentPage(1);
     }, [debouncedSearch, selectedCategory, selectedSubCategory, sortBy, debouncedPrice, inStockOnly]);
 
+    // Scroll to top when page changes
+    useEffect(() => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }, [currentPage]);
+
     // ── Handlers ───────────────────────────────────────────
     const toggleCategory = (slug) => {
         setExpandedCategories(prev => ({ ...prev, [slug]: !prev[slug] }));
@@ -300,15 +305,19 @@ const Catalogue = () => {
                                 </p>
                             )}
                         </div>
-                        {!isVisualGridMode && (
-                            <button
-                                className="catalogue-page__filter-toggle"
-                                onClick={() => setSidebarOpen(!sidebarOpen)}
-                            >
-                                <SlidersHorizontal size={18} />
-                                {t('catalogue.filters')}
-                            </button>
-                        )}
+                        {!isVisualGridMode && (() => {
+                            const activeFilterCount = [searchQuery, selectedCategory, selectedSubCategory, inStockOnly, priceRange[1] < 1000000].filter(Boolean).length;
+                            return (
+                                <button
+                                    className="catalogue-page__filter-toggle"
+                                    onClick={() => setSidebarOpen(!sidebarOpen)}
+                                >
+                                    <SlidersHorizontal size={18} />
+                                    {t('catalogue.filters')}
+                                    {activeFilterCount > 0 && <span className="filter-badge">{activeFilterCount}</span>}
+                                </button>
+                            );
+                        })()}
                     </div>
                 </div>
             </div>

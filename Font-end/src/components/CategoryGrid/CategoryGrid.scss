@@ -86,6 +86,13 @@
         }
     }
 
+    @media (hover: none) {
+        &:active {
+            transform: scale(0.97);
+            opacity: 0.9;
+        }
+    }
+
     &__image-container {
         position: relative;
         height: 160px;

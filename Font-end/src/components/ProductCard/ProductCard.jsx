@@ -17,6 +17,7 @@ const ProductCard = ({ product, badge }) => {
     const [imgSrc, setImgSrc] = useState(product.image || PLACEHOLDER_IMG);
 
     const isBackorder = (product.stock ?? 0) <= 0;
+    const [justAdded, setJustAdded] = useState(false);
 
     const handleFavorite = (e) => {
         e.preventDefault();
@@ -28,6 +29,8 @@ const ProductCard = ({ product, badge }) => {
         e.preventDefault();
         e.stopPropagation();
         addToCart(product, 1);
+        setJustAdded(true);
+        setTimeout(() => setJustAdded(false), 800);
     };
 
     const handleImageError = () => {
@@ -120,7 +123,7 @@ const ProductCard = ({ product, badge }) => {
                         </Link>
 
                         <button
-                            className={`product-card__action-btn ${isBackorder ? 'product-card__action-btn--preorder' : ''}`}
+                            className={`product-card__action-btn ${isBackorder ? 'product-card__action-btn--preorder' : ''} ${justAdded ? 'product-card__action-btn--added' : ''}`}
                             onClick={handleAddToCart}
                             aria-label={isBackorder ? t('product.preorderBtnTitle') : t('product.addToCart')}
                             title={isBackorder ? t('product.preorderBtnTitle') : t('product.addToCart')}

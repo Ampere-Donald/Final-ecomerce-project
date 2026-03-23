@@ -131,11 +131,8 @@
     padding: $spacing-2xl;
     box-shadow: $shadow-lg;
 
-    @media (max-width: $breakpoint-lg) {
-        grid-template-columns: 1fr;
-    }
-
     @media (max-width: $breakpoint-md) {
+        grid-template-columns: 1fr;
         padding: $spacing-xl $spacing-lg;
         border-radius: $border-radius-lg;
     }
