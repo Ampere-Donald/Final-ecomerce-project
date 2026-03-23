@@ -170,7 +170,7 @@
     }
 
     @media (min-width: $breakpoint-lg) {
-        grid-template-columns: 500px 1fr; // Fixed image size roughly
+        grid-template-columns: 1.1fr 0.9fr;
         gap: $spacing-3xl;
     }
 }
@@ -577,6 +577,10 @@
 
     @media (min-width: $breakpoint-md) {
         grid-template-columns: repeat(3, 1fr);
+    }
+
+    @media (min-width: 1440px) {
+        grid-template-columns: repeat(4, 1fr);
     }
 }
 

@@ -228,6 +228,13 @@
             transform: translateY(-2px);
             box-shadow: 0 4px 12px rgba($color-primary, 0.4);
         }
+
+        &:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
     }
 
     &__bottom {

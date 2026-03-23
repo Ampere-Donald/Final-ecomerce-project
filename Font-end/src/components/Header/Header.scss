@@ -109,7 +109,7 @@
     &__nav {
         display: none;
 
-        @media (min-width: $breakpoint-xl) {
+        @media (min-width: $breakpoint-lg) {
             display: block;
         }
 
@@ -158,7 +158,7 @@
     &__actions {
         display: none;
 
-        @media (min-width: $breakpoint-xl) {
+        @media (min-width: $breakpoint-lg) {
             display: flex;
             align-items: center;
             gap: $spacing-md;
@@ -218,7 +218,7 @@
         align-items: center;
         gap: $spacing-2xs;
 
-        @media (min-width: $breakpoint-xl) {
+        @media (min-width: $breakpoint-lg) {
             display: none;
         }
     }

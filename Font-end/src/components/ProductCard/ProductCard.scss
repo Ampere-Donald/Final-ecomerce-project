@@ -194,7 +194,7 @@
     }
 
     &__category {
-        font-size: 10px;
+        font-size: 11px;
         font-weight: 700;
         color: $color-secondary;
         text-transform: uppercase;
@@ -459,6 +459,10 @@
     border-radius: $border-radius-xl;
     max-width: 700px;
     width: 100%;
+
+    @media (min-width: 1440px) {
+        max-width: 900px;
+    }
     max-height: 90vh;
     overflow-y: auto;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);

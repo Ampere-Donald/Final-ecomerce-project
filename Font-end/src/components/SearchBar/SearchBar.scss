@@ -6,6 +6,10 @@
     max-width: 400px;
     margin-right: $spacing-md;
 
+    @media (min-width: 1600px) {
+        max-width: 500px;
+    }
+
     @media (max-width: calc(#{$breakpoint-lg} - 1px)) {
         max-width: 200px;
         margin-right: $spacing-xs;
