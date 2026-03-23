@@ -108,7 +108,7 @@ const Catalogue = () => {
                 if (debouncedPrice[0] > globalMinPrice) params.append('minPrice', debouncedPrice[0]);
                 if (debouncedPrice[1] && debouncedPrice[1] < globalMaxPrice) params.append('maxPrice', debouncedPrice[1]);
                 if (inStockOnly) params.append('inStock', 'true');
-                if (sortBy && sortBy !== 'name-asc') params.append('sort', sortBy);
+                params.append('sort', sortBy.replace('-', '_'));
 
 
                 const prodRes = await apiClient.get(`/produits?${params.toString()}`);
