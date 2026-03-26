@@ -3,7 +3,7 @@
   <!-- Page d'accueil -->
   <url>
     <loc>https://newoteg.com/</loc>
-    <lastmod>2026-03-22</lastmod>
+    <lastmod>2026-03-26</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
@@ -11,7 +11,7 @@
   <!-- Catalogue -->
   <url>
     <loc>https://newoteg.com/catalogue</loc>
-    <lastmod>2026-03-22</lastmod>
+    <lastmod>2026-03-26</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
   </url>
@@ -19,37 +19,37 @@
   <!-- Catégories principales -->
   <url>
     <loc>https://newoteg.com/catalogue?category=microcontrollers</loc>
-    <lastmod>2026-03-22</lastmod>
+    <lastmod>2026-03-26</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://newoteg.com/catalogue?category=transistors</loc>
-    <lastmod>2026-03-22</lastmod>
+    <lastmod>2026-03-26</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://newoteg.com/catalogue?category=sensors</loc>
-    <lastmod>2026-03-22</lastmod>
+    <lastmod>2026-03-26</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://newoteg.com/catalogue?category=capacitors</loc>
-    <lastmod>2026-03-22</lastmod>
+    <lastmod>2026-03-26</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://newoteg.com/catalogue?category=components</loc>
-    <lastmod>2026-03-22</lastmod>
+    <lastmod>2026-03-26</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://newoteg.com/catalogue?category=automation</loc>
-    <lastmod>2026-03-22</lastmod>
+    <lastmod>2026-03-26</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
@@ -57,25 +57,25 @@
   <!-- Pages statiques -->
   <url>
     <loc>https://newoteg.com/about</loc>
-    <lastmod>2026-03-22</lastmod>
+    <lastmod>2026-03-26</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://newoteg.com/contact</loc>
-    <lastmod>2026-03-22</lastmod>
+    <lastmod>2026-03-26</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://newoteg.com/terms</loc>
-    <lastmod>2026-03-22</lastmod>
+    <lastmod>2026-03-26</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>
   <url>
     <loc>https://newoteg.com/privacy</loc>
-    <lastmod>2026-03-22</lastmod>
+    <lastmod>2026-03-26</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>
