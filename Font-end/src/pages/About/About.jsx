@@ -13,7 +13,11 @@ const About = () => {
     const [selectedMedia, setSelectedMedia] = useState(null);
     const [heroExpanded, setHeroExpanded] = useState(false);
 
-    const revealOptions = { threshold: 0.15, rootMargin: '0px 0px -50px 0px' };
+    const isMobileView = typeof window !== 'undefined' && window.innerWidth <= 768;
+    const revealOptions = {
+        threshold: isMobileView ? 0.01 : 0.15,
+        rootMargin: isMobileView ? '0px' : '0px 0px -50px 0px'
+    };
     const expertiseRef = useScrollReveal(revealOptions);
     const statsRef = useScrollReveal(revealOptions);
     const offersRef = useScrollReveal(revealOptions);
@@ -78,7 +82,7 @@ const About = () => {
                     </p>
                 </div>
                 <div className="about-expertise__image">
-                    <img src="/images/9.jpg" alt="Ingénieurs NEWOTEG" loading="lazy" />
+                    <img src="/images/9.webp" alt="Ingénieurs NEWOTEG" loading="lazy" />
                 </div>
             </section>
 
@@ -197,14 +201,14 @@ const About = () => {
                         <div className="team-row-lead">
                             <div className="team-card team-card--lead">
                                 <div className="team-card__image">
-                                    <img src="/images/img-equipe/1.png" alt="Jude FOGUENG" loading="lazy" onError={(e) => { e.target.src = 'https://ui-avatars.com/api/?name=Jude+FOGUENG&background=random'; }} />
+                                    <img src="/images/img-equipe/1.webp" alt="Jude FOGUENG" loading="lazy" onError={(e) => { e.target.src = 'https://ui-avatars.com/api/?name=Jude+FOGUENG&background=random'; }} />
                                 </div>
                                 <h3>M. Jude FOGUENG</h3>
                                 <span className="team-card__role">{t('about.roleFounder')}</span>
                             </div>
                             <div className="team-card team-card--lead">
                                 <div className="team-card__image">
-                                    <img src="/images/img-equipe/4.png" alt="Kamla PHILEMON JOSUÉ" loading="lazy" onError={(e) => { e.target.src = 'https://ui-avatars.com/api/?name=Kamla+PHILEMON+JOSUÉ&background=random'; }} />
+                                    <img src="/images/img-equipe/4.webp" alt="Kamla PHILEMON JOSUÉ" loading="lazy" onError={(e) => { e.target.src = 'https://ui-avatars.com/api/?name=Kamla+PHILEMON+JOSUÉ&background=random'; }} />
                                 </div>
                                 <h3>M. Kamla PHILEMON J.</h3>
                                 <span className="team-card__role">{t('about.roleManager')}</span>
@@ -215,28 +219,28 @@ const About = () => {
                         <div className="team-row-members team-row-members--4">
                             <div className="team-card">
                                 <div className="team-card__image">
-                                    <img src="/images/img-equipe/3.png" alt="Noubissi Kely Rachel" loading="lazy" onError={(e) => { e.target.src = 'https://ui-avatars.com/api/?name=Noubissi+Kely+Rachel&background=random'; }} />
+                                    <img src="/images/img-equipe/3.webp" alt="Noubissi Kely Rachel" loading="lazy" onError={(e) => { e.target.src = 'https://ui-avatars.com/api/?name=Noubissi+Kely+Rachel&background=random'; }} />
                                 </div>
                                 <h3>Noubissi Kely Rachel</h3>
                                 <span className="team-card__role">{t('about.roleInformatique')}</span>
                             </div>
                             <div className="team-card">
                                 <div className="team-card__image">
-                                    <img src="/images/img-equipe/zasou.png" alt="Zasou" loading="lazy" onError={(e) => { e.target.src = 'https://ui-avatars.com/api/?name=Zasou&background=random'; }} />
+                                    <img src="/images/img-equipe/zasou.webp" alt="Zasou" loading="lazy" onError={(e) => { e.target.src = 'https://ui-avatars.com/api/?name=Zasou&background=random'; }} />
                                 </div>
                                 <h3>Zasou</h3>
                                 <span className="team-card__role">{t('about.roleExpertTech')}</span>
                             </div>
                             <div className="team-card">
                                 <div className="team-card__image">
-                                    <img src="/images/img-equipe/christian.png" alt="Christian" loading="lazy" onError={(e) => { e.target.src = 'https://ui-avatars.com/api/?name=Christian&background=random'; }} />
+                                    <img src="/images/img-equipe/christian.webp" alt="Christian" loading="lazy" onError={(e) => { e.target.src = 'https://ui-avatars.com/api/?name=Christian&background=random'; }} />
                                 </div>
                                 <h3>Christian</h3>
                                 <span className="team-card__role">{t('about.rolePartner')}</span>
                             </div>
                             <div className="team-card">
                                 <div className="team-card__image">
-                                    <img src="/images/img-equipe/tagne.png" alt="Navou Momo" loading="lazy" onError={(e) => { e.target.src = 'https://ui-avatars.com/api/?name=Navou+Momo&background=random'; }} />
+                                    <img src="/images/img-equipe/tagne.webp" alt="Navou Momo" loading="lazy" onError={(e) => { e.target.src = 'https://ui-avatars.com/api/?name=Navou+Momo&background=random'; }} />
                                 </div>
                                 <h3>Navou Momo</h3>
                                 <span className="team-card__role">{t('about.roleFullStack')}</span>
@@ -247,28 +251,28 @@ const About = () => {
                         <div className="team-row-members team-row-members--4">
                             <div className="team-card">
                                 <div className="team-card__image">
-                                    <img src="/images/img-equipe/13.png" alt="Donald FOGUENG" loading="lazy" onError={(e) => { e.target.src = 'https://ui-avatars.com/api/?name=Donald+FOGUENG&background=random'; }} />
+                                    <img src="/images/img-equipe/13.webp" alt="Donald FOGUENG" loading="lazy" onError={(e) => { e.target.src = 'https://ui-avatars.com/api/?name=Donald+FOGUENG&background=random'; }} />
                                 </div>
                                 <h3>Donald FOGUENG</h3>
                                 <span className="team-card__role">{t('about.roleFullStack')}</span>
                             </div>
                             <div className="team-card">
                                 <div className="team-card__image">
-                                    <img src="/images/img-equipe/6.png" alt="Betuel Lavoisier FOGUENG" loading="lazy" onError={(e) => { e.target.src = 'https://ui-avatars.com/api/?name=Betuel+Lavoisier+FOGUENG&background=random'; }} />
+                                    <img src="/images/img-equipe/6.webp" alt="Betuel Lavoisier FOGUENG" loading="lazy" onError={(e) => { e.target.src = 'https://ui-avatars.com/api/?name=Betuel+Lavoisier+FOGUENG&background=random'; }} />
                                 </div>
                                 <h3>Betuel L. FOGUENG</h3>
                                 <span className="team-card__role">{t('about.roleInventories')}</span>
                             </div>
                             <div className="team-card">
                                 <div className="team-card__image">
-                                    <img src="/images/img-equipe/5.png" alt="Duclair KENMOE" loading="lazy" onError={(e) => { e.target.src = 'https://ui-avatars.com/api/?name=Duclair+KENMOE&background=random'; }} />
+                                    <img src="/images/img-equipe/5.webp" alt="Duclair KENMOE" loading="lazy" onError={(e) => { e.target.src = 'https://ui-avatars.com/api/?name=Duclair+KENMOE&background=random'; }} />
                                 </div>
                                 <h3>Duclair KENMOE</h3>
                                 <span className="team-card__role">{t('about.roleHR')}</span>
                             </div>
                             <div className="team-card">
                                 <div className="team-card__image">
-                                    <img src="/images/img-equipe/17.png" alt="Darielle" loading="lazy" onError={(e) => { e.target.src = 'https://ui-avatars.com/api/?name=Darielle&background=random'; }} />
+                                    <img src="/images/img-equipe/17.webp" alt="Darielle" loading="lazy" onError={(e) => { e.target.src = 'https://ui-avatars.com/api/?name=Darielle&background=random'; }} />
                                 </div>
                                 <h3>Darielle</h3>
                                 <span className="team-card__role">{t('about.roleMarketing')}</span>
@@ -279,21 +283,21 @@ const About = () => {
                         <div className="team-row-members">
                             <div className="team-card">
                                 <div className="team-card__image">
-                                    <img src="/images/img-equipe/15.png" alt="Amélie Aimée NKUIDJEU" loading="lazy" onError={(e) => { e.target.src = 'https://ui-avatars.com/api/?name=Amélie+Aimée+NKUIDJEU&background=random'; }} />
+                                    <img src="/images/img-equipe/15.webp" alt="Amélie Aimée NKUIDJEU" loading="lazy" onError={(e) => { e.target.src = 'https://ui-avatars.com/api/?name=Amélie+Aimée+NKUIDJEU&background=random'; }} />
                                 </div>
                                 <h3>Amélie Aimée N.</h3>
                                 <span className="team-card__role">{t('about.roleSales')}</span>
                             </div>
                             <div className="team-card">
                                 <div className="team-card__image">
-                                    <img src="/images/img-equipe/12.png" alt="Doris Gaye MOGUEM" loading="lazy" onError={(e) => { e.target.src = 'https://ui-avatars.com/api/?name=Doris+Gaye+MOGUEM&background=random'; }} />
+                                    <img src="/images/img-equipe/12.webp" alt="Doris Gaye MOGUEM" loading="lazy" onError={(e) => { e.target.src = 'https://ui-avatars.com/api/?name=Doris+Gaye+MOGUEM&background=random'; }} />
                                 </div>
                                 <h3>Doris Gaye M.</h3>
                                 <span className="team-card__role">{t('about.roleSales')}</span>
                             </div>
                             <div className="team-card">
                                 <div className="team-card__image">
-                                    <img src="/images/img-equipe/14.png" alt="Edwige DOMBOU JAALA" loading="lazy" onError={(e) => { e.target.src = 'https://ui-avatars.com/api/?name=Edwige+DOMBOU+JAALA&background=random'; }} />
+                                    <img src="/images/img-equipe/14.webp" alt="Edwige DOMBOU JAALA" loading="lazy" onError={(e) => { e.target.src = 'https://ui-avatars.com/api/?name=Edwige+DOMBOU+JAALA&background=random'; }} />
                                 </div>
                                 <h3>Edwige DOMBOU J.</h3>
                                 <span className="team-card__role">{t('about.roleCashier')}</span>
@@ -314,34 +318,34 @@ const About = () => {
 
                     <div className="gallery-grid">
                         {/* Images about */}
-                        <div className="gallery-item" role="button" aria-label="Agrandir la photo de la boutique" tabIndex={0} onClick={() => openMedia({ type: 'image', src: '/images/about.jpg', alt: 'Notre boutique' })}>
+                        <div className="gallery-item" role="button" aria-label="Agrandir la photo de la boutique" tabIndex={0} onClick={() => openMedia({ type: 'image', src: '/images/about.webp', alt: 'Notre boutique' })}>
                             <div className="gallery-item__overlay"><Camera size={40} /><span>{t('about.viewImage')}</span></div>
-                            <img src="/images/about.jpg" alt="Notre boutique" loading="lazy" />
+                            <img src="/images/about.webp" alt="Notre boutique" loading="lazy" />
                         </div>
-                        <div className="gallery-item" role="button" aria-label="Agrandir la photo de l'entreprise" tabIndex={0} onClick={() => openMedia({ type: 'image', src: '/images/about2.jpeg', alt: 'Notre entreprise' })}>
+                        <div className="gallery-item" role="button" aria-label="Agrandir la photo de l'entreprise" tabIndex={0} onClick={() => openMedia({ type: 'image', src: '/images/about2.webp', alt: 'Notre entreprise' })}>
                             <div className="gallery-item__overlay"><Camera size={40} /><span>{t('about.viewImage')}</span></div>
-                            <img src="/images/about2.jpeg" alt="Notre entreprise" loading="lazy" />
+                            <img src="/images/about2.webp" alt="Notre entreprise" loading="lazy" />
                         </div>
                         {/* Images 8 à 12 */}
-                        <div className="gallery-item" role="button" aria-label="Agrandir l'image" tabIndex={0} onClick={() => openMedia({ type: 'image', src: '/images/8.jpg', alt: 'NEWOTEG 8' })}>
+                        <div className="gallery-item" role="button" aria-label="Agrandir l'image" tabIndex={0} onClick={() => openMedia({ type: 'image', src: '/images/8.webp', alt: 'NEWOTEG 8' })}>
                             <div className="gallery-item__overlay"><Camera size={40} /><span>{t('about.viewImage')}</span></div>
-                            <img src="/images/8.jpg" alt="NEWOTEG 8" loading="lazy" />
+                            <img src="/images/8.webp" alt="NEWOTEG 8" loading="lazy" />
                         </div>
-                        <div className="gallery-item" role="button" aria-label="Agrandir l'image" tabIndex={0} onClick={() => openMedia({ type: 'image', src: '/images/9.jpg', alt: 'NEWOTEG 9' })}>
+                        <div className="gallery-item" role="button" aria-label="Agrandir l'image" tabIndex={0} onClick={() => openMedia({ type: 'image', src: '/images/9.webp', alt: 'NEWOTEG 9' })}>
                             <div className="gallery-item__overlay"><Camera size={40} /><span>{t('about.viewImage')}</span></div>
-                            <img src="/images/9.jpg" alt="NEWOTEG 9" loading="lazy" />
+                            <img src="/images/9.webp" alt="NEWOTEG 9" loading="lazy" />
                         </div>
-                        <div className="gallery-item" role="button" aria-label="Agrandir l'image" tabIndex={0} onClick={() => openMedia({ type: 'image', src: '/images/10.jpg', alt: 'NEWOTEG 10' })}>
+                        <div className="gallery-item" role="button" aria-label="Agrandir l'image" tabIndex={0} onClick={() => openMedia({ type: 'image', src: '/images/10.webp', alt: 'NEWOTEG 10' })}>
                             <div className="gallery-item__overlay"><Camera size={40} /><span>{t('about.viewImage')}</span></div>
-                            <img src="/images/10.jpg" alt="NEWOTEG 10" loading="lazy" />
+                            <img src="/images/10.webp" alt="NEWOTEG 10" loading="lazy" />
                         </div>
-                        <div className="gallery-item" role="button" aria-label="Agrandir l'image" tabIndex={0} onClick={() => openMedia({ type: 'image', src: '/images/11.jpg', alt: 'NEWOTEG 11' })}>
+                        <div className="gallery-item" role="button" aria-label="Agrandir l'image" tabIndex={0} onClick={() => openMedia({ type: 'image', src: '/images/11.webp', alt: 'NEWOTEG 11' })}>
                             <div className="gallery-item__overlay"><Camera size={40} /><span>{t('about.viewImage')}</span></div>
-                            <img src="/images/11.jpg" alt="NEWOTEG 11" loading="lazy" />
+                            <img src="/images/11.webp" alt="NEWOTEG 11" loading="lazy" />
                         </div>
-                        <div className="gallery-item" role="button" aria-label="Agrandir l'image" tabIndex={0} onClick={() => openMedia({ type: 'image', src: '/images/12.jpg', alt: 'NEWOTEG 12' })}>
+                        <div className="gallery-item" role="button" aria-label="Agrandir l'image" tabIndex={0} onClick={() => openMedia({ type: 'image', src: '/images/12.webp', alt: 'NEWOTEG 12' })}>
                             <div className="gallery-item__overlay"><Camera size={40} /><span>{t('about.viewImage')}</span></div>
-                            <img src="/images/12.jpg" alt="NEWOTEG 12" loading="lazy" />
+                            <img src="/images/12.webp" alt="NEWOTEG 12" loading="lazy" />
                         </div>
                         {/* Vidéos */}
                         <div className="gallery-item gallery-item--video" role="button" aria-label="Lancer la vidéo" tabIndex={0} onClick={() => openMedia({ type: 'video', src: '/videos/20260325_133312.mp4', alt: 'Vidéo NEWOTEG 1' })}>
