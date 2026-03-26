@@ -50,11 +50,11 @@ const Catalogue = () => {
         return () => window.removeEventListener('resize', handleResize);
     }, []);
 
-    // Force grid layout if the user's viewport is mobile, overriding previous Table view cache
+    // Force table (list) layout on mobile for denser product display
     useEffect(() => {
-        if (isMobile && viewMode !== 'grid') {
-            setViewMode('grid');
-            localStorage.setItem('catalogueViewMode', 'grid');
+        if (isMobile && viewMode !== 'table') {
+            setViewMode('table');
+            localStorage.setItem('catalogueViewMode', 'table');
         }
     }, [isMobile, viewMode]);
 

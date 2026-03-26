@@ -23,6 +23,7 @@ const ProductDetails = () => {
     const [product, setProduct] = useState(null);
     const [relatedProducts, setRelatedProducts] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [touchStartX, setTouchStartX] = useState(null);
 
     useEffect(() => {
         const fetchProduct = async () => {
@@ -99,6 +100,20 @@ const ProductDetails = () => {
     const increaseQuantity = () => setQuantity(q => q + 1);
     const decreaseQuantity = () => setQuantity(q => q > 1 ? q - 1 : 1);
 
+    const handleTouchStart = (e) => setTouchStartX(e.touches[0].clientX);
+    const handleTouchEnd = (e) => {
+        if (touchStartX === null) return;
+        const diff = touchStartX - e.changedTouches[0].clientX;
+        if (Math.abs(diff) > 50) {
+            if (diff > 0) {
+                setActiveImageIndex(i => (i + 1) % product.images.length);
+            } else {
+                setActiveImageIndex(i => (i - 1 + product.images.length) % product.images.length);
+            }
+        }
+        setTouchStartX(null);
+    };
+
     return (
         <div className="product-details-page">
             <Helmet>
@@ -149,7 +164,11 @@ const ProductDetails = () => {
                     <div className="product-details__layout">
                         {/* ── Left: Image Gallery ────────────────── */}
                         <div className="product-details__image-col">
-                            <div className="product-details__image-main">
+                            <div
+                                className="product-details__image-main"
+                                onTouchStart={handleTouchStart}
+                                onTouchEnd={handleTouchEnd}
+                            >
                                 <img src={product.images[activeImageIndex] || product.image} alt={product.model} />
                             </div>
                             <div className="product-details__thumbnails">

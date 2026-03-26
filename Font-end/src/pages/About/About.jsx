@@ -78,7 +78,7 @@ const About = () => {
                     </p>
                 </div>
                 <div className="about-expertise__image">
-                    <img src="/images/about_expertise.png" alt="Ingénieurs NEWOTEG" loading="lazy" />
+                    <img src="/images/9.jpg" alt="Ingénieurs NEWOTEG" loading="lazy" />
                 </div>
             </section>
 
@@ -215,10 +215,10 @@ const About = () => {
                         <div className="team-row-members team-row-members--4">
                             <div className="team-card">
                                 <div className="team-card__image">
-                                    <img src="/images/img-equipe/3.png" alt="Fogueng Noubissi kely Rachel" loading="lazy" onError={(e) => { e.target.src = 'https://ui-avatars.com/api/?name=Fogueng+Noubissi+kely+Rachel&background=random'; }} />
+                                    <img src="/images/img-equipe/3.png" alt="Noubissi Kely Rachel" loading="lazy" onError={(e) => { e.target.src = 'https://ui-avatars.com/api/?name=Noubissi+Kely+Rachel&background=random'; }} />
                                 </div>
-                                <h3>Mlle Noubissie Kely Rachel</h3>
-                                <span className="team-card__role">{t('about.roleEngineering')}</span>
+                                <h3>Noubissi Kely Rachel</h3>
+                                <span className="team-card__role">{t('about.roleInformatique')}</span>
                             </div>
                             <div className="team-card">
                                 <div className="team-card__image">
@@ -232,14 +232,14 @@ const About = () => {
                                     <img src="/images/img-equipe/christian.png" alt="Christian" loading="lazy" onError={(e) => { e.target.src = 'https://ui-avatars.com/api/?name=Christian&background=random'; }} />
                                 </div>
                                 <h3>Christian</h3>
-                                <span className="team-card__role">{t('about.roleExpertTech')}</span>
+                                <span className="team-card__role">{t('about.rolePartner')}</span>
                             </div>
                             <div className="team-card">
                                 <div className="team-card__image">
-                                    <img src="/images/img-equipe/tagne.png" alt="Tagne BONIFACE" loading="lazy" onError={(e) => { e.target.src = 'https://ui-avatars.com/api/?name=Tagne+BONIFACE&background=random'; }} />
+                                    <img src="/images/img-equipe/tagne.png" alt="Navou Momo" loading="lazy" onError={(e) => { e.target.src = 'https://ui-avatars.com/api/?name=Navou+Momo&background=random'; }} />
                                 </div>
-                                <h3>Tagne BONIFACE</h3>
-                                <span className="team-card__role">{t('about.roleExpertTech')}</span>
+                                <h3>Navou Momo</h3>
+                                <span className="team-card__role">{t('about.roleFullStack')}</span>
                             </div>
                         </div>
 
@@ -250,7 +250,7 @@ const About = () => {
                                     <img src="/images/img-equipe/13.png" alt="Donald FOGUENG" loading="lazy" onError={(e) => { e.target.src = 'https://ui-avatars.com/api/?name=Donald+FOGUENG&background=random'; }} />
                                 </div>
                                 <h3>Donald FOGUENG</h3>
-                                <span className="team-card__role">{t('about.roleLogistics')}</span>
+                                <span className="team-card__role">{t('about.roleFullStack')}</span>
                             </div>
                             <div className="team-card">
                                 <div className="team-card__image">
@@ -313,36 +313,56 @@ const About = () => {
                     </div>
 
                     <div className="gallery-grid">
-                        <div className="gallery-item" role="button" aria-label="Agrandir l'image des locaux" tabIndex={0} onClick={() => openMedia({ type: 'image', src: '/images/1.jpeg', alt: 'Nos locaux' })}>
-                            <div className="gallery-item__overlay">
-                                <Camera size={40} />
-                                <span>{t('about.viewImage')}</span>
-                            </div>
-                            <img src="/images/1.jpeg" alt="Nos locaux" loading="lazy" />
+                        {/* Images about */}
+                        <div className="gallery-item" role="button" aria-label="Agrandir la photo de la boutique" tabIndex={0} onClick={() => openMedia({ type: 'image', src: '/images/about.jpg', alt: 'Notre boutique' })}>
+                            <div className="gallery-item__overlay"><Camera size={40} /><span>{t('about.viewImage')}</span></div>
+                            <img src="/images/about.jpg" alt="Notre boutique" loading="lazy" />
                         </div>
-                        {/* Video */}
-                        <div className="gallery-item gallery-item--video" role="button" aria-label="Lancer la vidéo de présentation" tabIndex={0} onClick={() => openMedia({ type: 'video', src: '/images/1.mp4', alt: 'Présentation' })}>
-                            <div className="gallery-item__overlay">
-                                <PlayCircle size={48} />
-                                <span>{t('about.playVideo')}</span>
-                            </div>
-                            <video src="/images/1.mp4" alt="Présentation" loading="lazy" autoPlay muted loop style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        <div className="gallery-item" role="button" aria-label="Agrandir la photo de l'entreprise" tabIndex={0} onClick={() => openMedia({ type: 'image', src: '/images/about2.jpeg', alt: 'Notre entreprise' })}>
+                            <div className="gallery-item__overlay"><Camera size={40} /><span>{t('about.viewImage')}</span></div>
+                            <img src="/images/about2.jpeg" alt="Notre entreprise" loading="lazy" />
                         </div>
-                        {/* Image 3 */}
-                        <div className="gallery-item" role="button" aria-label="Agrandir l'image du matériel technique" tabIndex={0} onClick={() => openMedia({ type: 'image', src: '/images/2.jpeg', alt: 'Matériel technique' })}>
-                            <div className="gallery-item__overlay">
-                                <Camera size={40} />
-                                <span>{t('about.viewImage')}</span>
-                            </div>
-                            <img src="/images/2.jpeg" alt="Matériel technique" loading="lazy" />
+                        {/* Images 8 à 12 */}
+                        <div className="gallery-item" role="button" aria-label="Agrandir l'image" tabIndex={0} onClick={() => openMedia({ type: 'image', src: '/images/8.jpg', alt: 'NEWOTEG 8' })}>
+                            <div className="gallery-item__overlay"><Camera size={40} /><span>{t('about.viewImage')}</span></div>
+                            <img src="/images/8.jpg" alt="NEWOTEG 8" loading="lazy" />
                         </div>
-                        {/* Image 4 */}
-                        <div className="gallery-item" role="button" aria-label="Agrandir l'image des équipements" tabIndex={0} onClick={() => openMedia({ type: 'image', src: '/images/4.jpeg', alt: 'Équipements' })}>
-                            <div className="gallery-item__overlay">
-                                <Camera size={40} />
-                                <span>{t('about.viewImage')}</span>
-                            </div>
-                            <img src="/images/4.jpeg" alt="Équipements" loading="lazy" />
+                        <div className="gallery-item" role="button" aria-label="Agrandir l'image" tabIndex={0} onClick={() => openMedia({ type: 'image', src: '/images/9.jpg', alt: 'NEWOTEG 9' })}>
+                            <div className="gallery-item__overlay"><Camera size={40} /><span>{t('about.viewImage')}</span></div>
+                            <img src="/images/9.jpg" alt="NEWOTEG 9" loading="lazy" />
+                        </div>
+                        <div className="gallery-item" role="button" aria-label="Agrandir l'image" tabIndex={0} onClick={() => openMedia({ type: 'image', src: '/images/10.jpg', alt: 'NEWOTEG 10' })}>
+                            <div className="gallery-item__overlay"><Camera size={40} /><span>{t('about.viewImage')}</span></div>
+                            <img src="/images/10.jpg" alt="NEWOTEG 10" loading="lazy" />
+                        </div>
+                        <div className="gallery-item" role="button" aria-label="Agrandir l'image" tabIndex={0} onClick={() => openMedia({ type: 'image', src: '/images/11.jpg', alt: 'NEWOTEG 11' })}>
+                            <div className="gallery-item__overlay"><Camera size={40} /><span>{t('about.viewImage')}</span></div>
+                            <img src="/images/11.jpg" alt="NEWOTEG 11" loading="lazy" />
+                        </div>
+                        <div className="gallery-item" role="button" aria-label="Agrandir l'image" tabIndex={0} onClick={() => openMedia({ type: 'image', src: '/images/12.jpg', alt: 'NEWOTEG 12' })}>
+                            <div className="gallery-item__overlay"><Camera size={40} /><span>{t('about.viewImage')}</span></div>
+                            <img src="/images/12.jpg" alt="NEWOTEG 12" loading="lazy" />
+                        </div>
+                        {/* Vidéos */}
+                        <div className="gallery-item gallery-item--video" role="button" aria-label="Lancer la vidéo" tabIndex={0} onClick={() => openMedia({ type: 'video', src: '/videos/20260325_133312.mp4', alt: 'Vidéo NEWOTEG 1' })}>
+                            <div className="gallery-item__overlay"><PlayCircle size={48} /><span>{t('about.playVideo')}</span></div>
+                            <video src="/videos/20260325_133312.mp4" muted loop autoPlay style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        </div>
+                        <div className="gallery-item gallery-item--video" role="button" aria-label="Lancer la vidéo" tabIndex={0} onClick={() => openMedia({ type: 'video', src: '/videos/20260325_133448.mp4', alt: 'Vidéo NEWOTEG 2' })}>
+                            <div className="gallery-item__overlay"><PlayCircle size={48} /><span>{t('about.playVideo')}</span></div>
+                            <video src="/videos/20260325_133448.mp4" muted loop autoPlay style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        </div>
+                        <div className="gallery-item gallery-item--video" role="button" aria-label="Lancer la vidéo" tabIndex={0} onClick={() => openMedia({ type: 'video', src: '/videos/20260325_133526.mp4', alt: 'Vidéo NEWOTEG 3' })}>
+                            <div className="gallery-item__overlay"><PlayCircle size={48} /><span>{t('about.playVideo')}</span></div>
+                            <video src="/videos/20260325_133526.mp4" muted loop autoPlay style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        </div>
+                        <div className="gallery-item gallery-item--video" role="button" aria-label="Lancer la vidéo" tabIndex={0} onClick={() => openMedia({ type: 'video', src: '/videos/20260325_133601.mp4', alt: 'Vidéo NEWOTEG 4' })}>
+                            <div className="gallery-item__overlay"><PlayCircle size={48} /><span>{t('about.playVideo')}</span></div>
+                            <video src="/videos/20260325_133601.mp4" muted loop autoPlay style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        </div>
+                        <div className="gallery-item gallery-item--video" role="button" aria-label="Lancer la vidéo" tabIndex={0} onClick={() => openMedia({ type: 'video', src: '/videos/20260325_133751.mp4', alt: 'Vidéo NEWOTEG 5' })}>
+                            <div className="gallery-item__overlay"><PlayCircle size={48} /><span>{t('about.playVideo')}</span></div>
+                            <video src="/videos/20260325_133751.mp4" muted loop autoPlay style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                         </div>
                     </div>
                 </div>
