@@ -70,7 +70,7 @@ const Signup = () => {
     <>
     <Helmet>
       <title>{t('auth.signupTitle')} — NEWOTEG SARL</title>
-      <meta name="robots" content="noindex, nofollow" />
+      <meta name="robots" content="index, follow" />
     </Helmet>
     <div className="auth-page">
       <div className="auth-page__card">

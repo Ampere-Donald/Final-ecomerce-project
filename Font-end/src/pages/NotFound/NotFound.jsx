@@ -9,7 +9,7 @@ const NotFound = () => {
     <>
       <Helmet>
         <title>{t('notFound.title')} — NEWOTEG SARL</title>
-        <meta name="robots" content="noindex, nofollow" />
+        <meta name="robots" content="index, follow" />
       </Helmet>
       <div style={{
         minHeight: '70vh',
