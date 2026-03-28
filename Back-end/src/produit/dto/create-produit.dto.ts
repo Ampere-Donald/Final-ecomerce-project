@@ -52,6 +52,12 @@ export class CreateProduitDto {
   quantiteStock?: number;
 
   @IsOptional()
+  @IsInt()
+  @Min(0)
+  @Type(() => Number)
+  seuilAlerte?: number;
+
+  @IsOptional()
   @IsString()
   urlDatasheet?: string;
 

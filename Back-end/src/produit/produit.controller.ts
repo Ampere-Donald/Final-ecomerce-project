@@ -91,6 +91,7 @@ export class ProduitController {
     if (createProduitDto.prixGros != null) createProduitDto.prixGros = parseFloat(String(createProduitDto.prixGros));
     if (createProduitDto.prixDetail != null) createProduitDto.prixDetail = parseFloat(String(createProduitDto.prixDetail));
     if (createProduitDto.quantiteStock != null) createProduitDto.quantiteStock = parseInt(String(createProduitDto.quantiteStock), 10);
+    if (createProduitDto.seuilAlerte != null) createProduitDto.seuilAlerte = parseInt(String(createProduitDto.seuilAlerte), 10);
     const prixPromoStr = String(createProduitDto.prixPromo ?? '');
     createProduitDto.prixPromo = prixPromoStr !== '' ? parseFloat(prixPromoStr) : undefined;
     if (createProduitDto.prixPromo !== undefined && isNaN(createProduitDto.prixPromo)) createProduitDto.prixPromo = undefined;
@@ -143,6 +144,12 @@ export class ProduitController {
   @Get('import/status')
   getImportStatus() {
     return this.produitService.getImportStatus();
+  }
+
+  @UseGuards(AdminAuthGuard)
+  @Get('low-stock')
+  findLowStock() {
+    return this.produitService.findLowStock();
   }
 
   // ── Import ZIP (CSV + images) or plain CSV en masse ─────────────────────
@@ -273,6 +280,7 @@ export class ProduitController {
     if (updateProduitDto.prixGros != null) updateProduitDto.prixGros = parseFloat(String(updateProduitDto.prixGros));
     if (updateProduitDto.prixDetail != null) updateProduitDto.prixDetail = parseFloat(String(updateProduitDto.prixDetail));
     if (updateProduitDto.quantiteStock != null) updateProduitDto.quantiteStock = parseInt(String(updateProduitDto.quantiteStock), 10);
+    if (updateProduitDto.seuilAlerte != null) updateProduitDto.seuilAlerte = parseInt(String(updateProduitDto.seuilAlerte), 10);
     const prixPromoStr = String(updateProduitDto.prixPromo ?? '');
     (updateProduitDto as any).prixPromo = prixPromoStr !== '' ? parseFloat(prixPromoStr) : null;
     if (typeof (updateProduitDto as any).prixPromo === 'number' && isNaN((updateProduitDto as any).prixPromo)) (updateProduitDto as any).prixPromo = null;

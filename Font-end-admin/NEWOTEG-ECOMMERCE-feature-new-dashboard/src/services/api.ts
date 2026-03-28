@@ -100,6 +100,7 @@ export const produitApi = {
     }).then(res => res.data);
   },
   getImportStatus: () => api.get('/produits/import/status').then(res => res.data),
+  getLowStock: () => api.get('/produits/low-stock').then(toArray),
 };
 
 // Catégories
@@ -171,6 +172,8 @@ export const commandeApi = {
   getAll: () => api.get('/commandes').then(toArray),
   getOne: (id: string) => api.get(`/commandes/${id}`).then(res => res.data),
   update: (id: string, data: any) => api.patch(`/commandes/${id}`, data).then(res => res.data),
+  processPickup: (id: string, data: { paiementSurPlace: boolean; methodePaiement?: string }) =>
+    api.patch(`/commandes/${id}/pickup`, data).then(res => res.data),
 };
 
 // Notifications

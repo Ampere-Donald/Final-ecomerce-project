@@ -166,6 +166,18 @@ export class ProduitService {
     };
   }
 
+  async findLowStock() {
+    return this.db.$queryRaw`
+      SELECT p.id, p.nom_produit AS "nomProduit", p.marque, p.quantite_stock AS "quantiteStock",
+             p.seuil_alerte AS "seuilAlerte", p.image_url AS "imageUrl",
+             p.id_categorie AS "categorieId", c.nom AS "categorieNom"
+      FROM produit p
+      LEFT JOIN categorie c ON p.id_categorie = c.id
+      WHERE p.quantite_stock <= p.seuil_alerte
+      ORDER BY p.quantite_stock ASC
+    `;
+  }
+
   async findOne(id: string) {
     const produit = await this.db.produit.findUnique({
       where: { id },

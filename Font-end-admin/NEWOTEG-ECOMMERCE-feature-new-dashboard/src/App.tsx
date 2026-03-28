@@ -22,6 +22,7 @@ import { Roles } from './components/Roles';
 import { Attributs } from './components/Attributs';
 import { AdminAccounts } from './components/AdminAccounts';
 import { NotificationsPage } from './components/NotificationsPage';
+import { StockAlerts } from './components/StockAlerts';
 
 export default function App() {
   return (
@@ -39,6 +40,7 @@ export default function App() {
             <Route path="categories" element={<Categories />} />
 
             <Route path="stock" element={<MouvementsStock />} />
+            <Route path="stock-alerts" element={<StockAlerts />} />
             <Route path="ventes" element={<Ventes />} />
             <Route path="achats" element={<Achats />} />
             <Route path="clients" element={<Clients />} />

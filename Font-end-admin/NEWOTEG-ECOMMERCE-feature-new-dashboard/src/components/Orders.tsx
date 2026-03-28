@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Search, Filter, Download, ExternalLink, Calendar, X, Truck, MapPin, Phone, User, Package } from 'lucide-react';
+import { Search, Filter, Download, ExternalLink, Calendar, X, Truck, MapPin, Phone, User, Package, ShoppingBag, CheckCircle2, Banknote, Smartphone, CreditCard, Building2 } from 'lucide-react';
 import { Commande, StatutCommande, ModeReception } from '../types';
 import { commandeApi } from '../services/api';
 
@@ -32,6 +32,13 @@ export const Orders = () => {
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
 
+  // ── Pickup state ──
+  const [pickupOrder, setPickupOrder] = useState<Commande | null>(null);
+  const [pickupChecked, setPickupChecked] = useState<Record<string, boolean>>({});
+  const [pickupPayment, setPickupPayment] = useState<'PREPAYE' | 'ESPECES' | 'MOBILE_MONEY' | 'CARTE'>('PREPAYE');
+  const [pickupSubmitting, setPickupSubmitting] = useState(false);
+  const [pickupError, setPickupError] = useState('');
+
   const fetchOrders = async () => {
     try {
       const data = await commandeApi.getAll();
@@ -58,6 +65,40 @@ export const Orders = () => {
       setUpdatingId(null);
     }
   };
+
+  // ── Pickup ─────────────────────────────────────────
+  const openPickupModal = (order: Commande) => {
+    setPickupOrder(order);
+    setPickupChecked({});
+    setPickupPayment('PREPAYE');
+    setPickupError('');
+  };
+
+  const allChecked = pickupOrder
+    ? pickupOrder.lignes.every(l => pickupChecked[l.id])
+    : false;
+
+  const handleProcessPickup = async () => {
+    if (!pickupOrder || !allChecked) return;
+    setPickupSubmitting(true);
+    setPickupError('');
+    try {
+      const paiementSurPlace = pickupPayment !== 'PREPAYE';
+      const updated = await commandeApi.processPickup(pickupOrder.id, {
+        paiementSurPlace,
+        methodePaiement: paiementSurPlace ? pickupPayment : undefined,
+      });
+      setOrders(prev => prev.map(o => o.id === pickupOrder.id ? updated : o));
+      setPickupOrder(null);
+    } catch (err: any) {
+      setPickupError(err.response?.data?.message || 'Erreur lors du traitement');
+    } finally {
+      setPickupSubmitting(false);
+    }
+  };
+
+  const canPickup = (o: Commande) =>
+    o.modeReception === 'RETRAIT_MAGASIN' && ['EN_ATTENTE', 'CONFIRMEE'].includes(o.statut);
 
   // ── Filtering ─────────────────────────────────────────
   const filtered = useMemo(() => {
@@ -217,7 +258,13 @@ export const Orders = () => {
                           ))}
                         </select>
                       </td>
-                      <td className="px-6 py-4 text-right">
+                      <td className="px-6 py-4 text-right space-x-2">
+                        {canPickup(order) && (
+                          <button onClick={() => openPickupModal(order)}
+                            className="inline-flex items-center gap-1 px-2.5 py-1 bg-emerald-50 text-emerald-700 rounded-lg text-xs font-bold hover:bg-emerald-100 transition-colors">
+                            <ShoppingBag size={12} /> Retrait
+                          </button>
+                        )}
                         <button onClick={() => setSelectedOrder(order)} className="text-sm font-bold text-primary hover:underline underline-offset-4">
                           Détails
                         </button>
@@ -273,6 +320,12 @@ export const Orders = () => {
                           <option key={s} value={s}>{STATUS_CONFIG[s].label}</option>
                         ))}
                       </select>
+                      {canPickup(order) && (
+                        <button onClick={() => openPickupModal(order)}
+                          className="inline-flex items-center gap-1 px-2 py-0.5 bg-emerald-50 text-emerald-700 rounded text-[10px] font-bold">
+                          <ShoppingBag size={10} /> Retrait
+                        </button>
+                      )}
                       <button onClick={() => setSelectedOrder(order)} className="text-xs font-bold text-primary hover:underline">
                         Détails →
                       </button>
@@ -396,6 +449,137 @@ export const Orders = () => {
                     <p className="text-2xl font-bold text-primary mt-1">{parseFloat(String(selectedOrder.montantTotal)).toLocaleString()} FCFA</p>
                   </div>
                 </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── Pickup Verification Modal ─────────────────────── */}
+      <AnimatePresence>
+        {pickupOrder && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4"
+            onClick={() => setPickupOrder(null)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              onClick={e => e.stopPropagation()}
+              className="bg-white rounded-2xl max-w-lg w-full max-h-[85vh] overflow-y-auto shadow-2xl"
+            >
+              <div className="p-6 border-b border-slate-100 flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                    <ShoppingBag size={20} className="text-emerald-600" /> Traiter le retrait
+                  </h3>
+                  <p className="text-sm text-primary font-mono">{pickupOrder.numeroSuivi}</p>
+                </div>
+                <button onClick={() => setPickupOrder(null)} className="p-2 hover:bg-slate-100 rounded-lg transition-colors">
+                  <X size={20} />
+                </button>
+              </div>
+
+              <div className="p-6 space-y-5">
+                {/* Order summary */}
+                <div className="bg-slate-50 p-4 rounded-xl space-y-2">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-slate-500">Client</span>
+                    <span className="font-bold text-slate-900">{pickupOrder.nomClient}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-slate-500">Telephone</span>
+                    <span className="font-medium text-slate-700">{pickupOrder.telephone}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-slate-500">Montant</span>
+                    <span className="font-bold text-primary text-lg">{parseFloat(String(pickupOrder.montantTotal)).toLocaleString()} FCFA</span>
+                  </div>
+                </div>
+
+                {/* Product checklist */}
+                <div>
+                  <p className="text-xs text-slate-400 font-bold uppercase mb-3">Verification des produits</p>
+                  <div className="space-y-2">
+                    {pickupOrder.lignes.map(ligne => (
+                      <label key={ligne.id}
+                        className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${
+                          pickupChecked[ligne.id]
+                            ? 'border-emerald-300 bg-emerald-50'
+                            : 'border-slate-200 hover:border-slate-300'
+                        }`}>
+                        <input
+                          type="checkbox"
+                          checked={!!pickupChecked[ligne.id]}
+                          onChange={e => setPickupChecked(prev => ({ ...prev, [ligne.id]: e.target.checked }))}
+                          className="w-4 h-4 text-emerald-600 rounded border-slate-300 focus:ring-emerald-500"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-slate-900">{ligne.nomProduit}</p>
+                          <p className="text-xs text-slate-500">Qty: {ligne.quantite} x {parseFloat(String(ligne.prixUnitaire)).toLocaleString()} FCFA</p>
+                        </div>
+                        {pickupChecked[ligne.id] && (
+                          <CheckCircle2 size={18} className="text-emerald-600 flex-shrink-0" />
+                        )}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Payment mode */}
+                <div>
+                  <p className="text-xs text-slate-400 font-bold uppercase mb-3">Mode de paiement</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    {[
+                      { value: 'PREPAYE' as const, label: 'Deja paye', icon: CheckCircle2 },
+                      { value: 'ESPECES' as const, label: 'Especes', icon: Banknote },
+                      { value: 'MOBILE_MONEY' as const, label: 'Mobile Money', icon: Smartphone },
+                      { value: 'CARTE' as const, label: 'Carte', icon: CreditCard },
+                    ].map(pm => {
+                      const Icon = pm.icon;
+                      return (
+                        <button key={pm.value} onClick={() => setPickupPayment(pm.value)}
+                          className={`flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm font-medium transition-all border ${
+                            pickupPayment === pm.value
+                              ? 'border-primary bg-primary/5 text-primary'
+                              : 'border-slate-200 text-slate-600 hover:border-slate-300'
+                          }`}>
+                          <Icon size={16} /> {pm.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Error */}
+                {pickupError && (
+                  <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm font-medium">
+                    {pickupError}
+                  </div>
+                )}
+
+                {/* Submit */}
+                <button
+                  onClick={handleProcessPickup}
+                  disabled={!allChecked || pickupSubmitting}
+                  className="w-full py-3 bg-emerald-600 text-white rounded-xl text-sm font-bold hover:bg-emerald-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  {pickupSubmitting ? (
+                    'Traitement en cours...'
+                  ) : (
+                    <><ShoppingBag size={18} /> Confirmer le retrait</>
+                  )}
+                </button>
+
+                {!allChecked && (
+                  <p className="text-xs text-amber-600 text-center">
+                    Cochez tous les produits pour confirmer le retrait
+                  </p>
+                )}
               </div>
             </motion.div>
           </motion.div>

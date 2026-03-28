@@ -39,6 +39,7 @@ const FORM_INITIAL = {
   prixDetail: '',
   prixGros: '',
   quantiteStock: '0',
+  seuilAlerte: '5',
   urlDatasheet: '',
   prixPromo: '',
   finPromo: '',
@@ -226,6 +227,7 @@ export const Produits = () => {
       prixDetail: prod.prixDetail != null ? String(prod.prixDetail) : '',
       prixGros: prod.prixGros != null ? String(prod.prixGros) : '',
       quantiteStock: prod.quantiteStock != null ? String(prod.quantiteStock) : '0',
+      seuilAlerte: (prod as any).seuilAlerte != null ? String((prod as any).seuilAlerte) : '5',
       urlDatasheet: prod.urlDatasheet ?? '',
       prixPromo: prod.prixPromo != null ? String(prod.prixPromo) : '',
       finPromo: prod.finPromo ? prod.finPromo.slice(0, 16) : '', // format datetime-local
@@ -282,6 +284,7 @@ export const Produits = () => {
       if (formData.prixDetail) dataToSend.append('prixDetail', formData.prixDetail);
       if (formData.prixGros) dataToSend.append('prixGros', formData.prixGros);
       dataToSend.append('quantiteStock', formData.quantiteStock || '0');
+      dataToSend.append('seuilAlerte', formData.seuilAlerte || '5');
       if (formData.urlDatasheet) dataToSend.append('urlDatasheet', formData.urlDatasheet);
       // ── Nouveaux champs promo / populaire ──
       // Toujours envoyer pour permettre de retirer une promo (le backend gère les chaînes vides → null)
@@ -861,6 +864,21 @@ export const Produits = () => {
                       className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary/20 outline-none transition-all"
                       placeholder="0"
                     />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">
+                      Seuil d'alerte
+                    </label>
+                    <input
+                      type="number"
+                      min={0}
+                      step="1"
+                      value={formData.seuilAlerte}
+                      onChange={(e) => setFormData((f) => ({ ...f, seuilAlerte: e.target.value }))}
+                      className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+                      placeholder="5"
+                    />
+                    <p className="text-xs text-slate-400 mt-1">Alerte si stock ≤ ce seuil</p>
                   </div>
                 </div>
 

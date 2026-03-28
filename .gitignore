@@ -19,6 +19,13 @@ imageburg/
 import-test/
 unzippzed_catalog/
 
+# Fichiers générés par l'IA et traitement d'images
+_analysis/
+image-generator/node_modules/
+image-generator/.env
+*.webp
+
+
 # Artifacts de travail Antigravity
 implementation_plan.md
 task.md

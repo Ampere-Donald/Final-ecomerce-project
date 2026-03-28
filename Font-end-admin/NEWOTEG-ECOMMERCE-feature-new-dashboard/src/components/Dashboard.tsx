@@ -1,9 +1,7 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo } from 'react';
+import { Link } from 'react-router-dom';
 import {
-  Filter,
-  Download,
   TrendingUp,
-  TrendingDown,
   BarChart3,
   PackageSearch,
   ArrowUpRight,
@@ -14,7 +12,9 @@ import {
   Truck,
   XCircle,
   Package,
-  Calendar,
+  AlertTriangle,
+  Store,
+  Globe,
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import {
@@ -25,7 +25,7 @@ import {
 import { Commande, StatutCommande } from '../types';
 import { venteApi, produitApi, commandeApi } from '../services/api';
 
-/* ── Period helpers ──────────────────────────────────────────────── */
+/* ── Period helpers ────────���─────────────────────────────────────── */
 type Period = 'today' | '7d' | '30d' | 'month' | 'quarter';
 
 const PERIOD_LABELS: Record<Period, string> = {
@@ -93,7 +93,7 @@ const isInRange = (date: Date | string, start: Date, end: Date) => {
   return d >= start && d <= end;
 };
 
-/* ── Order‑status visual map ────────────────────────────────────── */
+/* ── Order‑status visual map ─────���──────────────────────────────── */
 const STATUS_CFG: Record<StatutCommande, { label: string; bg: string; text: string; dot: string; icon: React.ReactNode; color: string }> = {
   EN_ATTENTE:   { label: 'En attente',   bg: 'bg-amber-50',    text: 'text-amber-700',   dot: 'bg-amber-500',   icon: <Clock size={18} />, color: '#f59e0b' },
   CONFIRMEE:    { label: 'Confirmée',    bg: 'bg-blue-50',     text: 'text-blue-700',    dot: 'bg-blue-500',    icon: <CheckCircle2 size={18} />, color: '#3b82f6' },
@@ -104,8 +104,6 @@ const STATUS_CFG: Record<StatutCommande, { label: string; bg: string; text: stri
 
 const STATUS_ORDER: StatutCommande[] = ['EN_ATTENTE', 'CONFIRMEE', 'EN_LIVRAISON', 'LIVREE', 'ANNULEE'];
 
-const CHART_COLORS = ['#f59e0b', '#3b82f6', '#6366f1', '#10b981', '#ef4444'];
-
 export const Dashboard = () => {
   const [allVentes, setAllVentes] = useState<any[]>([]);
   const [allProduits, setAllProduits] = useState<any[]>([]);
@@ -113,22 +111,44 @@ export const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [period, setPeriod] = useState<Period>('30d');
 
+  // Error states per data source
+  const [venteError, setVenteError] = useState<string | null>(null);
+  const [produitError, setProduitError] = useState<string | null>(null);
+  const [commandeError, setCommandeError] = useState<string | null>(null);
+
   useEffect(() => {
     const fetchData = async () => {
-      try {
-        const [ventesRes, produitsRes, commandesRes] = await Promise.all([
-          venteApi.getAll(),
-          produitApi.getAll(),
-          commandeApi.getAll(),
-        ]);
-        setAllVentes(ventesRes);
-        setAllProduits(produitsRes);
-        setAllCommandes(commandesRes);
-      } catch (error) {
-        console.error('Erreur chargement dashboard', error);
-      } finally {
-        setLoading(false);
+      const results = await Promise.allSettled([
+        venteApi.getAll(),
+        produitApi.getAll(),
+        commandeApi.getAll(),
+      ]);
+
+      if (results[0].status === 'fulfilled') {
+        setAllVentes(results[0].value);
+        setVenteError(null);
+      } else {
+        setAllVentes([]);
+        setVenteError('Impossible de charger les ventes boutique');
       }
+
+      if (results[1].status === 'fulfilled') {
+        setAllProduits(results[1].value);
+        setProduitError(null);
+      } else {
+        setAllProduits([]);
+        setProduitError('Impossible de charger les produits');
+      }
+
+      if (results[2].status === 'fulfilled') {
+        setAllCommandes(results[2].value);
+        setCommandeError(null);
+      } else {
+        setAllCommandes([]);
+        setCommandeError('Impossible de charger les commandes e-commerce');
+      }
+
+      setLoading(false);
     };
     fetchData();
   }, []);
@@ -148,8 +168,14 @@ export const Dashboard = () => {
   const commandesInPrev = useMemo(() =>
     allCommandes.filter(c => isInRange(c.dateCommande, prevStart, prevEnd)), [allCommandes, prevStart, prevEnd]);
 
-  // KPIs
-  const produitsSold = useMemo(() => {
+  // Commandes LIVREE in period (for KPIs)
+  const commandesLivreesInPeriod = useMemo(() =>
+    commandesInPeriod.filter(c => c.statut === 'LIVREE'), [commandesInPeriod]);
+  const commandesLivreesInPrev = useMemo(() =>
+    commandesInPrev.filter(c => c.statut === 'LIVREE'), [commandesInPrev]);
+
+  // ── KPIs: Produits vendus (combined) ──
+  const produitsBoutique = useMemo(() => {
     let total = 0;
     for (const v of ventesInPeriod) {
       for (const lv of (v.lignesVente ?? [])) total += lv.quantite ?? 0;
@@ -157,7 +183,17 @@ export const Dashboard = () => {
     return total;
   }, [ventesInPeriod]);
 
-  const produitsSoldPrev = useMemo(() => {
+  const produitsEcommerce = useMemo(() => {
+    let total = 0;
+    for (const c of commandesLivreesInPeriod) {
+      for (const l of (c.lignes ?? [])) total += l.quantite ?? 0;
+    }
+    return total;
+  }, [commandesLivreesInPeriod]);
+
+  const produitsSold = produitsBoutique + produitsEcommerce;
+
+  const produitsBoutiquePrev = useMemo(() => {
     let total = 0;
     for (const v of ventesInPrev) {
       for (const lv of (v.lignesVente ?? [])) total += lv.quantite ?? 0;
@@ -165,10 +201,28 @@ export const Dashboard = () => {
     return total;
   }, [ventesInPrev]);
 
-  const ca = useMemo(() =>
+  const produitsEcommercePrev = useMemo(() => {
+    let total = 0;
+    for (const c of commandesLivreesInPrev) {
+      for (const l of (c.lignes ?? [])) total += l.quantite ?? 0;
+    }
+    return total;
+  }, [commandesLivreesInPrev]);
+
+  const produitsSoldPrev = produitsBoutiquePrev + produitsEcommercePrev;
+
+  // ── KPIs: Chiffre d'affaires (combined) ──
+  const caBoutique = useMemo(() =>
     ventesInPeriod.reduce((acc, v) => acc + parseFloat(v.montantTotal || '0'), 0), [ventesInPeriod]);
-  const caPrev = useMemo(() =>
+  const caEcommerce = useMemo(() =>
+    commandesLivreesInPeriod.reduce((acc, c) => acc + parseFloat(String(c.montantTotal || '0')), 0), [commandesLivreesInPeriod]);
+  const ca = caBoutique + caEcommerce;
+
+  const caBoutiquePrev = useMemo(() =>
     ventesInPrev.reduce((acc, v) => acc + parseFloat(v.montantTotal || '0'), 0), [ventesInPrev]);
+  const caEcommercePrev = useMemo(() =>
+    commandesLivreesInPrev.reduce((acc, c) => acc + parseFloat(String(c.montantTotal || '0')), 0), [commandesLivreesInPrev]);
+  const caPrev = caBoutiquePrev + caEcommercePrev;
 
   // Trend calculation
   const calcTrend = (current: number, previous: number) => {
@@ -186,15 +240,19 @@ export const Dashboard = () => {
     return counts;
   }, [commandesInPeriod]);
 
-  // Recent orders (top 5, in period)
-  const recentOrders = useMemo(() => commandesInPeriod.slice(0, 5), [commandesInPeriod]);
+  // Recent orders (top 5, in period, sorted by date desc)
+  const recentOrders = useMemo(() =>
+    [...commandesInPeriod].sort((a, b) => new Date(b.dateCommande).getTime() - new Date(a.dateCommande).getTime()).slice(0, 5),
+    [commandesInPeriod]
+  );
 
   // Stocks (not period-dependent)
   const totalProducts = allProduits.length;
   const totalUnits = useMemo(() => allProduits.reduce((sum, p) => sum + (p.quantiteStock ?? 0), 0), [allProduits]);
   const lowStockItems = useMemo(() => {
+    const threshold = 5; // will be replaced by seuilAlerte per product in Phase 6
     const sorted = [...allProduits].sort((a, b) => (a.quantiteStock ?? 0) - (b.quantiteStock ?? 0));
-    return sorted.filter(p => (p.quantiteStock ?? 0) <= 5).slice(0, 4).map(p => ({
+    return sorted.filter(p => (p.quantiteStock ?? 0) <= threshold).slice(0, 10).map(p => ({
       name: p.nomProduit,
       count: p.quantiteStock ?? 0,
       status: (p.quantiteStock ?? 0) <= 0 ? 'Rupture' : 'Critique',
@@ -202,21 +260,40 @@ export const Dashboard = () => {
   }, [allProduits]);
 
   /* ── Chart data ───────────────────────────────────────────────── */
-  // CA evolution by day
+  // CA evolution by day — dual curves
   const caChartData = useMemo(() => {
-    const map = new Map<string, number>();
+    const boutiqueMap = new Map<string, number>();
+    const ecommerceMap = new Map<string, number>();
+    const allDates: string[] = [];
+
     // Initialize all days in range
     const d = new Date(start);
     while (d <= end) {
-      map.set(d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' }), 0);
+      const key = d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' });
+      boutiqueMap.set(key, 0);
+      ecommerceMap.set(key, 0);
+      allDates.push(key);
       d.setDate(d.getDate() + 1);
     }
+
+    // Fill boutique data
     for (const v of ventesInPeriod) {
       const key = new Date(v.dateVente).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' });
-      map.set(key, (map.get(key) ?? 0) + parseFloat(v.montantTotal || '0'));
+      boutiqueMap.set(key, (boutiqueMap.get(key) ?? 0) + parseFloat(v.montantTotal || '0'));
     }
-    return Array.from(map.entries()).map(([date, montant]) => ({ date, montant: Math.round(montant) }));
-  }, [ventesInPeriod, start, end]);
+
+    // Fill e-commerce data (delivered orders only)
+    for (const c of commandesLivreesInPeriod) {
+      const key = new Date(c.dateCommande).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' });
+      ecommerceMap.set(key, (ecommerceMap.get(key) ?? 0) + parseFloat(String(c.montantTotal || '0')));
+    }
+
+    return allDates.map(date => ({
+      date,
+      boutique: Math.round(boutiqueMap.get(date) ?? 0),
+      ecommerce: Math.round(ecommerceMap.get(date) ?? 0),
+    }));
+  }, [ventesInPeriod, commandesLivreesInPeriod, start, end]);
 
   // Orders by status pie chart
   const statusPieData = useMemo(() =>
@@ -226,7 +303,7 @@ export const Dashboard = () => {
       color: STATUS_CFG[s].color,
     })).filter(d => d.value > 0), [ordersByStatus]);
 
-  // Top 5 products by quantity sold
+  // Top 5 products by quantity sold (from ventes boutique)
   const topProducts = useMemo(() => {
     const map = new Map<string, number>();
     for (const v of ventesInPeriod) {
@@ -235,14 +312,21 @@ export const Dashboard = () => {
         map.set(name, (map.get(name) ?? 0) + (lv.quantite ?? 0));
       }
     }
+    // Also include e-commerce delivered orders
+    for (const c of commandesLivreesInPeriod) {
+      for (const l of (c.lignes ?? [])) {
+        const name = l.nomProduit || l.produit?.nomProduit || 'Inconnu';
+        map.set(name, (map.get(name) ?? 0) + (l.quantite ?? 0));
+      }
+    }
     return Array.from(map.entries())
       .sort((a, b) => b[1] - a[1])
       .slice(0, 5)
-      .map(([name, qty]) => ({ name: name.length > 20 ? name.substring(0, 18) + '…' : name, quantite: qty }));
-  }, [ventesInPeriod]);
+      .map(([name, qty]) => ({ name: name.length > 20 ? name.substring(0, 18) + '\u2026' : name, quantite: qty }));
+  }, [ventesInPeriod, commandesLivreesInPeriod]);
 
   const TrendBadge = ({ value }: { value: number }) => {
-    if (value === 0) return <span className="text-xs font-bold text-slate-400">—</span>;
+    if (value === 0) return <span className="text-xs font-bold text-slate-400">&mdash;</span>;
     const positive = value > 0;
     return (
       <span className={`flex items-center text-xs font-bold ${positive ? 'text-emerald-600' : 'text-red-500'}`}>
@@ -252,6 +336,23 @@ export const Dashboard = () => {
     );
   };
 
+  const ErrorBanner = ({ messages }: { messages: string[] }) => {
+    if (messages.length === 0) return null;
+    return (
+      <div className="bg-red-50 border border-red-200 rounded-xl p-4 space-y-1">
+        <div className="flex items-center gap-2 text-red-700 font-semibold text-sm">
+          <AlertTriangle size={16} />
+          Erreur de chargement
+        </div>
+        {messages.map((msg, i) => (
+          <p key={i} className="text-sm text-red-600">{msg}</p>
+        ))}
+      </div>
+    );
+  };
+
+  const errors = [venteError, produitError, commandeError].filter(Boolean) as string[];
+
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-8">
 
@@ -259,7 +360,7 @@ export const Dashboard = () => {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Tableau de bord</h1>
-          <p className="text-sm text-slate-500 mt-1">Vue d'ensemble de votre activité</p>
+          <p className="text-sm text-slate-500 mt-1">Vue d'ensemble de votre activit&eacute;</p>
         </div>
         <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl">
           {(Object.keys(PERIOD_LABELS) as Period[]).map(p => (
@@ -278,7 +379,10 @@ export const Dashboard = () => {
         </div>
       </div>
 
-      {/* ═══ Top KPI Cards ═════════════════════════════════════════ */}
+      {/* ═══ Error Banners ═══════════════════════════════════════════ */}
+      <ErrorBanner messages={errors} />
+
+      {/* ═══ Top KPI Cards ══════════���══════════════════════════════ */}
       <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Produits vendus */}
         <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
@@ -287,8 +391,18 @@ export const Dashboard = () => {
             <TrendBadge value={trendProduits} />
           </div>
           <p className="text-sm text-slate-500 font-medium">Produits Vendus</p>
-          <p className="text-2xl font-bold text-slate-900 mt-1">{loading ? '...' : produitsSold.toLocaleString()} unités</p>
-          <p className="text-xs text-slate-400 mt-1">vs {produitsSoldPrev.toLocaleString()} période précédente</p>
+          <p className="text-2xl font-bold text-slate-900 mt-1">{loading ? '...' : produitsSold.toLocaleString()} unit&eacute;s</p>
+          <p className="text-xs text-slate-400 mt-1">vs {produitsSoldPrev.toLocaleString()} p&eacute;riode pr&eacute;c&eacute;dente</p>
+          {!loading && (produitsBoutique > 0 || produitsEcommerce > 0) && (
+            <div className="flex items-center gap-3 mt-3 pt-3 border-t border-slate-100">
+              <span className="flex items-center gap-1 text-xs text-slate-500">
+                <Store size={12} className="text-indigo-500" /> Boutique: {produitsBoutique.toLocaleString()}
+              </span>
+              <span className="flex items-center gap-1 text-xs text-slate-500">
+                <Globe size={12} className="text-emerald-500" /> E-commerce: {produitsEcommerce.toLocaleString()}
+              </span>
+            </div>
+          )}
         </div>
 
         {/* CA de la période */}
@@ -299,24 +413,38 @@ export const Dashboard = () => {
           </div>
           <p className="text-sm text-slate-500 font-medium">Chiffre d'Affaires</p>
           <p className="text-2xl font-bold text-slate-900 mt-1">{loading ? '...' : ca.toLocaleString()} FCFA</p>
-          <p className="text-xs text-slate-400 mt-1">vs {caPrev.toLocaleString()} FCFA période précédente</p>
+          <p className="text-xs text-slate-400 mt-1">vs {caPrev.toLocaleString()} FCFA p&eacute;riode pr&eacute;c&eacute;dente</p>
+          {!loading && (caBoutique > 0 || caEcommerce > 0) && (
+            <div className="flex items-center gap-3 mt-3 pt-3 border-t border-slate-100">
+              <span className="flex items-center gap-1 text-xs text-slate-500">
+                <Store size={12} className="text-indigo-500" /> {caBoutique.toLocaleString()} FCFA
+              </span>
+              <span className="flex items-center gap-1 text-xs text-slate-500">
+                <Globe size={12} className="text-emerald-500" /> {caEcommerce.toLocaleString()} FCFA
+              </span>
+            </div>
+          )}
         </div>
       </section>
 
       {/* ═══ Charts Row ═══════════════════════════════════════════════ */}
       {!loading && (
         <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* CA Evolution AreaChart */}
+          {/* CA Evolution AreaChart — dual curves */}
           <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
-            <h3 className="font-bold text-lg text-slate-900 mb-1">Évolution du CA</h3>
+            <h3 className="font-bold text-lg text-slate-900 mb-1">&Eacute;volution du CA</h3>
             <p className="text-sm text-slate-500 mb-4">{PERIOD_LABELS[period]}</p>
             {caChartData.length > 0 ? (
               <ResponsiveContainer width="100%" height={260}>
                 <AreaChart data={caChartData}>
                   <defs>
-                    <linearGradient id="caGrad" x1="0" y1="0" x2="0" y2="1">
+                    <linearGradient id="caGradBoutique" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor="#1c19a3" stopOpacity={0.2} />
                       <stop offset="95%" stopColor="#1c19a3" stopOpacity={0} />
+                    </linearGradient>
+                    <linearGradient id="caGradEcommerce" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.2} />
+                      <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
@@ -324,13 +452,24 @@ export const Dashboard = () => {
                   <YAxis tick={{ fontSize: 11, fill: '#94a3b8' }} tickFormatter={v => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : v} />
                   <Tooltip
                     contentStyle={{ borderRadius: 12, border: '1px solid #e2e8f0', fontSize: 13 }}
-                    formatter={(value: number) => [`${value.toLocaleString()} FCFA`, 'CA']}
+                    formatter={(value: number, name: string) => [
+                      `${value.toLocaleString()} FCFA`,
+                      name === 'boutique' ? 'Boutique' : 'E-commerce',
+                    ]}
                   />
-                  <Area type="monotone" dataKey="montant" stroke="#1c19a3" strokeWidth={2} fill="url(#caGrad)" />
+                  <Legend
+                    verticalAlign="top"
+                    align="right"
+                    iconType="circle"
+                    iconSize={8}
+                    formatter={(value) => <span className="text-xs text-slate-600">{value === 'boutique' ? 'Boutique' : 'E-commerce'}</span>}
+                  />
+                  <Area type="monotone" dataKey="boutique" stroke="#1c19a3" strokeWidth={2} fill="url(#caGradBoutique)" />
+                  <Area type="monotone" dataKey="ecommerce" stroke="#10b981" strokeWidth={2} fill="url(#caGradEcommerce)" />
                 </AreaChart>
               </ResponsiveContainer>
             ) : (
-              <p className="text-sm text-slate-400 py-12 text-center">Aucune donnée pour cette période</p>
+              <p className="text-sm text-slate-400 py-12 text-center">Aucune donn&eacute;e pour cette p&eacute;riode</p>
             )}
           </div>
 
@@ -377,7 +516,7 @@ export const Dashboard = () => {
       {!loading && topProducts.length > 0 && (
         <section className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
           <h3 className="font-bold text-lg text-slate-900 mb-1">Top Produits Vendus</h3>
-          <p className="text-sm text-slate-500 mb-4">Par quantité vendue ({PERIOD_LABELS[period]})</p>
+          <p className="text-sm text-slate-500 mb-4">Par quantit&eacute; vendue ({PERIOD_LABELS[period]})</p>
           <ResponsiveContainer width="100%" height={220}>
             <BarChart data={topProducts} layout="vertical" margin={{ left: 10 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" horizontal={false} />
@@ -385,7 +524,7 @@ export const Dashboard = () => {
               <YAxis type="category" dataKey="name" width={140} tick={{ fontSize: 11, fill: '#475569' }} />
               <Tooltip
                 contentStyle={{ borderRadius: 12, border: '1px solid #e2e8f0', fontSize: 13 }}
-                formatter={(value: number) => [`${value} unités`, 'Vendus']}
+                formatter={(value: number) => [`${value} unit\u00e9s`, 'Vendus']}
               />
               <Bar dataKey="quantite" fill="#1c19a3" radius={[0, 6, 6, 0]} barSize={24} />
             </BarChart>
@@ -400,7 +539,7 @@ export const Dashboard = () => {
             <div className="p-2 bg-indigo-50 text-indigo-600 rounded-lg"><ShoppingCart size={20} /></div>
             <div>
               <h3 className="font-bold text-lg text-slate-900">Commandes</h3>
-              <p className="text-sm text-slate-500">{loading ? '...' : `${commandesInPeriod.length} commande${commandesInPeriod.length !== 1 ? 's' : ''} sur la période`}</p>
+              <p className="text-sm text-slate-500">{loading ? '...' : `${commandesInPeriod.length} commande${commandesInPeriod.length !== 1 ? 's' : ''} sur la p\u00e9riode`}</p>
             </div>
           </div>
         </div>
@@ -431,7 +570,7 @@ export const Dashboard = () => {
             <div className="p-2 bg-amber-50 text-amber-600 rounded-lg"><PackageSearch size={20} /></div>
             <div>
               <h3 className="font-bold text-lg text-slate-900">Inventaire</h3>
-              <p className="text-sm text-slate-500">Stock en temps réel</p>
+              <p className="text-sm text-slate-500">Stock en temps r&eacute;el</p>
             </div>
           </div>
         </div>
@@ -444,12 +583,12 @@ export const Dashboard = () => {
               <div className="bg-slate-50 rounded-xl p-4 text-center">
                 <div className="flex items-center justify-center gap-2 mb-2 text-slate-500"><Package size={16} /></div>
                 <p className="text-2xl font-bold text-slate-900">{totalProducts}</p>
-                <p className="text-xs font-semibold text-slate-500 mt-1">Produits référencés</p>
+                <p className="text-xs font-semibold text-slate-500 mt-1">Produits r&eacute;f&eacute;renc&eacute;s</p>
               </div>
               <div className="bg-slate-50 rounded-xl p-4 text-center">
                 <div className="flex items-center justify-center gap-2 mb-2 text-slate-500"><PackageSearch size={16} /></div>
                 <p className="text-2xl font-bold text-slate-900">{totalUnits.toLocaleString()}</p>
-                <p className="text-xs font-semibold text-slate-500 mt-1">Unités disponibles</p>
+                <p className="text-xs font-semibold text-slate-500 mt-1">Unit&eacute;s disponibles</p>
               </div>
               <div className="bg-red-50 rounded-xl p-4 text-center">
                 <div className="flex items-center justify-center gap-2 mb-2 text-red-400"><XCircle size={16} /></div>
@@ -473,6 +612,9 @@ export const Dashboard = () => {
                     </div>
                   ))}
                 </div>
+                <Link to="/stock-alerts" className="inline-flex items-center gap-1 text-sm font-bold text-primary hover:underline underline-offset-4 mt-3">
+                  Voir toutes les alertes <ArrowUpRight size={14} />
+                </Link>
               </div>
             )}
           </div>
@@ -482,7 +624,7 @@ export const Dashboard = () => {
       {/* ═══ Recent Orders Table ══════════════════════════════════ */}
       <section className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
         <div className="p-4 md:p-6 border-b border-slate-100 flex items-center justify-between">
-          <h3 className="font-bold text-lg text-slate-900">Commandes Récentes</h3>
+          <h3 className="font-bold text-lg text-slate-900">Commandes R&eacute;centes</h3>
         </div>
 
         {/* ── Table (desktop) ── */}
@@ -490,7 +632,7 @@ export const Dashboard = () => {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-slate-50 text-slate-500 text-xs font-bold uppercase tracking-wider">
-                <th className="px-6 py-4">N° Suivi</th>
+                <th className="px-6 py-4">N&deg; Suivi</th>
                 <th className="px-6 py-4">Date</th>
                 <th className="px-6 py-4">Client</th>
                 <th className="px-6 py-4">Montant</th>
@@ -503,7 +645,7 @@ export const Dashboard = () => {
               {loading ? (
                 <tr><td colSpan={7} className="px-6 py-8 text-center text-slate-500">Chargement...</td></tr>
               ) : recentOrders.length === 0 ? (
-                <tr><td colSpan={7} className="px-6 py-8 text-center text-slate-500">Aucune commande sur cette période.</td></tr>
+                <tr><td colSpan={7} className="px-6 py-8 text-center text-slate-500">Aucune commande sur cette p&eacute;riode.</td></tr>
               ) : (
                 recentOrders.map((order) => {
                   const st = STATUS_CFG[order.statut];
@@ -521,7 +663,7 @@ export const Dashboard = () => {
                         </span>
                       </td>
                       <td className="px-6 py-4 text-right">
-                        <a href="/orders" className="text-sm font-bold text-primary hover:underline underline-offset-4">Voir</a>
+                        <Link to="/orders" className="text-sm font-bold text-primary hover:underline underline-offset-4">Voir</Link>
                       </td>
                     </tr>
                   );
@@ -536,7 +678,7 @@ export const Dashboard = () => {
           {loading ? (
             <p className="px-4 py-8 text-center text-slate-500">Chargement...</p>
           ) : recentOrders.length === 0 ? (
-            <p className="px-4 py-8 text-center text-slate-500">Aucune commande sur cette période.</p>
+            <p className="px-4 py-8 text-center text-slate-500">Aucune commande sur cette p&eacute;riode.</p>
           ) : (
             recentOrders.map((order) => {
               const st = STATUS_CFG[order.statut];
@@ -554,8 +696,8 @@ export const Dashboard = () => {
                     <span className="font-semibold text-slate-900">{parseFloat(String(order.montantTotal)).toLocaleString()} FCFA</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-xs text-slate-400">{new Date(order.dateCommande).toLocaleDateString('fr-FR')} · {order.modeReception === 'LIVRAISON' ? 'Livraison' : 'Retrait'}</span>
-                    <a href="/orders" className="text-xs font-bold text-primary hover:underline">Voir →</a>
+                    <span className="text-xs text-slate-400">{new Date(order.dateCommande).toLocaleDateString('fr-FR')} &middot; {order.modeReception === 'LIVRAISON' ? 'Livraison' : 'Retrait'}</span>
+                    <Link to="/orders" className="text-xs font-bold text-primary hover:underline">Voir &rarr;</Link>
                   </div>
                 </div>
               );

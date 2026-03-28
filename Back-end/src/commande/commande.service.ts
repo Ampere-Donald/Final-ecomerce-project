@@ -9,6 +9,7 @@ import { NotificationService, NotificationActor } from 'src/notification/notific
 import { AuthService } from 'src/auth/auth.service';
 import { CreateCommandeDto } from './dto/create-commande.dto';
 import { UpdateCommandeDto } from './dto/update-commande.dto';
+import { ProcessPickupDto } from './dto/process-pickup.dto';
 import * as bcrypt from 'bcrypt';
 
 @Injectable()
@@ -269,12 +270,31 @@ export class CommandeService {
 
   async update(id: string, dto: UpdateCommandeDto, actor?: NotificationActor) {
     await this.findOne(id);
+
+    const data: any = {
+      ...dto,
+      version: { increment: 1 },
+    };
+
+    // Auto-fill date fields based on status transition
+    if (dto.statut) {
+      const now = new Date();
+      switch (dto.statut) {
+        case 'LIVREE':
+          data.dateLivraison = now;
+          break;
+        case 'CONFIRMEE':
+          data.dateConfirmation = now;
+          break;
+        case 'ANNULEE':
+          data.dateAnnulation = now;
+          break;
+      }
+    }
+
     const commande = await this.db.commande.update({
       where: { id },
-      data: {
-        ...dto,
-        version: { increment: 1 },
-      },
+      data,
       include: {
         lignes: { include: { produit: true } },
       },
@@ -316,7 +336,7 @@ export class CommandeService {
 
     const updated = await this.db.commande.update({
       where: { id },
-      data: { statut: 'ANNULEE', version: { increment: 1 } },
+      data: { statut: 'ANNULEE', dateAnnulation: new Date(), version: { increment: 1 } },
       include: { lignes: { include: { produit: true } } },
     });
 
@@ -347,17 +367,76 @@ export class CommandeService {
 
     const updated = await this.db.commande.update({
       where: { id },
-      data: { statut: 'CONFIRMEE', version: { increment: 1 } },
+      data: { statut: 'LIVREE', dateLivraison: new Date(), version: { increment: 1 } },
       include: { lignes: { include: { produit: true } } },
     });
 
     this.notifications
       .create(
         'COMMANDE_STATUT',
-        `Commande ${updated.numeroSuivi} confirmée/reçue par le client`,
+        `Commande ${updated.numeroSuivi} livrée (réception confirmée par le client)`,
       )
       .catch(() => {});
 
     return updated;
+  }
+
+  /**
+   * Process in-store pickup for RETRAIT_MAGASIN orders.
+   * Sets status to LIVREE and optionally creates a Caisse entry if paid on site.
+   * Stock was already decremented at order creation.
+   */
+  async processPickup(id: string, dto: ProcessPickupDto, actor?: NotificationActor) {
+    const commande = await this.findOne(id);
+
+    if (commande.modeReception !== 'RETRAIT_MAGASIN') {
+      throw new BadRequestException(
+        'Cette commande n\'est pas en mode retrait magasin.',
+      );
+    }
+
+    if (!['EN_ATTENTE', 'CONFIRMEE'].includes(commande.statut)) {
+      throw new BadRequestException(
+        `Impossible de traiter le retrait: la commande est en statut "${commande.statut}".`,
+      );
+    }
+
+    const result = await this.db.$transaction(async (tx: any) => {
+      // 1. Update order status to LIVREE
+      const updated = await tx.commande.update({
+        where: { id },
+        data: {
+          statut: 'LIVREE',
+          dateLivraison: new Date(),
+          version: { increment: 1 },
+        },
+        include: {
+          lignes: { include: { produit: true } },
+        },
+      });
+
+      // 2. If paid on site, create Caisse ENTREE
+      if (dto.paiementSurPlace) {
+        await tx.caisse.create({
+          data: {
+            typeOperation: 'ENTREE',
+            montant: commande.montantTotal,
+            motif: `Retrait magasin - Commande ${commande.numeroSuivi}${dto.methodePaiement ? ` (${dto.methodePaiement})` : ''}`,
+          },
+        });
+      }
+
+      return updated;
+    });
+
+    this.notifications
+      .create(
+        'COMMANDE_STATUT',
+        `Commande ${result.numeroSuivi} retirée en magasin${dto.paiementSurPlace ? ' (payée sur place)' : ' (pré-payée)'}`,
+        actor,
+      )
+      .catch(() => {});
+
+    return result;
   }
 }

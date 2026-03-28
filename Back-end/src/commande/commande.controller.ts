@@ -13,6 +13,7 @@ import {
 import { CommandeService } from './commande.service';
 import { CreateCommandeDto } from './dto/create-commande.dto';
 import { UpdateCommandeDto } from './dto/update-commande.dto';
+import { ProcessPickupDto } from './dto/process-pickup.dto';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { AdminAuthGuard } from '../admin-auth/admin-auth.guard';
 
@@ -46,6 +47,18 @@ export class CommandeController {
     return this.commandeService.findByClient(req.user.id);
   }
 
+  /** Admin: process in-store pickup */
+  @UseGuards(AdminAuthGuard)
+  @Patch(':id/pickup')
+  processPickup(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Request() req: any,
+    @Body() dto: ProcessPickupDto,
+  ) {
+    const actor = { id: req.user.id, nom: req.user.nom, role: req.user.role };
+    return this.commandeService.processPickup(id, dto, actor);
+  }
+
   /** Admin: view single order */
   @UseGuards(AdminAuthGuard)
   @Get(':id')
@@ -64,9 +77,9 @@ export class CommandeController {
     @Request() req: any,
     @Body() updateCommandeDto: UpdateCommandeDto,
   ) {
-    if (updateCommandeDto.statut && !['EN_ATTENTE', 'EN_LIVRAISON'].includes(updateCommandeDto.statut)) {
+    if (updateCommandeDto.statut && !['EN_ATTENTE', 'CONFIRMEE', 'EN_LIVRAISON', 'LIVREE'].includes(updateCommandeDto.statut)) {
       throw new ForbiddenException(
-        'L\'administrateur ne peut définir que les statuts "En attente" ou "En livraison". L\'annulation et la confirmation sont réservées au client.',
+        'L\'administrateur ne peut définir que les statuts "En attente", "Confirmée", "En livraison" ou "Livrée". L\'annulation est réservée au client.',
       );
     }
     const actor = { id: req.user.id, nom: req.user.nom, role: req.user.role };

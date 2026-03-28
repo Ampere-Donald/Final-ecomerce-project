@@ -56,5 +56,8 @@ export interface Commande {
   statut: StatutCommande;
   modeReception: ModeReception;
   dateCommande: string;
+  dateLivraison?: string;
+  dateConfirmation?: string;
+  dateAnnulation?: string;
   lignes: LigneCommande[];
 }

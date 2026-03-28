@@ -21,6 +21,7 @@ import {
   Palette,
   UserCog,
   Bell,
+  AlertTriangle,
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useAdminAuth } from '../context/AdminAuthContext';
@@ -55,6 +56,7 @@ export const Sidebar = ({ open, onClose }: SidebarProps) => {
     { label: 'Mouvements Stock', icon: Activity, path: '/stock' },
     { label: 'Ventes', icon: ShoppingCart, path: '/ventes' },
     { label: 'Achats (Réappro)', icon: Truck, path: '/achats' },
+    { label: 'Alertes Stock', icon: AlertTriangle, path: '/stock-alerts' },
   ];
 
   const tiersItems = [
