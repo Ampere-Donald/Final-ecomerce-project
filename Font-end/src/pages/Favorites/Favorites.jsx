@@ -23,7 +23,7 @@ const Favorites = () => {
     <>
       <Helmet>
         <title>{t('favorites.metaTitle')}</title>
-        <meta name="robots" content="index, follow" />
+        <meta name="robots" content="noindex, nofollow" />
       </Helmet>
       <div className="favorites container">
         <div className="favorites__header">

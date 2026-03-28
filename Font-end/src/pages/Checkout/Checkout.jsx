@@ -189,7 +189,7 @@ const Checkout = () => {
             <Helmet>
                 <title>{t('checkout.metaTitle')}</title>
                 <meta name="description" content={t('checkout.metaDesc')} />
-                <meta name="robots" content="index, follow" />
+                <meta name="robots" content="noindex, nofollow" />
             </Helmet>
             {/* Steps Header */}
             <div className="checkout__steps-container">

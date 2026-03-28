@@ -66,7 +66,7 @@ const Login = () => {
     <>
     <Helmet>
       <title>{t('auth.loginTitle')} — NEWOTEG SARL</title>
-      <meta name="robots" content="index, follow" />
+      <meta name="robots" content="noindex, nofollow" />
     </Helmet>
     <div className="auth-page">
       <div className="auth-page__card">
