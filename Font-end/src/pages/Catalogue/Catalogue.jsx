@@ -38,7 +38,12 @@ const Catalogue = () => {
     const [inStockOnly, setInStockOnly] = useState(searchParams.get('instock') === 'true');
     const [totalPages, setTotalPages] = useState(1);
     const [totalProducts, setTotalProducts] = useState(0);
-    const [viewMode, setViewMode] = useState(localStorage.getItem('catalogueViewMode') || 'grid');
+    const [viewMode, setViewMode] = useState(() => {
+        const saved = localStorage.getItem('catalogueViewMode');
+        if (saved) return saved;
+        // Default to 'grid' — user can switch freely on any device
+        return 'grid';
+    });
     const [globalMinPrice, setGlobalMinPrice] = useState(0);
     const [globalMaxPrice, setGlobalMaxPrice] = useState(1000000);
 
@@ -49,14 +54,6 @@ const Catalogue = () => {
         window.addEventListener('resize', handleResize);
         return () => window.removeEventListener('resize', handleResize);
     }, []);
-
-    // Force table (list) layout on mobile for denser product display
-    useEffect(() => {
-        if (isMobile && viewMode !== 'table') {
-            setViewMode('table');
-            localStorage.setItem('catalogueViewMode', 'table');
-        }
-    }, [isMobile, viewMode]);
 
     const debouncedSearch = useDebounce(searchQuery, 500);
     const debouncedPrice = useDebounce(priceRange, 500);

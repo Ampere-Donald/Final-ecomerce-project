@@ -6,17 +6,45 @@
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
     overflow-x: auto;
     margin-bottom: 2rem;
+    position: relative;
+
+    // Scroll cue: gradient fade on the right edge (mobile only)
+    &::after {
+        content: '';
+        position: sticky;
+        right: 0;
+        top: 0;
+        bottom: 0;
+        width: 40px;
+        pointer-events: none;
+        background: linear-gradient(to left, rgba(255,255,255,0.95), transparent);
+        display: block;
+        position: absolute;
+        height: 100%;
+
+        @media (min-width: $breakpoint-md) {
+            display: none;
+        }
+    }
 
     .product-table {
         width: 100%;
         border-collapse: collapse;
-        min-width: 800px; // Assure le défilement horizontal sur mobile
+        min-width: 600px;
+
+        @media (min-width: $breakpoint-md) {
+            min-width: 800px;
+        }
 
         th, td {
             text-align: left;
             padding: 1rem;
             border-bottom: 1px solid #f0f0f0;
             vertical-align: middle;
+
+            @media (max-width: calc(#{$breakpoint-md} - 1px)) {
+                padding: 0.6rem 0.5rem;
+            }
         }
 
         th {
@@ -29,10 +57,26 @@
 
             &.product-table__th-img {
                 width: 80px;
+
+                @media (max-width: calc(#{$breakpoint-md} - 1px)) {
+                    width: 50px;
+                }
             }
             &.product-table__th-action {
                 text-align: center;
                 width: 80px;
+            }
+            // Hide description column on mobile
+            &.product-table__th-desc {
+                @media (max-width: calc(#{$breakpoint-md} - 1px)) {
+                    display: none;
+                }
+            }
+            // Hide wholesale price on small mobile
+            &.product-table__th-stock {
+                @media (max-width: $breakpoint-sm) {
+                    display: none;
+                }
             }
         }
 
@@ -55,6 +99,11 @@
                 object-fit: cover;
                 border-radius: 4px;
                 border: 1px solid #eee;
+
+                @media (max-width: calc(#{$breakpoint-md} - 1px)) {
+                    width: 44px;
+                    height: 44px;
+                }
             }
         }
 
@@ -85,6 +134,18 @@
             font-size: 0.85rem;
             color: #475569;
             max-width: 250px;
+
+            // Hide description column on mobile
+            @media (max-width: calc(#{$breakpoint-md} - 1px)) {
+                display: none;
+            }
+        }
+
+        // Hide stock column on small mobile
+        .product-table__cell-stock {
+            @media (max-width: $breakpoint-sm) {
+                display: none;
+            }
         }
 
         .badge {

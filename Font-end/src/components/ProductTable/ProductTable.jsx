@@ -57,7 +57,7 @@ const ProductTable = ({ products }) => {
                                 <td className="product-table__cell product-table__desc">
                                     {product.description?.substring(0, 50) || t('productTable.noDesc')}...
                                 </td>
-                                <td className="product-table__cell">
+                                <td className="product-table__cell product-table__cell-stock">
                                     {isBackorder ? (
                                         <span className="badge badge-warning" style={{ backgroundColor: '#f59e0b', color: 'white', padding: '4px 8px', borderRadius: '4px', fontSize: '11px', fontWeight: 'bold' }}>{t('productTable.preorder')}</span>
                                     ) : (
