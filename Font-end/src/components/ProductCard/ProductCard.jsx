@@ -5,16 +5,16 @@ import { useFavorites } from '../../context/FavoritesContext';
 import { useCart } from '../../context/CartContext';
 import { useI18n } from '../../context/I18nContext';
 import { formatFCFA } from '../../utils/formatFCFA';
+import PlaceholderImage from '../PlaceholderImage/PlaceholderImage';
 import './ProductCard.scss';
-
-const PLACEHOLDER_IMG = 'https://images.unsplash.com/photo-1608564697071-ddf911d81370?q=80&w=400&auto=format&fit=crop';
 
 const ProductCard = ({ product, badge }) => {
     const { t } = useI18n();
     const { toggleFavorite, isFavorite } = useFavorites();
     const { addToCart } = useCart();
     const isLiked = isFavorite(product.code);
-    const [imgSrc, setImgSrc] = useState(product.image || PLACEHOLDER_IMG);
+    const [imgSrc, setImgSrc] = useState(product.image || '');
+    const [imgError, setImgError] = useState(false);
 
     const isBackorder = (product.stock ?? 0) <= 0;
     const [justAdded, setJustAdded] = useState(false);
@@ -34,7 +34,7 @@ const ProductCard = ({ product, badge }) => {
     };
 
     const handleImageError = () => {
-        setImgSrc(PLACEHOLDER_IMG);
+        setImgError(true);
     };
 
     const [showQuickView, setShowQuickView] = useState(false);
@@ -50,13 +50,17 @@ const ProductCard = ({ product, badge }) => {
             <div className={`product-card ${isBackorder ? 'product-card--backorder' : ''}`}>
                 {/* Image area */}
                 <Link to={`/product/${product.id}`} className="product-card__image-area">
-                    <img
-                        src={imgSrc}
-                        alt={product.model}
-                        className="product-card__img"
-                        loading="lazy"
-                        onError={handleImageError}
-                    />
+                    {imgSrc && !imgError ? (
+                        <img
+                            src={imgSrc}
+                            alt={product.model}
+                            className="product-card__img"
+                            loading="lazy"
+                            onError={handleImageError}
+                        />
+                    ) : (
+                        <PlaceholderImage />
+                    )}
                     {/* Badges container */}
                     <div className="product-card__badges-container">
                         {isBackorder ? (
@@ -158,7 +162,11 @@ const ProductCard = ({ product, badge }) => {
                         </button>
                         <div className="quick-view-modal__layout">
                             <div className="quick-view-modal__image">
-                                <img src={imgSrc} alt={product.model} onError={handleImageError} />
+                                {imgSrc && !imgError ? (
+                                    <img src={imgSrc} alt={product.model} onError={handleImageError} />
+                                ) : (
+                                    <PlaceholderImage />
+                                )}
                             </div>
                             <div className="quick-view-modal__info">
                                 <p className="quick-view-modal__category">

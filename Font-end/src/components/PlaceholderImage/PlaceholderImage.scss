@@ -1,0 +1,58 @@
+@use '../../styles/variables' as *;
+
+.placeholder-img {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(145deg, #f0f2f8 0%, #e8eaf6 40%, #f5f6fa 100%);
+    position: relative;
+    overflow: hidden;
+
+    // Subtle pattern overlay
+    &::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background-image: radial-gradient(circle at 20% 80%, rgba($color-primary, 0.03) 0%, transparent 50%),
+                          radial-gradient(circle at 80% 20%, rgba($color-primary, 0.04) 0%, transparent 50%);
+    }
+
+    &__glass {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        padding: 16px 20px;
+        background: rgba(255, 255, 255, 0.45);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        border-radius: $border-radius-lg;
+        border: 1px solid rgba(255, 255, 255, 0.6);
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.03);
+    }
+
+    &__logo {
+        width: 40px;
+        height: 40px;
+        object-fit: contain;
+        opacity: 0.3;
+        filter: grayscale(30%);
+        user-select: none;
+    }
+
+    &--hidden {
+        display: none !important;
+    }
+
+    &__text {
+        font-size: 10px;
+        font-weight: $font-weight-extrabold;
+        letter-spacing: 0.2em;
+        color: rgba($color-text, 0.18);
+        text-transform: uppercase;
+        user-select: none;
+    }
+}

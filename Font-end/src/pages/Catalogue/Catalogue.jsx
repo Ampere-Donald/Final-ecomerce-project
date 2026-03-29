@@ -131,8 +131,7 @@ const Catalogue = () => {
                     oldPrice: null,
                     parentCategory: 'ÉQUIPEMENTS',
                     urlDatasheet: p.urlDatasheet || null,
-                    image: resolveImageUrl(p.imageUrl)
-                        || 'https://images.unsplash.com/photo-1505843490538-5133c6c7d0e1?q=80&w=400&auto=format&fit=crop'
+                    image: resolveImageUrl(p.imageUrl) || ''
                 }));
 
 

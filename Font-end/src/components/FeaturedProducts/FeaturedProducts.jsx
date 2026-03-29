@@ -3,6 +3,7 @@ import { Zap, ChevronLeft, ChevronRight } from 'lucide-react';
 import apiClient from '../../utils/apiClient';
 import { formatFCFA } from '../../utils/formatFCFA';
 import { resolveImageUrl, PLACEHOLDER_IMG } from '../../utils/mapProduct';
+import PlaceholderImage from '../PlaceholderImage/PlaceholderImage';
 import { useCart } from '../../context/CartContext';
 import { useI18n } from '../../context/I18nContext';
 import { Link } from 'react-router-dom';
@@ -160,12 +161,11 @@ const FlashProductCard = ({ product, addToCart }) => {
                 {product.badge && (
                     <span className="fp-card__promo-tag">{product.badge}</span>
                 )}
-                <img
-                    src={product.image}
-                    alt={product.model}
-                    loading="lazy"
-                    onError={(e) => { e.target.src = PLACEHOLDER_IMG; }}
-                />
+                {product.image ? (
+                    <img src={product.image} alt={product.model} loading="lazy" onError={(e) => { e.target.style.display = 'none'; }} />
+                ) : (
+                    <PlaceholderImage />
+                )}
             </div>
             <div className="fp-card__body">
                 <h3 className="fp-card__name">{product.model}</h3>
@@ -195,12 +195,11 @@ const PopularProductCard = ({ product, addToCart }) => {
                 <span className={`fp-card__stock-tag ${outOfStock ? 'fp-card__stock-tag--oos' : ''}`}>
                     {outOfStock ? t('product.outOfStock') : t('product.inStock')}
                 </span>
-                <img
-                    src={product.image}
-                    alt={product.model}
-                    loading="lazy"
-                    onError={(e) => { e.target.src = PLACEHOLDER_IMG; }}
-                />
+                {product.image ? (
+                    <img src={product.image} alt={product.model} loading="lazy" onError={(e) => { e.target.style.display = 'none'; }} />
+                ) : (
+                    <PlaceholderImage />
+                )}
             </div>
             <div className="fp-card__body">
                 <h3 className="fp-card__name">{product.model}</h3>

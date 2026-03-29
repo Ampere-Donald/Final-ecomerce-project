@@ -3,9 +3,8 @@ import { ShoppingCart, FileText } from 'lucide-react';
 import { useCart } from '../../context/CartContext';
 import { useI18n } from '../../context/I18nContext';
 import { formatFCFA } from '../../utils/formatFCFA';
+import PlaceholderImage from '../PlaceholderImage/PlaceholderImage';
 import './ProductTable.scss';
-
-const PLACEHOLDER_IMG = 'https://images.unsplash.com/photo-1608564697071-ddf911d81370?q=80&w=400&auto=format&fit=crop';
 
 const ProductTable = ({ products }) => {
     const { t } = useI18n();
@@ -39,12 +38,15 @@ const ProductTable = ({ products }) => {
                             <tr key={product.code} className={`product-table__row ${isBackorder ? 'product-table__row--backorder' : ''}`}>
                                 <td className="product-table__cell product-table__cell-img">
                                     <Link to={`/product/${product.id}`}>
-                                        <img 
-                                            src={product.image || PLACEHOLDER_IMG} 
-                                            alt={product.model} 
-                                            loading="lazy" 
-                                            onError={(e) => e.target.src = PLACEHOLDER_IMG}
-                                        />
+                                        {product.image ? (
+                                            <img
+                                                src={product.image}
+                                                alt={product.model}
+                                                loading="lazy"
+                                                onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
+                                            />
+                                        ) : null}
+                                        <PlaceholderImage className={product.image ? 'placeholder-img--hidden' : ''} />
                                     </Link>
                                 </td>
                                 <td className="product-table__cell">
