@@ -126,7 +126,7 @@
     text-decoration: none;
     scroll-snap-align: start;
     flex-shrink: 0;
-    width: 88px;
+    width: 100px;
     transition: transform $transition-fast;
 
     &:active {
@@ -135,33 +135,32 @@
 
     &__visual {
         position: relative;
-        width: 64px;
-        height: 64px;
+        width: 76px;
+        height: 76px;
         border-radius: $border-radius-circle;
         overflow: hidden;
         background: $color-surface;
         border: 2px solid $color-border;
         box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
-        margin-bottom: 6px;
+        margin-bottom: $spacing-xs;
         transition: border-color $transition-fast;
 
         .placeholder-img {
             position: absolute;
             inset: 0;
 
-            // Smaller logo inside circle
             .placeholder-img__glass {
-                padding: 6px;
-                gap: 2px;
+                padding: 8px;
+                gap: 3px;
             }
 
             .placeholder-img__logo {
-                width: 22px;
-                height: 22px;
+                width: 26px;
+                height: 26px;
             }
 
             .placeholder-img__text {
-                font-size: 6px;
+                font-size: 7px;
             }
         }
     }
@@ -179,11 +178,11 @@
     }
 
     &__name {
-        font-size: 11px;
+        font-size: 12px;
         font-weight: $font-weight-semibold;
         color: $color-text;
         text-align: center;
-        line-height: 1.2;
+        line-height: 1.25;
         max-width: 100%;
         overflow: hidden;
         text-overflow: ellipsis;
@@ -191,10 +190,10 @@
     }
 
     &__count {
-        font-size: 9px;
+        font-size: 10px;
         font-weight: $font-weight-medium;
         color: $color-secondary-light;
-        margin-top: 1px;
+        margin-top: 2px;
     }
 }
 
