@@ -2,26 +2,20 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { Zap, ChevronLeft, ChevronRight } from 'lucide-react';
 import apiClient from '../../utils/apiClient';
 import { formatFCFA } from '../../utils/formatFCFA';
-import { mapProduct, resolveImageUrl, PLACEHOLDER_IMG } from '../../utils/mapProduct';
+import { resolveImageUrl, PLACEHOLDER_IMG } from '../../utils/mapProduct';
 import { useCart } from '../../context/CartContext';
 import { useI18n } from '../../context/I18nContext';
 import { Link } from 'react-router-dom';
 import useScrollReveal from '../../hooks/useScrollReveal';
-import useSwipe from '../../hooks/useSwipe';
 import ProductCardSkeleton from '../ProductCard/ProductCardSkeleton';
 import './FeaturedProducts.scss';
 
-
-
-
-// ── Countdown Hook (calcule depuis une date de fin réelle) ──────────────
+// ── Countdown Hook ──────────────────────────────────────────────
 const useCountdown = (targetDate) => {
     const [time, setTime] = useState({ h: 0, m: 0, s: 0 });
 
-
     useEffect(() => {
         if (!targetDate) return;
-
         const calcRemaining = () => {
             const diff = Math.max(0, new Date(targetDate).getTime() - Date.now());
             const totalSeconds = Math.floor(diff / 1000);
@@ -31,7 +25,6 @@ const useCountdown = (targetDate) => {
                 s: totalSeconds % 60,
             };
         };
-
         setTime(calcRemaining());
         const timer = setInterval(() => setTime(calcRemaining()), 1000);
         return () => clearInterval(timer);
@@ -40,89 +33,148 @@ const useCountdown = (targetDate) => {
     return time;
 };
 
-// ── Product Slider Hook ─────────────────────────────────────────────────
-const useSlider = (itemCount, visibleCount = 2, autoPlayInterval = 4000) => {
-    const [currentIndex, setCurrentIndex] = useState(0);
-    const [isHovered, setIsHovered] = useState(false);
-    const maxIndex = Math.max(0, itemCount - visibleCount);
+// ── Scroll-Snap Carousel Hook ───────────────────────────────────
+const useSnapCarousel = (itemCount, autoPlayMs = 0) => {
+    const trackRef = useRef(null);
+    const [activeIndex, setActiveIndex] = useState(0);
+    const [dotCount, setDotCount] = useState(0);
+    const isHovered = useRef(false);
+
+    // Observe which card is in view to update dots
+    useEffect(() => {
+        const track = trackRef.current;
+        if (!track) return;
+
+        const cards = track.children;
+        if (!cards.length) return;
+
+        const observer = new IntersectionObserver(
+            (entries) => {
+                for (const entry of entries) {
+                    if (entry.isIntersecting) {
+                        const idx = Array.from(cards).indexOf(entry.target);
+                        if (idx >= 0) setActiveIndex(idx);
+                    }
+                }
+            },
+            { root: track, threshold: 0.6 }
+        );
+
+        Array.from(cards).forEach((card) => observer.observe(card));
+        return () => observer.disconnect();
+    }, [itemCount]);
+
+    // Compute dot count based on visible cards
+    useEffect(() => {
+        setDotCount(itemCount);
+    }, [itemCount]);
+
+    const scrollTo = useCallback((index) => {
+        const track = trackRef.current;
+        if (!track || !track.children[index]) return;
+        track.children[index].scrollIntoView({
+            behavior: 'smooth',
+            block: 'nearest',
+            inline: 'start',
+        });
+    }, []);
 
     const goNext = useCallback(() => {
-        setCurrentIndex(prev => (prev >= maxIndex ? 0 : prev + 1));
-    }, [maxIndex]);
+        const next = activeIndex < itemCount - 1 ? activeIndex + 1 : 0;
+        scrollTo(next);
+    }, [activeIndex, itemCount, scrollTo]);
 
     const goPrev = useCallback(() => {
-        setCurrentIndex(prev => (prev <= 0 ? maxIndex : prev - 1));
-    }, [maxIndex]);
+        const prev = activeIndex > 0 ? activeIndex - 1 : itemCount - 1;
+        scrollTo(prev);
+    }, [activeIndex, itemCount, scrollTo]);
 
+    // Auto-play (desktop only)
     useEffect(() => {
-        if (itemCount <= visibleCount || isHovered) return;
-        const timer = setInterval(goNext, autoPlayInterval);
+        if (!autoPlayMs || itemCount <= 1) return;
+        const timer = setInterval(() => {
+            if (!isHovered.current) goNext();
+        }, autoPlayMs);
         return () => clearInterval(timer);
-    }, [itemCount, visibleCount, isHovered, goNext, autoPlayInterval]);
+    }, [autoPlayMs, itemCount, goNext]);
 
     return {
-        currentIndex,
-        canGoPrev: true, // Infinite loop
-        canGoNext: true, // Infinite loop
+        trackRef,
+        activeIndex,
+        dotCount,
         goNext,
         goPrev,
-        needsSlider: itemCount > visibleCount,
+        scrollTo,
         hoverHandlers: {
-            onMouseEnter: () => setIsHovered(true),
-            onMouseLeave: () => setIsHovered(false),
-        }
+            onMouseEnter: () => { isHovered.current = true; },
+            onMouseLeave: () => { isHovered.current = false; },
+        },
     };
 };
 
-// ── Product Card (Flash) ────────────────────────────────────────────────
+// ── Dot Indicators ──────────────────────────────────────────────
+const Dots = ({ count, active, onDotClick, maxVisible = 7 }) => {
+    if (count <= 1) return null;
+
+    // If many items, show a subset of dots
+    let dots = [];
+    if (count <= maxVisible) {
+        dots = Array.from({ length: count }, (_, i) => i);
+    } else {
+        // Show first, last, active, and neighbors
+        const s = new Set([0, count - 1, active]);
+        if (active > 0) s.add(active - 1);
+        if (active < count - 1) s.add(active + 1);
+        dots = [...s].sort((a, b) => a - b);
+    }
+
+    return (
+        <div className="snap-dots">
+            {dots.map((idx, i) => {
+                const isGap = i > 0 && idx - dots[i - 1] > 1;
+                return (
+                    <span key={idx}>
+                        {isGap && <span className="snap-dots__gap" />}
+                        <button
+                            className={`snap-dots__dot ${idx === active ? 'snap-dots__dot--active' : ''}`}
+                            onClick={() => onDotClick(idx)}
+                            aria-label={`Slide ${idx + 1}`}
+                        />
+                    </span>
+                );
+            })}
+        </div>
+    );
+};
+
+// ── Flash Product Card ──────────────────────────────────────────
 const FlashProductCard = ({ product, addToCart }) => {
     const { t } = useI18n();
     const outOfStock = (product.stock ?? 0) <= 0;
     return (
-        <Link to={`/product/${product.id}`} className={`product-card ${outOfStock ? 'product-card--out-of-stock' : ''}`}>
-            <div className="product-card__image-wrapper">
-                <span className={`product-card__stock-badge ${outOfStock ? 'product-card__stock-badge--rupture' : ''}`}>
+        <Link to={`/product/${product.id}`} className={`fp-card ${outOfStock ? 'fp-card--oos' : ''}`}>
+            <div className="fp-card__img-wrap">
+                <span className={`fp-card__stock-tag ${outOfStock ? 'fp-card__stock-tag--oos' : ''}`}>
                     {outOfStock ? t('product.outOfStock') : t('product.inStock')}
                 </span>
                 {product.badge && (
-                    <span className="product-card__promo-badge">{product.badge}</span>
+                    <span className="fp-card__promo-tag">{product.badge}</span>
                 )}
-                <div className="product-card__image">
-                    <img
-                        src={product.image}
-                        alt={product.model}
-                        loading="lazy"
-                        onError={(e) => { e.target.src = PLACEHOLDER_IMG; }}
-                    />
-                </div>
+                <img
+                    src={product.image}
+                    alt={product.model}
+                    loading="lazy"
+                    onError={(e) => { e.target.src = PLACEHOLDER_IMG; }}
+                />
             </div>
-            <div className="product-card__body">
-                <p className="product-card__ref">REF: {product.code}</p>
-                <div className="product-card__title-link">
-                    <h3 className="product-card__name">{product.model}</h3>
+            <div className="fp-card__body">
+                <h3 className="fp-card__name">{product.model}</h3>
+                <div className="fp-card__prices">
+                    <span className="fp-card__old-price">{formatFCFA(product.retailPrice)}</span>
+                    <span className="fp-card__promo-price">{formatFCFA(product.promoPrice)}</span>
                 </div>
-
-                <div className="product-card__pricing">
-                    <div className="product-card__retail">
-                        <span className="product-card__retail-label">{t('product.priceLabel')}</span>
-                        <span className="product-card__retail-price" style={{ textDecoration: 'line-through', opacity: 0.5, fontSize: '0.85em' }}>
-                            {formatFCFA(product.retailPrice)}
-                        </span>
-                    </div>
-                    <div className="product-card__wholesale">
-                        <span className="product-card__wholesale-label" style={{ color: '#ef4444', fontWeight: 700 }}>{t('product.promoLabel')}</span>
-                        <span className="product-card__wholesale-price" style={{ color: '#ef4444', fontWeight: 800, fontSize: '1.1em' }}>
-                            {formatFCFA(product.promoPrice)}
-                        </span>
-                    </div>
-                </div>
-
-                <p className={`product-card__stock-info ${outOfStock ? 'product-card__stock-info--danger' : ''}`}>
-                    {outOfStock ? t('product.outOfStockLong') : t('product.inStockCount', { count: product.stock })}
-                </p>
-
                 <button
-                    className={`product-card__add-btn ${outOfStock ? 'product-card__add-btn--disabled' : ''}`}
+                    className={`fp-card__btn ${outOfStock ? 'fp-card__btn--disabled' : ''}`}
                     onClick={(e) => { e.preventDefault(); if (!outOfStock) addToCart({ ...product, retailPrice: product.promoPrice }, 1); }}
                     disabled={outOfStock}
                 >
@@ -133,48 +185,33 @@ const FlashProductCard = ({ product, addToCart }) => {
     );
 };
 
-// ── Product Card (Populaire) ────────────────────────────────────────────
+// ── Popular Product Card ────────────────────────────────────────
 const PopularProductCard = ({ product, addToCart }) => {
     const { t } = useI18n();
     const outOfStock = (product.stock ?? 0) <= 0;
     return (
-        <Link to={`/product/${product.id}`} className={`product-card ${outOfStock ? 'product-card--out-of-stock' : ''}`}>
-            <div className="product-card__image-wrapper">
-                <span className={`product-card__stock-badge ${outOfStock ? 'product-card__stock-badge--rupture' : ''}`}>
+        <Link to={`/product/${product.id}`} className={`fp-card ${outOfStock ? 'fp-card--oos' : ''}`}>
+            <div className="fp-card__img-wrap">
+                <span className={`fp-card__stock-tag ${outOfStock ? 'fp-card__stock-tag--oos' : ''}`}>
                     {outOfStock ? t('product.outOfStock') : t('product.inStock')}
                 </span>
-                <div className="product-card__image">
-                    <img
-                        src={product.image}
-                        alt={product.model}
-                        loading="lazy"
-                        onError={(e) => { e.target.src = PLACEHOLDER_IMG; }}
-                    />
-                </div>
+                <img
+                    src={product.image}
+                    alt={product.model}
+                    loading="lazy"
+                    onError={(e) => { e.target.src = PLACEHOLDER_IMG; }}
+                />
             </div>
-            <div className="product-card__body">
-                <p className="product-card__ref">REF: {product.code}</p>
-                <div className="product-card__title-link">
-                    <h3 className="product-card__name">{product.model}</h3>
+            <div className="fp-card__body">
+                <h3 className="fp-card__name">{product.model}</h3>
+                <div className="fp-card__prices">
+                    <span className="fp-card__retail">{formatFCFA(product.retailPrice)}</span>
+                    {product.wholesalePrice > 0 && product.wholesalePrice < product.retailPrice && (
+                        <span className="fp-card__wholesale">{t('product.wholesalePrice')}: {formatFCFA(product.wholesalePrice)}</span>
+                    )}
                 </div>
-
-                <div className="product-card__pricing">
-                    <div className="product-card__retail">
-                        <span className="product-card__retail-label">{t('product.retailPrice')}</span>
-                        <span className="product-card__retail-price">{formatFCFA(product.retailPrice)}</span>
-                    </div>
-                    <div className="product-card__wholesale">
-                        <span className="product-card__wholesale-label">{t('product.wholesalePrice')}</span>
-                        <span className="product-card__wholesale-price">{formatFCFA(product.wholesalePrice)}</span>
-                    </div>
-                </div>
-
-                <p className={`product-card__stock-info ${outOfStock ? 'product-card__stock-info--danger' : ''}`}>
-                    {outOfStock ? t('product.outOfStockLong') : t('product.inStockCount', { count: product.stock })}
-                </p>
-
                 <button
-                    className={`product-card__add-btn ${outOfStock ? 'product-card__add-btn--disabled' : ''}`}
+                    className={`fp-card__btn ${outOfStock ? 'fp-card__btn--disabled' : ''}`}
                     onClick={(e) => { e.preventDefault(); if (!outOfStock) addToCart(product, 1); }}
                     disabled={outOfStock}
                 >
@@ -185,7 +222,7 @@ const PopularProductCard = ({ product, addToCart }) => {
     );
 };
 
-// ── Main Component ─────────────────────────────────────────────
+// ── Main Component ──────────────────────────────────────────────
 const FeaturedProducts = () => {
     const { t } = useI18n();
     const { addToCart } = useCart();
@@ -194,30 +231,22 @@ const FeaturedProducts = () => {
     const [loading, setLoading] = useState(true);
     const [latestFinPromo, setLatestFinPromo] = useState(null);
 
-    const flashSlider = useSlider(flashProducts.length, 2);
-    const popSlider = useSlider(bestSellers.length, 4);
-
-    const flashTrackRef = useRef(null);
-    const popTrackRef = useRef(null);
-
-    const flashSwipe = useSwipe(flashSlider.goNext, flashSlider.goPrev);
-    const popSwipe = useSwipe(popSlider.goNext, popSlider.goPrev);
+    const flashCarousel = useSnapCarousel(flashProducts.length, 5000);
+    const popCarousel = useSnapCarousel(bestSellers.length, 6000);
 
     const revealOptions = { threshold: 0.15, rootMargin: '0px 0px -50px 0px' };
     const flashRevealRef = useScrollReveal(revealOptions);
     const popRevealRef = useScrollReveal(revealOptions);
 
-    // ── Fetch flash deals & populaires from dedicated API routes ──
+    // ── Fetch data ──
     useEffect(() => {
         const fetchProducts = async () => {
             try {
-
                 const [flashRes, popRes] = await Promise.all([
                     apiClient.get('/produits/flash'),
                     apiClient.get('/produits/populaires'),
                 ]);
 
-                // ── Flash deals ──
                 const flashRaw = Array.isArray(flashRes.data) ? flashRes.data : flashRes.data?.data || [];
                 const flashData = flashRaw.map((p) => {
                     const retailPrice = parseFloat(p.prixDetail) || 0;
@@ -235,14 +264,11 @@ const FeaturedProducts = () => {
                         stock: p.quantiteStock ?? 0,
                         finPromo: p.finPromo,
                         badge: discount > 0 ? `-${discount}%` : '',
-                        image: p.imageUrl
-                            ? resolveImageUrl(p.imageUrl)
-                            : PLACEHOLDER_IMG,
+                        image: p.imageUrl ? resolveImageUrl(p.imageUrl) : PLACEHOLDER_IMG,
                     };
                 });
                 setFlashProducts(flashData);
 
-                // Utiliser la date de fin la plus lointaine pour le timer
                 if (flashData.length > 0) {
                     const maxDate = flashData.reduce((max, p) =>
                         p.finPromo && new Date(p.finPromo) > new Date(max) ? p.finPromo : max,
@@ -251,7 +277,6 @@ const FeaturedProducts = () => {
                     setLatestFinPromo(maxDate);
                 }
 
-                // ── Populaires ──
                 const popRaw = Array.isArray(popRes.data) ? popRes.data : popRes.data?.data || [];
                 const popData = popRaw.map(p => ({
                     id: p.id,
@@ -262,13 +287,9 @@ const FeaturedProducts = () => {
                     retailPrice: parseFloat(p.prixDetail) || 0,
                     wholesalePrice: parseFloat(p.prixGros) || 0,
                     stock: p.quantiteStock ?? 0,
-                    image: p.imageUrl
-                        ? resolveImageUrl(p.imageUrl)
-                        : PLACEHOLDER_IMG,
+                    image: p.imageUrl ? resolveImageUrl(p.imageUrl) : PLACEHOLDER_IMG,
                 }));
                 setBestSellers(popData);
-
-
             } catch (err) {
                 console.error("Erreur de chargement des produits vedettes", err);
             } finally {
@@ -293,136 +314,109 @@ const FeaturedProducts = () => {
         );
     }
 
-    // Si aucun flash et aucun populaire, ne rien afficher
     if (flashProducts.length === 0 && bestSellers.length === 0) return null;
 
     return (
         <section className="promo-catalogue">
             <div className="container">
 
-                {/* ━━ Flash Deal Banner B2B ━━━━━━━━━━━━━━━━━━━━ */}
+                {/* ━━ Flash Deals ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
                 {flashProducts.length > 0 && (
-                <div className="flash-deal-b2b reveal-up" ref={flashRevealRef}>
-                    <div className="flash-deal-b2b__left">
-                        <span className="flash-deal-b2b__badge">
-                            <Zap size={14} fill="currentColor" />
-                            {t('home.flashDeal')}
-                        </span>
-                        <h2 className="flash-deal-b2b__title">{t('home.flashSales')}</h2>
-                        <p className="flash-deal-b2b__desc">
-                            {t('home.flashSalesDesc')}
-                        </p>
+                    <div className="flash-section reveal-up" ref={flashRevealRef}>
+                        {/* Header row: badge + timer + arrows */}
+                        <div className="flash-section__header">
+                            <div className="flash-section__title-group">
+                                <span className="flash-section__badge">
+                                    <Zap size={14} fill="currentColor" />
+                                    {t('home.flashDeal')}
+                                </span>
+                                <h2 className="flash-section__title">{t('home.flashSales')}</h2>
+                            </div>
 
-                        <div className="flash-deal-b2b__timer">
-                            <div className="flash-deal-b2b__timer-block">
-                                <span className="flash-deal-b2b__timer-value">{pad(countdown.h)}</span>
-                                <span className="flash-deal-b2b__timer-label">{t('home.hrs')}</span>
+                            <div className="flash-section__timer">
+                                <div className="flash-section__timer-block">
+                                    <span>{pad(countdown.h)}</span>
+                                    <small>{t('home.hrs')}</small>
+                                </div>
+                                <span className="flash-section__timer-sep">:</span>
+                                <div className="flash-section__timer-block">
+                                    <span>{pad(countdown.m)}</span>
+                                    <small>{t('home.min')}</small>
+                                </div>
+                                <span className="flash-section__timer-sep">:</span>
+                                <div className="flash-section__timer-block">
+                                    <span>{pad(countdown.s)}</span>
+                                    <small>{t('home.sec')}</small>
+                                </div>
                             </div>
-                            <span className="flash-deal-b2b__timer-sep">:</span>
-                            <div className="flash-deal-b2b__timer-block">
-                                <span className="flash-deal-b2b__timer-value">{pad(countdown.m)}</span>
-                                <span className="flash-deal-b2b__timer-label">{t('home.min')}</span>
-                            </div>
-                            <span className="flash-deal-b2b__timer-sep">:</span>
-                            <div className="flash-deal-b2b__timer-block">
-                                <span className="flash-deal-b2b__timer-value">{pad(countdown.s)}</span>
-                                <span className="flash-deal-b2b__timer-label">{t('home.sec')}</span>
-                            </div>
-                        </div>
 
-                        {/* Slider arrows for flash (below timer) */}
-                        {flashSlider.needsSlider && (
-                            <div className="slider-nav slider-nav--flash">
-                                <button
-                                    className={`slider-nav__btn ${!flashSlider.canGoPrev ? 'slider-nav__btn--disabled' : ''}`}
-                                    onClick={flashSlider.goPrev}
-                                    disabled={!flashSlider.canGoPrev}
-                                    aria-label={t('common.prev')}
-                                >
+                            <div className="flash-section__nav">
+                                <button className="snap-arrow" onClick={flashCarousel.goPrev} aria-label={t('common.prev')}>
                                     <ChevronLeft size={20} />
                                 </button>
-                                <span className="slider-nav__counter">
-                                    {flashSlider.currentIndex + 1}–{Math.min(flashSlider.currentIndex + 2, flashProducts.length)} / {flashProducts.length}
-                                </span>
-                                <button
-                                    className={`slider-nav__btn ${!flashSlider.canGoNext ? 'slider-nav__btn--disabled' : ''}`}
-                                    onClick={flashSlider.goNext}
-                                    disabled={!flashSlider.canGoNext}
-                                    aria-label={t('common.next')}
-                                >
+                                <button className="snap-arrow" onClick={flashCarousel.goNext} aria-label={t('common.next')}>
                                     <ChevronRight size={20} />
                                 </button>
                             </div>
-                        )}
-                    </div>
+                        </div>
 
-                    <div className="flash-deal-b2b__products-wrapper" {...flashSlider.hoverHandlers} {...flashSwipe} style={{ touchAction: 'pan-y' }}>
+                        {/* Scrollable track */}
                         <div
-                            ref={flashTrackRef}
-                            className="flash-deal-b2b__products flash-deal-b2b__products--slider"
-                            style={{
-                                transform: `translateX(-${flashSlider.currentIndex * (100 / 2)}%)`,
-                            }}
+                            className="snap-track snap-track--flash"
+                            ref={flashCarousel.trackRef}
+                            {...flashCarousel.hoverHandlers}
                         >
                             {flashProducts.map((product) => (
-                                <div className="slider-card-wrapper slider-card-wrapper--flash" key={product.id}>
+                                <div className="snap-card snap-card--flash" key={product.id}>
                                     <FlashProductCard product={product} addToCart={addToCart} />
                                 </div>
                             ))}
                         </div>
+
+                        <Dots
+                            count={flashProducts.length}
+                            active={flashCarousel.activeIndex}
+                            onDotClick={flashCarousel.scrollTo}
+                        />
                     </div>
-                </div>
                 )}
 
-                {/* ━━ Best Sellers Grid / Slider ━━━━━━━━━━━━━━━━━━━━━━━ */}
+                {/* ━━ Best Sellers ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
                 {bestSellers.length > 0 && (
-                <div className="bestsellers section-margin reveal-up" ref={popRevealRef}>
-                    <div className="bestsellers__header">
-                        <h2 className="bestsellers__title">{t('home.bestSellers')}</h2>
-                        <div className="bestsellers__header-right">
-                            {popSlider.needsSlider && (
-                                <div className="slider-nav">
-                                    <button
-                                        className={`slider-nav__btn ${!popSlider.canGoPrev ? 'slider-nav__btn--disabled' : ''}`}
-                                        onClick={popSlider.goPrev}
-                                        disabled={!popSlider.canGoPrev}
-                                        aria-label={t('common.prev')}
-                                    >
+                    <div className="bestsellers-section section-margin reveal-up" ref={popRevealRef}>
+                        <div className="bestsellers-section__header">
+                            <h2 className="bestsellers-section__title">{t('home.bestSellers')}</h2>
+                            <div className="bestsellers-section__right">
+                                <div className="bestsellers-section__nav">
+                                    <button className="snap-arrow snap-arrow--light" onClick={popCarousel.goPrev} aria-label={t('common.prev')}>
                                         <ChevronLeft size={18} />
                                     </button>
-                                    <span className="slider-nav__counter">
-                                        {popSlider.currentIndex + 1}–{Math.min(popSlider.currentIndex + 4, bestSellers.length)} / {bestSellers.length}
-                                    </span>
-                                    <button
-                                        className={`slider-nav__btn ${!popSlider.canGoNext ? 'slider-nav__btn--disabled' : ''}`}
-                                        onClick={popSlider.goNext}
-                                        disabled={!popSlider.canGoNext}
-                                        aria-label={t('common.next')}
-                                    >
+                                    <button className="snap-arrow snap-arrow--light" onClick={popCarousel.goNext} aria-label={t('common.next')}>
                                         <ChevronRight size={18} />
                                     </button>
                                 </div>
-                            )}
-                            <Link to="/catalogue" className="bestsellers__view-all">{t('common.viewAll')} &rarr;</Link>
+                                <Link to="/catalogue" className="bestsellers-section__view-all">{t('common.viewAll')} &rarr;</Link>
+                            </div>
                         </div>
-                    </div>
 
-                    <div className="bestsellers__slider-wrapper" {...popSlider.hoverHandlers} {...popSwipe} style={{ touchAction: 'pan-y' }}>
                         <div
-                            ref={popTrackRef}
-                            className="bestsellers__grid bestsellers__grid--slider"
-                            style={{
-                                transform: `translateX(-${popSlider.currentIndex * (100 / 4)}%)`,
-                            }}
+                            className="snap-track snap-track--pop"
+                            ref={popCarousel.trackRef}
+                            {...popCarousel.hoverHandlers}
                         >
                             {bestSellers.map((product) => (
-                                <div className="slider-card-wrapper slider-card-wrapper--pop" key={product.id}>
+                                <div className="snap-card snap-card--pop" key={product.id}>
                                     <PopularProductCard product={product} addToCart={addToCart} />
                                 </div>
                             ))}
                         </div>
+
+                        <Dots
+                            count={bestSellers.length}
+                            active={popCarousel.activeIndex}
+                            onDotClick={popCarousel.scrollTo}
+                        />
                     </div>
-                </div>
                 )}
 
             </div>
