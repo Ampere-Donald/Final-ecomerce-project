@@ -34,6 +34,7 @@ const SQL_STATEMENTS = [
   `ALTER TABLE "produit" ADD COLUMN IF NOT EXISTS "prix_promo" DOUBLE PRECISION;`,
   `ALTER TABLE "produit" ADD COLUMN IF NOT EXISTS "image_url2" TEXT;`,
   `ALTER TABLE "produit" ADD COLUMN IF NOT EXISTS "image_url3" TEXT;`,
+  `ALTER TABLE "produit" ADD COLUMN IF NOT EXISTS "seuil_alerte" INTEGER NOT NULL DEFAULT 5;`,
 
   // ── Table: commande ──
   `CREATE TABLE IF NOT EXISTS "commande" (
@@ -90,6 +91,11 @@ const SQL_STATEMENTS = [
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT "newsletter_pkey" PRIMARY KEY ("id")
   );`,
+
+  // ── Columns on commande (IF NOT EXISTS) ──
+  `ALTER TABLE "commande" ADD COLUMN IF NOT EXISTS "date_livraison" TIMESTAMP(3);`,
+  `ALTER TABLE "commande" ADD COLUMN IF NOT EXISTS "date_confirmation" TIMESTAMP(3);`,
+  `ALTER TABLE "commande" ADD COLUMN IF NOT EXISTS "date_annulation" TIMESTAMP(3);`,
 
   // ── Unique indexes ──
   `CREATE UNIQUE INDEX IF NOT EXISTS "commande_numero_suivi_key" ON "commande"("numero_suivi");`,
