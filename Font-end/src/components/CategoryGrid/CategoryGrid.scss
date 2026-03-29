@@ -96,11 +96,22 @@
         height: 32px;
         border-radius: $border-radius-circle;
         flex-shrink: 0;
+        overflow: hidden;
+    }
 
-        svg {
-            color: $color-text;
-            opacity: 0.7;
-        }
+    &__img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border-radius: $border-radius-circle;
+    }
+
+    &__letter {
+        font-size: $font-size-sm;
+        font-weight: $font-weight-bold;
+        color: $color-text;
+        opacity: 0.6;
+        text-transform: uppercase;
     }
 
     &__name {
@@ -119,13 +130,17 @@
     }
 }
 
-// ── Desktop bento grid ─────────────────────────────────────
+// ── Desktop classic grid ───────────────────────────────────
 .category-grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(6, 1fr);
     gap: $spacing-lg;
 
     @media (max-width: $breakpoint-xl) {
+        grid-template-columns: repeat(4, 1fr);
+    }
+
+    @media (max-width: $breakpoint-lg) {
         grid-template-columns: repeat(3, 1fr);
     }
 
@@ -141,7 +156,7 @@
     }
 }
 
-// ── Category card ──────────────────────────────────────────
+// ── Category card (improved) ───────────────────────────────
 .cat-card {
     display: flex;
     flex-direction: column;
@@ -150,21 +165,18 @@
     overflow: hidden;
     background: $color-surface;
     border: 1px solid rgba($color-border, 0.6);
-    box-shadow: $shadow-xs;
-    transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+    transition: all 0.35s cubic-bezier(0.25, 1, 0.5, 1);
 
     @media (hover: hover) {
         &:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.08);
+            transform: translateY(-6px);
+            box-shadow: 0 16px 40px rgba(0, 0, 0, 0.08),
+                        0 4px 12px rgba(0, 0, 0, 0.04);
             border-color: rgba($color-primary, 0.2);
 
             .cat-card__image {
-                transform: scale(1.06);
-            }
-
-            .cat-card__icon {
-                transform: scale(1.1);
+                transform: scale(1.08);
             }
 
             .cat-card__name {
@@ -176,34 +188,23 @@
     @media (hover: none) {
         &:active {
             transform: scale(0.97);
-        }
-    }
-
-    // Featured card (top 3 on homepage) — span 2 columns
-    &--featured {
-        grid-column: span 2;
-
-        @media (max-width: $breakpoint-md) {
-            grid-column: span 1;
-        }
-
-        .cat-card__visual {
-            height: 180px;
+            opacity: 0.9;
         }
     }
 
     // ── Visual area ──
     &__visual {
         position: relative;
-        height: 140px;
+        height: 160px;
         width: 100%;
         display: flex;
         align-items: center;
         justify-content: center;
         overflow: hidden;
+        background: $color-surface-hover;
 
         @media (max-width: $breakpoint-sm) {
-            height: 110px;
+            height: 120px;
         }
     }
 
@@ -216,31 +217,37 @@
         transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
     }
 
-    &__icon {
-        color: $color-text;
-        opacity: 0.35;
-        transition: transform 0.3s ease, opacity 0.3s ease;
+    // PlaceholderImage inside visual
+    .placeholder-img {
+        position: absolute;
+        inset: 0;
     }
 
     // ── Info area ──
     &__info {
-        padding: $spacing-sm $spacing-md $spacing-md;
+        padding: $spacing-md $spacing-lg $spacing-lg;
+        display: flex;
+        flex-direction: column;
+        flex: 1;
         text-align: center;
         border-top: 1px solid rgba($color-border, 0.3);
+
+        @media (max-width: $breakpoint-sm) {
+            padding: $spacing-sm $spacing-md $spacing-md;
+        }
     }
 
     &__name {
-        font-size: $font-size-sm;
+        font-size: 14px;
         font-weight: $font-weight-bold;
         color: $color-text;
-        margin: 0 0 $spacing-2xs;
+        margin: 0 0 $spacing-xs;
         transition: color $transition-fast;
         line-height: $line-height-tight;
     }
 
     &__count {
-        display: block;
-        font-size: $font-size-xs;
+        font-size: 12px;
         color: $color-secondary;
         font-weight: $font-weight-medium;
     }
@@ -252,16 +259,20 @@
 
     .cat-card__skeleton-img {
         width: 100%;
-        height: 140px;
+        height: 160px;
         background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
         background-size: 200% 100%;
         animation: shimmer 1.5s infinite;
+
+        @media (max-width: $breakpoint-sm) {
+            height: 120px;
+        }
     }
 
     .cat-card__skeleton-text {
         height: 14px;
         width: 60%;
-        margin: $spacing-sm auto;
+        margin: $spacing-md auto $spacing-xs;
         background: #e2e8f0;
         border-radius: $border-radius-sm;
     }

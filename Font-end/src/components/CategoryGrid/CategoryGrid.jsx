@@ -1,54 +1,10 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import {
-    Cpu, Cable, Speaker, Battery, Wrench, Monitor,
-    Zap, ShoppingBag, Search, Tv, Radio, Fan, Package, Box
-} from 'lucide-react';
 import apiClient from '../../utils/apiClient';
 import { resolveImageUrl } from '../../utils/mapProduct';
 import { useI18n } from '../../context/I18nContext';
 import PlaceholderImage from '../PlaceholderImage/PlaceholderImage';
 import './CategoryGrid.scss';
-
-// ── Category icon mapping (fallback when no image) ──────────────
-const CATEGORY_ICONS = {
-    'composants': Cpu,
-    'electronique': Cpu,
-    'câbles': Cable,
-    'cable': Cable,
-    'connectique': Cable,
-    'audio': Speaker,
-    'son': Speaker,
-    'piles': Battery,
-    'batteries': Battery,
-    'chargeur': Zap,
-    'power': Zap,
-    'alimentation': Zap,
-    'energie': Zap,
-    'outillage': Wrench,
-    'informatique': Monitor,
-    'reseaux': Monitor,
-    'réseau': Monitor,
-    'satellite': Tv,
-    'tv': Tv,
-    'telecommande': Radio,
-    'télécommande': Radio,
-    'ventilateur': Fan,
-    'mesure': Search,
-    'test': Search,
-    'optique': Search,
-    'loupe': Search,
-    'accessoire': ShoppingBag,
-    'divers': Package,
-};
-
-function getCategoryIcon(name) {
-    const lower = (name || '').toLowerCase();
-    for (const [key, Icon] of Object.entries(CATEGORY_ICONS)) {
-        if (lower.includes(key)) return Icon;
-    }
-    return Box;
-}
 
 // ── Unique pastel color per category ────────────────────────────
 const PASTEL_COLORS = [
@@ -125,7 +81,8 @@ const CategoryGrid = ({ mode = 'home' }) => {
                     <div className="category-scroll-mobile">
                         <div className="category-scroll-mobile__track">
                             {categories.map((cat, index) => {
-                                const Icon = getCategoryIcon(cat.nom);
+                                const hasImage = cat.imageUrl && cat.imageUrl.length > 5;
+                                const imageUrl = hasImage ? resolveImageUrl(cat.imageUrl) : null;
                                 const count = cat._count?.produits || cat.produits?.length || 0;
                                 const bgColor = PASTEL_COLORS[index % PASTEL_COLORS.length];
 
@@ -136,7 +93,11 @@ const CategoryGrid = ({ mode = 'home' }) => {
                                         className="cat-chip"
                                     >
                                         <div className="cat-chip__icon" style={{ backgroundColor: bgColor }}>
-                                            <Icon size={20} />
+                                            {imageUrl ? (
+                                                <img src={imageUrl} alt="" className="cat-chip__img" loading="lazy" onError={(e) => { e.target.style.display = 'none'; }} />
+                                            ) : (
+                                                <span className="cat-chip__letter">{(cat.nom || '?')[0]}</span>
+                                            )}
                                         </div>
                                         <span className="cat-chip__name">{cat.nom}</span>
                                         {count > 0 && <span className="cat-chip__count">{count}</span>}
@@ -147,35 +108,30 @@ const CategoryGrid = ({ mode = 'home' }) => {
                     </div>
                 )}
 
-                {/* Desktop homepage + catalogue: bento grid */}
+                {/* Desktop grid (classic layout) */}
                 <div className={`category-grid ${isMobileHome ? 'category-grid--desktop-only' : ''}`}>
                     {categories.map((cat, index) => {
                         const hasImage = cat.imageUrl && cat.imageUrl.length > 5;
                         const imageUrl = hasImage ? resolveImageUrl(cat.imageUrl) : null;
-                        const Icon = getCategoryIcon(cat.nom);
                         const count = cat._count?.produits || cat.produits?.length || 0;
-                        const bgColor = PASTEL_COLORS[index % PASTEL_COLORS.length];
-                        // Top 3 categories get "featured" large card on homepage
-                        const isFeatured = mode === 'home' && index < 3;
 
                         return (
                             <Link
                                 to={`/catalogue?category=${cat.id}`}
                                 key={cat.id}
-                                className={`cat-card ${isFeatured ? 'cat-card--featured' : ''}`}
+                                className="cat-card"
                             >
-                                <div className="cat-card__visual" style={{ backgroundColor: bgColor }}>
+                                <div className="cat-card__visual">
                                     {imageUrl ? (
                                         <img
                                             src={imageUrl}
                                             alt={cat.nom}
                                             className="cat-card__image"
                                             loading="lazy"
-                                            onError={(e) => { e.target.style.display = 'none'; }}
+                                            onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling && (e.target.nextSibling.style.display = 'flex'); }}
                                         />
-                                    ) : (
-                                        <Icon size={isFeatured ? 48 : 36} className="cat-card__icon" />
-                                    )}
+                                    ) : null}
+                                    <PlaceholderImage className={imageUrl ? 'placeholder-img--hidden' : ''} />
                                 </div>
                                 <div className="cat-card__info">
                                     <h3 className="cat-card__name">{cat.nom}</h3>

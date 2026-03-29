@@ -73,10 +73,10 @@ const useSnapCarousel = (itemCount, autoPlayMs = 0) => {
     const scrollTo = useCallback((index) => {
         const track = trackRef.current;
         if (!track || !track.children[index]) return;
-        track.children[index].scrollIntoView({
+        const child = track.children[index];
+        track.scrollTo({
+            left: child.offsetLeft - track.offsetLeft,
             behavior: 'smooth',
-            block: 'nearest',
-            inline: 'start',
         });
     }, []);
 
