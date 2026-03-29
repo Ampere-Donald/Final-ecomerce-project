@@ -351,10 +351,10 @@ const FeaturedProducts = () => {
 
                             <div className="flash-section__nav">
                                 <button className="snap-arrow" onClick={flashCarousel.goPrev} aria-label={t('common.prev')}>
-                                    <ChevronLeft size={20} />
+                                    <ChevronLeft size={18} />
                                 </button>
                                 <button className="snap-arrow" onClick={flashCarousel.goNext} aria-label={t('common.next')}>
-                                    <ChevronRight size={20} />
+                                    <ChevronRight size={18} />
                                 </button>
                             </div>
                         </div>
