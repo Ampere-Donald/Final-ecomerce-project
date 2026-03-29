@@ -43,12 +43,49 @@
             text-decoration: underline;
         }
     }
+
+    // ── Show more button ──
+    &__show-more {
+        display: flex;
+        justify-content: center;
+        margin-top: $spacing-xl;
+
+        @media (max-width: ($breakpoint-md - 1px)) {
+            display: none;
+        }
+    }
+
+    &__show-more-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: $spacing-xs;
+        padding: $spacing-sm $spacing-xl;
+        background: $color-surface;
+        color: $color-primary;
+        border: 2px solid $color-primary;
+        border-radius: $border-radius-full;
+        font-weight: $font-weight-semibold;
+        font-size: $font-size-sm;
+        cursor: pointer;
+        transition: all 0.25s ease;
+
+        &:hover {
+            background: $color-primary;
+            color: $color-surface;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba($color-primary, 0.25);
+        }
+
+        &:active {
+            transform: translateY(0);
+        }
+    }
 }
 
-// ── Mobile horizontal scroll chips ─────────────────────────
+// ── Mobile mini-card scroll ────────────────────────────────
 .category-scroll-mobile {
+    position: relative;
     display: block;
-    margin-bottom: $spacing-md;
 
     @media (min-width: $breakpoint-md) {
         display: none;
@@ -56,9 +93,9 @@
 
     &__track {
         display: flex;
-        gap: $spacing-xs;
+        gap: $spacing-sm;
         overflow-x: auto;
-        scroll-snap-type: x proximity;
+        scroll-snap-type: x mandatory;
         -webkit-overflow-scrolling: touch;
         padding: $spacing-xs 0 $spacing-md;
         scrollbar-width: none;
@@ -67,66 +104,76 @@
             display: none;
         }
     }
+
+    // Fade hint on right edge to suggest scroll
+    &__fade {
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: $spacing-md;
+        width: 40px;
+        background: linear-gradient(to left, $color-background 0%, transparent 100%);
+        pointer-events: none;
+    }
 }
 
-.cat-chip {
+// ── Mobile mini-card ───────────────────────────────────────
+.cat-mini {
     display: flex;
+    flex-direction: column;
     align-items: center;
-    gap: $spacing-xs;
-    padding: $spacing-xs $spacing-sm;
-    background: $color-surface;
-    border: 1px solid $color-border;
-    border-radius: $border-radius-full;
     text-decoration: none;
-    white-space: nowrap;
     scroll-snap-align: start;
     flex-shrink: 0;
-    transition: all $transition-fast;
+    width: 100px;
+    transition: transform $transition-fast;
 
     &:active {
-        transform: scale(0.96);
-        background: $color-surface-hover;
+        transform: scale(0.95);
     }
 
-    &__icon {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 32px;
-        height: 32px;
-        border-radius: $border-radius-circle;
-        flex-shrink: 0;
+    &__visual {
+        position: relative;
+        width: 72px;
+        height: 72px;
+        border-radius: $border-radius-lg;
         overflow: hidden;
+        background: $color-surface;
+        border: 1px solid rgba($color-border, 0.6);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        margin-bottom: $spacing-xs;
+
+        .placeholder-img {
+            position: absolute;
+            inset: 0;
+        }
     }
 
     &__img {
         width: 100%;
         height: 100%;
-        object-fit: cover;
-        border-radius: $border-radius-circle;
-    }
-
-    &__letter {
-        font-size: $font-size-sm;
-        font-weight: $font-weight-bold;
-        color: $color-text;
-        opacity: 0.6;
-        text-transform: uppercase;
+        object-fit: contain;
+        padding: 6px;
+        mix-blend-mode: multiply;
     }
 
     &__name {
-        font-size: $font-size-xs;
+        font-size: 11px;
         font-weight: $font-weight-semibold;
         color: $color-text;
+        text-align: center;
+        line-height: $line-height-tight;
+        max-width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
     }
 
     &__count {
         font-size: 10px;
-        font-weight: $font-weight-bold;
+        font-weight: $font-weight-medium;
         color: $color-secondary-light;
-        background: $color-surface-muted;
-        padding: 2px 6px;
-        border-radius: $border-radius-full;
+        margin-top: 2px;
     }
 }
 

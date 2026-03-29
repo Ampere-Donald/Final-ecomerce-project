@@ -1,29 +1,25 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { ChevronDown } from 'lucide-react';
 import apiClient from '../../utils/apiClient';
 import { resolveImageUrl } from '../../utils/mapProduct';
 import { useI18n } from '../../context/I18nContext';
 import PlaceholderImage from '../PlaceholderImage/PlaceholderImage';
 import './CategoryGrid.scss';
 
-// ── Unique pastel color per category ────────────────────────────
-const PASTEL_COLORS = [
-    '#eef2ff', '#fef3c7', '#ecfdf5', '#fce7f3', '#f0f9ff',
-    '#fef9c3', '#f5f3ff', '#fff7ed', '#f0fdf4', '#fdf2f8',
-    '#e0f2fe', '#fefce8', '#ede9fe', '#ffedd5', '#dcfce7', '#fce4ec',
-];
+const STEP = 6; // reveal 6 categories at a time
 
 const CategoryGrid = ({ mode = 'home' }) => {
     const { t } = useI18n();
     const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [visibleCount, setVisibleCount] = useState(STEP);
 
     useEffect(() => {
         const fetchCategories = async () => {
             try {
                 const res = await apiClient.get('/categories');
                 const data = Array.isArray(res.data) ? res.data : (res.data?.data || []);
-                // Sort by product count descending for bento priority
                 const sorted = [...data].sort((a, b) =>
                     (b._count?.produits || b.produits?.length || 0) - (a._count?.produits || a.produits?.length || 0)
                 );
@@ -61,56 +57,65 @@ const CategoryGrid = ({ mode = 'home' }) => {
 
     if (categories.length === 0) return null;
 
-    // On homepage: show top categories in bento layout
-    // On catalogue: show all in flat grid
-    const isMobileHome = mode === 'home';
+    const isHome = mode === 'home';
+    // Desktop: progressive reveal on homepage, all on catalogue
+    const desktopCategories = isHome ? categories.slice(0, visibleCount) : categories;
+    const hasMore = isHome && visibleCount < categories.length;
 
     return (
         <section className={`category-section ${mode === 'catalogue' ? 'category-section--catalogue' : ''}`}>
             <div className={`container ${mode === 'catalogue' ? 'container--fluid' : ''}`}>
 
-                {mode === 'home' && (
+                {isHome && (
                     <div className="category-section__header">
                         <h2 className="category-section__title">{t('home.categoriesTitle')}</h2>
                         <Link to="/catalogue" className="category-section__view-all">{t('home.exploreCatalogue')}</Link>
                     </div>
                 )}
 
-                {/* Mobile homepage: horizontal scroll-snap */}
-                {isMobileHome && (
+                {/* Mobile homepage: mini-card scroll */}
+                {isHome && (
                     <div className="category-scroll-mobile">
                         <div className="category-scroll-mobile__track">
-                            {categories.map((cat, index) => {
+                            {categories.map((cat) => {
                                 const hasImage = cat.imageUrl && cat.imageUrl.length > 5;
                                 const imageUrl = hasImage ? resolveImageUrl(cat.imageUrl) : null;
                                 const count = cat._count?.produits || cat.produits?.length || 0;
-                                const bgColor = PASTEL_COLORS[index % PASTEL_COLORS.length];
 
                                 return (
                                     <Link
                                         to={`/catalogue?category=${cat.id}`}
                                         key={cat.id}
-                                        className="cat-chip"
+                                        className="cat-mini"
                                     >
-                                        <div className="cat-chip__icon" style={{ backgroundColor: bgColor }}>
+                                        <div className="cat-mini__visual">
                                             {imageUrl ? (
-                                                <img src={imageUrl} alt="" className="cat-chip__img" loading="lazy" onError={(e) => { e.target.style.display = 'none'; }} />
-                                            ) : (
-                                                <span className="cat-chip__letter">{(cat.nom || '?')[0]}</span>
-                                            )}
+                                                <img
+                                                    src={imageUrl}
+                                                    alt={cat.nom}
+                                                    className="cat-mini__img"
+                                                    loading="lazy"
+                                                    onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling && (e.target.nextSibling.style.display = 'flex'); }}
+                                                />
+                                            ) : null}
+                                            <PlaceholderImage className={imageUrl ? 'placeholder-img--hidden' : ''} />
                                         </div>
-                                        <span className="cat-chip__name">{cat.nom}</span>
-                                        {count > 0 && <span className="cat-chip__count">{count}</span>}
+                                        <span className="cat-mini__name">{cat.nom}</span>
+                                        {count > 0 && (
+                                            <span className="cat-mini__count">{count}</span>
+                                        )}
                                     </Link>
                                 );
                             })}
                         </div>
+                        {/* Fade hint for scroll */}
+                        <div className="category-scroll-mobile__fade" />
                     </div>
                 )}
 
-                {/* Desktop grid (classic layout) */}
-                <div className={`category-grid ${isMobileHome ? 'category-grid--desktop-only' : ''}`}>
-                    {categories.map((cat, index) => {
+                {/* Desktop grid (classic layout, progressive reveal on home) */}
+                <div className={`category-grid ${isHome ? 'category-grid--desktop-only' : ''}`}>
+                    {desktopCategories.map((cat) => {
                         const hasImage = cat.imageUrl && cat.imageUrl.length > 5;
                         const imageUrl = hasImage ? resolveImageUrl(cat.imageUrl) : null;
                         const count = cat._count?.produits || cat.produits?.length || 0;
@@ -145,6 +150,19 @@ const CategoryGrid = ({ mode = 'home' }) => {
                         );
                     })}
                 </div>
+
+                {/* Show more button (desktop, homepage only) */}
+                {hasMore && (
+                    <div className="category-section__show-more">
+                        <button
+                            className="category-section__show-more-btn"
+                            onClick={() => setVisibleCount(prev => prev + STEP)}
+                        >
+                            {t('common.showMore')}
+                            <ChevronDown size={18} />
+                        </button>
+                    </div>
+                )}
 
             </div>
         </section>
