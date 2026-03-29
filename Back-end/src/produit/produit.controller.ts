@@ -176,7 +176,7 @@ export class ProduitController {
         }
         cb(null, true);
       },
-      limits: { fileSize: 50 * 1024 * 1024 }, // 50 Mo max
+      limits: { fileSize: 100 * 1024 * 1024 }, // 100 Mo max
     }),
   )
   async importProducts(@UploadedFile() file: Express.Multer.File) {
