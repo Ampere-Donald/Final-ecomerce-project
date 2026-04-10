@@ -76,22 +76,6 @@ const fmtDateTime = (iso?: string) => {
 // Print CSS injected once via <style> inside the component
 // ---------------------------------------------------------------------------
 
-const printStyles = `
-@media print {
-  body * { visibility: hidden !important; }
-  #receipt-print-zone,
-  #receipt-print-zone * {
-    visibility: visible !important;
-  }
-  #receipt-print-zone {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 100%;
-  }
-  .no-print { display: none !important; }
-}
-`;
 
 // ---------------------------------------------------------------------------
 // Component
@@ -132,13 +116,107 @@ export const ReceiptGenerator: React.FC<ReceiptProps> = (props) => {
   );
 
   // --- Actions ---
-  const handlePrint = () => window.print();
+  const openPrintWindow = (saveAsPdf = false) => {
+    const content = printRef.current;
+    if (!content) return;
 
-  // PDF export: use browser built-in "Save as PDF" via print dialog.
-  // TODO: For programmatic PDF generation, install jspdf + html2canvas:
-  //   npm install jspdf html2canvas
-  // Then use html2canvas to capture printRef.current and jspdf to save.
-  const handleExportPDF = () => window.print();
+    // Collect all CSS from the current page (Tailwind + custom styles)
+    const css = Array.from(document.styleSheets)
+      .map((sheet) => {
+        try {
+          return Array.from(sheet.cssRules).map((r) => r.cssText).join('\n');
+        } catch {
+          return sheet.href ? `@import url("${sheet.href}");` : '';
+        }
+      })
+      .join('\n');
+
+    const pageSize = activeType === 'ticket'
+      ? '@page { size: 80mm auto; margin: 5mm; }'
+      : '@page { size: A4 portrait; margin: 10mm; }';
+
+    const win = window.open('', '_blank', 'width=900,height=700');
+    if (!win) {
+      alert('Veuillez autoriser les popups pour imprimer.');
+      return;
+    }
+
+    win.document.write(`<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>${saveAsPdf ? 'PDF' : 'Impression'} — ${numero}</title>
+  <style>${css}</style>
+  <style>
+    ${pageSize}
+    body { margin: 0; padding: ${activeType === 'ticket' ? '0' : '20px'}; background: white; }
+  </style>
+</head>
+<body>${content.innerHTML}</body>
+</html>`);
+    win.document.close();
+    win.focus();
+    setTimeout(() => {
+      win.print();
+      win.close();
+    }, 400);
+  };
+
+  const handlePrint = () => openPrintWindow(false);
+
+  const handleExportPDF = async () => {
+    const container = printRef.current;
+    if (!container) return;
+
+    // Supprime temporairement les contraintes overflow/maxHeight
+    const prevOverflow = container.style.overflow;
+    const prevMaxHeight = container.style.maxHeight;
+    container.style.overflow = 'visible';
+    container.style.maxHeight = 'none';
+
+    try {
+      const [{ default: html2canvas }, { default: jsPDF }] = await Promise.all([
+        import('html2canvas-pro'),
+        import('jspdf'),
+      ]);
+
+      // Capture l'enfant direct (ticket ou facture), pas le conteneur scrollable
+      const target = (container.firstElementChild as HTMLElement) ?? container;
+
+      const canvas = await html2canvas(target, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: '#ffffff',
+        logging: false,
+      });
+
+      const imgData = canvas.toDataURL('image/png');
+
+      if (activeType === 'ticket') {
+        const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a5' });
+        const pageWidth = pdf.internal.pageSize.getWidth();
+        const margin = 8;
+        const contentWidth = pageWidth - margin * 2;
+        const imgHeight = (canvas.height * contentWidth) / canvas.width;
+        pdf.addImage(imgData, 'PNG', margin, margin, contentWidth, imgHeight);
+        pdf.save(`${numero}.pdf`);
+      } else {
+        const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+        const pageWidth = pdf.internal.pageSize.getWidth();
+        const margin = 10;
+        const contentWidth = pageWidth - margin * 2;
+        const imgHeight = (canvas.height * contentWidth) / canvas.width;
+        pdf.addImage(imgData, 'PNG', margin, margin, contentWidth, imgHeight);
+        pdf.save(`${numero}.pdf`);
+      }
+    } catch (err) {
+      console.error('Erreur génération PDF:', err);
+      alert(`Erreur PDF: ${err instanceof Error ? err.message : String(err)}`);
+    } finally {
+      container.style.overflow = prevOverflow;
+      container.style.maxHeight = prevMaxHeight;
+    }
+  };
 
   // --- Derived display number ---
   const displayNumero = numero;
@@ -180,7 +258,7 @@ export const ReceiptGenerator: React.FC<ReceiptProps> = (props) => {
       <div className="mb-1">
         {lignes.map((l, i) => (
           <div key={i} className="flex justify-between text-[11px] leading-tight py-[1px]">
-            <span className="truncate mr-1" style={{ maxWidth: 180 }}>
+            <span className="break-words mr-1">
               {l.nomProduit} x{l.quantite}
             </span>
             <span className="whitespace-nowrap">{fmt(l.sousTotal)}</span>
@@ -334,9 +412,6 @@ export const ReceiptGenerator: React.FC<ReceiptProps> = (props) => {
           if (e.target === e.currentTarget) onClose();
         }}
       >
-        {/* Inject print styles */}
-        <style>{printStyles}</style>
-
         <motion.div
           key="receipt-content"
           className="my-8 relative"
