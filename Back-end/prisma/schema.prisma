@@ -188,10 +188,35 @@ model Caisse {
   venteId       String?       @map("id_vente")
   achatId       String?       @map("id_achat")
   version       Int           @default(1)
+  coffreId          String?       @map("id_coffre")
+  transfertGroupId  String?       @map("transfert_group_id")
+  annulee           Boolean       @default(false)
+  motifAnnulation   String?       @db.VarChar(255) @map("motif_annulation")
+  annuleeById       String?       @map("annulee_by")
+  annuleeAt         DateTime?     @map("annulee_at")
+  effectueePar      String?       @map("effectuee_par")
   achat         Achat?        @relation(fields: [achatId], references: [id])
+  coffre        Coffre?       @relation("CoffreOperations", fields: [coffreId], references: [id])
   vente         Vente?        @relation(fields: [venteId], references: [id])
 
+  @@index([coffreId])
+  @@index([transfertGroupId])
   @@map("caisse")
+}
+
+model Coffre {
+  id              String       @id @default(uuid())
+  nom             String       @db.VarChar(150)
+  description     String?      @db.VarChar(500)
+  objectifMontant Decimal?     @db.Decimal(12, 2) @map("objectif_montant")
+  dateEcheance    DateTime?    @map("date_echeance")
+  statut          CoffreStatut @default(ACTIF)
+  createdById     String?      @map("created_by")
+  createdAt       DateTime     @default(now()) @map("created_at")
+  updatedAt       DateTime     @updatedAt @map("updated_at")
+  operations      Caisse[]     @relation("CoffreOperations")
+
+  @@map("coffre")
 }
 
 model Role {
@@ -305,6 +330,12 @@ enum TypeMouvement {
 enum TypeOperation {
   ENTREE
   SORTIE
+}
+
+enum CoffreStatut {
+  ACTIF
+  ATTEINT
+  CLOTURE
 }
 
 enum StatutCommande {
