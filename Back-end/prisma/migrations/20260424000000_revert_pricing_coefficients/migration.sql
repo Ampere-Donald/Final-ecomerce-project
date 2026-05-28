@@ -1,0 +1,4 @@
+-- Reconstructed no-op migration.
+-- The production database has this migration recorded as applied; the final
+-- schema after the pricing-coefficient revert is already represented by
+-- 20260422070112_add_prix_achat_parametres_tarif and the current Prisma schema.
