@@ -11,6 +11,7 @@ import {
   Users,
   Factory,
   Wallet,
+  Landmark,
   Settings,
   LifeBuoy,
   LogOut,
@@ -67,6 +68,7 @@ export const Sidebar = ({ open, onClose }: SidebarProps) => {
   // Finance items - filtered by role
   const financeItems = [
     ...(can.accessCaisse(role) ? [{ label: 'Caisse', icon: Wallet, path: '/caisse' }] : []),
+    ...(can.accessCoffres(role) ? [{ label: 'Coffres', icon: Landmark, path: '/coffres' }] : []),
     ...(can.accessRoles(role) ? [{ label: 'Rôles', icon: Shield, path: '/roles' }] : []),
   ];
 

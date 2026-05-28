@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo } from 'react';
+import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import {
   TrendingUp,
@@ -15,6 +16,8 @@ import {
   AlertTriangle,
   Store,
   Globe,
+  Wallet,
+  Landmark,
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import {
@@ -23,7 +26,7 @@ import {
   BarChart, Bar,
 } from 'recharts';
 import { Commande, StatutCommande } from '../types';
-import { venteApi, produitApi, commandeApi } from '../services/api';
+import { venteApi, produitApi, commandeApi, caisseApi } from '../services/api';
 
 /* ── Period helpers ────────���─────────────────────────────────────── */
 type Period = 'today' | '7d' | '30d' | 'month' | 'quarter';
@@ -48,6 +51,12 @@ type StockAlertItem = {
   count: number;
   threshold: number;
   status: 'Rupture' | 'Critique';
+};
+
+type SoldeGlobal = {
+  caissePrincipale: number;
+  coffres: Array<{ id: string; nom: string; solde: number }>;
+  total: number;
 };
 
 const PERIOD_LABELS: Record<Period, string> = {
@@ -150,7 +159,7 @@ const getProductThreshold = (produit: ProduitDashboard) => {
 };
 
 /* ── Order‑status visual map ─────���──────────────────────────────── */
-const STATUS_CFG: Record<StatutCommande, { label: string; bg: string; text: string; dot: string; icon: React.ReactNode; color: string }> = {
+const STATUS_CFG: Record<StatutCommande, { label: string; bg: string; text: string; dot: string; icon: ReactNode; color: string }> = {
   EN_ATTENTE:   { label: 'En attente',   bg: 'bg-amber-50',    text: 'text-amber-700',   dot: 'bg-amber-500',   icon: <Clock size={18} />, color: '#f59e0b' },
   CONFIRMEE:    { label: 'Confirmée',    bg: 'bg-blue-50',     text: 'text-blue-700',    dot: 'bg-blue-500',    icon: <CheckCircle2 size={18} />, color: '#3b82f6' },
   EN_LIVRAISON: { label: 'En livraison', bg: 'bg-indigo-50',   text: 'text-indigo-700',  dot: 'bg-indigo-500',  icon: <Truck size={18} />, color: '#6366f1' },
@@ -166,6 +175,9 @@ export const Dashboard = () => {
   const [allCommandes, setAllCommandes] = useState<Commande[]>([]);
   const [loading, setLoading] = useState(true);
   const [period, setPeriod] = useState<Period>('30d');
+  const [soldeGlobal, setSoldeGlobal] = useState<SoldeGlobal | null>(null);
+  const [soldeGlobalLoading, setSoldeGlobalLoading] = useState(true);
+  const [soldeGlobalError, setSoldeGlobalError] = useState<string | null>(null);
 
   // Error states per data source
   const [venteError, setVenteError] = useState<string | null>(null);
@@ -208,6 +220,23 @@ export const Dashboard = () => {
       setLoading(false);
     };
     fetchData();
+  }, []);
+
+  useEffect(() => {
+    const fetchSoldeGlobal = async () => {
+      try {
+        setSoldeGlobalLoading(true);
+        const data = await caisseApi.soldeGlobal();
+        setSoldeGlobal(data);
+        setSoldeGlobalError(null);
+      } catch {
+        setSoldeGlobal(null);
+        setSoldeGlobalError('Impossible de charger la tresorerie');
+      } finally {
+        setSoldeGlobalLoading(false);
+      }
+    };
+    fetchSoldeGlobal();
   }, []);
 
   /* ── Derived data based on period ─────────────────────────────── */
@@ -362,6 +391,10 @@ export const Dashboard = () => {
   const caChartHasData = useMemo(() =>
     caChartData.some(d => d.boutique > 0 || d.ecommerce > 0), [caChartData]);
 
+  const totalCoffres = useMemo(() =>
+    soldeGlobal?.coffres?.reduce((sum, coffre) => sum + toNumber(coffre.solde), 0) ?? 0,
+    [soldeGlobal]);
+
   // Orders by status pie chart
   const statusPieData = useMemo(() =>
     STATUS_ORDER.map(s => ({
@@ -495,6 +528,43 @@ export const Dashboard = () => {
               </span>
             </div>
           )}
+        </div>
+      </section>
+
+      {/* ═══ Treasury Card ═══════════════════════════════════ */}
+      <section className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-slate-900 text-white rounded-lg"><Wallet size={20} /></div>
+            <div>
+              <h3 className="font-bold text-lg text-slate-900">Tresorerie : Caisse + Coffres</h3>
+              <p className="text-sm text-slate-500">Argent disponible, distinct du chiffre d'affaires commercial.</p>
+            </div>
+          </div>
+          {soldeGlobalError && <p className="text-sm font-semibold text-red-600">{soldeGlobalError}</p>}
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-5">
+          <div className="bg-slate-50 rounded-xl p-4">
+            <div className="flex items-center gap-2 text-slate-500 mb-2"><Wallet size={16} /></div>
+            <p className="text-xs font-bold uppercase text-slate-400">Solde caisse principale</p>
+            <p className="text-2xl font-black text-slate-900 mt-1">
+              {soldeGlobalLoading ? '...' : formatFCFA(soldeGlobal?.caissePrincipale ?? 0)}
+            </p>
+          </div>
+          <div className="bg-slate-50 rounded-xl p-4">
+            <div className="flex items-center gap-2 text-slate-500 mb-2"><Landmark size={16} /></div>
+            <p className="text-xs font-bold uppercase text-slate-400">Total coffres actifs</p>
+            <p className="text-2xl font-black text-slate-900 mt-1">
+              {soldeGlobalLoading ? '...' : formatFCFA(totalCoffres)}
+            </p>
+          </div>
+          <div className="bg-emerald-50 rounded-xl p-4">
+            <div className="flex items-center gap-2 text-emerald-600 mb-2"><BarChart3 size={16} /></div>
+            <p className="text-xs font-bold uppercase text-emerald-600">Tresorerie totale</p>
+            <p className="text-2xl font-black text-emerald-700 mt-1">
+              {soldeGlobalLoading ? '...' : formatFCFA(soldeGlobal?.total ?? 0)}
+            </p>
+          </div>
         </div>
       </section>
 

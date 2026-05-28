@@ -163,8 +163,20 @@ export const fournisseurApi = {
 export const caisseApi = {
   getAll: () => api.get('/caisse').then(toArray),
   create: (data: any) => api.post('/caisse', data).then(res => res.data),
-  update: (id: string, data: any) => api.patch(`/caisse/${id}`, data).then(res => res.data),
-  delete: (id: string) => api.delete(`/caisse/${id}`).then(res => res.data),
+  transferer: (data: any) => api.post('/caisse/transferer', data).then(res => res.data),
+  annuler: (id: string, motifAnnulation: string) =>
+    api.post(`/caisse/${id}/annuler`, { motifAnnulation }).then(res => res.data),
+  soldeGlobal: () => api.get('/caisse/solde-global').then(res => res.data),
+};
+
+// Coffres virtuels
+export const coffreApi = {
+  getAll: () => api.get('/coffres').then(res => res.data),
+  getOne: (id: string) => api.get(`/coffres/${id}`).then(res => res.data),
+  create: (data: any) => api.post('/coffres', data).then(res => res.data),
+  update: (id: string, data: any) => api.patch(`/coffres/${id}`, data).then(res => res.data),
+  sortie: (id: string, data: any) => api.post(`/coffres/${id}/sortie`, data).then(res => res.data),
+  cloturer: (id: string, force = false) => api.post(`/coffres/${id}/cloturer`, { force }).then(res => res.data),
 };
 
 // Commandes (e-commerce orders)
