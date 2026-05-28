@@ -31,6 +31,36 @@ export class MailService {
   }
 
   /**
+   * Generic email sender. NEVER throws — logs on failure so callers
+   * (e.g. the échéance alert engine) are not broken by SMTP issues.
+   * Returns true if sent successfully, false otherwise.
+   */
+  async sendMail(to: string, subject: string, html: string): Promise<boolean> {
+    if (!to) return false;
+
+    if (this.transporter) {
+      try {
+        await this.transporter.sendMail({
+          from: '"NEWOTEG SARL" <noreply@newoteg.com>',
+          to,
+          subject,
+          html,
+        });
+        this.logger.log(`Email "${subject}" sent to ${to}`);
+        return true;
+      } catch (error) {
+        this.logger.error(
+          `Failed to send email "${subject}" to ${to}: ${error.message}`,
+        );
+        return false;
+      }
+    }
+
+    this.logger.warn(`[DEV MODE] Email "${subject}" for ${to} not sent (no SMTP).`);
+    return false;
+  }
+
+  /**
    * Send OTP email. NEVER throws — logs on failure so signup is not broken.
    * Returns true if sent successfully, false if fallback to console.
    */

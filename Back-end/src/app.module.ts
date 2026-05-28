@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { ScheduleModule } from '@nestjs/schedule';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { join } from 'path';
@@ -19,6 +20,7 @@ import { LigneVenteModule } from './ligne-vente/ligne-vente.module';
 import { MouvementStockModule } from './mouvement-stock/mouvement-stock.module';
 import { CaisseModule } from './caisse/caisse.module';
 import { CoffreModule } from './coffre/coffre.module';
+import { EcheanceModule } from './echeance/echeance.module';
 import { RoleModule } from './role/role.module';
 import { CommandeModule } from './commande/commande.module';
 import { NotificationModule } from './notification/notification.module';
@@ -33,6 +35,7 @@ import { CloudinaryModule } from './cloudinary/cloudinary.module';
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
+    ScheduleModule.forRoot(),
     ThrottlerModule.forRoot([{
       ttl: 60000,
       limit: 100,
@@ -55,6 +58,7 @@ import { CloudinaryModule } from './cloudinary/cloudinary.module';
     MouvementStockModule,
     CaisseModule,
     CoffreModule,
+    EcheanceModule,
     RoleModule,
     CommandeModule,
     NotificationModule,

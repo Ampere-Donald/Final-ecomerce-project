@@ -215,8 +215,47 @@ model Coffre {
   createdAt       DateTime     @default(now()) @map("created_at")
   updatedAt       DateTime     @updatedAt @map("updated_at")
   operations      Caisse[]     @relation("CoffreOperations")
+  echeances       Echeance[]
 
   @@map("coffre")
+}
+
+model Echeance {
+  id               String             @id @default(uuid())
+  titre            String             @db.VarChar(150)
+  description      String?            @db.VarChar(500)
+  coffreId         String?            @map("id_coffre")
+  montantCible     Decimal?           @map("montant_cible") @db.Decimal(12, 2)
+  dateEcheance     DateTime           @map("date_echeance")
+  recurrence       RecurrenceEcheance @default(UNIQUE)
+  joursAlerteAvant Int[]              @default([7, 3, 1]) @map("jours_alerte_avant")
+  active           Boolean            @default(true)
+  derniereAlerteLe DateTime?          @map("derniere_alerte_le")
+  createdById      String?            @map("created_by")
+  createdAt        DateTime           @default(now()) @map("created_at")
+  updatedAt        DateTime           @updatedAt @map("updated_at")
+  coffre           Coffre?            @relation(fields: [coffreId], references: [id])
+  alertes          AlerteEcheance[]
+
+  @@index([coffreId])
+  @@index([active, dateEcheance])
+  @@map("echeance")
+}
+
+model AlerteEcheance {
+  id              String     @id @default(uuid())
+  echeanceId      String     @map("id_echeance")
+  type            TypeAlerte
+  message         String     @db.VarChar(500)
+  jourEmission    String     @map("jour_emission") @db.VarChar(10)
+  emailEnvoye     Boolean    @default(false) @map("email_envoye")
+  declencheManuel Boolean    @default(false) @map("declenche_manuel")
+  createdAt       DateTime   @default(now()) @map("created_at")
+  echeance        Echeance   @relation(fields: [echeanceId], references: [id], onDelete: Cascade)
+
+  @@unique([echeanceId, type, jourEmission])
+  @@index([echeanceId])
+  @@map("alerte_echeance")
 }
 
 model Role {
@@ -338,6 +377,19 @@ enum CoffreStatut {
   CLOTURE
 }
 
+enum RecurrenceEcheance {
+  UNIQUE
+  MENSUELLE
+  TRIMESTRIELLE
+  ANNUELLE
+}
+
+enum TypeAlerte {
+  RAPPEL
+  URGENT
+  RETARD
+}
+
 enum StatutCommande {
   EN_ATTENTE
   CONFIRMEE
@@ -376,6 +428,7 @@ enum TypeNotification {
   CAISSE_MAJ
   CAISSE_SUPPRIMEE
   MOUVEMENT_STOCK_CREE
+  ECHEANCE
 }
 
 model PendingImport {

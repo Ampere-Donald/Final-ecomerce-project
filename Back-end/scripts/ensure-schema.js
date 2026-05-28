@@ -136,6 +136,44 @@ const SQL_STATEMENTS = [
   `DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'ligne_commande_id_produit_fkey') THEN ALTER TABLE "ligne_commande" ADD CONSTRAINT "ligne_commande_id_produit_fkey" FOREIGN KEY ("id_produit") REFERENCES "produit"("id") ON DELETE RESTRICT ON UPDATE CASCADE; END IF; END $$;`,
   `DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'caisse_id_coffre_fkey') THEN ALTER TABLE "caisse" ADD CONSTRAINT "caisse_id_coffre_fkey" FOREIGN KEY ("id_coffre") REFERENCES "coffre"("id") ON DELETE SET NULL ON UPDATE CASCADE; END IF; END $$;`,
 
+  // ── Echeances + moteur d'alertes ──
+  `DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'RecurrenceEcheance') THEN CREATE TYPE "RecurrenceEcheance" AS ENUM ('UNIQUE', 'MENSUELLE', 'TRIMESTRIELLE', 'ANNUELLE'); END IF; END $$;`,
+  `DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'TypeAlerte') THEN CREATE TYPE "TypeAlerte" AS ENUM ('RAPPEL', 'URGENT', 'RETARD'); END IF; END $$;`,
+  `ALTER TYPE "TypeNotification" ADD VALUE IF NOT EXISTS 'ECHEANCE';`,
+  `CREATE TABLE IF NOT EXISTS "echeance" (
+    "id" TEXT NOT NULL,
+    "titre" VARCHAR(150) NOT NULL,
+    "description" VARCHAR(500),
+    "id_coffre" TEXT,
+    "montant_cible" DECIMAL(12,2),
+    "date_echeance" TIMESTAMP(3) NOT NULL,
+    "recurrence" "RecurrenceEcheance" NOT NULL DEFAULT 'UNIQUE',
+    "jours_alerte_avant" INTEGER[] DEFAULT ARRAY[7, 3, 1],
+    "active" BOOLEAN NOT NULL DEFAULT true,
+    "derniere_alerte_le" TIMESTAMP(3),
+    "created_by" TEXT,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "echeance_pkey" PRIMARY KEY ("id")
+  );`,
+  `CREATE TABLE IF NOT EXISTS "alerte_echeance" (
+    "id" TEXT NOT NULL,
+    "id_echeance" TEXT NOT NULL,
+    "type" "TypeAlerte" NOT NULL,
+    "message" VARCHAR(500) NOT NULL,
+    "jour_emission" VARCHAR(10) NOT NULL,
+    "email_envoye" BOOLEAN NOT NULL DEFAULT false,
+    "declenche_manuel" BOOLEAN NOT NULL DEFAULT false,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "alerte_echeance_pkey" PRIMARY KEY ("id")
+  );`,
+  `CREATE INDEX IF NOT EXISTS "echeance_id_coffre_idx" ON "echeance"("id_coffre");`,
+  `CREATE INDEX IF NOT EXISTS "echeance_active_date_echeance_idx" ON "echeance"("active", "date_echeance");`,
+  `CREATE INDEX IF NOT EXISTS "alerte_echeance_id_echeance_idx" ON "alerte_echeance"("id_echeance");`,
+  `CREATE UNIQUE INDEX IF NOT EXISTS "alerte_echeance_id_echeance_type_jour_emission_key" ON "alerte_echeance"("id_echeance", "type", "jour_emission");`,
+  `DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'echeance_id_coffre_fkey') THEN ALTER TABLE "echeance" ADD CONSTRAINT "echeance_id_coffre_fkey" FOREIGN KEY ("id_coffre") REFERENCES "coffre"("id") ON DELETE SET NULL ON UPDATE CASCADE; END IF; END $$;`,
+  `DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'alerte_echeance_id_echeance_fkey') THEN ALTER TABLE "alerte_echeance" ADD CONSTRAINT "alerte_echeance_id_echeance_fkey" FOREIGN KEY ("id_echeance") REFERENCES "echeance"("id") ON DELETE CASCADE ON UPDATE CASCADE; END IF; END $$;`,
+
   // ── Mark the migration as applied in _prisma_migrations (so Prisma doesn't try to re-run it) ──
   `INSERT INTO "_prisma_migrations" (id, checksum, finished_at, migration_name, logs, rolled_back_at, started_at, applied_steps_count)
    SELECT gen_random_uuid()::text, 'ensure-schema-script', NOW(), '20260321220000_add_ecommerce_tables', NULL, NULL, NOW(), 1
