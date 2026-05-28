@@ -12,6 +12,7 @@ import {
   Factory,
   Wallet,
   Landmark,
+  AlarmClock,
   Settings,
   LifeBuoy,
   LogOut,
@@ -69,6 +70,7 @@ export const Sidebar = ({ open, onClose }: SidebarProps) => {
   const financeItems = [
     ...(can.accessCaisse(role) ? [{ label: 'Caisse', icon: Wallet, path: '/caisse' }] : []),
     ...(can.accessCoffres(role) ? [{ label: 'Coffres', icon: Landmark, path: '/coffres' }] : []),
+    ...(can.accessEcheances(role) ? [{ label: 'Échéances', icon: AlarmClock, path: '/echeances' }] : []),
     ...(can.accessRoles(role) ? [{ label: 'Rôles', icon: Shield, path: '/roles' }] : []),
   ];
 

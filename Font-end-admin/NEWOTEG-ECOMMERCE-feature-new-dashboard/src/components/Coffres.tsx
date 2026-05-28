@@ -57,6 +57,14 @@ export const Coffres = () => {
   const [movementForm, setMovementForm] = useState({ montant: '', motif: '', beneficiaire: '' });
   const [warning, setWarning] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
+
+  const extractError = (err: any, fallback: string) => {
+    const data = err?.response?.data;
+    const msg = data?.message;
+    if (Array.isArray(msg)) return msg.join(', ');
+    return msg || err?.message || fallback;
+  };
 
   const actifs = useMemo(() => coffres.filter(c => c.statut === 'ACTIF'), [coffres]);
 
@@ -96,6 +104,7 @@ export const Coffres = () => {
     e.preventDefault();
     try {
       setSubmitting(true);
+      setFormError(null);
       await coffreApi.create({
         nom: coffreForm.nom,
         description: coffreForm.description || undefined,
@@ -105,6 +114,8 @@ export const Coffres = () => {
       setModal(null);
       setCoffreForm(emptyCoffreForm);
       await fetchCoffres();
+    } catch (err) {
+      setFormError(extractError(err, 'Impossible de creer le coffre.'));
     } finally {
       setSubmitting(false);
     }
@@ -115,6 +126,7 @@ export const Coffres = () => {
     if (!selected) return;
     try {
       setSubmitting(true);
+      setFormError(null);
       await caisseApi.transferer({
         coffreId: selected.id,
         montant: Number(movementForm.montant),
@@ -123,6 +135,8 @@ export const Coffres = () => {
       setModal(null);
       setMovementForm({ montant: '', motif: '', beneficiaire: '' });
       await refreshSelected(selected.id);
+    } catch (err) {
+      setFormError(extractError(err, 'Transfert impossible.'));
     } finally {
       setSubmitting(false);
     }
@@ -133,6 +147,7 @@ export const Coffres = () => {
     if (!selected) return;
     try {
       setSubmitting(true);
+      setFormError(null);
       await coffreApi.sortie(selected.id, {
         montant: Number(movementForm.montant),
         motif: movementForm.motif,
@@ -141,6 +156,8 @@ export const Coffres = () => {
       setModal(null);
       setMovementForm({ montant: '', motif: '', beneficiaire: '' });
       await refreshSelected(selected.id);
+    } catch (err) {
+      setFormError(extractError(err, 'Sortie impossible.'));
     } finally {
       setSubmitting(false);
     }
@@ -327,8 +344,9 @@ export const Coffres = () => {
         )}
 
         {modal === 'create' && (
-          <Modal title="Nouveau coffre" onClose={() => setModal(null)}>
+          <Modal title="Nouveau coffre" onClose={() => { setModal(null); setFormError(null); }}>
             <form onSubmit={handleCreate} className="space-y-4">
+              {formError && <FormError message={formError} />}
               <Input label="Nom" value={coffreForm.nom} onChange={v => setCoffreForm(f => ({ ...f, nom: v }))} required />
               <Input label="Description" value={coffreForm.description} onChange={v => setCoffreForm(f => ({ ...f, description: v }))} />
               <Input label="Objectif (FCFA)" type="number" value={coffreForm.objectifMontant} onChange={v => setCoffreForm(f => ({ ...f, objectifMontant: v }))} />
@@ -339,8 +357,9 @@ export const Coffres = () => {
         )}
 
         {modal === 'transfer' && selected && (
-          <Modal title={`Alimenter ${selected.nom}`} onClose={() => setModal(null)}>
+          <Modal title={`Alimenter ${selected.nom}`} onClose={() => { setModal(null); setFormError(null); }}>
             <form onSubmit={handleTransfer} className="space-y-4">
+              {formError && <FormError message={formError} />}
               <Input label="Montant (FCFA)" type="number" value={movementForm.montant} onChange={v => setMovementForm(f => ({ ...f, montant: v }))} required />
               <Input label="Motif" value={movementForm.motif} onChange={v => setMovementForm(f => ({ ...f, motif: v }))} />
               {actifs.length === 0 && <p className="text-xs text-amber-600">Aucun coffre actif disponible.</p>}
@@ -350,8 +369,9 @@ export const Coffres = () => {
         )}
 
         {modal === 'sortie' && selected && (
-          <Modal title={`Sortie depuis ${selected.nom}`} onClose={() => setModal(null)}>
+          <Modal title={`Sortie depuis ${selected.nom}`} onClose={() => { setModal(null); setFormError(null); }}>
             <form onSubmit={handleSortie} className="space-y-4">
+              {formError && <FormError message={formError} />}
               <Input label="Montant (FCFA)" type="number" value={movementForm.montant} onChange={v => setMovementForm(f => ({ ...f, montant: v }))} required />
               <Input label="Motif" value={movementForm.motif} onChange={v => setMovementForm(f => ({ ...f, motif: v }))} required />
               <Input label="Beneficiaire" value={movementForm.beneficiaire} onChange={v => setMovementForm(f => ({ ...f, beneficiaire: v }))} />
@@ -391,6 +411,12 @@ const Input = ({ label, value, onChange, type = 'text', required = false }: { la
       className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary/20 outline-none"
     />
   </label>
+);
+
+const FormError = ({ message }: { message: string }) => (
+  <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg p-3 text-sm font-medium">
+    {message}
+  </div>
 );
 
 const Submit = ({ disabled, label }: { disabled: boolean; label: string }) => (

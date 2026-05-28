@@ -18,6 +18,7 @@ import {
   Globe,
   Wallet,
   Landmark,
+  AlarmClock,
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import {
@@ -26,7 +27,7 @@ import {
   BarChart, Bar,
 } from 'recharts';
 import { Commande, StatutCommande } from '../types';
-import { venteApi, produitApi, commandeApi, caisseApi } from '../services/api';
+import { venteApi, produitApi, commandeApi, caisseApi, echeanceApi } from '../services/api';
 
 /* ── Period helpers ────────���─────────────────────────────────────── */
 type Period = 'today' | '7d' | '30d' | 'month' | 'quarter';
@@ -57,6 +58,23 @@ type SoldeGlobal = {
   caissePrincipale: number;
   coffres: Array<{ id: string; nom: string; solde: number }>;
   total: number;
+};
+
+type EcheanceAVenir = {
+  id: string;
+  titre: string;
+  dateEcheance: string;
+  recurrence?: string;
+  coffre?: { nom: string } | null;
+};
+
+const daysUntilDate = (value: Date | string | null | undefined): number => {
+  const target = toValidDate(value);
+  if (!target) return 0;
+  const t = new Date(target.getFullYear(), target.getMonth(), target.getDate()).getTime();
+  const now = new Date();
+  const n = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  return Math.round((t - n) / 86_400_000);
 };
 
 const PERIOD_LABELS: Record<Period, string> = {
@@ -178,6 +196,8 @@ export const Dashboard = () => {
   const [soldeGlobal, setSoldeGlobal] = useState<SoldeGlobal | null>(null);
   const [soldeGlobalLoading, setSoldeGlobalLoading] = useState(true);
   const [soldeGlobalError, setSoldeGlobalError] = useState<string | null>(null);
+  const [echeancesAVenir, setEcheancesAVenir] = useState<EcheanceAVenir[]>([]);
+  const [echeancesLoading, setEcheancesLoading] = useState(true);
 
   // Error states per data source
   const [venteError, setVenteError] = useState<string | null>(null);
@@ -237,6 +257,21 @@ export const Dashboard = () => {
       }
     };
     fetchSoldeGlobal();
+  }, []);
+
+  useEffect(() => {
+    const fetchEcheances = async () => {
+      try {
+        setEcheancesLoading(true);
+        const data = await echeanceApi.getAVenir(30);
+        setEcheancesAVenir(Array.isArray(data) ? data.slice(0, 5) : []);
+      } catch {
+        setEcheancesAVenir([]);
+      } finally {
+        setEcheancesLoading(false);
+      }
+    };
+    fetchEcheances();
   }, []);
 
   /* ── Derived data based on period ─────────────────────────────── */
@@ -566,6 +601,42 @@ export const Dashboard = () => {
             </p>
           </div>
         </div>
+      </section>
+
+      {/* ═══ Échéances à venir ═══════════════════════════════════════ */}
+      <section className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-orange-50 text-orange-600 rounded-lg"><AlarmClock size={20} /></div>
+            <div>
+              <h3 className="font-bold text-lg text-slate-900">&Eacute;ch&eacute;ances &agrave; venir</h3>
+              <p className="text-sm text-slate-500">Tontines, Advans, salaires et rappels (30 prochains jours)</p>
+            </div>
+          </div>
+          <Link to="/echeances" className="text-sm font-bold text-primary hover:underline underline-offset-4">G&eacute;rer</Link>
+        </div>
+        {echeancesLoading ? (
+          <p className="text-sm text-slate-400">Chargement...</p>
+        ) : echeancesAVenir.length === 0 ? (
+          <p className="text-sm text-slate-400 py-6 text-center">Aucune &eacute;ch&eacute;ance dans les 30 prochains jours.</p>
+        ) : (
+          <div className="space-y-2">
+            {echeancesAVenir.map(e => {
+              const d = daysUntilDate(e.dateEcheance);
+              const cls = d < 0 ? 'bg-red-50 text-red-700' : d === 0 ? 'bg-amber-50 text-amber-700' : d <= 3 ? 'bg-orange-50 text-orange-700' : 'bg-emerald-50 text-emerald-700';
+              const label = d < 0 ? 'En retard' : d === 0 ? "Aujourd'hui" : `Dans ${d} j`;
+              return (
+                <div key={e.id} className="flex items-center justify-between py-2 px-3 bg-slate-50 rounded-lg">
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-slate-700 truncate">{e.titre}</p>
+                    <p className="text-xs text-slate-400">{formatDate(e.dateEcheance)}{e.coffre ? ` · ${e.coffre.nom}` : ''}</p>
+                  </div>
+                  <span className={`px-2 py-1 rounded-full text-[10px] font-bold whitespace-nowrap ${cls}`}>{label}</span>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </section>
 
       {/* ═══ Charts Row ═══════════════════════════════════════════════ */}

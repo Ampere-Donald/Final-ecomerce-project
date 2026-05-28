@@ -19,6 +19,7 @@ import { Fournisseurs } from './components/Fournisseurs';
 import { MouvementsStock } from './components/MouvementsStock';
 import { Caisse } from './components/Caisse';
 import { Coffres } from './components/Coffres';
+import { Echeances } from './components/Echeances';
 import { Roles } from './components/Roles';
 import { Attributs } from './components/Attributs';
 import { AdminAccounts } from './components/AdminAccounts';
@@ -51,6 +52,7 @@ export default function App() {
             {/* Routes protégées par rôle */}
             <Route path="caisse" element={<RoleProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN']}><Caisse /></RoleProtectedRoute>} />
             <Route path="coffres" element={<RoleProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN']}><Coffres /></RoleProtectedRoute>} />
+            <Route path="echeances" element={<RoleProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN']}><Echeances /></RoleProtectedRoute>} />
             <Route path="roles" element={<RoleProtectedRoute allowedRoles={['SUPER_ADMIN']}><Roles /></RoleProtectedRoute>} />
             <Route path="comptes" element={<RoleProtectedRoute allowedRoles={['SUPER_ADMIN']}><AdminAccounts /></RoleProtectedRoute>} />
             <Route path="notifications" element={<RoleProtectedRoute allowedRoles={['SUPER_ADMIN']}><NotificationsPage /></RoleProtectedRoute>} />

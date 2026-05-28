@@ -179,6 +179,18 @@ export const coffreApi = {
   cloturer: (id: string, force = false) => api.post(`/coffres/${id}/cloturer`, { force }).then(res => res.data),
 };
 
+// Échéances + moteur d'alertes
+export const echeanceApi = {
+  getAll: () => api.get('/echeances').then(res => res.data),
+  getAVenir: (jours?: number) =>
+    api.get('/echeances/a-venir', { params: jours ? { jours } : {} }).then(res => res.data),
+  getOne: (id: string) => api.get(`/echeances/${id}`).then(res => res.data),
+  create: (data: any) => api.post('/echeances', data).then(res => res.data),
+  update: (id: string, data: any) => api.patch(`/echeances/${id}`, data).then(res => res.data),
+  delete: (id: string) => api.delete(`/echeances/${id}`).then(res => res.data),
+  declencher: (id: string) => api.post(`/echeances/${id}/declencher`, {}).then(res => res.data),
+};
+
 // Commandes (e-commerce orders)
 export const commandeApi = {
   getAll: () => api.get('/commandes').then(toArray),
