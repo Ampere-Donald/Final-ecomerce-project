@@ -83,6 +83,7 @@ export class VenteService {
           montant: venteData.montantTotal,
           motif: `Vente #${vente.id}`,
           venteId: vente.id,
+          effectueePar: actor?.id,
         },
       });
 

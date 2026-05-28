@@ -18,6 +18,7 @@ import { VenteModule } from './vente/vente.module';
 import { LigneVenteModule } from './ligne-vente/ligne-vente.module';
 import { MouvementStockModule } from './mouvement-stock/mouvement-stock.module';
 import { CaisseModule } from './caisse/caisse.module';
+import { CoffreModule } from './coffre/coffre.module';
 import { RoleModule } from './role/role.module';
 import { CommandeModule } from './commande/commande.module';
 import { NotificationModule } from './notification/notification.module';
@@ -53,6 +54,7 @@ import { CloudinaryModule } from './cloudinary/cloudinary.module';
     LigneVenteModule,
     MouvementStockModule,
     CaisseModule,
+    CoffreModule,
     RoleModule,
     CommandeModule,
     NotificationModule,

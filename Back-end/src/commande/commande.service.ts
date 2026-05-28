@@ -422,6 +422,7 @@ export class CommandeService {
             typeOperation: 'ENTREE',
             montant: commande.montantTotal,
             motif: `Retrait magasin - Commande ${commande.numeroSuivi}${dto.methodePaiement ? ` (${dto.methodePaiement})` : ''}`,
+            effectueePar: actor?.id,
           },
         });
       }
