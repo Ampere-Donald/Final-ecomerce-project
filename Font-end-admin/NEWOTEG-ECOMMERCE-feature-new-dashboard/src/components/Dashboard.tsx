@@ -28,6 +28,28 @@ import { venteApi, produitApi, commandeApi } from '../services/api';
 /* ── Period helpers ────────���─────────────────────────────────────── */
 type Period = 'today' | '7d' | '30d' | 'month' | 'quarter';
 
+type VenteDashboard = {
+  dateVente?: string | Date | null;
+  montantTotal?: number | string | null;
+  lignesVente?: Array<{
+    quantite?: number | string | null;
+    produit?: { nomProduit?: string | null } | null;
+  }> | null;
+};
+
+type ProduitDashboard = {
+  nomProduit?: string | null;
+  quantiteStock?: number | string | null;
+  seuilAlerte?: number | string | null;
+};
+
+type StockAlertItem = {
+  name: string;
+  count: number;
+  threshold: number;
+  status: 'Rupture' | 'Critique';
+};
+
 const PERIOD_LABELS: Record<Period, string> = {
   today: "Aujourd'hui",
   '7d': '7 jours',
@@ -40,57 +62,91 @@ const getPeriodRange = (period: Period): { start: Date; end: Date; prevStart: Da
   const now = new Date();
   const end = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
   let start: Date;
-  let prevStart: Date;
-  let prevEnd: Date;
 
   switch (period) {
     case 'today': {
       start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-      prevEnd = new Date(start.getTime() - 1);
-      prevStart = new Date(prevEnd.getFullYear(), prevEnd.getMonth(), prevEnd.getDate());
       break;
     }
     case '7d': {
       start = new Date(end);
       start.setDate(start.getDate() - 6);
       start.setHours(0, 0, 0, 0);
-      prevEnd = new Date(start.getTime() - 1);
-      prevStart = new Date(prevEnd);
-      prevStart.setDate(prevStart.getDate() - 6);
-      prevStart.setHours(0, 0, 0, 0);
       break;
     }
     case '30d': {
       start = new Date(end);
       start.setDate(start.getDate() - 29);
       start.setHours(0, 0, 0, 0);
-      prevEnd = new Date(start.getTime() - 1);
-      prevStart = new Date(prevEnd);
-      prevStart.setDate(prevStart.getDate() - 29);
-      prevStart.setHours(0, 0, 0, 0);
       break;
     }
     case 'month': {
       start = new Date(now.getFullYear(), now.getMonth(), 1);
-      prevStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-      prevEnd = new Date(start.getTime() - 1);
       break;
     }
     case 'quarter': {
       const qMonth = Math.floor(now.getMonth() / 3) * 3;
       start = new Date(now.getFullYear(), qMonth, 1);
-      prevStart = new Date(now.getFullYear(), qMonth - 3, 1);
-      prevEnd = new Date(start.getTime() - 1);
       break;
     }
   }
+
+  const prevEnd = new Date(start.getTime() - 1);
+  const prevStart = new Date(prevEnd.getTime() - (end.getTime() - start.getTime()));
 
   return { start, end, prevStart, prevEnd };
 };
 
 const isInRange = (date: Date | string, start: Date, end: Date) => {
-  const d = new Date(date);
+  const d = toValidDate(date);
+  if (!d) return false;
   return d >= start && d <= end;
+};
+
+const toValidDate = (value: Date | string | null | undefined): Date | null => {
+  if (!value) return null;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
+};
+
+const formatDate = (value: Date | string | null | undefined) => (
+  toValidDate(value)?.toLocaleDateString('fr-FR') ?? '-'
+);
+
+const formatDayKey = (value: Date | string | null | undefined) => (
+  toValidDate(value)?.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' }) ?? null
+);
+
+const toNumber = (value: unknown): number => {
+  if (value === null || value === undefined || value === '') return 0;
+  if (typeof value === 'number') return Number.isFinite(value) ? value : 0;
+  if (typeof value === 'string') {
+    const normalized = value.replace(/\s/g, '').replace(',', '.');
+    const parsed = Number(normalized);
+    return Number.isFinite(parsed) ? parsed : 0;
+  }
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : 0;
+};
+
+const toInteger = (value: unknown): number => Math.trunc(toNumber(value));
+
+const formatNumber = (value: number): string => Math.round(toNumber(value)).toLocaleString('fr-FR');
+const formatFCFA = (value: number): string => `${formatNumber(value)} FCFA`;
+
+const getSaleLines = (vente: VenteDashboard) => (
+  Array.isArray(vente.lignesVente) ? vente.lignesVente : []
+);
+
+const getOrderLines = (commande: Commande) => (
+  Array.isArray(commande.lignes) ? commande.lignes : []
+);
+
+const getProductStock = (produit: ProduitDashboard) => toInteger(produit.quantiteStock);
+
+const getProductThreshold = (produit: ProduitDashboard) => {
+  if (produit.seuilAlerte === null || produit.seuilAlerte === undefined || produit.seuilAlerte === '') return 5;
+  return Math.max(0, toInteger(produit.seuilAlerte));
 };
 
 /* ── Order‑status visual map ─────���──────────────────────────────── */
@@ -105,8 +161,8 @@ const STATUS_CFG: Record<StatutCommande, { label: string; bg: string; text: stri
 const STATUS_ORDER: StatutCommande[] = ['EN_ATTENTE', 'CONFIRMEE', 'EN_LIVRAISON', 'LIVREE', 'ANNULEE'];
 
 export const Dashboard = () => {
-  const [allVentes, setAllVentes] = useState<any[]>([]);
-  const [allProduits, setAllProduits] = useState<any[]>([]);
+  const [allVentes, setAllVentes] = useState<VenteDashboard[]>([]);
+  const [allProduits, setAllProduits] = useState<ProduitDashboard[]>([]);
   const [allCommandes, setAllCommandes] = useState<Commande[]>([]);
   const [loading, setLoading] = useState(true);
   const [period, setPeriod] = useState<Period>('30d');
@@ -118,6 +174,7 @@ export const Dashboard = () => {
 
   useEffect(() => {
     const fetchData = async () => {
+      setLoading(true);
       const results = await Promise.allSettled([
         venteApi.getAll(),
         produitApi.getAll(),
@@ -178,7 +235,7 @@ export const Dashboard = () => {
   const produitsBoutique = useMemo(() => {
     let total = 0;
     for (const v of ventesInPeriod) {
-      for (const lv of (v.lignesVente ?? [])) total += lv.quantite ?? 0;
+      for (const lv of getSaleLines(v)) total += toInteger(lv.quantite);
     }
     return total;
   }, [ventesInPeriod]);
@@ -186,7 +243,7 @@ export const Dashboard = () => {
   const produitsEcommerce = useMemo(() => {
     let total = 0;
     for (const c of commandesLivreesInPeriod) {
-      for (const l of (c.lignes ?? [])) total += l.quantite ?? 0;
+      for (const l of getOrderLines(c)) total += toInteger(l.quantite);
     }
     return total;
   }, [commandesLivreesInPeriod]);
@@ -196,7 +253,7 @@ export const Dashboard = () => {
   const produitsBoutiquePrev = useMemo(() => {
     let total = 0;
     for (const v of ventesInPrev) {
-      for (const lv of (v.lignesVente ?? [])) total += lv.quantite ?? 0;
+      for (const lv of getSaleLines(v)) total += toInteger(lv.quantite);
     }
     return total;
   }, [ventesInPrev]);
@@ -204,7 +261,7 @@ export const Dashboard = () => {
   const produitsEcommercePrev = useMemo(() => {
     let total = 0;
     for (const c of commandesLivreesInPrev) {
-      for (const l of (c.lignes ?? [])) total += l.quantite ?? 0;
+      for (const l of getOrderLines(c)) total += toInteger(l.quantite);
     }
     return total;
   }, [commandesLivreesInPrev]);
@@ -213,21 +270,23 @@ export const Dashboard = () => {
 
   // ── KPIs: Chiffre d'affaires (combined) ──
   const caBoutique = useMemo(() =>
-    ventesInPeriod.reduce((acc, v) => acc + parseFloat(v.montantTotal || '0'), 0), [ventesInPeriod]);
+    ventesInPeriod.reduce((acc, v) => acc + toNumber(v.montantTotal), 0), [ventesInPeriod]);
   const caEcommerce = useMemo(() =>
-    commandesLivreesInPeriod.reduce((acc, c) => acc + parseFloat(String(c.montantTotal || '0')), 0), [commandesLivreesInPeriod]);
+    commandesLivreesInPeriod.reduce((acc, c) => acc + toNumber(c.montantTotal), 0), [commandesLivreesInPeriod]);
   const ca = caBoutique + caEcommerce;
 
   const caBoutiquePrev = useMemo(() =>
-    ventesInPrev.reduce((acc, v) => acc + parseFloat(v.montantTotal || '0'), 0), [ventesInPrev]);
+    ventesInPrev.reduce((acc, v) => acc + toNumber(v.montantTotal), 0), [ventesInPrev]);
   const caEcommercePrev = useMemo(() =>
-    commandesLivreesInPrev.reduce((acc, c) => acc + parseFloat(String(c.montantTotal || '0')), 0), [commandesLivreesInPrev]);
+    commandesLivreesInPrev.reduce((acc, c) => acc + toNumber(c.montantTotal), 0), [commandesLivreesInPrev]);
   const caPrev = caBoutiquePrev + caEcommercePrev;
 
   // Trend calculation
   const calcTrend = (current: number, previous: number) => {
-    if (previous === 0) return current > 0 ? 100 : 0;
-    return Math.round(((current - previous) / previous) * 100);
+    const safeCurrent = toNumber(current);
+    const safePrevious = toNumber(previous);
+    if (safePrevious === 0) return safeCurrent > 0 ? 100 : 0;
+    return Math.round(((safeCurrent - safePrevious) / safePrevious) * 100);
   };
 
   const trendProduits = calcTrend(produitsSold, produitsSoldPrev);
@@ -242,22 +301,25 @@ export const Dashboard = () => {
 
   // Recent orders (top 5, in period, sorted by date desc)
   const recentOrders = useMemo(() =>
-    [...commandesInPeriod].sort((a, b) => new Date(b.dateCommande).getTime() - new Date(a.dateCommande).getTime()).slice(0, 5),
+    [...commandesInPeriod]
+      .sort((a, b) => toNumber(toValidDate(b.dateCommande)?.getTime()) - toNumber(toValidDate(a.dateCommande)?.getTime()))
+      .slice(0, 5),
     [commandesInPeriod]
   );
 
   // Stocks (not period-dependent)
   const totalProducts = allProduits.length;
-  const totalUnits = useMemo(() => allProduits.reduce((sum, p) => sum + (p.quantiteStock ?? 0), 0), [allProduits]);
-  const lowStockItems = useMemo(() => {
-    const threshold = 5; // will be replaced by seuilAlerte per product in Phase 6
-    const sorted = [...allProduits].sort((a, b) => (a.quantiteStock ?? 0) - (b.quantiteStock ?? 0));
-    return sorted.filter(p => (p.quantiteStock ?? 0) <= threshold).slice(0, 10).map(p => ({
-      name: p.nomProduit,
-      count: p.quantiteStock ?? 0,
-      status: (p.quantiteStock ?? 0) <= 0 ? 'Rupture' : 'Critique',
+  const totalUnits = useMemo(() => allProduits.reduce((sum, p) => sum + getProductStock(p), 0), [allProduits]);
+  const lowStockProducts = useMemo<StockAlertItem[]>(() => {
+    const sorted = [...allProduits].sort((a, b) => getProductStock(a) - getProductStock(b));
+    return sorted.filter(p => getProductStock(p) <= getProductThreshold(p)).map(p => ({
+      name: p.nomProduit || 'Produit sans nom',
+      count: getProductStock(p),
+      threshold: getProductThreshold(p),
+      status: getProductStock(p) <= 0 ? 'Rupture' : 'Critique',
     }));
   }, [allProduits]);
+  const lowStockItems = useMemo(() => lowStockProducts.slice(0, 10), [lowStockProducts]);
 
   /* ── Chart data ───────────────────────────────────────────────── */
   // CA evolution by day — dual curves
@@ -269,7 +331,8 @@ export const Dashboard = () => {
     // Initialize all days in range
     const d = new Date(start);
     while (d <= end) {
-      const key = d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' });
+      const key = formatDayKey(d);
+      if (!key) break;
       boutiqueMap.set(key, 0);
       ecommerceMap.set(key, 0);
       allDates.push(key);
@@ -278,14 +341,16 @@ export const Dashboard = () => {
 
     // Fill boutique data
     for (const v of ventesInPeriod) {
-      const key = new Date(v.dateVente).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' });
-      boutiqueMap.set(key, (boutiqueMap.get(key) ?? 0) + parseFloat(v.montantTotal || '0'));
+      const key = formatDayKey(v.dateVente);
+      if (!key || !boutiqueMap.has(key)) continue;
+      boutiqueMap.set(key, (boutiqueMap.get(key) ?? 0) + toNumber(v.montantTotal));
     }
 
     // Fill e-commerce data (delivered orders only)
     for (const c of commandesLivreesInPeriod) {
-      const key = new Date(c.dateCommande).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' });
-      ecommerceMap.set(key, (ecommerceMap.get(key) ?? 0) + parseFloat(String(c.montantTotal || '0')));
+      const key = formatDayKey(c.dateCommande);
+      if (!key || !ecommerceMap.has(key)) continue;
+      ecommerceMap.set(key, (ecommerceMap.get(key) ?? 0) + toNumber(c.montantTotal));
     }
 
     return allDates.map(date => ({
@@ -294,6 +359,8 @@ export const Dashboard = () => {
       ecommerce: Math.round(ecommerceMap.get(date) ?? 0),
     }));
   }, [ventesInPeriod, commandesLivreesInPeriod, start, end]);
+  const caChartHasData = useMemo(() =>
+    caChartData.some(d => d.boutique > 0 || d.ecommerce > 0), [caChartData]);
 
   // Orders by status pie chart
   const statusPieData = useMemo(() =>
@@ -307,16 +374,20 @@ export const Dashboard = () => {
   const topProducts = useMemo(() => {
     const map = new Map<string, number>();
     for (const v of ventesInPeriod) {
-      for (const lv of (v.lignesVente ?? [])) {
+      for (const lv of getSaleLines(v)) {
+        const qty = toInteger(lv.quantite);
+        if (qty <= 0) continue;
         const name = lv.produit?.nomProduit || 'Inconnu';
-        map.set(name, (map.get(name) ?? 0) + (lv.quantite ?? 0));
+        map.set(name, (map.get(name) ?? 0) + qty);
       }
     }
     // Also include e-commerce delivered orders
     for (const c of commandesLivreesInPeriod) {
-      for (const l of (c.lignes ?? [])) {
+      for (const l of getOrderLines(c)) {
+        const qty = toInteger(l.quantite);
+        if (qty <= 0) continue;
         const name = l.nomProduit || l.produit?.nomProduit || 'Inconnu';
-        map.set(name, (map.get(name) ?? 0) + (l.quantite ?? 0));
+        map.set(name, (map.get(name) ?? 0) + qty);
       }
     }
     return Array.from(map.entries())
@@ -391,15 +462,15 @@ export const Dashboard = () => {
             <TrendBadge value={trendProduits} />
           </div>
           <p className="text-sm text-slate-500 font-medium">Produits Vendus</p>
-          <p className="text-2xl font-bold text-slate-900 mt-1">{loading ? '...' : produitsSold.toLocaleString()} unit&eacute;s</p>
-          <p className="text-xs text-slate-400 mt-1">vs {produitsSoldPrev.toLocaleString()} p&eacute;riode pr&eacute;c&eacute;dente</p>
+          <p className="text-2xl font-bold text-slate-900 mt-1">{loading ? '...' : formatNumber(produitsSold)} unit&eacute;s</p>
+          <p className="text-xs text-slate-400 mt-1">vs {formatNumber(produitsSoldPrev)} p&eacute;riode pr&eacute;c&eacute;dente</p>
           {!loading && (produitsBoutique > 0 || produitsEcommerce > 0) && (
             <div className="flex items-center gap-3 mt-3 pt-3 border-t border-slate-100">
               <span className="flex items-center gap-1 text-xs text-slate-500">
-                <Store size={12} className="text-indigo-500" /> Boutique: {produitsBoutique.toLocaleString()}
+                <Store size={12} className="text-indigo-500" /> Boutique: {formatNumber(produitsBoutique)}
               </span>
               <span className="flex items-center gap-1 text-xs text-slate-500">
-                <Globe size={12} className="text-emerald-500" /> E-commerce: {produitsEcommerce.toLocaleString()}
+                <Globe size={12} className="text-emerald-500" /> E-commerce: {formatNumber(produitsEcommerce)}
               </span>
             </div>
           )}
@@ -412,15 +483,15 @@ export const Dashboard = () => {
             <TrendBadge value={trendCA} />
           </div>
           <p className="text-sm text-slate-500 font-medium">Chiffre d'Affaires</p>
-          <p className="text-2xl font-bold text-slate-900 mt-1">{loading ? '...' : ca.toLocaleString()} FCFA</p>
-          <p className="text-xs text-slate-400 mt-1">vs {caPrev.toLocaleString()} FCFA p&eacute;riode pr&eacute;c&eacute;dente</p>
+          <p className="text-2xl font-bold text-slate-900 mt-1">{loading ? '...' : formatFCFA(ca)}</p>
+          <p className="text-xs text-slate-400 mt-1">vs {formatFCFA(caPrev)} p&eacute;riode pr&eacute;c&eacute;dente</p>
           {!loading && (caBoutique > 0 || caEcommerce > 0) && (
             <div className="flex items-center gap-3 mt-3 pt-3 border-t border-slate-100">
               <span className="flex items-center gap-1 text-xs text-slate-500">
-                <Store size={12} className="text-indigo-500" /> {caBoutique.toLocaleString()} FCFA
+                <Store size={12} className="text-indigo-500" /> {formatFCFA(caBoutique)}
               </span>
               <span className="flex items-center gap-1 text-xs text-slate-500">
-                <Globe size={12} className="text-emerald-500" /> {caEcommerce.toLocaleString()} FCFA
+                <Globe size={12} className="text-emerald-500" /> {formatFCFA(caEcommerce)}
               </span>
             </div>
           )}
@@ -434,7 +505,7 @@ export const Dashboard = () => {
           <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
             <h3 className="font-bold text-lg text-slate-900 mb-1">&Eacute;volution du CA</h3>
             <p className="text-sm text-slate-500 mb-4">{PERIOD_LABELS[period]}</p>
-            {caChartData.length > 0 ? (
+            {caChartHasData ? (
               <ResponsiveContainer width="100%" height={260}>
                 <AreaChart data={caChartData}>
                   <defs>
@@ -449,11 +520,11 @@ export const Dashboard = () => {
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
                   <XAxis dataKey="date" tick={{ fontSize: 11, fill: '#94a3b8' }} interval={caChartData.length > 15 ? Math.floor(caChartData.length / 7) : 0} />
-                  <YAxis tick={{ fontSize: 11, fill: '#94a3b8' }} tickFormatter={v => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : v} />
+                  <YAxis tick={{ fontSize: 11, fill: '#94a3b8' }} tickFormatter={v => toNumber(v) >= 1000 ? `${Math.round(toNumber(v) / 1000)}k` : formatNumber(toNumber(v))} />
                   <Tooltip
                     contentStyle={{ borderRadius: 12, border: '1px solid #e2e8f0', fontSize: 13 }}
                     formatter={(value: number, name: string) => [
-                      `${value.toLocaleString()} FCFA`,
+                      formatFCFA(value),
                       name === 'boutique' ? 'Boutique' : 'E-commerce',
                     ]}
                   />
@@ -513,22 +584,26 @@ export const Dashboard = () => {
       )}
 
       {/* ═══ Top Products Bar Chart ═══════════════════════════════════ */}
-      {!loading && topProducts.length > 0 && (
+      {!loading && (
         <section className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
           <h3 className="font-bold text-lg text-slate-900 mb-1">Top Produits Vendus</h3>
           <p className="text-sm text-slate-500 mb-4">Par quantit&eacute; vendue ({PERIOD_LABELS[period]})</p>
-          <ResponsiveContainer width="100%" height={220}>
-            <BarChart data={topProducts} layout="vertical" margin={{ left: 10 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" horizontal={false} />
-              <XAxis type="number" tick={{ fontSize: 11, fill: '#94a3b8' }} />
-              <YAxis type="category" dataKey="name" width={140} tick={{ fontSize: 11, fill: '#475569' }} />
-              <Tooltip
-                contentStyle={{ borderRadius: 12, border: '1px solid #e2e8f0', fontSize: 13 }}
-                formatter={(value: number) => [`${value} unit\u00e9s`, 'Vendus']}
-              />
-              <Bar dataKey="quantite" fill="#1c19a3" radius={[0, 6, 6, 0]} barSize={24} />
-            </BarChart>
-          </ResponsiveContainer>
+          {topProducts.length > 0 ? (
+            <ResponsiveContainer width="100%" height={220}>
+              <BarChart data={topProducts} layout="vertical" margin={{ left: 10 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" horizontal={false} />
+                <XAxis type="number" tick={{ fontSize: 11, fill: '#94a3b8' }} />
+                <YAxis type="category" dataKey="name" width={140} tick={{ fontSize: 11, fill: '#475569' }} />
+                <Tooltip
+                  contentStyle={{ borderRadius: 12, border: '1px solid #e2e8f0', fontSize: 13 }}
+                  formatter={(value: number) => [`${formatNumber(value)} unit\u00e9s`, 'Vendus']}
+                />
+                <Bar dataKey="quantite" fill="#1c19a3" radius={[0, 6, 6, 0]} barSize={24} />
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <p className="text-sm text-slate-400 py-12 text-center">Aucune vente pour cette p&eacute;riode</p>
+          )}
         </section>
       )}
 
@@ -582,17 +657,17 @@ export const Dashboard = () => {
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
               <div className="bg-slate-50 rounded-xl p-4 text-center">
                 <div className="flex items-center justify-center gap-2 mb-2 text-slate-500"><Package size={16} /></div>
-                <p className="text-2xl font-bold text-slate-900">{totalProducts}</p>
+                <p className="text-2xl font-bold text-slate-900">{formatNumber(totalProducts)}</p>
                 <p className="text-xs font-semibold text-slate-500 mt-1">Produits r&eacute;f&eacute;renc&eacute;s</p>
               </div>
               <div className="bg-slate-50 rounded-xl p-4 text-center">
                 <div className="flex items-center justify-center gap-2 mb-2 text-slate-500"><PackageSearch size={16} /></div>
-                <p className="text-2xl font-bold text-slate-900">{totalUnits.toLocaleString()}</p>
+                <p className="text-2xl font-bold text-slate-900">{formatNumber(totalUnits)}</p>
                 <p className="text-xs font-semibold text-slate-500 mt-1">Unit&eacute;s disponibles</p>
               </div>
               <div className="bg-red-50 rounded-xl p-4 text-center">
                 <div className="flex items-center justify-center gap-2 mb-2 text-red-400"><XCircle size={16} /></div>
-                <p className="text-2xl font-bold text-red-600">{lowStockItems.length}</p>
+                <p className="text-2xl font-bold text-red-600">{formatNumber(lowStockProducts.length)}</p>
                 <p className="text-xs font-semibold text-red-500 mt-1">Produits en alerte</p>
               </div>
             </div>
@@ -605,7 +680,7 @@ export const Dashboard = () => {
                     <div key={idx} className="flex items-center justify-between py-2 px-3 bg-slate-50 rounded-lg">
                       <p className="text-sm font-medium text-slate-700 truncate max-w-[200px]">{item.name}</p>
                       <div className="flex items-center gap-2">
-                        <span className="text-sm font-bold text-slate-900">{item.count}</span>
+                        <span className="text-sm font-bold text-slate-900" title={`Seuil: ${formatNumber(item.threshold)}`}>{formatNumber(item.count)}</span>
                         <span className={`size-2 rounded-full ${item.status === 'Rupture' ? 'bg-red-500' : 'bg-amber-500'}`} />
                         <span className={`text-[10px] font-bold ${item.status === 'Rupture' ? 'text-red-500' : 'text-amber-500'}`}>{item.status}</span>
                       </div>
@@ -648,13 +723,13 @@ export const Dashboard = () => {
                 <tr><td colSpan={7} className="px-6 py-8 text-center text-slate-500">Aucune commande sur cette p&eacute;riode.</td></tr>
               ) : (
                 recentOrders.map((order) => {
-                  const st = STATUS_CFG[order.statut];
+                  const st = STATUS_CFG[order.statut] ?? STATUS_CFG.EN_ATTENTE;
                   return (
                     <tr key={order.id} className="hover:bg-slate-50 transition-colors group">
                       <td className="px-6 py-4 font-medium text-primary font-mono text-sm">{order.numeroSuivi}</td>
-                      <td className="px-6 py-4 text-sm text-slate-500">{new Date(order.dateCommande).toLocaleDateString('fr-FR')}</td>
+                      <td className="px-6 py-4 text-sm text-slate-500">{formatDate(order.dateCommande)}</td>
                       <td className="px-6 py-4 text-sm text-slate-700">{order.nomClient}</td>
-                      <td className="px-6 py-4 text-sm font-semibold text-slate-900">{parseFloat(String(order.montantTotal)).toLocaleString()} FCFA</td>
+                      <td className="px-6 py-4 text-sm font-semibold text-slate-900">{formatFCFA(toNumber(order.montantTotal))}</td>
                       <td className="px-6 py-4 text-sm text-slate-600">{order.modeReception === 'LIVRAISON' ? 'Livraison' : 'Retrait'}</td>
                       <td className="px-6 py-4">
                         <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium ${st.bg} ${st.text}`}>
@@ -681,7 +756,7 @@ export const Dashboard = () => {
             <p className="px-4 py-8 text-center text-slate-500">Aucune commande sur cette p&eacute;riode.</p>
           ) : (
             recentOrders.map((order) => {
-              const st = STATUS_CFG[order.statut];
+              const st = STATUS_CFG[order.statut] ?? STATUS_CFG.EN_ATTENTE;
               return (
                 <div key={order.id} className="p-4 flex flex-col gap-2">
                   <div className="flex items-center justify-between">
@@ -693,10 +768,10 @@ export const Dashboard = () => {
                   </div>
                   <div className="flex items-center justify-between text-sm">
                     <span className="font-medium text-slate-700">{order.nomClient}</span>
-                    <span className="font-semibold text-slate-900">{parseFloat(String(order.montantTotal)).toLocaleString()} FCFA</span>
+                    <span className="font-semibold text-slate-900">{formatFCFA(toNumber(order.montantTotal))}</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-xs text-slate-400">{new Date(order.dateCommande).toLocaleDateString('fr-FR')} &middot; {order.modeReception === 'LIVRAISON' ? 'Livraison' : 'Retrait'}</span>
+                    <span className="text-xs text-slate-400">{formatDate(order.dateCommande)} &middot; {order.modeReception === 'LIVRAISON' ? 'Livraison' : 'Retrait'}</span>
                     <Link to="/orders" className="text-xs font-bold text-primary hover:underline">Voir &rarr;</Link>
                   </div>
                 </div>
