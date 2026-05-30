@@ -1,6 +1,7 @@
 import { Injectable, UnauthorizedException, BadRequestException, ForbiddenException, NotFoundException, Logger } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
+import { AdminRole } from '@prisma/client';
 import { DatabaseService } from 'src/database/database.service';
 import { NotificationService, NotificationActor } from 'src/notification/notification.service';
 import { CreateAdminDto } from './dto/create-admin.dto';
@@ -177,6 +178,16 @@ export class AdminAuthService {
     );
 
     return { message: 'Mot de passe réinitialisé avec succès' };
+  }
+
+  async changerRole(id: string, role: AdminRole) {
+    const admin = await this.db.adminUser.findUnique({ where: { id } });
+    if (!admin) throw new NotFoundException('Employe introuvable');
+    return this.db.adminUser.update({
+      where: { id },
+      data: { role },
+      select: { id: true, nom: true, email: true, role: true, isActive: true },
+    });
   }
 
   async deleteAdmin(id: string, currentAdminId: string, actor: NotificationActor) {
