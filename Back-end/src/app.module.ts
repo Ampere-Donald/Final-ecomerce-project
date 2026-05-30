@@ -31,6 +31,7 @@ import { FavoriModule } from './favori/favori.module';
 import { DatabaseModule } from './database/database.module';
 import { NewsletterModule } from './newsletter/newsletter.module';
 import { CloudinaryModule } from './cloudinary/cloudinary.module';
+import { BonVenteModule } from './bon-vente/bon-vente.module';
 
 @Module({
   imports: [
@@ -69,6 +70,7 @@ import { CloudinaryModule } from './cloudinary/cloudinary.module';
     DatabaseModule,
     NewsletterModule,
     CloudinaryModule,
+    BonVenteModule,
   ],
   controllers: [AppController],
   providers: [AppService],
