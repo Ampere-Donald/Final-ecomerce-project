@@ -41,6 +41,7 @@ model Produit {
   lignesAchat     LigneAchat[]
   lignesCommande  LigneCommande[]
   lignesVente     LigneVente[]
+  lignesBon       LigneBon[]
   mouvementsStock MouvementStock[]
   categorie       Categorie        @relation(fields: [categorieId], references: [id])
 
@@ -104,6 +105,8 @@ model Client {
   commandes    Commande[]
   favoris      Favori[]
   ventes       Vente[]
+  bons         BonVente[]
+  factures     Facture[]
 
   @@map("client")
 }
@@ -144,9 +147,13 @@ model Vente {
   methodePaiement MethodePaiement @map("methode_paiement")
   statutPaiement  StatutPaiement  @default(PAYE) @map("statut_paiement")
   version         Int             @default(1)
+  vendeurId       String?         @map("vendeur_id")
   caisses         Caisse[]
   lignesVente     LigneVente[]
   client          Client?         @relation(fields: [clientId], references: [id])
+  vendeur         AdminUser?      @relation("VentesVendeur", fields: [vendeurId], references: [id])
+  bonVente        BonVente?
+  facture         Facture?
 
   @@map("vente")
 }
@@ -198,6 +205,7 @@ model Caisse {
   achat         Achat?        @relation(fields: [achatId], references: [id])
   coffre        Coffre?       @relation("CoffreOperations", fields: [coffreId], references: [id])
   vente         Vente?        @relation(fields: [venteId], references: [id])
+  effectueeParUser AdminUser? @relation("CaisseOperateur", fields: [effectueePar], references: [id])
 
   @@index([coffreId])
   @@index([transfertGroupId])
@@ -335,6 +343,95 @@ model Newsletter {
   @@map("newsletter")
 }
 
+model BonVente {
+  id              String          @id @default(uuid())
+  numero          String          @unique
+  vendeurId       String          @map("vendeur_id")
+  clientId        String?         @map("client_id")
+  methodePaiement MethodePaiement @map("methode_paiement")
+  statut          StatutBon       @default(EN_ATTENTE)
+  createdAt       DateTime        @default(now()) @map("created_at")
+  valideeAt       DateTime?       @map("validee_at")
+  valideeById     String?         @map("validee_by")
+  venteId         String?         @unique @map("vente_id")
+  vendeur         AdminUser       @relation("BonsVendeur", fields: [vendeurId], references: [id])
+  valideeBy       AdminUser?      @relation("BonsValides", fields: [valideeById], references: [id])
+  client          Client?         @relation(fields: [clientId], references: [id])
+  lignes          LigneBon[]
+  facture         Facture?
+  vente           Vente?          @relation(fields: [venteId], references: [id])
+
+  @@map("bon_vente")
+}
+
+model LigneBon {
+  id           String   @id @default(uuid())
+  bonId        String   @map("bon_id")
+  produitId    String   @map("produit_id")
+  nomProduit   String   @map("nom_produit") @db.VarChar(150)
+  quantite     Int
+  prixUnitaire Decimal  @map("prix_unitaire") @db.Decimal(10, 2)
+  sousTotal    Decimal  @map("sous_total") @db.Decimal(12, 2)
+  bon          BonVente @relation(fields: [bonId], references: [id], onDelete: Cascade)
+  produit      Produit  @relation(fields: [produitId], references: [id])
+
+  @@map("ligne_bon")
+}
+
+model Facture {
+  id              String          @id @default(uuid())
+  numero          String          @unique
+  type            TypeFacture
+  bonId           String?         @unique @map("bon_id")
+  venteId         String?         @unique @map("vente_id")
+  clientId        String?         @map("client_id")
+  vendeurId       String          @map("vendeur_id")
+  caissierId      String?         @map("caissier_id")
+  dateEmission    DateTime        @default(now()) @map("date_emission")
+  totalHT         Decimal         @map("total_ht") @db.Decimal(12, 2)
+  tva             Decimal         @db.Decimal(12, 2)
+  totalTTC        Decimal         @map("total_ttc") @db.Decimal(12, 2)
+  methodePaiement MethodePaiement @map("methode_paiement")
+  printCount      Int             @default(0) @map("print_count")
+  bon             BonVente?       @relation(fields: [bonId], references: [id])
+  vente           Vente?          @relation(fields: [venteId], references: [id])
+  client          Client?         @relation(fields: [clientId], references: [id])
+  vendeur         AdminUser       @relation("FacturesVendeur", fields: [vendeurId], references: [id])
+  caissier        AdminUser?      @relation("FacturesCaissier", fields: [caissierId], references: [id])
+  lignes          FactureLigne[]
+
+  @@map("facture")
+}
+
+model FactureLigne {
+  id              String  @id @default(uuid())
+  factureId       String  @map("facture_id")
+  nomProduit      String  @map("nom_produit") @db.VarChar(150)
+  quantite        Int
+  prixUnitaireHT  Decimal @map("prix_unitaire_ht") @db.Decimal(10, 2)
+  prixUnitaireTTC Decimal @map("prix_unitaire_ttc") @db.Decimal(10, 2)
+  sousTotalHT     Decimal @map("sous_total_ht") @db.Decimal(12, 2)
+  sousTotalTTC    Decimal @map("sous_total_ttc") @db.Decimal(12, 2)
+  facture         Facture @relation(fields: [factureId], references: [id], onDelete: Cascade)
+
+  @@map("facture_ligne")
+}
+
+model PrimeVendeur {
+  id            String      @id @default(uuid())
+  vendeurId     String      @map("vendeur_id")
+  periode       String
+  nombreTickets Int         @default(0) @map("nombre_tickets")
+  statut        StatutPrime @default(EN_COURS)
+  valideeById   String?     @map("validee_by")
+  valideeAt     DateTime?   @map("validee_at")
+  vendeur       AdminUser   @relation("PrimesVendeur", fields: [vendeurId], references: [id])
+  valideeBy     AdminUser?  @relation("PrimesValidees", fields: [valideeById], references: [id])
+
+  @@unique([vendeurId, periode])
+  @@map("prime_vendeur")
+}
+
 enum TypeAttribut {
   TEXTE
   NOMBRE
@@ -431,6 +528,23 @@ enum TypeNotification {
   ECHEANCE
 }
 
+enum StatutBon {
+  EN_ATTENTE
+  VALIDE
+  ANNULE
+}
+
+enum TypeFacture {
+  FACTURE
+  TICKET_CAISSE
+}
+
+enum StatutPrime {
+  EN_COURS
+  VALIDEE
+  PAYEE
+}
+
 model PendingImport {
   id        String   @id @default(uuid())
   data      Json
@@ -448,6 +562,14 @@ model AdminUser {
   isActive    Boolean   @default(true) @map("is_active")
   lastLoginAt DateTime? @map("last_login_at")
   createdAt   DateTime  @default(now()) @map("created_at")
+  ventesEffectuees Vente[]        @relation("VentesVendeur")
+  operationsCaisse Caisse[]       @relation("CaisseOperateur")
+  bonsCreees       BonVente[]     @relation("BonsVendeur")
+  bonsValides      BonVente[]     @relation("BonsValides")
+  facturesVendeur  Facture[]      @relation("FacturesVendeur")
+  facturesCaisse   Facture[]      @relation("FacturesCaissier")
+  primesVendeur    PrimeVendeur[] @relation("PrimesVendeur")
+  primesValidees   PrimeVendeur[] @relation("PrimesValidees")
 
   @@map("admin_user")
 }
@@ -456,4 +578,6 @@ enum AdminRole {
   SUPER_ADMIN
   ADMIN
   MANAGER
+  CAISSIER
+  VENDEUR
 }
