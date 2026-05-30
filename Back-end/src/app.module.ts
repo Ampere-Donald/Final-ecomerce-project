@@ -33,6 +33,7 @@ import { NewsletterModule } from './newsletter/newsletter.module';
 import { CloudinaryModule } from './cloudinary/cloudinary.module';
 import { BonVenteModule } from './bon-vente/bon-vente.module';
 import { FactureModule } from './facture/facture.module';
+import { PrimeModule } from './prime/prime.module';
 
 @Module({
   imports: [
@@ -73,6 +74,7 @@ import { FactureModule } from './facture/facture.module';
     CloudinaryModule,
     BonVenteModule,
     FactureModule,
+    PrimeModule,
   ],
   controllers: [AppController],
   providers: [AppService],
