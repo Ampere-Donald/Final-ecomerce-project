@@ -1,10 +1,14 @@
-import { IsBoolean, IsEmail, IsEnum, IsOptional, IsString } from 'class-validator';
+import { IsBoolean, IsEmail, IsEnum, IsOptional, IsString, Matches, MinLength } from 'class-validator';
 import { AdminRole } from '@prisma/client';
 
 export class UpdateAdminDto {
   @IsOptional()
   @IsEmail()
-  email?: string;
+  email?: string | null;
+
+  @IsOptional()
+  @IsString()
+  username?: string;
 
   @IsOptional()
   @IsString()
@@ -13,6 +17,23 @@ export class UpdateAdminDto {
   @IsOptional()
   @IsEnum(AdminRole)
   role?: AdminRole;
+
+  @IsOptional()
+  @IsString()
+  @MinLength(8)
+  motDePasse?: string;
+
+  @IsOptional()
+  @Matches(/^\d{4,6}$/)
+  pin?: string;
+
+  @IsOptional()
+  @IsString()
+  photoUrl?: string;
+
+  @IsOptional()
+  @IsString()
+  motifRole?: string;
 
   @IsOptional()
   @IsBoolean()

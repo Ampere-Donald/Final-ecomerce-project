@@ -17,14 +17,22 @@ export class AdminJwtStrategy extends PassportStrategy(Strategy, 'jwt-admin') {
     });
   }
 
-  async validate(payload: { sub: string; email: string; role: string; type: string }) {
+  async validate(payload: { sub: string; email?: string; username?: string; role: string; type: string }) {
     if (payload.type !== 'admin') {
-      throw new UnauthorizedException('Accès admin requis');
+      throw new UnauthorizedException('Acces admin requis');
     }
     const admin = await this.db.adminUser.findUnique({ where: { id: payload.sub } });
     if (!admin || !admin.isActive) {
-      throw new UnauthorizedException('Compte admin désactivé ou introuvable');
+      throw new UnauthorizedException('Compte admin desactive ou introuvable');
     }
-    return { id: admin.id, email: admin.email, nom: admin.nom, role: admin.role, type: 'admin' };
+    return {
+      id: admin.id,
+      email: admin.email,
+      username: admin.username,
+      nom: admin.nom,
+      role: admin.role,
+      photoUrl: admin.photoUrl,
+      type: 'admin',
+    };
   }
 }

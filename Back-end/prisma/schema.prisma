@@ -440,20 +440,58 @@ model PendingImport {
 }
 
 model AdminUser {
-  id          String    @id @default(uuid())
-  email       String    @unique @db.VarChar(100)
-  motDePasse  String    @map("mot_de_passe")
-  nom         String    @db.VarChar(100)
-  role        AdminRole @default(ADMIN)
-  isActive    Boolean   @default(true) @map("is_active")
-  lastLoginAt DateTime? @map("last_login_at")
-  createdAt   DateTime  @default(now()) @map("created_at")
+  id          String        @id @default(uuid())
+  email       String?       @unique @db.VarChar(100)
+  username    String        @unique @db.VarChar(50)
+  motDePasse  String?       @map("mot_de_passe")
+  pinCode     String?       @map("pin_code") @db.VarChar(255)
+  nom         String        @db.VarChar(100)
+  photoUrl    String?       @map("photo_url")
+  role        AdminRole     @default(ADMIN)
+  isActive    Boolean       @default(true) @map("is_active")
+  lastLoginAt DateTime?     @map("last_login_at")
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @updatedAt @map("updated_at")
+  createdById String?       @map("created_by")
+  roleHistory RoleHistory[]
+  activityLog ActivityLog[]
 
   @@map("admin_user")
+}
+
+model RoleHistory {
+  id          String    @id @default(uuid())
+  adminUserId String    @map("admin_user_id")
+  oldRole     AdminRole @map("old_role")
+  newRole     AdminRole @map("new_role")
+  changedById String    @map("changed_by")
+  changedAt   DateTime  @default(now()) @map("changed_at")
+  motif       String?   @db.VarChar(255)
+  adminUser   AdminUser @relation(fields: [adminUserId], references: [id], onDelete: Cascade)
+
+  @@index([adminUserId])
+  @@map("role_history")
+}
+
+model ActivityLog {
+  id          String    @id @default(uuid())
+  adminUserId String    @map("admin_user_id")
+  action      String    @db.VarChar(100)
+  details     Json?
+  ipAddress   String?   @map("ip_address") @db.VarChar(45)
+  userAgent   String?   @map("user_agent") @db.VarChar(255)
+  createdAt   DateTime  @default(now()) @map("created_at")
+  adminUser   AdminUser @relation(fields: [adminUserId], references: [id], onDelete: Cascade)
+
+  @@index([adminUserId, createdAt])
+  @@index([action, createdAt])
+  @@map("activity_log")
 }
 
 enum AdminRole {
   SUPER_ADMIN
   ADMIN
+  CAISSIER
+  VENDEUR
   MANAGER
 }

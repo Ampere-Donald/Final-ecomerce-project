@@ -13,6 +13,66 @@ const SQL_STATEMENTS = [
   `DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'ModeReception') THEN CREATE TYPE "ModeReception" AS ENUM ('LIVRAISON', 'RETRAIT_MAGASIN'); END IF; END $$;`,
   `DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'CoffreStatut') THEN CREATE TYPE "CoffreStatut" AS ENUM ('ACTIF', 'ATTEINT', 'CLOTURE'); END IF; END $$;`,
   `DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'TypeNotification') THEN CREATE TYPE "TypeNotification" AS ENUM ('COMMANDE_CREEE', 'COMMANDE_STATUT', 'PRODUIT_CREE', 'PRODUIT_MAJ', 'STOCK_CHANGE', 'CATEGORIE_CREEE', 'CATEGORIE_MAJ', 'VENTE_CREEE', 'ACHAT_CREE'); END IF; END $$;`,
+  `DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'AdminRole') THEN CREATE TYPE "AdminRole" AS ENUM ('SUPER_ADMIN', 'ADMIN', 'MANAGER'); END IF; END $$;`,
+  `ALTER TYPE "AdminRole" ADD VALUE IF NOT EXISTS 'CAISSIER';`,
+  `ALTER TYPE "AdminRole" ADD VALUE IF NOT EXISTS 'VENDEUR';`,
+
+  // Admin auth refonte roles/PIN
+  `ALTER TABLE "admin_user" ALTER COLUMN "email" DROP NOT NULL;`,
+  `ALTER TABLE "admin_user" ADD COLUMN IF NOT EXISTS "username" VARCHAR(50);`,
+  `ALTER TABLE "admin_user" ADD COLUMN IF NOT EXISTS "pin_code" VARCHAR(255);`,
+  `ALTER TABLE "admin_user" ADD COLUMN IF NOT EXISTS "photo_url" TEXT;`,
+  `ALTER TABLE "admin_user" ADD COLUMN IF NOT EXISTS "updated_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP;`,
+  `ALTER TABLE "admin_user" ADD COLUMN IF NOT EXISTS "created_by" TEXT;`,
+  `ALTER TABLE "admin_user" ALTER COLUMN "mot_de_passe" DROP NOT NULL;`,
+  `WITH candidates AS (
+    SELECT
+      "id",
+      NULLIF(LOWER(REGEXP_REPLACE(SPLIT_PART(COALESCE("email", "nom"), '@', 1), '[^a-zA-Z0-9_]+', '_', 'g')), '') AS base_username
+    FROM "admin_user"
+    WHERE "username" IS NULL
+  ),
+  ranked AS (
+    SELECT
+      "id",
+      COALESCE(base_username, CONCAT('admin_', LEFT("id", 8))) AS base_username,
+      ROW_NUMBER() OVER (PARTITION BY COALESCE(base_username, CONCAT('admin_', LEFT("id", 8))) ORDER BY "id") AS rn
+    FROM candidates
+  )
+  UPDATE "admin_user" AS au
+  SET "username" = CASE
+    WHEN ranked.rn = 1 THEN ranked.base_username
+    ELSE CONCAT(ranked.base_username, '_', ranked.rn)
+  END
+  FROM ranked
+  WHERE au."id" = ranked."id";`,
+  `ALTER TABLE "admin_user" ALTER COLUMN "username" SET NOT NULL;`,
+  `CREATE UNIQUE INDEX IF NOT EXISTS "admin_user_username_key" ON "admin_user"("username");`,
+  `CREATE TABLE IF NOT EXISTS "role_history" (
+    "id" TEXT NOT NULL,
+    "admin_user_id" TEXT NOT NULL,
+    "old_role" "AdminRole" NOT NULL,
+    "new_role" "AdminRole" NOT NULL,
+    "changed_by" TEXT NOT NULL,
+    "changed_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "motif" VARCHAR(255),
+    CONSTRAINT "role_history_pkey" PRIMARY KEY ("id")
+  );`,
+  `CREATE INDEX IF NOT EXISTS "role_history_admin_user_id_idx" ON "role_history"("admin_user_id");`,
+  `DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'role_history_admin_user_id_fkey') THEN ALTER TABLE "role_history" ADD CONSTRAINT "role_history_admin_user_id_fkey" FOREIGN KEY ("admin_user_id") REFERENCES "admin_user"("id") ON DELETE CASCADE ON UPDATE CASCADE; END IF; END $$;`,
+  `CREATE TABLE IF NOT EXISTS "activity_log" (
+    "id" TEXT NOT NULL,
+    "admin_user_id" TEXT NOT NULL,
+    "action" VARCHAR(100) NOT NULL,
+    "details" JSONB,
+    "ip_address" VARCHAR(45),
+    "user_agent" VARCHAR(255),
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "activity_log_pkey" PRIMARY KEY ("id")
+  );`,
+  `CREATE INDEX IF NOT EXISTS "activity_log_admin_user_id_created_at_idx" ON "activity_log"("admin_user_id", "created_at");`,
+  `CREATE INDEX IF NOT EXISTS "activity_log_action_created_at_idx" ON "activity_log"("action", "created_at");`,
+  `DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'activity_log_admin_user_id_fkey') THEN ALTER TABLE "activity_log" ADD CONSTRAINT "activity_log_admin_user_id_fkey" FOREIGN KEY ("admin_user_id") REFERENCES "admin_user"("id") ON DELETE CASCADE ON UPDATE CASCADE; END IF; END $$;`,
 
   // ── Columns on client (IF NOT EXISTS) ──
   `ALTER TABLE "client" ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP;`,

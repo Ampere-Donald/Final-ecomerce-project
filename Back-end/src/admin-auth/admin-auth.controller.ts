@@ -11,7 +11,7 @@ import {
   Request,
 } from '@nestjs/common';
 import { AdminAuthService } from './admin-auth.service';
-import { AdminLoginDto } from './dto/admin-login.dto';
+import { AdminLoginDto, AdminPinLoginDto } from './dto/admin-login.dto';
 import { CreateAdminDto } from './dto/create-admin.dto';
 import { UpdateAdminDto, ResetPasswordDto } from './dto/update-admin.dto';
 import { AdminAuthGuard } from './admin-auth.guard';
@@ -24,7 +24,12 @@ export class AdminAuthController {
 
   @Post('login')
   async login(@Body() dto: AdminLoginDto) {
-    return this.adminAuthService.login(dto.email, dto.motDePasse);
+    return this.adminAuthService.login(dto.username || dto.email || '', dto.motDePasse, dto.pin);
+  }
+
+  @Post('login-pin')
+  async loginPin(@Body() dto: AdminPinLoginDto) {
+    return this.adminAuthService.loginWithPin(dto.username, dto.pin);
   }
 
   @UseGuards(AdminAuthGuard)
@@ -43,8 +48,8 @@ export class AdminAuthController {
   }
 
   @Post('seed')
-  async seed(@Body() body: { email: string; motDePasse: string; nom: string }) {
-    return this.adminAuthService.seedFirstAdmin(body.email, body.motDePasse, body.nom);
+  async seed(@Body() body: { email: string; motDePasse: string; nom: string; username?: string }) {
+    return this.adminAuthService.seedFirstAdmin(body.email, body.motDePasse, body.nom, body.username);
   }
 
   // ── CRUD Comptes Admin (SUPER_ADMIN only) ──────────────────────────────
