@@ -29,7 +29,7 @@ api.interceptors.response.use(
       localStorage.removeItem('newoteg_admin_token');
       localStorage.removeItem('newoteg_admin_user');
       if (window.location.pathname !== '/login') {
-        window.location.href = '/login';
+        window.location.href = '/login?expired=1';
       }
     }
     return Promise.reject(err);
@@ -38,8 +38,10 @@ api.interceptors.response.use(
 
 // ── Admin Auth API ───────────────────────────────────────────────────────
 export const adminAuthApi = {
-  login: (email: string, motDePasse: string) =>
-    api.post('/admin-auth/login', { email, motDePasse }).then(res => res.data),
+  login: (username: string, motDePasse: string) =>
+    api.post('/admin-auth/login', { username, motDePasse }).then(res => res.data),
+  loginPin: (username: string, pin: string) =>
+    api.post('/admin-auth/login-pin', { username, pin }).then(res => res.data),
   getMe: () => api.get('/admin-auth/me').then(res => res.data),
   changePassword: (oldPassword: string, newPassword: string) =>
     api.patch('/admin-auth/change-password', { oldPassword, newPassword }).then(res => res.data),

@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AdminAuthProvider } from './context/AdminAuthContext';
 import { AdminProtectedRoute } from './components/AdminProtectedRoute';
 import { RoleProtectedRoute } from './components/RoleProtectedRoute';
+import { AdminLogin } from './components/AdminLogin';
 import { Layout } from './components/Layout';
 import { Dashboard } from './components/Dashboard';
 import { Orders } from './components/Orders';
@@ -31,6 +32,7 @@ export default function App() {
     <BrowserRouter>
       <AdminAuthProvider>
         <Routes>
+          <Route path="/login" element={<AdminLogin />} />
           <Route path="/" element={<AdminProtectedRoute><Layout /></AdminProtectedRoute>}>
             <Route index element={<Dashboard />} />
             <Route path="orders" element={<Orders />} />

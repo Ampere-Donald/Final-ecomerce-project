@@ -4,14 +4,17 @@ import { adminAuthApi } from '../services/api';
 interface AdminUser {
   id: string;
   nom: string;
-  email: string;
+  username: string;
+  email?: string | null;
   role: string;
+  photoUrl?: string | null;
 }
 
 interface AdminAuthContextType {
   admin: AdminUser | null;
   loading: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  login: (username: string, password: string) => Promise<void>;
+  loginPin: (username: string, pin: string) => Promise<void>;
   logout: () => void;
   isAuthenticated: boolean;
 }
@@ -52,8 +55,15 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       .finally(() => setLoading(false));
   }, []);
 
-  const login = useCallback(async (email: string, password: string) => {
-    const data = await adminAuthApi.login(email, password);
+  const login = useCallback(async (username: string, password: string) => {
+    const data = await adminAuthApi.login(username, password);
+    localStorage.setItem(TOKEN_KEY, data.access_token);
+    localStorage.setItem(USER_KEY, JSON.stringify(data.admin));
+    setAdmin(data.admin);
+  }, []);
+
+  const loginPin = useCallback(async (username: string, pin: string) => {
+    const data = await adminAuthApi.loginPin(username, pin);
     localStorage.setItem(TOKEN_KEY, data.access_token);
     localStorage.setItem(USER_KEY, JSON.stringify(data.admin));
     setAdmin(data.admin);
@@ -66,7 +76,7 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   }, []);
 
   return (
-    <AdminAuthContext.Provider value={{ admin, loading, login, logout, isAuthenticated: !!admin }}>
+    <AdminAuthContext.Provider value={{ admin, loading, login, loginPin, logout, isAuthenticated: !!admin }}>
       {children}
     </AdminAuthContext.Provider>
   );
