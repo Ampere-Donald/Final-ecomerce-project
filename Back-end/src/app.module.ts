@@ -32,6 +32,7 @@ import { DatabaseModule } from './database/database.module';
 import { NewsletterModule } from './newsletter/newsletter.module';
 import { CloudinaryModule } from './cloudinary/cloudinary.module';
 import { BonVenteModule } from './bon-vente/bon-vente.module';
+import { FactureModule } from './facture/facture.module';
 
 @Module({
   imports: [
@@ -71,6 +72,7 @@ import { BonVenteModule } from './bon-vente/bon-vente.module';
     NewsletterModule,
     CloudinaryModule,
     BonVenteModule,
+    FactureModule,
   ],
   controllers: [AppController],
   providers: [AppService],
