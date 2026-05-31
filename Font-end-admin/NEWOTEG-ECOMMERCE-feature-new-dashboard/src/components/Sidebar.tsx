@@ -4,9 +4,8 @@ import {
   LayoutDashboard,
   Package,
   Tags,
-  Layers,
   Activity,
-  ShoppingCart,
+  Globe,
   Truck,
   Users,
   Factory,
@@ -14,18 +13,18 @@ import {
   Landmark,
   AlarmClock,
   Settings,
-  LifeBuoy,
   LogOut,
-  Package2,
-  ClipboardList,
   X,
   Shield,
   Palette,
   UserCog,
   Bell,
   AlertTriangle,
+  ShoppingBag,
+  ListChecks,
+  Receipt,
+  PiggyBank,
 } from 'lucide-react';
-import { motion } from 'motion/react';
 import { useAdminAuth } from '../context/AdminAuthContext';
 import { can } from '../utils/permissions';
 
@@ -34,11 +33,14 @@ interface SidebarProps {
   onClose: () => void;
 }
 
+type Item = { label: string; icon: any; path: string };
+type Group = { label: string; items: Item[] };
+
 export const Sidebar = ({ open, onClose }: SidebarProps) => {
   const { admin, logout } = useAdminAuth();
   const role = admin?.role;
 
-  const adminName = admin?.nom || admin?.email || 'Admin';
+  const adminName = admin?.nom || admin?.username || 'Admin';
   const initials = adminName
     .split(' ')
     .map((w: string) => w[0])
@@ -46,61 +48,86 @@ export const Sidebar = ({ open, onClose }: SidebarProps) => {
     .toUpperCase()
     .slice(0, 2);
 
-  const catalogueItems = [
-    { label: 'Tableau de bord', icon: LayoutDashboard, path: '/' },
-    { label: 'Produits', icon: Package, path: '/produits' },
-    { label: 'Catégories', icon: Tags, path: '/categories' },
-    { label: 'Attributs', icon: Palette, path: '/attributs' },
+  // Helper: ajoute un item si la permission est vraie
+  const add = (cond: boolean, item: Item): Item[] => (cond ? [item] : []);
+
+  const groups: Group[] = [
+    {
+      label: 'Pilotage',
+      items: [
+        ...add(can.accessDashboard(role), { label: 'Tableau de bord', icon: LayoutDashboard, path: '/' }),
+        ...add(can.accessNotificationsPage(role), { label: 'Notifications', icon: Bell, path: '/notifications' }),
+      ],
+    },
+    {
+      label: 'Finance',
+      items: [
+        ...add(can.accessCaisseJour(role), { label: 'Caisse du jour', icon: Wallet, path: '/caisse-jour' }),
+        ...add(can.accessCaisseGlobale(role), { label: 'Caisse globale', icon: Landmark, path: '/caisse' }),
+        ...add(can.accessCoffres(role), { label: 'Coffres', icon: PiggyBank, path: '/coffres' }),
+        ...add(can.accessEcheances(role), { label: 'Échéances', icon: AlarmClock, path: '/echeances' }),
+      ],
+    },
+    {
+      label: 'Boutique',
+      items: [
+        ...add(can.accessPOSVendeur(role), { label: 'Vente en cours', icon: ShoppingBag, path: '/pos' }),
+        ...add(can.accessMesTickets(role), { label: 'Mes tickets', icon: Receipt, path: '/mes-tickets' }),
+        ...add(can.accessFileCaissier(role), { label: "File d'attente", icon: ListChecks, path: '/file-caissier' }),
+      ],
+    },
+    {
+      label: 'E-commerce',
+      items: [
+        ...add(can.accessCommandesEnLigne(role), { label: 'Commandes en ligne', icon: Globe, path: '/orders' }),
+      ],
+    },
+    {
+      label: 'Catalogue',
+      items: [
+        ...add(can.voirProduits(role), { label: 'Produits', icon: Package, path: '/produits' }),
+        ...add(can.modifierProduits(role), { label: 'Catégories', icon: Tags, path: '/categories' }),
+        ...add(can.modifierProduits(role), { label: 'Attributs', icon: Palette, path: '/attributs' }),
+        ...add(can.accessStock(role), { label: 'Mouvements stock', icon: Activity, path: '/stock' }),
+        ...add(can.accessStock(role), { label: 'Alertes stock', icon: AlertTriangle, path: '/stock-alerts' }),
+        ...add(can.accessAchats(role), { label: 'Achats (Réappro)', icon: Truck, path: '/achats' }),
+      ],
+    },
+    {
+      label: 'Relation',
+      items: [
+        ...add(can.accessClients(role), { label: 'Clients', icon: Users, path: '/clients' }),
+        ...add(can.accessFournisseurs(role), { label: 'Fournisseurs', icon: Factory, path: '/fournisseurs' }),
+        ...add(can.accessAccounts(role), { label: 'Comptes Admin', icon: UserCog, path: '/comptes' }),
+        ...add(can.accessRoles(role), { label: 'Rôles', icon: Shield, path: '/roles' }),
+      ],
+    },
+    {
+      label: 'Système',
+      items: [
+        ...add(can.accessParametres(role), { label: 'Paramètres', icon: Settings, path: '/settings' }),
+      ],
+    },
   ];
 
-  const operationItems = [
-    { label: 'Commandes', icon: ClipboardList, path: '/orders' },
-    { label: 'Mouvements Stock', icon: Activity, path: '/stock' },
-    { label: 'Ventes', icon: ShoppingCart, path: '/ventes' },
-    { label: 'Achats (Réappro)', icon: Truck, path: '/achats' },
-    { label: 'Alertes Stock', icon: AlertTriangle, path: '/stock-alerts' },
-  ];
+  const visibleGroups = groups.filter((g) => g.items.length > 0);
 
-  const tiersItems = [
-    { label: 'Clients', icon: Users, path: '/clients' },
-    { label: 'Fournisseurs', icon: Factory, path: '/fournisseurs' },
-  ];
-
-  // Finance items - filtered by role
-  const financeItems = [
-    ...(can.accessCaisse(role) ? [{ label: 'Caisse', icon: Wallet, path: '/caisse' }] : []),
-    ...(can.accessCoffres(role) ? [{ label: 'Coffres', icon: Landmark, path: '/coffres' }] : []),
-    ...(can.accessEcheances(role) ? [{ label: 'Échéances', icon: AlarmClock, path: '/echeances' }] : []),
-    ...(can.accessRoles(role) ? [{ label: 'Rôles', icon: Shield, path: '/roles' }] : []),
-  ];
-
-  // Admin-only items
-  const adminItems = [
-    ...(can.accessAccounts(role) ? [{ label: 'Comptes Admin', icon: UserCog, path: '/comptes' }] : []),
-    ...(can.accessNotificationsPage(role) ? [{ label: 'Notifications', icon: Bell, path: '/notifications' }] : []),
-  ];
-
-  const secondaryItems = [
-    { label: 'Paramètres', icon: Settings, path: '/settings' },
-    { label: 'Support', icon: LifeBuoy, path: '/support' },
-  ];
-
-  const renderNavItems = (items: typeof catalogueItems) =>
-    items.map((item) => (
-      <NavLink
-        key={item.path}
-        to={item.path}
-        onClick={onClose}
-        className={({ isActive }) =>
-          `flex items-center gap-3 px-3 py-2 rounded-lg transition-colors font-medium ${
-            isActive ? 'bg-primary/10 text-primary' : 'text-slate-600 hover:bg-slate-50 hover:text-primary'
-          }`
-        }
-      >
-        <item.icon size={20} />
-        <span>{item.label}</span>
-      </NavLink>
-    ));
+  const renderNavItem = (item: Item) => (
+    <NavLink
+      key={item.path}
+      to={item.path}
+      end={item.path === '/'}
+      onClick={onClose}
+      className={({ isActive }) =>
+        `flex items-center gap-3 px-3 py-2 rounded-lg transition-colors font-medium ${
+          isActive ? 'bg-primary/10 text-primary' : 'text-slate-600 hover:bg-slate-50 hover:text-primary'
+        }`
+      }
+    >
+      <item.icon size={20} />
+      <span>{item.label}</span>
+    </NavLink>
+  );
 
   return (
     <aside className={`
@@ -110,7 +137,6 @@ export const Sidebar = ({ open, onClose }: SidebarProps) => {
       ${open ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
     `}>
       <div className="p-6 border-b border-slate-100 flex items-center gap-3">
-        {/* Bouton fermer visible uniquement sur mobile */}
         <button
           onClick={onClose}
           className="md:hidden absolute right-4 top-4 p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
@@ -124,54 +150,32 @@ export const Sidebar = ({ open, onClose }: SidebarProps) => {
       </div>
 
       <nav className="flex-1 overflow-y-auto p-4 space-y-6">
-
-        {/* CATALOGUE */}
-        <div>
-          <p className="px-3 text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Catalogue</p>
-          <div className="space-y-1">
-            {renderNavItems(catalogueItems)}
+        {visibleGroups.map((g) => (
+          <div key={g.label}>
+            <p className="px-3 text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">
+              {g.label}
+            </p>
+            <div className="space-y-1">{g.items.map(renderNavItem)}</div>
           </div>
-        </div>
-
-        {/* OPERATIONS */}
-        <div>
-          <p className="px-3 text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Opérations</p>
-          <div className="space-y-1">
-            {renderNavItems(operationItems)}
-          </div>
-        </div>
-
-        {/* TIERS & FINANCE */}
-        <div>
-          <p className="px-3 text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Tiers & Finance</p>
-          <div className="space-y-1">
-            {renderNavItems([...tiersItems, ...financeItems])}
-          </div>
-        </div>
-
-        {/* ADMINISTRATION (SUPER_ADMIN only) */}
-        {adminItems.length > 0 && (
-          <div>
-            <p className="px-3 text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Administration</p>
-            <div className="space-y-1">
-              {renderNavItems(adminItems)}
-            </div>
-          </div>
-        )}
-
-        <div className="pt-4 border-t border-slate-100 space-y-1">
-          {renderNavItems(secondaryItems)}
-        </div>
+        ))}
       </nav>
 
       <div className="p-4 border-t border-slate-100">
         <div className="flex items-center gap-3 bg-slate-50 p-2 rounded-xl border border-slate-100">
-          <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold text-sm">
-            {initials}
-          </div>
+          {admin?.photoUrl ? (
+            <img
+              src={admin.photoUrl}
+              alt={adminName}
+              className="w-10 h-10 rounded-full object-cover"
+            />
+          ) : (
+            <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold text-sm">
+              {initials}
+            </div>
+          )}
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold truncate">{adminName}</p>
-            <p className="text-xs text-slate-500">{admin?.role || 'Administrateur'}</p>
+            <p className="text-xs text-slate-500">{role || 'Utilisateur'}</p>
           </div>
           <button
             onClick={logout}
@@ -185,3 +189,4 @@ export const Sidebar = ({ open, onClose }: SidebarProps) => {
     </aside>
   );
 };
+

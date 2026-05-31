@@ -6,10 +6,7 @@ import { AdminLogin } from './components/AdminLogin';
 import { Layout } from './components/Layout';
 import { Dashboard } from './components/Dashboard';
 import { Orders } from './components/Orders';
-import { Invoices } from './components/Invoices';
-import { Addresses } from './components/Addresses';
 import { Settings } from './components/Settings';
-import { Support } from './components/Support';
 import { Produits } from './components/Produits';
 import { Categories } from './components/Categories';
 
@@ -26,6 +23,10 @@ import { Attributs } from './components/Attributs';
 import { AdminAccounts } from './components/AdminAccounts';
 import { NotificationsPage } from './components/NotificationsPage';
 import { StockAlerts } from './components/StockAlerts';
+import { POSVendeur } from './components/POSVendeur';
+import { MesTickets } from './components/MesTickets';
+import { FileCaissier } from './components/FileCaissier';
+import { CaisseJour } from './components/CaisseJour';
 
 export default function App() {
   return (
@@ -36,8 +37,6 @@ export default function App() {
           <Route path="/" element={<AdminProtectedRoute><Layout /></AdminProtectedRoute>}>
             <Route index element={<Dashboard />} />
             <Route path="orders" element={<Orders />} />
-            <Route path="invoices" element={<Invoices />} />
-            <Route path="addresses" element={<Addresses />} />
 
             {/* Nouveaux écrans connectés au backend */}
             <Route path="produits" element={<Produits />} />
@@ -53,14 +52,19 @@ export default function App() {
 
             {/* Routes protégées par rôle */}
             <Route path="caisse" element={<RoleProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN']}><Caisse /></RoleProtectedRoute>} />
+            <Route path="caisse-jour" element={<RoleProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN', 'CAISSIER']}><CaisseJour /></RoleProtectedRoute>} />
             <Route path="coffres" element={<RoleProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN']}><Coffres /></RoleProtectedRoute>} />
             <Route path="echeances" element={<RoleProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN']}><Echeances /></RoleProtectedRoute>} />
             <Route path="roles" element={<RoleProtectedRoute allowedRoles={['SUPER_ADMIN']}><Roles /></RoleProtectedRoute>} />
             <Route path="comptes" element={<RoleProtectedRoute allowedRoles={['SUPER_ADMIN']}><AdminAccounts /></RoleProtectedRoute>} />
-            <Route path="notifications" element={<RoleProtectedRoute allowedRoles={['SUPER_ADMIN']}><NotificationsPage /></RoleProtectedRoute>} />
+            <Route path="notifications" element={<RoleProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN']}><NotificationsPage /></RoleProtectedRoute>} />
+
+            {/* Workflow vendeur ↔ caissier (Phase 3 L4) */}
+            <Route path="pos" element={<RoleProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN', 'VENDEUR']}><POSVendeur /></RoleProtectedRoute>} />
+            <Route path="mes-tickets" element={<RoleProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN', 'VENDEUR']}><MesTickets /></RoleProtectedRoute>} />
+            <Route path="file-caissier" element={<RoleProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN', 'CAISSIER']}><FileCaissier /></RoleProtectedRoute>} />
 
             <Route path="settings" element={<Settings />} />
-            <Route path="support" element={<Support />} />
           </Route>
         </Routes>
       </AdminAuthProvider>

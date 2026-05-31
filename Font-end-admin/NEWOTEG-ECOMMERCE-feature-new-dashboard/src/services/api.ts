@@ -181,6 +181,40 @@ export const coffreApi = {
   cloturer: (id: string, force = false) => api.post(`/coffres/${id}/cloturer`, { force }).then(res => res.data),
 };
 
+// Caisse du jour (session caissier)
+export const caisseJourApi = {
+  aujourdhui: () => api.get('/caisse-jour/aujourdhui').then(res => res.data),
+  historique: (from?: string, to?: string) =>
+    api.get('/caisse-jour', { params: { from, to } }).then(res => res.data),
+  getOne: (id: string) => api.get(`/caisse-jour/${id}`).then(res => res.data),
+  fermer: (id: string, note?: string) =>
+    api.post(`/caisse-jour/${id}/fermer`, { note }).then(res => res.data),
+  addOperation: (
+    id: string,
+    data: { typeOperation: 'ENTREE' | 'SORTIE'; montant: number; motif: string },
+  ) => api.post(`/caisse-jour/${id}/operation`, data).then(res => res.data),
+};
+
+// Tickets de vente (vendeur → caissier)
+export const ticketApi = {
+  create: (data: {
+    clientId?: string;
+    nomClient?: string;
+    telephoneClient?: string;
+    lignes: { produitId: string; quantite: number }[];
+  }) => api.post('/tickets', data).then(res => res.data),
+  enAttente: () => api.get('/tickets/en-attente').then(res => res.data),
+  mesTickets: () => api.get('/tickets/mes-tickets').then(res => res.data),
+  jour: () => api.get('/tickets/jour').then(res => res.data),
+  getOne: (id: string) => api.get(`/tickets/${id}`).then(res => res.data),
+  encaisser: (
+    id: string,
+    methodePaiement: 'ESPECES' | 'CARTE' | 'VIREMENT' | 'MOBILE_MONEY',
+  ) => api.post(`/tickets/${id}/encaisser`, { methodePaiement }).then(res => res.data),
+  annuler: (id: string, motif?: string) =>
+    api.post(`/tickets/${id}/annuler`, { motif }).then(res => res.data),
+};
+
 // Échéances + moteur d'alertes
 export const echeanceApi = {
   getAll: () => api.get('/echeances').then(res => res.data),
