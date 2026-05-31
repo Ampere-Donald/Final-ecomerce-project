@@ -19,6 +19,8 @@ import { VenteModule } from './vente/vente.module';
 import { LigneVenteModule } from './ligne-vente/ligne-vente.module';
 import { MouvementStockModule } from './mouvement-stock/mouvement-stock.module';
 import { CaisseModule } from './caisse/caisse.module';
+import { CaisseJourModule } from './caisse-jour/caisse-jour.module';
+import { TicketVenteModule } from './ticket-vente/ticket-vente.module';
 import { CoffreModule } from './coffre/coffre.module';
 import { EcheanceModule } from './echeance/echeance.module';
 import { RoleModule } from './role/role.module';
@@ -57,6 +59,8 @@ import { CloudinaryModule } from './cloudinary/cloudinary.module';
     LigneVenteModule,
     MouvementStockModule,
     CaisseModule,
+    CaisseJourModule,
+    TicketVenteModule,
     CoffreModule,
     EcheanceModule,
     RoleModule,

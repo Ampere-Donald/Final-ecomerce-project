@@ -147,8 +147,55 @@ model Vente {
   caisses         Caisse[]
   lignesVente     LigneVente[]
   client          Client?         @relation(fields: [clientId], references: [id])
+  ticket          TicketVente?
 
   @@map("vente")
+}
+
+model TicketVente {
+  id              String           @id @default(uuid())
+  numeroTicket    String           @unique @map("numero_ticket") @db.VarChar(20)
+  vendeurId       String           @map("vendeur_id")
+  caissierId      String?          @map("caissier_id")
+  clientId        String?          @map("client_id")
+  nomClient       String?          @map("nom_client") @db.VarChar(150)
+  telephoneClient String?          @map("telephone_client") @db.VarChar(30)
+  montantTotal    Decimal          @map("montant_total") @db.Decimal(12, 2)
+  methodePaiement MethodePaiement? @map("methode_paiement")
+  statut          StatutTicket     @default(EN_ATTENTE)
+  venteId         String?          @unique @map("vente_id")
+  expiresAt       DateTime         @map("expires_at")
+  createdAt       DateTime         @default(now()) @map("created_at")
+  encaisseAt      DateTime?        @map("encaisse_at")
+  annuleAt        DateTime?        @map("annule_at")
+  motifAnnulation String?          @map("motif_annulation") @db.VarChar(255)
+  lignes          LigneTicket[]
+  vente           Vente?           @relation(fields: [venteId], references: [id])
+
+  @@index([statut, expiresAt])
+  @@index([vendeurId, createdAt])
+  @@map("ticket_vente")
+}
+
+model LigneTicket {
+  id           String      @id @default(uuid())
+  ticketId     String      @map("ticket_id")
+  produitId    String      @map("produit_id")
+  nomProduit   String      @map("nom_produit") @db.VarChar(150)
+  quantite     Int
+  prixUnitaire Decimal     @map("prix_unitaire") @db.Decimal(10, 2)
+  sousTotal    Decimal     @map("sous_total") @db.Decimal(12, 2)
+  ticket       TicketVente @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+
+  @@index([ticketId])
+  @@map("ligne_ticket")
+}
+
+enum StatutTicket {
+  EN_ATTENTE
+  ENCAISSE
+  EXPIRE
+  ANNULE
 }
 
 model LigneVente {
@@ -189,6 +236,7 @@ model Caisse {
   achatId       String?       @map("id_achat")
   version       Int           @default(1)
   coffreId          String?       @map("id_coffre")
+  caisseJourId      String?       @map("caisse_jour_id")
   transfertGroupId  String?       @map("transfert_group_id")
   annulee           Boolean       @default(false)
   motifAnnulation   String?       @db.VarChar(255) @map("motif_annulation")
@@ -197,11 +245,35 @@ model Caisse {
   effectueePar      String?       @map("effectuee_par")
   achat         Achat?        @relation(fields: [achatId], references: [id])
   coffre        Coffre?       @relation("CoffreOperations", fields: [coffreId], references: [id])
+  caisseJour    CaisseJour?   @relation("CaisseJourOperations", fields: [caisseJourId], references: [id])
   vente         Vente?        @relation(fields: [venteId], references: [id])
 
   @@index([coffreId])
+  @@index([caisseJourId])
   @@index([transfertGroupId])
   @@map("caisse")
+}
+
+model CaisseJour {
+  id           String           @id @default(uuid())
+  date         DateTime         @unique @db.Date
+  ouvertureAt  DateTime         @map("ouverture_at")
+  fermetureAt  DateTime?        @map("fermeture_at")
+  caissierId   String?          @map("caissier_id")
+  soldeCloture Decimal?         @map("solde_cloture") @db.Decimal(12, 2)
+  statut       StatutCaisseJour @default(OUVERTE)
+  createdAt    DateTime         @default(now()) @map("created_at")
+  updatedAt    DateTime         @updatedAt @map("updated_at")
+  operations   Caisse[]         @relation("CaisseJourOperations")
+
+  @@index([statut])
+  @@index([date])
+  @@map("caisse_jour")
+}
+
+enum StatutCaisseJour {
+  OUVERTE
+  FERMEE
 }
 
 model Coffre {
