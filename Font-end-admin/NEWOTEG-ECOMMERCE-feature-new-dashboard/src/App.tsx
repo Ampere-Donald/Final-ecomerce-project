@@ -27,6 +27,7 @@ import { POSVendeur } from './components/POSVendeur';
 import { MesTickets } from './components/MesTickets';
 import { FileCaissier } from './components/FileCaissier';
 import { CaisseJour } from './components/CaisseJour';
+import { Analyses } from './components/Analyses';
 
 export default function App() {
   return (
@@ -36,6 +37,7 @@ export default function App() {
           <Route path="/login" element={<AdminLogin />} />
           <Route path="/" element={<AdminProtectedRoute><Layout /></AdminProtectedRoute>}>
             <Route index element={<Dashboard />} />
+            <Route path="analyses" element={<RoleProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN']}><Analyses /></RoleProtectedRoute>} />
             <Route path="orders" element={<Orders />} />
 
             {/* Nouveaux écrans connectés au backend */}

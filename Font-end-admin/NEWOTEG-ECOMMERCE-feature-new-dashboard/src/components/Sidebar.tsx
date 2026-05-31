@@ -2,6 +2,7 @@ import React from 'react';
 import { NavLink } from 'react-router-dom';
 import {
   LayoutDashboard,
+  BarChart3,
   Package,
   Tags,
   Activity,
@@ -56,6 +57,7 @@ export const Sidebar = ({ open, onClose }: SidebarProps) => {
       label: 'Pilotage',
       items: [
         ...add(can.accessDashboard(role), { label: 'Tableau de bord', icon: LayoutDashboard, path: '/' }),
+        ...add(can.accessAnalyses(role), { label: 'Analyses', icon: BarChart3, path: '/analyses' }),
         ...add(can.accessNotificationsPage(role), { label: 'Notifications', icon: Bell, path: '/notifications' }),
       ],
     },
