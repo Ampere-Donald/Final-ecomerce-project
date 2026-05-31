@@ -265,6 +265,48 @@ export class AdminAuthService {
     return { message: 'Mot de passe reinitialise avec succes' };
   }
 
+  async toggleActive(id: string, currentAdminId: string, actor: NotificationActor) {
+    if (id === currentAdminId) {
+      throw new ForbiddenException('Vous ne pouvez pas desactiver votre propre compte.');
+    }
+    const admin = await this.db.adminUser.findUnique({ where: { id } });
+    if (!admin) throw new NotFoundException('Compte introuvable');
+
+    const updated = await this.db.adminUser.update({
+      where: { id },
+      data: { isActive: !admin.isActive },
+    });
+
+    this.logger.log(
+      `Admin ${updated.isActive ? 'activated' : 'deactivated'}: ${updated.username} by ${actor.nom}`,
+    );
+    await this.activityLog.log(actor.id, updated.isActive ? 'ADMIN_ACTIVATE' : 'ADMIN_DEACTIVATE', {
+      adminId: updated.id,
+    });
+    await this.notifications.create(
+      'COMPTE_MAJ',
+      `Compte ${updated.nom} ${updated.isActive ? 'reactivé' : 'desactivé'}`,
+      actor,
+    );
+
+    return this.serializeAdmin(updated);
+  }
+
+  async getActivityLog(adminId: string, limit = 50) {
+    const admin = await this.db.adminUser.findUnique({ where: { id: adminId } });
+    if (!admin) throw new NotFoundException('Compte introuvable');
+    return this.activityLog.list(adminId, limit);
+  }
+
+  async getRoleHistory(adminId: string) {
+    const admin = await this.db.adminUser.findUnique({ where: { id: adminId } });
+    if (!admin) throw new NotFoundException('Compte introuvable');
+    return this.db.roleHistory.findMany({
+      where: { adminUserId: adminId },
+      orderBy: { changedAt: 'desc' },
+    });
+  }
+
   async deleteAdmin(id: string, currentAdminId: string, actor: NotificationActor) {
     if (id === currentAdminId) {
       throw new ForbiddenException('Vous ne pouvez pas supprimer votre propre compte.');

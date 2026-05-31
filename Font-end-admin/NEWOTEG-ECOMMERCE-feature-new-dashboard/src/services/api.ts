@@ -250,11 +250,17 @@ export const notificationApi = {
 // Admin Account Management (SUPER_ADMIN only)
 export const adminAccountApi = {
   getAll: () => api.get('/admin-auth/admins').then(res => res.data),
-  create: (data: { email: string; motDePasse: string; nom: string; role: string }) =>
+  create: (data: { email?: string; username?: string; motDePasse?: string; pin?: string; nom: string; role: string; photoUrl?: string }) =>
     api.post('/admin-auth/admins', data).then(res => res.data),
   update: (id: string, data: any) => api.patch(`/admin-auth/admins/${id}`, data).then(res => res.data),
   resetPassword: (id: string, newPassword: string) =>
     api.patch(`/admin-auth/admins/${id}/reset-password`, { newPassword }).then(res => res.data),
+  toggleActive: (id: string) =>
+    api.patch(`/admin-auth/admins/${id}/toggle-active`).then(res => res.data),
+  getActivity: (id: string, limit = 50) =>
+    api.get(`/admin-auth/admins/${id}/activity`, { params: { limit } }).then(res => res.data),
+  getRoleHistory: (id: string) =>
+    api.get(`/admin-auth/admins/${id}/role-history`).then(res => res.data),
   delete: (id: string) => api.delete(`/admin-auth/admins/${id}`).then(res => res.data),
 };
 

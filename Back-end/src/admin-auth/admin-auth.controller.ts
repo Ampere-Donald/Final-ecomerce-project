@@ -7,6 +7,7 @@ import {
   Body,
   Param,
   ParseUUIDPipe,
+  Query,
   UseGuards,
   Request,
 } from '@nestjs/common';
@@ -91,6 +92,31 @@ export class AdminAuthController {
   ) {
     const actor = { id: req.user.id, nom: req.user.nom, role: req.user.role };
     return this.adminAuthService.resetPassword(id, dto.newPassword, actor);
+  }
+
+  @UseGuards(AdminAuthGuard, RolesGuard)
+  @Roles('SUPER_ADMIN')
+  @Patch('admins/:id/toggle-active')
+  toggleActive(@Param('id', ParseUUIDPipe) id: string, @Request() req: any) {
+    const actor = { id: req.user.id, nom: req.user.nom, role: req.user.role };
+    return this.adminAuthService.toggleActive(id, req.user.id, actor);
+  }
+
+  @UseGuards(AdminAuthGuard, RolesGuard)
+  @Roles('SUPER_ADMIN')
+  @Get('admins/:id/activity')
+  getActivity(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Query('limit') limit?: string,
+  ) {
+    return this.adminAuthService.getActivityLog(id, limit ? parseInt(limit, 10) : 50);
+  }
+
+  @UseGuards(AdminAuthGuard, RolesGuard)
+  @Roles('SUPER_ADMIN')
+  @Get('admins/:id/role-history')
+  getRoleHistory(@Param('id', ParseUUIDPipe) id: string) {
+    return this.adminAuthService.getRoleHistory(id);
   }
 
   @UseGuards(AdminAuthGuard, RolesGuard)

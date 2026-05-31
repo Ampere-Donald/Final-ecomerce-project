@@ -100,7 +100,7 @@ export const Sidebar = ({ open, onClose }: SidebarProps) => {
       items: [
         ...add(can.accessClients(role), { label: 'Clients', icon: Users, path: '/clients' }),
         ...add(can.accessFournisseurs(role), { label: 'Fournisseurs', icon: Factory, path: '/fournisseurs' }),
-        ...add(can.accessAccounts(role), { label: 'Comptes Admin', icon: UserCog, path: '/comptes' }),
+        ...add(can.accessEmployes(role), { label: 'Employés', icon: UserCog, path: '/employes' }),
         ...add(can.accessRoles(role), { label: 'Rôles', icon: Shield, path: '/roles' }),
       ],
     },
