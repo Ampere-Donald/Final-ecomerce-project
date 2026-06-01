@@ -234,18 +234,28 @@ export const POSVendeur = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Catalogue produits */}
         <div className="lg:col-span-2 space-y-4">
-          <div className="relative">
-            <Search
-              size={18}
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-            />
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Rechercher un produit ou une marque…"
-              className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
-            />
+          <div className="flex gap-2">
+            <div className="relative flex-1">
+              <Search
+                size={18}
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+              />
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Rechercher un produit ou une marque…"
+                className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
+              />
+            </div>
+            <button
+              onClick={() => ouvrirEquivalents({ query: search.trim() || undefined })}
+              className="flex items-center gap-2 px-4 py-3 bg-violet-600 text-white text-sm font-bold rounded-xl shadow-md shadow-violet-600/20 hover:bg-violet-700 whitespace-nowrap shrink-0"
+              title="Chercher un produit équivalent via l'IA"
+            >
+              <Sparkles size={16} />
+              <span className="hidden sm:inline">Équivalent IA</span>
+            </button>
           </div>
 
           {loading ? (

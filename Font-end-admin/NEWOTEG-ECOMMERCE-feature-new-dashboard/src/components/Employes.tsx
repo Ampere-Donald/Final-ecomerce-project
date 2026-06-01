@@ -17,6 +17,7 @@ import {
   ListChecks,
   AlertCircle,
   CheckCircle2,
+  Trash2,
 } from 'lucide-react';
 import { adminAccountApi } from '../services/api';
 import { useAdminAuth } from '../context/AdminAuthContext';
@@ -273,6 +274,15 @@ export const Employes = () => {
                             title={e.isActive ? 'Désactiver' : 'Réactiver'}
                           >
                             <Power size={14} />
+                          </button>
+                        )}
+                        {!isMe && (
+                          <button
+                            onClick={() => setConfirmDelete(e)}
+                            className="px-2 py-1 text-xs font-medium text-red-500 hover:bg-red-50 rounded"
+                            title="Supprimer"
+                          >
+                            <Trash2 size={14} />
                           </button>
                         )}
                       </div>
