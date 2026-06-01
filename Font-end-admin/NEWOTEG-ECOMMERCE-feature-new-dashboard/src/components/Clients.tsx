@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Search, Mail, Phone, Users, X, MapPin, ShieldCheck, ShieldOff, ShoppingBag, Calendar, Eye, Download } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { clientApi } from '../services/api';
+import { ClientCreditPanel } from './ClientCreditPanel';
 
 /* ── Status badge colors ──────────────────────────────────────── */
 const STATUS_CFG: Record<string, { label: string; bg: string; text: string }> = {
@@ -285,6 +286,12 @@ export const Clients = () => {
                         <p className="text-[11px] font-semibold text-emerald-500">Ventes</p>
                       </div>
                     </div>
+                  </div>
+
+                  {/* Crédit client */}
+                  <div className="p-6 border-b border-slate-100">
+                    <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Crédit</p>
+                    <ClientCreditPanel clientId={selectedClient.id} />
                   </div>
 
                   {/* Recent Orders */}

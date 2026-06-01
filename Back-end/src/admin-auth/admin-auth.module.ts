@@ -7,6 +7,7 @@ import { AdminAuthController } from './admin-auth.controller';
 import { AdminJwtStrategy } from './admin-jwt.strategy';
 import { AdminAuthGuard } from './admin-auth.guard';
 import { RolesGuard } from './roles.guard';
+import { ActivityLogService } from './activity-log.service';
 
 @Module({
   imports: [
@@ -21,7 +22,7 @@ import { RolesGuard } from './roles.guard';
     }),
   ],
   controllers: [AdminAuthController],
-  providers: [AdminAuthService, AdminJwtStrategy, AdminAuthGuard, RolesGuard],
-  exports: [AdminAuthGuard, RolesGuard],
+  providers: [AdminAuthService, AdminJwtStrategy, AdminAuthGuard, RolesGuard, ActivityLogService],
+  exports: [AdminAuthGuard, RolesGuard, ActivityLogService],
 })
 export class AdminAuthModule {}

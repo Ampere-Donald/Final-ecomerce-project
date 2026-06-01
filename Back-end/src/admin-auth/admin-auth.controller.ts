@@ -7,12 +7,12 @@ import {
   Body,
   Param,
   ParseUUIDPipe,
+  Query,
   UseGuards,
   Request,
 } from '@nestjs/common';
-import { AdminRole } from '@prisma/client';
 import { AdminAuthService } from './admin-auth.service';
-import { AdminLoginDto } from './dto/admin-login.dto';
+import { AdminLoginDto, AdminPinLoginDto } from './dto/admin-login.dto';
 import { CreateAdminDto } from './dto/create-admin.dto';
 import { UpdateAdminDto, ResetPasswordDto } from './dto/update-admin.dto';
 import { AdminAuthGuard } from './admin-auth.guard';
@@ -25,7 +25,12 @@ export class AdminAuthController {
 
   @Post('login')
   async login(@Body() dto: AdminLoginDto) {
-    return this.adminAuthService.login(dto.email, dto.motDePasse);
+    return this.adminAuthService.login(dto.username || dto.email || '', dto.motDePasse, dto.pin);
+  }
+
+  @Post('login-pin')
+  async loginPin(@Body() dto: AdminPinLoginDto) {
+    return this.adminAuthService.loginWithPin(dto.username, dto.pin);
   }
 
   @UseGuards(AdminAuthGuard)
@@ -44,8 +49,8 @@ export class AdminAuthController {
   }
 
   @Post('seed')
-  async seed(@Body() body: { email: string; motDePasse: string; nom: string }) {
-    return this.adminAuthService.seedFirstAdmin(body.email, body.motDePasse, body.nom);
+  async seed(@Body() body: { email: string; motDePasse: string; nom: string; username?: string }) {
+    return this.adminAuthService.seedFirstAdmin(body.email, body.motDePasse, body.nom, body.username);
   }
 
   // ── CRUD Comptes Admin (SUPER_ADMIN only) ──────────────────────────────
@@ -91,12 +96,27 @@ export class AdminAuthController {
 
   @UseGuards(AdminAuthGuard, RolesGuard)
   @Roles('SUPER_ADMIN')
-  @Patch(':id/role')
-  changerRole(
+  @Patch('admins/:id/toggle-active')
+  toggleActive(@Param('id', ParseUUIDPipe) id: string, @Request() req: any) {
+    const actor = { id: req.user.id, nom: req.user.nom, role: req.user.role };
+    return this.adminAuthService.toggleActive(id, req.user.id, actor);
+  }
+
+  @UseGuards(AdminAuthGuard, RolesGuard)
+  @Roles('SUPER_ADMIN')
+  @Get('admins/:id/activity')
+  getActivity(
     @Param('id', ParseUUIDPipe) id: string,
-    @Body() body: { role: AdminRole },
+    @Query('limit') limit?: string,
   ) {
-    return this.adminAuthService.changerRole(id, body.role);
+    return this.adminAuthService.getActivityLog(id, limit ? parseInt(limit, 10) : 50);
+  }
+
+  @UseGuards(AdminAuthGuard, RolesGuard)
+  @Roles('SUPER_ADMIN')
+  @Get('admins/:id/role-history')
+  getRoleHistory(@Param('id', ParseUUIDPipe) id: string) {
+    return this.adminAuthService.getRoleHistory(id);
   }
 
   @UseGuards(AdminAuthGuard, RolesGuard)

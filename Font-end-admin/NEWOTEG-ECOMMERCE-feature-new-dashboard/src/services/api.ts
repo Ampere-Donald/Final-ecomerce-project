@@ -29,7 +29,7 @@ api.interceptors.response.use(
       localStorage.removeItem('newoteg_admin_token');
       localStorage.removeItem('newoteg_admin_user');
       if (window.location.pathname !== '/login') {
-        window.location.href = '/login';
+        window.location.href = '/login?expired=1';
       }
     }
     return Promise.reject(err);
@@ -38,8 +38,10 @@ api.interceptors.response.use(
 
 // ── Admin Auth API ───────────────────────────────────────────────────────
 export const adminAuthApi = {
-  login: (email: string, motDePasse: string) =>
-    api.post('/admin-auth/login', { email, motDePasse }).then(res => res.data),
+  login: (username: string, motDePasse: string) =>
+    api.post('/admin-auth/login', { username, motDePasse }).then(res => res.data),
+  loginPin: (username: string, pin: string) =>
+    api.post('/admin-auth/login-pin', { username, pin }).then(res => res.data),
   getMe: () => api.get('/admin-auth/me').then(res => res.data),
   changePassword: (oldPassword: string, newPassword: string) =>
     api.patch('/admin-auth/change-password', { oldPassword, newPassword }).then(res => res.data),
@@ -149,6 +151,20 @@ export const clientApi = {
   getAll: () => api.get('/clients').then(toArray),
   getOne: (id: string) => api.get(`/clients/${id}`).then(res => res.data),
   create: (data: any) => api.post('/clients', data).then(res => res.data),
+  // Crédit clients
+  getCredits: () => api.get('/clients/credits').then(toArray),
+  getEncours: (id: string) => api.get(`/clients/${id}/encours`).then(res => res.data),
+  getClientCredits: (id: string) => api.get(`/clients/${id}/credits`).then(res => res.data),
+};
+
+// Règlements (encaissements partiels sur ventes à crédit)
+export const reglementApi = {
+  create: (data: { venteId: string; montant: number; methodePaiement: string; note?: string }) =>
+    api.post('/reglements', data).then(res => res.data),
+  annuler: (id: string, motif: string) =>
+    api.delete(`/reglements/${id}`, { data: { motif } }).then(res => res.data),
+  byVente: (venteId: string) =>
+    api.get('/reglements', { params: { venteId } }).then(res => res.data),
 };
 
 // Fournisseurs
@@ -177,6 +193,44 @@ export const coffreApi = {
   update: (id: string, data: any) => api.patch(`/coffres/${id}`, data).then(res => res.data),
   sortie: (id: string, data: any) => api.post(`/coffres/${id}/sortie`, data).then(res => res.data),
   cloturer: (id: string, force = false) => api.post(`/coffres/${id}/cloturer`, { force }).then(res => res.data),
+};
+
+// Caisse du jour (session caissier)
+export const caisseJourApi = {
+  aujourdhui: () => api.get('/caisse-jour/aujourdhui').then(res => res.data),
+  historique: (from?: string, to?: string) =>
+    api.get('/caisse-jour', { params: { from, to } }).then(res => res.data),
+  getOne: (id: string) => api.get(`/caisse-jour/${id}`).then(res => res.data),
+  fermer: (id: string, note?: string) =>
+    api.post(`/caisse-jour/${id}/fermer`, { note }).then(res => res.data),
+  addOperation: (
+    id: string,
+    data: { typeOperation: 'ENTREE' | 'SORTIE'; montant: number; motif: string },
+  ) => api.post(`/caisse-jour/${id}/operation`, data).then(res => res.data),
+};
+
+// Tickets de vente (vendeur → caissier)
+export const ticketApi = {
+  create: (data: {
+    clientId?: string;
+    nomClient?: string;
+    telephoneClient?: string;
+    lignes: { produitId: string; quantite: number }[];
+  }) => api.post('/tickets', data).then(res => res.data),
+  enAttente: () => api.get('/tickets/en-attente').then(res => res.data),
+  mesTickets: () => api.get('/tickets/mes-tickets').then(res => res.data),
+  jour: () => api.get('/tickets/jour').then(res => res.data),
+  getOne: (id: string) => api.get(`/tickets/${id}`).then(res => res.data),
+  encaisser: (
+    id: string,
+    methodePaiement: 'ESPECES' | 'CARTE' | 'VIREMENT' | 'MOBILE_MONEY' | 'CREDIT',
+    opts?: { clientId?: string; montantPaye?: number },
+  ) =>
+    api
+      .post(`/tickets/${id}/encaisser`, { methodePaiement, ...opts })
+      .then(res => res.data),
+  annuler: (id: string, motif?: string) =>
+    api.post(`/tickets/${id}/annuler`, { motif }).then(res => res.data),
 };
 
 // Échéances + moteur d'alertes
@@ -214,17 +268,30 @@ export const notificationApi = {
 // Admin Account Management (SUPER_ADMIN only)
 export const adminAccountApi = {
   getAll: () => api.get('/admin-auth/admins').then(res => res.data),
-  create: (data: { email: string; motDePasse: string; nom: string; role: string }) =>
+  create: (data: { email?: string; username?: string; motDePasse?: string; pin?: string; nom: string; role: string; photoUrl?: string }) =>
     api.post('/admin-auth/admins', data).then(res => res.data),
   update: (id: string, data: any) => api.patch(`/admin-auth/admins/${id}`, data).then(res => res.data),
   resetPassword: (id: string, newPassword: string) =>
     api.patch(`/admin-auth/admins/${id}/reset-password`, { newPassword }).then(res => res.data),
+  toggleActive: (id: string) =>
+    api.patch(`/admin-auth/admins/${id}/toggle-active`).then(res => res.data),
+  getActivity: (id: string, limit = 50) =>
+    api.get(`/admin-auth/admins/${id}/activity`, { params: { limit } }).then(res => res.data),
+  getRoleHistory: (id: string) =>
+    api.get(`/admin-auth/admins/${id}/role-history`).then(res => res.data),
   delete: (id: string) => api.delete(`/admin-auth/admins/${id}`).then(res => res.data),
 };
 
 // Search
 export const searchApi = {
   search: (q: string) => api.get('/search', { params: { q } }).then(res => res.data),
+};
+
+// Équivalences (IA Gemini)
+export const equivalenceApi = {
+  suggest: (data: { query?: string; produitId?: string; source?: 'pos' | 'ecommerce'; vendeurId?: string }) =>
+    api.post('/equivalence/suggest', data).then(res => res.data),
+  stats: () => api.get('/equivalence/stats').then(res => res.data),
 };
 
 // Roles

@@ -281,6 +281,7 @@ export class EcheanceService {
 
     let any = false;
     for (const admin of superAdmins) {
+      if (!admin.email) continue;
       const ok = await this.mail.sendMail(admin.email, subject, html);
       any = any || ok;
     }

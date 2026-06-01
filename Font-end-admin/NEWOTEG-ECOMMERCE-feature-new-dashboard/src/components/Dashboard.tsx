@@ -1,926 +1,457 @@
-import { useEffect, useState, useMemo } from 'react';
-import type { ReactNode } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import {
-  TrendingUp,
-  BarChart3,
-  PackageSearch,
-  ArrowUpRight,
-  ArrowDownRight,
-  ShoppingCart,
-  Clock,
-  CheckCircle2,
-  Truck,
-  XCircle,
-  Package,
-  AlertTriangle,
-  Store,
-  Globe,
-  Wallet,
-  Landmark,
-  AlarmClock,
-} from 'lucide-react';
 import { motion } from 'motion/react';
 import {
-  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  PieChart, Pie, Cell, Legend,
-  BarChart, Bar,
-} from 'recharts';
-import { Commande, StatutCommande } from '../types';
-import { venteApi, produitApi, commandeApi, caisseApi, echeanceApi } from '../services/api';
+  Wallet,
+  Landmark,
+  Globe,
+  Receipt,
+  AlarmClock,
+  AlertTriangle,
+  ChevronRight,
+  CheckCircle2,
+  XCircle,
+  Lock,
+  PackageX,
+  BarChart3,
+  HandCoins,
+} from 'lucide-react';
+import {
+  caisseApi,
+  caisseJourApi,
+  commandeApi,
+  ticketApi,
+  echeanceApi,
+  produitApi,
+  clientApi,
+} from '../services/api';
+import { useAdminAuth } from '../context/AdminAuthContext';
+import { can } from '../utils/permissions';
 
-/* ── Period helpers ────────���─────────────────────────────────────── */
-type Period = 'today' | '7d' | '30d' | 'month' | 'quarter';
-
-type VenteDashboard = {
-  dateVente?: string | Date | null;
-  montantTotal?: number | string | null;
-  lignesVente?: Array<{
-    quantite?: number | string | null;
-    produit?: { nomProduit?: string | null } | null;
-  }> | null;
+const fmtFCFA = (n: number | string | null | undefined): string => {
+  const v = typeof n === 'string' ? parseFloat(n) : n ?? 0;
+  return new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 })
+    .format(v || 0)
+    .replace(/\s/g, ' ') + ' FCFA';
 };
 
-type ProduitDashboard = {
-  nomProduit?: string | null;
-  quantiteStock?: number | string | null;
-  seuilAlerte?: number | string | null;
-};
+const fmtDateCourt = (d: string | Date): string =>
+  new Intl.DateTimeFormat('fr-FR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  }).format(new Date(d));
 
-type StockAlertItem = {
-  name: string;
-  count: number;
-  threshold: number;
-  status: 'Rupture' | 'Critique';
-};
-
-type SoldeGlobal = {
-  caissePrincipale: number;
-  coffres: Array<{ id: string; nom: string; solde: number }>;
-  total: number;
-};
-
-type EcheanceAVenir = {
-  id: string;
-  titre: string;
-  dateEcheance: string;
-  recurrence?: string;
-  coffre?: { nom: string } | null;
-};
-
-const daysUntilDate = (value: Date | string | null | undefined): number => {
-  const target = toValidDate(value);
-  if (!target) return 0;
+const daysUntil = (d: string | Date): number => {
+  const target = new Date(d);
   const t = new Date(target.getFullYear(), target.getMonth(), target.getDate()).getTime();
-  const now = new Date();
-  const n = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
-  return Math.round((t - n) / 86_400_000);
+  const n = new Date();
+  const today = new Date(n.getFullYear(), n.getMonth(), n.getDate()).getTime();
+  return Math.round((t - today) / 86_400_000);
 };
 
-const PERIOD_LABELS: Record<Period, string> = {
-  today: "Aujourd'hui",
-  '7d': '7 jours',
-  '30d': '30 jours',
-  month: 'Ce mois',
-  quarter: 'Ce trimestre',
+interface Kpi {
+  icon: any;
+  label: string;
+  value: string;
+  sub?: string;
+  to?: string;
+  color: string;
+}
+
+interface UrgentAction {
+  id: string;
+  icon: any;
+  label: string;
+  detail?: string;
+  to: string;
+  severity: 'rouge' | 'orange' | 'jaune';
+}
+
+const sevClasses: Record<UrgentAction['severity'], string> = {
+  rouge: 'bg-red-50 text-red-700 border-red-200',
+  orange: 'bg-orange-50 text-orange-700 border-orange-200',
+  jaune: 'bg-amber-50 text-amber-700 border-amber-200',
 };
-
-const getPeriodRange = (period: Period): { start: Date; end: Date; prevStart: Date; prevEnd: Date } => {
-  const now = new Date();
-  const end = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
-  let start: Date;
-
-  switch (period) {
-    case 'today': {
-      start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-      break;
-    }
-    case '7d': {
-      start = new Date(end);
-      start.setDate(start.getDate() - 6);
-      start.setHours(0, 0, 0, 0);
-      break;
-    }
-    case '30d': {
-      start = new Date(end);
-      start.setDate(start.getDate() - 29);
-      start.setHours(0, 0, 0, 0);
-      break;
-    }
-    case 'month': {
-      start = new Date(now.getFullYear(), now.getMonth(), 1);
-      break;
-    }
-    case 'quarter': {
-      const qMonth = Math.floor(now.getMonth() / 3) * 3;
-      start = new Date(now.getFullYear(), qMonth, 1);
-      break;
-    }
-  }
-
-  const prevEnd = new Date(start.getTime() - 1);
-  const prevStart = new Date(prevEnd.getTime() - (end.getTime() - start.getTime()));
-
-  return { start, end, prevStart, prevEnd };
-};
-
-const isInRange = (date: Date | string, start: Date, end: Date) => {
-  const d = toValidDate(date);
-  if (!d) return false;
-  return d >= start && d <= end;
-};
-
-const toValidDate = (value: Date | string | null | undefined): Date | null => {
-  if (!value) return null;
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? null : date;
-};
-
-const formatDate = (value: Date | string | null | undefined) => (
-  toValidDate(value)?.toLocaleDateString('fr-FR') ?? '-'
-);
-
-const formatDayKey = (value: Date | string | null | undefined) => (
-  toValidDate(value)?.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' }) ?? null
-);
-
-const toNumber = (value: unknown): number => {
-  if (value === null || value === undefined || value === '') return 0;
-  if (typeof value === 'number') return Number.isFinite(value) ? value : 0;
-  if (typeof value === 'string') {
-    const normalized = value.replace(/\s/g, '').replace(',', '.');
-    const parsed = Number(normalized);
-    return Number.isFinite(parsed) ? parsed : 0;
-  }
-  const parsed = Number(value);
-  return Number.isFinite(parsed) ? parsed : 0;
-};
-
-const toInteger = (value: unknown): number => Math.trunc(toNumber(value));
-
-const formatNumber = (value: number): string => Math.round(toNumber(value)).toLocaleString('fr-FR');
-const formatFCFA = (value: number): string => `${formatNumber(value)} FCFA`;
-
-const getSaleLines = (vente: VenteDashboard) => (
-  Array.isArray(vente.lignesVente) ? vente.lignesVente : []
-);
-
-const getOrderLines = (commande: Commande) => (
-  Array.isArray(commande.lignes) ? commande.lignes : []
-);
-
-const getProductStock = (produit: ProduitDashboard) => toInteger(produit.quantiteStock);
-
-const getProductThreshold = (produit: ProduitDashboard) => {
-  if (produit.seuilAlerte === null || produit.seuilAlerte === undefined || produit.seuilAlerte === '') return 5;
-  return Math.max(0, toInteger(produit.seuilAlerte));
-};
-
-/* ── Order‑status visual map ─────���──────────────────────────────── */
-const STATUS_CFG: Record<StatutCommande, { label: string; bg: string; text: string; dot: string; icon: ReactNode; color: string }> = {
-  EN_ATTENTE:   { label: 'En attente',   bg: 'bg-amber-50',    text: 'text-amber-700',   dot: 'bg-amber-500',   icon: <Clock size={18} />, color: '#f59e0b' },
-  CONFIRMEE:    { label: 'Confirmée',    bg: 'bg-blue-50',     text: 'text-blue-700',    dot: 'bg-blue-500',    icon: <CheckCircle2 size={18} />, color: '#3b82f6' },
-  EN_LIVRAISON: { label: 'En livraison', bg: 'bg-indigo-50',   text: 'text-indigo-700',  dot: 'bg-indigo-500',  icon: <Truck size={18} />, color: '#6366f1' },
-  LIVREE:       { label: 'Livrée',       bg: 'bg-emerald-50',  text: 'text-emerald-700', dot: 'bg-emerald-500', icon: <CheckCircle2 size={18} />, color: '#10b981' },
-  ANNULEE:      { label: 'Annulée',      bg: 'bg-red-50',      text: 'text-red-700',     dot: 'bg-red-500',     icon: <XCircle size={18} />, color: '#ef4444' },
-};
-
-const STATUS_ORDER: StatutCommande[] = ['EN_ATTENTE', 'CONFIRMEE', 'EN_LIVRAISON', 'LIVREE', 'ANNULEE'];
 
 export const Dashboard = () => {
-  const [allVentes, setAllVentes] = useState<VenteDashboard[]>([]);
-  const [allProduits, setAllProduits] = useState<ProduitDashboard[]>([]);
-  const [allCommandes, setAllCommandes] = useState<Commande[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [period, setPeriod] = useState<Period>('30d');
-  const [soldeGlobal, setSoldeGlobal] = useState<SoldeGlobal | null>(null);
-  const [soldeGlobalLoading, setSoldeGlobalLoading] = useState(true);
-  const [soldeGlobalError, setSoldeGlobalError] = useState<string | null>(null);
-  const [echeancesAVenir, setEcheancesAVenir] = useState<EcheanceAVenir[]>([]);
-  const [echeancesLoading, setEcheancesLoading] = useState(true);
+  const { admin } = useAdminAuth();
+  const role = admin?.role;
+  const peutAnalyses = can.accessAnalyses(role);
 
-  // Error states per data source
-  const [venteError, setVenteError] = useState<string | null>(null);
-  const [produitError, setProduitError] = useState<string | null>(null);
-  const [commandeError, setCommandeError] = useState<string | null>(null);
+  const [soldeCaisseJour, setSoldeCaisseJour] = useState<number | null>(null);
+  const [caisseJourFermee, setCaisseJourFermee] = useState(false);
+  const [soldeGlobale, setSoldeGlobale] = useState<number | null>(null);
+  const [nbCommandesEnAttente, setNbCommandesEnAttente] = useState<number | null>(null);
+  const [commandesAnciennes, setCommandesAnciennes] = useState(0);
+  const [nbTicketsAttente, setNbTicketsAttente] = useState<number | null>(null);
+  const [echeancesUrgentes, setEcheancesUrgentes] = useState<any[]>([]);
+  const [echeances7j, setEcheances7j] = useState<any[]>([]);
+  const [produitsRupture, setProduitsRupture] = useState(0);
+  const [encoursTotal, setEncoursTotal] = useState<number | null>(null);
+  const [topDebiteurs, setTopDebiteurs] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      const results = await Promise.allSettled([
-        venteApi.getAll(),
-        produitApi.getAll(),
+    let mounted = true;
+    const charger = async () => {
+      const res = await Promise.allSettled([
+        caisseJourApi.aujourdhui(),
+        caisseApi.soldeGlobal(),
         commandeApi.getAll(),
+        ticketApi.enAttente(),
+        echeanceApi.getAVenir(7),
+        produitApi.getLowStock(),
+        clientApi.getCredits(),
       ]);
+      if (!mounted) return;
 
-      if (results[0].status === 'fulfilled') {
-        setAllVentes(results[0].value);
-        setVenteError(null);
-      } else {
-        setAllVentes([]);
-        setVenteError('Impossible de charger les ventes boutique');
+      if (res[0].status === 'fulfilled') {
+        const cj = res[0].value;
+        setSoldeCaisseJour(cj?.solde ?? 0);
+        setCaisseJourFermee(cj?.statut === 'FERMEE');
       }
-
-      if (results[1].status === 'fulfilled') {
-        setAllProduits(results[1].value);
-        setProduitError(null);
-      } else {
-        setAllProduits([]);
-        setProduitError('Impossible de charger les produits');
+      if (res[1].status === 'fulfilled') {
+        setSoldeGlobale(res[1].value?.total ?? 0);
       }
-
-      if (results[2].status === 'fulfilled') {
-        setAllCommandes(results[2].value);
-        setCommandeError(null);
-      } else {
-        setAllCommandes([]);
-        setCommandeError('Impossible de charger les commandes e-commerce');
+      if (res[2].status === 'fulfilled') {
+        const cmds = res[2].value || [];
+        const enAttente = cmds.filter((c: any) => c.statut === 'EN_ATTENTE');
+        setNbCommandesEnAttente(enAttente.length);
+        const limite = Date.now() - 24 * 3600 * 1000;
+        setCommandesAnciennes(
+          enAttente.filter((c: any) => new Date(c.dateCommande).getTime() < limite).length,
+        );
       }
-
+      if (res[3].status === 'fulfilled') {
+        setNbTicketsAttente((res[3].value || []).length);
+      }
+      if (res[4].status === 'fulfilled') {
+        const list = res[4].value || [];
+        setEcheances7j(list.slice(0, 5));
+        setEcheancesUrgentes(
+          list.filter((e: any) => daysUntil(e.dateEcheance) <= 3),
+        );
+      }
+      if (res[5].status === 'fulfilled') {
+        setProduitsRupture((res[5].value || []).length);
+      }
+      if (res[6].status === 'fulfilled') {
+        const credits = res[6].value || [];
+        setEncoursTotal(credits.reduce((acc: number, c: any) => acc + (c.totalDu || 0), 0));
+        setTopDebiteurs(credits.slice(0, 3));
+      }
       setLoading(false);
     };
-    fetchData();
-  }, []);
-
-  useEffect(() => {
-    const fetchSoldeGlobal = async () => {
-      try {
-        setSoldeGlobalLoading(true);
-        const data = await caisseApi.soldeGlobal();
-        setSoldeGlobal(data);
-        setSoldeGlobalError(null);
-      } catch {
-        setSoldeGlobal(null);
-        setSoldeGlobalError('Impossible de charger la tresorerie');
-      } finally {
-        setSoldeGlobalLoading(false);
-      }
+    charger();
+    const id = setInterval(charger, 30000);
+    return () => {
+      mounted = false;
+      clearInterval(id);
     };
-    fetchSoldeGlobal();
   }, []);
 
-  useEffect(() => {
-    const fetchEcheances = async () => {
-      try {
-        setEcheancesLoading(true);
-        const data = await echeanceApi.getAVenir(30);
-        setEcheancesAVenir(Array.isArray(data) ? data.slice(0, 5) : []);
-      } catch {
-        setEcheancesAVenir([]);
-      } finally {
-        setEcheancesLoading(false);
-      }
-    };
-    fetchEcheances();
-  }, []);
-
-  /* ── Derived data based on period ─────────────────────────────── */
-  const { start, end, prevStart, prevEnd } = useMemo(() => getPeriodRange(period), [period]);
-
-  // Ventes filtered by period
-  const ventesInPeriod = useMemo(() =>
-    allVentes.filter(v => isInRange(v.dateVente, start, end)), [allVentes, start, end]);
-  const ventesInPrev = useMemo(() =>
-    allVentes.filter(v => isInRange(v.dateVente, prevStart, prevEnd)), [allVentes, prevStart, prevEnd]);
-
-  // Commandes filtered by period
-  const commandesInPeriod = useMemo(() =>
-    allCommandes.filter(c => isInRange(c.dateCommande, start, end)), [allCommandes, start, end]);
-  const commandesInPrev = useMemo(() =>
-    allCommandes.filter(c => isInRange(c.dateCommande, prevStart, prevEnd)), [allCommandes, prevStart, prevEnd]);
-
-  // Commandes LIVREE in period (for KPIs)
-  const commandesLivreesInPeriod = useMemo(() =>
-    commandesInPeriod.filter(c => c.statut === 'LIVREE'), [commandesInPeriod]);
-  const commandesLivreesInPrev = useMemo(() =>
-    commandesInPrev.filter(c => c.statut === 'LIVREE'), [commandesInPrev]);
-
-  // ── KPIs: Produits vendus (combined) ──
-  const produitsBoutique = useMemo(() => {
-    let total = 0;
-    for (const v of ventesInPeriod) {
-      for (const lv of getSaleLines(v)) total += toInteger(lv.quantite);
-    }
-    return total;
-  }, [ventesInPeriod]);
-
-  const produitsEcommerce = useMemo(() => {
-    let total = 0;
-    for (const c of commandesLivreesInPeriod) {
-      for (const l of getOrderLines(c)) total += toInteger(l.quantite);
-    }
-    return total;
-  }, [commandesLivreesInPeriod]);
-
-  const produitsSold = produitsBoutique + produitsEcommerce;
-
-  const produitsBoutiquePrev = useMemo(() => {
-    let total = 0;
-    for (const v of ventesInPrev) {
-      for (const lv of getSaleLines(v)) total += toInteger(lv.quantite);
-    }
-    return total;
-  }, [ventesInPrev]);
-
-  const produitsEcommercePrev = useMemo(() => {
-    let total = 0;
-    for (const c of commandesLivreesInPrev) {
-      for (const l of getOrderLines(c)) total += toInteger(l.quantite);
-    }
-    return total;
-  }, [commandesLivreesInPrev]);
-
-  const produitsSoldPrev = produitsBoutiquePrev + produitsEcommercePrev;
-
-  // ── KPIs: Chiffre d'affaires (combined) ──
-  const caBoutique = useMemo(() =>
-    ventesInPeriod.reduce((acc, v) => acc + toNumber(v.montantTotal), 0), [ventesInPeriod]);
-  const caEcommerce = useMemo(() =>
-    commandesLivreesInPeriod.reduce((acc, c) => acc + toNumber(c.montantTotal), 0), [commandesLivreesInPeriod]);
-  const ca = caBoutique + caEcommerce;
-
-  const caBoutiquePrev = useMemo(() =>
-    ventesInPrev.reduce((acc, v) => acc + toNumber(v.montantTotal), 0), [ventesInPrev]);
-  const caEcommercePrev = useMemo(() =>
-    commandesLivreesInPrev.reduce((acc, c) => acc + toNumber(c.montantTotal), 0), [commandesLivreesInPrev]);
-  const caPrev = caBoutiquePrev + caEcommercePrev;
-
-  // Trend calculation
-  const calcTrend = (current: number, previous: number) => {
-    const safeCurrent = toNumber(current);
-    const safePrevious = toNumber(previous);
-    if (safePrevious === 0) return safeCurrent > 0 ? 100 : 0;
-    return Math.round(((safeCurrent - safePrevious) / safePrevious) * 100);
-  };
-
-  const trendProduits = calcTrend(produitsSold, produitsSoldPrev);
-  const trendCA = calcTrend(ca, caPrev);
-
-  // Orders by status (in period)
-  const ordersByStatus = useMemo(() => {
-    const counts: Record<string, number> = {};
-    for (const c of commandesInPeriod) counts[c.statut] = (counts[c.statut] ?? 0) + 1;
-    return counts;
-  }, [commandesInPeriod]);
-
-  // Recent orders (top 5, in period, sorted by date desc)
-  const recentOrders = useMemo(() =>
-    [...commandesInPeriod]
-      .sort((a, b) => toNumber(toValidDate(b.dateCommande)?.getTime()) - toNumber(toValidDate(a.dateCommande)?.getTime()))
-      .slice(0, 5),
-    [commandesInPeriod]
+  const kpis: Kpi[] = useMemo(
+    () => [
+      {
+        icon: Wallet,
+        label: 'Caisse du jour',
+        value: soldeCaisseJour == null ? '…' : fmtFCFA(soldeCaisseJour),
+        sub: caisseJourFermee ? 'Caisse fermée' : 'Session ouverte',
+        to: '/caisse-jour',
+        color: 'text-primary',
+      },
+      {
+        icon: Landmark,
+        label: 'Caisse globale + coffres',
+        value: soldeGlobale == null ? '…' : fmtFCFA(soldeGlobale),
+        sub: 'Trésorerie totale',
+        to: '/caisse',
+        color: 'text-emerald-600',
+      },
+      {
+        icon: Globe,
+        label: 'Commandes en ligne',
+        value: nbCommandesEnAttente == null ? '…' : String(nbCommandesEnAttente),
+        sub: 'en attente',
+        to: '/orders',
+        color: 'text-indigo-600',
+      },
+      {
+        icon: Receipt,
+        label: 'Tickets boutique',
+        value: nbTicketsAttente == null ? '…' : String(nbTicketsAttente),
+        sub: 'à encaisser',
+        to: '/file-caissier',
+        color: 'text-amber-600',
+      },
+    ],
+    [soldeCaisseJour, caisseJourFermee, soldeGlobale, nbCommandesEnAttente, nbTicketsAttente],
   );
 
-  // Stocks (not period-dependent)
-  const totalProducts = allProduits.length;
-  const totalUnits = useMemo(() => allProduits.reduce((sum, p) => sum + getProductStock(p), 0), [allProduits]);
-  const lowStockProducts = useMemo<StockAlertItem[]>(() => {
-    const sorted = [...allProduits].sort((a, b) => getProductStock(a) - getProductStock(b));
-    return sorted.filter(p => getProductStock(p) <= getProductThreshold(p)).map(p => ({
-      name: p.nomProduit || 'Produit sans nom',
-      count: getProductStock(p),
-      threshold: getProductThreshold(p),
-      status: getProductStock(p) <= 0 ? 'Rupture' : 'Critique',
-    }));
-  }, [allProduits]);
-  const lowStockItems = useMemo(() => lowStockProducts.slice(0, 10), [lowStockProducts]);
-
-  /* ── Chart data ───────────────────────────────────────────────── */
-  // CA evolution by day — dual curves
-  const caChartData = useMemo(() => {
-    const boutiqueMap = new Map<string, number>();
-    const ecommerceMap = new Map<string, number>();
-    const allDates: string[] = [];
-
-    // Initialize all days in range
-    const d = new Date(start);
-    while (d <= end) {
-      const key = formatDayKey(d);
-      if (!key) break;
-      boutiqueMap.set(key, 0);
-      ecommerceMap.set(key, 0);
-      allDates.push(key);
-      d.setDate(d.getDate() + 1);
+  const actions: UrgentAction[] = useMemo(() => {
+    const list: UrgentAction[] = [];
+    for (const e of echeancesUrgentes) {
+      const d = daysUntil(e.dateEcheance);
+      list.push({
+        id: `ech-${e.id}`,
+        icon: AlarmClock,
+        label: e.titre,
+        detail:
+          d < 0
+            ? `En retard de ${Math.abs(d)} jour(s)`
+            : d === 0
+              ? "Aujourd'hui"
+              : `Dans ${d} jour(s)`,
+        to: '/echeances',
+        severity: d < 0 ? 'rouge' : d <= 1 ? 'rouge' : 'orange',
+      });
     }
-
-    // Fill boutique data
-    for (const v of ventesInPeriod) {
-      const key = formatDayKey(v.dateVente);
-      if (!key || !boutiqueMap.has(key)) continue;
-      boutiqueMap.set(key, (boutiqueMap.get(key) ?? 0) + toNumber(v.montantTotal));
+    if (commandesAnciennes > 0) {
+      list.push({
+        id: 'cmds-old',
+        icon: Globe,
+        label: `${commandesAnciennes} commande(s) en attente depuis plus de 24h`,
+        to: '/orders',
+        severity: 'orange',
+      });
     }
-
-    // Fill e-commerce data (delivered orders only)
-    for (const c of commandesLivreesInPeriod) {
-      const key = formatDayKey(c.dateCommande);
-      if (!key || !ecommerceMap.has(key)) continue;
-      ecommerceMap.set(key, (ecommerceMap.get(key) ?? 0) + toNumber(c.montantTotal));
+    if (produitsRupture > 0) {
+      list.push({
+        id: 'stock',
+        icon: PackageX,
+        label: `${produitsRupture} produit(s) en rupture ou seuil bas`,
+        to: '/stock-alerts',
+        severity: 'jaune',
+      });
     }
-
-    return allDates.map(date => ({
-      date,
-      boutique: Math.round(boutiqueMap.get(date) ?? 0),
-      ecommerce: Math.round(ecommerceMap.get(date) ?? 0),
-    }));
-  }, [ventesInPeriod, commandesLivreesInPeriod, start, end]);
-  const caChartHasData = useMemo(() =>
-    caChartData.some(d => d.boutique > 0 || d.ecommerce > 0), [caChartData]);
-
-  const totalCoffres = useMemo(() =>
-    soldeGlobal?.coffres?.reduce((sum, coffre) => sum + toNumber(coffre.solde), 0) ?? 0,
-    [soldeGlobal]);
-
-  // Orders by status pie chart
-  const statusPieData = useMemo(() =>
-    STATUS_ORDER.map(s => ({
-      name: STATUS_CFG[s].label,
-      value: ordersByStatus[s] ?? 0,
-      color: STATUS_CFG[s].color,
-    })).filter(d => d.value > 0), [ordersByStatus]);
-
-  // Top 5 products by quantity sold (from ventes boutique)
-  const topProducts = useMemo(() => {
-    const map = new Map<string, number>();
-    for (const v of ventesInPeriod) {
-      for (const lv of getSaleLines(v)) {
-        const qty = toInteger(lv.quantite);
-        if (qty <= 0) continue;
-        const name = lv.produit?.nomProduit || 'Inconnu';
-        map.set(name, (map.get(name) ?? 0) + qty);
-      }
+    if (caisseJourFermee) {
+      list.push({
+        id: 'caisse-fermee',
+        icon: Lock,
+        label: "Caisse du jour fermée",
+        detail: "Une nouvelle session s'ouvrira demain matin",
+        to: '/caisse-jour',
+        severity: 'jaune',
+      });
     }
-    // Also include e-commerce delivered orders
-    for (const c of commandesLivreesInPeriod) {
-      for (const l of getOrderLines(c)) {
-        const qty = toInteger(l.quantite);
-        if (qty <= 0) continue;
-        const name = l.nomProduit || l.produit?.nomProduit || 'Inconnu';
-        map.set(name, (map.get(name) ?? 0) + qty);
-      }
-    }
-    return Array.from(map.entries())
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 5)
-      .map(([name, qty]) => ({ name: name.length > 20 ? name.substring(0, 18) + '\u2026' : name, quantite: qty }));
-  }, [ventesInPeriod, commandesLivreesInPeriod]);
-
-  const TrendBadge = ({ value }: { value: number }) => {
-    if (value === 0) return <span className="text-xs font-bold text-slate-400">&mdash;</span>;
-    const positive = value > 0;
-    return (
-      <span className={`flex items-center text-xs font-bold ${positive ? 'text-emerald-600' : 'text-red-500'}`}>
-        {positive ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />}
-        {positive ? '+' : ''}{value}%
-      </span>
-    );
-  };
-
-  const ErrorBanner = ({ messages }: { messages: string[] }) => {
-    if (messages.length === 0) return null;
-    return (
-      <div className="bg-red-50 border border-red-200 rounded-xl p-4 space-y-1">
-        <div className="flex items-center gap-2 text-red-700 font-semibold text-sm">
-          <AlertTriangle size={16} />
-          Erreur de chargement
-        </div>
-        {messages.map((msg, i) => (
-          <p key={i} className="text-sm text-red-600">{msg}</p>
-        ))}
-      </div>
-    );
-  };
-
-  const errors = [venteError, produitError, commandeError].filter(Boolean) as string[];
+    return list;
+  }, [echeancesUrgentes, commandesAnciennes, produitsRupture, caisseJourFermee]);
 
   return (
-    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-8">
-
-      {/* ═══ Period Selector ═══════════════════════════════════════════ */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="space-y-6"
+    >
+      <div className="flex items-start justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Tableau de bord</h1>
-          <p className="text-sm text-slate-500 mt-1">Vue d'ensemble de votre activit&eacute;</p>
+          <h1 className="text-2xl font-bold text-slate-900">
+            {new Date().getHours() < 12 ? 'Bonjour' : new Date().getHours() < 18 ? 'Bon après-midi' : 'Bonsoir'}{' '}
+            {admin?.nom || 'Administrateur'} 👋
+          </h1>
+          <p className="text-sm text-slate-500 mt-1">
+            Voici l'état de votre activité maintenant.
+          </p>
         </div>
-        <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl">
-          {(Object.keys(PERIOD_LABELS) as Period[]).map(p => (
-            <button
-              key={p}
-              onClick={() => setPeriod(p)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                period === p
-                  ? 'bg-white text-primary shadow-sm'
-                  : 'text-slate-500 hover:text-slate-700'
-              }`}
-            >
-              {PERIOD_LABELS[p]}
-            </button>
-          ))}
-        </div>
+        {peutAnalyses && (
+          <Link
+            to="/analyses"
+            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-primary border border-primary/20 bg-primary/5 rounded-lg hover:bg-primary/10"
+          >
+            <BarChart3 size={16} />
+            Voir les analyses détaillées
+          </Link>
+        )}
       </div>
 
-      {/* ═══ Error Banners ═══════════════════════════════════════════ */}
-      <ErrorBanner messages={errors} />
-
-      {/* ═══ Top KPI Cards ══════════���══════════════════════════════ */}
-      <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Produits vendus */}
-        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-          <div className="flex items-center justify-between mb-4">
-            <div className="p-2 bg-emerald-50 text-emerald-600 rounded-lg"><TrendingUp size={20} /></div>
-            <TrendBadge value={trendProduits} />
-          </div>
-          <p className="text-sm text-slate-500 font-medium">Produits Vendus</p>
-          <p className="text-2xl font-bold text-slate-900 mt-1">{loading ? '...' : formatNumber(produitsSold)} unit&eacute;s</p>
-          <p className="text-xs text-slate-400 mt-1">vs {formatNumber(produitsSoldPrev)} p&eacute;riode pr&eacute;c&eacute;dente</p>
-          {!loading && (produitsBoutique > 0 || produitsEcommerce > 0) && (
-            <div className="flex items-center gap-3 mt-3 pt-3 border-t border-slate-100">
-              <span className="flex items-center gap-1 text-xs text-slate-500">
-                <Store size={12} className="text-indigo-500" /> Boutique: {formatNumber(produitsBoutique)}
-              </span>
-              <span className="flex items-center gap-1 text-xs text-slate-500">
-                <Globe size={12} className="text-emerald-500" /> E-commerce: {formatNumber(produitsEcommerce)}
-              </span>
+      {/* 4 KPIs */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {kpis.map((k) => {
+          const Icon = k.icon;
+          const card = (
+            <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm hover:shadow-md transition-all h-full">
+              <div className="flex items-center justify-between mb-3">
+                <div className={`p-2 rounded-lg bg-slate-50 ${k.color}`}>
+                  <Icon size={20} />
+                </div>
+                {k.to && <ChevronRight size={16} className="text-slate-300" />}
+              </div>
+              <p className="text-xs uppercase tracking-wider font-bold text-slate-400">
+                {k.label}
+              </p>
+              <p className={`text-2xl font-bold mt-1 ${k.color}`}>{k.value}</p>
+              {k.sub && <p className="text-xs text-slate-400 mt-1">{k.sub}</p>}
             </div>
+          );
+          return k.to ? (
+            <Link key={k.label} to={k.to}>
+              {card}
+            </Link>
+          ) : (
+            <div key={k.label}>{card}</div>
+          );
+        })}
+      </div>
+
+      {/* Actions urgentes */}
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm">
+        <div className="flex items-center justify-between p-5 border-b border-slate-100">
+          <div className="flex items-center gap-2">
+            <AlertTriangle size={18} className="text-orange-500" />
+            <h3 className="font-bold text-slate-900">Actions urgentes</h3>
+          </div>
+          {actions.length > 0 && (
+            <span className="text-xs font-bold text-slate-400">
+              {actions.length} à traiter
+            </span>
           )}
         </div>
-
-        {/* CA de la période */}
-        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-          <div className="flex items-center justify-between mb-4">
-            <div className="p-2 bg-blue-50 text-blue-600 rounded-lg"><BarChart3 size={20} /></div>
-            <TrendBadge value={trendCA} />
+        {loading ? (
+          <p className="text-center text-slate-400 py-6 text-sm">Chargement…</p>
+        ) : actions.length === 0 ? (
+          <div className="text-center text-slate-400 py-8">
+            <CheckCircle2 size={32} className="mx-auto mb-2 text-emerald-500 opacity-60" />
+            <p className="text-sm font-medium">Tout est en ordre. Rien à faire pour l'instant.</p>
           </div>
-          <p className="text-sm text-slate-500 font-medium">Chiffre d'Affaires</p>
-          <p className="text-2xl font-bold text-slate-900 mt-1">{loading ? '...' : formatFCFA(ca)}</p>
-          <p className="text-xs text-slate-400 mt-1">vs {formatFCFA(caPrev)} p&eacute;riode pr&eacute;c&eacute;dente</p>
-          {!loading && (caBoutique > 0 || caEcommerce > 0) && (
-            <div className="flex items-center gap-3 mt-3 pt-3 border-t border-slate-100">
-              <span className="flex items-center gap-1 text-xs text-slate-500">
-                <Store size={12} className="text-indigo-500" /> {formatFCFA(caBoutique)}
-              </span>
-              <span className="flex items-center gap-1 text-xs text-slate-500">
-                <Globe size={12} className="text-emerald-500" /> {formatFCFA(caEcommerce)}
-              </span>
-            </div>
-          )}
-        </div>
-      </section>
-
-      {/* ═══ Treasury Card ═══════════════════════════════════ */}
-      <section className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-slate-900 text-white rounded-lg"><Wallet size={20} /></div>
-            <div>
-              <h3 className="font-bold text-lg text-slate-900">Tresorerie : Caisse + Coffres</h3>
-              <p className="text-sm text-slate-500">Argent disponible, distinct du chiffre d'affaires commercial.</p>
-            </div>
-          </div>
-          {soldeGlobalError && <p className="text-sm font-semibold text-red-600">{soldeGlobalError}</p>}
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-5">
-          <div className="bg-slate-50 rounded-xl p-4">
-            <div className="flex items-center gap-2 text-slate-500 mb-2"><Wallet size={16} /></div>
-            <p className="text-xs font-bold uppercase text-slate-400">Solde caisse principale</p>
-            <p className="text-2xl font-black text-slate-900 mt-1">
-              {soldeGlobalLoading ? '...' : formatFCFA(soldeGlobal?.caissePrincipale ?? 0)}
-            </p>
-          </div>
-          <div className="bg-slate-50 rounded-xl p-4">
-            <div className="flex items-center gap-2 text-slate-500 mb-2"><Landmark size={16} /></div>
-            <p className="text-xs font-bold uppercase text-slate-400">Total coffres actifs</p>
-            <p className="text-2xl font-black text-slate-900 mt-1">
-              {soldeGlobalLoading ? '...' : formatFCFA(totalCoffres)}
-            </p>
-          </div>
-          <div className="bg-emerald-50 rounded-xl p-4">
-            <div className="flex items-center gap-2 text-emerald-600 mb-2"><BarChart3 size={16} /></div>
-            <p className="text-xs font-bold uppercase text-emerald-600">Tresorerie totale</p>
-            <p className="text-2xl font-black text-emerald-700 mt-1">
-              {soldeGlobalLoading ? '...' : formatFCFA(soldeGlobal?.total ?? 0)}
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* ═══ Échéances à venir ═══════════════════════════════════════ */}
-      <section className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-orange-50 text-orange-600 rounded-lg"><AlarmClock size={20} /></div>
-            <div>
-              <h3 className="font-bold text-lg text-slate-900">&Eacute;ch&eacute;ances &agrave; venir</h3>
-              <p className="text-sm text-slate-500">Tontines, Advans, salaires et rappels (30 prochains jours)</p>
-            </div>
-          </div>
-          <Link to="/echeances" className="text-sm font-bold text-primary hover:underline underline-offset-4">G&eacute;rer</Link>
-        </div>
-        {echeancesLoading ? (
-          <p className="text-sm text-slate-400">Chargement...</p>
-        ) : echeancesAVenir.length === 0 ? (
-          <p className="text-sm text-slate-400 py-6 text-center">Aucune &eacute;ch&eacute;ance dans les 30 prochains jours.</p>
         ) : (
-          <div className="space-y-2">
-            {echeancesAVenir.map(e => {
-              const d = daysUntilDate(e.dateEcheance);
-              const cls = d < 0 ? 'bg-red-50 text-red-700' : d === 0 ? 'bg-amber-50 text-amber-700' : d <= 3 ? 'bg-orange-50 text-orange-700' : 'bg-emerald-50 text-emerald-700';
+          <ul className="divide-y divide-slate-100">
+            {actions.map((a) => {
+              const Icon = a.icon;
+              return (
+                <li key={a.id}>
+                  <Link
+                    to={a.to}
+                    className="flex items-center gap-3 p-4 hover:bg-slate-50 transition-colors"
+                  >
+                    <div className={`p-2 rounded-lg border ${sevClasses[a.severity]}`}>
+                      <Icon size={16} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-slate-900 truncate">
+                        {a.label}
+                      </p>
+                      {a.detail && (
+                        <p className="text-xs text-slate-500 mt-0.5">{a.detail}</p>
+                      )}
+                    </div>
+                    <ChevronRight size={16} className="text-slate-300" />
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </div>
+
+      {/* Encours clients */}
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm">
+        <div className="flex items-center justify-between p-5 border-b border-slate-100">
+          <div className="flex items-center gap-2">
+            <HandCoins size={18} className="text-primary" />
+            <h3 className="font-bold text-slate-900">Encours clients</h3>
+          </div>
+          <Link to="/credits" className="text-xs font-bold text-primary hover:underline">
+            Tout voir
+          </Link>
+        </div>
+        <div className="p-5 flex items-center justify-between border-b border-slate-100">
+          <span className="text-sm text-slate-500">Total dû par les clients</span>
+          <span className={`text-2xl font-bold ${(encoursTotal ?? 0) > 0 ? 'text-red-600' : 'text-emerald-600'}`}>
+            {encoursTotal == null ? '…' : fmtFCFA(encoursTotal)}
+          </span>
+        </div>
+        {topDebiteurs.length === 0 ? (
+          <div className="text-center text-slate-400 py-6 text-sm">
+            Aucun crédit en cours. Tout est soldé 🎉
+          </div>
+        ) : (
+          <ul className="divide-y divide-slate-100">
+            {topDebiteurs.map((d) => (
+              <li key={d.client?.id}>
+                <Link to="/credits" className="flex items-center justify-between p-4 hover:bg-slate-50 transition-colors">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="size-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xs shrink-0">
+                      {d.client?.nom?.charAt(0).toUpperCase()}
+                    </div>
+                    <p className="text-sm font-medium text-slate-900 truncate">
+                      {d.client?.nom} {d.client?.prenom || ''}
+                    </p>
+                  </div>
+                  <span className="text-sm font-bold text-red-600 whitespace-nowrap">{fmtFCFA(d.totalDu)}</span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
+      {/* Échéances 7 jours */}
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm">
+        <div className="flex items-center justify-between p-5 border-b border-slate-100">
+          <div className="flex items-center gap-2">
+            <AlarmClock size={18} className="text-primary" />
+            <h3 className="font-bold text-slate-900">Échéances — 7 prochains jours</h3>
+          </div>
+          <Link
+            to="/echeances"
+            className="text-xs font-bold text-primary hover:underline"
+          >
+            Tout voir
+          </Link>
+        </div>
+        {echeances7j.length === 0 ? (
+          <div className="text-center text-slate-400 py-8 text-sm">
+            Aucune échéance dans les 7 prochains jours.
+          </div>
+        ) : (
+          <ul className="divide-y divide-slate-100">
+            {echeances7j.map((e: any) => {
+              const d = daysUntil(e.dateEcheance);
+              const cls =
+                d < 0
+                  ? 'bg-red-50 text-red-700'
+                  : d <= 1
+                    ? 'bg-orange-50 text-orange-700'
+                    : 'bg-emerald-50 text-emerald-700';
               const label = d < 0 ? 'En retard' : d === 0 ? "Aujourd'hui" : `Dans ${d} j`;
               return (
-                <div key={e.id} className="flex items-center justify-between py-2 px-3 bg-slate-50 rounded-lg">
+                <li
+                  key={e.id}
+                  className="flex items-center justify-between p-4 hover:bg-slate-50 transition-colors"
+                >
                   <div className="min-w-0">
-                    <p className="text-sm font-medium text-slate-700 truncate">{e.titre}</p>
-                    <p className="text-xs text-slate-400">{formatDate(e.dateEcheance)}{e.coffre ? ` · ${e.coffre.nom}` : ''}</p>
+                    <p className="text-sm font-medium text-slate-900 truncate">
+                      {e.titre}
+                    </p>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      {fmtDateCourt(e.dateEcheance)}
+                      {e.coffre ? ` · ${e.coffre.nom}` : ''}
+                    </p>
                   </div>
-                  <span className={`px-2 py-1 rounded-full text-[10px] font-bold whitespace-nowrap ${cls}`}>{label}</span>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </section>
-
-      {/* ═══ Charts Row ═══════════════════════════════════════════════ */}
-      {!loading && (
-        <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* CA Evolution AreaChart — dual curves */}
-          <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
-            <h3 className="font-bold text-lg text-slate-900 mb-1">&Eacute;volution du CA</h3>
-            <p className="text-sm text-slate-500 mb-4">{PERIOD_LABELS[period]}</p>
-            {caChartHasData ? (
-              <ResponsiveContainer width="100%" height={260}>
-                <AreaChart data={caChartData}>
-                  <defs>
-                    <linearGradient id="caGradBoutique" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#1c19a3" stopOpacity={0.2} />
-                      <stop offset="95%" stopColor="#1c19a3" stopOpacity={0} />
-                    </linearGradient>
-                    <linearGradient id="caGradEcommerce" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.2} />
-                      <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                  <XAxis dataKey="date" tick={{ fontSize: 11, fill: '#94a3b8' }} interval={caChartData.length > 15 ? Math.floor(caChartData.length / 7) : 0} />
-                  <YAxis tick={{ fontSize: 11, fill: '#94a3b8' }} tickFormatter={v => toNumber(v) >= 1000 ? `${Math.round(toNumber(v) / 1000)}k` : formatNumber(toNumber(v))} />
-                  <Tooltip
-                    contentStyle={{ borderRadius: 12, border: '1px solid #e2e8f0', fontSize: 13 }}
-                    formatter={(value: number, name: string) => [
-                      formatFCFA(value),
-                      name === 'boutique' ? 'Boutique' : 'E-commerce',
-                    ]}
-                  />
-                  <Legend
-                    verticalAlign="top"
-                    align="right"
-                    iconType="circle"
-                    iconSize={8}
-                    formatter={(value) => <span className="text-xs text-slate-600">{value === 'boutique' ? 'Boutique' : 'E-commerce'}</span>}
-                  />
-                  <Area type="monotone" dataKey="boutique" stroke="#1c19a3" strokeWidth={2} fill="url(#caGradBoutique)" />
-                  <Area type="monotone" dataKey="ecommerce" stroke="#10b981" strokeWidth={2} fill="url(#caGradEcommerce)" />
-                </AreaChart>
-              </ResponsiveContainer>
-            ) : (
-              <p className="text-sm text-slate-400 py-12 text-center">Aucune donn&eacute;e pour cette p&eacute;riode</p>
-            )}
-          </div>
-
-          {/* Orders by Status PieChart */}
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
-            <h3 className="font-bold text-lg text-slate-900 mb-1">Commandes par statut</h3>
-            <p className="text-sm text-slate-500 mb-4">{commandesInPeriod.length} commande{commandesInPeriod.length !== 1 ? 's' : ''}</p>
-            {statusPieData.length > 0 ? (
-              <ResponsiveContainer width="100%" height={260}>
-                <PieChart>
-                  <Pie
-                    data={statusPieData}
-                    cx="50%"
-                    cy="45%"
-                    innerRadius={50}
-                    outerRadius={80}
-                    paddingAngle={3}
-                    dataKey="value"
+                  <span
+                    className={`px-2 py-1 rounded-full text-xs font-bold whitespace-nowrap ${cls}`}
                   >
-                    {statusPieData.map((entry, i) => (
-                      <Cell key={i} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip
-                    contentStyle={{ borderRadius: 12, border: '1px solid #e2e8f0', fontSize: 13 }}
-                    formatter={(value: number, name: string) => [`${value}`, name]}
-                  />
-                  <Legend
-                    verticalAlign="bottom"
-                    iconType="circle"
-                    iconSize={8}
-                    formatter={(value) => <span className="text-xs text-slate-600">{value}</span>}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
-            ) : (
-              <p className="text-sm text-slate-400 py-12 text-center">Aucune commande</p>
-            )}
-          </div>
-        </section>
-      )}
-
-      {/* ═══ Top Products Bar Chart ═══════════════════════════════════ */}
-      {!loading && (
-        <section className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
-          <h3 className="font-bold text-lg text-slate-900 mb-1">Top Produits Vendus</h3>
-          <p className="text-sm text-slate-500 mb-4">Par quantit&eacute; vendue ({PERIOD_LABELS[period]})</p>
-          {topProducts.length > 0 ? (
-            <ResponsiveContainer width="100%" height={220}>
-              <BarChart data={topProducts} layout="vertical" margin={{ left: 10 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" horizontal={false} />
-                <XAxis type="number" tick={{ fontSize: 11, fill: '#94a3b8' }} />
-                <YAxis type="category" dataKey="name" width={140} tick={{ fontSize: 11, fill: '#475569' }} />
-                <Tooltip
-                  contentStyle={{ borderRadius: 12, border: '1px solid #e2e8f0', fontSize: 13 }}
-                  formatter={(value: number) => [`${formatNumber(value)} unit\u00e9s`, 'Vendus']}
-                />
-                <Bar dataKey="quantite" fill="#1c19a3" radius={[0, 6, 6, 0]} barSize={24} />
-              </BarChart>
-            </ResponsiveContainer>
-          ) : (
-            <p className="text-sm text-slate-400 py-12 text-center">Aucune vente pour cette p&eacute;riode</p>
-          )}
-        </section>
-      )}
-
-      {/* ═══ BIG Commandes Status Breakdown Card ═══════════════════ */}
-      <section className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-indigo-50 text-indigo-600 rounded-lg"><ShoppingCart size={20} /></div>
-            <div>
-              <h3 className="font-bold text-lg text-slate-900">Commandes</h3>
-              <p className="text-sm text-slate-500">{loading ? '...' : `${commandesInPeriod.length} commande${commandesInPeriod.length !== 1 ? 's' : ''} sur la p\u00e9riode`}</p>
-            </div>
-          </div>
-        </div>
-
-        {loading ? (
-          <p className="text-sm text-slate-400">Chargement...</p>
-        ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
-            {STATUS_ORDER.map(s => {
-              const cfg = STATUS_CFG[s];
-              const count = ordersByStatus[s] ?? 0;
-              return (
-                <div key={s} className={`${cfg.bg} rounded-xl p-4 flex flex-col items-center justify-center gap-2 min-h-[100px] transition-transform hover:scale-[1.02]`}>
-                  <div className={`${cfg.text} opacity-80`}>{cfg.icon}</div>
-                  <p className={`text-2xl font-bold ${cfg.text}`}>{count}</p>
-                  <p className={`text-xs font-semibold ${cfg.text} opacity-70`}>{cfg.label}</p>
-                </div>
+                    {label}
+                  </span>
+                </li>
               );
             })}
-          </div>
+          </ul>
         )}
-      </section>
+      </div>
 
-      {/* ═══ Stocks Inventory Card ═════════════════════════════════ */}
-      <section className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-amber-50 text-amber-600 rounded-lg"><PackageSearch size={20} /></div>
-            <div>
-              <h3 className="font-bold text-lg text-slate-900">Inventaire</h3>
-              <p className="text-sm text-slate-500">Stock en temps r&eacute;el</p>
-            </div>
-          </div>
-        </div>
-
-        {loading ? (
-          <p className="text-sm text-slate-400">Chargement...</p>
-        ) : (
-          <div className="space-y-5">
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-              <div className="bg-slate-50 rounded-xl p-4 text-center">
-                <div className="flex items-center justify-center gap-2 mb-2 text-slate-500"><Package size={16} /></div>
-                <p className="text-2xl font-bold text-slate-900">{formatNumber(totalProducts)}</p>
-                <p className="text-xs font-semibold text-slate-500 mt-1">Produits r&eacute;f&eacute;renc&eacute;s</p>
-              </div>
-              <div className="bg-slate-50 rounded-xl p-4 text-center">
-                <div className="flex items-center justify-center gap-2 mb-2 text-slate-500"><PackageSearch size={16} /></div>
-                <p className="text-2xl font-bold text-slate-900">{formatNumber(totalUnits)}</p>
-                <p className="text-xs font-semibold text-slate-500 mt-1">Unit&eacute;s disponibles</p>
-              </div>
-              <div className="bg-red-50 rounded-xl p-4 text-center">
-                <div className="flex items-center justify-center gap-2 mb-2 text-red-400"><XCircle size={16} /></div>
-                <p className="text-2xl font-bold text-red-600">{formatNumber(lowStockProducts.length)}</p>
-                <p className="text-xs font-semibold text-red-500 mt-1">Produits en alerte</p>
-              </div>
-            </div>
-
-            {lowStockItems.length > 0 && (
-              <div>
-                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Alertes Stock Bas</p>
-                <div className="space-y-2">
-                  {lowStockItems.map((item, idx) => (
-                    <div key={idx} className="flex items-center justify-between py-2 px-3 bg-slate-50 rounded-lg">
-                      <p className="text-sm font-medium text-slate-700 truncate max-w-[200px]">{item.name}</p>
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-bold text-slate-900" title={`Seuil: ${formatNumber(item.threshold)}`}>{formatNumber(item.count)}</span>
-                        <span className={`size-2 rounded-full ${item.status === 'Rupture' ? 'bg-red-500' : 'bg-amber-500'}`} />
-                        <span className={`text-[10px] font-bold ${item.status === 'Rupture' ? 'text-red-500' : 'text-amber-500'}`}>{item.status}</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                <Link to="/stock-alerts" className="inline-flex items-center gap-1 text-sm font-bold text-primary hover:underline underline-offset-4 mt-3">
-                  Voir toutes les alertes <ArrowUpRight size={14} />
-                </Link>
-              </div>
-            )}
-          </div>
+      {/* Note minuscule en bas */}
+      <p className="text-center text-xs text-slate-400">
+        Données rafraîchies toutes les 30 secondes.
+        {!peutAnalyses && (
+          <>
+            {' '}
+            <XCircle size={10} className="inline" /> Analyses détaillées non
+            disponibles pour votre rôle.
+          </>
         )}
-      </section>
-
-      {/* ═══ Recent Orders Table ══════════════════════════════════ */}
-      <section className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
-        <div className="p-4 md:p-6 border-b border-slate-100 flex items-center justify-between">
-          <h3 className="font-bold text-lg text-slate-900">Commandes R&eacute;centes</h3>
-        </div>
-
-        {/* ── Table (desktop) ── */}
-        <div className="hidden md:block overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-slate-50 text-slate-500 text-xs font-bold uppercase tracking-wider">
-                <th className="px-6 py-4">N&deg; Suivi</th>
-                <th className="px-6 py-4">Date</th>
-                <th className="px-6 py-4">Client</th>
-                <th className="px-6 py-4">Montant</th>
-                <th className="px-6 py-4">Mode</th>
-                <th className="px-6 py-4">Statut</th>
-                <th className="px-6 py-4 text-right">Action</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {loading ? (
-                <tr><td colSpan={7} className="px-6 py-8 text-center text-slate-500">Chargement...</td></tr>
-              ) : recentOrders.length === 0 ? (
-                <tr><td colSpan={7} className="px-6 py-8 text-center text-slate-500">Aucune commande sur cette p&eacute;riode.</td></tr>
-              ) : (
-                recentOrders.map((order) => {
-                  const st = STATUS_CFG[order.statut] ?? STATUS_CFG.EN_ATTENTE;
-                  return (
-                    <tr key={order.id} className="hover:bg-slate-50 transition-colors group">
-                      <td className="px-6 py-4 font-medium text-primary font-mono text-sm">{order.numeroSuivi}</td>
-                      <td className="px-6 py-4 text-sm text-slate-500">{formatDate(order.dateCommande)}</td>
-                      <td className="px-6 py-4 text-sm text-slate-700">{order.nomClient}</td>
-                      <td className="px-6 py-4 text-sm font-semibold text-slate-900">{formatFCFA(toNumber(order.montantTotal))}</td>
-                      <td className="px-6 py-4 text-sm text-slate-600">{order.modeReception === 'LIVRAISON' ? 'Livraison' : 'Retrait'}</td>
-                      <td className="px-6 py-4">
-                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium ${st.bg} ${st.text}`}>
-                          <span className={`w-1.5 h-1.5 rounded-full ${st.dot}`}></span>
-                          {st.label}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-right">
-                        <Link to="/orders" className="text-sm font-bold text-primary hover:underline underline-offset-4">Voir</Link>
-                      </td>
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
-        </div>
-
-        {/* ── Cards (mobile) ── */}
-        <div className="md:hidden divide-y divide-slate-100">
-          {loading ? (
-            <p className="px-4 py-8 text-center text-slate-500">Chargement...</p>
-          ) : recentOrders.length === 0 ? (
-            <p className="px-4 py-8 text-center text-slate-500">Aucune commande sur cette p&eacute;riode.</p>
-          ) : (
-            recentOrders.map((order) => {
-              const st = STATUS_CFG[order.statut] ?? STATUS_CFG.EN_ATTENTE;
-              return (
-                <div key={order.id} className="p-4 flex flex-col gap-2">
-                  <div className="flex items-center justify-between">
-                    <span className="font-mono font-bold text-primary text-sm">{order.numeroSuivi}</span>
-                    <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium ${st.bg} ${st.text}`}>
-                      <span className={`w-1.5 h-1.5 rounded-full ${st.dot}`}></span>
-                      {st.label}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="font-medium text-slate-700">{order.nomClient}</span>
-                    <span className="font-semibold text-slate-900">{formatFCFA(toNumber(order.montantTotal))}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs text-slate-400">{formatDate(order.dateCommande)} &middot; {order.modeReception === 'LIVRAISON' ? 'Livraison' : 'Retrait'}</span>
-                    <Link to="/orders" className="text-xs font-bold text-primary hover:underline">Voir &rarr;</Link>
-                  </div>
-                </div>
-              );
-            })
-          )}
-        </div>
-      </section>
+      </p>
     </motion.div>
   );
 };

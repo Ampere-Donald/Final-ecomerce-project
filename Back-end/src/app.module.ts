@@ -19,8 +19,12 @@ import { VenteModule } from './vente/vente.module';
 import { LigneVenteModule } from './ligne-vente/ligne-vente.module';
 import { MouvementStockModule } from './mouvement-stock/mouvement-stock.module';
 import { CaisseModule } from './caisse/caisse.module';
+import { CaisseJourModule } from './caisse-jour/caisse-jour.module';
+import { TicketVenteModule } from './ticket-vente/ticket-vente.module';
 import { CoffreModule } from './coffre/coffre.module';
 import { EcheanceModule } from './echeance/echeance.module';
+import { ReglementModule } from './reglement/reglement.module';
+import { EquivalenceModule } from './equivalence/equivalence.module';
 import { RoleModule } from './role/role.module';
 import { CommandeModule } from './commande/commande.module';
 import { NotificationModule } from './notification/notification.module';
@@ -60,8 +64,12 @@ import { PrimeModule } from './prime/prime.module';
     LigneVenteModule,
     MouvementStockModule,
     CaisseModule,
+    CaisseJourModule,
+    TicketVenteModule,
     CoffreModule,
     EcheanceModule,
+    ReglementModule,
+    EquivalenceModule,
     RoleModule,
     CommandeModule,
     NotificationModule,

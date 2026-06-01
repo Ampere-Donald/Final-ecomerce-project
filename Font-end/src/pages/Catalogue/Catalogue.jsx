@@ -3,7 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { SlidersHorizontal, X, ChevronLeft, ChevronRight, Search, LayoutGrid, List } from 'lucide-react';
 import apiClient from '../../utils/apiClient';
-import { resolveImageUrl } from '../../utils/mapProduct';
+import { resolveImageUrl, getProductCode, PLACEHOLDER_IMG } from '../../utils/mapProduct';
 import { useDebounce } from '../../hooks/useDebounce';
 import { useI18n } from '../../context/I18nContext';
 import Footer from '../../components/Footer/Footer';
@@ -47,6 +47,11 @@ const Catalogue = () => {
     const [globalMinPrice, setGlobalMinPrice] = useState(0);
     const [globalMaxPrice, setGlobalMaxPrice] = useState(1000000);
 
+    // Équivalents IA (sur recherche sans résultat)
+    const [equivResults, setEquivResults] = useState([]);
+    const [equivLoading, setEquivLoading] = useState(false);
+    const [equivTried, setEquivTried] = useState(false);
+
     const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' ? window.innerWidth < 1024 : false);
 
     useEffect(() => {
@@ -57,6 +62,41 @@ const Catalogue = () => {
 
     const debouncedSearch = useDebounce(searchQuery, 500);
     const debouncedPrice = useDebounce(priceRange, 500);
+
+    // Réinitialise les équivalents quand la recherche change
+    useEffect(() => {
+        setEquivResults([]);
+        setEquivTried(false);
+    }, [debouncedSearch]);
+
+    const suggestionToCard = (s) => ({
+        id: s.produitId,
+        code: getProductCode(s.produitId),
+        model: s.nomProduit,
+        brand: s.marque,
+        categoryName: s.marque || '',
+        retailPrice: s.prixPromo ?? s.prixDetail ?? 0,
+        wholesalePrice: 0,
+        stock: s.quantiteStock,
+        image: resolveImageUrl(s.imageUrl) || PLACEHOLDER_IMG,
+    });
+
+    const chercherEquivalents = async () => {
+        if (!debouncedSearch) return;
+        setEquivLoading(true);
+        setEquivTried(true);
+        try {
+            const res = await apiClient.post('/equivalence/suggest', {
+                query: debouncedSearch,
+                source: 'ecommerce',
+            });
+            setEquivResults((res.data?.suggestions || []).map(suggestionToCard));
+        } catch {
+            setEquivResults([]);
+        } finally {
+            setEquivLoading(false);
+        }
+    };
 
     // ── Initial Fetch (Categories, Global Price limits) ──
     useEffect(() => {
@@ -418,7 +458,34 @@ const Catalogue = () => {
                                     <button onClick={clearFilters} className="catalogue-empty__btn">
                                         {t('catalogue.clearFilters')}
                                     </button>
+                                    {searchQuery && searchQuery.trim().length >= 2 && !equivTried && (
+                                        <button
+                                            onClick={chercherEquivalents}
+                                            disabled={equivLoading}
+                                            className="catalogue-empty__btn"
+                                            style={{ marginTop: '0.75rem', background: '#7c3aed', color: '#fff' }}
+                                        >
+                                            {equivLoading ? 'Recherche…' : 'Voir des équivalents suggérés'}
+                                        </button>
+                                    )}
                                 </div>
+                            )}
+
+                            {/* Équivalents IA suggérés */}
+                            {equivResults.length > 0 && (
+                                <div style={{ marginTop: '1.5rem' }}>
+                                    <h3 style={{ marginBottom: '1rem' }}>Alternatives recommandées</h3>
+                                    <div className="catalogue-grid">
+                                        {equivResults.map((p) => (
+                                            <ProductCard key={p.code} product={p} />
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                            {equivTried && !equivLoading && equivResults.length === 0 && (
+                                <p style={{ marginTop: '1rem', color: '#94a3b8' }}>
+                                    Aucune alternative trouvée pour cette recherche.
+                                </p>
                             )}
 
                             {/* Pagination */}

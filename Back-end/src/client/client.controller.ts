@@ -29,9 +29,27 @@ export class ClientController {
     return this.clientService.findAll();
   }
 
+  /** Clients ayant un encours (dette en cours). Doit précéder la route :id. */
+  @Get('credits')
+  listCredits() {
+    return this.clientService.listCredits();
+  }
+
   @Get(':id')
   findOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.clientService.findOne(id);
+  }
+
+  /** Encours synthétique d'un client. */
+  @Get(':id/encours')
+  getEncours(@Param('id', ParseUUIDPipe) id: string) {
+    return this.clientService.getEncours(id);
+  }
+
+  /** Détail crédit d'un client (ventes non soldées + articles + règlements). */
+  @Get(':id/credits')
+  getCredits(@Param('id', ParseUUIDPipe) id: string) {
+    return this.clientService.getCredits(id);
   }
 
   @Patch(':id')
