@@ -58,6 +58,7 @@ export const POSVendeur = () => {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [panierMobileOpen, setPanierMobileOpen] = useState(false);
 
   // Équivalents IA
   const [equivOpen, setEquivOpen] = useState(false);
@@ -206,7 +207,7 @@ export const POSVendeur = () => {
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="space-y-6"
+      className={`space-y-6 ${panier.length > 0 ? 'pb-24 lg:pb-0' : ''}`}
     >
       <div className="flex items-center justify-between">
         <div>
@@ -332,8 +333,8 @@ export const POSVendeur = () => {
           )}
         </div>
 
-        {/* Panier */}
-        <div className="space-y-4">
+        {/* Panier (desktop seulement — mobile via barre fixe + drawer) */}
+        <div className="hidden lg:block space-y-4">
           <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
             <h3 className="font-bold text-lg text-slate-900 mb-4 flex items-center gap-2">
               <ShoppingCart size={20} className="text-primary" />
@@ -440,6 +441,93 @@ export const POSVendeur = () => {
           </button>
         </div>
       </div>
+
+      {/* ═══ Barre panier fixe mobile ═══════════════════════════════ */}
+      {panier.length > 0 && (
+        <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-slate-200 shadow-[0_-4px_12px_rgba(0,0,0,0.08)] px-4 py-3">
+          <button
+            onClick={() => setPanierMobileOpen(true)}
+            className="w-full flex items-center justify-between gap-3 px-4 py-3 bg-primary text-white font-bold rounded-xl"
+          >
+            <span className="flex items-center gap-2">
+              <ShoppingCart size={18} />
+              {panier.length} article{panier.length > 1 ? 's' : ''}
+            </span>
+            <span className="text-lg">{fmtFCFA(total)}</span>
+          </button>
+        </div>
+      )}
+
+      {/* ═══ Drawer panier mobile ═════════════════════════════════ */}
+      {panierMobileOpen && (
+        <div
+          className="lg:hidden fixed inset-0 z-50 bg-black/50"
+          onClick={() => setPanierMobileOpen(false)}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="absolute bottom-0 left-0 right-0 bg-white rounded-t-2xl max-h-[85vh] overflow-y-auto"
+          >
+            <div className="flex items-center justify-between p-5 border-b border-slate-100">
+              <h3 className="font-bold text-lg text-slate-900 flex items-center gap-2">
+                <ShoppingCart size={20} className="text-primary" />
+                Panier ({panier.length})
+              </h3>
+              <button onClick={() => setPanierMobileOpen(false)} className="p-1 text-slate-400 hover:text-slate-700">
+                <X size={20} />
+              </button>
+            </div>
+            <div className="p-5 space-y-3">
+              {panier.map((l) => (
+                <div key={l.produitId} className="flex items-center gap-2 pb-3 border-b border-slate-100 last:border-0">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-slate-900 truncate">{l.nomProduit}</p>
+                    <p className="text-xs text-slate-500">{fmtFCFA(l.prix)}</p>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <button onClick={() => changerQuantite(l.produitId, -1)} className="p-1.5 rounded text-slate-400 hover:text-slate-700 hover:bg-slate-100">
+                      <Minus size={14} />
+                    </button>
+                    <span className="w-6 text-center text-sm font-semibold">{l.quantite}</span>
+                    <button onClick={() => changerQuantite(l.produitId, 1)} disabled={l.quantite >= l.stockDispo} className="p-1.5 rounded text-slate-400 hover:text-slate-700 hover:bg-slate-100 disabled:opacity-30">
+                      <Plus size={14} />
+                    </button>
+                  </div>
+                  <button onClick={() => retirerLigne(l.produitId)} className="p-1 text-red-400 hover:text-red-600">
+                    <Trash2 size={14} />
+                  </button>
+                </div>
+              ))}
+            </div>
+            <div className="p-5 border-t border-slate-100 space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-slate-500">Total</span>
+                <span className="text-xl font-bold text-primary">{fmtFCFA(total)}</span>
+              </div>
+              <div className="space-y-2">
+                <div className="relative">
+                  <UserIcon size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <input type="text" value={nomClient} onChange={(e) => setNomClient(e.target.value)} placeholder="Nom du client (optionnel)" maxLength={150}
+                    className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-primary/20 outline-none" />
+                </div>
+                <div className="relative">
+                  <Phone size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <input type="tel" value={telephoneClient} onChange={(e) => setTelephoneClient(e.target.value)} placeholder="Téléphone (optionnel)" maxLength={30}
+                    className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-primary/20 outline-none" />
+                </div>
+              </div>
+              <button
+                onClick={() => { setPanierMobileOpen(false); envoyerAuCaissier(); }}
+                disabled={panier.length === 0 || submitting}
+                className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-primary text-white font-bold rounded-xl shadow-md shadow-primary/20 hover:bg-opacity-90 disabled:opacity-50"
+              >
+                <Send size={18} />
+                {submitting ? 'Envoi…' : 'Envoyer au caissier'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ═══ Modal équivalents IA ═══════════════════════════════════ */}
       {equivOpen && (

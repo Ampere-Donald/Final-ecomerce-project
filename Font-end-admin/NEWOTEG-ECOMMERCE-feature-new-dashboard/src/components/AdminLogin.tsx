@@ -59,8 +59,8 @@ export const AdminLogin: React.FC = () => {
         <section className="grid w-full overflow-hidden rounded-lg border border-slate-200 bg-white shadow-xl lg:grid-cols-[0.95fr_1.05fr]">
           <aside className="hidden bg-slate-950 p-10 text-white lg:flex lg:flex-col lg:justify-between">
             <div>
-              <div className="mb-8 flex h-12 w-12 items-center justify-center rounded-lg bg-blue-600">
-                <ShieldCheck size={28} />
+              <div className="mb-8 flex h-14 w-14 items-center justify-center rounded-xl bg-white/10 p-2">
+                <img src="/logo.png" alt="Newoteg" className="w-full h-full object-contain" />
               </div>
               <p className="text-sm font-semibold uppercase text-blue-200">NEWOTEG Admin</p>
               <h1 className="mt-4 text-4xl font-bold leading-tight">Pilotage boutique et e-commerce</h1>
@@ -86,8 +86,8 @@ export const AdminLogin: React.FC = () => {
 
           <section className="p-6 sm:p-8 lg:p-10">
             <div className="mb-8 lg:hidden">
-              <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-blue-600 text-white">
-                <ShieldCheck size={26} />
+              <div className="mb-4 flex h-14 w-14 items-center justify-center">
+                <img src="/logo.png" alt="Newoteg" className="w-full h-full object-contain" />
               </div>
               <h1 className="text-2xl font-bold">NEWOTEG Admin</h1>
             </div>
