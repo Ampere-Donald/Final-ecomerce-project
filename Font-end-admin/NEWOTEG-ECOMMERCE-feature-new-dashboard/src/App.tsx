@@ -13,6 +13,7 @@ import { Categories } from './components/Categories';
 import { Ventes } from './components/Ventes';
 import { Achats } from './components/Achats';
 import { Clients } from './components/Clients';
+import { CreditsClients } from './components/CreditsClients';
 import { Fournisseurs } from './components/Fournisseurs';
 import { MouvementsStock } from './components/MouvementsStock';
 import { Caisse } from './components/Caisse';
@@ -52,6 +53,7 @@ export default function App() {
             <Route path="ventes" element={<Ventes />} />
             <Route path="achats" element={<Achats />} />
             <Route path="clients" element={<Clients />} />
+            <Route path="credits" element={<RoleProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN', 'CAISSIER']}><CreditsClients /></RoleProtectedRoute>} />
             <Route path="fournisseurs" element={<Fournisseurs />} />
             <Route path="attributs" element={<Attributs />} />
 

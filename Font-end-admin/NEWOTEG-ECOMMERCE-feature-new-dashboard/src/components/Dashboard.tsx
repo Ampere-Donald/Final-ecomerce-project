@@ -14,6 +14,7 @@ import {
   Lock,
   PackageX,
   BarChart3,
+  HandCoins,
 } from 'lucide-react';
 import {
   caisseApi,
@@ -22,6 +23,7 @@ import {
   ticketApi,
   echeanceApi,
   produitApi,
+  clientApi,
 } from '../services/api';
 import { useAdminAuth } from '../context/AdminAuthContext';
 import { can } from '../utils/permissions';
@@ -86,6 +88,8 @@ export const Dashboard = () => {
   const [echeancesUrgentes, setEcheancesUrgentes] = useState<any[]>([]);
   const [echeances7j, setEcheances7j] = useState<any[]>([]);
   const [produitsRupture, setProduitsRupture] = useState(0);
+  const [encoursTotal, setEncoursTotal] = useState<number | null>(null);
+  const [topDebiteurs, setTopDebiteurs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -98,6 +102,7 @@ export const Dashboard = () => {
         ticketApi.enAttente(),
         echeanceApi.getAVenir(7),
         produitApi.getLowStock(),
+        clientApi.getCredits(),
       ]);
       if (!mounted) return;
 
@@ -130,6 +135,11 @@ export const Dashboard = () => {
       }
       if (res[5].status === 'fulfilled') {
         setProduitsRupture((res[5].value || []).length);
+      }
+      if (res[6].status === 'fulfilled') {
+        const credits = res[6].value || [];
+        setEncoursTotal(credits.reduce((acc: number, c: any) => acc + (c.totalDu || 0), 0));
+        setTopDebiteurs(credits.slice(0, 3));
       }
       setLoading(false);
     };
@@ -329,6 +339,48 @@ export const Dashboard = () => {
                 </li>
               );
             })}
+          </ul>
+        )}
+      </div>
+
+      {/* Encours clients */}
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm">
+        <div className="flex items-center justify-between p-5 border-b border-slate-100">
+          <div className="flex items-center gap-2">
+            <HandCoins size={18} className="text-primary" />
+            <h3 className="font-bold text-slate-900">Encours clients</h3>
+          </div>
+          <Link to="/credits" className="text-xs font-bold text-primary hover:underline">
+            Tout voir
+          </Link>
+        </div>
+        <div className="p-5 flex items-center justify-between border-b border-slate-100">
+          <span className="text-sm text-slate-500">Total dû par les clients</span>
+          <span className={`text-2xl font-bold ${(encoursTotal ?? 0) > 0 ? 'text-red-600' : 'text-emerald-600'}`}>
+            {encoursTotal == null ? '…' : fmtFCFA(encoursTotal)}
+          </span>
+        </div>
+        {topDebiteurs.length === 0 ? (
+          <div className="text-center text-slate-400 py-6 text-sm">
+            Aucun crédit en cours. Tout est soldé 🎉
+          </div>
+        ) : (
+          <ul className="divide-y divide-slate-100">
+            {topDebiteurs.map((d) => (
+              <li key={d.client?.id}>
+                <Link to="/credits" className="flex items-center justify-between p-4 hover:bg-slate-50 transition-colors">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="size-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xs shrink-0">
+                      {d.client?.nom?.charAt(0).toUpperCase()}
+                    </div>
+                    <p className="text-sm font-medium text-slate-900 truncate">
+                      {d.client?.nom} {d.client?.prenom || ''}
+                    </p>
+                  </div>
+                  <span className="text-sm font-bold text-red-600 whitespace-nowrap">{fmtFCFA(d.totalDu)}</span>
+                </Link>
+              </li>
+            ))}
           </ul>
         )}
       </div>

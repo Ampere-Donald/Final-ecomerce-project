@@ -141,15 +141,39 @@ model Vente {
   clientId        String?         @map("id_client")
   dateVente       DateTime        @default(now()) @map("date_vente")
   montantTotal    Decimal         @map("montant_total") @db.Decimal(12, 2)
+  montantPaye     Decimal         @default(0) @map("montant_paye") @db.Decimal(12, 2)
   methodePaiement MethodePaiement @map("methode_paiement")
   statutPaiement  StatutPaiement  @default(PAYE) @map("statut_paiement")
   version         Int             @default(1)
   caisses         Caisse[]
   lignesVente     LigneVente[]
+  reglements      Reglement[]
   client          Client?         @relation(fields: [clientId], references: [id])
   ticket          TicketVente?
 
+  @@index([clientId, statutPaiement])
   @@map("vente")
+}
+
+model Reglement {
+  id              String          @id @default(uuid())
+  venteId         String          @map("id_vente")
+  montant         Decimal         @db.Decimal(12, 2)
+  methodePaiement MethodePaiement @map("methode_paiement")
+  dateReglement   DateTime        @default(now()) @map("date_reglement")
+  caissierId      String          @map("caissier_id")
+  caisseJourId    String?         @map("caisse_jour_id")
+  note            String?         @db.VarChar(255)
+  annulee         Boolean         @default(false)
+  motifAnnulation String?         @map("motif_annulation") @db.VarChar(255)
+  annuleeById     String?         @map("annulee_by")
+  annuleeAt       DateTime?       @map("annulee_at")
+  createdAt       DateTime        @default(now()) @map("created_at")
+  vente           Vente           @relation(fields: [venteId], references: [id], onDelete: Cascade)
+  caisses         Caisse[]
+
+  @@index([venteId])
+  @@map("reglement")
 }
 
 model TicketVente {
@@ -234,6 +258,7 @@ model Caisse {
   motif         String        @db.VarChar(255)
   venteId       String?       @map("id_vente")
   achatId       String?       @map("id_achat")
+  reglementId   String?       @map("id_reglement")
   version       Int           @default(1)
   coffreId          String?       @map("id_coffre")
   caisseJourId      String?       @map("caisse_jour_id")
@@ -247,10 +272,12 @@ model Caisse {
   coffre        Coffre?       @relation("CoffreOperations", fields: [coffreId], references: [id])
   caisseJour    CaisseJour?   @relation("CaisseJourOperations", fields: [caisseJourId], references: [id])
   vente         Vente?        @relation(fields: [venteId], references: [id])
+  reglement     Reglement?    @relation(fields: [reglementId], references: [id])
 
   @@index([coffreId])
   @@index([caisseJourId])
   @@index([transfertGroupId])
+  @@index([reglementId])
   @@map("caisse")
 }
 
@@ -429,6 +456,7 @@ enum MethodePaiement {
   CARTE
   VIREMENT
   MOBILE_MONEY
+  CREDIT
 }
 
 enum TypeMouvement {
@@ -509,6 +537,19 @@ model PendingImport {
   createdAt DateTime @default(now()) @map("created_at")
 
   @@map("pending_import")
+}
+
+model SuggestionEquivalence {
+  id               String   @id @default(uuid())
+  query            String   @db.VarChar(255)
+  produitVoulu     String?  @map("produit_voulu")
+  produitsSuggeres Json     @map("produits_suggeres")
+  vendeurId        String?  @map("vendeur_id")
+  source           String   @default("pos") @db.VarChar(20)
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  @@index([createdAt])
+  @@map("suggestion_equivalence")
 }
 
 model AdminUser {

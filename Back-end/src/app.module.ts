@@ -23,6 +23,8 @@ import { CaisseJourModule } from './caisse-jour/caisse-jour.module';
 import { TicketVenteModule } from './ticket-vente/ticket-vente.module';
 import { CoffreModule } from './coffre/coffre.module';
 import { EcheanceModule } from './echeance/echeance.module';
+import { ReglementModule } from './reglement/reglement.module';
+import { EquivalenceModule } from './equivalence/equivalence.module';
 import { RoleModule } from './role/role.module';
 import { CommandeModule } from './commande/commande.module';
 import { NotificationModule } from './notification/notification.module';
@@ -63,6 +65,8 @@ import { CloudinaryModule } from './cloudinary/cloudinary.module';
     TicketVenteModule,
     CoffreModule,
     EcheanceModule,
+    ReglementModule,
+    EquivalenceModule,
     RoleModule,
     CommandeModule,
     NotificationModule,
