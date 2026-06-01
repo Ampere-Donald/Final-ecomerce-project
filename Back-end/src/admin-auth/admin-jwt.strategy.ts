@@ -11,7 +11,11 @@ export class AdminJwtStrategy extends PassportStrategy(Strategy, 'jwt-admin') {
     configService: ConfigService,
   ) {
     super({
-      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+      // SSE (EventSource) ne peut pas envoyer de headers — on accepte aussi ?token=xxx
+      jwtFromRequest: ExtractJwt.fromExtractors([
+        ExtractJwt.fromAuthHeaderAsBearerToken(),
+        ExtractJwt.fromUrlQueryParameter('token'),
+      ]),
       ignoreExpiration: false,
       secretOrKey: configService.getOrThrow<string>('JWT_SECRET'),
     });

@@ -56,9 +56,9 @@ export class FactureService {
       vendeur: { select: { id: true, nom: true, email: true, role: true } },
       caissier: { select: { id: true, nom: true, email: true, role: true } },
       client: true,
-      lignes: true,
-      bon: true,
+      ticket: { include: { lignes: true } },
       vente: true,
+      lignes: true,
     };
   }
 }

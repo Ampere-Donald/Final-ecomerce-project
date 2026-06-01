@@ -27,7 +27,7 @@ export class PrimeService {
     });
 
     return (
-      prime || {
+      prime ?? {
         periode,
         nombreTickets: 0,
         statut: 'EN_COURS',
@@ -68,7 +68,7 @@ export class PrimeService {
     if (!prime) throw new NotFoundException('Prime introuvable');
   }
 
-  private getPeriode(date: Date) {
+  private getPeriode(date: Date): string {
     return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
   }
 }

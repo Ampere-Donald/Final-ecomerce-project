@@ -10,7 +10,6 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import { AdminRole, AdminUser } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
-import { AdminRole } from '@prisma/client';
 import { DatabaseService } from 'src/database/database.service';
 import { NotificationService, NotificationActor } from 'src/notification/notification.service';
 import { ActivityLogService } from './activity-log.service';

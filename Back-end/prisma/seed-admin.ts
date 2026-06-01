@@ -32,9 +32,11 @@ async function main() {
   }
 
   const hashedPassword = await bcrypt.hash(password, 12);
+  const username = (process.env.ADMIN_USERNAME || email.split('@')[0]).toLowerCase().replace(/[^a-z0-9_]/g, '_');
   const admin = await prisma.adminUser.create({
     data: {
       email,
+      username,
       motDePasse: hashedPassword,
       nom,
       role: 'SUPER_ADMIN',
