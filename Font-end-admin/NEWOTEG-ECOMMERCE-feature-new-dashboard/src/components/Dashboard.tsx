@@ -247,7 +247,8 @@ export const Dashboard = () => {
       <div className="flex items-start justify-between flex-wrap gap-3">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">
-            Bonjour {admin?.nom?.split(' ')[0] || ''} 👋
+            {new Date().getHours() < 12 ? 'Bonjour' : new Date().getHours() < 18 ? 'Bon après-midi' : 'Bonsoir'}{' '}
+            {admin?.nom || 'Administrateur'} 👋
           </h1>
           <p className="text-sm text-slate-500 mt-1">
             Voici l'état de votre activité maintenant.

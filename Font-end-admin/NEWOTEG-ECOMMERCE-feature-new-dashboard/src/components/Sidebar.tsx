@@ -182,7 +182,9 @@ export const Sidebar = ({ open, onClose }: SidebarProps) => {
             <p className="text-xs text-slate-500">{role || 'Utilisateur'}</p>
           </div>
           <button
-            onClick={logout}
+            onClick={() => {
+              if (window.confirm('Voulez-vous vraiment vous déconnecter ?')) logout();
+            }}
             title="Se déconnecter"
             className="text-slate-400 hover:text-red-500 transition-colors"
           >
