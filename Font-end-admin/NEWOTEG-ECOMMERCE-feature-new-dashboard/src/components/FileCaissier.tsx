@@ -16,6 +16,7 @@ import {
   UserCheck,
 } from 'lucide-react';
 import { ticketApi, caisseJourApi, clientApi } from '../services/api';
+import { useToast, errorMessage } from './ui/Toast';
 
 type Methode = 'ESPECES' | 'CARTE' | 'VIREMENT' | 'MOBILE_MONEY' | 'CREDIT';
 
@@ -115,6 +116,7 @@ const TicketRow = ({
 };
 
 export const FileCaissier = () => {
+  const toast = useToast();
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -193,7 +195,7 @@ export const FileCaissier = () => {
     if (!selected) return;
     const isCredit = methode === 'CREDIT';
     if (isCredit && !selectedClient) {
-      alert('Sélectionnez un client enregistré pour une vente à crédit.');
+      toast.error('Sélectionnez un client enregistré pour une vente à crédit.');
       return;
     }
     setSubmitting(true);
@@ -205,11 +207,12 @@ export const FileCaissier = () => {
           }
         : undefined;
       await ticketApi.encaisser(selected.id, methode, opts);
+      toast.success(isCredit ? 'Vente à crédit enregistrée.' : 'Encaissement réussi.');
       setSelected(null);
       setMethode('ESPECES');
       await charger();
     } catch (e: any) {
-      alert(e?.response?.data?.message || 'Échec de l\'encaissement');
+      toast.error(errorMessage(e));
     } finally {
       setSubmitting(false);
     }
