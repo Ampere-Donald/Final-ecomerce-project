@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import {
   UserPlus,
   Shield,
+  ShieldCheck,
   ShoppingBag,
   Wallet,
   Users as UsersIcon,
@@ -57,8 +58,8 @@ interface ActivityItem {
 }
 
 const ROLE_META: Record<Role, { label: string; icon: any; color: string }> = {
-  SUPER_ADMIN: { label: 'Super Admin', icon: Shield, color: 'bg-purple-100 text-purple-800' },
-  ADMIN: { label: 'Admin', icon: Shield, color: 'bg-blue-100 text-blue-800' },
+  SUPER_ADMIN: { label: 'Super Admin', icon: ShieldCheck, color: 'bg-purple-100 text-purple-800' },
+  ADMIN: { label: 'Admin', icon: UsersIcon, color: 'bg-blue-100 text-blue-800' },
   CAISSIER: { label: 'Caissier', icon: Wallet, color: 'bg-amber-100 text-amber-800' },
   VENDEUR: { label: 'Vendeur', icon: ShoppingBag, color: 'bg-emerald-100 text-emerald-800' },
   MANAGER: { label: 'Manager (legacy)', icon: UsersIcon, color: 'bg-slate-100 text-slate-700' },
@@ -369,11 +370,10 @@ export const Employes = () => {
 
       <ConfirmDialog
         open={!!confirmDelete}
-        title="Supprimer définitivement ce compte ?"
+        title={`Supprimer le compte "${confirmDelete?.nom}" ?`}
         description="Cette action est irréversible. L'historique de rôles et le journal d'activité seront supprimés."
         confirmLabel="Supprimer définitivement"
         variant="danger"
-        requireType={confirmDelete?.username}
         onClose={() => setConfirmDelete(null)}
         onConfirm={async () => {
           if (!confirmDelete) return;
