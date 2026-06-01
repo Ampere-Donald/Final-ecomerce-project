@@ -11,9 +11,11 @@ import {
   AlertCircle,
   User as UserIcon,
   Phone,
+  Sparkles,
+  X,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { produitApi, ticketApi } from '../services/api';
+import { produitApi, ticketApi, equivalenceApi } from '../services/api';
 
 interface Produit {
   id: string;
@@ -56,6 +58,14 @@ export const POSVendeur = () => {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+
+  // Équivalents IA
+  const [equivOpen, setEquivOpen] = useState(false);
+  const [equivQuery, setEquivQuery] = useState('');
+  const [equivProduitId, setEquivProduitId] = useState<string | null>(null);
+  const [equivLoading, setEquivLoading] = useState(false);
+  const [equivError, setEquivError] = useState<string | null>(null);
+  const [equivResults, setEquivResults] = useState<any[]>([]);
 
   useEffect(() => {
     let mounted = true;
@@ -127,6 +137,46 @@ export const POSVendeur = () => {
     () => panier.reduce((acc, l) => acc + l.prix * l.quantite, 0),
     [panier],
   );
+
+  const ouvrirEquivalents = async (opts: { query?: string; produitId?: string }) => {
+    setEquivOpen(true);
+    setEquivQuery(opts.query ?? '');
+    setEquivProduitId(opts.produitId ?? null);
+    await lancerRechercheEquivalents(opts);
+  };
+
+  const lancerRechercheEquivalents = async (opts: { query?: string; produitId?: string }) => {
+    setEquivLoading(true);
+    setEquivError(null);
+    setEquivResults([]);
+    try {
+      const res = await equivalenceApi.suggest({
+        query: opts.query?.trim() || undefined,
+        produitId: opts.produitId || undefined,
+        source: 'pos',
+      });
+      setEquivResults(res?.suggestions || []);
+      if ((res?.suggestions || []).length === 0) {
+        setEquivError(res?.message || 'Aucun équivalent trouvé pour cette recherche.');
+      }
+    } catch (e: any) {
+      setEquivError(e?.response?.data?.message || 'Service IA momentanément indisponible. Réessayez dans un instant.');
+    } finally {
+      setEquivLoading(false);
+    }
+  };
+
+  const ajouterSuggestion = (s: any) => {
+    ajouterAuPanier({
+      id: s.produitId,
+      nomProduit: s.nomProduit,
+      marque: s.marque,
+      prixDetail: s.prixDetail,
+      prixPromo: s.prixPromo,
+      quantiteStock: s.quantiteStock,
+      imageUrl: s.imageUrl,
+    });
+  };
 
   const envoyerAuCaissier = async () => {
     if (panier.length === 0) return;
@@ -200,8 +250,17 @@ export const POSVendeur = () => {
           {loading ? (
             <div className="text-center text-slate-400 py-12">Chargement…</div>
           ) : produitsFiltres.length === 0 ? (
-            <div className="text-center text-slate-400 py-12">
-              Aucun produit trouvé.
+            <div className="text-center py-12 space-y-3">
+              <p className="text-slate-400">Aucun produit trouvé.</p>
+              {search.trim().length >= 2 && (
+                <button
+                  onClick={() => ouvrirEquivalents({ query: search })}
+                  className="inline-flex items-center gap-2 px-4 py-2.5 bg-violet-600 text-white text-sm font-bold rounded-xl shadow-md shadow-violet-600/20 hover:bg-violet-700"
+                >
+                  <Sparkles size={16} />
+                  Chercher un équivalent (IA)
+                </button>
+              )}
             </div>
           ) : (
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
@@ -209,17 +268,8 @@ export const POSVendeur = () => {
                 const prix = p.prixPromo ?? p.prixDetail ?? 0;
                 const enRupture = p.quantiteStock <= 0;
                 const img = resolveImgUrl(p.imageUrl);
-                return (
-                  <button
-                    key={p.id}
-                    onClick={() => ajouterAuPanier(p)}
-                    disabled={enRupture}
-                    className={`group bg-white rounded-xl border border-slate-200 p-3 text-left transition-all ${
-                      enRupture
-                        ? 'opacity-50 cursor-not-allowed'
-                        : 'hover:border-primary/40 hover:shadow-md'
-                    }`}
-                  >
+                const contenu = (
+                  <>
                     <div className="w-full aspect-square bg-slate-50 rounded-lg overflow-hidden mb-2 flex items-center justify-center">
                       {img ? (
                         <img
@@ -247,6 +297,34 @@ export const POSVendeur = () => {
                     >
                       {enRupture ? 'Rupture' : `Stock : ${p.quantiteStock}`}
                     </p>
+                  </>
+                );
+
+                if (enRupture) {
+                  return (
+                    <div
+                      key={p.id}
+                      className="group bg-white rounded-xl border border-slate-200 p-3 text-left"
+                    >
+                      <div className="opacity-50">{contenu}</div>
+                      <button
+                        onClick={() => ouvrirEquivalents({ query: p.nomProduit, produitId: p.id })}
+                        className="mt-2 w-full flex items-center justify-center gap-1.5 px-2 py-1.5 bg-violet-50 text-violet-700 text-xs font-bold rounded-lg hover:bg-violet-100"
+                      >
+                        <Sparkles size={13} />
+                        Équivalent (IA)
+                      </button>
+                    </div>
+                  );
+                }
+
+                return (
+                  <button
+                    key={p.id}
+                    onClick={() => ajouterAuPanier(p)}
+                    className="group bg-white rounded-xl border border-slate-200 p-3 text-left transition-all hover:border-primary/40 hover:shadow-md"
+                  >
+                    {contenu}
                   </button>
                 );
               })}
@@ -362,6 +440,106 @@ export const POSVendeur = () => {
           </button>
         </div>
       </div>
+
+      {/* ═══ Modal équivalents IA ═══════════════════════════════════ */}
+      {equivOpen && (
+        <div
+          className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4"
+          onClick={() => setEquivOpen(false)}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="bg-white rounded-2xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-hidden flex flex-col"
+          >
+            <div className="flex items-center justify-between p-5 border-b border-slate-100">
+              <h3 className="font-bold text-lg text-slate-900 flex items-center gap-2">
+                <Sparkles size={18} className="text-violet-600" />
+                Équivalents suggérés
+              </h3>
+              <button onClick={() => setEquivOpen(false)} className="p-1 text-slate-400 hover:text-slate-700">
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="p-5 border-b border-slate-100">
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={equivQuery}
+                  onChange={(e) => setEquivQuery(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter')
+                      lancerRechercheEquivalents({ query: equivQuery, produitId: equivProduitId || undefined });
+                  }}
+                  placeholder="Ex. condensateur 12µF 450V"
+                  className="flex-1 px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 outline-none"
+                />
+                <button
+                  onClick={() => lancerRechercheEquivalents({ query: equivQuery, produitId: equivProduitId || undefined })}
+                  disabled={equivLoading}
+                  className="px-4 py-2 bg-violet-600 text-white text-sm font-bold rounded-lg hover:bg-violet-700 disabled:opacity-50"
+                >
+                  {equivLoading ? '…' : 'Chercher'}
+                </button>
+              </div>
+              <p className="text-[11px] text-slate-400 mt-2">
+                Suggestions assistées par IA — à valider par le vendeur avant proposition au client.
+              </p>
+            </div>
+
+            <div className="p-5 overflow-y-auto flex-1 space-y-3">
+              {equivLoading ? (
+                <div className="text-center text-slate-400 py-8">Recherche en cours…</div>
+              ) : equivError ? (
+                <div className="flex items-center gap-2 p-3 rounded-lg bg-amber-50 text-amber-700 border border-amber-200 text-sm">
+                  <AlertCircle size={16} />
+                  {equivError}
+                </div>
+              ) : (
+                equivResults.map((s) => {
+                  const prix = s.prixPromo ?? s.prixDetail ?? 0;
+                  const compatCfg: Record<string, string> = {
+                    haute: 'bg-emerald-100 text-emerald-700',
+                    moyenne: 'bg-amber-100 text-amber-700',
+                    faible: 'bg-red-100 text-red-700',
+                  };
+                  return (
+                    <div key={s.produitId} className="rounded-xl border border-slate-200 p-3">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0">
+                          <p className="font-semibold text-sm text-slate-900">{s.nomProduit}</p>
+                          {s.marque && <p className="text-xs text-slate-500">{s.marque}</p>}
+                        </div>
+                        <span className={`shrink-0 px-2 py-0.5 rounded-full text-[10px] font-bold ${compatCfg[s.compatibilite] || compatCfg.moyenne}`}>
+                          {s.compatibilite}
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-600 mt-1.5">{s.raison}</p>
+                      {s.avertissement && (
+                        <p className="text-[11px] text-amber-600 mt-1 flex items-start gap-1">
+                          <AlertCircle size={12} className="mt-0.5 shrink-0" /> {s.avertissement}
+                        </p>
+                      )}
+                      <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-100">
+                        <div className="text-xs text-slate-500">
+                          <span className="font-bold text-primary">{fmtFCFA(prix)}</span> · Stock : {s.quantiteStock}
+                        </div>
+                        <button
+                          onClick={() => ajouterSuggestion(s)}
+                          disabled={s.quantiteStock <= 0}
+                          className="flex items-center gap-1.5 px-3 py-1.5 bg-primary text-white text-xs font-bold rounded-lg hover:bg-opacity-90 disabled:opacity-50"
+                        >
+                          <Plus size={13} /> Ajouter
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </motion.div>
   );
 };

@@ -4,7 +4,7 @@ import { Helmet } from 'react-helmet-async';
 import { ChevronRight, ShoppingCart, CheckCircle2, Truck, FileText, Package, Plus, Minus, ShieldCheck, Box, Heart } from 'lucide-react';
 import apiClient from '../../utils/apiClient';
 import { formatFCFA } from '../../utils/formatFCFA';
-import { mapProduct } from '../../utils/mapProduct';
+import { mapProduct, resolveImageUrl, PLACEHOLDER_IMG } from '../../utils/mapProduct';
 import { useCart } from '../../context/CartContext';
 import { useFavorites } from '../../context/FavoritesContext';
 import { useI18n } from '../../context/I18nContext';
@@ -24,6 +24,8 @@ const ProductDetails = () => {
     const [relatedProducts, setRelatedProducts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [touchStartX, setTouchStartX] = useState(null);
+    const [equivalents, setEquivalents] = useState([]);
+    const [equivLoading, setEquivLoading] = useState(false);
 
     useEffect(() => {
         const fetchProduct = async () => {
@@ -60,6 +62,25 @@ const ProductDetails = () => {
         };
         fetchProduct();
     }, [id]);
+
+    // Rupture de stock → proposer des équivalents (IA)
+    useEffect(() => {
+        if (!product || product.stock > 0) {
+            setEquivalents([]);
+            return;
+        }
+        let active = true;
+        setEquivLoading(true);
+        apiClient
+            .post('/equivalence/suggest', { produitId: product.id, source: 'ecommerce' })
+            .then((res) => {
+                if (!active) return;
+                setEquivalents(res.data?.suggestions || []);
+            })
+            .catch(() => active && setEquivalents([]))
+            .finally(() => active && setEquivLoading(false));
+        return () => { active = false; };
+    }, [product]);
 
     if (loading) {
         return (
@@ -351,6 +372,54 @@ const ProductDetails = () => {
                     </div >
                 </div >
             </section >
+
+            {/* ── Produits équivalents (rupture) ──────── */}
+            {
+                isOutOfStock && (equivLoading || equivalents.length > 0) && (
+                    <section className="product-details__related">
+                        <div className="container">
+                            <h2 className="product-details__related-title">Alternatives recommandées</h2>
+                            {equivLoading ? (
+                                <p style={{ color: '#94a3b8', padding: '1rem 0' }}>Recherche d’alternatives…</p>
+                            ) : (
+                                <div className="product-details__related-grid">
+                                    {equivalents.map((s) => {
+                                        const prix = s.prixPromo ?? s.prixDetail ?? 0;
+                                        const img = resolveImageUrl(s.imageUrl) || PLACEHOLDER_IMG;
+                                        const alt = {
+                                            id: s.produitId,
+                                            model: s.nomProduit,
+                                            brand: s.marque,
+                                            retailPrice: prix,
+                                            image: img,
+                                            stock: s.quantiteStock,
+                                            categoryName: s.marque || '',
+                                        };
+                                        return (
+                                            <Link to={`/product/${s.produitId}`} key={s.produitId} className="product-card-light">
+                                                <div className="product-card-light__image">
+                                                    <img src={img} alt={s.nomProduit} loading="lazy" />
+                                                </div>
+                                                <div className="product-card-light__body">
+                                                    <h3 className="product-card-light__name">{s.nomProduit}</h3>
+                                                    <p className="product-card-light__desc">{s.raison}</p>
+                                                    <div className="product-card-light__bottom">
+                                                        <span className="product-card-light__price">{formatFCFA(prix)}</span>
+                                                        <button
+                                                            className="product-card-light__add"
+                                                            onClick={(e) => { e.preventDefault(); addToCart(alt, 1); }}
+                                                        >+</button>
+                                                    </div>
+                                                </div>
+                                            </Link>
+                                        );
+                                    })}
+                                </div>
+                            )}
+                        </div>
+                    </section>
+                )
+            }
 
             {/* ── Related Products (Frequently Bought) ──────── */}
             {

@@ -149,11 +149,17 @@ export class TicketVenteService {
   /**
    * Encaisse un ticket : crée la vente, l'opération caisse du jour, décrémente
    * le stock. Atomique via Prisma $transaction.
+   *
+   * Pour un encaissement à CRÉDIT : un client enregistré est obligatoire ; un
+   * acompte facultatif est tracé comme premier règlement (cohérent avec le
+   * recalcul de montantPaye côté ReglementService). Seul l'acompte entre en
+   * caisse (rien si l'acompte est nul).
    */
   async encaisser(
     ticketId: string,
     caissierId: string,
     methodePaiement: MethodePaiement,
+    options: { clientId?: string; montantPaye?: number } = {},
   ) {
     const ticket = await this.findOne(ticketId);
     if (ticket.statut !== 'EN_ATTENTE') {
@@ -170,6 +176,34 @@ export class TicketVenteService {
       throw new BadRequestException('Ce ticket a expiré.');
     }
 
+    const isCredit = methodePaiement === 'CREDIT';
+    const clientId = options.clientId ?? ticket.clientId ?? null;
+    const montantTotal = this.toNumber(ticket.montantTotal);
+
+    if (isCredit && !clientId) {
+      throw new BadRequestException(
+        'Une vente à crédit exige un client enregistré.',
+      );
+    }
+
+    // Montant effectivement encaissé (acompte pour le crédit, total sinon)
+    let montantPaye = montantTotal;
+    if (isCredit) {
+      const acompte = this.toNumber(options.montantPaye ?? 0);
+      if (acompte < 0 || acompte > montantTotal) {
+        throw new BadRequestException(
+          `Acompte invalide (entre 0 et ${montantTotal} FCFA).`,
+        );
+      }
+      montantPaye = acompte;
+    }
+    const statutPaiement =
+      montantPaye >= montantTotal
+        ? 'PAYE'
+        : montantPaye > 0
+          ? 'PARTIEL'
+          : 'NON_PAYE';
+
     const cj = await this.caisseJour.getOrCreateToday(caissierId);
     if (cj.statut === 'FERMEE') {
       throw new BadRequestException(
@@ -181,10 +215,11 @@ export class TicketVenteService {
       // 1. Créer la vente + lignes
       const vente = await tx.vente.create({
         data: {
-          clientId: ticket.clientId ?? null,
+          clientId,
           montantTotal: ticket.montantTotal,
+          montantPaye,
           methodePaiement,
-          statutPaiement: 'PAYE',
+          statutPaiement,
           lignesVente: {
             create: ticket.lignes.map((l) => ({
               produitId: l.produitId,
@@ -212,24 +247,46 @@ export class TicketVenteService {
         });
       }
 
-      // 3. Opération caisse du jour
-      await tx.caisse.create({
-        data: {
-          typeOperation: 'ENTREE',
-          montant: ticket.montantTotal,
-          motif: `Encaissement ticket ${ticket.numeroTicket}`,
-          venteId: vente.id,
-          caisseJourId: cj.id,
-          effectueePar: caissierId,
-        },
-      });
+      // 3. Pour le crédit : tracer l'acompte comme premier règlement
+      let reglementId: string | null = null;
+      if (isCredit && montantPaye > 0) {
+        const reglement = await tx.reglement.create({
+          data: {
+            venteId: vente.id,
+            montant: montantPaye,
+            methodePaiement: 'ESPECES', // acompte versé au comptoir
+            caissierId,
+            caisseJourId: cj.id,
+            note: `Acompte à la vente — ticket ${ticket.numeroTicket}`,
+          },
+        });
+        reglementId = reglement.id;
+      }
 
-      // 4. Mettre à jour le ticket
+      // 4. Opération caisse du jour (uniquement l'argent réellement reçu)
+      if (montantPaye > 0) {
+        await tx.caisse.create({
+          data: {
+            typeOperation: 'ENTREE',
+            montant: montantPaye,
+            motif: isCredit
+              ? `Acompte ticket ${ticket.numeroTicket}`
+              : `Encaissement ticket ${ticket.numeroTicket}`,
+            venteId: vente.id,
+            reglementId,
+            caisseJourId: cj.id,
+            effectueePar: caissierId,
+          },
+        });
+      }
+
+      // 5. Mettre à jour le ticket
       const updated = await tx.ticketVente.update({
         where: { id: ticketId },
         data: {
           statut: 'ENCAISSE',
           caissierId,
+          clientId,
           methodePaiement,
           venteId: vente.id,
           encaisseAt: new Date(),
@@ -243,7 +300,9 @@ export class TicketVenteService {
     this.notifications
       .create(
         'VENTE_CREEE',
-        `Ticket ${ticket.numeroTicket} encaissé — ${ticket.montantTotal} FCFA (${methodePaiement})`,
+        isCredit
+          ? `Ticket ${ticket.numeroTicket} à crédit — ${montantTotal} FCFA (acompte ${montantPaye})`
+          : `Ticket ${ticket.numeroTicket} encaissé — ${montantTotal} FCFA (${methodePaiement})`,
       )
       .catch(() => {});
 

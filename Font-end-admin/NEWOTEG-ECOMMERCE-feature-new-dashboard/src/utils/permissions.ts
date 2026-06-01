@@ -42,6 +42,8 @@ export const can = {
 
   // ── Relation ────────────────────────────────────────────────
   accessClients: (r?: string) => isAdmin(r) || isVendeur(r),
+  accessCredits: (r?: string) => isAdmin(r) || isCaissier(r),
+  enregistrerReglement: (r?: string) => isAdmin(r) || isCaissier(r),
   accessFournisseurs: (r?: string) => isAdmin(r),
   accessEmployes: (r?: string) => isSuper(r),
 

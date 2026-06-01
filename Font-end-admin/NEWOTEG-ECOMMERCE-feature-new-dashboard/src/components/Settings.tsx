@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion } from 'motion/react';
-import { User, Bell, Shield, Wallet, Globe, Smartphone, CheckCircle2, AlertCircle, Eye, EyeOff } from 'lucide-react';
+import { User, Bell, Shield, Wallet, Globe, Smartphone, CheckCircle2, AlertCircle, Eye, EyeOff, Sparkles } from 'lucide-react';
 import { useAdminAuth } from '../context/AdminAuthContext';
-import { adminAuthApi } from '../services/api';
+import { adminAuthApi, equivalenceApi } from '../services/api';
 
-type Tab = 'profile' | 'security';
+type Tab = 'profile' | 'security' | 'ia';
 
 export const Settings = () => {
   const { admin } = useAdminAuth();
@@ -18,6 +18,14 @@ export const Settings = () => {
   const [showNew, setShowNew] = useState(false);
   const [pwLoading, setPwLoading] = useState(false);
   const [pwMessage, setPwMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
+  // Statistiques IA (équivalences)
+  const [iaStats, setIaStats] = useState<{ configured: boolean; appelsJour: number; appelsMois: number } | null>(null);
+
+  useEffect(() => {
+    if (activeTab !== 'ia') return;
+    equivalenceApi.stats().then(setIaStats).catch(() => setIaStats(null));
+  }, [activeTab]);
 
   const adminName = admin?.nom || 'Admin';
   const initials = adminName
@@ -58,6 +66,7 @@ export const Settings = () => {
   const tabs = [
     { key: 'profile' as Tab, label: 'Infos Profil', icon: User },
     { key: 'security' as Tab, label: 'Sécurité', icon: Shield },
+    { key: 'ia' as Tab, label: 'IA & Équivalences', icon: Sparkles },
   ];
 
   const inputClass = 'w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all';
@@ -231,6 +240,54 @@ export const Settings = () => {
                   {pwLoading ? 'Modification...' : 'Mettre à jour le mot de passe'}
                 </button>
               </form>
+            </div>
+          )}
+
+          {/* IA & Équivalences Tab */}
+          {activeTab === 'ia' && (
+            <div className="bg-white rounded-2xl border border-slate-200 p-8 shadow-sm">
+              <h3 className="font-bold text-lg mb-1 text-slate-900 flex items-center gap-2">
+                <Sparkles size={18} className="text-violet-600" />
+                Équivalences assistées par IA
+              </h3>
+              <p className="text-sm text-slate-500 mb-6">
+                Suggestions de pièces équivalentes (Gemini, free tier). Surveillez la consommation du quota gratuit.
+              </p>
+
+              {iaStats == null ? (
+                <p className="text-sm text-slate-400">Chargement…</p>
+              ) : (
+                <div className="space-y-5">
+                  <div
+                    className={`flex items-center gap-2 p-3 rounded-lg text-sm border ${
+                      iaStats.configured
+                        ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                        : 'bg-amber-50 text-amber-700 border-amber-200'
+                    }`}
+                  >
+                    {iaStats.configured ? <CheckCircle2 size={16} /> : <AlertCircle size={16} />}
+                    {iaStats.configured
+                      ? 'Service IA configuré (clé GEMINI_API_KEY présente).'
+                      : 'Clé GEMINI_API_KEY manquante — les suggestions sont indisponibles.'}
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="bg-slate-50 rounded-xl p-5 text-center">
+                      <p className="text-3xl font-bold text-violet-600">{iaStats.appelsJour}</p>
+                      <p className="text-xs font-semibold text-slate-500 mt-1">Recherches aujourd'hui</p>
+                    </div>
+                    <div className="bg-slate-50 rounded-xl p-5 text-center">
+                      <p className="text-3xl font-bold text-violet-600">{iaStats.appelsMois}</p>
+                      <p className="text-xs font-semibold text-slate-500 mt-1">Recherches ce mois-ci</p>
+                    </div>
+                  </div>
+
+                  <p className="text-xs text-slate-400">
+                    Le free tier Gemini Flash autorise environ 1 500 requêtes/jour. Au-delà, les suggestions renvoient
+                    un message d'indisponibilité temporaire.
+                  </p>
+                </div>
+              )}
             </div>
           )}
         </div>

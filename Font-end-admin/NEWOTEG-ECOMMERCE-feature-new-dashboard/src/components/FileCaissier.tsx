@@ -11,10 +11,13 @@ import {
   Smartphone,
   Building2,
   Wallet,
+  HandCoins,
+  Search,
+  UserCheck,
 } from 'lucide-react';
-import { ticketApi, caisseJourApi } from '../services/api';
+import { ticketApi, caisseJourApi, clientApi } from '../services/api';
 
-type Methode = 'ESPECES' | 'CARTE' | 'VIREMENT' | 'MOBILE_MONEY';
+type Methode = 'ESPECES' | 'CARTE' | 'VIREMENT' | 'MOBILE_MONEY' | 'CREDIT';
 
 interface LigneTicket {
   id: string;
@@ -48,6 +51,7 @@ const methodes: { value: Methode; label: string; icon: any }[] = [
   { value: 'MOBILE_MONEY', label: 'Mobile Money', icon: Smartphone },
   { value: 'CARTE', label: 'Carte bancaire', icon: CreditCard },
   { value: 'VIREMENT', label: 'Virement', icon: Building2 },
+  { value: 'CREDIT', label: 'Crédit (à payer)', icon: HandCoins },
 ];
 
 const useCountdown = (expiresAt: string) => {
@@ -119,6 +123,13 @@ export const FileCaissier = () => {
   const [submitting, setSubmitting] = useState(false);
   const [caisseJour, setCaisseJour] = useState<{ id: string; statut: string; solde: number } | null>(null);
 
+  // Crédit : sélection du client enregistré + acompte
+  const [clients, setClients] = useState<any[]>([]);
+  const [clientSearch, setClientSearch] = useState('');
+  const [selectedClient, setSelectedClient] = useState<any>(null);
+  const [clientEncours, setClientEncours] = useState<number | null>(null);
+  const [acompte, setAcompte] = useState('');
+
   const charger = async () => {
     setError(null);
     try {
@@ -141,11 +152,59 @@ export const FileCaissier = () => {
     return () => clearInterval(id);
   }, []);
 
+  // Charge la liste des clients (pour les ventes à crédit)
+  useEffect(() => {
+    clientApi.getAll().then((data) => setClients(data || [])).catch(() => {});
+  }, []);
+
+  // Réinitialise la sélection client quand on ouvre/ferme un ticket ou change de méthode
+  useEffect(() => {
+    setSelectedClient(null);
+    setClientEncours(null);
+    setClientSearch('');
+    setAcompte('');
+  }, [selected, methode]);
+
+  // Encours du client choisi (informatif)
+  useEffect(() => {
+    if (!selectedClient) {
+      setClientEncours(null);
+      return;
+    }
+    clientApi
+      .getEncours(selectedClient.id)
+      .then((e) => setClientEncours(e?.totalDu ?? 0))
+      .catch(() => setClientEncours(null));
+  }, [selectedClient]);
+
+  const clientsFiltres = useMemo(() => {
+    const q = clientSearch.trim().toLowerCase();
+    if (!q) return clients.slice(0, 6);
+    return clients
+      .filter(
+        (c) =>
+          `${c.nom} ${c.prenom || ''}`.toLowerCase().includes(q) ||
+          (c.telephone || '').includes(q),
+      )
+      .slice(0, 6);
+  }, [clients, clientSearch]);
+
   const handleEncaisser = async () => {
     if (!selected) return;
+    const isCredit = methode === 'CREDIT';
+    if (isCredit && !selectedClient) {
+      alert('Sélectionnez un client enregistré pour une vente à crédit.');
+      return;
+    }
     setSubmitting(true);
     try {
-      await ticketApi.encaisser(selected.id, methode);
+      const opts = isCredit
+        ? {
+            clientId: selectedClient.id,
+            montantPaye: acompte ? Math.max(0, parseFloat(acompte)) : 0,
+          }
+        : undefined;
+      await ticketApi.encaisser(selected.id, methode, opts);
       setSelected(null);
       setMethode('ESPECES');
       await charger();
@@ -316,6 +375,87 @@ export const FileCaissier = () => {
                     })}
                   </div>
                 </div>
+
+                {/* Vente à crédit : client enregistré obligatoire + acompte */}
+                {methode === 'CREDIT' && (
+                  <div className="space-y-3 rounded-xl border border-amber-200 bg-amber-50/60 p-3">
+                    <p className="text-sm font-semibold text-amber-800">
+                      Client (obligatoire pour le crédit)
+                    </p>
+
+                    {selectedClient ? (
+                      <div className="flex items-center justify-between gap-2 bg-white rounded-lg border border-slate-200 p-2.5">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <UserCheck size={16} className="text-emerald-600 shrink-0" />
+                          <div className="min-w-0">
+                            <p className="text-sm font-bold text-slate-900 truncate">
+                              {selectedClient.nom} {selectedClient.prenom || ''}
+                            </p>
+                            {clientEncours != null && clientEncours > 0 && (
+                              <p className="text-xs text-red-600 font-semibold">
+                                Doit déjà : {fmtFCFA(clientEncours)}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => setSelectedClient(null)}
+                          className="text-xs font-bold text-primary hover:underline shrink-0"
+                        >
+                          Changer
+                        </button>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="relative">
+                          <Search size={15} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                          <input
+                            type="text"
+                            value={clientSearch}
+                            onChange={(e) => setClientSearch(e.target.value)}
+                            placeholder="Rechercher un client (nom, téléphone)…"
+                            className="w-full pl-8 pr-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-primary/20 outline-none"
+                          />
+                        </div>
+                        <div className="max-h-40 overflow-y-auto space-y-1">
+                          {clientsFiltres.length === 0 ? (
+                            <p className="text-xs text-slate-400 py-2 text-center">Aucun client trouvé.</p>
+                          ) : (
+                            clientsFiltres.map((c) => (
+                              <button
+                                key={c.id}
+                                onClick={() => setSelectedClient(c)}
+                                className="w-full flex items-center justify-between gap-2 px-2.5 py-2 bg-white rounded-lg border border-slate-200 text-left hover:border-primary/40"
+                              >
+                                <span className="text-sm font-medium text-slate-800 truncate">
+                                  {c.nom} {c.prenom || ''}
+                                </span>
+                                <span className="text-xs text-slate-400 shrink-0">{c.telephone || ''}</span>
+                              </button>
+                            ))
+                          )}
+                        </div>
+                      </>
+                    )}
+
+                    <div>
+                      <label className="block text-xs font-semibold text-amber-800 mb-1">
+                        Acompte versé maintenant (optionnel)
+                      </label>
+                      <input
+                        type="number"
+                        value={acompte}
+                        onChange={(e) => setAcompte(e.target.value)}
+                        min={0}
+                        placeholder="0"
+                        className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-primary/20 outline-none"
+                      />
+                      <p className="text-[11px] text-slate-500 mt-1">
+                        Laissez vide si le client ne paie rien aujourd'hui.
+                      </p>
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="p-5 border-t border-slate-100 flex gap-2">
@@ -328,11 +468,15 @@ export const FileCaissier = () => {
                 </button>
                 <button
                   onClick={handleEncaisser}
-                  disabled={submitting}
-                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-primary text-white font-bold rounded-lg hover:bg-opacity-90 disabled:opacity-50"
+                  disabled={submitting || (methode === 'CREDIT' && !selectedClient)}
+                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-primary text-white font-bold rounded-lg hover:bg-opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <CheckCircle2 size={16} />
-                  {submitting ? 'Encaissement…' : 'Encaisser'}
+                  {submitting
+                    ? 'Traitement…'
+                    : methode === 'CREDIT'
+                      ? 'Valider à crédit'
+                      : 'Encaisser'}
                 </button>
               </div>
             </motion.div>

@@ -151,6 +151,20 @@ export const clientApi = {
   getAll: () => api.get('/clients').then(toArray),
   getOne: (id: string) => api.get(`/clients/${id}`).then(res => res.data),
   create: (data: any) => api.post('/clients', data).then(res => res.data),
+  // Crédit clients
+  getCredits: () => api.get('/clients/credits').then(toArray),
+  getEncours: (id: string) => api.get(`/clients/${id}/encours`).then(res => res.data),
+  getClientCredits: (id: string) => api.get(`/clients/${id}/credits`).then(res => res.data),
+};
+
+// Règlements (encaissements partiels sur ventes à crédit)
+export const reglementApi = {
+  create: (data: { venteId: string; montant: number; methodePaiement: string; note?: string }) =>
+    api.post('/reglements', data).then(res => res.data),
+  annuler: (id: string, motif: string) =>
+    api.delete(`/reglements/${id}`, { data: { motif } }).then(res => res.data),
+  byVente: (venteId: string) =>
+    api.get('/reglements', { params: { venteId } }).then(res => res.data),
 };
 
 // Fournisseurs
@@ -209,8 +223,12 @@ export const ticketApi = {
   getOne: (id: string) => api.get(`/tickets/${id}`).then(res => res.data),
   encaisser: (
     id: string,
-    methodePaiement: 'ESPECES' | 'CARTE' | 'VIREMENT' | 'MOBILE_MONEY',
-  ) => api.post(`/tickets/${id}/encaisser`, { methodePaiement }).then(res => res.data),
+    methodePaiement: 'ESPECES' | 'CARTE' | 'VIREMENT' | 'MOBILE_MONEY' | 'CREDIT',
+    opts?: { clientId?: string; montantPaye?: number },
+  ) =>
+    api
+      .post(`/tickets/${id}/encaisser`, { methodePaiement, ...opts })
+      .then(res => res.data),
   annuler: (id: string, motif?: string) =>
     api.post(`/tickets/${id}/annuler`, { motif }).then(res => res.data),
 };
@@ -267,6 +285,13 @@ export const adminAccountApi = {
 // Search
 export const searchApi = {
   search: (q: string) => api.get('/search', { params: { q } }).then(res => res.data),
+};
+
+// Équivalences (IA Gemini)
+export const equivalenceApi = {
+  suggest: (data: { query?: string; produitId?: string; source?: 'pos' | 'ecommerce'; vendeurId?: string }) =>
+    api.post('/equivalence/suggest', data).then(res => res.data),
+  stats: () => api.get('/equivalence/stats').then(res => res.data),
 };
 
 // Roles

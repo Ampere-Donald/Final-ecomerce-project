@@ -63,7 +63,10 @@ export class TicketVenteController {
     @Request() req: any,
     @Body() dto: EncaisserTicketDto,
   ) {
-    return this.service.encaisser(id, req.user.id, dto.methodePaiement);
+    return this.service.encaisser(id, req.user.id, dto.methodePaiement, {
+      clientId: dto.clientId,
+      montantPaye: dto.montantPaye,
+    });
   }
 
   /** Annuler un ticket en attente (vendeur propriétaire ou ADMIN/SUPER_ADMIN). */
