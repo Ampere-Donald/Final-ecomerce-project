@@ -30,6 +30,8 @@ import { FileCaissier } from './components/FileCaissier';
 import { CaisseJour } from './components/CaisseJour';
 import { Analyses } from './components/Analyses';
 import { Employes } from './components/Employes';
+import { Invoices } from './components/Invoices';
+import { Primes } from './components/Primes';
 import { ToastProvider } from './components/ui/Toast';
 
 export default function App() {
@@ -70,6 +72,10 @@ export default function App() {
             <Route path="pos" element={<RoleProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN', 'VENDEUR']}><POSVendeur /></RoleProtectedRoute>} />
             <Route path="mes-tickets" element={<RoleProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN', 'VENDEUR']}><MesTickets /></RoleProtectedRoute>} />
             <Route path="file-caissier" element={<RoleProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN', 'CAISSIER']}><FileCaissier /></RoleProtectedRoute>} />
+
+            {/* Factures + Primes (Plan Implementation) */}
+            <Route path="invoices" element={<RoleProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN', 'CAISSIER']}><Invoices /></RoleProtectedRoute>} />
+            <Route path="primes" element={<RoleProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN']}><Primes /></RoleProtectedRoute>} />
 
             <Route path="employes" element={<RoleProtectedRoute allowedRoles={['SUPER_ADMIN']}><Employes /></RoleProtectedRoute>} />
             <Route path="settings" element={<Settings />} />

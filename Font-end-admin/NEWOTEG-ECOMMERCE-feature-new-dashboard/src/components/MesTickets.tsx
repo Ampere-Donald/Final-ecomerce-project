@@ -2,11 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { motion } from 'motion/react';
 import {
   Receipt,
-  Clock,
   CheckCircle2,
-  XCircle,
   AlertCircle,
-  X,
   RefreshCw,
 } from 'lucide-react';
 import { ticketApi } from '../services/api';
@@ -40,48 +37,15 @@ const fmtFCFA = (n: number | string): string => {
     .replace(/ |\s/g, ' ') + ' FCFA';
 };
 
-const statutMeta = (statut: Ticket['statut']) => {
-  switch (statut) {
-    case 'EN_ATTENTE':
-      return { label: 'En attente', color: 'bg-amber-100 text-amber-800', icon: Clock };
-    case 'ENCAISSE':
-      return { label: 'Encaissé', color: 'bg-emerald-100 text-emerald-800', icon: CheckCircle2 };
-    case 'EXPIRE':
-      return { label: 'Expiré', color: 'bg-slate-100 text-slate-600', icon: XCircle };
-    case 'ANNULE':
-      return { label: 'Annulé', color: 'bg-red-100 text-red-800', icon: X };
-  }
+const statutMeta = (_statut: Ticket['statut']) => {
+  // Seul ENCAISSE est affiché ici
+  return { label: 'Encaissé', color: 'bg-emerald-100 text-emerald-800', icon: CheckCircle2 };
 };
 
-/** Compte à rebours mm:ss jusqu'à expiresAt. Devient rouge sous 3 min. */
-const useCountdown = (expiresAt: string, actif: boolean) => {
-  const [now, setNow] = useState(Date.now());
-  useEffect(() => {
-    if (!actif) return;
-    const id = setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(id);
-  }, [actif]);
-  if (!actif) return null;
-  const diff = new Date(expiresAt).getTime() - now;
-  if (diff <= 0) return { label: 'Expiré', urgent: true };
-  const m = Math.floor(diff / 60000);
-  const s = Math.floor((diff % 60000) / 1000);
-  return {
-    label: `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`,
-    urgent: diff < 3 * 60 * 1000,
-  };
-};
 
-const TicketCard = ({
-  ticket,
-  onAnnuler,
-}: {
-  ticket: Ticket;
-  onAnnuler: (id: string) => void;
-}) => {
+const TicketCard = ({ ticket }: { ticket: Ticket }) => {
   const meta = statutMeta(ticket.statut);
   const Icon = meta.icon;
-  const countdown = useCountdown(ticket.expiresAt, ticket.statut === 'EN_ATTENTE');
 
   return (
     <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
@@ -129,23 +93,10 @@ const TicketCard = ({
         </span>
       </div>
 
-      {ticket.statut === 'EN_ATTENTE' && countdown && (
-        <div
-          className={`mt-3 flex items-center justify-between text-xs font-semibold ${
-            countdown.urgent ? 'text-red-600' : 'text-amber-600'
-          }`}
-        >
-          <span className="flex items-center gap-1">
-            <Clock size={14} />
-            Expire dans {countdown.label}
-          </span>
-          <button
-            onClick={() => onAnnuler(ticket.id)}
-            className="text-red-500 hover:text-red-700 underline underline-offset-4"
-          >
-            Annuler
-          </button>
-        </div>
+      {ticket.encaisseAt && (
+        <p className="mt-3 text-xs text-slate-400">
+          Encaissé le {new Date(ticket.encaisseAt).toLocaleString('fr-FR')}
+        </p>
       )}
     </div>
   );
@@ -160,7 +111,8 @@ export const MesTickets = () => {
     setError(null);
     try {
       const data = await ticketApi.mesTickets();
-      setTickets(data || []);
+      // Uniquement les tickets finalisés — les EN_ATTENTE sont dans "Vente en cours"
+      setTickets((data || []).filter((t: Ticket) => t.statut === 'ENCAISSE'));
     } catch (e: any) {
       setError(e?.response?.data?.message || 'Erreur de chargement.');
     } finally {
@@ -174,16 +126,6 @@ export const MesTickets = () => {
     return () => clearInterval(id);
   }, []);
 
-  const handleAnnuler = async (id: string) => {
-    if (!confirm('Annuler ce ticket ?')) return;
-    try {
-      await ticketApi.annuler(id);
-      await charger();
-    } catch (e: any) {
-      alert(e?.response?.data?.message || 'Impossible d\'annuler');
-    }
-  };
-
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -194,7 +136,7 @@ export const MesTickets = () => {
         <div>
           <h2 className="text-2xl font-bold text-slate-900">Mes tickets</h2>
           <p className="text-slate-500 text-sm">
-            Tickets que vous avez créés (50 plus récents).
+            Vos ventes encaissées — {tickets.length} au total.
           </p>
         </div>
         <button
@@ -223,7 +165,7 @@ export const MesTickets = () => {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {tickets.map((t) => (
-            <TicketCard key={t.id} ticket={t} onAnnuler={handleAnnuler} />
+            <TicketCard key={t.id} ticket={t} />
           ))}
         </div>
       )}

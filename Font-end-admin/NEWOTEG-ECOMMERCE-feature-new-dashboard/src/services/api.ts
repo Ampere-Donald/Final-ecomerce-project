@@ -323,11 +323,12 @@ export const bonVenteApi = {
   mesBons: () => api.get('/bons/mes-bons').then(r => r.data),
   annuler: (id: string) => api.post(`/bons/${id}/annuler`).then(r => r.data),
   monScore: () => api.get('/primes/mon-score').then(r => r.data),
-};
-
-export const caisseValidationApi = {
   pending: () => api.get('/bons/pending').then(r => r.data),
-  valider: (id: string) => api.post(`/bons/${id}/valider`).then(r => r.data),
+  valider: (id: string, body: {
+    methodePaiement: string;
+    clientId?: string;
+    montantPaye?: number;
+  }) => api.post(`/bons/${id}/valider`, body).then(r => r.data),
 };
 
 export const factureApi = {
