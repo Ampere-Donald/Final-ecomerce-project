@@ -7,6 +7,7 @@ import {
   RefreshCw,
 } from 'lucide-react';
 import { ticketApi } from '../services/api';
+import { useAdminAuth } from '../context/AdminAuthContext';
 
 interface LigneTicket {
   id: string;
@@ -28,6 +29,7 @@ interface Ticket {
   encaisseAt?: string | null;
   annuleAt?: string | null;
   lignes: LigneTicket[];
+  vendeur?: { id: string; nom: string; username: string } | null;
 }
 
 const fmtFCFA = (n: number | string): string => {
@@ -43,7 +45,7 @@ const statutMeta = (_statut: Ticket['statut']) => {
 };
 
 
-const TicketCard = ({ ticket }: { ticket: Ticket }) => {
+const TicketCard = ({ ticket, showVendeur }: { ticket: Ticket; showVendeur: boolean }) => {
   const meta = statutMeta(ticket.statut);
   const Icon = meta.icon;
 
@@ -65,6 +67,12 @@ const TicketCard = ({ ticket }: { ticket: Ticket }) => {
           {meta.label}
         </span>
       </div>
+
+      {showVendeur && ticket.vendeur && (
+        <p className="text-xs font-semibold text-primary mb-2">
+          Vendeur : {ticket.vendeur.nom}
+        </p>
+      )}
 
       {ticket.nomClient && (
         <p className="text-sm text-slate-700 mb-2">
@@ -103,6 +111,8 @@ const TicketCard = ({ ticket }: { ticket: Ticket }) => {
 };
 
 export const MesTickets = () => {
+  const { admin } = useAdminAuth();
+  const isAdmin = ['SUPER_ADMIN', 'ADMIN'].includes(admin?.role || '');
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -135,9 +145,11 @@ export const MesTickets = () => {
     >
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-slate-900">Mes tickets</h2>
+          <h2 className="text-2xl font-bold text-slate-900">
+            {isAdmin ? 'Tickets vendeurs' : 'Mes tickets'}
+          </h2>
           <p className="text-slate-500 text-sm">
-            Vos ventes encaissées — {tickets.length} au total.
+            {isAdmin ? 'Toutes les ventes encaissées' : 'Vos ventes encaissées'} — {tickets.length} au total.
           </p>
         </div>
         <button
@@ -166,7 +178,7 @@ export const MesTickets = () => {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {tickets.map((t) => (
-            <TicketCard key={t.id} ticket={t} />
+            <TicketCard key={t.id} ticket={t} showVendeur={isAdmin} />
           ))}
         </div>
       )}
