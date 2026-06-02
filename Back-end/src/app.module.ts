@@ -35,6 +35,8 @@ import { FavoriModule } from './favori/favori.module';
 import { DatabaseModule } from './database/database.module';
 import { NewsletterModule } from './newsletter/newsletter.module';
 import { CloudinaryModule } from './cloudinary/cloudinary.module';
+import { TauxChangeModule } from './taux-change/taux-change.module';
+import { CmupModule } from './cmup/cmup.module';
 
 @Module({
   imports: [
@@ -77,6 +79,8 @@ import { CloudinaryModule } from './cloudinary/cloudinary.module';
     DatabaseModule,
     NewsletterModule,
     CloudinaryModule,
+    TauxChangeModule,
+    CmupModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -143,7 +143,29 @@ export const achatApi = {
   getOne: (id: string) => api.get(`/achats/${id}`).then(res => res.data),
   create: (data: any) => api.post('/achats', data).then(res => res.data),
   update: (id: string, data: any) => api.patch(`/achats/${id}`, data).then(res => res.data),
+  valider: (id: string) => api.post(`/achats/${id}/valider`, {}).then(res => res.data),
+  annuler: (id: string, motifAnnulation?: string) =>
+    api.post(`/achats/${id}/annuler`, { motifAnnulation }).then(res => res.data),
   delete: (id: string) => api.delete(`/achats/${id}`).then(res => res.data),
+};
+
+// Taux de change
+export const tauxChangeApi = {
+  getLatest: (devise: string) =>
+    api.get('/taux-change/latest', { params: { devise } }).then(res => res.data),
+  saveManual: (devise: string, tauxVersFcfa: number, source?: string) =>
+    api.post('/taux-change/manual', { devise, tauxVersFcfa, source }).then(res => res.data),
+  getHistory: (devise: string, limit = 50) =>
+    api.get('/taux-change/history', { params: { devise, limit } }).then(res => res.data),
+};
+
+// CMUP
+export const cmupApi = {
+  preview: (data: { devise: string; tauxVersFcfa: number; lignes: { produitId: string; quantite: number; prixUnitaireDevise: number }[] }) =>
+    api.post('/cmup/preview', data).then(res => res.data),
+  getAll: () => api.get('/cmup').then(toArray),
+  historique: (produitId: string) =>
+    api.get(`/cmup/produits/${produitId}/historique`).then(res => res.data),
 };
 
 // Clients

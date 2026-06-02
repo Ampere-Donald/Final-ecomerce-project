@@ -231,12 +231,18 @@ export class TicketVenteService {
         },
       });
 
-      // 2. Décrémenter stock + mouvement
+      // 2. Décrémenter stock de façon atomique (re-vérification au moment de l'encaissement — audit P2)
       for (const l of ticket.lignes) {
-        await tx.produit.update({
-          where: { id: l.produitId },
+        const updated = await tx.produit.updateMany({
+          where: { id: l.produitId, quantiteStock: { gte: l.quantite } },
           data: { quantiteStock: { decrement: l.quantite } },
         });
+        if (updated.count === 0) {
+          const p = await tx.produit.findUnique({ where: { id: l.produitId }, select: { nomProduit: true, quantiteStock: true } });
+          throw new BadRequestException(
+            `Stock insuffisant pour ${p?.nomProduit ?? l.nomProduit}. Disponible: ${p?.quantiteStock ?? 0}, Demandé: ${l.quantite}`,
+          );
+        }
         await tx.mouvementStock.create({
           data: {
             produitId: l.produitId,

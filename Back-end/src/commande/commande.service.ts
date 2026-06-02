@@ -124,15 +124,18 @@ export class CommandeService {
         },
       });
 
-      // 3. Decrement stock and create stock movement entries
+      // 3. Décrémenter le stock de façon atomique (interdit stock négatif)
       for (const ligne of lignes) {
-        await tx.produit.update({
-          where: { id: ligne.produitId },
-          data: {
-            quantiteStock: { decrement: ligne.quantite },
-            version: { increment: 1 },
-          },
+        const updated = await tx.produit.updateMany({
+          where: { id: ligne.produitId, quantiteStock: { gte: ligne.quantite } },
+          data: { quantiteStock: { decrement: ligne.quantite }, version: { increment: 1 } },
         });
+        if (updated.count === 0) {
+          const p = await tx.produit.findUnique({ where: { id: ligne.produitId }, select: { nomProduit: true, quantiteStock: true } });
+          throw new BadRequestException(
+            `Stock insuffisant pour "${p?.nomProduit ?? ligne.nomProduit}". Disponible: ${p?.quantiteStock ?? 0}, Demandé: ${ligne.quantite}`,
+          );
+        }
 
         await tx.mouvementStock.create({
           data: {
@@ -213,15 +216,18 @@ export class CommandeService {
         },
       });
 
-      // 3. Decrement stock and create stock movement entries
+      // 3. Décrémenter le stock de façon atomique (interdit stock négatif)
       for (const ligne of lignes) {
-        await tx.produit.update({
-          where: { id: ligne.produitId },
-          data: {
-            quantiteStock: { decrement: ligne.quantite },
-            version: { increment: 1 },
-          },
+        const updated = await tx.produit.updateMany({
+          where: { id: ligne.produitId, quantiteStock: { gte: ligne.quantite } },
+          data: { quantiteStock: { decrement: ligne.quantite }, version: { increment: 1 } },
         });
+        if (updated.count === 0) {
+          const p = await tx.produit.findUnique({ where: { id: ligne.produitId }, select: { nomProduit: true, quantiteStock: true } });
+          throw new BadRequestException(
+            `Stock insuffisant pour "${p?.nomProduit ?? ligne.nomProduit}". Disponible: ${p?.quantiteStock ?? 0}, Demandé: ${ligne.quantite}`,
+          );
+        }
 
         await tx.mouvementStock.create({
           data: {
@@ -316,7 +322,7 @@ export class CommandeService {
     });
   }
 
-  /** Cancel an order (business rules enforced) */
+  /** Cancel an order — restitue le stock dans la même transaction (audit P1). */
   async cancel(id: string) {
     const commande = await this.findOne(id);
 
@@ -334,16 +340,36 @@ export class CommandeService {
       );
     }
 
-    const updated = await this.db.commande.update({
-      where: { id },
-      data: { statut: 'ANNULEE', dateAnnulation: new Date(), version: { increment: 1 } },
-      include: { lignes: { include: { produit: true } } },
+    const updated = await this.db.$transaction(async (tx: any) => {
+      const result = await tx.commande.update({
+        where: { id },
+        data: { statut: 'ANNULEE', dateAnnulation: new Date(), version: { increment: 1 } },
+        include: { lignes: { include: { produit: true } } },
+      });
+
+      // Restituer le stock de chaque ligne (D3 : CMUP inchangé)
+      for (const ligne of result.lignes) {
+        await tx.produit.update({
+          where: { id: ligne.produitId },
+          data: { quantiteStock: { increment: ligne.quantite }, version: { increment: 1 } },
+        });
+        await tx.mouvementStock.create({
+          data: {
+            produitId: ligne.produitId,
+            typeMouvement: 'RETOUR',
+            quantite: ligne.quantite,
+            motif: `Annulation commande #${result.numeroSuivi}`,
+          },
+        });
+      }
+
+      return result;
     });
 
     this.notifications
       .create(
         'COMMANDE_STATUT',
-        `Commande ${updated.numeroSuivi} annulée par le client`,
+        `Commande ${updated.numeroSuivi} annulée — stock restitué`,
       )
       .catch(() => {});
     return updated;

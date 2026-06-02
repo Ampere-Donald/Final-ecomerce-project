@@ -55,17 +55,22 @@ export class VenteService {
         },
       });
 
-      // Mettre à jour le stock pour chaque ligne
+      // Décrémenter le stock de façon atomique (interdit stock négatif)
       for (const ligne of lignesVente) {
-        await tx.produit.update({
-          where: { id: ligne.produitId },
+        const updated = await tx.produit.updateMany({
+          where: { id: ligne.produitId, quantiteStock: { gte: ligne.quantite } },
           data: {
             quantiteStock: { decrement: ligne.quantite },
             version: { increment: 1 },
           },
         });
+        if (updated.count === 0) {
+          const p = await tx.produit.findUnique({ where: { id: ligne.produitId }, select: { nomProduit: true, quantiteStock: true } });
+          throw new BadRequestException(
+            `Stock insuffisant pour ${p?.nomProduit ?? ligne.produitId}. Disponible: ${p?.quantiteStock ?? 0}, Demandé: ${ligne.quantite}`,
+          );
+        }
 
-        // Créer un mouvement de stock
         await tx.mouvementStock.create({
           data: {
             produitId: ligne.produitId,

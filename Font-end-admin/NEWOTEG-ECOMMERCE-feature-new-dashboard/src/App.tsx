@@ -30,6 +30,7 @@ import { FileCaissier } from './components/FileCaissier';
 import { CaisseJour } from './components/CaisseJour';
 import { Analyses } from './components/Analyses';
 import { Employes } from './components/Employes';
+import { CmupValorisation } from './components/CmupValorisation';
 import { ToastProvider } from './components/ui/Toast';
 
 export default function App() {
@@ -52,6 +53,7 @@ export default function App() {
             <Route path="stock-alerts" element={<StockAlerts />} />
             <Route path="ventes" element={<Ventes />} />
             <Route path="achats" element={<Achats />} />
+            <Route path="cmup" element={<RoleProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN', 'MANAGER']}><CmupValorisation /></RoleProtectedRoute>} />
             <Route path="clients" element={<Clients />} />
             <Route path="credits" element={<RoleProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN', 'CAISSIER']}><CreditsClients /></RoleProtectedRoute>} />
             <Route path="fournisseurs" element={<Fournisseurs />} />

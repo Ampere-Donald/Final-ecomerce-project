@@ -1,6 +1,7 @@
 export type Role = 'SUPER_ADMIN' | 'ADMIN' | 'CAISSIER' | 'VENDEUR' | 'MANAGER';
 
 const isAdmin = (role?: string) => ['SUPER_ADMIN', 'ADMIN'].includes(role || '');
+const isManager = (role?: string) => ['SUPER_ADMIN', 'ADMIN', 'MANAGER'].includes(role || '');
 const isSuper = (role?: string) => role === 'SUPER_ADMIN';
 const isCaissier = (role?: string) => role === 'CAISSIER';
 const isVendeur = (role?: string) => role === 'VENDEUR';
@@ -39,6 +40,7 @@ export const can = {
   supprimerProduits: (r?: string) => isSuper(r),
   accessStock: (r?: string) => isAdmin(r),
   accessAchats: (r?: string) => isAdmin(r),
+  validerAchat: (r?: string) => isManager(r),
 
   // ── Relation ────────────────────────────────────────────────
   accessClients: (r?: string) => isAdmin(r) || isVendeur(r),
