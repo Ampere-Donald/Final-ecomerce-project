@@ -133,8 +133,6 @@ export const MesTickets = () => {
 
   useEffect(() => {
     charger();
-    const id = setInterval(charger, 15000);
-    return () => clearInterval(id);
   }, []);
 
   return (
