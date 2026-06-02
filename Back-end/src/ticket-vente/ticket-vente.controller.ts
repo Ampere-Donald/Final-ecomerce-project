@@ -35,11 +35,12 @@ export class TicketVenteController {
     return this.service.listEnAttente();
   }
 
-  /** Tickets créés par le vendeur connecté. */
+  /** VENDEUR : ses propres tickets. ADMIN/SUPER_ADMIN : tous les tickets avec nom vendeur. */
   @Get('mes-tickets')
   @Roles('SUPER_ADMIN', 'ADMIN', 'VENDEUR')
   mesTickets(@Request() req: any) {
-    return this.service.listMine(req.user.id);
+    const isAdmin = ['SUPER_ADMIN', 'ADMIN'].includes(req.user.role);
+    return this.service.listMine(isAdmin ? undefined : req.user.id);
   }
 
   /** Tickets du jour, tous statuts (ADMIN/SUPER_ADMIN). */

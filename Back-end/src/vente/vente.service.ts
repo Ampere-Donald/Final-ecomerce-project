@@ -40,6 +40,7 @@ export class VenteService {
       const vente = await tx.vente.create({
         data: {
           ...venteData,
+          vendeurId: actor?.id,
           lignesVente: {
             create: lignesVente.map((ligne) => ({
               produitId: ligne.produitId,

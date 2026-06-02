@@ -15,7 +15,7 @@ import {
   Search,
   UserCheck,
 } from 'lucide-react';
-import { ticketApi, caisseJourApi, clientApi } from '../services/api';
+import { bonVenteApi, caisseJourApi, clientApi } from '../services/api';
 import { useToast, errorMessage } from './ui/Toast';
 
 type Methode = 'ESPECES' | 'CARTE' | 'VIREMENT' | 'MOBILE_MONEY' | 'CREDIT';
@@ -136,7 +136,7 @@ export const FileCaissier = () => {
     setError(null);
     try {
       const [tks, cj] = await Promise.all([
-        ticketApi.enAttente(),
+        bonVenteApi.pending(),
         caisseJourApi.aujourdhui().catch(() => null),
       ]);
       setTickets(tks || []);
@@ -150,8 +150,16 @@ export const FileCaissier = () => {
 
   useEffect(() => {
     charger();
-    const id = setInterval(charger, 10000);
-    return () => clearInterval(id);
+
+    // SSE — notifications temps réel quand un vendeur envoie un bon
+    const token = localStorage.getItem('newoteg_admin_token');
+    const rawUrl = import.meta.env.VITE_API_URL || '/api';
+    const baseUrl = rawUrl.endsWith('/api') ? rawUrl.replace(/\/api$/, '') : rawUrl;
+    const es = new EventSource(`${baseUrl}/api/bons/stream?token=${token}`);
+    es.onmessage = () => { charger(); };
+    es.onerror = () => { es.close(); };
+
+    return () => { es.close(); };
   }, []);
 
   // Charge la liste des clients (pour les ventes à crédit)
@@ -206,13 +214,17 @@ export const FileCaissier = () => {
             montantPaye: acompte ? Math.max(0, parseFloat(acompte)) : 0,
           }
         : undefined;
-      await ticketApi.encaisser(selected.id, methode, opts);
+      await bonVenteApi.valider(selected.id, {
+        methodePaiement: methode,
+        ...(isCredit ? opts : {}),
+      });
       toast.success(isCredit ? 'Vente à crédit enregistrée.' : 'Encaissement réussi.');
       setSelected(null);
       setMethode('ESPECES');
       await charger();
     } catch (e: any) {
       toast.error(errorMessage(e));
+      await charger(); // recharger même sur erreur pour éviter l'état désynchronisé
     } finally {
       setSubmitting(false);
     }
@@ -241,7 +253,7 @@ export const FileCaissier = () => {
         <div>
           <h2 className="text-2xl font-bold text-slate-900">File d'attente</h2>
           <p className="text-slate-500 text-sm">
-            Tickets envoyés par les vendeurs, en attente d'encaissement.
+            Bons envoyés par les vendeurs — notification en temps réel.
           </p>
         </div>
         {caisseJour && (

@@ -11,6 +11,7 @@ import {
   UseGuards,
   Request,
 } from '@nestjs/common';
+import { AdminRole } from '@prisma/client';
 import { AdminAuthService } from './admin-auth.service';
 import { AdminLoginDto, AdminPinLoginDto } from './dto/admin-login.dto';
 import { CreateAdminDto } from './dto/create-admin.dto';
@@ -128,5 +129,17 @@ export class AdminAuthController {
   ) {
     const actor = { id: req.user.id, nom: req.user.nom, role: req.user.role };
     return this.adminAuthService.deleteAdmin(id, req.user.id, actor);
+  }
+
+  // ── Passation volante — changement de rôle (SUPER_ADMIN only) ────────────
+
+  @UseGuards(AdminAuthGuard, RolesGuard)
+  @Roles('SUPER_ADMIN')
+  @Patch(':id/role')
+  changerRole(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() body: { role: AdminRole },
+  ) {
+    return this.adminAuthService.changerRole(id, body.role);
   }
 }

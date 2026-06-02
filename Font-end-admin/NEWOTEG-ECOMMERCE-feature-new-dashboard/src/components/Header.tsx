@@ -123,7 +123,7 @@ export const Header = ({ onMenuClick }: HeaderProps) => {
   const [results, setResults] = useState<Record<string, any[]>>({});
   const [searchOpen, setSearchOpen] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
-  const debounceRef = useRef<ReturnType<typeof setTimeout>>();
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   useEffect(() => {
     if (query.trim().length < 2) { setResults({}); setSearchOpen(false); return; }

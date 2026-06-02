@@ -116,13 +116,16 @@ export class TicketVenteService {
     });
   }
 
-  /** Tickets d'un vendeur (tous statuts, 50 derniers). */
-  async listMine(vendeurId: string) {
+  /** Tickets d'un vendeur ou de tous les vendeurs (admin). */
+  async listMine(vendeurId?: string) {
     return this.db.ticketVente.findMany({
-      where: { vendeurId },
-      include: { lignes: true },
+      where: vendeurId ? { vendeurId } : undefined,
+      include: {
+        lignes: true,
+        vendeur: { select: { id: true, nom: true, username: true } },
+      },
       orderBy: { createdAt: 'desc' },
-      take: 50,
+      take: 100,
     });
   }
 

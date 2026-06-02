@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import {
   LayoutDashboard,
@@ -26,9 +26,11 @@ import {
   ListChecks,
   Receipt,
   PiggyBank,
+  Award,
 } from 'lucide-react';
 import { useAdminAuth } from '../context/AdminAuthContext';
 import { can } from '../utils/permissions';
+import { bonVenteApi } from '../services/api';
 
 interface SidebarProps {
   open: boolean;
@@ -41,6 +43,21 @@ type Group = { label: string; items: Item[] };
 export const Sidebar = ({ open, onClose }: SidebarProps) => {
   const { admin, logout } = useAdminAuth();
   const role = admin?.role;
+  const [pendingCount, setPendingCount] = useState(0);
+
+  // Badge "Mes tickets" : nombre de bons EN_ATTENTE du vendeur
+  useEffect(() => {
+    if (role !== 'VENDEUR') return;
+    const load = () =>
+      bonVenteApi.mesBons()
+        .then((bons: any[]) =>
+          setPendingCount(bons.filter((b: any) => b.statut === 'EN_ATTENTE').length)
+        )
+        .catch(() => {});
+    load();
+    const id = setInterval(load, 15000);
+    return () => clearInterval(id);
+  }, [role]);
 
   const adminName = admin?.nom || admin?.username || 'Admin';
   const initials = adminName
@@ -78,6 +95,8 @@ export const Sidebar = ({ open, onClose }: SidebarProps) => {
         ...add(can.accessPOSVendeur(role), { label: 'Vente en cours', icon: ShoppingBag, path: '/pos' }),
         ...add(can.accessMesTickets(role), { label: 'Mes tickets', icon: Receipt, path: '/mes-tickets' }),
         ...add(can.accessFileCaissier(role), { label: "File d'attente", icon: ListChecks, path: '/file-caissier' }),
+        ...add(can.voirFactures(role), { label: 'Factures', icon: Receipt, path: '/invoices' }),
+        ...add(can.voirPrimes(role), { label: 'Primes vendeurs', icon: Award, path: '/primes' }),
       ],
     },
     {
@@ -129,7 +148,12 @@ export const Sidebar = ({ open, onClose }: SidebarProps) => {
       }
     >
       <item.icon size={20} />
-      <span>{item.label}</span>
+      <span className="flex-1">{item.label}</span>
+      {item.path === '/pos' && pendingCount > 0 && (
+        <span className="flex h-5 w-5 items-center justify-center rounded-full bg-amber-500 text-[10px] font-bold text-white">
+          {pendingCount}
+        </span>
+      )}
     </NavLink>
   );
 

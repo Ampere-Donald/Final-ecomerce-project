@@ -1,14 +1,18 @@
 import React, { useEffect, useState } from 'react';
 import { PlusCircle, Search, X, Pencil, Trash2, UserCog, Key, ToggleLeft, ToggleRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { adminAccountApi } from '../services/api';
+import { adminAccountApi, adminRoleApi } from '../services/api';
 import { useAdminAuth } from '../context/AdminAuthContext';
+
+const ALL_ROLES = ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'CAISSIER', 'VENDEUR'];
 
 const roleBadge = (role: string) => {
   const colors: Record<string, string> = {
     SUPER_ADMIN: 'bg-violet-100 text-violet-700',
     ADMIN: 'bg-blue-100 text-blue-700',
     MANAGER: 'bg-slate-100 text-slate-700',
+    CAISSIER: 'bg-amber-100 text-amber-700',
+    VENDEUR: 'bg-emerald-100 text-emerald-700',
   };
   return colors[role] || 'bg-slate-100 text-slate-600';
 };
@@ -111,6 +115,17 @@ export const AdminAccounts = () => {
     }
   };
 
+  const handleChangerRoleInline = async (a: any, newRole: string) => {
+    if (a.id === currentAdmin?.id) return;
+    if (newRole === a.role) return;
+    try {
+      await adminRoleApi.changerRole(a.id, newRole);
+      setAdmins(prev => prev.map(item => item.id === a.id ? { ...item, role: newRole } : item));
+    } catch (err: any) {
+      alert(err.response?.data?.message || 'Erreur lors du changement de rôle.');
+    }
+  };
+
   const filtered = admins.filter(a =>
     a.nom?.toLowerCase().includes(search.toLowerCase()) ||
     a.email?.toLowerCase().includes(search.toLowerCase())
@@ -166,8 +181,7 @@ export const AdminAccounts = () => {
                   <label className="block text-sm font-medium text-slate-700 mb-1">Rôle *</label>
                   <select value={formData.role} onChange={e => setFormData({ ...formData, role: e.target.value })}
                     className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary/20 outline-none">
-                    <option value="ADMIN">ADMIN</option>
-                    <option value="MANAGER">MANAGER</option>
+                    {ALL_ROLES.map(r => <option key={r} value={r}>{r}</option>)}
                   </select>
                 </div>
                 <div className="pt-4 border-t border-slate-100 flex justify-end gap-3">
@@ -254,7 +268,17 @@ export const AdminAccounts = () => {
                     </td>
                     <td className="px-6 py-4 text-sm text-slate-600">{a.email}</td>
                     <td className="px-6 py-4">
-                      <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${roleBadge(a.role)}`}>{a.role}</span>
+                      {a.id === currentAdmin?.id ? (
+                        <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${roleBadge(a.role)}`}>{a.role}</span>
+                      ) : (
+                        <select
+                          value={a.role}
+                          onChange={e => handleChangerRoleInline(a, e.target.value)}
+                          className={`rounded-full px-2.5 py-1 text-xs font-bold border-0 outline-none cursor-pointer ${roleBadge(a.role)}`}
+                        >
+                          {ALL_ROLES.map(r => <option key={r} value={r}>{r}</option>)}
+                        </select>
+                      )}
                     </td>
                     <td className="px-6 py-4">
                       <button onClick={() => handleToggleActive(a)} disabled={a.id === currentAdmin?.id}
