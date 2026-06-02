@@ -10,6 +10,7 @@ import { NotificationActor } from 'src/notification/notification.service';
 import { TicketVenteService } from 'src/ticket-vente/ticket-vente.service';
 import { BonVenteEventsService } from './bon-vente.events.service';
 import { CreateBonDto } from './dto/create-bon.dto';
+import { EncaisserTicketDto } from 'src/ticket-vente/dto/encaisser-ticket.dto';
 
 const TVA_TAUX = 0.1925;
 const TICKET_VALIDITY_MS = 15 * 60 * 1000;
@@ -124,18 +125,25 @@ export class BonVenteService {
    * 2. Crée la Facture avec TVA 19,25 %
    * 3. Met à jour la PrimeVendeur du mois
    */
-  async valider(ticketId: string, actor: NotificationActor) {
+  async valider(ticketId: string, actor: NotificationActor, dto?: EncaisserTicketDto) {
     // Récupérer le ticket avant encaissement (pour les lignes et vendeurId)
     const ticket = await this.ticketService.findOne(ticketId);
 
+    // Le caissier peut surcharger la méthode de paiement choisie par le vendeur
     const methodePaiement: MethodePaiement =
-      (ticket.methodePaiement as MethodePaiement) ?? 'ESPECES';
+      (dto?.methodePaiement as MethodePaiement) ??
+      (ticket.methodePaiement as MethodePaiement) ??
+      'ESPECES';
 
-    // Encaissement atomique via TicketVenteService (gère CaisseJour)
+    // Encaissement atomique via TicketVenteService (gère CaisseJour + crédit)
     const encaisse = await this.ticketService.encaisser(
       ticketId,
       actor.id,
       methodePaiement,
+      {
+        clientId: dto?.clientId,
+        montantPaye: dto?.montantPaye,
+      },
     );
 
     // Créer la Facture (hors transaction initiale — données d'audit)

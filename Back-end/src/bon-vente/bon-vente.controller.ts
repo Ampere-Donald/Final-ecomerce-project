@@ -17,6 +17,7 @@ import { RolesGuard } from 'src/admin-auth/roles.guard';
 import { BonVenteEventsService } from './bon-vente.events.service';
 import { BonVenteService } from './bon-vente.service';
 import { CreateBonDto } from './dto/create-bon.dto';
+import { EncaisserTicketDto } from 'src/ticket-vente/dto/encaisser-ticket.dto';
 
 @UseGuards(AdminAuthGuard, RolesGuard)
 @Controller('bons')
@@ -44,10 +45,14 @@ export class BonVenteController {
     return this.bonVenteService.findMesBons(req.user.id);
   }
 
-  @Roles('CAISSIER', 'SUPER_ADMIN')
+  @Roles('CAISSIER', 'SUPER_ADMIN', 'ADMIN')
   @Post(':id/valider')
-  valider(@Param('id', ParseUUIDPipe) id: string, @Request() req: any) {
-    return this.bonVenteService.valider(id, req.user);
+  valider(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: EncaisserTicketDto,
+    @Request() req: any,
+  ) {
+    return this.bonVenteService.valider(id, req.user, dto);
   }
 
   @Roles('VENDEUR')
