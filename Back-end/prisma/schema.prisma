@@ -200,6 +200,7 @@ model TicketVente {
   lignes          LigneTicket[]
   vente           Vente?           @relation(fields: [venteId], references: [id])
   facture         Facture?
+  vendeur         AdminUser        @relation("TicketsVendeur", fields: [vendeurId], references: [id])
 
   @@index([statut, expiresAt])
   @@index([vendeurId, createdAt])
@@ -584,6 +585,7 @@ model AdminUser {
   facturesCaissier  Facture[]      @relation("FacturesCaissier")
   primesVendeur     PrimeVendeur[] @relation("PrimesVendeur")
   primesValidees    PrimeVendeur[] @relation("PrimesValidees")
+  ticketsVendeur    TicketVente[]  @relation("TicketsVendeur")
 
   @@map("admin_user")
 }
