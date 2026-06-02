@@ -116,6 +116,7 @@ model Client {
   factures     Facture[]
   favoris      Favori[]
   ventes       Vente[]
+  factures     Facture[]
 
   @@map("client")
 }
@@ -322,6 +323,7 @@ model Vente {
   vendeurId       String?         @map("vendeur_id")
   version         Int             @default(1)
   bonVente        BonVente?
+  vendeurId       String?         @map("vendeur_id")
   caisses         Caisse[]
   facture         Facture?
   lignesVente     LigneVente[]
@@ -329,7 +331,8 @@ model Vente {
   ticket          TicketVente?
   client          Client?         @relation(fields: [clientId], references: [id])
   vendeur         AdminUser?      @relation("VenteVendeur", fields: [vendeurId], references: [id])
-
+  facture         Facture?
+  
   @@index([clientId, statutPaiement])
   @@map("vente")
 }
@@ -374,6 +377,8 @@ model TicketVente {
   motifAnnulation String?          @map("motif_annulation") @db.VarChar(255)
   lignes          LigneTicket[]
   vente           Vente?           @relation(fields: [venteId], references: [id])
+  facture         Facture?
+  vendeur         AdminUser        @relation("TicketsVendeur", fields: [vendeurId], references: [id])
 
   @@index([statut, expiresAt])
   @@index([vendeurId, createdAt])
@@ -423,6 +428,7 @@ model MouvementStock {
 }
 
 model Caisse {
+
   id               String        @id @default(uuid())
   dateOperation    DateTime      @default(now()) @map("date_operation")
   typeOperation    TypeOperation @map("type_operation")
@@ -446,6 +452,8 @@ model Caisse {
   caisseJour       CaisseJour?   @relation("CaisseJourOperations", fields: [caisseJourId], references: [id])
   vente            Vente?        @relation(fields: [venteId], references: [id])
   reglement        Reglement?    @relation(fields: [reglementId], references: [id])
+  effectueeParUser   AdminUser?  @relation("CaisseOperateur", fields: [effectueePar], references: [id])
+
 
   @@index([coffreId])
   @@index([caisseJourId])
@@ -830,7 +838,90 @@ enum TypeNotification {
   CAISSE_SUPPRIMEE
   MOUVEMENT_STOCK_CREE
   ECHEANCE
+  BON_CREE
+  BON_VALIDE
+  BON_ANNULE
+  PRIME_MAJ
 }
+
+
+model PendingImport {
+  id        String   @id @default(uuid())
+  data      Json
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("pending_import")
+}
+
+model SuggestionEquivalence {
+  id               String   @id @default(uuid())
+  query            String   @db.VarChar(255)
+  produitVoulu     String?  @map("produit_voulu")
+  produitsSuggeres Json     @map("produits_suggeres")
+  vendeurId        String?  @map("vendeur_id")
+  source           String   @default("pos") @db.VarChar(20)
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  @@index([createdAt])
+  @@map("suggestion_equivalence")
+}
+
+model AdminUser {
+  id          String        @id @default(uuid())
+  email       String?       @unique @db.VarChar(100)
+  username    String        @unique @db.VarChar(50)
+  motDePasse  String?       @map("mot_de_passe")
+  pinCode     String?       @map("pin_code") @db.VarChar(255)
+  nom         String        @db.VarChar(100)
+  photoUrl    String?       @map("photo_url")
+  role        AdminRole     @default(ADMIN)
+  isActive    Boolean       @default(true) @map("is_active")
+  lastLoginAt DateTime?     @map("last_login_at")
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @updatedAt @map("updated_at")
+  createdById       String?        @map("created_by")
+  roleHistory       RoleHistory[]
+  activityLog       ActivityLog[]
+  ventesEffectuees  Vente[]        @relation("VentesVendeur")
+  operationsCaisse  Caisse[]       @relation("CaisseOperateur")
+  facturesVendeur   Facture[]      @relation("FacturesVendeur")
+  facturesCaissier  Facture[]      @relation("FacturesCaissier")
+  primesVendeur     PrimeVendeur[] @relation("PrimesVendeur")
+  primesValidees    PrimeVendeur[] @relation("PrimesValidees")
+  ticketsVendeur    TicketVente[]  @relation("TicketsVendeur")
+
+  @@map("admin_user")
+}
+
+model RoleHistory {
+  id          String    @id @default(uuid())
+  adminUserId String    @map("admin_user_id")
+  oldRole     AdminRole @map("old_role")
+  newRole     AdminRole @map("new_role")
+  changedById String    @map("changed_by")
+  changedAt   DateTime  @default(now()) @map("changed_at")
+  motif       String?   @db.VarChar(255)
+  adminUser   AdminUser @relation(fields: [adminUserId], references: [id], onDelete: Cascade)
+
+  @@index([adminUserId])
+  @@map("role_history")
+}
+
+model ActivityLog {
+  id          String    @id @default(uuid())
+  adminUserId String    @map("admin_user_id")
+  action      String    @db.VarChar(100)
+  details     Json?
+  ipAddress   String?   @map("ip_address") @db.VarChar(45)
+  userAgent   String?   @map("user_agent") @db.VarChar(255)
+  createdAt   DateTime  @default(now()) @map("created_at")
+  adminUser   AdminUser @relation(fields: [adminUserId], references: [id], onDelete: Cascade)
+
+  @@index([adminUserId, createdAt])
+  @@index([action, createdAt])
+  @@map("activity_log")
+}
+
 
 enum AdminRole {
   SUPER_ADMIN
@@ -838,4 +929,71 @@ enum AdminRole {
   CAISSIER
   VENDEUR
   MANAGER
+}
+
+// ── Nouveaux modèles PLAN_IMPLEMENTATION (adaptés au projet actuel) ───────────
+
+model Facture {
+  id              String          @id @default(uuid())
+  numero          String          @unique
+  type            TypeFacture
+  ticketId        String?         @unique @map("ticket_id")
+  venteId         String?         @unique @map("vente_id")
+  clientId        String?         @map("client_id")
+  vendeurId       String          @map("vendeur_id")
+  caissierId      String?         @map("caissier_id")
+  dateEmission    DateTime        @default(now()) @map("date_emission")
+  totalHT         Decimal         @db.Decimal(12, 2) @map("total_ht")
+  tva             Decimal         @db.Decimal(12, 2)
+  totalTTC        Decimal         @db.Decimal(12, 2) @map("total_ttc")
+  methodePaiement MethodePaiement @map("methode_paiement")
+  printCount      Int             @default(0) @map("print_count")
+  ticket          TicketVente?    @relation(fields: [ticketId], references: [id])
+  vente           Vente?          @relation(fields: [venteId], references: [id])
+  client          Client?         @relation(fields: [clientId], references: [id])
+  vendeur         AdminUser       @relation("FacturesVendeur", fields: [vendeurId], references: [id])
+  caissier        AdminUser?      @relation("FacturesCaissier", fields: [caissierId], references: [id])
+  lignes          FactureLigne[]
+
+  @@map("facture")
+}
+
+model FactureLigne {
+  id              String  @id @default(uuid())
+  factureId       String  @map("facture_id")
+  nomProduit      String  @map("nom_produit") @db.VarChar(150)
+  quantite        Int
+  prixUnitaireHT  Decimal @map("prix_unitaire_ht") @db.Decimal(10, 2)
+  prixUnitaireTTC Decimal @map("prix_unitaire_ttc") @db.Decimal(10, 2)
+  sousTotalHT     Decimal @map("sous_total_ht") @db.Decimal(12, 2)
+  sousTotalTTC    Decimal @map("sous_total_ttc") @db.Decimal(12, 2)
+  facture         Facture @relation(fields: [factureId], references: [id], onDelete: Cascade)
+
+  @@map("facture_ligne")
+}
+
+model PrimeVendeur {
+  id            String      @id @default(uuid())
+  vendeurId     String      @map("vendeur_id")
+  periode       String      // format "2026-05"
+  nombreTickets Int         @default(0) @map("nombre_tickets")
+  statut        StatutPrime @default(EN_COURS)
+  valideeById   String?     @map("validee_by")
+  valideeAt     DateTime?   @map("validee_at")
+  vendeur       AdminUser   @relation("PrimesVendeur", fields: [vendeurId], references: [id])
+  valideeBy     AdminUser?  @relation("PrimesValidees", fields: [valideeById], references: [id])
+
+  @@unique([vendeurId, periode])
+  @@map("prime_vendeur")
+}
+
+enum TypeFacture {
+  FACTURE
+  TICKET_CAISSE
+}
+
+enum StatutPrime {
+  EN_COURS
+  VALIDEE
+  PAYEE
 }

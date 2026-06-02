@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import {
   UserPlus,
   Shield,
+  ShieldCheck,
   ShoppingBag,
   Wallet,
   Users as UsersIcon,
@@ -16,6 +17,7 @@ import {
   ListChecks,
   AlertCircle,
   CheckCircle2,
+  Trash2,
 } from 'lucide-react';
 import { adminAccountApi } from '../services/api';
 import { useAdminAuth } from '../context/AdminAuthContext';
@@ -57,8 +59,8 @@ interface ActivityItem {
 }
 
 const ROLE_META: Record<Role, { label: string; icon: any; color: string }> = {
-  SUPER_ADMIN: { label: 'Super Admin', icon: Shield, color: 'bg-purple-100 text-purple-800' },
-  ADMIN: { label: 'Admin', icon: Shield, color: 'bg-blue-100 text-blue-800' },
+  SUPER_ADMIN: { label: 'Super Admin', icon: ShieldCheck, color: 'bg-purple-100 text-purple-800' },
+  ADMIN: { label: 'Admin', icon: UsersIcon, color: 'bg-blue-100 text-blue-800' },
   CAISSIER: { label: 'Caissier', icon: Wallet, color: 'bg-amber-100 text-amber-800' },
   VENDEUR: { label: 'Vendeur', icon: ShoppingBag, color: 'bg-emerald-100 text-emerald-800' },
   MANAGER: { label: 'Manager (legacy)', icon: UsersIcon, color: 'bg-slate-100 text-slate-700' },
@@ -274,6 +276,15 @@ export const Employes = () => {
                             <Power size={14} />
                           </button>
                         )}
+                        {!isMe && (
+                          <button
+                            onClick={() => setConfirmDelete(e)}
+                            className="px-2 py-1 text-xs font-medium text-red-500 hover:bg-red-50 rounded"
+                            title="Supprimer"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -369,11 +380,10 @@ export const Employes = () => {
 
       <ConfirmDialog
         open={!!confirmDelete}
-        title="Supprimer définitivement ce compte ?"
+        title={`Supprimer le compte "${confirmDelete?.nom}" ?`}
         description="Cette action est irréversible. L'historique de rôles et le journal d'activité seront supprimés."
         confirmLabel="Supprimer définitivement"
         variant="danger"
-        requireType={confirmDelete?.username}
         onClose={() => setConfirmDelete(null)}
         onConfirm={async () => {
           if (!confirmDelete) return;

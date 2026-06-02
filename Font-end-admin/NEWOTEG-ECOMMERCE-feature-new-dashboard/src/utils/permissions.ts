@@ -54,6 +54,15 @@ export const can = {
   accessRoles: (r?: string) => isSuper(r),
   accessAccounts: (r?: string) => isSuper(r),
 
+  // ── Bons de vente + Primes ──────────────────────────────────
+  creerBon: (r?: string) => isVendeur(r),
+  validerBon: (r?: string) => isCaissier(r) || isSuper(r),
+  voirPrimes: (r?: string) => isAdmin(r),
+  validerPrime: (r?: string) => isSuper(r),
+  voirFactures: (r?: string) => isAdmin(r) || isCaissier(r),
+  voirMarges: (r?: string) => isAdmin(r),
+  voirSoldeGlobal: (r?: string) => isAdmin(r),
+
   // ── Divers (rétrocompat / utils) ────────────────────────────
   deleteEntities: (r?: string) => isAdmin(r),
   exportCsv: (r?: string) => isAdmin(r),

@@ -340,4 +340,36 @@ export const valeurAttributApi = {
   delete: (id: string) => api.delete(`/valeur-attributs/${id}`).then(res => res.data),
 };
 
+export const bonVenteApi = {
+  create: (data: any) => api.post('/bons', data).then(r => r.data),
+  mesBons: () => api.get('/bons/mes-bons').then(r => r.data),
+  annuler: (id: string) => api.post(`/bons/${id}/annuler`).then(r => r.data),
+  monScore: () => api.get('/primes/mon-score').then(r => r.data),
+  pending: () => api.get('/bons/pending').then(r => r.data),
+  valider: (id: string, body: {
+    methodePaiement: string;
+    clientId?: string;
+    montantPaye?: number;
+  }) => api.post(`/bons/${id}/valider`, body).then(r => r.data),
+};
+
+export const factureApi = {
+  getAll: (params?: any) => api.get('/factures', { params }).then(r => r.data),
+  getOne: (id: string) => api.get(`/factures/${id}`).then(r => r.data),
+  print: (id: string) => api.post(`/factures/${id}/print`).then(r => r.data),
+};
+
+export const primeApi = {
+  classement: (periode: string) =>
+    api.get('/primes/classement', { params: { periode } }).then(r => r.data),
+  monScore: () => api.get('/primes/mon-score').then(r => r.data),
+  valider: (id: string) => api.patch(`/primes/${id}/valider`).then(r => r.data),
+  payer: (id: string) => api.patch(`/primes/${id}/payer`).then(r => r.data),
+};
+
+export const adminRoleApi = {
+  changerRole: (id: string, role: string) =>
+    api.patch(`/admin-auth/${id}/role`, { role }).then(r => r.data),
+};
+
 export default api;

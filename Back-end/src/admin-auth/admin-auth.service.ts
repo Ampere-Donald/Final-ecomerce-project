@@ -307,6 +307,16 @@ export class AdminAuthService {
     });
   }
 
+  async changerRole(id: string, role: AdminRole) {
+    const admin = await this.db.adminUser.findUnique({ where: { id } });
+    if (!admin) throw new NotFoundException('Employe introuvable');
+    return this.db.adminUser.update({
+      where: { id },
+      data: { role },
+      select: { id: true, nom: true, email: true, role: true, isActive: true },
+    });
+  }
+
   async deleteAdmin(id: string, currentAdminId: string, actor: NotificationActor) {
     if (id === currentAdminId) {
       throw new ForbiddenException('Vous ne pouvez pas supprimer votre propre compte.');

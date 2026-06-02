@@ -37,6 +37,9 @@ import { NewsletterModule } from './newsletter/newsletter.module';
 import { CloudinaryModule } from './cloudinary/cloudinary.module';
 import { TauxChangeModule } from './taux-change/taux-change.module';
 import { CmupModule } from './cmup/cmup.module';
+import { BonVenteModule } from './bon-vente/bon-vente.module';
+import { FactureModule } from './facture/facture.module';
+import { PrimeModule } from './prime/prime.module';
 
 @Module({
   imports: [
@@ -81,6 +84,9 @@ import { CmupModule } from './cmup/cmup.module';
     CloudinaryModule,
     TauxChangeModule,
     CmupModule,
+    BonVenteModule,
+    FactureModule,
+    PrimeModule,
   ],
   controllers: [AppController],
   providers: [AppService],
