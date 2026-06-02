@@ -39,17 +39,6 @@ export class BonVenteService {
       throw new BadRequestException('Le bon doit contenir au moins une ligne');
     }
 
-    // Vérifier qu'aucun bon EN_ATTENTE n'existe pour ce vendeur
-    const pending = await this.db.ticketVente.findFirst({
-      where: { vendeurId: actor.id, statut: 'EN_ATTENTE' },
-      select: { id: true, numeroTicket: true },
-    });
-    if (pending) {
-      throw new BadRequestException(
-        `Un bon est déjà en attente pour ce vendeur (${pending.numeroTicket})`,
-      );
-    }
-
     // Charger les produits et calculer les prix depuis la base
     const produitIds = dto.lignes.map((l) => l.produitId);
     const produits = await this.db.produit.findMany({

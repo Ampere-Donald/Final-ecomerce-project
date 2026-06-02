@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { motion } from 'motion/react';
 import { FileText, Printer, Search, ChevronDown } from 'lucide-react';
 import { factureApi } from '../services/api';
+import { ReceiptGenerator } from './ReceiptGenerator';
 
 const fmtFCFA = (n: number | string): string => {
   const v = Number(n) || 0;
@@ -34,6 +35,7 @@ export const Invoices = () => {
   const [search, setSearch] = useState('');
   const [filterType, setFilterType] = useState<'' | 'FACTURE' | 'TICKET_CAISSE'>('');
   const [printing, setPrinting] = useState<string | null>(null);
+  const [receiptFacture, setReceiptFacture] = useState<Facture | null>(null);
 
   const charger = async () => {
     setLoading(true);
@@ -54,17 +56,17 @@ export const Invoices = () => {
     charger();
   }, [filterType]);
 
-  const handlePrint = async (id: string) => {
-    setPrinting(id);
+  const handlePrint = async (f: Facture) => {
+    setPrinting(f.id);
     try {
-      await factureApi.print(id);
+      await factureApi.print(f.id);
       setFactures((prev) =>
-        prev.map((f) =>
-          f.id === id ? { ...f, printCount: (f.printCount || 0) + 1 } : f,
-        ),
+        prev.map((x) => x.id === f.id ? { ...x, printCount: (x.printCount || 0) + 1 } : x),
       );
+      setReceiptFacture(f);
     } catch {
-      // silently ignore
+      // si l'API échoue, on ouvre quand même le reçu
+      setReceiptFacture(f);
     } finally {
       setPrinting(null);
     }
@@ -178,7 +180,7 @@ export const Invoices = () => {
                   <td className="px-4 py-3 text-center text-slate-500">{f.printCount}</td>
                   <td className="px-4 py-3 text-center">
                     <button
-                      onClick={() => handlePrint(f.id)}
+                      onClick={() => handlePrint(f)}
                       disabled={printing === f.id}
                       title="Imprimer"
                       className="inline-flex items-center gap-1.5 rounded-lg bg-slate-100 px-2.5 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-200 disabled:opacity-50"
@@ -192,6 +194,24 @@ export const Invoices = () => {
             </tbody>
           </table>
         </div>
+      )}
+      {/* Reçu imprimable */}
+      {receiptFacture && (
+        <ReceiptGenerator
+          type={receiptFacture.type === 'FACTURE' ? 'facture' : 'ticket'}
+          numero={receiptFacture.numero}
+          dateVente={receiptFacture.dateEmission}
+          methodePaiement={receiptFacture.methodePaiement}
+          montantTotal={Number(receiptFacture.totalTTC)}
+          client={receiptFacture.client ? { nom: receiptFacture.client.nom, telephone: receiptFacture.client.telephone } : undefined}
+          lignes={(receiptFacture.lignes || []).map((l) => ({
+            nomProduit: l.nomProduit,
+            quantite: l.quantite,
+            prixUnitaire: l.quantite > 0 ? Math.round(Number(l.sousTotalTTC) / l.quantite) : 0,
+            sousTotal: Number(l.sousTotalTTC),
+          }))}
+          onClose={() => setReceiptFacture(null)}
+        />
       )}
     </motion.div>
   );

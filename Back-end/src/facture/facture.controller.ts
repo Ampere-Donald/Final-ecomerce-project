@@ -18,7 +18,7 @@ import { FactureService } from './facture.service';
 export class FactureController {
   constructor(private readonly factureService: FactureService) {}
 
-  @Roles('SUPER_ADMIN', 'ADMIN')
+  @Roles('SUPER_ADMIN', 'ADMIN', 'CAISSIER')
   @Get()
   findAll(
     @Query('type') type?: TypeFacture,

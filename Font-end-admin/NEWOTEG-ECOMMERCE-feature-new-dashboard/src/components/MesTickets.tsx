@@ -108,6 +108,7 @@ export const MesTickets = () => {
   const [error, setError] = useState<string | null>(null);
 
   const charger = async () => {
+    setLoading(true);
     setError(null);
     try {
       const data = await ticketApi.mesTickets();

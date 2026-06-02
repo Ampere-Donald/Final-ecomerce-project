@@ -224,6 +224,7 @@ export const FileCaissier = () => {
       await charger();
     } catch (e: any) {
       toast.error(errorMessage(e));
+      await charger(); // recharger même sur erreur pour éviter l'état désynchronisé
     } finally {
       setSubmitting(false);
     }

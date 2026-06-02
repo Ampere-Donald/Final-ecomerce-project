@@ -149,7 +149,7 @@ export const Sidebar = ({ open, onClose }: SidebarProps) => {
     >
       <item.icon size={20} />
       <span className="flex-1">{item.label}</span>
-      {item.path === '/mes-tickets' && pendingCount > 0 && (
+      {item.path === '/pos' && pendingCount > 0 && (
         <span className="flex h-5 w-5 items-center justify-center rounded-full bg-amber-500 text-[10px] font-bold text-white">
           {pendingCount}
         </span>
