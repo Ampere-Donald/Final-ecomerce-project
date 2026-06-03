@@ -88,6 +88,7 @@ export const Sidebar = ({ open, onClose }: SidebarProps) => {
         ...add(can.accessCoffres(role), { label: 'Coffres', icon: PiggyBank, path: '/coffres' }),
         ...add(can.accessCredits(role), { label: 'Crédits clients', icon: HandCoins, path: '/credits' }),
         ...add(can.accessEcheances(role), { label: 'Échéances', icon: AlarmClock, path: '/echeances' }),
+        ...add(can.accessAchats(role), { label: 'CMUP & Valorisation', icon: Calculator, path: '/cmup' }),
       ],
     },
     {
@@ -115,7 +116,6 @@ export const Sidebar = ({ open, onClose }: SidebarProps) => {
         ...add(can.accessStock(role), { label: 'Mouvements stock', icon: Activity, path: '/stock' }),
         ...add(can.accessStock(role), { label: 'Alertes stock', icon: AlertTriangle, path: '/stock-alerts' }),
         ...add(can.accessAchats(role), { label: 'Achats (Réappro)', icon: Truck, path: '/achats' }),
-        ...add(can.accessAchats(role), { label: 'CMUP & Valorisation', icon: Calculator, path: '/cmup' }),
       ],
     },
     {

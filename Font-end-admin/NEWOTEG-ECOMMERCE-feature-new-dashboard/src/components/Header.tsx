@@ -62,6 +62,7 @@ export const Header = ({ onMenuClick }: HeaderProps) => {
 
   /* ── Import Status ────────────────────────────────────────────── */
   const [importStatus, setImportStatus] = useState<{ isImporting: boolean; progress: number; message: string; error: string | null } | null>(null);
+  const prevIsImportingRef = useRef<boolean | undefined>(undefined);
 
   /* ── Notifications state ──────────────────────────────────────── */
   const [unread, setUnread] = useState(0);
@@ -81,15 +82,14 @@ export const Header = ({ onMenuClick }: HeaderProps) => {
     fetchUnread();
     const iv = setInterval(fetchUnread, 30000);
 
-    // Fetch import status more aggressively if needed
     const fetchImportStatus = async () => {
       try {
         const s = await produitApi.getImportStatus();
         setImportStatus(s);
-        // Si l'import vient de se terminer (passage à 100%), on relance les notifs pour chopper l'alerte !
-        if (s && !s.isImporting && s.progress === 100 && (importStatus?.isImporting)) {
+        if (s && !s.isImporting && s.progress === 100 && prevIsImportingRef.current) {
           fetchUnread();
         }
+        prevIsImportingRef.current = s?.isImporting;
       } catch {}
     };
     fetchImportStatus();
@@ -99,7 +99,7 @@ export const Header = ({ onMenuClick }: HeaderProps) => {
       clearInterval(iv);
       clearInterval(ivImport);
     };
-  }, [fetchUnread, importStatus?.isImporting]);
+  }, [fetchUnread]);
 
   const openBell = async () => {
     setBellOpen(prev => !prev);
