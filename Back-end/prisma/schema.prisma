@@ -36,7 +36,6 @@ model Produit {
   prixPromo            Float?           @map("prix_promo")
   imageUrl2            String?          @map("image_url2")
   imageUrl3            String?          @map("image_url3")
-  // CMUP - valeurStock calculee a la volee (quantiteStock * cmupActuel)
   cmupActuel           Decimal          @default(0) @map("cmup_actuel") @db.Decimal(12, 2)
   dernierCoutAchatFcfa Decimal?         @map("dernier_cout_achat_fcfa") @db.Decimal(12, 2)
   derniereDeviseAchat  Devise?          @map("derniere_devise_achat")
@@ -116,34 +115,30 @@ model Client {
   factures     Facture[]
   favoris      Favori[]
   ventes       Vente[]
-  factures     Facture[]
 
   @@map("client")
 }
 
 model Achat {
-  id                 String         @id @default(uuid())
-  fournisseurId      String         @map("id_fournisseur")
-  dateAchat          DateTime       @default(now()) @map("date_achat")
-  // Champs multi-devise
-  devise             Devise         @default(FCFA)
-  tauxChange         Decimal        @default(1) @map("taux_change") @db.Decimal(12, 6)
-  dateTaux           DateTime?      @map("date_taux")
-  sourceTaux         SourceTaux     @default(MANUEL) @map("source_taux")
-  montantTotalDevise Decimal        @default(0) @map("montant_total_devise") @db.Decimal(12, 2)
-  montantTotalFcfa   Decimal        @default(0) @map("montant_total_fcfa") @db.Decimal(12, 2)
-  // Champ legacy conserve (= montantTotalFcfa desormais)
-  montantTotal       Decimal        @default(0) @map("montant_total") @db.Decimal(12, 2)
-  statutPaiement     StatutPaiement @default(NON_PAYE) @map("statut_paiement")
-  // Flux brouillon / validation
-  statutAchat        StatutAchat    @default(BROUILLON) @map("statut_achat")
-  validatedAt        DateTime?      @map("validated_at")
-  validatedById      String?        @map("validated_by_id")
-  annuleeAt          DateTime?      @map("annulee_at")
-  annuleeById        String?        @map("annulee_by_id")
-  motifAnnulation    String?        @map("motif_annulation") @db.VarChar(500)
-  version            Int            @default(1)
-  fournisseur        Fournisseur    @relation(fields: [fournisseurId], references: [id])
+  id                 String          @id @default(uuid())
+  fournisseurId      String          @map("id_fournisseur")
+  dateAchat          DateTime        @default(now()) @map("date_achat")
+  devise             Devise          @default(FCFA)
+  tauxChange         Decimal         @default(1) @map("taux_change") @db.Decimal(12, 6)
+  dateTaux           DateTime?       @map("date_taux")
+  sourceTaux         SourceTaux      @default(MANUEL) @map("source_taux")
+  montantTotalDevise Decimal         @default(0) @map("montant_total_devise") @db.Decimal(12, 2)
+  montantTotalFcfa   Decimal         @default(0) @map("montant_total_fcfa") @db.Decimal(12, 2)
+  montantTotal       Decimal         @default(0) @map("montant_total") @db.Decimal(12, 2)
+  statutPaiement     StatutPaiement  @default(NON_PAYE) @map("statut_paiement")
+  statutAchat        StatutAchat     @default(BROUILLON) @map("statut_achat")
+  validatedAt        DateTime?       @map("validated_at")
+  validatedById      String?         @map("validated_by_id")
+  annuleeAt          DateTime?       @map("annulee_at")
+  annuleeById        String?         @map("annulee_by_id")
+  motifAnnulation    String?         @map("motif_annulation") @db.VarChar(500)
+  version            Int             @default(1)
+  fournisseur        Fournisseur     @relation(fields: [fournisseurId], references: [id])
   caisses            Caisse[]
   lignesAchat        LigneAchat[]
   mouvementsCmup     MouvementCmup[]
@@ -158,17 +153,13 @@ model LigneAchat {
   achatId                String         @map("id_achat")
   produitId              String         @map("id_produit")
   quantite               Int
-  // Champs devise
   prixUnitaireDevise     Decimal        @default(0) @map("prix_unitaire_devise") @db.Decimal(12, 2)
   sousTotalDevise        Decimal        @default(0) @map("sous_total_devise") @db.Decimal(12, 2)
-  // Champs FCFA
   prixUnitaireFcfa       Decimal        @default(0) @map("prix_unitaire_fcfa") @db.Decimal(12, 2)
   sousTotalFcfa          Decimal        @default(0) @map("sous_total_fcfa") @db.Decimal(12, 2)
   coutUnitaireEntreeFcfa Decimal        @default(0) @map("cout_unitaire_entree_fcfa") @db.Decimal(12, 2)
-  // Champs legacy conserves
   prixUnitaire           Decimal        @default(0) @map("prix_unitaire") @db.Decimal(10, 2)
   sousTotal              Decimal        @default(0) @map("sous_total") @db.Decimal(12, 2)
-  // Snapshot CMUP au moment de la validation
   stockAvant             Int?           @map("stock_avant")
   stockApres             Int?           @map("stock_apres")
   cmupAvant              Decimal?       @map("cmup_avant") @db.Decimal(12, 2)
@@ -219,8 +210,6 @@ model MouvementCmup {
   @@map("mouvement_cmup")
 }
 
-// ── Bons de vente (feature ajoutee en prod par collaborateur) ─────────────
-
 model BonVente {
   id              String          @id @default(uuid())
   numero          String          @unique
@@ -236,7 +225,6 @@ model BonVente {
   validateur      AdminUser?      @relation("BonVenteValidateur", fields: [valideeBy], references: [id])
   vendeur         AdminUser       @relation("BonVenteVendeur", fields: [vendeurId], references: [id])
   vente           Vente?          @relation(fields: [venteId], references: [id])
-  facture         Facture?
   lignes          LigneBon[]
 
   @@map("bon_vente")
@@ -260,22 +248,22 @@ model Facture {
   id              String          @id @default(uuid())
   numero          String          @unique
   type            TypeFacture
-  bonId           String?         @unique @map("bon_id")
+  ticketId        String?         @unique @map("ticket_id")
   venteId         String?         @unique @map("vente_id")
   clientId        String?         @map("client_id")
   vendeurId       String          @map("vendeur_id")
   caissierId      String?         @map("caissier_id")
   dateEmission    DateTime        @default(now()) @map("date_emission")
-  totalHt         Decimal         @map("total_ht") @db.Decimal(12, 2)
+  totalHT         Decimal         @map("total_ht") @db.Decimal(12, 2)
   tva             Decimal         @db.Decimal(12, 2)
-  totalTtc        Decimal         @map("total_ttc") @db.Decimal(12, 2)
+  totalTTC        Decimal         @map("total_ttc") @db.Decimal(12, 2)
   methodePaiement MethodePaiement @map("methode_paiement")
   printCount      Int             @default(0) @map("print_count")
-  bon             BonVente?       @relation(fields: [bonId], references: [id])
-  caissier        AdminUser?      @relation("FactureCaissier", fields: [caissierId], references: [id])
-  client          Client?         @relation(fields: [clientId], references: [id])
-  vendeur         AdminUser       @relation("FactureVendeur", fields: [vendeurId], references: [id])
+  ticket          TicketVente?    @relation(fields: [ticketId], references: [id])
   vente           Vente?          @relation(fields: [venteId], references: [id])
+  client          Client?         @relation(fields: [clientId], references: [id])
+  vendeur         AdminUser       @relation("FacturesVendeur", fields: [vendeurId], references: [id])
+  caissier        AdminUser?      @relation("FacturesCaissier", fields: [caissierId], references: [id])
   lignes          FactureLigne[]
 
   @@map("facture")
@@ -286,10 +274,10 @@ model FactureLigne {
   factureId       String  @map("facture_id")
   nomProduit      String  @map("nom_produit") @db.VarChar(150)
   quantite        Int
-  prixUnitaireHt  Decimal @map("prix_unitaire_ht") @db.Decimal(10, 2)
-  prixUnitaireTtc Decimal @map("prix_unitaire_ttc") @db.Decimal(10, 2)
-  sousTotalHt     Decimal @map("sous_total_ht") @db.Decimal(12, 2)
-  sousTotalTtc    Decimal @map("sous_total_ttc") @db.Decimal(12, 2)
+  prixUnitaireHT  Decimal @map("prix_unitaire_ht") @db.Decimal(10, 2)
+  prixUnitaireTTC Decimal @map("prix_unitaire_ttc") @db.Decimal(10, 2)
+  sousTotalHT     Decimal @map("sous_total_ht") @db.Decimal(12, 2)
+  sousTotalTTC    Decimal @map("sous_total_ttc") @db.Decimal(12, 2)
   facture         Facture @relation(fields: [factureId], references: [id], onDelete: Cascade)
 
   @@map("facture_ligne")
@@ -301,16 +289,14 @@ model PrimeVendeur {
   periode       String
   nombreTickets Int         @default(0) @map("nombre_tickets")
   statut        StatutPrime @default(EN_COURS)
-  valideeBy     String?     @map("validee_by")
+  valideeById   String?     @map("validee_by")
   valideeAt     DateTime?   @map("validee_at")
-  validateur    AdminUser?  @relation("PrimeVendeurValidateur", fields: [valideeBy], references: [id])
-  vendeur       AdminUser   @relation("PrimeVendeurVendeur", fields: [vendeurId], references: [id])
+  vendeur       AdminUser   @relation("PrimesVendeur", fields: [vendeurId], references: [id])
+  valideeBy     AdminUser?  @relation("PrimesValidees", fields: [valideeById], references: [id])
 
   @@unique([vendeurId, periode])
   @@map("prime_vendeur")
 }
-
-// ── Suite des modeles metier ──────────────────────────────────────────────
 
 model Vente {
   id              String          @id @default(uuid())
@@ -323,7 +309,6 @@ model Vente {
   vendeurId       String?         @map("vendeur_id")
   version         Int             @default(1)
   bonVente        BonVente?
-  vendeurId       String?         @map("vendeur_id")
   caisses         Caisse[]
   facture         Facture?
   lignesVente     LigneVente[]
@@ -331,8 +316,7 @@ model Vente {
   ticket          TicketVente?
   client          Client?         @relation(fields: [clientId], references: [id])
   vendeur         AdminUser?      @relation("VenteVendeur", fields: [vendeurId], references: [id])
-  facture         Facture?
-  
+
   @@index([clientId, statutPaiement])
   @@map("vente")
 }
@@ -428,7 +412,6 @@ model MouvementStock {
 }
 
 model Caisse {
-
   id               String        @id @default(uuid())
   dateOperation    DateTime      @default(now()) @map("date_operation")
   typeOperation    TypeOperation @map("type_operation")
@@ -452,8 +435,6 @@ model Caisse {
   caisseJour       CaisseJour?   @relation("CaisseJourOperations", fields: [caisseJourId], references: [id])
   vente            Vente?        @relation(fields: [venteId], references: [id])
   reglement        Reglement?    @relation(fields: [reglementId], references: [id])
-  effectueeParUser   AdminUser?  @relation("CaisseOperateur", fields: [effectueePar], references: [id])
-
 
   @@index([coffreId])
   @@index([caisseJourId])
@@ -647,15 +628,15 @@ model AdminUser {
   createdById String?        @map("created_by")
   roleHistory RoleHistory[]
   activityLog ActivityLog[]
-  // Relations metier
-  bonsVenteVendeur    BonVente[]    @relation("BonVenteVendeur")
-  bonsVenteValidateur BonVente[]    @relation("BonVenteValidateur")
-  caissesOperees      Caisse[]      @relation("CaisseOperateur")
-  facturesVendeur     Facture[]     @relation("FactureVendeur")
-  facturesCaissier    Facture[]     @relation("FactureCaissier")
-  primesVendeur       PrimeVendeur[] @relation("PrimeVendeurVendeur")
-  primesValidateur    PrimeVendeur[] @relation("PrimeVendeurValidateur")
-  ventesEffectuees    Vente[]       @relation("VenteVendeur")
+  bonsVenteVendeur    BonVente[]     @relation("BonVenteVendeur")
+  bonsVenteValidateur BonVente[]     @relation("BonVenteValidateur")
+  operationsCaisse    Caisse[]       @relation("CaisseOperateur")
+  facturesVendeur     Facture[]      @relation("FacturesVendeur")
+  facturesCaissier    Facture[]      @relation("FacturesCaissier")
+  primesVendeur       PrimeVendeur[] @relation("PrimesVendeur")
+  primesValidees      PrimeVendeur[] @relation("PrimesValidees")
+  ticketsVendeur      TicketVente[]  @relation("TicketsVendeur")
+  ventesEffectuees    Vente[]        @relation("VenteVendeur")
 
   @@map("admin_user")
 }
@@ -690,6 +671,14 @@ model ActivityLog {
 }
 
 // ── Enums ─────────────────────────────────────────────────────────────────
+
+enum AdminRole {
+  SUPER_ADMIN
+  ADMIN
+  CAISSIER
+  VENDEUR
+  MANAGER
+}
 
 enum Devise {
   FCFA
@@ -842,158 +831,4 @@ enum TypeNotification {
   BON_VALIDE
   BON_ANNULE
   PRIME_MAJ
-}
-
-
-model PendingImport {
-  id        String   @id @default(uuid())
-  data      Json
-  createdAt DateTime @default(now()) @map("created_at")
-
-  @@map("pending_import")
-}
-
-model SuggestionEquivalence {
-  id               String   @id @default(uuid())
-  query            String   @db.VarChar(255)
-  produitVoulu     String?  @map("produit_voulu")
-  produitsSuggeres Json     @map("produits_suggeres")
-  vendeurId        String?  @map("vendeur_id")
-  source           String   @default("pos") @db.VarChar(20)
-  createdAt        DateTime @default(now()) @map("created_at")
-
-  @@index([createdAt])
-  @@map("suggestion_equivalence")
-}
-
-model AdminUser {
-  id          String        @id @default(uuid())
-  email       String?       @unique @db.VarChar(100)
-  username    String        @unique @db.VarChar(50)
-  motDePasse  String?       @map("mot_de_passe")
-  pinCode     String?       @map("pin_code") @db.VarChar(255)
-  nom         String        @db.VarChar(100)
-  photoUrl    String?       @map("photo_url")
-  role        AdminRole     @default(ADMIN)
-  isActive    Boolean       @default(true) @map("is_active")
-  lastLoginAt DateTime?     @map("last_login_at")
-  createdAt   DateTime      @default(now()) @map("created_at")
-  updatedAt   DateTime      @updatedAt @map("updated_at")
-  createdById       String?        @map("created_by")
-  roleHistory       RoleHistory[]
-  activityLog       ActivityLog[]
-  ventesEffectuees  Vente[]        @relation("VentesVendeur")
-  operationsCaisse  Caisse[]       @relation("CaisseOperateur")
-  facturesVendeur   Facture[]      @relation("FacturesVendeur")
-  facturesCaissier  Facture[]      @relation("FacturesCaissier")
-  primesVendeur     PrimeVendeur[] @relation("PrimesVendeur")
-  primesValidees    PrimeVendeur[] @relation("PrimesValidees")
-  ticketsVendeur    TicketVente[]  @relation("TicketsVendeur")
-
-  @@map("admin_user")
-}
-
-model RoleHistory {
-  id          String    @id @default(uuid())
-  adminUserId String    @map("admin_user_id")
-  oldRole     AdminRole @map("old_role")
-  newRole     AdminRole @map("new_role")
-  changedById String    @map("changed_by")
-  changedAt   DateTime  @default(now()) @map("changed_at")
-  motif       String?   @db.VarChar(255)
-  adminUser   AdminUser @relation(fields: [adminUserId], references: [id], onDelete: Cascade)
-
-  @@index([adminUserId])
-  @@map("role_history")
-}
-
-model ActivityLog {
-  id          String    @id @default(uuid())
-  adminUserId String    @map("admin_user_id")
-  action      String    @db.VarChar(100)
-  details     Json?
-  ipAddress   String?   @map("ip_address") @db.VarChar(45)
-  userAgent   String?   @map("user_agent") @db.VarChar(255)
-  createdAt   DateTime  @default(now()) @map("created_at")
-  adminUser   AdminUser @relation(fields: [adminUserId], references: [id], onDelete: Cascade)
-
-  @@index([adminUserId, createdAt])
-  @@index([action, createdAt])
-  @@map("activity_log")
-}
-
-
-enum AdminRole {
-  SUPER_ADMIN
-  ADMIN
-  CAISSIER
-  VENDEUR
-  MANAGER
-}
-
-// ── Nouveaux modèles PLAN_IMPLEMENTATION (adaptés au projet actuel) ───────────
-
-model Facture {
-  id              String          @id @default(uuid())
-  numero          String          @unique
-  type            TypeFacture
-  ticketId        String?         @unique @map("ticket_id")
-  venteId         String?         @unique @map("vente_id")
-  clientId        String?         @map("client_id")
-  vendeurId       String          @map("vendeur_id")
-  caissierId      String?         @map("caissier_id")
-  dateEmission    DateTime        @default(now()) @map("date_emission")
-  totalHT         Decimal         @db.Decimal(12, 2) @map("total_ht")
-  tva             Decimal         @db.Decimal(12, 2)
-  totalTTC        Decimal         @db.Decimal(12, 2) @map("total_ttc")
-  methodePaiement MethodePaiement @map("methode_paiement")
-  printCount      Int             @default(0) @map("print_count")
-  ticket          TicketVente?    @relation(fields: [ticketId], references: [id])
-  vente           Vente?          @relation(fields: [venteId], references: [id])
-  client          Client?         @relation(fields: [clientId], references: [id])
-  vendeur         AdminUser       @relation("FacturesVendeur", fields: [vendeurId], references: [id])
-  caissier        AdminUser?      @relation("FacturesCaissier", fields: [caissierId], references: [id])
-  lignes          FactureLigne[]
-
-  @@map("facture")
-}
-
-model FactureLigne {
-  id              String  @id @default(uuid())
-  factureId       String  @map("facture_id")
-  nomProduit      String  @map("nom_produit") @db.VarChar(150)
-  quantite        Int
-  prixUnitaireHT  Decimal @map("prix_unitaire_ht") @db.Decimal(10, 2)
-  prixUnitaireTTC Decimal @map("prix_unitaire_ttc") @db.Decimal(10, 2)
-  sousTotalHT     Decimal @map("sous_total_ht") @db.Decimal(12, 2)
-  sousTotalTTC    Decimal @map("sous_total_ttc") @db.Decimal(12, 2)
-  facture         Facture @relation(fields: [factureId], references: [id], onDelete: Cascade)
-
-  @@map("facture_ligne")
-}
-
-model PrimeVendeur {
-  id            String      @id @default(uuid())
-  vendeurId     String      @map("vendeur_id")
-  periode       String      // format "2026-05"
-  nombreTickets Int         @default(0) @map("nombre_tickets")
-  statut        StatutPrime @default(EN_COURS)
-  valideeById   String?     @map("validee_by")
-  valideeAt     DateTime?   @map("validee_at")
-  vendeur       AdminUser   @relation("PrimesVendeur", fields: [vendeurId], references: [id])
-  valideeBy     AdminUser?  @relation("PrimesValidees", fields: [valideeById], references: [id])
-
-  @@unique([vendeurId, periode])
-  @@map("prime_vendeur")
-}
-
-enum TypeFacture {
-  FACTURE
-  TICKET_CAISSE
-}
-
-enum StatutPrime {
-  EN_COURS
-  VALIDEE
-  PAYEE
 }
