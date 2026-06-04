@@ -76,6 +76,88 @@ const statutPaiementBadge = (s: string) => {
   return <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${cls}`}>{s}</span>;
 };
 
+// ─── Autocomplete produit ────────────────────────────────────────────────────
+
+interface ProduitSearchProps {
+  value: string;
+  produits: any[];
+  onChange: (produitId: string) => void;
+}
+
+const ProduitSearch = ({ value, produits, onChange }: ProduitSearchProps) => {
+  const selected = produits.find(p => p.id === value);
+  const displayName = (p: any) => [p.marque, p.nomProduit].filter(Boolean).join(' ');
+
+  const [query, setQuery] = useState(() => (selected ? displayName(selected) : ''));
+  const [open, setOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const p = produits.find(p => p.id === value);
+    setQuery(p ? displayName(p) : '');
+  }, [value]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setOpen(false);
+        // revert to selected name if user left without picking
+        const p = produits.find(p => p.id === value);
+        setQuery(p ? displayName(p) : '');
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [value, produits]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const suggestions = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return produits.slice(0, 8);
+    return produits
+      .filter(p =>
+        p.nomProduit?.toLowerCase().includes(q) ||
+        p.marque?.toLowerCase().includes(q),
+      )
+      .slice(0, 10);
+  }, [query, produits]);
+
+  const pick = (p: any) => {
+    onChange(p.id);
+    setQuery(displayName(p));
+    setOpen(false);
+  };
+
+  return (
+    <div ref={containerRef} className="relative">
+      <input
+        type="text"
+        value={query}
+        onChange={e => { setQuery(e.target.value); setOpen(true); if (!e.target.value) onChange(''); }}
+        onFocus={() => setOpen(true)}
+        placeholder="Rechercher un produit…"
+        className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs focus:ring-2 focus:ring-primary/20 outline-none"
+        autoComplete="off"
+      />
+      {open && suggestions.length > 0 && (
+        <div className="absolute z-50 top-full mt-1 left-0 right-0 bg-white border border-slate-200 rounded-lg shadow-xl max-h-52 overflow-y-auto">
+          {suggestions.map(p => (
+            <button
+              key={p.id}
+              type="button"
+              onMouseDown={e => { e.preventDefault(); pick(p); }}
+              className={`w-full text-left px-3 py-2 text-xs flex items-center justify-between gap-2 transition-colors
+                ${p.id === value ? 'bg-primary/10 text-primary font-semibold' : 'hover:bg-slate-50 text-slate-700'}`}
+            >
+              <span className="truncate">{displayName(p)}</span>
+              <span className="text-slate-400 shrink-0">stock : {p.quantiteStock}</span>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
 // ─── Composant principal ─────────────────────────────────────────────────────
 
 export const Achats = () => {
@@ -614,13 +696,11 @@ export const Achats = () => {
                             <div key={i} className="grid grid-cols-12 gap-2 items-end bg-slate-50 rounded-xl p-3">
                               <div className="col-span-12 sm:col-span-4">
                                 {i === 0 && <label className="block text-xs text-slate-500 mb-1">Produit</label>}
-                                <select value={ligne.produitId} onChange={e => updateLigne(i, { produitId: e.target.value })}
-                                  className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs focus:ring-2 focus:ring-primary/20 outline-none">
-                                  <option value="">Sélectionner…</option>
-                                  {produits.map(p => (
-                                    <option key={p.id} value={p.id}>{p.nomProduit} (stock: {p.quantiteStock})</option>
-                                  ))}
-                                </select>
+                                <ProduitSearch
+                                  value={ligne.produitId}
+                                  produits={produits}
+                                  onChange={produitId => updateLigne(i, { produitId })}
+                                />
                               </div>
                               <div className="col-span-4 sm:col-span-2">
                                 {i === 0 && <label className="block text-xs text-slate-500 mb-1">Quantité</label>}
