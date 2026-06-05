@@ -11,6 +11,7 @@ model Categorie {
   nom         String    @unique @db.VarChar(100)
   description String?
   imageUrl    String?   @map("image_url")
+  quantiteGros Int?      @map("quantite_gros")
   version     Int       @default(1)
   produits    Produit[]
 
@@ -28,6 +29,7 @@ model Produit {
   imageUrl             String?          @map("image_url")
   prixDetail           Float?           @map("prix_detail")
   prixGros             Float?           @map("prix_gros")
+  quantiteGros         Int?             @map("quantite_gros")
   quantiteStock        Int              @default(0) @map("quantite_stock")
   seuilAlerte          Int              @default(5) @map("seuil_alerte")
   urlDatasheet         String?          @map("url_datasheet")
@@ -109,10 +111,13 @@ model Client {
   otpCode      String?     @map("otp_code")
   otpExpiresAt DateTime?   @map("otp_expires_at")
   typeClient   TypeClient  @default(PARTICULIER) @map("type_client")
+  niu          String?     @db.VarChar(50)
+  rccm         String?     @db.VarChar(50)
   googleId     String?     @unique @map("google_id")
   bonsVente    BonVente[]
   commandes    Commande[]
   factures     Facture[]
+  proformas    Proforma[]
   favoris      Favori[]
   ventes       Vente[]
 
@@ -283,11 +288,46 @@ model FactureLigne {
   @@map("facture_ligne")
 }
 
+model Proforma {
+  id             String          @id @default(uuid())
+  numero         String          @unique
+  vendeurId      String          @map("vendeur_id")
+  clientId       String?         @map("client_id")
+  clientNom      String?         @map("client_nom") @db.VarChar(150)
+  clientNiu      String?         @map("client_niu") @db.VarChar(50)
+  clientRccm     String?         @map("client_rccm") @db.VarChar(50)
+  statut         StatutProforma  @default(EN_COURS)
+  dateCreation   DateTime        @default(now()) @map("date_creation")
+  dateExpiration DateTime        @map("date_expiration")
+  montantTotal   Decimal         @default(0) @map("montant_total") @db.Decimal(12, 2)
+  notes          String?
+  lignes         ProformaLigne[]
+  vendeur        AdminUser       @relation("ProformasVendeur", fields: [vendeurId], references: [id])
+  client         Client?         @relation(fields: [clientId], references: [id])
+
+  @@index([statut, dateExpiration])
+  @@index([vendeurId, dateCreation])
+  @@map("proforma")
+}
+
+model ProformaLigne {
+  id           String   @id @default(uuid())
+  proformaId   String   @map("proforma_id")
+  produitId    String?  @map("produit_id")
+  nomProduit   String   @map("nom_produit") @db.VarChar(150)
+  quantite     Int
+  prixUnitaire Decimal  @map("prix_unitaire") @db.Decimal(10, 2)
+  sousTotal    Decimal  @map("sous_total") @db.Decimal(12, 2)
+  proforma     Proforma @relation(fields: [proformaId], references: [id], onDelete: Cascade)
+
+  @@map("proforma_ligne")
+}
 model PrimeVendeur {
   id            String      @id @default(uuid())
   vendeurId     String      @map("vendeur_id")
   periode       String
   nombreTickets Int         @default(0) @map("nombre_tickets")
+  montantTotal  Decimal     @default(0) @map("montant_total") @db.Decimal(12, 2)
   statut        StatutPrime @default(EN_COURS)
   valideeById   String?     @map("validee_by")
   valideeAt     DateTime?   @map("validee_at")
@@ -636,6 +676,7 @@ model AdminUser {
   primesVendeur       PrimeVendeur[] @relation("PrimesVendeur")
   primesValidees      PrimeVendeur[] @relation("PrimesValidees")
   ticketsVendeur      TicketVente[]  @relation("TicketsVendeur")
+  proformasVendeur    Proforma[]     @relation("ProformasVendeur")
   ventesEffectuees    Vente[]        @relation("VenteVendeur")
 
   @@map("admin_user")
@@ -670,7 +711,7 @@ model ActivityLog {
   @@map("activity_log")
 }
 
-// ── Enums ─────────────────────────────────────────────────────────────────
+// -- Enums ---------------------------------------------------------------------
 
 enum AdminRole {
   SUPER_ADMIN
@@ -712,6 +753,11 @@ enum StatutPrime {
   PAYEE
 }
 
+enum StatutProforma {
+  EN_COURS
+  ACCEPTEE
+  TRANSFORMEE
+}
 enum TypeFacture {
   FACTURE
   TICKET_CAISSE
@@ -832,3 +878,4 @@ enum TypeNotification {
   BON_ANNULE
   PRIME_MAJ
 }
+
