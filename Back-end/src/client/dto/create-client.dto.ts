@@ -23,4 +23,14 @@ export class CreateClientDto {
   @IsOptional()
   @IsString()
   adresse?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(50)
+  niu?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(50)
+  rccm?: string;
 }

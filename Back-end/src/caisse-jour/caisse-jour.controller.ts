@@ -1,4 +1,4 @@
-import {
+﻿import {
   Body,
   Controller,
   Get,
@@ -22,8 +22,8 @@ export class CaisseJourController {
   constructor(private readonly service: CaisseJourService) {}
 
   /**
-   * Caisse du jour active (auto-créée si absente).
-   * Accessible CAISSIER (sa caisse) + ADMIN/SUPER_ADMIN (supervision temps réel).
+   * Caisse du jour active (auto-crÃ©Ã©e si absente).
+   * Accessible CAISSIER (sa caisse) + ADMIN/SUPER_ADMIN (supervision temps rÃ©el).
    */
   @Get('aujourdhui')
   @Roles('SUPER_ADMIN', 'ADMIN', 'CAISSIER')
@@ -39,7 +39,15 @@ export class CaisseJourController {
     return this.service.historique(from, to);
   }
 
-  /** Détail d'une caisse du jour : caisse + opérations + solde. */
+  /** DÃ©tail d'une caisse du jour : caisse + opÃ©rations + solde. */
+  @Get('caissier/:id')
+  @Roles('SUPER_ADMIN', 'ADMIN')
+  statsCaissier(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Query('periode') periode: string,
+  ) {
+    return this.service.statsCaissier(id, periode);
+  }
   @Get(':id')
   @Roles('SUPER_ADMIN', 'ADMIN', 'CAISSIER')
   one(@Param('id', ParseUUIDPipe) id: string) {
@@ -47,8 +55,8 @@ export class CaisseJourController {
   }
 
   /**
-   * Ferme la caisse du jour active et transfère le solde vers caisse globale.
-   * Réservé au caissier en poste, à l'ADMIN ou au SUPER_ADMIN.
+   * Ferme la caisse du jour active et transfÃ¨re le solde vers caisse globale.
+   * RÃ©servÃ© au caissier en poste, Ã  l'ADMIN ou au SUPER_ADMIN.
    */
   @Post(':id/fermer')
   @Roles('SUPER_ADMIN', 'ADMIN', 'CAISSIER')
@@ -61,8 +69,8 @@ export class CaisseJourController {
   }
 
   /**
-   * Enregistre une opération (ENTREE ou SORTIE) sur la caisse du jour.
-   * Caissier pour les sorties tracées, ADMIN/SUPER_ADMIN pour supervision.
+   * Enregistre une opÃ©ration (ENTREE ou SORTIE) sur la caisse du jour.
+   * Caissier pour les sorties tracÃ©es, ADMIN/SUPER_ADMIN pour supervision.
    */
   @Post(':id/operation')
   @Roles('SUPER_ADMIN', 'ADMIN', 'CAISSIER')
@@ -80,3 +88,4 @@ export class CaisseJourController {
     );
   }
 }
+
