@@ -30,6 +30,15 @@ export class PrimeController {
     return this.primeService.monScore(req.user.id);
   }
 
+  @Roles('SUPER_ADMIN', 'ADMIN')
+  @Get('vendeur/:id')
+  detailVendeur(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Query('periode') periode: string,
+  ) {
+    return this.primeService.detailVendeur(id, periode);
+  }
+
   @Roles('SUPER_ADMIN')
   @Patch(':id/valider')
   valider(@Param('id', ParseUUIDPipe) id: string, @Request() req: any) {

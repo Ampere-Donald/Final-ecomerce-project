@@ -186,8 +186,16 @@ export class BonVenteService {
       where: {
         vendeurId_periode: { vendeurId: ticket.vendeurId, periode },
       },
-      create: { vendeurId: ticket.vendeurId, periode, nombreTickets: 1 },
-      update: { nombreTickets: { increment: 1 } },
+      create: {
+        vendeurId: ticket.vendeurId,
+        periode,
+        nombreTickets: 1,
+        montantTotal: totalTTC,
+      },
+      update: {
+        nombreTickets: { increment: 1 },
+        montantTotal: { increment: totalTTC },
+      },
     });
 
     return { bon: encaisse, facture };
