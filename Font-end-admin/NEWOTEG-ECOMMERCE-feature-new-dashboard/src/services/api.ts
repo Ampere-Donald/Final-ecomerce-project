@@ -223,6 +223,8 @@ export const caisseJourApi = {
   aujourdhui: () => api.get('/caisse-jour/aujourdhui').then(res => res.data),
   historique: (from?: string, to?: string) =>
     api.get('/caisse-jour', { params: { from, to } }).then(res => res.data),
+  statsCaissier: (id: string, periode: string) =>
+    api.get(`/caisse-jour/caissier/${id}`, { params: { periode } }).then(res => res.data),
   getOne: (id: string) => api.get(`/caisse-jour/${id}`).then(res => res.data),
   fermer: (id: string, note?: string) =>
     api.post(`/caisse-jour/${id}/fermer`, { note }).then(res => res.data),
@@ -363,9 +365,21 @@ export const factureApi = {
 export const primeApi = {
   classement: (periode: string) =>
     api.get('/primes/classement', { params: { periode } }).then(r => r.data),
+  detailVendeur: (id: string, periode: string) =>
+    api.get(`/primes/vendeur/${id}`, { params: { periode } }).then(r => r.data),
   monScore: () => api.get('/primes/mon-score').then(r => r.data),
   valider: (id: string) => api.patch(`/primes/${id}/valider`).then(r => r.data),
   payer: (id: string) => api.patch(`/primes/${id}/payer`).then(r => r.data),
+};
+
+export const proformaApi = {
+  getAll: (params?: any) => api.get('/proformas', { params }).then(r => r.data),
+  getOne: (id: string) => api.get(`/proformas/${id}`).then(r => r.data),
+  create: (data: any) => api.post('/proformas', data).then(r => r.data),
+  update: (id: string, data: any) => api.patch(`/proformas/${id}`, data).then(r => r.data),
+  transformer: (id: string, body: { methodePaiement: string }) =>
+    api.post(`/proformas/${id}/transformer`, body).then(r => r.data),
+  remove: (id: string) => api.delete(`/proformas/${id}`).then(r => r.data),
 };
 
 export const adminRoleApi = {

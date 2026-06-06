@@ -33,6 +33,7 @@ import { Employes } from './components/Employes';
 import { CmupValorisation } from './components/CmupValorisation';
 import { Invoices } from './components/Invoices';
 import { Primes } from './components/Primes';
+import { Proformas } from './components/Proformas';
 import { ToastProvider } from './components/ui/Toast';
 
 export default function App() {
@@ -74,6 +75,7 @@ export default function App() {
             <Route path="pos" element={<RoleProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN', 'VENDEUR']}><POSVendeur /></RoleProtectedRoute>} />
             <Route path="mes-tickets" element={<RoleProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN', 'VENDEUR']}><MesTickets /></RoleProtectedRoute>} />
             <Route path="file-caissier" element={<RoleProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN', 'CAISSIER']}><FileCaissier /></RoleProtectedRoute>} />
+            <Route path="proformas" element={<RoleProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN', 'VENDEUR']}><Proformas /></RoleProtectedRoute>} />
 
             {/* Factures + Primes (Plan Implementation) */}
             <Route path="invoices" element={<RoleProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN', 'CAISSIER']}><Invoices /></RoleProtectedRoute>} />

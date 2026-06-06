@@ -28,6 +28,8 @@ export const can = {
   accessMesTickets: (r?: string) => isAdmin(r) || isVendeur(r),
   accessFileCaissier: (r?: string) => isAdmin(r) || isCaissier(r),
   accessTicketsJour: (r?: string) => isAdmin(r),
+  creerProforma: (r?: string) => isAdmin(r) || isVendeur(r),
+  voirProformas: (r?: string) => isAdmin(r) || isVendeur(r),
 
   // ── E-commerce ──────────────────────────────────────────────
   accessCommandesEnLigne: (r?: string) => isAdmin(r) || isVendeur(r),
