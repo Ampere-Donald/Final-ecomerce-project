@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+﻿import React, { useEffect, useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   Wallet,
@@ -13,6 +13,7 @@ import {
   CheckCircle2,
 } from 'lucide-react';
 import { caisseJourApi } from '../services/api';
+import { FileCaissier } from './FileCaissier';
 
 interface Operation {
   id: string;
@@ -59,8 +60,9 @@ export const CaisseJour = () => {
   const [operations, setOperations] = useState<Operation[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'encaisser' | 'mouvements' | 'cloture'>('encaisser');
 
-  // Modal ajout opération
+  // Modal ajout opÃ©ration
   const [showAdd, setShowAdd] = useState(false);
   const [addType, setAddType] = useState<'ENTREE' | 'SORTIE'>('SORTIE');
   const [addMontant, setAddMontant] = useState('');
@@ -158,7 +160,7 @@ export const CaisseJour = () => {
   };
 
   if (loading) {
-    return <div className="text-center text-slate-400 py-12">Chargement…</div>;
+    return <div className="text-center text-slate-400 py-12">Chargementâ€¦</div>;
   }
 
   if (!cj) {
@@ -181,8 +183,8 @@ export const CaisseJour = () => {
         <div>
           <h2 className="text-2xl font-bold text-slate-900">Caisse du jour</h2>
           <p className="text-slate-500 text-sm">
-            {fmtDateLong(cj.date)} — Ouverte à {fmtHeure(cj.ouvertureAt)}
-            {cj.fermetureAt && ` — Fermée à ${fmtHeure(cj.fermetureAt)}`}
+            {fmtDateLong(cj.date)} â€” Ouverte Ã  {fmtHeure(cj.ouvertureAt)}
+            {cj.fermetureAt && ` â€” FermÃ©e Ã  ${fmtHeure(cj.fermetureAt)}`}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -191,7 +193,7 @@ export const CaisseJour = () => {
             className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-slate-600 hover:text-primary border border-slate-200 rounded-lg"
           >
             <RefreshCw size={14} />
-            Rafraîchir
+            RafraÃ®chir
           </button>
           {ouverte && (
             <>
@@ -200,7 +202,7 @@ export const CaisseJour = () => {
                 className="flex items-center gap-2 px-3 py-2 text-sm font-medium bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200"
               >
                 <Plus size={14} />
-                Opération
+                OpÃ©ration
               </button>
               <button
                 onClick={() => setShowFermer(true)}
@@ -225,11 +227,29 @@ export const CaisseJour = () => {
         <div className="flex items-center gap-2 p-4 rounded-xl bg-slate-100 text-slate-700">
           <Lock size={18} />
           <span>
-            Caisse fermée. Solde de clôture transféré vers la caisse globale :{' '}
+            Caisse fermÃ©e. Solde de clÃ´ture transfÃ©rÃ© vers la caisse globale :{' '}
             <strong>{fmtFCFA(cj.soldeCloture ?? cj.solde)}</strong>
           </span>
         </div>
       )}
+
+      <div className="flex flex-wrap gap-2 rounded-xl border border-slate-200 bg-white p-2">
+        {([
+          ['encaisser', 'À encaisser'],
+          ['mouvements', 'Mouvements'],
+          ['cloture', 'Clôture'],
+        ] as const).map(([key, label]) => (
+          <button
+            key={key}
+            onClick={() => setActiveTab(key)}
+            className={`rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${
+              activeTab === key ? 'bg-primary text-white' : 'text-slate-600 hover:bg-slate-100'
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="bg-white p-5 rounded-2xl border border-slate-200">
@@ -242,7 +262,7 @@ export const CaisseJour = () => {
         <div className="bg-white p-5 rounded-2xl border border-slate-200">
           <div className="flex items-center gap-2 text-sm text-slate-500 mb-2">
             <ArrowUpRight size={16} className="text-emerald-600" />
-            Entrées du jour
+            EntrÃ©es du jour
           </div>
           <p className="text-2xl font-bold text-emerald-600">+{fmtFCFA(entrees)}</p>
         </div>
@@ -251,18 +271,23 @@ export const CaisseJour = () => {
             <ArrowDownRight size={16} className="text-red-600" />
             Sorties du jour
           </div>
-          <p className="text-2xl font-bold text-red-600">−{fmtFCFA(sorties)}</p>
+          <p className="text-2xl font-bold text-red-600">âˆ’{fmtFCFA(sorties)}</p>
         </div>
       </div>
 
+      {activeTab === 'encaisser' && (
+        <FileCaissier />
+      )}
+
+      {activeTab === 'mouvements' && (
       <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
         <div className="p-5 border-b border-slate-100">
-          <h3 className="font-bold text-slate-900">Opérations</h3>
+          <h3 className="font-bold text-slate-900">OpÃ©rations</h3>
         </div>
         {operations.length === 0 ? (
           <div className="text-center text-slate-400 py-12">
             <Clock size={36} className="mx-auto mb-2 opacity-40" />
-            <p className="text-sm">Aucune opération aujourd'hui.</p>
+            <p className="text-sm">Aucune opÃ©ration aujourd'hui.</p>
           </div>
         ) : (
           <div className="divide-y divide-slate-100">
@@ -288,7 +313,7 @@ export const CaisseJour = () => {
                   <p className="text-sm font-medium text-slate-900 truncate">
                     {op.motif}
                     {op.annulee && (
-                      <span className="ml-2 text-xs text-slate-400">(annulée)</span>
+                      <span className="ml-2 text-xs text-slate-400">(annulÃ©e)</span>
                     )}
                   </p>
                   <p className="text-xs text-slate-500">
@@ -300,7 +325,7 @@ export const CaisseJour = () => {
                     op.typeOperation === 'ENTREE' ? 'text-emerald-600' : 'text-red-600'
                   }`}
                 >
-                  {op.typeOperation === 'ENTREE' ? '+' : '−'}
+                  {op.typeOperation === 'ENTREE' ? '+' : 'âˆ’'}
                   {fmtFCFA(op.montant)}
                 </p>
               </div>
@@ -309,7 +334,24 @@ export const CaisseJour = () => {
         )}
       </div>
 
-      {/* Modal Ajouter opération */}
+      )}
+
+      {activeTab === 'cloture' && (
+        <div className="rounded-2xl border border-slate-200 bg-white p-6">
+          <h3 className="font-bold text-slate-900">Clôture</h3>
+          <p className="mt-2 text-sm text-slate-500">Vérifiez les mouvements du jour avant de fermer la caisse.</p>
+          <button
+            onClick={() => setShowFermer(true)}
+            disabled={!ouverte}
+            className="mt-4 inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-bold text-white hover:bg-red-700 disabled:opacity-50"
+          >
+            <Lock size={14} />
+            Fermer la caisse
+          </button>
+        </div>
+      )}
+
+      {/* Modal Ajouter opÃ©ration */}
       <AnimatePresence>
         {showAdd && (
           <motion.div
@@ -328,7 +370,7 @@ export const CaisseJour = () => {
             >
               <div className="flex items-center justify-between p-5 border-b border-slate-100">
                 <h3 className="font-bold text-lg text-slate-900">
-                  Nouvelle opération
+                  Nouvelle opÃ©ration
                 </h3>
                 <button
                   onClick={() => !addSubmitting && setShowAdd(false)}
@@ -358,7 +400,7 @@ export const CaisseJour = () => {
                         ) : (
                           <ArrowDownRight size={14} />
                         )}
-                        {t === 'ENTREE' ? 'Entrée' : 'Sortie'}
+                        {t === 'ENTREE' ? 'EntrÃ©e' : 'Sortie'}
                       </button>
                     ))}
                   </div>
@@ -409,7 +451,7 @@ export const CaisseJour = () => {
                   disabled={addSubmitting}
                   className="flex-1 px-4 py-2.5 bg-primary text-white font-bold rounded-lg hover:bg-opacity-90 disabled:opacity-50"
                 >
-                  {addSubmitting ? 'Enregistrement…' : 'Enregistrer'}
+                  {addSubmitting ? 'Enregistrementâ€¦' : 'Enregistrer'}
                 </button>
               </div>
             </motion.div>
@@ -448,9 +490,9 @@ export const CaisseJour = () => {
               <div className="p-5 space-y-4">
                 <div className="p-3 bg-amber-50 rounded-lg text-amber-900 text-sm">
                   <p>
-                    Vous êtes sur le point de fermer la caisse. Le solde de{' '}
-                    <strong>{fmtFCFA(cj.solde)}</strong> sera transféré vers la
-                    caisse globale et la session sera clôturée.
+                    Vous Ãªtes sur le point de fermer la caisse. Le solde de{' '}
+                    <strong>{fmtFCFA(cj.solde)}</strong> sera transfÃ©rÃ© vers la
+                    caisse globale et la session sera clÃ´turÃ©e.
                   </p>
                 </div>
                 <div>
@@ -463,7 +505,7 @@ export const CaisseJour = () => {
                     onChange={(e) => setFermerNote(e.target.value)}
                     maxLength={255}
                     className="w-full mt-1 px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
-                    placeholder="Ex : Journée calme, RAS"
+                    placeholder="Ex : JournÃ©e calme, RAS"
                   />
                 </div>
                 {fermerError && (
@@ -487,7 +529,7 @@ export const CaisseJour = () => {
                   className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-red-600 text-white font-bold rounded-lg hover:bg-red-700 disabled:opacity-50"
                 >
                   <CheckCircle2 size={16} />
-                  {fermerSubmitting ? 'Fermeture…' : 'Confirmer la fermeture'}
+                  {fermerSubmitting ? 'Fermetureâ€¦' : 'Confirmer la fermeture'}
                 </button>
               </div>
             </motion.div>
@@ -497,3 +539,4 @@ export const CaisseJour = () => {
     </motion.div>
   );
 };
+
