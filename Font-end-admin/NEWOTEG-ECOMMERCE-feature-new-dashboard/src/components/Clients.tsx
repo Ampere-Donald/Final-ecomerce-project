@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { Search, Mail, Phone, Users, X, MapPin, ShieldCheck, ShieldOff, ShoppingBag, Calendar, Eye, Download } from 'lucide-react';
+import { Search, Mail, Phone, Users, X, MapPin, ShieldCheck, ShieldOff, ShoppingBag, Calendar, Eye, Download, Trash2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { clientApi } from '../services/api';
+import { clientApi, commandeApi, getApiErrorMessage } from '../services/api';
+import { useAdminAuth } from '../context/AdminAuthContext';
 import { ClientCreditPanel } from './ClientCreditPanel';
 
 /* ── Status badge colors ──────────────────────────────────────── */
@@ -14,6 +15,8 @@ const STATUS_CFG: Record<string, { label: string; bg: string; text: string }> = 
 };
 
 export const Clients = () => {
+  const { admin } = useAdminAuth();
+  const isSuperAdmin = admin?.role === 'SUPER_ADMIN';
   const [clients, setClients] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -42,6 +45,41 @@ export const Clients = () => {
       console.error(err);
     } finally {
       setDetailLoading(false);
+    }
+  };
+
+  const deleteOrderHistory = async (order: any) => {
+    if (!isSuperAdmin) return;
+    if (!window.confirm(`Supprimer la commande ${order.numeroSuivi} de l'historique ?`)) return;
+    try {
+      await commandeApi.delete(order.id);
+      setSelectedClient((current: any) => {
+        if (!current) return current;
+        const commandes = (current.commandes || []).filter((item: any) => item.id !== order.id);
+        return {
+          ...current,
+          commandes,
+          _count: {
+            ...current._count,
+            commandes: Math.max(0, (current._count?.commandes ?? 1) - 1),
+          },
+        };
+      });
+      setClients((prev) =>
+        prev.map((client) =>
+          client.id === selectedClient?.id
+            ? {
+                ...client,
+                _count: {
+                  ...client._count,
+                  commandes: Math.max(0, (client._count?.commandes ?? 1) - 1),
+                },
+              }
+            : client,
+        ),
+      );
+    } catch (err: any) {
+      alert(getApiErrorMessage(err, 'Suppression impossible.'));
     }
   };
 
@@ -325,7 +363,7 @@ export const Clients = () => {
                         {selectedClient.commandes.map((order: any) => {
                           const st = STATUS_CFG[order.statut] ?? { label: order.statut, bg: 'bg-slate-100', text: 'text-slate-600' };
                           return (
-                            <div key={order.id} className="flex items-center justify-between py-2.5 px-3 bg-slate-50 rounded-lg">
+                            <div key={order.id} className="flex items-center justify-between gap-3 py-2.5 px-3 bg-slate-50 rounded-lg">
                               <div>
                                 <p className="text-sm font-mono font-semibold text-primary">{order.numeroSuivi}</p>
                                 <p className="text-[11px] text-slate-400">{new Date(order.dateCommande).toLocaleDateString('fr-FR')}</p>
@@ -333,6 +371,15 @@ export const Clients = () => {
                               <div className="flex items-center gap-3">
                                 <span className="text-sm font-bold text-slate-900">{parseFloat(String(order.montantTotal)).toLocaleString()} FCFA</span>
                                 <span className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold ${st.bg} ${st.text}`}>{st.label}</span>
+                                {isSuperAdmin && (
+                                  <button
+                                    onClick={() => deleteOrderHistory(order)}
+                                    className="rounded-md p-1.5 text-slate-400 transition-colors hover:bg-red-50 hover:text-red-600"
+                                    title="Supprimer de l'historique"
+                                  >
+                                    <Trash2 size={14} />
+                                  </button>
+                                )}
                               </div>
                             </div>
                           );

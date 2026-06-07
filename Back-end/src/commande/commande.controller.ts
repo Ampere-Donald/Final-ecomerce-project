@@ -4,7 +4,9 @@ import {
   Post,
   Body,
   Patch,
+  Delete,
   Param,
+  Query,
   ParseUUIDPipe,
   UseGuards,
   Request,
@@ -16,6 +18,8 @@ import { UpdateCommandeDto } from './dto/update-commande.dto';
 import { ProcessPickupDto } from './dto/process-pickup.dto';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { AdminAuthGuard } from '../admin-auth/admin-auth.guard';
+import { RolesGuard } from '../admin-auth/roles.guard';
+import { Roles } from '../admin-auth/roles.decorator';
 
 @Controller('commandes')
 export class CommandeController {
@@ -64,6 +68,28 @@ export class CommandeController {
   @Get(':id')
   findOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.commandeService.findOne(id);
+  }
+
+  /** Super admin: clean old order history in bulk. */
+  @UseGuards(AdminAuthGuard, RolesGuard)
+  @Roles('SUPER_ADMIN')
+  @Delete('historique/cleanup')
+  cleanupHistory(
+    @Query('before') before?: string,
+    @Query('statut') statut?: string,
+    @Request() req?: any,
+  ) {
+    const actor = { id: req.user.id, nom: req.user.nom, role: req.user.role };
+    return this.commandeService.cleanupHistory({ before, statut }, actor);
+  }
+
+  /** Super admin: delete one obsolete order history entry. */
+  @UseGuards(AdminAuthGuard, RolesGuard)
+  @Roles('SUPER_ADMIN')
+  @Delete(':id')
+  remove(@Param('id', ParseUUIDPipe) id: string, @Request() req: any) {
+    const actor = { id: req.user.id, nom: req.user.nom, role: req.user.role };
+    return this.commandeService.remove(id, actor);
   }
 
   /**

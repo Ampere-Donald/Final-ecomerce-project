@@ -322,6 +322,67 @@ export class CommandeService {
     });
   }
 
+  async remove(id: string, actor?: NotificationActor) {
+    const commande = await this.findOne(id);
+
+    await this.db.$transaction(async (tx: any) => {
+      await tx.ligneCommande.deleteMany({ where: { commandeId: id } });
+      await tx.commande.delete({ where: { id } });
+    });
+
+    this.notifications
+      .create(
+        'COMMANDE_STATUT',
+        `Commande ${commande.numeroSuivi} supprimee de l'historique par ${actor?.nom ?? 'Super admin'}`,
+        actor,
+      )
+      .catch(() => {});
+
+    return { deleted: true, id };
+  }
+
+  async cleanupHistory(filters: { before?: string; statut?: string }, actor?: NotificationActor) {
+    const before = filters.before ? new Date(filters.before) : new Date();
+    if (Number.isNaN(before.getTime())) {
+      throw new BadRequestException('Date limite invalide.');
+    }
+
+    const allowedStatuses = ['ANNULEE', 'LIVREE'];
+    const where: any = {
+      dateCommande: { lt: before },
+      statut:
+        filters.statut && filters.statut !== 'TOUS'
+          ? filters.statut
+          : { in: allowedStatuses },
+    };
+
+    if (typeof where.statut === 'string' && !allowedStatuses.includes(where.statut)) {
+      throw new BadRequestException('Le nettoyage est limite aux commandes annulees ou livrees.');
+    }
+
+    const commandes = await this.db.commande.findMany({
+      where,
+      select: { id: true },
+    });
+    const ids = commandes.map((commande) => commande.id);
+    if (ids.length === 0) return { deleted: 0 };
+
+    await this.db.$transaction(async (tx: any) => {
+      await tx.ligneCommande.deleteMany({ where: { commandeId: { in: ids } } });
+      await tx.commande.deleteMany({ where: { id: { in: ids } } });
+    });
+
+    this.notifications
+      .create(
+        'COMMANDE_STATUT',
+        `${ids.length} commande(s) supprimee(s) de l'historique par ${actor?.nom ?? 'Super admin'}`,
+        actor,
+      )
+      .catch(() => {});
+
+    return { deleted: ids.length };
+  }
+
   /** Cancel an order — restitue le stock dans la même transaction (audit P1). */
   async cancel(id: string) {
     const commande = await this.findOne(id);
