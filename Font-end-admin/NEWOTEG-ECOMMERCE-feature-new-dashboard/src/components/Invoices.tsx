@@ -24,6 +24,7 @@ interface Facture {
   methodePaiement: string;
   printCount: number;
   vendeur?: { nom: string } | null;
+  caissier?: { nom: string } | null;
   client?: { nom: string; telephone?: string } | null;
   lignes?: Array<{ nomProduit: string; quantite: number; sousTotalTTC: number | string }>;
 }
@@ -77,6 +78,7 @@ export const Invoices = () => {
       !search ||
       f.numero.toLowerCase().includes(search.toLowerCase()) ||
       f.vendeur?.nom.toLowerCase().includes(search.toLowerCase()) ||
+      f.caissier?.nom.toLowerCase().includes(search.toLowerCase()) ||
       f.client?.nom.toLowerCase().includes(search.toLowerCase()),
   );
 
@@ -102,7 +104,7 @@ export const Invoices = () => {
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
           <input
             type="text"
-            placeholder="Rechercher par numéro, vendeur, client…"
+            placeholder="Rechercher par numero, vendeur, caissier, client..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full rounded-lg border border-slate-200 bg-white py-2 pl-9 pr-4 text-sm outline-none focus:border-primary"
@@ -146,6 +148,7 @@ export const Invoices = () => {
                 <th className="px-4 py-3 text-left">Type</th>
                 <th className="px-4 py-3 text-left">Date</th>
                 <th className="px-4 py-3 text-left">Vendeur</th>
+                <th className="px-4 py-3 text-left">Caissier</th>
                 <th className="px-4 py-3 text-left">Client</th>
                 <th className="px-4 py-3 text-right">Total TTC</th>
                 <th className="px-4 py-3 text-center">Impressions</th>
@@ -173,6 +176,7 @@ export const Invoices = () => {
                     {new Date(f.dateEmission).toLocaleDateString('fr-FR')}
                   </td>
                   <td className="px-4 py-3 text-slate-700">{f.vendeur?.nom ?? '—'}</td>
+                  <td className="px-4 py-3 text-slate-700">{f.caissier?.nom ?? '—'}</td>
                   <td className="px-4 py-3 text-slate-600">{f.client?.nom ?? 'Comptoir'}</td>
                   <td className="px-4 py-3 text-right font-bold text-primary">
                     {fmtFCFA(f.totalTTC)}
