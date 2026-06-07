@@ -19,7 +19,7 @@ import {
   CheckCircle2,
   Trash2,
 } from 'lucide-react';
-import { adminAccountApi } from '../services/api';
+import { adminAccountApi, caisseJourApi, primeApi } from '../services/api';
 import { useAdminAuth } from '../context/AdminAuthContext';
 import { fmtDateCourt, fmtRelatif } from '../utils/format';
 import { Button } from './ui/Button';
@@ -57,6 +57,14 @@ interface ActivityItem {
   details?: any;
   ipAddress?: string | null;
 }
+
+const periodeCourante = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+};
+
+const fmtFCFA = (value: number | string | undefined | null) =>
+  `${new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 }).format(Number(value) || 0)} FCFA`;
 
 const ROLE_META: Record<Role, { label: string; icon: any; color: string }> = {
   SUPER_ADMIN: { label: 'Super Admin', icon: ShieldCheck, color: 'bg-purple-100 text-purple-800' },
@@ -573,6 +581,8 @@ const DetailEmployeModal = ({
   const [activity, setActivity] = useState<ActivityItem[]>([]);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [activityLoading, setActivityLoading] = useState(false);
+  const [businessLoading, setBusinessLoading] = useState(false);
+  const [businessStats, setBusinessStats] = useState<any>(null);
   const [editNom, setEditNom] = useState(employe.nom);
   const [editEmail, setEditEmail] = useState(employe.email || '');
   const [saving, setSaving] = useState(false);
@@ -593,6 +603,18 @@ const DetailEmployeModal = ({
         .then(setActivity)
         .catch((e: any) => onError(errorMessage(e)))
         .finally(() => setActivityLoading(false));
+    }
+    if (tab === 'activity' && !businessStats && (employe.role === 'VENDEUR' || employe.role === 'CAISSIER')) {
+      const periode = periodeCourante();
+      setBusinessLoading(true);
+      const request =
+        employe.role === 'VENDEUR'
+          ? primeApi.detailVendeur(employe.id, periode)
+          : caisseJourApi.statsCaissier(employe.id, periode);
+      request
+        .then((data: any) => setBusinessStats({ role: employe.role, periode, data }))
+        .catch((e: any) => onError(errorMessage(e)))
+        .finally(() => setBusinessLoading(false));
     }
   }, [tab]);
 
@@ -794,6 +816,55 @@ const DetailEmployeModal = ({
 
           {tab === 'activity' && (
             <div>
+              {(employe.role === 'VENDEUR' || employe.role === 'CAISSIER') && (
+                <div className="mb-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
+                  <div className="mb-3 flex items-center justify-between">
+                    <p className="text-sm font-bold text-slate-800">Activite du mois</p>
+                    <span className="rounded-full bg-white px-2 py-0.5 text-xs font-semibold text-slate-500">
+                      {businessStats?.periode || periodeCourante()}
+                    </span>
+                  </div>
+                  {businessLoading ? (
+                    <p className="py-3 text-sm text-slate-400">Chargement des statistiques...</p>
+                  ) : employe.role === 'VENDEUR' ? (
+                    (() => {
+                      const tickets = Array.isArray(businessStats?.data) ? businessStats.data : [];
+                      const montant = tickets.reduce((sum: number, t: any) => sum + Number(t.facture?.totalTTC ?? t.totalTTC ?? t.montantTotal ?? 0), 0);
+                      return (
+                        <div className="grid grid-cols-2 gap-3">
+                          <div className="rounded-lg bg-white p-3">
+                            <p className="text-xs text-slate-500">Tickets encaisses</p>
+                            <p className="text-xl font-black text-primary">{tickets.length}</p>
+                          </div>
+                          <div className="rounded-lg bg-white p-3">
+                            <p className="text-xs text-slate-500">Montant vendu</p>
+                            <p className="text-xl font-black text-slate-900">{fmtFCFA(montant)}</p>
+                          </div>
+                        </div>
+                      );
+                    })()
+                  ) : (
+                    <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                      <div className="rounded-lg bg-white p-3">
+                        <p className="text-xs text-slate-500">Encaissements</p>
+                        <p className="text-xl font-black text-primary">{businessStats?.data?.nbEncaissements ?? 0}</p>
+                      </div>
+                      <div className="rounded-lg bg-white p-3">
+                        <p className="text-xs text-slate-500">Montant encaisse</p>
+                        <p className="text-lg font-black text-slate-900">{fmtFCFA(businessStats?.data?.montantTotal)}</p>
+                      </div>
+                      <div className="rounded-lg bg-white p-3">
+                        <p className="text-xs text-slate-500">Credits</p>
+                        <p className="text-lg font-black text-amber-700">{fmtFCFA(businessStats?.data?.creditsAccordes)}</p>
+                      </div>
+                      <div className="rounded-lg bg-white p-3">
+                        <p className="text-xs text-slate-500">Ecarts</p>
+                        <p className="text-lg font-black text-red-600">{fmtFCFA(businessStats?.data?.ecarts)}</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
               {activityLoading ? (
                 <p className="text-center text-slate-400 py-6 text-sm">Chargement…</p>
               ) : activity.length === 0 ? (
