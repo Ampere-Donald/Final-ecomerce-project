@@ -11,9 +11,13 @@ import {
   X,
   RefreshCw,
   CheckCircle2,
+  FileText,
+  Printer,
+  Search,
 } from 'lucide-react';
-import { caisseJourApi } from '../services/api';
+import { caisseJourApi, factureApi } from '../services/api';
 import { FileCaissier } from './FileCaissier';
+import { ReceiptGenerator } from './ReceiptGenerator';
 
 interface Operation {
   id: string;
@@ -32,6 +36,20 @@ interface CaisseJourData {
   statut: 'OUVERTE' | 'FERMEE';
   soldeCloture?: string | number | null;
   solde: number;
+}
+
+interface FactureJour {
+  id: string;
+  numero: string;
+  type: 'FACTURE' | 'TICKET_CAISSE';
+  dateEmission: string;
+  totalTTC: number | string;
+  methodePaiement: string;
+  printCount: number;
+  vendeur?: { nom: string } | null;
+  caissier?: { nom: string } | null;
+  client?: { nom: string; telephone?: string } | null;
+  lignes?: Array<{ nomProduit: string; quantite: number; sousTotalTTC: number | string }>;
 }
 
 const fmtFCFA = (n: number | string): string => {
@@ -58,9 +76,13 @@ const fmtHeure = (d: string): string =>
 export const CaisseJour = () => {
   const [cj, setCj] = useState<CaisseJourData | null>(null);
   const [operations, setOperations] = useState<Operation[]>([]);
+  const [facturesJour, setFacturesJour] = useState<FactureJour[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'encaisser' | 'mouvements' | 'cloture'>('encaisser');
+  const [activeTab, setActiveTab] = useState<'encaisser' | 'encaissements' | 'mouvements' | 'cloture'>('encaisser');
+  const [searchFacture, setSearchFacture] = useState('');
+  const [printingFacture, setPrintingFacture] = useState<string | null>(null);
+  const [receiptFacture, setReceiptFacture] = useState<FactureJour | null>(null);
 
   // Modal ajout opÃ©ration
   const [showAdd, setShowAdd] = useState(false);
@@ -85,6 +107,8 @@ export const CaisseJour = () => {
         const detail = await caisseJourApi.getOne(data.id);
         setOperations(detail.operations || []);
       }
+      const factures = await factureApi.getAll();
+      setFacturesJour(Array.isArray(factures) ? factures : []);
     } catch (e: any) {
       setError(e?.response?.data?.message || 'Erreur de chargement.');
     } finally {
@@ -109,6 +133,44 @@ export const CaisseJour = () => {
     }
     return { entrees: e, sorties: s };
   }, [operations]);
+
+  const encaissementsDuJour = useMemo(() => {
+    if (!cj?.date) return [];
+    const target = new Date(cj.date).toDateString();
+    return facturesJour.filter((f) => new Date(f.dateEmission).toDateString() === target);
+  }, [cj?.date, facturesJour]);
+
+  const encaissementsFiltres = useMemo(() => {
+    const q = searchFacture.trim().toLowerCase();
+    if (!q) return encaissementsDuJour;
+    return encaissementsDuJour.filter(
+      (f) =>
+        f.numero.toLowerCase().includes(q) ||
+        f.vendeur?.nom.toLowerCase().includes(q) ||
+        f.caissier?.nom.toLowerCase().includes(q) ||
+        f.client?.nom.toLowerCase().includes(q),
+    );
+  }, [encaissementsDuJour, searchFacture]);
+
+  const totalEncaissements = useMemo(
+    () => encaissementsDuJour.reduce((sum, f) => sum + (Number(f.totalTTC) || 0), 0),
+    [encaissementsDuJour],
+  );
+
+  const handlePrintFacture = async (f: FactureJour) => {
+    setPrintingFacture(f.id);
+    try {
+      await factureApi.print(f.id);
+      setFacturesJour((prev) =>
+        prev.map((x) => x.id === f.id ? { ...x, printCount: (x.printCount || 0) + 1 } : x),
+      );
+      setReceiptFacture(f);
+    } catch {
+      setReceiptFacture(f);
+    } finally {
+      setPrintingFacture(null);
+    }
+  };
 
   const handleAddOperation = async () => {
     if (!cj) return;
@@ -236,6 +298,7 @@ export const CaisseJour = () => {
       <div className="flex flex-wrap gap-2 rounded-xl border border-slate-200 bg-white p-2">
         {([
           ['encaisser', 'À encaisser'],
+          ['encaissements', 'Encaissements'],
           ['mouvements', 'Mouvements'],
           ['cloture', 'Clôture'],
         ] as const).map(([key, label]) => (
@@ -277,6 +340,91 @@ export const CaisseJour = () => {
 
       {activeTab === 'encaisser' && (
         <FileCaissier />
+      )}
+
+      {activeTab === 'encaissements' && (
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div className="rounded-2xl border border-slate-200 bg-white p-5">
+              <p className="text-sm text-slate-500">Encaissements du jour</p>
+              <p className="mt-1 text-2xl font-bold text-slate-900">{encaissementsDuJour.length}</p>
+            </div>
+            <div className="rounded-2xl border border-slate-200 bg-white p-5">
+              <p className="text-sm text-slate-500">Montant encaissé</p>
+              <p className="mt-1 text-2xl font-bold text-primary">{fmtFCFA(totalEncaissements)}</p>
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-slate-200 bg-white">
+            <div className="flex flex-col gap-3 border-b border-slate-100 p-5 md:flex-row md:items-center md:justify-between">
+              <div>
+                <h3 className="font-bold text-slate-900">Tickets et factures du jour</h3>
+                <p className="text-sm text-slate-500">Historique imprimable des ventes encaissées aujourd'hui.</p>
+              </div>
+              <div className="relative w-full md:w-80">
+                <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input
+                  value={searchFacture}
+                  onChange={(e) => setSearchFacture(e.target.value)}
+                  placeholder="Rechercher numero, client..."
+                  className="w-full rounded-lg border border-slate-200 bg-slate-50 py-2 pl-9 pr-3 text-sm outline-none focus:border-primary"
+                />
+              </div>
+            </div>
+
+            {encaissementsFiltres.length === 0 ? (
+              <div className="py-12 text-center text-slate-400">
+                <FileText size={36} className="mx-auto mb-2 opacity-40" />
+                <p className="text-sm">Aucun encaissement trouve pour cette date.</p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead className="border-b border-slate-100 bg-slate-50 text-xs uppercase tracking-wider text-slate-500">
+                    <tr>
+                      <th className="px-4 py-3 text-left">Numero</th>
+                      <th className="px-4 py-3 text-left">Type</th>
+                      <th className="px-4 py-3 text-left">Heure</th>
+                      <th className="px-4 py-3 text-left">Vendeur</th>
+                      <th className="px-4 py-3 text-left">Client</th>
+                      <th className="px-4 py-3 text-right">Total</th>
+                      <th className="px-4 py-3 text-center">Impressions</th>
+                      <th className="px-4 py-3 text-center">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-50">
+                    {encaissementsFiltres.map((f) => (
+                      <tr key={f.id} className="hover:bg-slate-50">
+                        <td className="px-4 py-3 font-mono text-xs font-bold text-slate-900">{f.numero}</td>
+                        <td className="px-4 py-3">
+                          <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-bold text-slate-700">
+                            {f.type === 'TICKET_CAISSE' ? 'Ticket' : 'Facture'}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-slate-500">{fmtHeure(f.dateEmission)}</td>
+                        <td className="px-4 py-3 text-slate-700">{f.vendeur?.nom ?? '-'}</td>
+                        <td className="px-4 py-3 text-slate-600">{f.client?.nom ?? 'Comptoir'}</td>
+                        <td className="px-4 py-3 text-right font-bold text-primary">{fmtFCFA(f.totalTTC)}</td>
+                        <td className="px-4 py-3 text-center text-slate-500">{f.printCount || 0}</td>
+                        <td className="px-4 py-3 text-center">
+                          <button
+                            onClick={() => handlePrintFacture(f)}
+                            disabled={printingFacture === f.id}
+                            className="inline-flex items-center gap-1.5 rounded-lg bg-slate-100 px-2.5 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-200 disabled:opacity-50"
+                            title="Imprimer"
+                          >
+                            <Printer size={13} />
+                            {printingFacture === f.id ? '...' : 'Imprimer'}
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </div>
       )}
 
       {activeTab === 'mouvements' && (
@@ -536,6 +684,24 @@ export const CaisseJour = () => {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {receiptFacture && (
+        <ReceiptGenerator
+          type={receiptFacture.type === 'FACTURE' ? 'facture' : 'ticket'}
+          numero={receiptFacture.numero}
+          dateVente={receiptFacture.dateEmission}
+          methodePaiement={receiptFacture.methodePaiement}
+          montantTotal={Number(receiptFacture.totalTTC)}
+          client={receiptFacture.client ? { nom: receiptFacture.client.nom, telephone: receiptFacture.client.telephone } : undefined}
+          lignes={(receiptFacture.lignes || []).map((l) => ({
+            nomProduit: l.nomProduit,
+            quantite: l.quantite,
+            prixUnitaire: l.quantite > 0 ? Math.round(Number(l.sousTotalTTC) / l.quantite) : 0,
+            sousTotal: Number(l.sousTotalTTC),
+          }))}
+          onClose={() => setReceiptFacture(null)}
+        />
+      )}
     </motion.div>
   );
 };
