@@ -12,14 +12,15 @@ import 'dotenv/config';
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
 
-  // --- Force prisma migrations execution on startup ---
-  try {
-    const { execSync } = require('child_process');
-    logger.log('Running Prisma migrations...');
-    execSync('npx prisma migrate deploy', { stdio: 'inherit' });
-    logger.log('Prisma migrations applied successfully.');
-  } catch (error) {
-    logger.error('Failed to run Prisma migrations:', error);
+  if (process.env.RUN_PRISMA_MIGRATIONS === 'true') {
+    try {
+      const { execSync } = require('child_process');
+      logger.log('Running Prisma migrations...');
+      execSync('npx prisma migrate deploy', { stdio: 'inherit' });
+      logger.log('Prisma migrations applied successfully.');
+    } catch (error) {
+      logger.error('Failed to run Prisma migrations:', error);
+    }
   }
 
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
