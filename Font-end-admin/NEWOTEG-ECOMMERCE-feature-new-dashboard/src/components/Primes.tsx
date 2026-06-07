@@ -11,7 +11,7 @@ import {
   ChevronDown,
   X,
 } from 'lucide-react';
-import { primeApi } from '../services/api';
+import { primeApi, getApiErrorMessage } from '../services/api';
 import { useAdminAuth } from '../context/AdminAuthContext';
 
 interface Prime {
@@ -81,8 +81,8 @@ export const Primes = () => {
     try {
       const data = await primeApi.classement(periode);
       setClassement(Array.isArray(data) ? data : []);
-    } catch {
-      setError('Impossible de charger le classement.');
+    } catch (err: any) {
+      setError(getApiErrorMessage(err, 'Impossible de charger le classement.'));
     } finally {
       setLoading(false);
     }
@@ -99,7 +99,7 @@ export const Primes = () => {
       await charger();
     } catch (err: unknown) {
       const e = err as { response?: { data?: { message?: string } } };
-      setError(e.response?.data?.message || 'Erreur lors de la validation.');
+      setError(getApiErrorMessage(e, 'Erreur lors de la validation.'));
     } finally {
       setActioning(null);
     }
@@ -112,7 +112,7 @@ export const Primes = () => {
       await charger();
     } catch (err: unknown) {
       const e = err as { response?: { data?: { message?: string } } };
-      setError(e.response?.data?.message || 'Erreur lors du paiement.');
+      setError(getApiErrorMessage(e, 'Erreur lors du paiement.'));
     } finally {
       setActioning(null);
     }
@@ -125,8 +125,8 @@ export const Primes = () => {
     try {
       const data = await primeApi.detailVendeur(prime.vendeur.id, periode);
       setDetailTickets(Array.isArray(data) ? data : []);
-    } catch {
-      setError('Impossible de charger le detail vendeur.');
+    } catch (err: any) {
+      setError(getApiErrorMessage(err, 'Impossible de charger le détail vendeur.'));
     } finally {
       setDetailLoading(false);
     }

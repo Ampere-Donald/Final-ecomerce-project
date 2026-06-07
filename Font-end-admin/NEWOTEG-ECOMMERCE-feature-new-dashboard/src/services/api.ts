@@ -37,6 +37,26 @@ api.interceptors.response.use(
   },
 );
 
+const DB_SCHEMA_ERROR_CODES = new Set(['P2021', 'P2022']);
+
+export const getApiErrorMessage = (err: any, fallback: string): string => {
+  const data = err?.response?.data;
+
+  if (DB_SCHEMA_ERROR_CODES.has(data?.code)) {
+    return "Base de données non synchronisée : les tables ou colonnes nécessaires n'existent pas encore. Appliquez la migration Prisma avant de tester ce module.";
+  }
+
+  if (Array.isArray(data?.message)) {
+    return data.message.join(' ');
+  }
+
+  if (typeof data?.message === 'string' && data.message.trim()) {
+    return data.message;
+  }
+
+  return fallback;
+};
+
 // ── Admin Auth API ───────────────────────────────────────────────────────
 export const adminAuthApi = {
   login: (username: string, motDePasse: string) =>
@@ -275,6 +295,9 @@ export const commandeApi = {
   getAll: () => api.get('/commandes').then(toArray),
   getOne: (id: string) => api.get(`/commandes/${id}`).then(res => res.data),
   update: (id: string, data: any) => api.patch(`/commandes/${id}`, data).then(res => res.data),
+  delete: (id: string) => api.delete(`/commandes/${id}`).then(res => res.data),
+  cleanupHistory: (params: { before?: string; statut?: string }) =>
+    api.delete('/commandes/historique/cleanup', { params }).then(res => res.data),
   processPickup: (id: string, data: { paiementSurPlace: boolean; methodePaiement?: string }) =>
     api.patch(`/commandes/${id}/pickup`, data).then(res => res.data),
 };

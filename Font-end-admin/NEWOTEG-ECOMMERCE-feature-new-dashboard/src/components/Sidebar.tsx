@@ -86,8 +86,8 @@ export const Sidebar = ({ open, onClose }: SidebarProps) => {
         ...add(can.accessCaisseJour(role), { label: 'Caisse du jour', icon: Wallet, path: '/caisse-jour' }),
         ...add(can.accessCaisseGlobale(role), { label: 'Caisse globale', icon: Landmark, path: '/caisse' }),
         ...add(can.accessCoffres(role), { label: 'Coffres', icon: PiggyBank, path: '/coffres' }),
-        ...add(can.accessCredits(role), { label: 'CrÃ©dits clients', icon: HandCoins, path: '/credits' }),
-        ...add(can.accessEcheances(role), { label: 'Ã‰chÃ©ances', icon: AlarmClock, path: '/echeances' }),
+        ...add(can.accessCredits(role), { label: 'Crédits clients', icon: HandCoins, path: '/credits' }),
+        ...add(can.accessEcheances(role), { label: 'Échéances', icon: AlarmClock, path: '/echeances' }),
         ...add(can.accessAchats(role), { label: 'CMUP & Valorisation', icon: Calculator, path: '/cmup' }),
       ],
     },
@@ -111,11 +111,11 @@ export const Sidebar = ({ open, onClose }: SidebarProps) => {
       label: 'Catalogue',
       items: [
         ...add(can.voirProduits(role), { label: 'Produits', icon: Package, path: '/produits' }),
-        ...add(can.modifierProduits(role), { label: 'CatÃ©gories', icon: Tags, path: '/categories' }),
+        ...add(can.modifierProduits(role), { label: 'Catégories', icon: Tags, path: '/categories' }),
         ...add(can.modifierProduits(role), { label: 'Attributs', icon: Palette, path: '/attributs' }),
         ...add(can.accessStock(role), { label: 'Mouvements stock', icon: Activity, path: '/stock' }),
         ...add(can.accessStock(role), { label: 'Alertes stock', icon: AlertTriangle, path: '/stock-alerts' }),
-        ...add(can.accessAchats(role), { label: 'Achats (RÃ©appro)', icon: Truck, path: '/achats' }),
+        ...add(can.accessAchats(role), { label: 'Achats (Réappro)', icon: Truck, path: '/achats' }),
       ],
     },
     {
@@ -123,14 +123,14 @@ export const Sidebar = ({ open, onClose }: SidebarProps) => {
       items: [
         ...add(can.accessClients(role), { label: 'Clients', icon: Users, path: '/clients' }),
         ...add(can.accessFournisseurs(role), { label: 'Fournisseurs', icon: Factory, path: '/fournisseurs' }),
-        ...add(can.accessEmployes(role), { label: 'EmployÃ©s', icon: UserCog, path: '/employes' }),
-        ...add(can.accessRoles(role), { label: 'RÃ´les', icon: Shield, path: '/roles' }),
+        ...add(can.accessEmployes(role), { label: 'Employés', icon: UserCog, path: '/employes' }),
+        ...add(can.accessRoles(role), { label: 'Rôles', icon: Shield, path: '/roles' }),
       ],
     },
     {
-      label: 'SystÃ¨me',
+      label: 'Système',
       items: [
-        ...add(can.accessParametres(role), { label: 'ParamÃ¨tres', icon: Settings, path: '/settings' }),
+        ...add(can.accessParametres(role), { label: 'Paramètres', icon: Settings, path: '/settings' }),
       ],
     },
   ];
@@ -209,9 +209,9 @@ export const Sidebar = ({ open, onClose }: SidebarProps) => {
           </div>
           <button
             onClick={() => {
-              if (window.confirm('Voulez-vous vraiment vous dÃ©connecter ?')) logout();
+              if (window.confirm('Voulez-vous vraiment vous déconnecter ?')) logout();
             }}
-            title="Se dÃ©connecter"
+            title="Se déconnecter"
             className="text-slate-400 hover:text-red-500 transition-colors"
           >
             <LogOut size={16} />

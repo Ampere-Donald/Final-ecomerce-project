@@ -15,7 +15,7 @@ import {
   Printer,
   Search,
 } from 'lucide-react';
-import { caisseJourApi, factureApi } from '../services/api';
+import { caisseJourApi, factureApi, getApiErrorMessage } from '../services/api';
 import { FileCaissier } from './FileCaissier';
 import { ReceiptGenerator } from './ReceiptGenerator';
 
@@ -84,7 +84,7 @@ export const CaisseJour = () => {
   const [printingFacture, setPrintingFacture] = useState<string | null>(null);
   const [receiptFacture, setReceiptFacture] = useState<FactureJour | null>(null);
 
-  // Modal ajout opÃ©ration
+  // Modal ajout opération
   const [showAdd, setShowAdd] = useState(false);
   const [addType, setAddType] = useState<'ENTREE' | 'SORTIE'>('SORTIE');
   const [addMontant, setAddMontant] = useState('');
@@ -110,7 +110,7 @@ export const CaisseJour = () => {
       const factures = await factureApi.getAll();
       setFacturesJour(Array.isArray(factures) ? factures : []);
     } catch (e: any) {
-      setError(e?.response?.data?.message || 'Erreur de chargement.');
+      setError(getApiErrorMessage(e, 'Erreur de chargement.'));
     } finally {
       setLoading(false);
     }
@@ -222,7 +222,7 @@ export const CaisseJour = () => {
   };
 
   if (loading) {
-    return <div className="text-center text-slate-400 py-12">Chargementâ€¦</div>;
+    return <div className="text-center text-slate-400 py-12">Chargement…</div>;
   }
 
   if (!cj) {
@@ -245,8 +245,8 @@ export const CaisseJour = () => {
         <div>
           <h2 className="text-2xl font-bold text-slate-900">Caisse du jour</h2>
           <p className="text-slate-500 text-sm">
-            {fmtDateLong(cj.date)} â€” Ouverte Ã  {fmtHeure(cj.ouvertureAt)}
-            {cj.fermetureAt && ` â€” FermÃ©e Ã  ${fmtHeure(cj.fermetureAt)}`}
+            {fmtDateLong(cj.date)} — Ouverte à {fmtHeure(cj.ouvertureAt)}
+            {cj.fermetureAt && ` — Fermée à ${fmtHeure(cj.fermetureAt)}`}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -255,7 +255,7 @@ export const CaisseJour = () => {
             className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-slate-600 hover:text-primary border border-slate-200 rounded-lg"
           >
             <RefreshCw size={14} />
-            RafraÃ®chir
+            Rafraîchir
           </button>
           {ouverte && (
             <>
@@ -264,7 +264,7 @@ export const CaisseJour = () => {
                 className="flex items-center gap-2 px-3 py-2 text-sm font-medium bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200"
               >
                 <Plus size={14} />
-                OpÃ©ration
+                Opération
               </button>
               <button
                 onClick={() => setShowFermer(true)}
@@ -289,7 +289,7 @@ export const CaisseJour = () => {
         <div className="flex items-center gap-2 p-4 rounded-xl bg-slate-100 text-slate-700">
           <Lock size={18} />
           <span>
-            Caisse fermÃ©e. Solde de clÃ´ture transfÃ©rÃ© vers la caisse globale :{' '}
+            Caisse fermée. Solde de clôture transféré vers la caisse globale :{' '}
             <strong>{fmtFCFA(cj.soldeCloture ?? cj.solde)}</strong>
           </span>
         </div>
@@ -325,7 +325,7 @@ export const CaisseJour = () => {
         <div className="bg-white p-5 rounded-2xl border border-slate-200">
           <div className="flex items-center gap-2 text-sm text-slate-500 mb-2">
             <ArrowUpRight size={16} className="text-emerald-600" />
-            EntrÃ©es du jour
+            Entrées du jour
           </div>
           <p className="text-2xl font-bold text-emerald-600">+{fmtFCFA(entrees)}</p>
         </div>
@@ -334,7 +334,7 @@ export const CaisseJour = () => {
             <ArrowDownRight size={16} className="text-red-600" />
             Sorties du jour
           </div>
-          <p className="text-2xl font-bold text-red-600">âˆ’{fmtFCFA(sorties)}</p>
+          <p className="text-2xl font-bold text-red-600">−{fmtFCFA(sorties)}</p>
         </div>
       </div>
 
@@ -430,12 +430,12 @@ export const CaisseJour = () => {
       {activeTab === 'mouvements' && (
       <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
         <div className="p-5 border-b border-slate-100">
-          <h3 className="font-bold text-slate-900">OpÃ©rations</h3>
+          <h3 className="font-bold text-slate-900">Opérations</h3>
         </div>
         {operations.length === 0 ? (
           <div className="text-center text-slate-400 py-12">
             <Clock size={36} className="mx-auto mb-2 opacity-40" />
-            <p className="text-sm">Aucune opÃ©ration aujourd'hui.</p>
+            <p className="text-sm">Aucune opération aujourd'hui.</p>
           </div>
         ) : (
           <div className="divide-y divide-slate-100">
@@ -461,7 +461,7 @@ export const CaisseJour = () => {
                   <p className="text-sm font-medium text-slate-900 truncate">
                     {op.motif}
                     {op.annulee && (
-                      <span className="ml-2 text-xs text-slate-400">(annulÃ©e)</span>
+                      <span className="ml-2 text-xs text-slate-400">(annulée)</span>
                     )}
                   </p>
                   <p className="text-xs text-slate-500">
@@ -473,7 +473,7 @@ export const CaisseJour = () => {
                     op.typeOperation === 'ENTREE' ? 'text-emerald-600' : 'text-red-600'
                   }`}
                 >
-                  {op.typeOperation === 'ENTREE' ? '+' : 'âˆ’'}
+                  {op.typeOperation === 'ENTREE' ? '+' : '−'}
                   {fmtFCFA(op.montant)}
                 </p>
               </div>
@@ -499,7 +499,7 @@ export const CaisseJour = () => {
         </div>
       )}
 
-      {/* Modal Ajouter opÃ©ration */}
+      {/* Modal Ajouter opération */}
       <AnimatePresence>
         {showAdd && (
           <motion.div
@@ -518,7 +518,7 @@ export const CaisseJour = () => {
             >
               <div className="flex items-center justify-between p-5 border-b border-slate-100">
                 <h3 className="font-bold text-lg text-slate-900">
-                  Nouvelle opÃ©ration
+                  Nouvelle opération
                 </h3>
                 <button
                   onClick={() => !addSubmitting && setShowAdd(false)}
@@ -548,7 +548,7 @@ export const CaisseJour = () => {
                         ) : (
                           <ArrowDownRight size={14} />
                         )}
-                        {t === 'ENTREE' ? 'EntrÃ©e' : 'Sortie'}
+                        {t === 'ENTREE' ? 'Entrée' : 'Sortie'}
                       </button>
                     ))}
                   </div>
@@ -599,7 +599,7 @@ export const CaisseJour = () => {
                   disabled={addSubmitting}
                   className="flex-1 px-4 py-2.5 bg-primary text-white font-bold rounded-lg hover:bg-opacity-90 disabled:opacity-50"
                 >
-                  {addSubmitting ? 'Enregistrementâ€¦' : 'Enregistrer'}
+                  {addSubmitting ? 'Enregistrement…' : 'Enregistrer'}
                 </button>
               </div>
             </motion.div>
@@ -638,9 +638,9 @@ export const CaisseJour = () => {
               <div className="p-5 space-y-4">
                 <div className="p-3 bg-amber-50 rounded-lg text-amber-900 text-sm">
                   <p>
-                    Vous Ãªtes sur le point de fermer la caisse. Le solde de{' '}
-                    <strong>{fmtFCFA(cj.solde)}</strong> sera transfÃ©rÃ© vers la
-                    caisse globale et la session sera clÃ´turÃ©e.
+                    Vous êtes sur le point de fermer la caisse. Le solde de{' '}
+                    <strong>{fmtFCFA(cj.solde)}</strong> sera transféré vers la
+                    caisse globale et la session sera clôturée.
                   </p>
                 </div>
                 <div>
@@ -653,7 +653,7 @@ export const CaisseJour = () => {
                     onChange={(e) => setFermerNote(e.target.value)}
                     maxLength={255}
                     className="w-full mt-1 px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
-                    placeholder="Ex : JournÃ©e calme, RAS"
+                    placeholder="Ex : Journée calme, RAS"
                   />
                 </div>
                 {fermerError && (
@@ -677,7 +677,7 @@ export const CaisseJour = () => {
                   className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-red-600 text-white font-bold rounded-lg hover:bg-red-700 disabled:opacity-50"
                 >
                   <CheckCircle2 size={16} />
-                  {fermerSubmitting ? 'Fermetureâ€¦' : 'Confirmer la fermeture'}
+                  {fermerSubmitting ? 'Fermeture…' : 'Confirmer la fermeture'}
                 </button>
               </div>
             </motion.div>

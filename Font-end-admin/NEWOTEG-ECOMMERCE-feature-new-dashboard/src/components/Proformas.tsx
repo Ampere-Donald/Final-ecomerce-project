@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { motion } from 'motion/react';
 import { FileText, Plus, Printer, RefreshCw, Send, Trash2, X } from 'lucide-react';
-import { produitApi, proformaApi } from '../services/api';
+import { produitApi, proformaApi, getApiErrorMessage } from '../services/api';
 import { useAdminAuth } from '../context/AdminAuthContext';
 import { fmtDateCourt, fmtFCFA } from '../utils/format';
 import { ReceiptGenerator } from './ReceiptGenerator';
@@ -47,7 +47,7 @@ export const Proformas = () => {
       setProformas(Array.isArray(proformaData) ? proformaData : []);
       setProduits(Array.isArray(produitData) ? produitData : []);
     } catch (e: any) {
-      setError(e?.response?.data?.message || 'Impossible de charger les proformas.');
+      setError(getApiErrorMessage(e, 'Impossible de charger les proformas.'));
     } finally {
       setLoading(false);
     }
@@ -104,7 +104,7 @@ export const Proformas = () => {
       setPrintingProforma(created);
       await charger();
     } catch (e: any) {
-      setError(e?.response?.data?.message || 'Creation impossible.');
+      setError(getApiErrorMessage(e, 'Création impossible.'));
     } finally {
       setLoading(false);
     }
@@ -112,14 +112,24 @@ export const Proformas = () => {
 
   const transformer = async (id: string) => {
     if (!canManage) return;
-    await proformaApi.transformer(id, { methodePaiement: 'ESPECES' });
-    await charger();
+    setError(null);
+    try {
+      await proformaApi.transformer(id, { methodePaiement: 'ESPECES' });
+      await charger();
+    } catch (e: any) {
+      setError(getApiErrorMessage(e, 'Transformation impossible.'));
+    }
   };
 
   const remove = async (id: string) => {
     if (!window.confirm('Supprimer cette proforma ?')) return;
-    await proformaApi.remove(id);
-    await charger();
+    setError(null);
+    try {
+      await proformaApi.remove(id);
+      await charger();
+    } catch (e: any) {
+      setError(getApiErrorMessage(e, 'Suppression impossible.'));
+    }
   };
 
   return (

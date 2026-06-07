@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'motion/react';
 import { FileText, Printer, Search, ChevronDown } from 'lucide-react';
-import { factureApi } from '../services/api';
+import { factureApi, getApiErrorMessage } from '../services/api';
 import { ReceiptGenerator } from './ReceiptGenerator';
 
 const fmtFCFA = (n: number | string): string => {
@@ -46,8 +46,8 @@ export const Invoices = () => {
       if (filterType) params.type = filterType;
       const data = await factureApi.getAll(params);
       setFactures(Array.isArray(data) ? data : []);
-    } catch {
-      setError('Impossible de charger les factures.');
+    } catch (err: any) {
+      setError(getApiErrorMessage(err, 'Impossible de charger les factures.'));
     } finally {
       setLoading(false);
     }
@@ -66,7 +66,7 @@ export const Invoices = () => {
       );
       setReceiptFacture(f);
     } catch {
-      // si l'API échoue, on ouvre quand même le reçu
+      // Si l'API échoue, on ouvre quand même le reçu.
       setReceiptFacture(f);
     } finally {
       setPrinting(null);
