@@ -207,10 +207,23 @@ export const ReceiptGenerator: React.FC<ReceiptProps> = (props) => {
       } else {
         const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
         const pageWidth = pdf.internal.pageSize.getWidth();
+        const pageHeight = pdf.internal.pageSize.getHeight();
         const margin = 10;
         const contentWidth = pageWidth - margin * 2;
         const imgHeight = (canvas.height * contentWidth) / canvas.width;
-        pdf.addImage(imgData, 'PNG', margin, margin, contentWidth, imgHeight);
+        const printableHeight = pageHeight - margin * 2;
+        let remainingHeight = imgHeight;
+        let y = margin;
+
+        pdf.addImage(imgData, 'PNG', margin, y, contentWidth, imgHeight);
+        remainingHeight -= printableHeight;
+
+        while (remainingHeight > 0) {
+          pdf.addPage();
+          y -= printableHeight;
+          pdf.addImage(imgData, 'PNG', margin, y, contentWidth, imgHeight);
+          remainingHeight -= printableHeight;
+        }
         pdf.save(`${numero}.pdf`);
       }
     } catch (err) {
