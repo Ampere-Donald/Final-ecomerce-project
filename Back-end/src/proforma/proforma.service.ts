@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import { MethodePaiement } from '@prisma/client';
+import { BonVenteEventsService } from 'src/bon-vente/bon-vente.events.service';
 import { DatabaseService } from 'src/database/database.service';
 import { CreateProformaDto, LigneProformaDto } from './dto/create-proforma.dto';
 import { UpdateProformaDto } from './dto/update-proforma.dto';
@@ -17,7 +18,10 @@ type Actor = { id: string; role: string };
 
 @Injectable()
 export class ProformaService {
-  constructor(private readonly db: DatabaseService) {}
+  constructor(
+    private readonly db: DatabaseService,
+    private readonly events: BonVenteEventsService,
+  ) {}
 
   private toNumber(value: unknown): number {
     if (value === null || value === undefined || value === '') return 0;
@@ -212,7 +216,7 @@ export class ProformaService {
       }
     }
 
-    return this.db.$transaction(async (tx: any) => {
+    const result = await this.db.$transaction(async (tx: any) => {
       const ticket = await tx.ticketVente.create({
         data: {
           numeroTicket: await this.generateNumeroTicket(),
@@ -243,6 +247,9 @@ export class ProformaService {
 
       return { proforma: updated, ticket };
     });
+
+    this.events.emit(result.ticket);
+    return result;
   }
 
   async remove(id: string) {

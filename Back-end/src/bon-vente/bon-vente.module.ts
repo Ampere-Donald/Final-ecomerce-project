@@ -9,5 +9,6 @@ import { BonVenteService } from './bon-vente.service';
   imports: [DatabaseModule, TicketVenteModule],
   controllers: [BonVenteController],
   providers: [BonVenteService, BonVenteEventsService],
+  exports: [BonVenteEventsService],
 })
 export class BonVenteModule {}
