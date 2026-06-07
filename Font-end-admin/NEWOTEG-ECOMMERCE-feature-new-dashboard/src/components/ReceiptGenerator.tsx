@@ -14,7 +14,7 @@ interface LigneVente {
 }
 
 export interface ReceiptProps {
-  type: 'ticket' | 'facture';
+  type: 'ticket' | 'facture' | 'proforma';
   lignes: LigneVente[];
   montantTotal: number;
   methodePaiement: string;
@@ -25,6 +25,7 @@ export interface ReceiptProps {
     typeClient?: string;
     adresse?: string;
     nui?: string;
+    rccm?: string;
   };
   dateVente?: string;
   onClose: () => void;
@@ -34,12 +35,14 @@ export interface ReceiptProps {
 // Receipt number helpers (localStorage counter per year)
 // ---------------------------------------------------------------------------
 
-export function generateReceiptNumber(type: 'ticket' | 'facture'): string {
+export function generateReceiptNumber(type: 'ticket' | 'facture' | 'proforma'): string {
   const year = new Date().getFullYear();
-  const prefix = type === 'ticket' ? 'TIC' : 'FAC';
+  const prefix = type === 'ticket' ? 'TIC' : type === 'proforma' ? 'FP' : 'FAC';
   const key =
     type === 'ticket'
       ? `newoteg_ticket_counter_${year}`
+      : type === 'proforma'
+      ? `newoteg_proforma_counter_${year}`
       : `newoteg_invoice_counter_${year}`;
 
   const current = parseInt(localStorage.getItem(key) || '0', 10);
@@ -93,7 +96,7 @@ export const ReceiptGenerator: React.FC<ReceiptProps> = (props) => {
     onClose,
   } = props;
 
-  const [activeType, setActiveType] = React.useState<'ticket' | 'facture'>(initialType);
+  const [activeType, setActiveType] = React.useState<'ticket' | 'facture' | 'proforma'>(initialType);
   const printRef = useRef<HTMLDivElement>(null);
 
   // --- TVA calculation (prices are TTC) ---
@@ -193,9 +196,10 @@ export const ReceiptGenerator: React.FC<ReceiptProps> = (props) => {
       const imgData = canvas.toDataURL('image/png');
 
       if (activeType === 'ticket') {
-        const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a5' });
+        const ticketHeight = Math.max(120, Math.ceil((canvas.height * 80) / canvas.width) + 10);
+        const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: [80, ticketHeight] });
         const pageWidth = pdf.internal.pageSize.getWidth();
-        const margin = 8;
+        const margin = 4;
         const contentWidth = pageWidth - margin * 2;
         const imgHeight = (canvas.height * contentWidth) / canvas.width;
         pdf.addImage(imgData, 'PNG', margin, margin, contentWidth, imgHeight);
@@ -220,6 +224,7 @@ export const ReceiptGenerator: React.FC<ReceiptProps> = (props) => {
 
   // --- Derived display number ---
   const displayNumero = numero;
+  const documentLabel = activeType === 'proforma' ? 'FACTURE PROFORMA' : 'FACTURE';
 
   // -----------------------------------------------------------------------
   // Ticket Compact (80mm thermal — ~302px)
@@ -316,7 +321,7 @@ export const ReceiptGenerator: React.FC<ReceiptProps> = (props) => {
           <p className="text-xs text-gray-500">Tél: +237 6XX XXX XXX</p>
         </div>
         <div className="text-right">
-          <h2 className="text-lg font-bold text-gray-800">FACTURE</h2>
+          <h2 className="text-lg font-bold text-gray-800">{documentLabel}</h2>
           <p className="text-sm text-gray-600">N° {displayNumero}</p>
           <p className="text-sm text-gray-600">Date: {fmtDate(dateVente)}</p>
         </div>
@@ -331,6 +336,10 @@ export const ReceiptGenerator: React.FC<ReceiptProps> = (props) => {
         {client?.typeClient === 'professionnel' && client?.nui && (
           <p className="text-sm text-gray-600">NUI: {client.nui}</p>
         )}
+        {client?.nui && client?.typeClient !== 'professionnel' && (
+          <p className="text-sm text-gray-600">NUI: {client.nui}</p>
+        )}
+        {client?.rccm && <p className="text-sm text-gray-600">RCCM: {client.rccm}</p>}
       </div>
 
       {/* Table */}
@@ -384,7 +393,9 @@ export const ReceiptGenerator: React.FC<ReceiptProps> = (props) => {
 
       {/* Conditions */}
       <div className="border-t border-gray-300 pt-4 mb-8">
-        <p className="text-xs text-gray-500">Conditions : Paiement à réception</p>
+        <p className="text-xs text-gray-500">
+          Conditions : {activeType === 'proforma' ? 'Document non fiscal, valable sous reserve de stock disponible.' : 'Paiement à réception'}
+        </p>
       </div>
 
       {/* Signature */}
@@ -443,6 +454,16 @@ export const ReceiptGenerator: React.FC<ReceiptProps> = (props) => {
                 }`}
               >
                 Facture
+              </button>
+              <button
+                onClick={() => setActiveType('proforma')}
+                className={`px-3 py-1.5 transition-colors ${
+                  activeType === 'proforma'
+                    ? 'bg-indigo-600 text-white'
+                    : 'text-gray-300 hover:text-white'
+                }`}
+              >
+                Proforma
               </button>
             </div>
 

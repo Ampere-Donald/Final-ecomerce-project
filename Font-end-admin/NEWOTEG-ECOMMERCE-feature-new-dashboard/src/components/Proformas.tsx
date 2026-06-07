@@ -1,9 +1,10 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { motion } from 'motion/react';
-import { FileText, Plus, RefreshCw, Send, Trash2, X } from 'lucide-react';
+import { FileText, Plus, Printer, RefreshCw, Send, Trash2, X } from 'lucide-react';
 import { produitApi, proformaApi } from '../services/api';
 import { useAdminAuth } from '../context/AdminAuthContext';
 import { fmtDateCourt, fmtFCFA } from '../utils/format';
+import { ReceiptGenerator } from './ReceiptGenerator';
 
 type LigneForm = { produitId: string; quantite: number; prixUnitaire: number };
 
@@ -15,6 +16,7 @@ const currentPeriod = () => {
 export const Proformas = () => {
   const { admin } = useAdminAuth();
   const isAdmin = ['SUPER_ADMIN', 'ADMIN'].includes(admin?.role || '');
+  const canManage = ['SUPER_ADMIN', 'ADMIN', 'VENDEUR'].includes(admin?.role || '');
   const [proformas, setProformas] = useState<any[]>([]);
   const [produits, setProduits] = useState<any[]>([]);
   const [periode, setPeriode] = useState(currentPeriod());
@@ -27,6 +29,7 @@ export const Proformas = () => {
   const [clientRccm, setClientRccm] = useState('');
   const [notes, setNotes] = useState('');
   const [lignes, setLignes] = useState<LigneForm[]>([]);
+  const [printingProforma, setPrintingProforma] = useState<any | null>(null);
 
   const produitById = useMemo(
     () => new Map(produits.map((p) => [p.id, p])),
@@ -78,13 +81,14 @@ export const Proformas = () => {
   };
 
   const create = async () => {
+    if (!canManage) return;
     if (lignes.length === 0) {
       setError('Ajoutez au moins une ligne.');
       return;
     }
     setLoading(true);
     try {
-      await proformaApi.create({
+      const created = await proformaApi.create({
         clientNom: clientNom.trim() || undefined,
         clientNiu: clientNiu.trim() || undefined,
         clientRccm: clientRccm.trim() || undefined,
@@ -97,6 +101,7 @@ export const Proformas = () => {
       setClientRccm('');
       setNotes('');
       setLignes([]);
+      setPrintingProforma(created);
       await charger();
     } catch (e: any) {
       setError(e?.response?.data?.message || 'Creation impossible.');
@@ -106,6 +111,7 @@ export const Proformas = () => {
   };
 
   const transformer = async (id: string) => {
+    if (!canManage) return;
     await proformaApi.transformer(id, { methodePaiement: 'ESPECES' });
     await charger();
   };
@@ -121,7 +127,7 @@ export const Proformas = () => {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Proformas</h1>
-          <p className="text-sm text-slate-500">Devis avant vente, sans impact stock avant encaissement.</p>
+          <p className="text-sm text-slate-500">Devis avant vente, imprimable avant paiement et transformable en ticket a encaisser.</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <input
@@ -137,19 +143,21 @@ export const Proformas = () => {
           >
             <option value="">Tous</option>
             <option value="EN_COURS">En cours</option>
-            <option value="ACCEPTEE">Acceptée</option>
-            <option value="TRANSFORMEE">Transformée</option>
+            <option value="ACCEPTEE">Acceptee</option>
+            <option value="TRANSFORMEE">Transformee</option>
           </select>
-          <button onClick={charger} className="rounded-lg border border-slate-200 px-3 py-2 text-sm">
+          <button onClick={charger} className="rounded-lg border border-slate-200 px-3 py-2 text-sm" title="Rafraichir">
             <RefreshCw size={15} />
           </button>
-          <button
-            onClick={() => setShowCreate(true)}
-            className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-bold text-white"
-          >
-            <Plus size={16} />
-            Créer
-          </button>
+          {canManage && (
+            <button
+              onClick={() => setShowCreate(true)}
+              className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-bold text-white"
+            >
+              <Plus size={16} />
+              Creer
+            </button>
+          )}
         </div>
       </div>
 
@@ -159,7 +167,7 @@ export const Proformas = () => {
         <table className="w-full text-sm">
           <thead className="bg-slate-50 text-xs uppercase tracking-wider text-slate-500">
             <tr>
-              <th className="px-4 py-3 text-left">Numéro</th>
+              <th className="px-4 py-3 text-left">Numero</th>
               <th className="px-4 py-3 text-left">Client</th>
               <th className="px-4 py-3 text-left">Vendeur</th>
               <th className="px-4 py-3 text-left">Expiration</th>
@@ -181,7 +189,14 @@ export const Proformas = () => {
                 </td>
                 <td className="px-4 py-3">
                   <div className="flex justify-end gap-2">
-                    {p.statut !== 'TRANSFORMEE' && (
+                    <button
+                      onClick={() => setPrintingProforma(p)}
+                      className="rounded-lg bg-slate-100 p-2 text-slate-700 hover:bg-slate-200"
+                      title="Imprimer la proforma"
+                    >
+                      <Printer size={15} />
+                    </button>
+                    {canManage && p.statut !== 'TRANSFORMEE' && (
                       <button
                         onClick={() => transformer(p.id)}
                         className="rounded-lg bg-emerald-50 p-2 text-emerald-700 hover:bg-emerald-100"
@@ -207,7 +222,7 @@ export const Proformas = () => {
               <tr>
                 <td colSpan={7} className="px-4 py-12 text-center text-slate-400">
                   <FileText className="mx-auto mb-2 opacity-30" />
-                  Aucune proforma sur cette période.
+                  Aucune proforma sur cette periode.
                 </td>
               </tr>
             )}
@@ -215,7 +230,7 @@ export const Proformas = () => {
         </table>
       </div>
 
-      {showCreate && (
+      {showCreate && canManage && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4">
           <div className="w-full max-w-3xl rounded-xl bg-white p-5 shadow-xl">
             <div className="mb-4 flex items-center justify-between">
@@ -238,7 +253,7 @@ export const Proformas = () => {
                   </select>
                   <input type="number" min={1} value={line.quantite} onChange={(e) => updateLine(index, { quantite: Number(e.target.value) })} className="col-span-2 rounded-lg border border-slate-200 px-3 py-2 text-sm" />
                   <input type="number" min={0} value={line.prixUnitaire} onChange={(e) => updateLine(index, { prixUnitaire: Number(e.target.value) })} className="col-span-3 rounded-lg border border-slate-200 px-3 py-2 text-sm" />
-                  <button onClick={() => setLignes((prev) => prev.filter((_, i) => i !== index))} className="col-span-1 rounded-lg bg-red-50 text-red-600">×</button>
+                  <button onClick={() => setLignes((prev) => prev.filter((_, i) => i !== index))} className="col-span-1 rounded-lg bg-red-50 text-red-600">x</button>
                 </div>
               ))}
               <button onClick={addLine} className="rounded-lg border border-dashed border-slate-300 px-3 py-2 text-sm font-medium text-slate-600">
@@ -251,6 +266,28 @@ export const Proformas = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {printingProforma && (
+        <ReceiptGenerator
+          type="proforma"
+          numero={printingProforma.numero}
+          dateVente={printingProforma.dateCreation}
+          methodePaiement="A regler"
+          montantTotal={Number(printingProforma.montantTotal)}
+          client={{
+            nom: printingProforma.client?.nom || printingProforma.clientNom || 'Client comptoir',
+            nui: printingProforma.client?.niu || printingProforma.clientNiu || undefined,
+            rccm: printingProforma.client?.rccm || printingProforma.clientRccm || undefined,
+          }}
+          lignes={(printingProforma.lignes || []).map((l: any) => ({
+            nomProduit: l.nomProduit,
+            quantite: Number(l.quantite),
+            prixUnitaire: Number(l.prixUnitaire),
+            sousTotal: Number(l.sousTotal),
+          }))}
+          onClose={() => setPrintingProforma(null)}
+        />
       )}
     </motion.div>
   );

@@ -31,7 +31,7 @@ export class ProformaController {
   }
 
   @Get()
-  @Roles('SUPER_ADMIN', 'ADMIN', 'VENDEUR')
+  @Roles('SUPER_ADMIN', 'ADMIN', 'VENDEUR', 'CAISSIER')
   findAll(
     @Request() req: any,
     @Query('statut') statut?: string,
@@ -41,7 +41,7 @@ export class ProformaController {
   }
 
   @Get(':id')
-  @Roles('SUPER_ADMIN', 'ADMIN', 'VENDEUR')
+  @Roles('SUPER_ADMIN', 'ADMIN', 'VENDEUR', 'CAISSIER')
   findOne(@Param('id', ParseUUIDPipe) id: string, @Request() req: any) {
     return this.service.findOne(id, req.user);
   }

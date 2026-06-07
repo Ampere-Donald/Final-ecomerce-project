@@ -29,6 +29,10 @@ export class ProformaService {
     return ['SUPER_ADMIN', 'ADMIN'].includes(role);
   }
 
+  private canReadAll(role: string) {
+    return ['SUPER_ADMIN', 'ADMIN', 'CAISSIER'].includes(role);
+  }
+
   private include() {
     return {
       lignes: true,
@@ -114,7 +118,7 @@ export class ProformaService {
 
   async findAll(actor: Actor, filters: { statut?: string; periode?: string }) {
     const where: any = {};
-    if (!this.canManageAll(actor.role)) where.vendeurId = actor.id;
+    if (!this.canReadAll(actor.role)) where.vendeurId = actor.id;
     if (filters.statut) where.statut = filters.statut;
     if (filters.periode) {
       const [year, month] = filters.periode.split('-').map(Number);
@@ -138,7 +142,7 @@ export class ProformaService {
       include: this.include(),
     });
     if (!proforma) throw new NotFoundException('Proforma introuvable.');
-    if (!this.canManageAll(actor.role) && proforma.vendeurId !== actor.id) {
+    if (!this.canReadAll(actor.role) && proforma.vendeurId !== actor.id) {
       throw new ForbiddenException('Acces refuse a cette proforma.');
     }
     return proforma;
