@@ -22,6 +22,7 @@ interface Produit {
   imageUrl3?: string;
   prixDetail?: number;
   prixGros?: number;
+  quantiteGros?: number;
   quantiteStock?: number;
   urlDatasheet?: string;
   prixPromo?: number;
@@ -38,6 +39,7 @@ const FORM_INITIAL = {
   description: '',
   prixDetail: '',
   prixGros: '',
+  quantiteGros: '',
   quantiteStock: '0',
   seuilAlerte: '5',
   urlDatasheet: '',
@@ -226,6 +228,7 @@ export const Produits = () => {
       description: prod.description ?? '',
       prixDetail: prod.prixDetail != null ? String(prod.prixDetail) : '',
       prixGros: prod.prixGros != null ? String(prod.prixGros) : '',
+      quantiteGros: prod.quantiteGros != null ? String(prod.quantiteGros) : '',
       quantiteStock: prod.quantiteStock != null ? String(prod.quantiteStock) : '0',
       seuilAlerte: (prod as any).seuilAlerte != null ? String((prod as any).seuilAlerte) : '5',
       urlDatasheet: prod.urlDatasheet ?? '',
@@ -283,6 +286,7 @@ export const Produits = () => {
       if (formData.description) dataToSend.append('description', formData.description);
       if (formData.prixDetail) dataToSend.append('prixDetail', formData.prixDetail);
       if (formData.prixGros) dataToSend.append('prixGros', formData.prixGros);
+      dataToSend.append('quantiteGros', formData.quantiteGros || '');
       dataToSend.append('quantiteStock', formData.quantiteStock || '0');
       dataToSend.append('seuilAlerte', formData.seuilAlerte || '5');
       if (formData.urlDatasheet) dataToSend.append('urlDatasheet', formData.urlDatasheet);
@@ -849,6 +853,20 @@ export const Produits = () => {
                       onChange={(e) => setFormData((f) => ({ ...f, prixGros: e.target.value }))}
                       className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary/20 outline-none transition-all"
                       placeholder="0"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">
+                      Qte gros
+                    </label>
+                    <input
+                      type="number"
+                      min={0}
+                      step="1"
+                      value={formData.quantiteGros}
+                      onChange={(e) => setFormData((f) => ({ ...f, quantiteGros: e.target.value }))}
+                      className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+                      placeholder="Ex: 10"
                     />
                   </div>
                   <div>

@@ -48,14 +48,17 @@ export const Clients = () => {
   const filtered = clients.filter(c =>
     `${c.nom} ${c.prenom || ''}`.toLowerCase().includes(search.toLowerCase()) ||
     (c.email || '').toLowerCase().includes(search.toLowerCase()) ||
-    (c.telephone || '').includes(search)
+    (c.telephone || '').includes(search) ||
+    (c.niu || '').toLowerCase().includes(search.toLowerCase()) ||
+    (c.rccm || '').toLowerCase().includes(search.toLowerCase())
   );
 
   const handleExportCSV = () => {
     if (filtered.length === 0) return;
-    const headers = ['Nom', 'Prénom', 'Email', 'Téléphone', 'Type', 'Email vérifié', 'Commandes', 'Inscrit le'];
+    const headers = ['Nom', 'Prénom', 'Email', 'Téléphone', 'NIU', 'RCCM', 'Type', 'Email vérifié', 'Commandes', 'Inscrit le'];
     const rows = filtered.map(c => [
       `"${c.nom || ''}"`, `"${c.prenom || ''}"`, `"${c.email || ''}"`, `"${c.telephone || ''}"`,
+      `"${c.niu || ''}"`, `"${c.rccm || ''}"`,
       c.typeClient === 'PROFESSIONNEL' ? 'Pro' : 'Particulier',
       c.emailVerifie ? 'Oui' : 'Non',
       c._count?.commandes ?? 0,
@@ -131,6 +134,12 @@ export const Clients = () => {
                       <span className={`inline-flex px-2 py-0.5 rounded-full text-[11px] font-bold ${c.typeClient === 'PROFESSIONNEL' ? 'bg-blue-50 text-blue-700' : 'bg-slate-100 text-slate-600'}`}>
                         {c.typeClient === 'PROFESSIONNEL' ? 'Pro' : 'Particulier'}
                       </span>
+                      {(c.niu || c.rccm) && (
+                        <div className="mt-1 space-y-0.5 text-[11px] text-slate-500">
+                          {c.niu && <p>NIU: {c.niu}</p>}
+                          {c.rccm && <p>RCCM: {c.rccm}</p>}
+                        </div>
+                      )}
                     </td>
                     <td className="px-6 py-4">
                       {c.emailVerifie
@@ -261,6 +270,18 @@ export const Clients = () => {
                         <div className="flex items-center gap-3 text-sm">
                           <MapPin size={16} className="text-slate-400 flex-shrink-0" />
                           <span className="text-slate-700">{selectedClient.adresse}</span>
+                        </div>
+                      )}
+                      {selectedClient.niu && (
+                        <div className="flex items-center gap-3 text-sm">
+                          <ShoppingBag size={16} className="text-slate-400 flex-shrink-0" />
+                          <span className="text-slate-700">NIU: {selectedClient.niu}</span>
+                        </div>
+                      )}
+                      {selectedClient.rccm && (
+                        <div className="flex items-center gap-3 text-sm">
+                          <ShoppingBag size={16} className="text-slate-400 flex-shrink-0" />
+                          <span className="text-slate-700">RCCM: {selectedClient.rccm}</span>
                         </div>
                       )}
                       {selectedClient.createdAt && (

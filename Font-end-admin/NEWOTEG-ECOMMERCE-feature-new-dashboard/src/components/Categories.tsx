@@ -12,8 +12,8 @@ import { can } from '../utils/permissions';
 ──────────────────────────────────────────────────────────────────────*/
 interface ModalFormProps {
   title: string;
-  formData: { nom: string; description: string };
-  setFormData: React.Dispatch<React.SetStateAction<{ nom: string; description: string }>>;
+  formData: { nom: string; description: string; quantiteGros: string };
+  setFormData: React.Dispatch<React.SetStateAction<{ nom: string; description: string; quantiteGros: string }>>;
   isSubmitting: boolean;
   onSubmit: (e: React.FormEvent) => void;
   onClose: () => void;
@@ -51,6 +51,18 @@ const ModalForm: React.FC<ModalFormProps> = ({ title, formData, setFormData, isS
             onChange={e => setFormData(prev => ({ ...prev, description: e.target.value }))}
             className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary/20 outline-none transition-all resize-none"
             placeholder="Description de la categorie..."
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-1">Qte gros par defaut</label>
+          <input
+            type="number"
+            min={0}
+            step="1"
+            value={formData.quantiteGros}
+            onChange={e => setFormData(prev => ({ ...prev, quantiteGros: e.target.value }))}
+            className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+            placeholder="Ex: 10"
           />
         </div>
         <div>
@@ -97,7 +109,7 @@ export const Categories = () => {
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editModal, setEditModal] = useState<{ open: boolean; cat: any }>({ open: false, cat: null });
-  const [formData, setFormData] = useState({ nom: '', description: '' });
+  const [formData, setFormData] = useState({ nom: '', description: '', quantiteGros: '' });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [search, setSearch] = useState('');
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -130,7 +142,7 @@ export const Categories = () => {
   };
 
   const resetForm = () => {
-    setFormData({ nom: '', description: '' });
+    setFormData({ nom: '', description: '', quantiteGros: '' });
     setImageFile(null);
     setImagePreview(null);
   };
@@ -139,7 +151,12 @@ export const Categories = () => {
     e.preventDefault();
     try {
       setIsSubmitting(true);
-      const created = await categorieApi.create(formData);
+      const payload = {
+        nom: formData.nom,
+        description: formData.description,
+        quantiteGros: formData.quantiteGros ? Number(formData.quantiteGros) : undefined,
+      };
+      const created = await categorieApi.create(payload);
       if (imageFile) {
         await categorieApi.uploadImage(created.id, imageFile);
       }
@@ -159,7 +176,12 @@ export const Categories = () => {
     if (!editModal.cat) return;
     try {
       setIsSubmitting(true);
-      await categorieApi.update(editModal.cat.id, formData);
+      const payload = {
+        nom: formData.nom,
+        description: formData.description,
+        quantiteGros: formData.quantiteGros ? Number(formData.quantiteGros) : undefined,
+      };
+      await categorieApi.update(editModal.cat.id, payload);
       if (imageFile) {
         await categorieApi.uploadImage(editModal.cat.id, imageFile);
       }
@@ -185,7 +207,7 @@ export const Categories = () => {
   };
 
   const openEdit = (cat: any) => {
-    setFormData({ nom: cat.nom, description: cat.description || '' });
+    setFormData({ nom: cat.nom, description: cat.description || '', quantiteGros: cat.quantiteGros != null ? String(cat.quantiteGros) : '' });
     setImageFile(null);
     setImagePreview(cat.imageUrl || null);
     setEditModal({ open: true, cat });
@@ -226,15 +248,16 @@ export const Categories = () => {
               <tr className="bg-slate-50 text-slate-500 text-xs font-bold uppercase tracking-wider">
                 <th className="px-6 py-4">Nom de la categorie</th>
                 <th className="px-6 py-4">Description</th>
+                <th className="px-6 py-4">Qte gros</th>
                 <th className="px-6 py-4">Produits</th>
                 <th className="px-6 py-4 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {loading ? (
-                <tr><td colSpan={4} className="px-6 py-8 text-center text-slate-500">Chargement...</td></tr>
+                <tr><td colSpan={5} className="px-6 py-8 text-center text-slate-500">Chargement...</td></tr>
               ) : filtered.length === 0 ? (
-                <tr><td colSpan={4} className="px-6 py-12 text-center">
+                <tr><td colSpan={5} className="px-6 py-12 text-center">
                   <Tags size={36} className="mx-auto text-slate-300 mb-3" />
                   <p className="text-slate-500">Aucune categorie trouvee.</p>
                 </td></tr>
@@ -254,6 +277,7 @@ export const Categories = () => {
                       </div>
                     </td>
                     <td className="px-6 py-4 text-sm text-slate-500 max-w-xs truncate">{cat.description || <span className="italic text-slate-300">&mdash;</span>}</td>
+                    <td className="px-6 py-4 text-sm font-semibold text-slate-700">{cat.quantiteGros ?? <span className="italic text-slate-300">&mdash;</span>}</td>
                     <td className="px-6 py-4 text-sm font-semibold text-primary">{cat._count?.produits ?? cat.produits?.length ?? 0}</td>
                     <td className="px-6 py-4 text-right">
                       <div className="flex items-center justify-end gap-2">
