@@ -3,17 +3,20 @@ import { motion, AnimatePresence } from 'motion/react';
 import {
   Search, Plus, Minus, Trash2, Send, ShoppingCart,
   CheckCircle2, AlertCircle, Sparkles, X, Clock, Receipt,
-  User as UserIcon, Phone,
+  User as UserIcon, Phone, Printer,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { bonVenteApi, clientApi, produitApi, ticketApi, equivalenceApi } from '../services/api';
+import { bonVenteApi, clientApi, produitApi, ticketApi, equivalenceApi, proformaApi } from '../services/api';
 import { useAdminAuth } from '../context/AdminAuthContext';
+import { ReceiptGenerator } from './ReceiptGenerator';
 
 interface Produit {
   id: string;
   nomProduit: string;
   marque?: string;
   prixDetail?: number;
+  prixGros?: number;
+  quantiteGros?: number;
   prixPromo?: number;
   quantiteStock: number;
   imageUrl?: string | null;
@@ -29,6 +32,10 @@ interface PanierLigne {
   produitId: string;
   nomProduit: string;
   prix: number;
+  prixDetail: number;
+  prixGros?: number;
+  quantiteGros?: number;
+  modePrix: 'DETAIL' | 'GROS';
   quantite: number;
   stockDispo: number;
 }
@@ -75,6 +82,7 @@ export const POSVendeur = () => {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [proformaToPrint, setProformaToPrint] = useState<any | null>(null);
 
   // ── Admin : client texte libre ─────────────────────────────────────────
   const [nomClient, setNomClient] = useState('');
@@ -136,11 +144,22 @@ export const POSVendeur = () => {
     setPanier(prev => {
       const ex = prev.find(l => l.produitId === p.id);
       const prix = p.prixPromo ?? p.prixDetail ?? 0;
+      const prixDetail = p.prixPromo ?? p.prixDetail ?? 0;
       if (ex) {
         if (ex.quantite >= p.quantiteStock) return prev;
         return prev.map(l => l.produitId === p.id ? { ...l, quantite: l.quantite + 1 } : l);
       }
-      return [...prev, { produitId: p.id, nomProduit: p.nomProduit, prix, quantite: 1, stockDispo: p.quantiteStock }];
+      return [...prev, {
+        produitId: p.id,
+        nomProduit: p.nomProduit,
+        prix,
+        prixDetail,
+        prixGros: p.prixGros,
+        quantiteGros: p.quantiteGros,
+        modePrix: 'DETAIL',
+        quantite: 1,
+        stockDispo: p.quantiteStock,
+      }];
     });
   };
 
@@ -154,6 +173,14 @@ export const POSVendeur = () => {
   };
 
   const retirerLigne = (produitId: string) => setPanier(prev => prev.filter(l => l.produitId !== produitId));
+
+  const changerModePrix = (produitId: string, modePrix: 'DETAIL' | 'GROS') => {
+    setPanier(prev => prev.map(l => {
+      if (l.produitId !== produitId) return l;
+      const prix = modePrix === 'GROS' && l.prixGros != null ? Number(l.prixGros) : l.prixDetail;
+      return { ...l, modePrix, prix };
+    }));
+  };
 
   const total = useMemo(() => panier.reduce((acc, l) => acc + l.prix * l.quantite, 0), [panier]);
 
@@ -209,6 +236,29 @@ export const POSVendeur = () => {
     }
   };
 
+  const creerProforma = async () => {
+    if (!panier.length) return;
+    setSubmitting(true);
+    setError(null);
+    setSuccess(null);
+    try {
+      const proforma = await proformaApi.create({
+        clientId: selectedClientId || undefined,
+        lignes: panier.map(l => ({ produitId: l.produitId, quantite: l.quantite, prixUnitaire: l.prix })),
+      });
+      setProformaToPrint(proforma);
+      setSuccess(`Proforma ${proforma.numero} creee.`);
+      setPanier([]);
+      setSelectedClientId('');
+      setPanierMobileOpen(false);
+    } catch (e: any) {
+      const msg = e?.response?.data?.message || e?.message || 'Erreur inconnue';
+      setError(Array.isArray(msg) ? msg.join(', ') : String(msg));
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const annulerBon = async (id: string) => {
     try { await bonVenteApi.annuler(id); await loadBons(); }
     catch (e: any) { setError(e?.response?.data?.message || 'Impossible d\'annuler.'); }
@@ -232,7 +282,7 @@ export const POSVendeur = () => {
 
   const ajouterSuggestion = (s: any) => ajouterAuPanier({
     id: s.produitId, nomProduit: s.nomProduit, marque: s.marque,
-    prixDetail: s.prixDetail, prixPromo: s.prixPromo, quantiteStock: s.quantiteStock, imageUrl: s.imageUrl,
+    prixDetail: s.prixDetail, prixGros: s.prixGros, quantiteGros: s.quantiteGros, prixPromo: s.prixPromo, quantiteStock: s.quantiteStock, imageUrl: s.imageUrl,
   });
 
   // ── Rendu carte produit (commun) ───────────────────────────────────────
@@ -285,6 +335,23 @@ export const POSVendeur = () => {
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-slate-900 truncate">{l.nomProduit}</p>
                 <p className="text-xs text-slate-500">{fmtFCFA(l.prix)}</p>
+                {l.prixGros != null && (
+                  <div className="mt-1 inline-flex rounded-lg border border-slate-200 bg-slate-50 p-0.5 text-[11px] font-semibold">
+                    <button
+                      onClick={() => changerModePrix(l.produitId, 'DETAIL')}
+                      className={`rounded-md px-2 py-0.5 ${l.modePrix === 'DETAIL' ? 'bg-white text-primary shadow-sm' : 'text-slate-500'}`}
+                    >
+                      Detail
+                    </button>
+                    <button
+                      onClick={() => changerModePrix(l.produitId, 'GROS')}
+                      className={`rounded-md px-2 py-0.5 ${l.modePrix === 'GROS' ? 'bg-white text-primary shadow-sm' : 'text-slate-500'}`}
+                      title={l.quantiteGros ? `Seuil conseille : ${l.quantiteGros}` : 'Prix gros'}
+                    >
+                      Gros
+                    </button>
+                  </div>
+                )}
               </div>
               <div className="flex items-center gap-1">
                 <button onClick={() => changerQuantite(l.produitId, -1)} className="p-1 rounded text-slate-400 hover:text-slate-700 hover:bg-slate-100"><Minus size={14} /></button>
@@ -315,6 +382,23 @@ export const POSVendeur = () => {
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-slate-900 truncate">{l.nomProduit}</p>
                 <p className="text-xs text-slate-500">{fmtFCFA(l.prix)}</p>
+                {l.prixGros != null && (
+                  <div className="mt-1 inline-flex rounded-lg border border-slate-200 bg-slate-50 p-0.5 text-[11px] font-semibold">
+                    <button
+                      onClick={() => changerModePrix(l.produitId, 'DETAIL')}
+                      className={`rounded-md px-2 py-0.5 ${l.modePrix === 'DETAIL' ? 'bg-white text-primary shadow-sm' : 'text-slate-500'}`}
+                    >
+                      Detail
+                    </button>
+                    <button
+                      onClick={() => changerModePrix(l.produitId, 'GROS')}
+                      className={`rounded-md px-2 py-0.5 ${l.modePrix === 'GROS' ? 'bg-white text-primary shadow-sm' : 'text-slate-500'}`}
+                      title={l.quantiteGros ? `Seuil conseille : ${l.quantiteGros}` : 'Prix gros'}
+                    >
+                      Gros
+                    </button>
+                  </div>
+                )}
               </div>
               <div className="flex items-center gap-1">
                 <button onClick={() => changerQuantite(l.produitId, -1)} className="p-1 rounded text-slate-400 hover:text-slate-700 hover:bg-slate-100"><Minus size={14} /></button>
@@ -342,6 +426,10 @@ export const POSVendeur = () => {
         <button onClick={onEnvoyer ?? envoyerVendeur} disabled={!panier.length || submitting}
           className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-primary text-white font-bold rounded-xl shadow-md shadow-primary/20 hover:bg-opacity-90 disabled:opacity-50">
           <Send size={18} />{submitting ? 'Envoi…' : 'Envoyer à la caissière'}
+        </button>
+        <button onClick={creerProforma} disabled={!panier.length || submitting}
+          className="w-full flex items-center justify-center gap-2 px-4 py-3 border border-slate-200 bg-white text-slate-700 font-bold rounded-xl hover:bg-slate-50 disabled:opacity-50">
+          <Printer size={18} />{submitting ? 'Creation...' : 'Creer proforma'}
         </button>
       </div>
     </>
@@ -643,6 +731,28 @@ export const POSVendeur = () => {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {proformaToPrint && (
+        <ReceiptGenerator
+          type="proforma"
+          numero={proformaToPrint.numero}
+          dateVente={proformaToPrint.dateCreation}
+          methodePaiement="A regler"
+          montantTotal={Number(proformaToPrint.montantTotal)}
+          client={{
+            nom: proformaToPrint.client?.nom || proformaToPrint.clientNom || 'Client comptoir',
+            nui: proformaToPrint.client?.niu || proformaToPrint.clientNiu || undefined,
+            rccm: proformaToPrint.client?.rccm || proformaToPrint.clientRccm || undefined,
+          }}
+          lignes={(proformaToPrint.lignes || []).map((l: any) => ({
+            nomProduit: l.nomProduit,
+            quantite: Number(l.quantite),
+            prixUnitaire: Number(l.prixUnitaire),
+            sousTotal: Number(l.sousTotal),
+          }))}
+          onClose={() => setProformaToPrint(null)}
+        />
+      )}
 
       {renderEquivModal()}
     </motion.div>
