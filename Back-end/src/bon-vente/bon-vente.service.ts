@@ -57,7 +57,7 @@ export class BonVenteService {
           `Stock insuffisant pour ${p.nomProduit} (disponible : ${p.quantiteStock}).`,
         );
       }
-      const prixUnitaire = this.toNumber(p.prixPromo ?? p.prixDetail ?? 0);
+      const prixUnitaire = this.toNumber(l.prixUnitaire ?? p.prixPromo ?? p.prixDetail ?? 0);
       const sousTotal = prixUnitaire * l.quantite;
       montantTotal += sousTotal;
       return {
