@@ -75,7 +75,7 @@ export default function App() {
             <Route path="pos" element={<RoleProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN', 'VENDEUR']}><POSVendeur /></RoleProtectedRoute>} />
             <Route path="mes-tickets" element={<RoleProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN', 'VENDEUR']}><MesTickets /></RoleProtectedRoute>} />
             <Route path="file-caissier" element={<RoleProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN', 'CAISSIER']}><FileCaissier /></RoleProtectedRoute>} />
-            <Route path="proformas" element={<RoleProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN', 'VENDEUR']}><Proformas /></RoleProtectedRoute>} />
+            <Route path="proformas" element={<RoleProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN', 'VENDEUR', 'CAISSIER']}><Proformas /></RoleProtectedRoute>} />
 
             {/* Factures + Primes (Plan Implementation) */}
             <Route path="invoices" element={<RoleProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN', 'CAISSIER']}><Invoices /></RoleProtectedRoute>} />

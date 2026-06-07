@@ -29,7 +29,7 @@ export const can = {
   accessFileCaissier: (r?: string) => isAdmin(r) || isCaissier(r),
   accessTicketsJour: (r?: string) => isAdmin(r),
   creerProforma: (r?: string) => isAdmin(r) || isVendeur(r),
-  voirProformas: (r?: string) => isAdmin(r) || isVendeur(r),
+  voirProformas: (r?: string) => isAdmin(r) || isVendeur(r) || isCaissier(r),
 
   // ── E-commerce ──────────────────────────────────────────────
   accessCommandesEnLigne: (r?: string) => isAdmin(r) || isVendeur(r),
