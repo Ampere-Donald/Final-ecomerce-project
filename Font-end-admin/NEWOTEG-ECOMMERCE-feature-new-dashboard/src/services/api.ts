@@ -104,6 +104,8 @@ export const produitApi = {
   },
   getImportStatus: () => api.get('/produits/import/status').then(res => res.data),
   getLowStock: () => api.get('/produits/low-stock').then(toArray),
+  findByCode: (codeFamille: string, code: string) =>
+    api.get(`/produits/scan/${encodeURIComponent(codeFamille)}/${encodeURIComponent(code)}`).then(res => res.data),
 };
 
 // Catégories

@@ -25,7 +25,7 @@ import {
   ShoppingBag,
   ListChecks,
   Receipt,
-  PiggyBank, 
+  PiggyBank,
   Calculator,
   Award,
 } from 'lucide-react';
@@ -88,7 +88,7 @@ export const Sidebar = ({ open, onClose }: SidebarProps) => {
         ...add(can.accessCoffres(role), { label: 'Coffres', icon: PiggyBank, path: '/coffres' }),
         ...add(can.accessCredits(role), { label: 'Crédits clients', icon: HandCoins, path: '/credits' }),
         ...add(can.accessEcheances(role), { label: 'Échéances', icon: AlarmClock, path: '/echeances' }),
-        ...add(can.accessAchats(role), { label: 'CMUP & Valorisation', icon: Calculator, path: '/cmup' }),
+        ...add(can.accessCmup(role), { label: 'CMUP & Valorisation', icon: Calculator, path: '/cmup' }),
       ],
     },
     {

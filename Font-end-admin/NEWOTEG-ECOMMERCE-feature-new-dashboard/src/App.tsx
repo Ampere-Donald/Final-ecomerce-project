@@ -55,7 +55,7 @@ export default function App() {
             <Route path="stock-alerts" element={<StockAlerts />} />
             <Route path="ventes" element={<Ventes />} />
             <Route path="achats" element={<Achats />} />
-            <Route path="cmup" element={<RoleProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN', 'MANAGER']}><CmupValorisation /></RoleProtectedRoute>} />
+            <Route path="cmup" element={<RoleProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN']}><CmupValorisation /></RoleProtectedRoute>} />
             <Route path="clients" element={<Clients />} />
             <Route path="credits" element={<RoleProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN', 'CAISSIER']}><CreditsClients /></RoleProtectedRoute>} />
             <Route path="fournisseurs" element={<Fournisseurs />} />

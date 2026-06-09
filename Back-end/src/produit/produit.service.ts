@@ -192,6 +192,20 @@ export class ProduitService {
     return produit;
   }
 
+  async findByCode(codeFamille: string, code: string) {
+    const produit = await this.db.produit.findFirst({
+      where: { codeFamille, code },
+      include: {
+        categorie: true,
+        attributs: { include: { valeurs: true } },
+      },
+    });
+    if (!produit) {
+      throw new NotFoundException(`Produit introuvable pour le code famille "${codeFamille}" / code "${code}"`);
+    }
+    return produit;
+  }
+
   async update(id: string, updateProduitDto: UpdateProduitDto, actor?: NotificationActor) {
     await this.findOne(id);
 

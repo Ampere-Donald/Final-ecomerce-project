@@ -41,6 +41,8 @@ model Produit {
   derniereDeviseAchat  Devise?          @map("derniere_devise_achat")
   dernierFournisseurId String?          @map("dernier_fournisseur_id")
   dernierAchatAt       DateTime?        @map("dernier_achat_at")
+  codeFamille          String?          @map("code_famille") @db.VarChar(50)
+  code                 String?          @map("code") @db.VarChar(50)
   attributs            Attribut[]
   favoris              Favori[]
   lignesAchat          LigneAchat[]
@@ -52,6 +54,7 @@ model Produit {
   categorie            Categorie        @relation(fields: [categorieId], references: [id])
 
   @@unique([marque, nomProduit], name: "unique_produit")
+  @@unique([codeFamille, code], name: "unique_code_produit")
   @@map("produit")
 }
 

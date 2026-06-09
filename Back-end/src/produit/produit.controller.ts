@@ -212,6 +212,16 @@ export class ProduitController {
     return this.produitService.cleanupInvalidImages();
   }
 
+  @UseGuards(AdminAuthGuard, RolesGuard)
+  @Roles('SUPER_ADMIN', 'ADMIN', 'MANAGER', 'VENDEUR')
+  @Get('scan/:codeFamille/:code')
+  findByCode(
+    @Param('codeFamille') codeFamille: string,
+    @Param('code') code: string,
+  ) {
+    return this.produitService.findByCode(codeFamille, code);
+  }
+
   @Get(':id')
   findOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.produitService.findOne(id);
