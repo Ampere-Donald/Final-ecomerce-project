@@ -69,6 +69,19 @@ export class CaisseJourController {
   }
 
   /**
+   * Réouvre une caisse du jour fermée. Réservé au SUPER_ADMIN uniquement.
+   * Action tracée avec audit obligatoire.
+   */
+  @Post(':id/rouvrir')
+  @Roles('SUPER_ADMIN')
+  rouvrir(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Request() req: any,
+  ) {
+    return this.service.rouvrir(id, req.user.id);
+  }
+
+  /**
    * Enregistre une opération (ENTREE ou SORTIE) sur la caisse du jour.
    * Caissier pour les sorties tracées, ADMIN/SUPER_ADMIN pour supervision.
    */

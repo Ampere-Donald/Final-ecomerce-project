@@ -1,12 +1,20 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { motion } from 'motion/react';
-import { FileText, Plus, Printer, RefreshCw, Send, Trash2, X } from 'lucide-react';
+import { AlertTriangle, FileText, Plus, Printer, RefreshCw, Send, Trash2, X } from 'lucide-react';
 import { produitApi, proformaApi, getApiErrorMessage } from '../services/api';
 import { useAdminAuth } from '../context/AdminAuthContext';
 import { fmtDateCourt, fmtFCFA } from '../utils/format';
 import { ReceiptGenerator } from './ReceiptGenerator';
 
 type LigneForm = { produitId: string; quantite: number; prixUnitaire: number };
+
+const NOTES_DEFAULT = 'Devis valable 30 jours. Prix sous réserve de disponibilité des stocks.';
+
+const statutConfig: Record<string, { label: string; className: string }> = {
+  EN_COURS:    { label: 'En cours',    className: 'bg-blue-100 text-blue-700' },
+  ACCEPTEE:    { label: 'Acceptée',    className: 'bg-green-100 text-green-700' },
+  TRANSFORMEE: { label: 'Transformée', className: 'bg-slate-100 text-slate-500' },
+};
 
 const currentPeriod = () => {
   const d = new Date();
@@ -27,8 +35,10 @@ export const Proformas = () => {
   const [clientNom, setClientNom] = useState('');
   const [clientNiu, setClientNiu] = useState('');
   const [clientRccm, setClientRccm] = useState('');
-  const [notes, setNotes] = useState('');
+  const [notes, setNotes] = useState(NOTES_DEFAULT);
   const [lignes, setLignes] = useState<LigneForm[]>([]);
+  const [searchProduit, setSearchProduit] = useState('');
+  const [showDropdown, setShowDropdown] = useState(false);
   const [printingProforma, setPrintingProforma] = useState<any | null>(null);
 
   const produitById = useMemo(
@@ -57,13 +67,19 @@ export const Proformas = () => {
     charger();
   }, [periode, statut]);
 
-  const addLine = () => {
-    const p = produits[0];
-    if (!p) return;
+  const produitsFiltres = useMemo(() => {
+    const q = searchProduit.trim().toLowerCase();
+    if (!q) return produits;
+    return produits.filter((p) => p.nomProduit.toLowerCase().includes(q));
+  }, [produits, searchProduit]);
+
+  const addLine = (produit: any) => {
     setLignes((prev) => [
       ...prev,
-      { produitId: p.id, quantite: 1, prixUnitaire: Number(p.prixDetail || 0) },
+      { produitId: produit.id, quantite: 1, prixUnitaire: Number(produit.prixDetail || 0) },
     ]);
+    setSearchProduit('');
+    setShowDropdown(false);
   };
 
   const updateLine = (index: number, patch: Partial<LigneForm>) => {
@@ -71,11 +87,22 @@ export const Proformas = () => {
       prev.map((line, i) => {
         if (i !== index) return line;
         const next = { ...line, ...patch };
+        // Si le produit change, réinitialiser au prix détail
         if (patch.produitId) {
           const p = produitById.get(patch.produitId);
           next.prixUnitaire = Number(p?.prixDetail || 0);
         }
         return next;
+      }),
+    );
+  };
+
+  const appliquerPrixGros = (index: number) => {
+    setLignes((prev) =>
+      prev.map((line, i) => {
+        if (i !== index) return line;
+        const p = produitById.get(line.produitId);
+        return { ...line, prixUnitaire: Number(p?.prixGros || line.prixUnitaire) };
       }),
     );
   };
@@ -99,8 +126,10 @@ export const Proformas = () => {
       setClientNom('');
       setClientNiu('');
       setClientRccm('');
-      setNotes('');
+      setNotes(NOTES_DEFAULT);
       setLignes([]);
+      setSearchProduit('');
+      setShowDropdown(false);
       setPrintingProforma(created);
       await charger();
     } catch (e: any) {
@@ -195,7 +224,9 @@ export const Proformas = () => {
                 <td className="px-4 py-3">{fmtDateCourt(p.dateExpiration)}</td>
                 <td className="px-4 py-3 text-right font-bold text-primary">{fmtFCFA(p.montantTotal)}</td>
                 <td className="px-4 py-3 text-center">
-                  <span className="rounded-full bg-slate-100 px-2 py-1 text-xs font-bold text-slate-700">{p.statut}</span>
+                  <span className={`rounded-full px-2 py-1 text-xs font-bold ${(statutConfig[p.statut] ?? statutConfig['EN_COURS']).className}`}>
+                    {(statutConfig[p.statut] ?? { label: p.statut }).label}
+                  </span>
                 </td>
                 <td className="px-4 py-3">
                   <div className="flex justify-end gap-2">
@@ -245,7 +276,7 @@ export const Proformas = () => {
           <div className="w-full max-w-3xl rounded-xl bg-white p-5 shadow-xl">
             <div className="mb-4 flex items-center justify-between">
               <h2 className="text-lg font-bold text-slate-900">Nouvelle proforma</h2>
-              <button onClick={() => setShowCreate(false)} className="rounded-lg p-2 hover:bg-slate-100">
+              <button onClick={() => { setShowCreate(false); setSearchProduit(''); setNotes(NOTES_DEFAULT); }} className="rounded-lg p-2 hover:bg-slate-100">
                 <X size={18} />
               </button>
             </div>
@@ -255,23 +286,102 @@ export const Proformas = () => {
               <input value={clientRccm} onChange={(e) => setClientRccm(e.target.value)} placeholder="RCCM client" className="rounded-lg border border-slate-200 px-3 py-2 text-sm" />
             </div>
             <textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Notes" className="mt-3 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" />
-            <div className="mt-4 space-y-2">
-              {lignes.map((line, index) => (
-                <div key={index} className="grid grid-cols-12 gap-2">
-                  <select value={line.produitId} onChange={(e) => updateLine(index, { produitId: e.target.value })} className="col-span-6 rounded-lg border border-slate-200 px-3 py-2 text-sm">
-                    {produits.map((p) => <option key={p.id} value={p.id}>{p.nomProduit}</option>)}
-                  </select>
-                  <input type="number" min={1} value={line.quantite} onChange={(e) => updateLine(index, { quantite: Number(e.target.value) })} className="col-span-2 rounded-lg border border-slate-200 px-3 py-2 text-sm" />
-                  <input type="number" min={0} value={line.prixUnitaire} onChange={(e) => updateLine(index, { prixUnitaire: Number(e.target.value) })} className="col-span-3 rounded-lg border border-slate-200 px-3 py-2 text-sm" />
-                  <button onClick={() => setLignes((prev) => prev.filter((_, i) => i !== index))} className="col-span-1 rounded-lg bg-red-50 text-red-600">x</button>
+            {/* Autocomplete produits */}
+            <div className="relative mt-4 mb-2">
+              <input
+                type="text"
+                value={searchProduit}
+                onChange={(e) => { setSearchProduit(e.target.value); setShowDropdown(true); }}
+                onFocus={() => setShowDropdown(true)}
+                onBlur={() => setTimeout(() => setShowDropdown(false), 150)}
+                placeholder="Rechercher et ajouter un produit…"
+                className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm focus:border-primary focus:bg-white outline-none"
+              />
+              {showDropdown && produitsFiltres.length > 0 && (
+                <div className="absolute z-50 mt-1 w-full max-h-56 overflow-y-auto rounded-lg border border-slate-200 bg-white shadow-lg">
+                  {produitsFiltres.slice(0, 30).map((prod) => {
+                    const rupture = (prod.quantiteStock ?? 0) <= 0;
+                    return (
+                      <button
+                        key={prod.id}
+                        type="button"
+                        onMouseDown={() => addLine(prod)}
+                        className="flex w-full items-center justify-between px-3 py-2 text-sm hover:bg-slate-50 text-left"
+                      >
+                        <span className={rupture ? 'text-orange-600' : 'text-slate-800'}>
+                          {prod.nomProduit}
+                          {rupture && <span className="ml-1 text-xs">⚠ rupture</span>}
+                        </span>
+                        <span className="text-xs text-slate-400 ml-2">{Number(prod.prixDetail || 0).toLocaleString()} FCFA</span>
+                      </button>
+                    );
+                  })}
                 </div>
-              ))}
-              <button onClick={addLine} className="rounded-lg border border-dashed border-slate-300 px-3 py-2 text-sm font-medium text-slate-600">
-                Ajouter une ligne
-              </button>
+              )}
+            </div>
+
+            {/* Lignes ajoutées */}
+            <div className="space-y-2">
+              {lignes.length > 0 && (
+                <div className="grid grid-cols-12 gap-2 px-1">
+                  <span className="col-span-6 text-xs text-slate-400 font-medium">Produit</span>
+                  <span className="col-span-2 text-xs text-slate-400 font-medium">Qté</span>
+                  <span className="col-span-3 text-xs text-slate-400 font-medium">Prix unit.</span>
+                  <span className="col-span-1" />
+                </div>
+              )}
+              {lignes.map((line, index) => {
+                const p = produitById.get(line.produitId);
+                const enRupture = p && (p.quantiteStock ?? 0) <= 0;
+                const seuil = Number(p?.quantiteGros || 0);
+                const prixGros = Number(p?.prixGros || 0);
+                const eligibleGros = seuil > 0 && line.quantite >= seuil && prixGros > 0;
+                const grosDejaApplique = eligibleGros && line.prixUnitaire === prixGros;
+                return (
+                  <div key={index} className={`grid grid-cols-12 gap-2 rounded-lg p-2 ${enRupture ? 'bg-orange-50 border border-orange-200' : 'bg-slate-50'}`}>
+                    <div className="col-span-6">
+                      <p className="text-sm font-medium text-slate-800 truncate">{p?.nomProduit ?? '—'}</p>
+                      {enRupture && (
+                        <p className="flex items-center gap-1 text-xs text-orange-600">
+                          <AlertTriangle size={11} />
+                          Rupture — stock peut évoluer
+                        </p>
+                      )}
+                      {grosDejaApplique && (
+                        <p className="text-xs text-emerald-600 font-medium">✓ Prix de gros appliqué</p>
+                      )}
+                      {eligibleGros && !grosDejaApplique && (
+                        <button
+                          type="button"
+                          onClick={() => appliquerPrixGros(index)}
+                          className="text-xs text-emerald-700 underline font-medium hover:text-emerald-900"
+                        >
+                          Appliquer prix de gros ({prixGros.toLocaleString()} FCFA)
+                        </button>
+                      )}
+                    </div>
+                    <input
+                      type="number" min={1} value={line.quantite}
+                      onChange={(e) => updateLine(index, { quantite: Number(e.target.value) })}
+                      className="col-span-2 rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-sm"
+                    />
+                    <input
+                      type="number" min={0} value={line.prixUnitaire}
+                      onChange={(e) => updateLine(index, { prixUnitaire: Number(e.target.value) })}
+                      className="col-span-3 rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-sm"
+                    />
+                    <button
+                      onClick={() => setLignes((prev) => prev.filter((_, i) => i !== index))}
+                      className="col-span-1 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 flex items-center justify-center"
+                    >
+                      <X size={14} />
+                    </button>
+                  </div>
+                );
+              })}
             </div>
             <div className="mt-5 flex justify-end gap-2">
-              <button onClick={() => setShowCreate(false)} className="rounded-lg border border-slate-200 px-4 py-2 text-sm">Annuler</button>
+              <button onClick={() => { setShowCreate(false); setSearchProduit(''); setNotes(NOTES_DEFAULT); }} className="rounded-lg border border-slate-200 px-4 py-2 text-sm">Annuler</button>
               <button onClick={create} className="rounded-lg bg-primary px-4 py-2 text-sm font-bold text-white">Enregistrer</button>
             </div>
           </div>
@@ -290,6 +400,7 @@ export const Proformas = () => {
             nui: printingProforma.client?.niu || printingProforma.clientNiu || undefined,
             rccm: printingProforma.client?.rccm || printingProforma.clientRccm || undefined,
           }}
+          notes={printingProforma.notes || undefined}
           lignes={(printingProforma.lignes || []).map((l: any) => ({
             nomProduit: l.nomProduit,
             quantite: Number(l.quantite),

@@ -16,6 +16,7 @@ import {
   Search,
 } from 'lucide-react';
 import { caisseJourApi, factureApi, getApiErrorMessage } from '../services/api';
+import { useAdminAuth } from '../context/AdminAuthContext';
 import { FileCaissier } from './FileCaissier';
 import { ReceiptGenerator } from './ReceiptGenerator';
 
@@ -79,7 +80,7 @@ export const CaisseJour = () => {
   const [facturesJour, setFacturesJour] = useState<FactureJour[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'encaisser' | 'encaissements' | 'mouvements' | 'cloture'>('encaisser');
+  const [activeTab, setActiveTab] = useState<'encaisser' | 'encaissements' | 'mouvements'>('encaisser');
   const [searchFacture, setSearchFacture] = useState('');
   const [printingFacture, setPrintingFacture] = useState<string | null>(null);
   const [receiptFacture, setReceiptFacture] = useState<FactureJour | null>(null);
@@ -97,6 +98,13 @@ export const CaisseJour = () => {
   const [fermerNote, setFermerNote] = useState('');
   const [fermerSubmitting, setFermerSubmitting] = useState(false);
   const [fermerError, setFermerError] = useState<string | null>(null);
+
+  // Modal réouverture (SUPER_ADMIN uniquement)
+  const [showRouvrir, setShowRouvrir] = useState(false);
+  const [rouvrirSubmitting, setRouvrirSubmitting] = useState(false);
+  const [rouvrirError, setRouvrirError] = useState<string | null>(null);
+
+  const { admin } = useAdminAuth();
 
   const charger = async () => {
     setError(null);
@@ -221,6 +229,22 @@ export const CaisseJour = () => {
     }
   };
 
+  const handleRouvrir = async () => {
+    if (!cj) return;
+    setRouvrirError(null);
+    setRouvrirSubmitting(true);
+    try {
+      await caisseJourApi.rouvrir(cj.id);
+      setShowRouvrir(false);
+      await charger();
+    } catch (e: any) {
+      const msg = e?.response?.data?.message || e?.message;
+      setRouvrirError(Array.isArray(msg) ? msg.join(', ') : String(msg));
+    } finally {
+      setRouvrirSubmitting(false);
+    }
+  };
+
   if (loading) {
     return <div className="text-center text-slate-400 py-12">Chargement…</div>;
   }
@@ -275,6 +299,15 @@ export const CaisseJour = () => {
               </button>
             </>
           )}
+          {!ouverte && admin?.role === 'SUPER_ADMIN' && (
+            <button
+              onClick={() => setShowRouvrir(true)}
+              className="flex items-center gap-2 px-3 py-2 text-sm font-bold bg-amber-500 text-white rounded-lg hover:bg-amber-600"
+            >
+              <RefreshCw size={14} />
+              Rouvrir la caisse
+            </button>
+          )}
         </div>
       </div>
 
@@ -300,7 +333,6 @@ export const CaisseJour = () => {
           ['encaisser', 'À encaisser'],
           ['encaissements', 'Encaissements'],
           ['mouvements', 'Mouvements'],
-          ['cloture', 'Clôture'],
         ] as const).map(([key, label]) => (
           <button
             key={key}
@@ -484,20 +516,6 @@ export const CaisseJour = () => {
 
       )}
 
-      {activeTab === 'cloture' && (
-        <div className="rounded-2xl border border-slate-200 bg-white p-6">
-          <h3 className="font-bold text-slate-900">Clôture</h3>
-          <p className="mt-2 text-sm text-slate-500">Vérifiez les mouvements du jour avant de fermer la caisse.</p>
-          <button
-            onClick={() => setShowFermer(true)}
-            disabled={!ouverte}
-            className="mt-4 inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-bold text-white hover:bg-red-700 disabled:opacity-50"
-          >
-            <Lock size={14} />
-            Fermer la caisse
-          </button>
-        </div>
-      )}
 
       {/* Modal Ajouter opération */}
       <AnimatePresence>
@@ -678,6 +696,79 @@ export const CaisseJour = () => {
                 >
                   <CheckCircle2 size={16} />
                   {fermerSubmitting ? 'Fermeture…' : 'Confirmer la fermeture'}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Modal Rouvrir la caisse — SUPER_ADMIN uniquement */}
+      <AnimatePresence>
+        {showRouvrir && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+            onClick={() => !rouvrirSubmitting && setShowRouvrir(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-white rounded-2xl shadow-2xl max-w-md w-full"
+            >
+              <div className="flex items-center justify-between p-5 border-b border-slate-100">
+                <h3 className="font-bold text-lg text-slate-900">
+                  Rouvrir la caisse du jour
+                </h3>
+                <button
+                  onClick={() => !rouvrirSubmitting && setShowRouvrir(false)}
+                  className="p-1 text-slate-400 hover:text-slate-700"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+              <div className="p-5 space-y-4">
+                <div className="p-4 bg-amber-50 rounded-lg border border-amber-200 text-amber-900 text-sm space-y-2">
+                  <p className="font-bold flex items-center gap-2">
+                    <AlertCircle size={16} />
+                    Action sensible — Traçabilité activée
+                  </p>
+                  <p>
+                    Cette action réouvrira la caisse fermée du{' '}
+                    <strong>{cj ? fmtDateLong(cj.date) : ''}</strong>.
+                  </p>
+                  <p>
+                    Elle sera <strong>enregistrée dans l'audit</strong> avec votre
+                    identifiant, l'heure et la date. Toute réouverture non justifiée
+                    engage votre responsabilité.
+                  </p>
+                </div>
+                {rouvrirError && (
+                  <div className="flex items-center gap-2 p-2 rounded bg-red-50 text-red-700 text-sm border border-red-200">
+                    <AlertCircle size={14} />
+                    {rouvrirError}
+                  </div>
+                )}
+              </div>
+              <div className="p-5 border-t border-slate-100 flex gap-2">
+                <button
+                  onClick={() => !rouvrirSubmitting && setShowRouvrir(false)}
+                  disabled={rouvrirSubmitting}
+                  className="flex-1 px-4 py-2.5 border border-slate-200 text-slate-700 font-medium rounded-lg hover:bg-slate-50 disabled:opacity-50"
+                >
+                  Annuler
+                </button>
+                <button
+                  onClick={handleRouvrir}
+                  disabled={rouvrirSubmitting}
+                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-amber-500 text-white font-bold rounded-lg hover:bg-amber-600 disabled:opacity-50"
+                >
+                  <RefreshCw size={16} />
+                  {rouvrirSubmitting ? 'Réouverture…' : 'Confirmer la réouverture'}
                 </button>
               </div>
             </motion.div>

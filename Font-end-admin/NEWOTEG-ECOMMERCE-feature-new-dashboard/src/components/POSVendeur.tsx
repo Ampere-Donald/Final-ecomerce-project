@@ -153,8 +153,9 @@ export const POSVendeur = () => {
     if (p.quantiteStock <= 0) return;
     setPanier(prev => {
       const ex = prev.find(l => l.produitId === p.id);
-      const prix = p.prixPromo ?? p.prixDetail ?? 0;
-      const prixDetail = p.prixPromo ?? p.prixDetail ?? 0;
+      // Number() force la conversion depuis Prisma Decimal → number JS
+      const prixDetail = Number((p.prixPromo || null) ?? p.prixDetail ?? 0);
+      const prixGros = p.prixGros != null ? Number(p.prixGros) : null;
       if (ex) {
         if (ex.quantite >= p.quantiteStock) return prev;
         return prev.map(l => l.produitId === p.id ? { ...l, quantite: l.quantite + 1 } : l);
@@ -162,10 +163,10 @@ export const POSVendeur = () => {
       return [...prev, {
         produitId: p.id,
         nomProduit: p.nomProduit,
-        prix,
+        prix: prixDetail,
         prixDetail,
-        prixGros: p.prixGros,
-        quantiteGros: p.quantiteGros,
+        prixGros,
+        quantiteGros: p.quantiteGros != null ? Number(p.quantiteGros) : null,
         modePrix: 'DETAIL',
         quantite: 1,
         stockDispo: p.quantiteStock,
@@ -175,9 +176,15 @@ export const POSVendeur = () => {
 
   const changerQuantite = (produitId: string, delta: number) => {
     setPanier(prev => prev
-      .map(l => l.produitId === produitId
-        ? { ...l, quantite: Math.max(0, Math.min(l.stockDispo, l.quantite + delta)) }
-        : l)
+      .map(l => {
+        if (l.produitId !== produitId) return l;
+        const newQty = Math.max(0, Math.min(l.stockDispo, l.quantite + delta));
+        const seuil = l.quantiteGros ?? 0;
+        // Si on repasse sous le seuil, on revient automatiquement en Détail
+        const modePrix = (seuil > 0 && newQty < seuil) ? 'DETAIL' : l.modePrix;
+        const prix = modePrix === 'GROS' && l.prixGros != null ? Number(l.prixGros) : Number(l.prixDetail);
+        return { ...l, quantite: newQty, modePrix, prix };
+      })
       .filter(l => l.quantite > 0)
     );
   };
@@ -187,7 +194,7 @@ export const POSVendeur = () => {
   const changerModePrix = (produitId: string, modePrix: 'DETAIL' | 'GROS') => {
     setPanier(prev => prev.map(l => {
       if (l.produitId !== produitId) return l;
-      const prix = modePrix === 'GROS' && l.prixGros != null ? Number(l.prixGros) : l.prixDetail;
+      const prix = modePrix === 'GROS' && l.prixGros != null ? Number(l.prixGros) : Number(l.prixDetail);
       return { ...l, modePrix, prix };
     }));
   };
@@ -373,7 +380,7 @@ export const POSVendeur = () => {
 
   // ── Rendu carte produit (commun) ───────────────────────────────────────
   const renderProduit = (p: Produit) => {
-    const prix = p.prixPromo ?? p.prixDetail ?? 0;
+    const prix = Number((p.prixPromo || null) ?? p.prixDetail ?? 0);
     const enRupture = p.quantiteStock <= 0;
     const img = resolveImgUrl(p.imageUrl);
     const contenu = (
@@ -421,20 +428,20 @@ export const POSVendeur = () => {
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-slate-900 truncate">{l.nomProduit}</p>
                 <p className="text-xs text-slate-500">{fmtFCFA(l.prix)}</p>
-                {l.prixGros != null && (
+                {l.prixGros != null && l.quantiteGros != null && l.quantite >= l.quantiteGros && (
                   <div className="mt-1 inline-flex rounded-lg border border-slate-200 bg-slate-50 p-0.5 text-[11px] font-semibold">
                     <button
                       onClick={() => changerModePrix(l.produitId, 'DETAIL')}
                       className={`rounded-md px-2 py-0.5 ${l.modePrix === 'DETAIL' ? 'bg-white text-primary shadow-sm' : 'text-slate-500'}`}
                     >
-                      Detail
+                      Détail
                     </button>
                     <button
                       onClick={() => changerModePrix(l.produitId, 'GROS')}
                       className={`rounded-md px-2 py-0.5 ${l.modePrix === 'GROS' ? 'bg-white text-primary shadow-sm' : 'text-slate-500'}`}
-                      title={l.quantiteGros ? `Seuil conseille : ${l.quantiteGros}` : 'Prix gros'}
+                      title={l.quantiteGros ? `Seuil : ${l.quantiteGros} unités` : 'Prix de gros'}
                     >
-                      Gros
+                      Gros {l.quantiteGros ? `(≥${l.quantiteGros})` : ''}
                     </button>
                   </div>
                 )}
@@ -468,20 +475,20 @@ export const POSVendeur = () => {
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-slate-900 truncate">{l.nomProduit}</p>
                 <p className="text-xs text-slate-500">{fmtFCFA(l.prix)}</p>
-                {l.prixGros != null && (
+                {l.prixGros != null && l.quantiteGros != null && l.quantite >= l.quantiteGros && (
                   <div className="mt-1 inline-flex rounded-lg border border-slate-200 bg-slate-50 p-0.5 text-[11px] font-semibold">
                     <button
                       onClick={() => changerModePrix(l.produitId, 'DETAIL')}
                       className={`rounded-md px-2 py-0.5 ${l.modePrix === 'DETAIL' ? 'bg-white text-primary shadow-sm' : 'text-slate-500'}`}
                     >
-                      Detail
+                      Détail
                     </button>
                     <button
                       onClick={() => changerModePrix(l.produitId, 'GROS')}
                       className={`rounded-md px-2 py-0.5 ${l.modePrix === 'GROS' ? 'bg-white text-primary shadow-sm' : 'text-slate-500'}`}
-                      title={l.quantiteGros ? `Seuil conseille : ${l.quantiteGros}` : 'Prix gros'}
+                      title={l.quantiteGros ? `Seuil : ${l.quantiteGros} unités` : 'Prix de gros'}
                     >
-                      Gros
+                      Gros {l.quantiteGros ? `(≥${l.quantiteGros})` : ''}
                     </button>
                   </div>
                 )}
@@ -632,7 +639,7 @@ export const POSVendeur = () => {
               {equivLoading ? <div className="text-center text-slate-400 py-8">Recherche…</div>
                 : equivError ? <div className="flex items-center gap-2 p-3 rounded-lg bg-amber-50 text-amber-700 border border-amber-200 text-sm"><AlertCircle size={16} />{equivError}</div>
                   : equivResults.map(s => {
-                    const prix = s.prixPromo ?? s.prixDetail ?? 0;
+                    const prix = Number((s.prixPromo || null) ?? s.prixDetail ?? 0);
                     const compatCfg: Record<string, string> = { haute: 'bg-emerald-100 text-emerald-700', moyenne: 'bg-amber-100 text-amber-700', faible: 'bg-red-100 text-red-700' };
                     return (
                       <div key={s.produitId} className="rounded-xl border border-slate-200 p-3">

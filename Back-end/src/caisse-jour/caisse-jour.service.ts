@@ -315,4 +315,59 @@ export class CaisseJourService {
 
     return result;
   }
+
+  /**
+   * Rouvre une caisse du jour fermée.
+   * Réservé au SUPER_ADMIN uniquement.
+   * L'action est tracée dans la caisse globale pour audit.
+   */
+  async rouvrir(caisseJourId: string, rouvertParId: string) {
+    const cj = await this.db.caisseJour.findUnique({
+      where: { id: caisseJourId },
+    });
+    if (!cj) {
+      throw new NotFoundException(`Caisse du jour ${caisseJourId} introuvable.`);
+    }
+    if (cj.statut === 'OUVERTE') {
+      throw new BadRequestException('Cette caisse du jour est déjà ouverte.');
+    }
+
+    const dateLabel = cj.date.toISOString().slice(0, 10);
+
+    const updated = await this.db.$transaction(async (tx: any) => {
+      const result = await tx.caisseJour.update({
+        where: { id: caisseJourId },
+        data: {
+          statut: 'OUVERTE',
+          fermetureAt: null,
+          soldeCloture: null,
+        },
+      });
+
+      // Trace d'audit obligatoire dans la caisse globale
+      await tx.caisse.create({
+        data: {
+          typeOperation: 'ENTREE' as TypeOperation,
+          montant: 0,
+          motif: `[AUDIT] Réouverture caisse du jour ${dateLabel} par SUPER_ADMIN (id: ${rouvertParId})`,
+          effectueePar: rouvertParId,
+        },
+      });
+
+      return result;
+    });
+
+    this.logger.warn(
+      `AUDIT — Caisse du jour ${dateLabel} (id: ${caisseJourId}) réouverte par SUPER_ADMIN (id: ${rouvertParId}) le ${new Date().toISOString()}`,
+    );
+
+    this.notifications
+      .create(
+        'CAISSE_MAJ',
+        `Caisse du jour ${dateLabel} réouverte par un administrateur.`,
+      )
+      .catch(() => {});
+
+    return updated;
+  }
 }

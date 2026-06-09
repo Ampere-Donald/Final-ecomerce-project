@@ -5,8 +5,9 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
-import { MethodePaiement } from '@prisma/client';
+import { Prisma, MethodePaiement } from '@prisma/client';
 import { BonVenteEventsService } from 'src/bon-vente/bon-vente.events.service';
+import { BonVenteService } from 'src/bon-vente/bon-vente.service';
 import { DatabaseService } from 'src/database/database.service';
 import { CreateProformaDto, LigneProformaDto } from './dto/create-proforma.dto';
 import { UpdateProformaDto } from './dto/update-proforma.dto';
@@ -21,6 +22,7 @@ export class ProformaService {
   constructor(
     private readonly db: DatabaseService,
     private readonly events: BonVenteEventsService,
+    private readonly bonVente: BonVenteService,
   ) {}
 
   private toNumber(value: unknown): number {
@@ -55,17 +57,6 @@ export class ProformaService {
     return `FP-${year}-${String(count + 1).padStart(4, '0')}`;
   }
 
-  private async generateNumeroTicket(): Promise<string> {
-    const now = new Date();
-    const datePart = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
-    const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
-    const countToday = await this.db.ticketVente.count({
-      where: { createdAt: { gte: startOfDay, lt: endOfDay } },
-    });
-    return `T-${datePart}-${String(countToday + 1).padStart(4, '0')}`;
-  }
-
   private dateExpiration() {
     const d = new Date();
     d.setDate(d.getDate() + PROFORMA_VALIDITY_DAYS);
@@ -76,7 +67,7 @@ export class ProformaService {
     const produitIds = lignes.map((l) => l.produitId);
     const produits = await this.db.produit.findMany({
       where: { id: { in: produitIds } },
-      select: { id: true, nomProduit: true },
+      select: { id: true, nomProduit: true, prixDetail: true, prixGros: true, quantiteGros: true },
     });
     if (produits.length !== produitIds.length) {
       throw new NotFoundException('Au moins un produit est introuvable.');
@@ -86,6 +77,7 @@ export class ProformaService {
     let montantTotal = 0;
     const lignesData = lignes.map((l) => {
       const produit = produitsById.get(l.produitId)!;
+      // Le prix est toujours celui envoyé par le frontend (choix explicite du vendeur)
       const prixUnitaire = this.toNumber(l.prixUnitaire);
       const sousTotal = prixUnitaire * l.quantite;
       montantTotal += sousTotal;
@@ -204,22 +196,28 @@ export class ProformaService {
     });
     const produitsById = new Map(produits.map((p) => [p.id, p]));
 
+    const ruptures: string[] = [];
     for (const ligne of proforma.lignes) {
       if (!ligne.produitId) {
-        throw new BadRequestException(`Produit non lie pour ${ligne.nomProduit}.`);
+        throw new BadRequestException(`Produit non lié pour "${ligne.nomProduit}".`);
       }
       const produit = produitsById.get(ligne.produitId);
       if (!produit || produit.quantiteStock < ligne.quantite) {
-        throw new BadRequestException(
-          `Stock insuffisant pour ${ligne.nomProduit} (disponible : ${produit?.quantiteStock ?? 0}).`,
+        ruptures.push(
+          `${ligne.nomProduit} (demandé : ${ligne.quantite}, disponible : ${produit?.quantiteStock ?? 0})`,
         );
       }
+    }
+    if (ruptures.length > 0) {
+      throw new BadRequestException(
+        `Stock insuffisant pour : ${ruptures.join(' | ')}`,
+      );
     }
 
     const result = await this.db.$transaction(async (tx: any) => {
       const ticket = await tx.ticketVente.create({
         data: {
-          numeroTicket: await this.generateNumeroTicket(),
+          numeroTicket: await this.bonVente.generateNumeroTicket(tx),
           vendeurId: proforma.vendeurId,
           clientId: proforma.clientId,
           nomClient: proforma.clientNom,
@@ -246,13 +244,15 @@ export class ProformaService {
       });
 
       return { proforma: updated, ticket };
-    });
+    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
 
     this.events.emit(result.ticket);
     return result;
   }
 
   async remove(id: string) {
+    const proforma = await this.db.proforma.findUnique({ where: { id } });
+    if (!proforma) throw new NotFoundException('Proforma introuvable.');
     await this.db.proforma.delete({ where: { id } });
     return { deleted: true };
   }

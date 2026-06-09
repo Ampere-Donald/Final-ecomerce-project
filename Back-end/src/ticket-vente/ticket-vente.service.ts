@@ -68,7 +68,9 @@ export class TicketVenteService {
           `Stock insuffisant pour ${p.nomProduit} (disponible : ${p.quantiteStock}).`,
         );
       }
-      const prixUnitaire = this.toNumber(p.prixPromo ?? p.prixDetail ?? 0);
+      // prixPromo = 0 doit être ignoré (pas de promo), seule une valeur > 0 est valide
+      const promoValide = p.prixPromo && this.toNumber(p.prixPromo) > 0 ? p.prixPromo : null;
+      const prixUnitaire = this.toNumber(promoValide ?? p.prixDetail ?? 0);
       const sousTotal = prixUnitaire * l.quantite;
       montantTotal += sousTotal;
       return {

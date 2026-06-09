@@ -250,6 +250,8 @@ export const caisseJourApi = {
   getOne: (id: string) => api.get(`/caisse-jour/${id}`).then(res => res.data),
   fermer: (id: string, note?: string) =>
     api.post(`/caisse-jour/${id}/fermer`, { note }).then(res => res.data),
+  rouvrir: (id: string) =>
+    api.post(`/caisse-jour/${id}/rouvrir`).then(res => res.data),
   addOperation: (
     id: string,
     data: { typeOperation: 'ENTREE' | 'SORTIE'; montant: number; motif: string },
