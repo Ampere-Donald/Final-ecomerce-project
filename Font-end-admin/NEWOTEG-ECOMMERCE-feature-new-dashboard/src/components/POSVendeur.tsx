@@ -1,10 +1,12 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   Search, Plus, Minus, Trash2, Send, ShoppingCart,
   CheckCircle2, AlertCircle, Sparkles, X, Clock, Receipt,
-  User as UserIcon, Phone, Printer,
+  User as UserIcon, Phone, Printer, ScanBarcode, CameraOff,
 } from 'lucide-react';
+import { BrowserMultiFormatReader } from '@zxing/browser';
+import { NotFoundException } from '@zxing/library';
 import { useNavigate } from 'react-router-dom';
 import { bonVenteApi, clientApi, produitApi, ticketApi, equivalenceApi, proformaApi } from '../services/api';
 import { useAdminAuth } from '../context/AdminAuthContext';
@@ -95,6 +97,14 @@ export const POSVendeur = () => {
   const [bonsEnAttente, setBonsEnAttente] = useState<Bon[]>([]);
   const [monScore, setMonScore] = useState(0);
   const [activeTab, setActiveTab] = useState<'vente' | 'enAttente'>('vente');
+
+  // ── Scan caméra code-barres ────────────────────────────────────────────
+  const [scanOpen, setScanOpen]   = useState(false);
+  const [scanError, setScanError] = useState<string | null>(null);
+  const scanVideoRef  = useRef<HTMLVideoElement>(null);
+  const scanStreamRef = useRef<MediaStream | null>(null);
+  const scanReaderRef = useRef<BrowserMultiFormatReader | null>(null);
+  const scanActiveRef = useRef(false);
 
   // ── Équivalents IA (commun) ─────────────────────────────────────────────
   const [equivOpen, setEquivOpen] = useState(false);
@@ -285,6 +295,82 @@ export const POSVendeur = () => {
     prixDetail: s.prixDetail, prixGros: s.prixGros, quantiteGros: s.quantiteGros, prixPromo: s.prixPromo, quantiteStock: s.quantiteStock, imageUrl: s.imageUrl,
   });
 
+  // ── Scan caméra ────────────────────────────────────────────────────────
+  const stopScan = useCallback(() => {
+    scanActiveRef.current = false;
+    scanStreamRef.current?.getTracks().forEach(t => t.stop());
+    scanStreamRef.current = null;
+    if (scanVideoRef.current) scanVideoRef.current.srcObject = null;
+  }, []);
+
+  const handleBarcode = useCallback(async (raw: string) => {
+    stopScan();
+    setScanOpen(false);
+    // Parser : code_famille/code
+    let codeFamille = '', code = '';
+    for (const sep of ['/', '-', '|']) {
+      const idx = raw.indexOf(sep);
+      if (idx > 0 && idx < raw.length - 1) {
+        codeFamille = raw.slice(0, idx);
+        code = raw.slice(idx + 1);
+        break;
+      }
+    }
+    if (!codeFamille || !code) {
+      setError(`Format de code-barres non reconnu : "${raw}". Attendu : code_famille/code`);
+      return;
+    }
+    try {
+      const p: any = await produitApi.findByCode(codeFamille, code);
+      ajouterAuPanier(p as Produit);
+      setSuccess(`"${p.nomProduit}" ajouté au panier.`);
+      setTimeout(() => setSuccess(null), 2500);
+    } catch {
+      setError(`Produit introuvable : famille ${codeFamille} / code ${code}`);
+    }
+  }, [stopScan]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const startScan = useCallback(async () => {
+    setScanError(null);
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: { ideal: 'environment' } },
+      });
+      scanStreamRef.current = stream;
+      if (scanVideoRef.current) {
+        scanVideoRef.current.srcObject = stream;
+        await scanVideoRef.current.play();
+      }
+      if (!scanReaderRef.current) scanReaderRef.current = new BrowserMultiFormatReader();
+      scanActiveRef.current = true;
+      scanReaderRef.current.decodeFromVideoDevice(
+        undefined,
+        scanVideoRef.current!,
+        (result, err) => {
+          if (!scanActiveRef.current) return;
+          if (result) handleBarcode(result.getText());
+          else if (err && !(err instanceof NotFoundException)) console.warn('[scan]', err);
+        },
+      );
+    } catch (e: any) {
+      const msg: string = e?.message ?? '';
+      if (msg.includes('denied') || msg.includes('NotAllowed') || msg.includes('Permission')) {
+        setScanError("Permission caméra refusée. Autorisez l'accès dans votre navigateur.");
+      } else if (msg.includes('NotFound')) {
+        setScanError('Aucune caméra détectée sur cet appareil.');
+      } else {
+        setScanError("Impossible d'ouvrir la caméra.");
+      }
+      setScanOpen(false);
+    }
+  }, [handleBarcode]);
+
+  useEffect(() => {
+    if (scanOpen) startScan();
+    else stopScan();
+    return () => stopScan();
+  }, [scanOpen]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // ── Rendu carte produit (commun) ───────────────────────────────────────
   const renderProduit = (p: Produit) => {
     const prix = p.prixPromo ?? p.prixDetail ?? 0;
@@ -435,14 +521,64 @@ export const POSVendeur = () => {
     </>
   );
 
+  // ── Modal scan caméra ─────────────────────────────────────────────────
+  const renderScanModal = () => (
+    <AnimatePresence>
+      {scanOpen && (
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+          className="fixed inset-0 z-50 bg-black/80 flex flex-col items-center justify-center p-4 gap-4"
+          onClick={() => setScanOpen(false)}>
+          <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }} exit={{ scale: 0.95 }}
+            onClick={e => e.stopPropagation()}
+            className="bg-black rounded-2xl overflow-hidden relative w-full max-w-sm shadow-2xl">
+            <video ref={scanVideoRef} className="w-full aspect-video object-cover" muted playsInline />
+            {/* Viseur */}
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+              <div className="w-52 h-28 border border-white/30 rounded-xl relative">
+                <span className="absolute -top-px -left-px w-5 h-5 border-t-4 border-l-4 border-primary rounded-tl-lg" />
+                <span className="absolute -top-px -right-px w-5 h-5 border-t-4 border-r-4 border-primary rounded-tr-lg" />
+                <span className="absolute -bottom-px -left-px w-5 h-5 border-b-4 border-l-4 border-primary rounded-bl-lg" />
+                <span className="absolute -bottom-px -right-px w-5 h-5 border-b-4 border-r-4 border-primary rounded-br-lg" />
+                <div className="absolute top-1/2 -translate-y-1/2 left-2 right-2 h-0.5 bg-primary/70 animate-pulse" />
+              </div>
+            </div>
+            {/* Fermer */}
+            <button onClick={() => setScanOpen(false)}
+              className="absolute top-3 right-3 p-2 bg-black/50 text-white rounded-xl hover:bg-black/70">
+              <CameraOff size={18} />
+            </button>
+            <p className="absolute bottom-3 left-0 right-0 text-center text-white/60 text-xs">
+              Placez le code-barres dans le cadre
+            </p>
+          </motion.div>
+          {scanError && (
+            <p className="text-red-300 text-sm bg-red-900/50 px-4 py-2 rounded-xl border border-red-500/30">
+              {scanError}
+            </p>
+          )}
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+
   // ── Catalogue commun ───────────────────────────────────────────────────
   const renderCatalogue = () => (
     <div className="space-y-4">
-      <div className="relative">
-        <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-        <input type="text" value={search} onChange={e => setSearch(e.target.value)}
-          placeholder="Rechercher un produit ou une marque…"
-          className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none" />
+      <div className="flex gap-2">
+        <div className="relative flex-1">
+          <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+          <input type="text" value={search} onChange={e => setSearch(e.target.value)}
+            placeholder="Rechercher un produit ou une marque…"
+            className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none" />
+        </div>
+        <button
+          onClick={() => { setScanError(null); setScanOpen(true); }}
+          title="Scanner un code-barres"
+          className="flex items-center gap-2 px-4 py-3 bg-white border border-slate-200 rounded-xl text-slate-600 hover:border-primary/40 hover:text-primary transition-colors shrink-0"
+        >
+          <ScanBarcode size={18} />
+          <span className="hidden sm:inline text-sm font-medium">Scanner</span>
+        </button>
       </div>
       {loading ? <div className="text-center text-slate-400 py-12">Chargement…</div>
         : produitsFiltres.length === 0 ? (
@@ -618,6 +754,7 @@ export const POSVendeur = () => {
         </AnimatePresence>
 
         {renderEquivModal()}
+        {renderScanModal()}
       </motion.div>
     );
   }
@@ -755,6 +892,7 @@ export const POSVendeur = () => {
       )}
 
       {renderEquivModal()}
+      {renderScanModal()}
     </motion.div>
   );
 };
