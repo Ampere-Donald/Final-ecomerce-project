@@ -32,6 +32,14 @@ describe('EcheanceService', () => {
   });
 
   describe('computeProchaineDate', () => {
+    it('avance de sept jours pour une echeance hebdomadaire', () => {
+      const next = service.computeProchaineDate(
+        new Date(Date.UTC(2026, 5, 12)),
+        'HEBDOMADAIRE',
+      );
+      expect(next?.toISOString().slice(0, 10)).toBe('2026-06-19');
+    });
+
     it('avance d un mois en clampant la fin de mois (31 jan -> 28 fev)', () => {
       const next = service.computeProchaineDate(
         new Date(Date.UTC(2026, 0, 31)),
@@ -170,6 +178,22 @@ describe('EcheanceService', () => {
     it('reporte une echeance recurrente en retard vers une date future', async () => {
       db.echeance.findMany.mockResolvedValue([
         { id: 'e1', titre: 'Tontine', coffreId: null, dateEcheance: addDays(-2), recurrence: 'MENSUELLE', joursAlerteAvant: [] },
+      ]);
+
+      await service.processDailyAlerts();
+
+      const roll = db.echeance.update.mock.calls.find(
+        (c: any[]) => c[0]?.data?.dateEcheance instanceof Date,
+      );
+      expect(roll).toBeDefined();
+      expect((roll![0].data.dateEcheance as Date).getTime()).toBeGreaterThan(
+        Date.now(),
+      );
+    });
+
+    it('reporte une echeance hebdomadaire en retard de sept jours en sept jours', async () => {
+      db.echeance.findMany.mockResolvedValue([
+        { id: 'e1', titre: 'Inventaire hebdo', coffreId: null, dateEcheance: addDays(-8), recurrence: 'HEBDOMADAIRE', joursAlerteAvant: [] },
       ]);
 
       await service.processDailyAlerts();

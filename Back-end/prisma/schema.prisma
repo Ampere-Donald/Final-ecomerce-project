@@ -765,6 +765,7 @@ enum CoffreStatut {
 
 enum RecurrenceEcheance {
   UNIQUE
+  HEBDOMADAIRE
   MENSUELLE
   TRIMESTRIELLE
   ANNUELLE

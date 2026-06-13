@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAdminAuth } from '../context/AdminAuthContext';
 import { AlertTriangle, ArrowRight, Eye, EyeOff, Hash, Lock, ShieldCheck, User, X } from 'lucide-react';
+import { brand } from '../config/brand';
 
 type LoginMode = 'password' | 'pin';
 
@@ -62,10 +63,11 @@ export const AdminLogin: React.FC = () => {
               <div className="mb-8 flex h-14 w-14 items-center justify-center rounded-xl bg-white/10 p-2">
                 <img src="/logo.png" alt="Newoteg" className="w-full h-full object-contain" />
               </div>
-              <p className="text-sm font-semibold uppercase text-blue-200">NEWOTEG Admin</p>
+              <p className="text-sm font-semibold uppercase text-blue-200">{brand.companyName} Admin</p>
+              <p className="mt-1 text-xs font-semibold uppercase tracking-[0.2em] text-blue-100/80">{brand.branchName}</p>
               <h1 className="mt-4 text-4xl font-bold leading-tight">Pilotage boutique et e-commerce</h1>
               <p className="mt-5 max-w-sm text-sm leading-6 text-slate-300">
-                Connexion sécurisée pour les responsables, vendeurs et caissiers de la boutique.
+                Connexion sécurisée pour les responsables, vendeurs et caissiers de {brand.branchName}.
               </p>
             </div>
             <div className="grid grid-cols-3 gap-3 text-xs text-slate-300">
@@ -79,7 +81,7 @@ export const AdminLogin: React.FC = () => {
               </div>
               <div className="rounded-lg border border-white/10 p-3">
                 <span className="block text-lg font-bold text-white">Douala</span>
-                Heure locale
+                {brand.city}
               </div>
             </div>
           </aside>
@@ -89,7 +91,8 @@ export const AdminLogin: React.FC = () => {
               <div className="mb-4 flex h-14 w-14 items-center justify-center">
                 <img src="/logo.png" alt="Newoteg" className="w-full h-full object-contain" />
               </div>
-              <h1 className="text-2xl font-bold">NEWOTEG Admin</h1>
+              <h1 className="text-2xl font-bold">{brand.companyName} Admin</h1>
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-blue-700">{brand.branchName}</p>
             </div>
 
             <div className="mb-6">
@@ -243,7 +246,9 @@ export const AdminLogin: React.FC = () => {
               </div>
             )}
 
-            <p className="mt-6 text-center text-xs text-slate-500">Accès réservé au personnel autorisé NEWOTEG.</p>
+            <p className="mt-6 text-center text-xs text-slate-500">
+              Accès réservé au personnel autorisé {brand.companyName}.
+            </p>
           </section>
         </section>
       </div>

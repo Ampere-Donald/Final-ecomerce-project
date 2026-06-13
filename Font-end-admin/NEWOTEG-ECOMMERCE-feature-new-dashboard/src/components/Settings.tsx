@@ -1,10 +1,24 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'motion/react';
-import { User, Bell, Shield, Wallet, Globe, Smartphone, CheckCircle2, AlertCircle, Eye, EyeOff, Sparkles } from 'lucide-react';
+import { User, Bell, Shield, Wallet, Globe, Smartphone, CheckCircle2, AlertCircle, Eye, EyeOff, Sparkles, Loader2 } from 'lucide-react';
 import { useAdminAuth } from '../context/AdminAuthContext';
 import { adminAuthApi, equivalenceApi } from '../services/api';
 
 type Tab = 'profile' | 'security' | 'ia';
+
+type IaStats = {
+  configured: boolean;
+  model?: string;
+  appelsJour: number;
+  appelsMois: number;
+};
+
+type IaHealth = {
+  configured: boolean;
+  model: string;
+  ok: boolean;
+  message: string;
+};
 
 export const Settings = () => {
   const { admin } = useAdminAuth();
@@ -20,12 +34,32 @@ export const Settings = () => {
   const [pwMessage, setPwMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   // Statistiques IA (équivalences)
-  const [iaStats, setIaStats] = useState<{ configured: boolean; appelsJour: number; appelsMois: number } | null>(null);
+  const [iaStats, setIaStats] = useState<IaStats | null>(null);
+  const [iaHealth, setIaHealth] = useState<IaHealth | null>(null);
+  const [iaHealthLoading, setIaHealthLoading] = useState(false);
 
   useEffect(() => {
     if (activeTab !== 'ia') return;
     equivalenceApi.stats().then(setIaStats).catch(() => setIaStats(null));
   }, [activeTab]);
+
+  const handleGeminiHealth = async () => {
+    setIaHealthLoading(true);
+    setIaHealth(null);
+    try {
+      setIaHealth(await equivalenceApi.health());
+    } catch (err: any) {
+      const message = err.response?.data?.message || err.message || 'Test Gemini impossible.';
+      setIaHealth({
+        configured: false,
+        model: 'gemini-2.5-flash',
+        ok: false,
+        message: Array.isArray(message) ? message.join(', ') : message,
+      });
+    } finally {
+      setIaHealthLoading(false);
+    }
+  };
 
   const adminName = admin?.nom || 'Admin';
   const initials = adminName
@@ -269,6 +303,44 @@ export const Settings = () => {
                     {iaStats.configured
                       ? 'Service IA configuré (clé GEMINI_API_KEY présente).'
                       : 'Clé GEMINI_API_KEY manquante — les suggestions sont indisponibles.'}
+                  </div>
+
+                  <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                      <div>
+                        <p className="text-sm font-bold text-slate-900">Test Gemini Flash</p>
+                        <p className="text-xs text-slate-500">
+                          Modele configure : {iaStats.model || 'gemini-2.5-flash'}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleGeminiHealth}
+                        disabled={iaHealthLoading}
+                        className="inline-flex items-center justify-center gap-2 rounded-lg bg-violet-600 px-4 py-2 text-sm font-bold text-white transition hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        {iaHealthLoading && <Loader2 size={16} className="animate-spin" />}
+                        {iaHealthLoading ? 'Test en cours...' : 'Tester Gemini Flash'}
+                      </button>
+                    </div>
+
+                    {iaHealth && (
+                      <div
+                        className={`mt-4 flex items-start gap-2 rounded-lg border p-3 text-sm ${
+                          iaHealth.ok
+                            ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                            : 'border-amber-200 bg-amber-50 text-amber-800'
+                        }`}
+                      >
+                        {iaHealth.ok ? <CheckCircle2 size={16} className="mt-0.5" /> : <AlertCircle size={16} className="mt-0.5" />}
+                        <div>
+                          <p className="font-semibold">{iaHealth.message}</p>
+                          <p className="text-xs opacity-80">
+                            Modele teste : {iaHealth.model} | Cle configuree : {iaHealth.configured ? 'oui' : 'non'}
+                          </p>
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">

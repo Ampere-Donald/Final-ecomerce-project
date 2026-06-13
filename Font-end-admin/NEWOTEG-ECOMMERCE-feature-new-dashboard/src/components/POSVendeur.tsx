@@ -19,6 +19,8 @@ interface Produit {
   prixPromo?: number;
   quantiteStock: number;
   imageUrl?: string | null;
+  categorie?: { id?: string; nom?: string } | null;
+  categorieNom?: string | null;
 }
 
 interface Client {
@@ -53,6 +55,29 @@ const resolveImgUrl = (raw?: string | null): string | null => {
   if (raw.startsWith('http://') || raw.startsWith('https://')) return raw;
   const base = (import.meta.env.VITE_API_URL || 'http://localhost:3000/api').replace('/api', '');
   return `${base}${raw.startsWith('/') ? '' : '/'}${raw}`;
+};
+
+const normalizeEligibilityText = (value?: string | null): string =>
+  (value || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim();
+
+const isEquivalenceEligibleProduct = (p: Produit): boolean =>
+  normalizeEligibilityText(p.categorie?.nom || p.categorieNom) === 'composants electroniques';
+
+const looksLikeElectronicComponentSearch = (query: string): boolean => {
+  const q = normalizeEligibilityText(query);
+  if (!q) return false;
+  const keywords = [
+    'diode', 'zener', 'transistor', 'mosfet', 'thyristor', 'triac',
+    'resistance', 'condensateur', 'capacitor', 'led', 'circuit',
+    'integre', 'regulateur', 'relais', 'fusible', 'inductance',
+    'bobine', 'quartz', 'capteur', 'optocoupleur', 'ampli',
+  ];
+  return keywords.some((word) => q.includes(word)) ||
+    /\b(1n|2n|bc|bd|bf|tip|irf|irfz|lm|ne|tl|uln|pc|moc|bt|bta|atmega|esp|stm|78\d{2}|79\d{2}|555)\w*/i.test(query);
 };
 
 const METHODES = [
@@ -325,6 +350,7 @@ export const POSVendeur = () => {
   const renderProduit = (p: Produit) => {
     const prix = p.prixPromo ?? p.prixDetail ?? 0;
     const enRupture = p.quantiteStock <= 0;
+    const equivalenceEligible = isEquivalenceEligibleProduct(p);
     const img = resolveImgUrl(p.imageUrl);
     const contenu = (
       <>
@@ -343,10 +369,12 @@ export const POSVendeur = () => {
     if (enRupture) return (
       <div key={p.id} className="bg-white rounded-xl border border-slate-200 p-3">
         <div className="opacity-50">{contenu}</div>
-        <button onClick={() => ouvrirEquiv({ query: p.nomProduit, produitId: p.id })}
+        {equivalenceEligible && (
+          <button onClick={() => ouvrirEquiv({ query: p.nomProduit, produitId: p.id })}
           className="mt-2 w-full flex items-center justify-center gap-1.5 px-2 py-1.5 bg-violet-50 text-violet-700 text-xs font-bold rounded-lg hover:bg-violet-100">
           <Sparkles size={13} /> Équivalent (IA)
-        </button>
+          </button>
+        )}
       </div>
     );
     return (
@@ -496,7 +524,7 @@ export const POSVendeur = () => {
         : produitsFiltres.length === 0 ? (
           <div className="text-center py-12 space-y-3">
             <p className="text-slate-400">Aucun produit trouvé.</p>
-            {search.trim().length >= 2 && (
+            {search.trim().length >= 2 && looksLikeElectronicComponentSearch(search) && (
               <button onClick={() => ouvrirEquiv({ query: search })}
                 className="inline-flex items-center gap-2 px-4 py-2.5 bg-violet-600 text-white text-sm font-bold rounded-xl shadow-md shadow-violet-600/20 hover:bg-violet-700">
                 <Sparkles size={16} /> Chercher un équivalent (IA)

@@ -12,7 +12,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { coffreApi, echeanceApi } from '../services/api';
 import { useAdminAuth } from '../context/AdminAuthContext';
 
-type Recurrence = 'UNIQUE' | 'MENSUELLE' | 'TRIMESTRIELLE' | 'ANNUELLE';
+type Recurrence = 'UNIQUE' | 'HEBDOMADAIRE' | 'MENSUELLE' | 'TRIMESTRIELLE' | 'ANNUELLE';
 
 type Echeance = {
   id: string;
@@ -375,6 +375,7 @@ export const Echeances = () => {
                 <Field label="Recurrence">
                   <select value={form.recurrence} onChange={e => setForm(f => ({ ...f, recurrence: e.target.value as Recurrence }))} className={inputCls}>
                     <option value="UNIQUE">Unique</option>
+                    <option value="HEBDOMADAIRE">Hebdomadaire</option>
                     <option value="MENSUELLE">Mensuelle</option>
                     <option value="TRIMESTRIELLE">Trimestrielle</option>
                     <option value="ANNUELLE">Annuelle</option>

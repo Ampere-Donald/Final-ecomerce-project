@@ -257,7 +257,8 @@ const SQL_STATEMENTS = [
   `DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'caisse_id_coffre_fkey') THEN ALTER TABLE "caisse" ADD CONSTRAINT "caisse_id_coffre_fkey" FOREIGN KEY ("id_coffre") REFERENCES "coffre"("id") ON DELETE SET NULL ON UPDATE CASCADE; END IF; END $$;`,
 
   // ── Echeances + moteur d'alertes ──
-  `DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'RecurrenceEcheance') THEN CREATE TYPE "RecurrenceEcheance" AS ENUM ('UNIQUE', 'MENSUELLE', 'TRIMESTRIELLE', 'ANNUELLE'); END IF; END $$;`,
+  `DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'RecurrenceEcheance') THEN CREATE TYPE "RecurrenceEcheance" AS ENUM ('UNIQUE', 'HEBDOMADAIRE', 'MENSUELLE', 'TRIMESTRIELLE', 'ANNUELLE'); END IF; END $$;`,
+  `ALTER TYPE "RecurrenceEcheance" ADD VALUE IF NOT EXISTS 'HEBDOMADAIRE';`,
   `DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'TypeAlerte') THEN CREATE TYPE "TypeAlerte" AS ENUM ('RAPPEL', 'URGENT', 'RETARD'); END IF; END $$;`,
   `ALTER TYPE "TypeNotification" ADD VALUE IF NOT EXISTS 'ECHEANCE';`,
   `CREATE TABLE IF NOT EXISTS "echeance" (

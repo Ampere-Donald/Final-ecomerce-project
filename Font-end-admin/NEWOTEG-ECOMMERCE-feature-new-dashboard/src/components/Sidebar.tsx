@@ -30,6 +30,7 @@ import {
   Award,
 } from 'lucide-react';
 import { useAdminAuth } from '../context/AdminAuthContext';
+import { brand } from '../config/brand';
 import { can } from '../utils/permissions';
 import { bonVenteApi } from '../services/api';
 
@@ -176,7 +177,10 @@ export const Sidebar = ({ open, onClose }: SidebarProps) => {
         <div className="w-10 h-10 flex items-center justify-center">
           <img src="/logo.png" alt="Newoteg" className="w-full h-full object-contain drop-shadow-sm" />
         </div>
-        <h1 className="text-xl font-bold tracking-tight text-primary">NEWOTEG</h1>
+        <div className="min-w-0">
+          <h1 className="text-xl font-bold tracking-tight text-primary leading-tight">{brand.companyName}</h1>
+          <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400">{brand.branchName}</p>
+        </div>
       </div>
 
       <nav className="flex-1 overflow-y-auto p-4 space-y-6">

@@ -317,6 +317,7 @@ export const equivalenceApi = {
   suggest: (data: { query?: string; produitId?: string; source?: 'pos' | 'ecommerce'; vendeurId?: string }) =>
     api.post('/equivalence/suggest', data).then(res => res.data),
   stats: () => api.get('/equivalence/stats').then(res => res.data),
+  health: () => api.get('/equivalence/health').then(res => res.data),
 };
 
 // Roles

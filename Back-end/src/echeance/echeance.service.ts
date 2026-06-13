@@ -12,6 +12,7 @@ import {
   NotificationService,
 } from 'src/notification/notification.service';
 import { MailService } from 'src/auth/mail.service';
+import { brand } from 'src/common/brand';
 import { CreateEcheanceDto } from './dto/create-echeance.dto';
 import { UpdateEcheanceDto } from './dto/update-echeance.dto';
 
@@ -75,12 +76,20 @@ export class EcheanceService {
     return d;
   }
 
+  private addDays(date: Date, days: number): Date {
+    const d = new Date(date.getTime());
+    d.setUTCDate(d.getUTCDate() + days);
+    return d;
+  }
+
   /** Next occurrence date for a recurrence, or null for UNIQUE. */
   computeProchaineDate(
     date: Date,
     recurrence: RecurrenceEcheance,
   ): Date | null {
     switch (recurrence) {
+      case 'HEBDOMADAIRE':
+        return this.addDays(date, 7);
       case 'MENSUELLE':
         return this.addMonths(date, 1);
       case 'TRIMESTRIELLE':
@@ -269,13 +278,14 @@ export class EcheanceService {
     });
     if (superAdmins.length === 0) return false;
 
-    const subject = `NEWOTEG — Echeance: ${titre}`;
+    const subject = `${brand.companyName} - Echeance: ${titre}`;
     const html = `
       <div style="font-family: Arial, sans-serif; max-width: 520px; margin: 0 auto; padding: 24px;">
-        <h2 style="color: #2A2FCE; margin: 0 0 16px;">NEWOTEG SARL</h2>
+        <h2 style="color: #2A2FCE; margin: 0 0 4px;">${brand.legalName}</h2>
+        <p style="color: #4B5563; font-size: 13px; margin: 0 0 16px;">${brand.branchName} - ${brand.branchDescription}</p>
         <p style="color: #374151; font-size: 15px; line-height: 1.5;">${message}</p>
         <hr style="border: none; border-top: 1px solid #E5E7EB; margin: 20px 0;" />
-        <p style="color: #9CA3AF; font-size: 12px;">Message automatique — moteur d'alertes NEWOTEG.</p>
+        <p style="color: #9CA3AF; font-size: 12px;">Message automatique - moteur d'alertes ${brand.companyName}.</p>
       </div>
     `;
 
