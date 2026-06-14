@@ -150,6 +150,8 @@ export const achatApi = {
   annuler: (id: string, motifAnnulation?: string) =>
     api.post(`/achats/${id}/annuler`, { motifAnnulation }).then(res => res.data),
   delete: (id: string) => api.delete(`/achats/${id}`).then(res => res.data),
+  calculerLot: (id: string, data: any) => api.post(`/achats/${id}/calculer`, data).then(res => res.data),
+  validerLot: (id: string, data: any) => api.post(`/achats/${id}/valider-lot`, data).then(res => res.data),
 };
 
 // Taux de change
