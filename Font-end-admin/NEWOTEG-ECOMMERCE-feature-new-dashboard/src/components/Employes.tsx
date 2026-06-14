@@ -36,6 +36,7 @@ interface Employe {
   email?: string | null;
   role: Role;
   isActive: boolean;
+  peutVendreSousDemiGros?: boolean;
   photoUrl?: string | null;
   lastLoginAt?: string | null;
   createdAt?: string;
@@ -575,6 +576,9 @@ const DetailEmployeModal = ({
   const [activityLoading, setActivityLoading] = useState(false);
   const [editNom, setEditNom] = useState(employe.nom);
   const [editEmail, setEditEmail] = useState(employe.email || '');
+  const [editPeutVendre, setEditPeutVendre] = useState(
+    employe.peutVendreSousDemiGros ?? false,
+  );
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -602,6 +606,9 @@ const DetailEmployeModal = ({
       const updated = await adminAccountApi.update(employe.id, {
         nom: editNom.trim(),
         email: editEmail.trim() || null,
+        ...(employe.role === 'ADMIN' && {
+          peutVendreSousDemiGros: editPeutVendre,
+        }),
       });
       onUpdated(updated);
     } catch (e: any) {
@@ -725,6 +732,28 @@ const DetailEmployeModal = ({
                     className={inputClass}
                   />
                 </Field>
+                {employe.role === 'ADMIN' && (
+                  <label className="flex items-start gap-3 cursor-pointer select-none rounded-lg border border-slate-200 bg-slate-50 p-3">
+                    <div className="relative mt-0.5 shrink-0">
+                      <input
+                        type="checkbox"
+                        checked={editPeutVendre}
+                        onChange={(e) => setEditPeutVendre(e.target.checked)}
+                        className="sr-only peer"
+                      />
+                      <div className="w-11 h-6 bg-slate-300 peer-checked:bg-primary rounded-full transition-colors"></div>
+                      <div className="absolute left-0.5 top-0.5 w-5 h-5 bg-white rounded-full shadow-sm transition-transform peer-checked:translate-x-5"></div>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-slate-800">
+                        Autoriser la vente sous le demi-gros
+                      </p>
+                      <p className="text-xs text-slate-500">
+                        Permet à cet admin de descendre en bande jaune (entre gros et demi-gros), avec motif.
+                      </p>
+                    </div>
+                  </label>
+                )}
                 <div className="flex gap-2">
                   <Button onClick={sauverInfos} loading={saving}>
                     Enregistrer

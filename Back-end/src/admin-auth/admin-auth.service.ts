@@ -152,6 +152,7 @@ export class AdminAuthService {
         photoUrl: true,
         role: true,
         isActive: true,
+        peutVendreSousDemiGros: true,
         lastLoginAt: true,
         createdAt: true,
         updatedAt: true,
@@ -371,6 +372,7 @@ export class AdminAuthService {
       role: admin.role,
       photoUrl: admin.photoUrl,
       isActive: admin.isActive,
+      peutVendreSousDemiGros: admin.peutVendreSousDemiGros,
       lastLoginAt: admin.lastLoginAt,
     };
   }

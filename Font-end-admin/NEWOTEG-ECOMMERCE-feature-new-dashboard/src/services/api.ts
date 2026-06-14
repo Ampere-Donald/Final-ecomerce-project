@@ -240,7 +240,7 @@ export const ticketApi = {
     clientId?: string;
     nomClient?: string;
     telephoneClient?: string;
-    lignes: { produitId: string; quantite: number }[];
+    lignes: { produitId: string; quantite: number; prixUnitaire?: number; motifRemise?: string }[];
   }) => api.post('/tickets', data).then(res => res.data),
   enAttente: () => api.get('/tickets/en-attente').then(res => res.data),
   mesTickets: () => api.get('/tickets/mes-tickets').then(res => res.data),

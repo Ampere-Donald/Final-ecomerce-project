@@ -89,6 +89,7 @@ export class ProduitController {
 
     // FormData string parsing
     if (createProduitDto.prixGros != null) createProduitDto.prixGros = parseFloat(String(createProduitDto.prixGros));
+    if (createProduitDto.prixDemiGros != null) createProduitDto.prixDemiGros = parseFloat(String(createProduitDto.prixDemiGros));
     if (createProduitDto.prixDetail != null) createProduitDto.prixDetail = parseFloat(String(createProduitDto.prixDetail));
     if (createProduitDto.quantiteStock != null) createProduitDto.quantiteStock = parseInt(String(createProduitDto.quantiteStock), 10);
     if (createProduitDto.seuilAlerte != null) createProduitDto.seuilAlerte = parseInt(String(createProduitDto.seuilAlerte), 10);
@@ -288,6 +289,7 @@ export class ProduitController {
 
     // FormData string parsing
     if (updateProduitDto.prixGros != null) updateProduitDto.prixGros = parseFloat(String(updateProduitDto.prixGros));
+    if (updateProduitDto.prixDemiGros != null) updateProduitDto.prixDemiGros = parseFloat(String(updateProduitDto.prixDemiGros));
     if (updateProduitDto.prixDetail != null) updateProduitDto.prixDetail = parseFloat(String(updateProduitDto.prixDetail));
     if (updateProduitDto.quantiteStock != null) updateProduitDto.quantiteStock = parseInt(String(updateProduitDto.quantiteStock), 10);
     if (updateProduitDto.seuilAlerte != null) updateProduitDto.seuilAlerte = parseInt(String(updateProduitDto.seuilAlerte), 10);

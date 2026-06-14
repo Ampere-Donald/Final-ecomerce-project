@@ -157,6 +157,19 @@ const SQL_STATEMENTS = [
   `ALTER TABLE "produit" ADD COLUMN IF NOT EXISTS "image_url3" TEXT;`,
   `ALTER TABLE "produit" ADD COLUMN IF NOT EXISTS "seuil_alerte" INTEGER NOT NULL DEFAULT 5;`,
 
+  // ── Prix variable par bornes selon le rôle ──
+  `ALTER TABLE "produit" ADD COLUMN IF NOT EXISTS "prix_demi_gros" DOUBLE PRECISION;`,
+  `ALTER TABLE "admin_user" ADD COLUMN IF NOT EXISTS "peut_vendre_sous_demi_gros" BOOLEAN NOT NULL DEFAULT false;`,
+  `ALTER TABLE "ligne_ticket" ADD COLUMN IF NOT EXISTS "prix_reference" DECIMAL(10,2);`,
+  `ALTER TABLE "ligne_ticket" ADD COLUMN IF NOT EXISTS "bande_prix" VARCHAR(20);`,
+  `ALTER TABLE "ligne_ticket" ADD COLUMN IF NOT EXISTS "motif_remise" VARCHAR(255);`,
+  `ALTER TABLE "ligne_vente" ADD COLUMN IF NOT EXISTS "prix_reference" DECIMAL(10,2);`,
+  `ALTER TABLE "ligne_vente" ADD COLUMN IF NOT EXISTS "bande_prix" VARCHAR(20);`,
+  `ALTER TABLE "ligne_vente" ADD COLUMN IF NOT EXISTS "motif_remise" VARCHAR(255);`,
+  `ALTER TABLE "ligne_bon" ADD COLUMN IF NOT EXISTS "prix_reference" DECIMAL(10,2);`,
+  `ALTER TABLE "ligne_bon" ADD COLUMN IF NOT EXISTS "bande_prix" VARCHAR(20);`,
+  `ALTER TABLE "ligne_bon" ADD COLUMN IF NOT EXISTS "motif_remise" VARCHAR(255);`,
+
   // ── Table: commande ──
   `CREATE TABLE IF NOT EXISTS "commande" (
     "id" TEXT NOT NULL,

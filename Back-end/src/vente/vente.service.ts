@@ -7,6 +7,7 @@ import { DatabaseService } from 'src/database/database.service';
 import { NotificationService, NotificationActor } from 'src/notification/notification.service';
 import { CreateVenteDto } from './dto/create-vente.dto';
 import { UpdateVenteDto } from './dto/update-vente.dto';
+import { validerLignePrix, type LignePrixResult } from 'src/pricing/pricing.util';
 
 @Injectable()
 export class VenteService {
@@ -18,8 +19,17 @@ export class VenteService {
   async create(createVenteDto: CreateVenteDto, actor?: NotificationActor) {
     const { lignesVente, ...venteData } = createVenteDto;
 
+    // Filet de sécurité : bornes de prix selon le rôle de l'acteur (si connu)
+    const acteur = actor
+      ? await this.db.adminUser.findUnique({
+          where: { id: actor.id },
+          select: { role: true, peutVendreSousDemiGros: true },
+        })
+      : null;
+    const auditById = new Map<string, LignePrixResult>();
+
     const result = await this.db.$transaction(async (tx: any) => {
-      // Vérifier le stock disponible pour chaque ligne
+      // Vérifier le stock disponible + valider les bornes de prix
       for (const ligne of lignesVente) {
         const variante = await tx.produit.findUnique({
           where: { id: ligne.produitId },
@@ -34,6 +44,24 @@ export class VenteService {
             `Stock insuffisant pour ${variante.nomProduit}. Disponible: ${variante.quantiteStock}, Demandé: ${ligne.quantite}`,
           );
         }
+        if (acteur) {
+          auditById.set(
+            ligne.produitId,
+            validerLignePrix({
+              produit: {
+                prixGros: variante.prixGros,
+                prixDemiGros: variante.prixDemiGros,
+                prixDetail: variante.prixDetail,
+                cmupActuel: Number(variante.cmupActuel ?? 0),
+                nomProduit: variante.nomProduit,
+              },
+              prix: Number(ligne.prixUnitaire),
+              role: acteur.role,
+              peutVendreSousDemiGros: acteur.peutVendreSousDemiGros,
+              motif: ligne.motifRemise,
+            }),
+          );
+        }
       }
 
       // Créer la vente avec ses lignes
@@ -42,12 +70,18 @@ export class VenteService {
           ...venteData,
           vendeurId: actor?.id,
           lignesVente: {
-            create: lignesVente.map((ligne) => ({
-              produitId: ligne.produitId,
-              quantite: ligne.quantite,
-              prixUnitaire: ligne.prixUnitaire,
-              sousTotal: ligne.quantite * ligne.prixUnitaire,
-            })),
+            create: lignesVente.map((ligne) => {
+              const audit = auditById.get(ligne.produitId);
+              return {
+                produitId: ligne.produitId,
+                quantite: ligne.quantite,
+                prixUnitaire: ligne.prixUnitaire,
+                sousTotal: ligne.quantite * ligne.prixUnitaire,
+                prixReference: audit?.prixReference ?? null,
+                bandePrix: audit?.bandePrix ?? null,
+                motifRemise: audit?.motifRemise ?? null,
+              };
+            }),
           },
         },
         include: {

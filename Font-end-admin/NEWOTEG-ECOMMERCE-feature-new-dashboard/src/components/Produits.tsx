@@ -21,6 +21,7 @@ interface Produit {
   imageUrl2?: string;
   imageUrl3?: string;
   prixDetail?: number;
+  prixDemiGros?: number;
   prixGros?: number;
   quantiteStock?: number;
   urlDatasheet?: string;
@@ -37,6 +38,7 @@ const FORM_INITIAL = {
   categorieId: '',
   description: '',
   prixDetail: '',
+  prixDemiGros: '',
   prixGros: '',
   quantiteStock: '0',
   seuilAlerte: '5',
@@ -225,6 +227,7 @@ export const Produits = () => {
       categorieId: prod.categorie?.id ?? '',
       description: prod.description ?? '',
       prixDetail: prod.prixDetail != null ? String(prod.prixDetail) : '',
+      prixDemiGros: prod.prixDemiGros != null ? String(prod.prixDemiGros) : '',
       prixGros: prod.prixGros != null ? String(prod.prixGros) : '',
       quantiteStock: prod.quantiteStock != null ? String(prod.quantiteStock) : '0',
       seuilAlerte: (prod as any).seuilAlerte != null ? String((prod as any).seuilAlerte) : '5',
@@ -282,6 +285,7 @@ export const Produits = () => {
       dataToSend.append('categorieId', formData.categorieId);
       if (formData.description) dataToSend.append('description', formData.description);
       if (formData.prixDetail) dataToSend.append('prixDetail', formData.prixDetail);
+      if (formData.prixDemiGros) dataToSend.append('prixDemiGros', formData.prixDemiGros);
       if (formData.prixGros) dataToSend.append('prixGros', formData.prixGros);
       dataToSend.append('quantiteStock', formData.quantiteStock || '0');
       dataToSend.append('seuilAlerte', formData.seuilAlerte || '5');
@@ -833,6 +837,20 @@ export const Produits = () => {
                       step="any"
                       value={formData.prixDetail}
                       onChange={(e) => setFormData((f) => ({ ...f, prixDetail: e.target.value }))}
+                      className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+                      placeholder="0"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">
+                      Prix Demi-Gros (FCFA)
+                    </label>
+                    <input
+                      type="number"
+                      min={0}
+                      step="any"
+                      value={formData.prixDemiGros}
+                      onChange={(e) => setFormData((f) => ({ ...f, prixDemiGros: e.target.value }))}
                       className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary/20 outline-none transition-all"
                       placeholder="0"
                     />

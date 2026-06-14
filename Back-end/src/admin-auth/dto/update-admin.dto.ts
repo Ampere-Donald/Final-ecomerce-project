@@ -38,6 +38,10 @@ export class UpdateAdminDto {
   @IsOptional()
   @IsBoolean()
   isActive?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  peutVendreSousDemiGros?: boolean;
 }
 
 export class ResetPasswordDto {

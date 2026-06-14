@@ -10,13 +10,17 @@ import { NotFoundException } from '@zxing/library';
 import { useNavigate } from 'react-router-dom';
 import { bonVenteApi, clientApi, produitApi, ticketApi, equivalenceApi } from '../services/api';
 import { useAdminAuth } from '../context/AdminAuthContext';
+import { bornesPrix, classerBande, exigeMotif, BANDE_STYLE } from '../utils/pricing';
 
 interface Produit {
   id: string;
   nomProduit: string;
   marque?: string;
   prixDetail?: number;
+  prixDemiGros?: number;
+  prixGros?: number;
   prixPromo?: number;
+  cmupActuel?: number;
   quantiteStock: number;
   imageUrl?: string | null;
   categorie?: { id?: string; nom?: string } | null;
@@ -35,6 +39,12 @@ interface PanierLigne {
   prix: number;
   quantite: number;
   stockDispo: number;
+  // Références pour le calcul des bornes / bandes
+  prixGros?: number;
+  prixDemiGros?: number;
+  prixDetail?: number;
+  cmupActuel?: number;
+  motifRemise?: string;
 }
 
 interface Bon {
@@ -175,8 +185,79 @@ export const POSVendeur = () => {
         if (ex.quantite >= p.quantiteStock) return prev;
         return prev.map(l => l.produitId === p.id ? { ...l, quantite: l.quantite + 1 } : l);
       }
-      return [...prev, { produitId: p.id, nomProduit: p.nomProduit, prix, quantite: 1, stockDispo: p.quantiteStock }];
+      return [...prev, {
+        produitId: p.id,
+        nomProduit: p.nomProduit,
+        prix,
+        quantite: 1,
+        stockDispo: p.quantiteStock,
+        prixGros: p.prixGros,
+        prixDemiGros: p.prixDemiGros,
+        prixDetail: p.prixDetail,
+        cmupActuel: p.cmupActuel,
+      }];
     });
+  };
+
+  // ── Prix variable par bornes (le serveur reste l'autorité) ─────────────
+  const refsLigne = (l: PanierLigne) => ({
+    prixGros: l.prixGros,
+    prixDemiGros: l.prixDemiGros,
+    prixDetail: l.prixDetail,
+    cmupActuel: l.cmupActuel,
+  });
+  const bornesDe = (l: PanierLigne) =>
+    bornesPrix(refsLigne(l), admin?.role, (admin as any)?.peutVendreSousDemiGros);
+  const setPrixLigne = (produitId: string, prix: number) =>
+    setPanier(prev => prev.map(l => l.produitId === produitId ? { ...l, prix } : l));
+  const setMotifLigne = (produitId: string, motif: string) =>
+    setPanier(prev => prev.map(l => l.produitId === produitId ? { ...l, motifRemise: motif } : l));
+
+  /** Première ligne en infraction (prix sous le minimum ou motif manquant), sinon null. */
+  const ligneInvalide = (): string | null => {
+    for (const l of panier) {
+      const bornes = bornesDe(l);
+      if (l.prix < bornes.min) {
+        return `${l.nomProduit} : prix sous le minimum autorisé (${fmtFCFA(bornes.min)}).`;
+      }
+      if (exigeMotif(l.prix, refsLigne(l)) && !(l.motifRemise || '').trim()) {
+        return `${l.nomProduit} : motif requis pour vendre sous le prix de détail.`;
+      }
+    }
+    return null;
+  };
+
+  /** Cellule prix éditable + bornes + couleur de bande + motif si sous le détail. */
+  const renderPrixLigne = (l: PanierLigne) => {
+    const refs = refsLigne(l);
+    const bornes = bornesDe(l);
+    const bande = classerBande(l.prix, refs);
+    const sousDetail = exigeMotif(l.prix, refs);
+    return (
+      <div className="mt-1 space-y-1">
+        <div className="flex items-center gap-2">
+          <input
+            type="number"
+            min={bornes.min}
+            step="any"
+            value={l.prix}
+            onChange={e => setPrixLigne(l.produitId, Number(e.target.value))}
+            className={`w-24 px-2 py-1 text-sm font-semibold rounded-lg border outline-none ${BANDE_STYLE[bande]}`}
+          />
+          <span className="text-[10px] text-slate-400 whitespace-nowrap">min {fmtFCFA(bornes.min)}</span>
+        </div>
+        {sousDetail && (
+          <input
+            type="text"
+            value={l.motifRemise || ''}
+            onChange={e => setMotifLigne(l.produitId, e.target.value)}
+            placeholder="Motif de la remise (obligatoire)"
+            maxLength={255}
+            className="w-full px-2 py-1 text-xs rounded-lg border border-amber-300 bg-amber-50 outline-none focus:border-amber-500"
+          />
+        )}
+      </div>
+    );
   };
 
   const changerQuantite = (produitId: string, delta: number) => {
@@ -195,6 +276,8 @@ export const POSVendeur = () => {
   // ── Envoi ADMIN (ancien flux ticketApi) ───────────────────────────────
   const envoyerAdmin = async () => {
     if (!panier.length) return;
+    const invalide = ligneInvalide();
+    if (invalide) { setError(invalide); return; }
     setSubmitting(true);
     setError(null);
     setSuccess(null);
@@ -202,7 +285,12 @@ export const POSVendeur = () => {
       const ticket = await ticketApi.create({
         nomClient: nomClient.trim() || undefined,
         telephoneClient: telephoneClient.trim() || undefined,
-        lignes: panier.map(l => ({ produitId: l.produitId, quantite: l.quantite })),
+        lignes: panier.map(l => ({
+          produitId: l.produitId,
+          quantite: l.quantite,
+          prixUnitaire: l.prix,
+          motifRemise: (l.motifRemise || '').trim() || undefined,
+        })),
       });
       setSuccess(`Ticket ${ticket.numeroTicket} envoyé au caissier.`);
       setPanier([]);
@@ -220,6 +308,8 @@ export const POSVendeur = () => {
   // ── Envoi VENDEUR (nouveau flux bonVenteApi) ───────────────────────────
   const envoyerVendeur = async () => {
     if (!panier.length) return;
+    const invalide = ligneInvalide();
+    if (invalide) { setError(invalide); return; }
     setSubmitting(true);
     setError(null);
     setSuccess(null);
@@ -227,7 +317,12 @@ export const POSVendeur = () => {
       await bonVenteApi.create({
         clientId: selectedClientId || undefined,
         methodePaiement: paymentMethod,
-        lignes: panier.map(l => ({ produitId: l.produitId, quantite: l.quantite, prixUnitaire: l.prix })),
+        lignes: panier.map(l => ({
+          produitId: l.produitId,
+          quantite: l.quantite,
+          prixUnitaire: l.prix,
+          motifRemise: (l.motifRemise || '').trim() || undefined,
+        })),
       });
       setSuccess('Bon envoyé à la caissière.');
       setPanier([]);
@@ -267,7 +362,9 @@ export const POSVendeur = () => {
 
   const ajouterSuggestion = (s: any) => ajouterAuPanier({
     id: s.produitId, nomProduit: s.nomProduit, marque: s.marque,
-    prixDetail: s.prixDetail, prixPromo: s.prixPromo, quantiteStock: s.quantiteStock, imageUrl: s.imageUrl,
+    prixDetail: s.prixDetail, prixDemiGros: s.prixDemiGros, prixGros: s.prixGros,
+    prixPromo: s.prixPromo, cmupActuel: s.cmupActuel,
+    quantiteStock: s.quantiteStock, imageUrl: s.imageUrl,
   });
 
   // ── Scan caméra ────────────────────────────────────────────────────────
@@ -398,7 +495,7 @@ export const POSVendeur = () => {
             <li key={l.produitId} className="flex items-center gap-2 pb-3 border-b border-slate-100 last:border-0">
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-slate-900 truncate">{l.nomProduit}</p>
-                <p className="text-xs text-slate-500">{fmtFCFA(l.prix)}</p>
+                {renderPrixLigne(l)}
               </div>
               <div className="flex items-center gap-1">
                 <button onClick={() => changerQuantite(l.produitId, -1)} className="p-1 rounded text-slate-400 hover:text-slate-700 hover:bg-slate-100"><Minus size={14} /></button>
@@ -428,7 +525,7 @@ export const POSVendeur = () => {
             <li key={l.produitId} className="flex items-center gap-2 pb-3 border-b border-slate-100 last:border-0">
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-slate-900 truncate">{l.nomProduit}</p>
-                <p className="text-xs text-slate-500">{fmtFCFA(l.prix)}</p>
+                {renderPrixLigne(l)}
               </div>
               <div className="flex items-center gap-1">
                 <button onClick={() => changerQuantite(l.produitId, -1)} className="p-1 rounded text-slate-400 hover:text-slate-700 hover:bg-slate-100"><Minus size={14} /></button>
