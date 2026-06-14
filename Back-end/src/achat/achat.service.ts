@@ -7,6 +7,8 @@ import { CmupService } from 'src/cmup/cmup.service';
 import { CreateAchatDto } from './dto/create-achat.dto';
 import { UpdateAchatDto } from './dto/update-achat.dto';
 import { AnnulerAchatDto } from './dto/annuler-achat.dto';
+import { CalculerLotDto } from './dto/calculer-lot.dto';
+import { ValiderLotDto } from './dto/valider-lot.dto';
 
 @Injectable()
 export class AchatService {
@@ -219,7 +221,7 @@ export class AchatService {
           mouvementsCmup: true,
         },
       });
-    });
+    }, { timeout: 30000 });
 
     this.notifications
       .create('ACHAT_VALIDE', `Achat validé — ${result.montantTotalFcfa} FCFA`, actor)
@@ -255,6 +257,201 @@ export class AchatService {
     this.notifications.create('ACHAT_ANNULE', 'Brouillon annulé', actor).catch(() => {});
 
     return updated;
+  }
+
+  /**
+   * Calcul pur des prix suggérés — aucune écriture en DB.
+   * Utilisé par le frontend en temps réel pendant la saisie du lot.
+   */
+  async calculerLot(achatId: string, dto: CalculerLotDto) {
+    const achat = await this.findOne(achatId);
+    if (achat.statutAchat !== StatutAchat.BROUILLON) {
+      throw new BadRequestException('Seul un achat BROUILLON peut être calculé.');
+    }
+
+    // fraisTransport et fraisDouane sont des taux par kg ou par cm³
+    const fraisTaux = Number(dto.fraisTransport) + Number(dto.fraisDouane);
+    const isVolume = dto.methodeRepartition === 'VOLUME';
+
+    // Total poids/volume du lot (informatif, retourné dans la réponse)
+    const totalPV = dto.lignes.reduce((acc, l) => acc + (l.poidsOuVolume ?? 0) * l.quantite, 0);
+
+    const avertissements: string[] = [];
+
+    const resultats = await Promise.all(
+      dto.lignes.map(async (l) => {
+        const produit = await this.db.produit.findUnique({ where: { id: l.produitId } });
+        if (!produit) throw new NotFoundException(`Produit ${l.produitId} introuvable.`);
+
+        const cmup = Number(produit.cmupActuel ?? 0);
+        const pv = l.poidsOuVolume ?? 0;
+
+        // Charge unitaire = taux_frais × poids_ou_volume_par_unité
+        const chargeUnitaire = fraisTaux * pv;
+
+        const base = cmup + chargeUnitaire;
+        const cDetail = l.coeffDetail ?? dto.coeffDetailDefault;
+        const cGros   = l.coeffGros   ?? dto.coeffGrosDefault;
+
+        if (cGros >= cDetail) {
+          avertissements.push(`${produit.nomProduit} : coeffGros (${cGros}) ≥ coeffDetail (${cDetail})`);
+        }
+        if (cDetail < 1 || cGros < 1) {
+          avertissements.push(`${produit.nomProduit} : coefficient < 1 → vente à perte`);
+        }
+        if (cDetail > 5) {
+          avertissements.push(`${produit.nomProduit} : coeffDetail élevé (${cDetail})`);
+        }
+
+        return {
+          produitId: l.produitId,
+          nomProduit: produit.nomProduit,
+          cmup,
+          chargeUnitaire: Math.round(chargeUnitaire * 100) / 100,
+          coeffDetail: cDetail,
+          coeffGros: cGros,
+          prixDetailSuggere: Math.round(base * cDetail),
+          prixGrosSuggere:   Math.round(base * cGros),
+          poidsOuVolumeConnu: isVolume ? produit.volume : produit.poids,
+          poidsOuVolumeSaisi: pv,
+        };
+      }),
+    );
+
+    return { resultats, avertissements, totalPV, fraisTaux };
+  }
+
+  /**
+   * Valide le lot avec les prix finaux choisis par l'admin.
+   * Met à jour prixDetail/prixGros sur chaque produit + sauvegarde historique.
+   */
+  async validerLot(achatId: string, dto: ValiderLotDto, actor?: NotificationActor) {
+    const achat = await this.findOne(achatId);
+    if (achat.statutAchat !== StatutAchat.BROUILLON) {
+      throw new BadRequestException('Seul un achat BROUILLON peut être validé.');
+    }
+    if (!achat.lignesAchat.length) {
+      throw new BadRequestException("L'achat n'a aucune ligne.");
+    }
+
+    // Validation des coefficients
+    for (const l of dto.lignes) {
+      if (l.coeffGros != null && l.coeffDetail != null && l.coeffGros >= l.coeffDetail) {
+        throw new BadRequestException(
+          `coeffGros (${l.coeffGros}) doit être inférieur à coeffDetail (${l.coeffDetail}).`,
+        );
+      }
+      if ((l.coeffDetail != null && l.coeffDetail < 1) || (l.coeffGros != null && l.coeffGros < 1)) {
+        throw new BadRequestException('Un coefficient < 1 entraînerait une vente à perte.');
+      }
+    }
+
+    const taux   = achat.tauxChange;
+    const devise = achat.devise as Devise;
+
+    const result = await this.db.$transaction(async (tx: any) => {
+      const lignesPourCmup = achat.lignesAchat.map((l) => {
+        const coutUnitaireFcfa =
+          devise === Devise.FCFA
+            ? l.prixUnitaireDevise
+            : l.prixUnitaireDevise.mul(taux).toDecimalPlaces(2);
+        return {
+          id: l.id,
+          produitId: l.produitId,
+          quantite: l.quantite,
+          coutUnitaireFcfa,
+          sousTotalFcfa: coutUnitaireFcfa.mul(l.quantite).toDecimalPlaces(2),
+        };
+      });
+
+      // 1. Appliquer CMUP
+      await this.cmup.appliquer(tx, achatId, lignesPourCmup, devise, taux, actor?.id);
+
+      // 2. Mettre à jour chaque ligne + produit
+      for (const ligneDto of dto.lignes) {
+        const ligneAchat = achat.lignesAchat.find((l) => l.id === ligneDto.ligneAchatId);
+        if (!ligneAchat) continue;
+
+        const ligneCalc = lignesPourCmup.find((l) => l.id === ligneDto.ligneAchatId)!;
+
+        // Mise à jour LigneAchat (historique)
+        await tx.ligneAchat.update({
+          where: { id: ligneDto.ligneAchatId },
+          data: {
+            prixUnitaireFcfa: ligneCalc.coutUnitaireFcfa,
+            sousTotalFcfa: ligneCalc.sousTotalFcfa,
+            coutUnitaireEntreeFcfa: ligneCalc.coutUnitaireFcfa,
+            prixUnitaire: ligneCalc.coutUnitaireFcfa,
+            sousTotal: ligneCalc.sousTotalFcfa,
+            poidsUtilise: ligneDto.poidsOuVolume ?? null,
+            volumeUtilise: ligneDto.poidsOuVolume ?? null,
+            coeffDetail: ligneDto.coeffDetail ?? null,
+            coeffGros: ligneDto.coeffGros ?? null,
+            prixDetailFinal: new Decimal(ligneDto.prixDetailFinal),
+            prixGrosFinal: new Decimal(ligneDto.prixGrosFinal),
+          },
+        });
+
+        // Mise à jour du produit : prix de vente + poids/volume de référence
+        const produitUpdate: any = {
+          prixDetail: ligneDto.prixDetailFinal,
+          prixGros: ligneDto.prixGrosFinal,
+          dernierFournisseurId: achat.fournisseurId,
+        };
+        if (ligneDto.poidsOuVolume != null) {
+          if (achat.methodeRepartition === 'POIDS') {
+            produitUpdate.poids = ligneDto.poidsOuVolume;
+          } else {
+            produitUpdate.volume = ligneDto.poidsOuVolume;
+          }
+        }
+
+        await tx.produit.update({ where: { id: ligneAchat.produitId }, data: produitUpdate });
+
+        // MouvementStock
+        await tx.mouvementStock.create({
+          data: {
+            produitId: ligneAchat.produitId,
+            typeMouvement: 'ENTREE',
+            quantite: ligneAchat.quantite,
+            motif: `Validation achat #${achatId}`,
+          },
+        });
+      }
+
+      // 3. Recalculer totaux
+      const totalFcfa = lignesPourCmup
+        .reduce((acc, l) => acc.plus(l.sousTotalFcfa), new Decimal(0))
+        .toDecimalPlaces(2);
+      const totalDevise = achat.lignesAchat
+        .reduce((acc, l) => acc.plus(l.prixUnitaireDevise.mul(l.quantite)), new Decimal(0))
+        .toDecimalPlaces(2);
+
+      // 4. Passer en VALIDE
+      return tx.achat.update({
+        where: { id: achatId },
+        data: {
+          statutAchat: StatutAchat.VALIDE,
+          validatedAt: new Date(),
+          validatedById: actor?.id ?? null,
+          montantTotalFcfa: totalFcfa,
+          montantTotalDevise: totalDevise,
+          montantTotal: totalFcfa,
+          version: { increment: 1 },
+        },
+        include: {
+          fournisseur: true,
+          lignesAchat: { include: { produit: true } },
+          mouvementsCmup: true,
+        },
+      });
+    }, { timeout: 30000 });
+
+    this.notifications
+      .create('ACHAT_VALIDE', `Achat validé — ${result.montantTotalFcfa} FCFA`, actor)
+      .catch(() => {});
+
+    return result;
   }
 
   /** Suppression physique — seulement si BROUILLON. */

@@ -125,6 +125,11 @@ export const POSVendeur = () => {
   const [monScore, setMonScore] = useState(0);
   const [activeTab, setActiveTab] = useState<'vente' | 'enAttente'>('vente');
 
+  // ── Recherche manuelle code famille / code ─────────────────────────────
+  const [codeSearchFamille, setCodeSearchFamille] = useState('');
+  const [codeSearchCode, setCodeSearchCode]       = useState('');
+  const [codeSearchLoading, setCodeSearchLoading] = useState(false);
+
   // ── Scan caméra code-barres ────────────────────────────────────────────
   const [scanOpen, setScanOpen]   = useState(false);
   const [scanError, setScanError] = useState<string | null>(null);
@@ -367,6 +372,30 @@ export const POSVendeur = () => {
     quantiteStock: s.quantiteStock, imageUrl: s.imageUrl,
   });
 
+  // ── Recherche manuelle par code famille / code ─────────────────────────
+  const rechercherParCode = async () => {
+    const cf = codeSearchFamille.trim();
+    const c  = codeSearchCode.trim();
+    if (!cf || !c) {
+      setError('Entrez le code famille ET le code.');
+      return;
+    }
+    setCodeSearchLoading(true);
+    setError(null);
+    try {
+      const p: any = await produitApi.findByCode(cf, c);
+      ajouterAuPanier(p as Produit);
+      setSuccess(`"${p.nomProduit}" ajouté au panier.`);
+      setCodeSearchFamille('');
+      setCodeSearchCode('');
+      setTimeout(() => setSuccess(null), 2500);
+    } catch {
+      setError(`Produit introuvable : famille "${cf}" / code "${c}"`);
+    } finally {
+      setCodeSearchLoading(false);
+    }
+  };
+
   // ── Scan caméra ────────────────────────────────────────────────────────
   const stopScan = useCallback(() => {
     scanActiveRef.current = false;
@@ -600,7 +629,8 @@ export const POSVendeur = () => {
 
   // ── Catalogue commun ───────────────────────────────────────────────────
   const renderCatalogue = () => (
-    <div className="space-y-4">
+    <div className="space-y-3">
+      {/* Barre recherche nom + bouton scanner */}
       <div className="flex gap-2">
         <div className="relative flex-1">
           <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -615,6 +645,38 @@ export const POSVendeur = () => {
         >
           <ScanBarcode size={18} />
           <span className="hidden sm:inline text-sm font-medium">Scanner</span>
+        </button>
+      </div>
+
+      {/* Recherche manuelle code famille / code */}
+      <div className="flex flex-wrap gap-2 items-center bg-indigo-50 border border-indigo-200 rounded-xl px-3 py-2">
+        <span className="text-xs font-semibold text-indigo-400 uppercase tracking-wide shrink-0">Code :</span>
+        <input
+          type="text"
+          value={codeSearchFamille}
+          onChange={e => setCodeSearchFamille(e.target.value)}
+          onKeyDown={e => e.key === 'Enter' && rechercherParCode()}
+          placeholder="Code famille"
+          className="w-28 px-3 py-1.5 bg-white border border-indigo-200 rounded-lg text-sm font-mono focus:ring-2 focus:ring-indigo-300/40 outline-none placeholder:font-sans placeholder:text-slate-400"
+        />
+        <span className="text-indigo-300 font-bold">/</span>
+        <input
+          type="text"
+          value={codeSearchCode}
+          onChange={e => setCodeSearchCode(e.target.value)}
+          onKeyDown={e => e.key === 'Enter' && rechercherParCode()}
+          placeholder="Code article"
+          className="w-32 px-3 py-1.5 bg-white border border-indigo-200 rounded-lg text-sm font-mono focus:ring-2 focus:ring-indigo-300/40 outline-none placeholder:font-sans placeholder:text-slate-400"
+        />
+        <button
+          onClick={rechercherParCode}
+          disabled={codeSearchLoading || !codeSearchFamille.trim() || !codeSearchCode.trim()}
+          className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 text-white text-xs font-bold rounded-lg hover:bg-indigo-700 disabled:opacity-40 transition-colors"
+        >
+          {codeSearchLoading
+            ? <span className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
+            : <Plus size={13} />}
+          Ajouter
         </button>
       </div>
       {loading ? <div className="text-center text-slate-400 py-12">Chargement…</div>

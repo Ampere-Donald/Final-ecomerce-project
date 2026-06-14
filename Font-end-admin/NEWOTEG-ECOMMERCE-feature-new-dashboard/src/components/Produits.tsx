@@ -29,6 +29,8 @@ interface Produit {
   finPromo?: string;
   isPopulaire?: boolean;
   categorie?: Categorie;
+  codeFamille?: string | null;
+  code?: string | null;
 }
 
 // ─── État initial du formulaire isolé ─────────────────────────────────────────
@@ -67,6 +69,8 @@ export const Produits = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
   const [sortOrder, setSortOrder] = useState('newest');
+  const [codeFamilleFilter, setCodeFamilleFilter] = useState('');
+  const [codeFilter, setCodeFilter] = useState('');
 
   // ─── State Pagination & Global Import ─────────────────────────────────────
   const [isGlobalImporting, setIsGlobalImporting] = useState(false);
@@ -189,6 +193,16 @@ export const Produits = () => {
       );
     }
 
+    if (codeFamilleFilter.trim()) {
+      const cf = codeFamilleFilter.trim().toLowerCase();
+      result = result.filter(p => (p.codeFamille ?? '').toLowerCase().includes(cf));
+    }
+
+    if (codeFilter.trim()) {
+      const c = codeFilter.trim().toLowerCase();
+      result = result.filter(p => (p.code ?? '').toLowerCase().includes(c));
+    }
+
     if (sortOrder === 'az') {
       result = [...result].sort((a, b) => (a.nomProduit || '').localeCompare(b.nomProduit || ''));
     } else if (sortOrder === 'za') {
@@ -196,10 +210,10 @@ export const Produits = () => {
     }
 
     return result;
-  }, [produits, searchTerm, categoryFilter, sortOrder]);
+  }, [produits, searchTerm, categoryFilter, sortOrder, codeFamilleFilter, codeFilter]);
 
   // ─── Pagination ──────────────────────────────────────────────────────────
-  useEffect(() => { setCurrentPage(1); }, [searchTerm, categoryFilter, sortOrder]);
+  useEffect(() => { setCurrentPage(1); }, [searchTerm, categoryFilter, sortOrder, codeFamilleFilter, codeFilter]);
   const totalPages = Math.max(1, Math.ceil(filteredProduits.length / itemsPerPage));
   const paginatedProduits = useMemo(() => {
     const start = (currentPage - 1) * itemsPerPage;
@@ -983,34 +997,70 @@ export const Produits = () => {
       {/* Tableau ──────────────────────────────────────────────────────────── */}
       <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
         {/* Barre de recherche et Filtres */}
-        <div className="p-4 border-b border-slate-100 flex flex-col md:flex-row gap-3">
-          <div className="relative w-full max-w-md">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-            <input
-              type="text"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Rechercher par nom ou marque..."
-              className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all"
-            />
+        <div className="p-4 border-b border-slate-100 flex flex-col gap-3">
+          <div className="flex flex-col md:flex-row gap-3">
+            <div className="relative w-full max-w-md">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Rechercher par nom ou marque…"
+                className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+              />
+            </div>
+            <select
+              value={categoryFilter}
+              onChange={(e) => setCategoryFilter(e.target.value)}
+              className="px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-primary/20 text-slate-600 transition-all font-medium"
+            >
+              <option value="">Toutes les catégories</option>
+              {categories.map(c => <option key={c.id} value={c.id}>{c.nom}</option>)}
+            </select>
+            <select
+              value={sortOrder}
+              onChange={(e) => setSortOrder(e.target.value)}
+              className="px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-primary/20 text-slate-600 transition-all font-medium"
+            >
+              <option value="newest">Les plus récents</option>
+              <option value="az">Alphabétique (A-Z)</option>
+              <option value="za">Alphabétique (Z-A)</option>
+            </select>
           </div>
-          <select 
-            value={categoryFilter} 
-            onChange={(e) => setCategoryFilter(e.target.value)}
-            className="px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-primary/20 text-slate-600 transition-all font-medium"
-          >
-            <option value="">Toutes les catégories</option>
-            {categories.map(c => <option key={c.id} value={c.id}>{c.nom}</option>)}
-          </select>
-          <select 
-            value={sortOrder} 
-            onChange={(e) => setSortOrder(e.target.value)}
-            className="px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-primary/20 text-slate-600 transition-all font-medium"
-          >
-            <option value="newest">Les plus récents</option>
-            <option value="az">Alphabétique (A-Z)</option>
-            <option value="za">Alphabétique (Z-A)</option>
-          </select>
+
+          {/* Recherche par code famille / code */}
+          <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center">
+            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wide shrink-0">Code :</span>
+            <div className="flex gap-2 flex-1">
+              <div className="relative">
+                <input
+                  type="text"
+                  value={codeFamilleFilter}
+                  onChange={(e) => setCodeFamilleFilter(e.target.value)}
+                  placeholder="Code famille (ex: 101)"
+                  className="w-44 px-3 py-1.5 bg-indigo-50 border border-indigo-200 rounded-lg text-sm font-mono focus:ring-2 focus:ring-indigo-300/40 outline-none transition-all placeholder:font-sans placeholder:text-slate-400"
+                />
+              </div>
+              <span className="self-center text-slate-400 font-bold">/</span>
+              <div className="relative">
+                <input
+                  type="text"
+                  value={codeFilter}
+                  onChange={(e) => setCodeFilter(e.target.value)}
+                  placeholder="Code (ex: 101001)"
+                  className="w-44 px-3 py-1.5 bg-indigo-50 border border-indigo-200 rounded-lg text-sm font-mono focus:ring-2 focus:ring-indigo-300/40 outline-none transition-all placeholder:font-sans placeholder:text-slate-400"
+                />
+              </div>
+              {(codeFamilleFilter || codeFilter) && (
+                <button
+                  onClick={() => { setCodeFamilleFilter(''); setCodeFilter(''); }}
+                  className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold text-indigo-600 hover:text-indigo-800 hover:bg-indigo-100 rounded-lg transition-colors"
+                >
+                  <X size={13} /> Effacer
+                </button>
+              )}
+            </div>
+          </div>
         </div>
 
         {/* ── Table (desktop) ── */}
@@ -1065,7 +1115,13 @@ export const Produits = () => {
                           </div>
                           <div>
                             <p className="font-bold text-slate-900">{prod.nomProduit}</p>
-                            <p className="text-xs text-slate-500 max-w-[200px] truncate">{prod.description}</p>
+                            {prod.codeFamille && prod.code ? (
+                              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-mono font-semibold bg-indigo-50 text-indigo-600 mt-0.5">
+                                {prod.codeFamille}/{prod.code}
+                              </span>
+                            ) : (
+                              <p className="text-xs text-slate-500 max-w-[200px] truncate">{prod.description}</p>
+                            )}
                           </div>
                         </div>
                       </td>
@@ -1178,6 +1234,11 @@ export const Produits = () => {
                         <Tag size={10} />{prod.categorie?.nom || 'N/A'}
                       </span>
                       <span className="text-[11px] text-slate-500">{prod.marque}</span>
+                      {prod.codeFamille && prod.code && (
+                        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-mono font-semibold bg-indigo-50 text-indigo-600">
+                          {prod.codeFamille}/{prod.code}
+                        </span>
+                      )}
                       <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-bold ${(prod.quantiteStock ?? 0) > 10 ? 'bg-emerald-50 text-emerald-700'
                         : (prod.quantiteStock ?? 0) > 0 ? 'bg-amber-50 text-amber-700'
                           : 'bg-red-50 text-red-700'
