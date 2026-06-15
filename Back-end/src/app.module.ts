@@ -41,6 +41,7 @@ import { BonVenteModule } from './bon-vente/bon-vente.module';
 import { FactureModule } from './facture/facture.module';
 import { PrimeModule } from './prime/prime.module';
 import { ProformaModule } from './proforma/proforma.module';
+import { FactureVirtuelleModule } from './facture-virtuelle/facture-virtuelle.module';
 
 @Module({
   imports: [
@@ -89,6 +90,7 @@ import { ProformaModule } from './proforma/proforma.module';
     FactureModule,
     PrimeModule,
     ProformaModule,
+    FactureVirtuelleModule,
   ],
   controllers: [AppController],
   providers: [AppService],
