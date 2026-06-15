@@ -28,9 +28,15 @@ const typeLabels: Record<string, string> = {
   CAISSE_MAJ: 'Caisse modifiée',
   CAISSE_SUPPRIMEE: 'Caisse supprimée',
   MOUVEMENT_STOCK_CREE: 'Mouvement stock',
+  FACTURE_VIRTUELLE_DEMANDE: 'FV — Demande',
+  FACTURE_VIRTUELLE_APPROUVEE: 'FV — Approuvée',
+  FACTURE_VIRTUELLE_REFUSEE: 'FV — Refusée',
 };
 
 const typeBadgeColor = (type: string) => {
+  if (type === 'FACTURE_VIRTUELLE_DEMANDE') return 'bg-orange-100 text-orange-700 ring-2 ring-orange-300';
+  if (type === 'FACTURE_VIRTUELLE_APPROUVEE') return 'bg-green-100 text-green-700';
+  if (type === 'FACTURE_VIRTUELLE_REFUSEE') return 'bg-red-100 text-red-700';
   if (type.includes('SUPPRIM')) return 'bg-red-100 text-red-700';
   if (type.includes('CREE') || type.includes('CREEE')) return 'bg-green-100 text-green-700';
   if (type.includes('MAJ') || type.includes('STATUT')) return 'bg-blue-100 text-blue-700';

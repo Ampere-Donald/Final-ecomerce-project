@@ -19,6 +19,7 @@ import { caisseJourApi, factureApi, getApiErrorMessage } from '../services/api';
 import { useAdminAuth } from '../context/AdminAuthContext';
 import { FileCaissier } from './FileCaissier';
 import { ReceiptGenerator } from './ReceiptGenerator';
+import { FactureVirtuelleModal } from './FactureVirtuelleModal';
 
 interface Operation {
   id: string;
@@ -103,6 +104,11 @@ export const CaisseJour = () => {
   const [showRouvrir, setShowRouvrir] = useState(false);
   const [rouvrirSubmitting, setRouvrirSubmitting] = useState(false);
   const [rouvrirError, setRouvrirError] = useState<string | null>(null);
+
+  // Modal facture virtuelle
+  const [showFV, setShowFV] = useState(false);
+  const [fvFactureId, setFvFactureId] = useState<string | null>(null);
+  const [fvSuccess, setFvSuccess] = useState<string | null>(null);
 
   const { admin } = useAdminAuth();
 
@@ -439,15 +445,25 @@ export const CaisseJour = () => {
                         <td className="px-4 py-3 text-right font-bold text-primary">{fmtFCFA(f.totalTTC)}</td>
                         <td className="px-4 py-3 text-center text-slate-500">{f.printCount || 0}</td>
                         <td className="px-4 py-3 text-center">
-                          <button
-                            onClick={() => handlePrintFacture(f)}
-                            disabled={printingFacture === f.id}
-                            className="inline-flex items-center gap-1.5 rounded-lg bg-slate-100 px-2.5 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-200 disabled:opacity-50"
-                            title="Imprimer"
-                          >
-                            <Printer size={13} />
-                            {printingFacture === f.id ? '...' : 'Imprimer'}
-                          </button>
+                          <div className="flex items-center justify-center gap-1">
+                            <button
+                              onClick={() => handlePrintFacture(f)}
+                              disabled={printingFacture === f.id}
+                              className="inline-flex items-center gap-1.5 rounded-lg bg-slate-100 px-2.5 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-200 disabled:opacity-50"
+                              title="Imprimer"
+                            >
+                              <Printer size={13} />
+                              {printingFacture === f.id ? '...' : 'Imprimer'}
+                            </button>
+                            <button
+                              onClick={() => { setFvFactureId(f.id); setShowFV(true); }}
+                              className="inline-flex items-center gap-1 rounded-lg bg-blue-50 px-2.5 py-1.5 text-xs font-medium text-blue-700 hover:bg-blue-100"
+                              title="Facture virtuelle"
+                            >
+                              <FileText size={13} />
+                              FV
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -775,6 +791,20 @@ export const CaisseJour = () => {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Modal facture virtuelle */}
+      {showFV && fvFactureId && (
+        <FactureVirtuelleModal
+          factureReelleId={fvFactureId}
+          onClose={() => { setShowFV(false); setFvFactureId(null); }}
+          onSuccess={(pending) => {
+            setShowFV(false);
+            setFvFactureId(null);
+            setFvSuccess(pending ? 'Demande envoyée au SUPER_ADMIN pour approbation.' : 'Facture virtuelle créée !');
+            setTimeout(() => setFvSuccess(null), 4000);
+          }}
+        />
+      )}
 
       {receiptFacture && (
         <ReceiptGenerator

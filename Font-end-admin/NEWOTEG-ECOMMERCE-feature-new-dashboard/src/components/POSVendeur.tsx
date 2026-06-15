@@ -8,7 +8,7 @@ import {
 import { BrowserMultiFormatReader } from '@zxing/browser';
 import { NotFoundException } from '@zxing/library';
 import { useNavigate } from 'react-router-dom';
-import { bonVenteApi, clientApi, produitApi, ticketApi, equivalenceApi, proformaApi } from '../services/api';
+import { bonVenteApi, clientApi, produitApi, ticketApi, equivalenceApi, proformaApi, factureVirtuelleApi, getApiErrorMessage } from '../services/api';
 import { useAdminAuth } from '../context/AdminAuthContext';
 import { ReceiptGenerator } from './ReceiptGenerator';
 

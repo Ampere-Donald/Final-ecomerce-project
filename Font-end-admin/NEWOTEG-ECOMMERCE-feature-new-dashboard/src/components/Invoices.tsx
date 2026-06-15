@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'motion/react';
-import { FileText, Printer, Search, ChevronDown } from 'lucide-react';
+import { FileText, Printer, Search, ChevronDown, Ghost } from 'lucide-react';
 import { factureApi, getApiErrorMessage } from '../services/api';
 import { ReceiptGenerator } from './ReceiptGenerator';
+import { FactureVirtuelle } from './FactureVirtuelle';
 
 const fmtFCFA = (n: number | string): string => {
   const v = Number(n) || 0;
@@ -30,6 +31,7 @@ interface Facture {
 }
 
 export const Invoices = () => {
+  const [activeTab, setActiveTab] = useState<'reelles' | 'virtuelles'>('reelles');
   const [factures, setFactures] = useState<Facture[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -92,11 +94,31 @@ export const Invoices = () => {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Factures</h1>
-          <p className="text-sm text-slate-500">
-            {factures.length} facture{factures.length !== 1 ? 's' : ''} au total
-          </p>
+          <p className="text-sm text-slate-500">Factures réelles et factures virtuelles démarcheurs</p>
         </div>
       </div>
+
+      {/* Onglets */}
+      <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl w-fit">
+        <button
+          onClick={() => setActiveTab('reelles')}
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === 'reelles' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+        >
+          <FileText size={15} /> Factures réelles
+        </button>
+        <button
+          onClick={() => setActiveTab('virtuelles')}
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === 'virtuelles' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+        >
+          <Ghost size={15} /> Factures virtuelles
+        </button>
+      </div>
+
+      {/* Contenu onglet Factures virtuelles */}
+      {activeTab === 'virtuelles' && <FactureVirtuelle />}
+
+      {/* Contenu onglet Factures réelles */}
+      {activeTab === 'reelles' && <>
 
       {/* Filtres */}
       <div className="flex flex-col gap-3 sm:flex-row">
@@ -217,6 +239,9 @@ export const Invoices = () => {
           onClose={() => setReceiptFacture(null)}
         />
       )}
+
+      {/* Fin onglet factures réelles */}
+      </>}
     </motion.div>
   );
 };

@@ -35,6 +35,9 @@ const NOTIF_ICON: Record<string, React.ReactNode> = {
   CAISSE_MAJ:          <Wallet size={16} className="text-amber-500" />,
   CAISSE_SUPPRIMEE:    <Wallet size={16} className="text-red-500" />,
   MOUVEMENT_STOCK_CREE:<Activity size={16} className="text-blue-500" />,
+  FACTURE_VIRTUELLE_DEMANDE: <AlertCircle size={16} className="text-orange-600" />,
+  FACTURE_VIRTUELLE_APPROUVEE: <Check size={16} className="text-green-600" />,
+  FACTURE_VIRTUELLE_REFUSEE: <X size={16} className="text-red-600" />,
 };
 
 /* ── Route map for search results ───────────────────────────────── */
@@ -70,8 +73,22 @@ export const Header = ({ onMenuClick }: HeaderProps) => {
   const [bellOpen, setBellOpen] = useState(false);
   const bellRef = useRef<HTMLDivElement>(null);
 
+  const prevUnreadRef = useRef(0);
   const fetchUnread = useCallback(async () => {
-    try { const { count } = await notificationApi.unreadCount(); setUnread(count); } catch {}
+    try {
+      const { count } = await notificationApi.unreadCount();
+      if (count > prevUnreadRef.current && prevUnreadRef.current > 0) {
+        try {
+          const recent = await notificationApi.getAll();
+          const hasFvDemande = recent.some((n: any) => !n.lue && n.type === 'FACTURE_VIRTUELLE_DEMANDE');
+          if (hasFvDemande) {
+            try { new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbsGczIj2markup').play(); } catch {}
+          }
+        } catch {}
+      }
+      prevUnreadRef.current = count;
+      setUnread(count);
+    } catch {}
   }, []);
 
   const fetchNotifs = useCallback(async () => {

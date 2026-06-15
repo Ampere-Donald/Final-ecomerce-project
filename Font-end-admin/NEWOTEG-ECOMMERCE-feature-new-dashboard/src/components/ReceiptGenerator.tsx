@@ -14,7 +14,7 @@ interface LigneVente {
 }
 
 export interface ReceiptProps {
-  type: 'ticket' | 'facture' | 'proforma';
+  type: 'ticket' | 'facture' | 'proforma' | 'factureVirtuelle';
   lignes: LigneVente[];
   montantTotal: number;
   methodePaiement: string;
@@ -98,7 +98,8 @@ export const ReceiptGenerator: React.FC<ReceiptProps> = (props) => {
     onClose,
   } = props;
 
-  const [activeType, setActiveType] = React.useState<'ticket' | 'facture' | 'proforma'>(initialType);
+  const [activeType, setActiveType] = React.useState<'ticket' | 'facture' | 'proforma' | 'factureVirtuelle'>(initialType === 'factureVirtuelle' ? 'facture' : initialType);
+  const isVirtuelle = initialType === 'factureVirtuelle';
   const printRef = useRef<HTMLDivElement>(null);
 
   // --- TVA calculation (prices are TTC) ---
@@ -354,7 +355,7 @@ export const ReceiptGenerator: React.FC<ReceiptProps> = (props) => {
   };
 
   // --- Derived display number ---
-  const displayNumero = numero;
+  const displayNumero = isVirtuelle && !numero.includes('•') ? `${numero} •` : numero;
   const documentLabel = activeType === 'proforma' ? 'FACTURE PROFORMA' : 'FACTURE';
 
   // -----------------------------------------------------------------------

@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { venteApi, produitApi, clientApi, categorieApi } from '../services/api';
+import { FactureVirtuelleModal } from './FactureVirtuelleModal';
 import { ReceiptGenerator, generateReceiptNumber } from './ReceiptGenerator';
 
 /* ── Types ─────────────────────────────────────────────────────── */
@@ -73,6 +74,10 @@ export const Ventes = () => {
   const [lastVente, setLastVente] = useState<any>(null);
   const [showReceipt, setShowReceipt] = useState(false);
   const [receiptType, setReceiptType] = useState<'ticket' | 'facture'>('ticket');
+
+  // ── Facture virtuelle state ──
+  const [showFV, setShowFV] = useState(false);
+  const [fvFactureId, setFvFactureId] = useState<string | null>(null);
 
   // ── History state ──
   const [historySearch, setHistorySearch] = useState('');
@@ -460,10 +465,18 @@ export const Ventes = () => {
             className="flex items-center gap-2 p-4 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-700 font-medium text-sm">
             <CheckCircle2 size={18} /> {successMessage}
             {lastVente && (
-              <button onClick={() => setShowReceipt(true)}
-                className="ml-auto flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 text-white rounded-lg text-xs font-bold hover:bg-emerald-700 transition-colors">
-                <Receipt size={14} /> Imprimer recu
-              </button>
+              <div className="ml-auto flex items-center gap-2">
+                <button onClick={() => setShowReceipt(true)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 text-white rounded-lg text-xs font-bold hover:bg-emerald-700 transition-colors">
+                  <Receipt size={14} /> Imprimer recu
+                </button>
+                {lastVente.factureId && (
+                  <button onClick={() => { setFvFactureId(lastVente.factureId!); setShowFV(true); }}
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-bold hover:bg-blue-700 transition-colors">
+                    <Receipt size={14} /> Facture virtuelle
+                  </button>
+                )}
+              </div>
             )}
           </motion.div>
         )}
@@ -1317,6 +1330,20 @@ export const Ventes = () => {
           client={lastVente._client}
           dateVente={lastVente.dateVente}
           onClose={() => setShowReceipt(false)}
+        />
+      )}
+
+      {/* Modal facture virtuelle */}
+      {showFV && fvFactureId && (
+        <FactureVirtuelleModal
+          factureReelleId={fvFactureId}
+          onClose={() => { setShowFV(false); setFvFactureId(null); }}
+          onSuccess={(pending) => {
+            setShowFV(false);
+            setFvFactureId(null);
+            setSuccessMessage(pending ? 'Demande FV envoyée au SUPER_ADMIN.' : 'Facture virtuelle créée !');
+            setTimeout(() => setSuccessMessage(''), 4000);
+          }}
         />
       )}
     </motion.div>
