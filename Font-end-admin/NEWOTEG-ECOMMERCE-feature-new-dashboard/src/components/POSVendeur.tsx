@@ -10,6 +10,7 @@ import { NotFoundException } from '@zxing/library';
 import { useNavigate } from 'react-router-dom';
 import { bonVenteApi, clientApi, produitApi, ticketApi, equivalenceApi, proformaApi, factureVirtuelleApi, getApiErrorMessage } from '../services/api';
 import { useAdminAuth } from '../context/AdminAuthContext';
+import { can } from '../utils/permissions';
 import { ReceiptGenerator } from './ReceiptGenerator';
 
 interface Produit {
@@ -217,7 +218,7 @@ export const POSVendeur = () => {
       setPanier([]);
       setNomClient('');
       setTelephoneClient('');
-      setTimeout(() => navigate('/mes-tickets'), 1200);
+      setTimeout(() => navigate(can.accessCaisseJour(admin?.role) ? '/caisse-jour' : '/mes-tickets'), 1200);
     } catch (e: any) {
       const msg = e?.response?.data?.message || e?.message || 'Erreur inconnue';
       setError(Array.isArray(msg) ? msg.join(', ') : String(msg));
