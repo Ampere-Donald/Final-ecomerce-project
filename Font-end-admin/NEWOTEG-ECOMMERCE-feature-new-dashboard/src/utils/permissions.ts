@@ -64,6 +64,8 @@ export const can = {
   voirPrimes: (r?: string) => isAdmin(r),
   validerPrime: (r?: string) => isSuper(r),
   voirFactures: (r?: string) => isAdmin(r) || isCaissier(r),
+  voirFacturesVirtuelles: (r?: string) => isAdmin(r) || isCaissier(r) || isVendeur(r),
+  approuverFactureVirtuelle: (r?: string) => isSuper(r),
   voirMarges: (r?: string) => isAdmin(r),
   voirSoldeGlobal: (r?: string) => isAdmin(r),
 

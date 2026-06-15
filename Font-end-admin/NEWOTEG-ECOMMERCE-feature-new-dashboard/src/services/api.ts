@@ -409,6 +409,16 @@ export const proformaApi = {
   remove: (id: string) => api.delete(`/proformas/${id}`).then(r => r.data),
 };
 
+export const factureVirtuelleApi = {
+  create: (data: any) => api.post('/facture-virtuelle', data).then(r => r.data),
+  getAll: (params?: any) => api.get('/facture-virtuelle', { params }).then(r => r.data),
+  getOne: (id: string) => api.get(`/facture-virtuelle/${id}`).then(r => r.data),
+  approuver: (id: string) => api.post(`/facture-virtuelle/${id}/approuver`).then(r => r.data),
+  refuser: (id: string, motif: string) => api.post(`/facture-virtuelle/${id}/refuser`, { motif }).then(r => r.data),
+  print: (id: string) => api.post(`/facture-virtuelle/${id}/print`).then(r => r.data),
+  remove: (id: string) => api.delete(`/facture-virtuelle/${id}`).then(r => r.data),
+};
+
 export const adminRoleApi = {
   changerRole: (id: string, role: string) =>
     api.patch(`/admin-auth/${id}/role`, { role }).then(r => r.data),
