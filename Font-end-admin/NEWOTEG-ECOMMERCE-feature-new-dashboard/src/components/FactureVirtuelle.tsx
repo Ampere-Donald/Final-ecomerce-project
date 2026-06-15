@@ -4,6 +4,7 @@ import { Ghost, Printer, Search, CheckCircle2, XCircle, Trash2, ChevronDown } fr
 import { factureVirtuelleApi, getApiErrorMessage } from '../services/api';
 import { useAdminAuth } from '../context/AdminAuthContext';
 import { can } from '../utils/permissions';
+import { ReceiptGenerator } from './ReceiptGenerator';
 
 const fmtFCFA = (v: number | string) =>
   new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 }).format(Number(v) || 0).replace(/ /g, ' ') + ' FCFA';
@@ -38,6 +39,8 @@ export const FactureVirtuelle: React.FC = () => {
   const [showRefusModal, setShowRefusModal] = useState(false);
   const [selectedFv, setSelectedFv] = useState<FV | null>(null);
   const [motifRefus, setMotifRefus] = useState('');
+  const [showReceipt, setShowReceipt] = useState(false);
+  const [receiptData, setReceiptData] = useState<any | null>(null);
 
   const charger = async () => {
     setLoading(true);
@@ -97,7 +100,12 @@ export const FactureVirtuelle: React.FC = () => {
   const handlePrint = async (fv: FV) => {
     setActionLoading(fv.id);
     try {
-      await factureVirtuelleApi.print(fv.id);
+      const [, fullFv] = await Promise.all([
+        factureVirtuelleApi.print(fv.id),
+        factureVirtuelleApi.getOne(fv.id),
+      ]);
+      setReceiptData(fullFv);
+      setShowReceipt(true);
       charger();
     } catch (err: any) {
       setError(getApiErrorMessage(err, 'Erreur impression'));
@@ -266,6 +274,25 @@ export const FactureVirtuelle: React.FC = () => {
             </tbody>
           </table>
         </div>
+      )}
+
+      {/* Impression facture virtuelle */}
+      {showReceipt && receiptData && (
+        <ReceiptGenerator
+          type="factureVirtuelle"
+          lignes={(receiptData.lignes || []).map((l: any) => ({
+            nomProduit: l.nomProduit,
+            quantite: Number(l.quantite),
+            prixUnitaire: Number(l.prixUnitaireTTC),
+            sousTotal: Number(l.sousTotalTTC),
+          }))}
+          montantTotal={Number(receiptData.totalTTC)}
+          methodePaiement={receiptData.vente?.methodePaiement || 'ESPECES'}
+          numero={receiptData.numero}
+          client={receiptData.client ? { nom: receiptData.client.nom } : undefined}
+          dateVente={receiptData.dateCreation}
+          onClose={() => { setShowReceipt(false); setReceiptData(null); }}
+        />
       )}
 
       {/* Modal refus */}
