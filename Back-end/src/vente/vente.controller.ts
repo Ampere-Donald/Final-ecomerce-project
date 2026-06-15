@@ -22,22 +22,26 @@ import { Roles } from '../admin-auth/roles.decorator';
 export class VenteController {
   constructor(private readonly venteService: VenteService) {}
 
+  @Roles('SUPER_ADMIN', 'ADMIN')
   @Post()
   create(@Request() req: any, @Body() createVenteDto: CreateVenteDto) {
     const actor = { id: req.user.id, nom: req.user.nom, role: req.user.role };
     return this.venteService.create(createVenteDto, actor);
   }
 
+  @Roles('SUPER_ADMIN', 'ADMIN', 'CAISSIER')
   @Get()
   findAll() {
     return this.venteService.findAll();
   }
 
+  @Roles('SUPER_ADMIN', 'ADMIN', 'CAISSIER')
   @Get(':id')
   findOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.venteService.findOne(id);
   }
 
+  @Roles('SUPER_ADMIN', 'ADMIN')
   @Patch(':id')
   update(
     @Param('id', ParseUUIDPipe) id: string,
@@ -48,6 +52,7 @@ export class VenteController {
     return this.venteService.update(id, updateVenteDto, actor);
   }
 
+  @Roles('SUPER_ADMIN')
   @Delete(':id')
   remove(@Param('id', ParseUUIDPipe) id: string, @Request() req: any) {
     const actor = { id: req.user.id, nom: req.user.nom, role: req.user.role };

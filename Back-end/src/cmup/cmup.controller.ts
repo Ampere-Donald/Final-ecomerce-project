@@ -3,9 +3,11 @@ import { CmupService } from './cmup.service';
 import { PreviewCmupDto } from './dto/cmup.dto';
 import { AdminAuthGuard } from '../admin-auth/admin-auth.guard';
 import { RolesGuard } from '../admin-auth/roles.guard';
+import { Roles } from '../admin-auth/roles.decorator';
 
 @Controller('cmup')
 @UseGuards(AdminAuthGuard, RolesGuard)
+@Roles('SUPER_ADMIN', 'ADMIN')
 export class CmupController {
   constructor(private readonly service: CmupService) {}
 

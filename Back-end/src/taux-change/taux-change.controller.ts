@@ -8,6 +8,7 @@ import { Devise } from '@prisma/client';
 
 @Controller('taux-change')
 @UseGuards(AdminAuthGuard, RolesGuard)
+@Roles('SUPER_ADMIN', 'ADMIN', 'MANAGER')
 export class TauxChangeController {
   constructor(private readonly service: TauxChangeService) {}
 

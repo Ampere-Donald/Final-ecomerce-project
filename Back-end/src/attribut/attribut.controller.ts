@@ -14,12 +14,15 @@ import { AttributService } from './attribut.service';
 import { CreateAttributDto } from './dto/create-attribut.dto';
 import { UpdateAttributDto } from './dto/update-attribut.dto';
 import { AdminAuthGuard } from '../admin-auth/admin-auth.guard';
+import { RolesGuard } from '../admin-auth/roles.guard';
+import { Roles } from '../admin-auth/roles.decorator';
 
 @Controller('attributs')
 export class AttributController {
   constructor(private readonly attributService: AttributService) {}
 
-  @UseGuards(AdminAuthGuard)
+  @UseGuards(AdminAuthGuard, RolesGuard)
+  @Roles('SUPER_ADMIN', 'ADMIN')
   @Post()
   create(@Body() createAttributDto: CreateAttributDto) {
     return this.attributService.create(createAttributDto);
@@ -38,7 +41,8 @@ export class AttributController {
     return this.attributService.findOne(id);
   }
 
-  @UseGuards(AdminAuthGuard)
+  @UseGuards(AdminAuthGuard, RolesGuard)
+  @Roles('SUPER_ADMIN', 'ADMIN')
   @Patch(':id')
   update(
     @Param('id', ParseUUIDPipe) id: string,
@@ -47,7 +51,8 @@ export class AttributController {
     return this.attributService.update(id, updateAttributDto);
   }
 
-  @UseGuards(AdminAuthGuard)
+  @UseGuards(AdminAuthGuard, RolesGuard)
+  @Roles('SUPER_ADMIN', 'ADMIN')
   @Delete(':id')
   remove(@Param('id', ParseUUIDPipe) id: string) {
     return this.attributService.remove(id);

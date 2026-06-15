@@ -32,10 +32,24 @@ export class ProduitService {
     return this.importStatus;
   }
 
+  /**
+   * Seul le SUPER_ADMIN peut définir/modifier les prix.
+   * Pour tout autre acteur humain (admin, vendeur…), on retire les champs prix.
+   * Les flux internes (achat, import) écrivent directement en base et passent ici
+   * sans `actor` → les prix sont conservés.
+   */
+  private retirerPrixSiNonSuperAdmin(data: any, actor?: NotificationActor) {
+    if (!actor || actor.role === 'SUPER_ADMIN') return;
+    for (const f of ['prixDetail', 'prixGros', 'prixDemiGros', 'prixPromo']) {
+      delete data[f];
+    }
+  }
+
   async create(createProduitDto: CreateProduitDto, actor?: NotificationActor) {
     const { categorieId, ...rest } = createProduitDto;
 
     const data: any = { ...rest };
+    this.retirerPrixSiNonSuperAdmin(data, actor);
 
     if (data.finPromo) {
       data.finPromo = new Date(data.finPromo);
@@ -215,6 +229,7 @@ export class ProduitService {
       ...rest,
       version: { increment: 1 },
     };
+    this.retirerPrixSiNonSuperAdmin(updateData, actor);
 
     if (updateData.finPromo) {
       updateData.finPromo = new Date(updateData.finPromo);

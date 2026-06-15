@@ -12,8 +12,11 @@ export class RolesGuard implements CanActivate {
       context.getHandler(),
       context.getClass(),
     ]);
-    if (!requiredRoles || requiredRoles.length === 0) return true;
+    // Sécurité par défaut : si un endpoint applique RolesGuard sans déclarer
+    // de @Roles, on REFUSE (au lieu d'autoriser). Un endpoint « tout utilisateur
+    // authentifié » doit utiliser AdminAuthGuard seul, sans RolesGuard.
+    if (!requiredRoles || requiredRoles.length === 0) return false;
     const { user } = context.switchToHttp().getRequest();
-    return requiredRoles.includes(user.role);
+    return !!user && requiredRoles.includes(user.role);
   }
 }

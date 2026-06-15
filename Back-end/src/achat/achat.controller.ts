@@ -21,6 +21,7 @@ import { RolesGuard } from '../admin-auth/roles.guard';
 import { Roles } from '../admin-auth/roles.decorator';
 
 @UseGuards(AdminAuthGuard, RolesGuard)
+@Roles('SUPER_ADMIN', 'ADMIN', 'MANAGER')
 @Controller('achats')
 export class AchatController {
   constructor(private readonly achatService: AchatService) {}
