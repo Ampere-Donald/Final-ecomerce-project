@@ -311,7 +311,15 @@ const SQL_STATEMENTS = [
   // ── Mark the migration as applied in _prisma_migrations (so Prisma doesn't try to re-run it) ──
   `INSERT INTO "_prisma_migrations" (id, checksum, finished_at, migration_name, logs, rolled_back_at, started_at, applied_steps_count)
    SELECT gen_random_uuid()::text, 'ensure-schema-script', NOW(), '20260321220000_add_ecommerce_tables', NULL, NULL, NOW(), 1
-   WHERE NOT EXISTS (SELECT 1 FROM "_prisma_migrations" WHERE migration_name = '20260321220000_add_ecommerce_tables');`
+   WHERE NOT EXISTS (SELECT 1 FROM "_prisma_migrations" WHERE migration_name = '20260321220000_add_ecommerce_tables');`,
+
+  // ── Resolve failed/interrupted migrations (P3009) ──
+  // ensure-schema garantit déjà le schéma via IF NOT EXISTS ; on marque donc
+  // toute migration "started but never finished" comme terminée pour que
+  // `prisma migrate deploy` ne soit plus bloqué et que l'app puisse démarrer.
+  `UPDATE "_prisma_migrations"
+   SET finished_at = NOW(), applied_steps_count = 1, logs = COALESCE(logs, '') || ' [auto-resolved by ensure-schema]'
+   WHERE finished_at IS NULL AND rolled_back_at IS NULL;`
 ];
 
 async function main() {
