@@ -139,7 +139,12 @@ export const ReceiptGenerator: React.FC<ReceiptProps> = (props) => {
 
     const pageSize = activeType === 'ticket'
       ? '@page { size: 80mm auto; margin: 5mm; }'
-      : '@page { size: A4 portrait; margin: 10mm; }';
+      : '@page { size: A4 portrait; margin: 8mm; }';
+    const printCompact = activeType !== 'ticket' ? `
+      @media print {
+        table td, table th { padding: 3px 6px !important; font-size: 11px !important; }
+        .facture-footer { break-inside: avoid !important; page-break-inside: avoid !important; }
+      }` : '';
 
     const win = window.open('', '_blank', 'width=900,height=700');
     if (!win) {
@@ -155,7 +160,8 @@ export const ReceiptGenerator: React.FC<ReceiptProps> = (props) => {
   <style>${css}</style>
   <style>
     ${pageSize}
-    body { margin: 0; padding: ${activeType === 'ticket' ? '0' : '20px'}; background: white; }
+    body { margin: 0; padding: ${activeType === 'ticket' ? '0' : '16px'}; background: white; }
+    ${printCompact}
   </style>
 </head>
 <body>${content.innerHTML}</body>
@@ -500,51 +506,54 @@ export const ReceiptGenerator: React.FC<ReceiptProps> = (props) => {
         </tbody>
       </table>
 
-      {/* Totals */}
-      <div className="flex justify-end mb-8">
-        <div className="w-64">
-          <div className="flex justify-between py-1 text-sm">
-            <span>Total HT</span>
-            <span>{fmt(totalHT)} FCFA</span>
-          </div>
-          <div className="flex justify-between py-1 text-sm">
-            <span>TVA 19,25%</span>
-            <span>{fmt(tva)} FCFA</span>
-          </div>
-          <div className="flex justify-between py-2 text-base font-bold border-t-2 border-gray-800 mt-1">
-            <span>Total TTC</span>
-            <span>{fmt(totalTTC)} FCFA</span>
+      {/* Pied de facture — regroupé pour éviter coupure de page */}
+      <div style={{ breakInside: 'avoid', pageBreakInside: 'avoid' }}>
+        {/* Totals */}
+        <div className="flex justify-end mb-4">
+          <div className="w-64">
+            <div className="flex justify-between py-1 text-sm">
+              <span>Total HT</span>
+              <span>{fmt(totalHT)} FCFA</span>
+            </div>
+            <div className="flex justify-between py-1 text-sm">
+              <span>TVA 19,25%</span>
+              <span>{fmt(tva)} FCFA</span>
+            </div>
+            <div className="flex justify-between py-2 text-base font-bold border-t-2 border-gray-800 mt-1">
+              <span>Total TTC</span>
+              <span>{fmt(totalTTC)} FCFA</span>
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Payment method */}
-      <p className="text-sm text-gray-600 mb-6">
-        Mode de paiement : <span className="font-medium">{methodePaiement}</span>
-      </p>
+        {/* Payment method */}
+        <p className="text-sm text-gray-600 mb-3">
+          Mode de paiement : <span className="font-medium">{methodePaiement}</span>
+        </p>
 
-      {/* Notes proforma */}
-      {activeType === 'proforma' && (
-        <div className="border border-gray-200 rounded p-3 mb-6 bg-gray-50">
-          <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Notes</p>
-          <p className="text-sm text-gray-700">
-            {notes?.trim() || 'Devis valable 30 jours. Prix sous réserve de disponibilité des stocks.'}
+        {/* Notes proforma */}
+        {activeType === 'proforma' && (
+          <div className="border border-gray-200 rounded p-3 mb-3 bg-gray-50">
+            <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Notes</p>
+            <p className="text-sm text-gray-700">
+              {notes?.trim() || 'Devis valable 30 jours. Prix sous réserve de disponibilité des stocks.'}
+            </p>
+          </div>
+        )}
+
+        {/* Conditions */}
+        <div className="border-t border-gray-300 pt-3 mb-4">
+          <p className="text-xs text-gray-500">
+            Conditions : {activeType === 'proforma' ? 'Document non fiscal, valable sous réserve de stock disponible.' : 'Paiement à réception'}
           </p>
         </div>
-      )}
 
-      {/* Conditions */}
-      <div className="border-t border-gray-300 pt-4 mb-8">
-        <p className="text-xs text-gray-500">
-          Conditions : {activeType === 'proforma' ? 'Document non fiscal, valable sous réserve de stock disponible.' : 'Paiement à réception'}
-        </p>
-      </div>
-
-      {/* Signature */}
-      <div className="flex justify-end mt-12">
-        <div className="text-center">
-          <div className="w-48 border-b border-gray-400 mb-1" style={{ height: 60 }} />
-          <p className="text-xs text-gray-500">Signature & cachet</p>
+        {/* Signature */}
+        <div className="flex justify-end mt-4">
+          <div className="text-center">
+            <div className="w-48 border-b border-gray-400 mb-1" style={{ height: 40 }} />
+            <p className="text-xs text-gray-500">Signature & cachet</p>
+          </div>
         </div>
       </div>
     </div>
