@@ -123,6 +123,7 @@ model Client {
   proformas    Proforma[]
   favoris      Favori[]
   ventes       Vente[]
+  facturesVirtuelles FactureVirtuelle[]
 
   @@map("client")
 }
@@ -273,6 +274,7 @@ model Facture {
   vendeur         AdminUser       @relation("FacturesVendeur", fields: [vendeurId], references: [id])
   caissier        AdminUser?      @relation("FacturesCaissier", fields: [caissierId], references: [id])
   lignes          FactureLigne[]
+  factureVirtuelle FactureVirtuelle?
 
   @@map("facture")
 }
@@ -357,6 +359,7 @@ model Vente {
   lignesVente     LigneVente[]
   reglements      Reglement[]
   ticket          TicketVente?
+  factureVirtuelle FactureVirtuelle?
   client          Client?         @relation(fields: [clientId], references: [id])
   vendeur         AdminUser?      @relation("VenteVendeur", fields: [vendeurId], references: [id])
 
@@ -681,6 +684,8 @@ model AdminUser {
   ticketsVendeur      TicketVente[]  @relation("TicketsVendeur")
   proformasVendeur    Proforma[]     @relation("ProformasVendeur")
   ventesEffectuees    Vente[]        @relation("VenteVendeur")
+  facturesVirtuellesVendeur    FactureVirtuelle[]  @relation("FacturesVirtuellesVendeur")
+  facturesVirtuellesApprouveur FactureVirtuelle[]  @relation("FacturesVirtuellesApprouveur")
 
   @@map("admin_user")
 }
@@ -880,5 +885,63 @@ enum TypeNotification {
   BON_VALIDE
   BON_ANNULE
   PRIME_MAJ
+  FACTURE_VIRTUELLE_DEMANDE
+  FACTURE_VIRTUELLE_APPROUVEE
+  FACTURE_VIRTUELLE_REFUSEE
+}
+
+enum StatutFactureVirtuelle {
+  EN_ATTENTE
+  APPROUVEE
+  REFUSEE
+}
+
+enum ModeMajoration {
+  GLOBAL
+  PAR_LIGNE
+}
+
+model FactureVirtuelle {
+  id                    String                   @id @default(uuid())
+  numero                String                   @unique
+  factureReelleId       String                   @unique @map("facture_reelle_id")
+  venteId               String                   @unique @map("vente_id")
+  clientId              String?                  @map("client_id")
+  vendeurId             String                   @map("vendeur_id")
+  approuveurId          String?                  @map("approuveur_id")
+  dateCreation          DateTime                 @default(now()) @map("date_creation")
+  dateApprobation       DateTime?                @map("date_approbation")
+  pourcentageMajoration Decimal                  @map("pourcentage_majoration") @db.Decimal(5, 2)
+  totalTTC              Decimal                  @map("total_ttc") @db.Decimal(12, 2)
+  totalReelTTC          Decimal                  @map("total_reel_ttc") @db.Decimal(12, 2)
+  margeDemarcheur       Decimal                  @map("marge_demarcheur") @db.Decimal(12, 2)
+  modeMajoration        ModeMajoration           @default(GLOBAL) @map("mode_majoration")
+  statut                StatutFactureVirtuelle   @default(EN_ATTENTE)
+  motifRefus            String?                  @map("motif_refus")
+  printCount            Int                      @default(0) @map("print_count")
+
+  factureReelle         Facture                  @relation(fields: [factureReelleId], references: [id])
+  vente                 Vente                    @relation(fields: [venteId], references: [id])
+  client                Client?                  @relation(fields: [clientId], references: [id])
+  vendeur               AdminUser                @relation("FacturesVirtuellesVendeur", fields: [vendeurId], references: [id])
+  approuveur            AdminUser?               @relation("FacturesVirtuellesApprouveur", fields: [approuveurId], references: [id])
+  lignes                FactureVirtuelleLigne[]
+
+  @@map("facture_virtuelle")
+}
+
+model FactureVirtuelleLigne {
+  id                    String             @id @default(uuid())
+  factureVirtuelleId    String             @map("facture_virtuelle_id")
+  nomProduit            String             @map("nom_produit") @db.VarChar(150)
+  quantite              Int
+  prixUnitaireReelTTC   Decimal            @map("prix_unitaire_reel_ttc") @db.Decimal(10, 2)
+  pourcentageLigne      Decimal            @map("pourcentage_ligne") @db.Decimal(5, 2)
+  prixUnitaireTTC       Decimal            @map("prix_unitaire_ttc") @db.Decimal(10, 2)
+  sousTotalTTC          Decimal            @map("sous_total_ttc") @db.Decimal(12, 2)
+
+  factureVirtuelle      FactureVirtuelle   @relation(fields: [factureVirtuelleId], references: [id], onDelete: Cascade)
+
+  @@map("facture_virtuelle_ligne")
 }
 
