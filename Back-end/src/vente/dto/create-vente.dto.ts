@@ -1,8 +1,10 @@
 import {
   IsEnum,
   IsNumber,
+  IsString,
   IsUUID,
   IsArray,
+  MaxLength,
   ValidateNested,
   IsOptional,
 } from 'class-validator';
@@ -20,6 +22,11 @@ export class LigneVenteDto {
   @IsNumber()
   @Type(() => Number)
   prixUnitaire: number;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(255)
+  motifRemise?: string;
 }
 
 export class CreateVenteDto {

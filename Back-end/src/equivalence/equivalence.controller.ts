@@ -25,4 +25,11 @@ export class EquivalenceController {
   stats() {
     return this.equivalenceService.stats();
   }
+
+  @UseGuards(AdminAuthGuard, RolesGuard)
+  @Roles('SUPER_ADMIN', 'ADMIN')
+  @Get('health')
+  health() {
+    return this.equivalenceService.health();
+  }
 }

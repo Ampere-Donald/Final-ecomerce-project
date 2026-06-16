@@ -38,7 +38,8 @@ export class CommandeController {
   }
 
   /** Admin: list all orders */
-  @UseGuards(AdminAuthGuard)
+  @UseGuards(AdminAuthGuard, RolesGuard)
+  @Roles('SUPER_ADMIN', 'ADMIN', 'VENDEUR')
   @Get()
   findAll() {
     return this.commandeService.findAll();
@@ -52,7 +53,8 @@ export class CommandeController {
   }
 
   /** Admin: process in-store pickup */
-  @UseGuards(AdminAuthGuard)
+  @UseGuards(AdminAuthGuard, RolesGuard)
+  @Roles('SUPER_ADMIN', 'ADMIN', 'CAISSIER')
   @Patch(':id/pickup')
   processPickup(
     @Param('id', ParseUUIDPipe) id: string,
@@ -64,7 +66,8 @@ export class CommandeController {
   }
 
   /** Admin: view single order */
-  @UseGuards(AdminAuthGuard)
+  @UseGuards(AdminAuthGuard, RolesGuard)
+  @Roles('SUPER_ADMIN', 'ADMIN', 'VENDEUR')
   @Get(':id')
   findOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.commandeService.findOne(id);
@@ -96,7 +99,8 @@ export class CommandeController {
    * Admin status update.
    * ANTI-FRAUD: Admin can ONLY set status to EN_ATTENTE or EN_LIVRAISON.
    */
-  @UseGuards(AdminAuthGuard)
+  @UseGuards(AdminAuthGuard, RolesGuard)
+  @Roles('SUPER_ADMIN', 'ADMIN')
   @Patch(':id')
   update(
     @Param('id', ParseUUIDPipe) id: string,

@@ -49,6 +49,12 @@ export class CreateProduitDto {
   @IsNumber()
   @Min(0)
   @Type(() => Number)
+  prixDemiGros?: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  @Type(() => Number)
   prixDetail?: number;
 
   @IsOptional()

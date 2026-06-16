@@ -1,6 +1,7 @@
 import React, { useRef, useMemo } from 'react';
 import { Printer, FileText, X, Download } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { brand } from '../config/brand';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -374,10 +375,11 @@ export const ReceiptGenerator: React.FC<ReceiptProps> = (props) => {
     >
       {/* Header */}
       <div className="text-center border-b border-dashed border-gray-400 pb-2 mb-2">
-        <p className="font-bold text-sm tracking-wide">NEWOTEG SARL</p>
-        <p className="text-[10px]">Pièces Électroniques</p>
-        <p className="text-[10px]">Douala, Cameroun</p>
-        <p className="text-[10px]">Tél: +237 6XX XXX XXX</p>
+        <p className="font-bold text-sm tracking-wide">{brand.legalName}</p>
+        <p className="text-[10px] font-semibold">{brand.branchName}</p>
+        <p className="text-[10px]">{brand.branchDescription}</p>
+        <p className="text-[10px]">{brand.city}</p>
+        <p className="text-[10px]">Tél: {brand.phone}</p>
       </div>
 
       {/* Date + numero */}
@@ -451,12 +453,13 @@ export const ReceiptGenerator: React.FC<ReceiptProps> = (props) => {
       {/* Company header */}
       <div className="flex justify-between items-start mb-8">
         <div>
-          <h1 className="text-xl font-bold text-gray-900">NEWOTEG SARL</h1>
-          <p className="text-sm text-gray-600">Pièces Électroniques</p>
+          <h1 className="text-xl font-bold text-gray-900">{brand.legalName}</h1>
+          <p className="text-sm font-semibold text-gray-700">{brand.branchName}</p>
+          <p className="text-sm text-gray-600">{brand.branchDescription}</p>
           <p className="text-xs text-gray-500 mt-1">NUI: P00000000000X (placeholder)</p>
           <p className="text-xs text-gray-500">RCCM: RC/DLA/2024/X/00000 (placeholder)</p>
-          <p className="text-xs text-gray-500">Douala, Cameroun</p>
-          <p className="text-xs text-gray-500">Tél: +237 6XX XXX XXX</p>
+          <p className="text-xs text-gray-500">{brand.city}</p>
+          <p className="text-xs text-gray-500">Tél: {brand.phone}</p>
         </div>
         <div className="text-right">
           <h2 className="text-lg font-bold text-gray-800">{documentLabel}</h2>

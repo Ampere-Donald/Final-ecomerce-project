@@ -32,6 +32,7 @@ export class CategorieController {
   ) {}
 
   @UseGuards(AdminAuthGuard, RolesGuard)
+  @Roles('SUPER_ADMIN', 'ADMIN')
   @Post()
   create(@Request() req: any, @Body() createCategorieDto: CreateCategorieDto) {
     const actor = { id: req.user.id, nom: req.user.nom, role: req.user.role };
@@ -49,6 +50,7 @@ export class CategorieController {
   }
 
   @UseGuards(AdminAuthGuard, RolesGuard)
+  @Roles('SUPER_ADMIN', 'ADMIN')
   @Post(':id/image')
   @UseInterceptors(FileInterceptor('file', memStore))
   async uploadImage(
@@ -67,6 +69,7 @@ export class CategorieController {
   }
 
   @UseGuards(AdminAuthGuard, RolesGuard)
+  @Roles('SUPER_ADMIN', 'ADMIN')
   @Patch(':id')
   update(
     @Param('id', ParseUUIDPipe) id: string,

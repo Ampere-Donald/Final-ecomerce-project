@@ -14,8 +14,11 @@ import { LigneVenteService } from './ligne-vente.service';
 import { CreateLigneVenteDto } from './dto/create-ligne-vente.dto';
 import { UpdateLigneVenteDto } from './dto/update-ligne-vente.dto';
 import { AdminAuthGuard } from '../admin-auth/admin-auth.guard';
+import { RolesGuard } from '../admin-auth/roles.guard';
+import { Roles } from '../admin-auth/roles.decorator';
 
-@UseGuards(AdminAuthGuard)
+@UseGuards(AdminAuthGuard, RolesGuard)
+@Roles('SUPER_ADMIN', 'ADMIN')
 @Controller('lignes-vente')
 export class LigneVenteController {
   constructor(private readonly ligneVenteService: LigneVenteService) {}

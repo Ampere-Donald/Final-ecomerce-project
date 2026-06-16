@@ -12,6 +12,32 @@ import { can } from '../utils/permissions';
 
 type Devise = 'FCFA' | 'NGN' | 'CNY';
 type StatutAchat = 'BROUILLON' | 'VALIDE' | 'ANNULE';
+type MethodeRepartition = 'POIDS' | 'VOLUME';
+
+interface LotConfig {
+  fraisTransport: number;
+  fraisDouane: number;
+  methodeRepartition: MethodeRepartition;
+  coeffDetailDefault: number;
+  coeffGrosDefault: number;
+}
+
+interface LotLigne {
+  ligneAchatId: string;
+  produitId: string;
+  nomProduit: string;
+  quantite: number;
+  cmup: number;
+  poidsOuVolume: number | '';
+  autofill: boolean;
+  chargeUnitaire: number;
+  coeffDetail: number;
+  coeffGros: number;
+  prixDetailSuggere: number;
+  prixGrosSuggere: number;
+  prixDetailFinal: number | '';
+  prixGrosFinal: number | '';
+}
 
 interface LigneForme {
   produitId: string;
@@ -88,7 +114,10 @@ const ProduitSearch = ({ value, produits, onChange }: ProduitSearchProps) => {
   const selected = produits.find(p => p.id === value);
   const displayName = (p: any) => [p.marque, p.nomProduit].filter(Boolean).join(' ');
 
-  const [query, setQuery] = useState(() => (selected ? displayName(selected) : ''));
+  const [mode, setMode] = useState<'nom' | 'code'>('nom');
+  const [query, setQuery]     = useState(() => (selected ? displayName(selected) : ''));
+  const [codeFam, setCodeFam] = useState('');
+  const [codeProd, setCodeProd] = useState('');
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -101,7 +130,6 @@ const ProduitSearch = ({ value, produits, onChange }: ProduitSearchProps) => {
     const handler = (e: MouseEvent) => {
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
         setOpen(false);
-        // revert to selected name if user left without picking
         const p = produits.find(p => p.id === value);
         setQuery(p ? displayName(p) : '');
       }
@@ -111,45 +139,93 @@ const ProduitSearch = ({ value, produits, onChange }: ProduitSearchProps) => {
   }, [value, produits]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const suggestions = useMemo(() => {
+    if (mode === 'code') {
+      const cf = codeFam.trim().toLowerCase();
+      const cp = codeProd.trim().toLowerCase();
+      if (!cf && !cp) return produits.slice(0, 8);
+      return produits.filter(p => {
+        const matchCf = !cf || (p.codeFamille ?? '').toLowerCase().startsWith(cf);
+        const matchCp = !cp || (p.code ?? '').toLowerCase().startsWith(cp);
+        return matchCf && matchCp;
+      }).slice(0, 12);
+    }
     const q = query.trim().toLowerCase();
     if (!q) return produits.slice(0, 8);
-    return produits
-      .filter(p =>
-        p.nomProduit?.toLowerCase().includes(q) ||
-        p.marque?.toLowerCase().includes(q),
-      )
-      .slice(0, 10);
-  }, [query, produits]);
+    return produits.filter(p =>
+      p.nomProduit?.toLowerCase().includes(q) ||
+      p.marque?.toLowerCase().includes(q) ||
+      (p.codeFamille ?? '').toLowerCase().includes(q) ||
+      (p.code ?? '').toLowerCase().includes(q),
+    ).slice(0, 12);
+  }, [mode, query, codeFam, codeProd, produits]);
 
   const pick = (p: any) => {
     onChange(p.id);
     setQuery(displayName(p));
+    setCodeFam('');
+    setCodeProd('');
     setOpen(false);
   };
 
   return (
-    <div ref={containerRef} className="relative">
-      <input
-        type="text"
-        value={query}
-        onChange={e => { setQuery(e.target.value); setOpen(true); if (!e.target.value) onChange(''); }}
-        onFocus={() => setOpen(true)}
-        placeholder="Rechercher un produit…"
-        className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs focus:ring-2 focus:ring-primary/20 outline-none"
-        autoComplete="off"
-      />
+    <div ref={containerRef} className="relative space-y-1">
+      {/* Mode tabs */}
+      <div className="flex gap-1">
+        <button type="button" onClick={() => { setMode('nom'); setOpen(true); }}
+          className={`px-2 py-0.5 text-xs rounded font-medium transition-colors ${mode === 'nom' ? 'bg-primary text-white' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}>
+          Nom
+        </button>
+        <button type="button" onClick={() => { setMode('code'); setOpen(true); }}
+          className={`px-2 py-0.5 text-xs rounded font-medium transition-colors ${mode === 'code' ? 'bg-indigo-500 text-white' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}>
+          Code
+        </button>
+      </div>
+
+      {mode === 'nom' ? (
+        <input type="text" value={query} autoComplete="off"
+          onChange={e => { setQuery(e.target.value); setOpen(true); if (!e.target.value) onChange(''); }}
+          onFocus={() => setOpen(true)}
+          placeholder="Rechercher un produit…"
+          className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs focus:ring-2 focus:ring-primary/20 outline-none" />
+      ) : (
+        <div className="flex gap-1">
+          <input type="text" value={codeFam} autoComplete="off"
+            onChange={e => { setCodeFam(e.target.value); setOpen(true); }}
+            onFocus={() => setOpen(true)}
+            placeholder="Famille (ex: 101)"
+            className="w-1/2 px-2 py-2 bg-white border border-indigo-200 rounded-lg text-xs font-mono focus:ring-2 focus:ring-indigo-300 outline-none" />
+          <input type="text" value={codeProd} autoComplete="off"
+            onChange={e => { setCodeProd(e.target.value); setOpen(true); }}
+            onFocus={() => setOpen(true)}
+            placeholder="Code (ex: 101001)"
+            className="w-1/2 px-2 py-2 bg-white border border-indigo-200 rounded-lg text-xs font-mono focus:ring-2 focus:ring-indigo-300 outline-none" />
+        </div>
+      )}
+
+      {selected && (
+        <div className="text-xs text-emerald-600 font-medium truncate flex items-center gap-1.5">
+          <CheckCircle size={10} />
+          <span>{displayName(selected)}</span>
+          {(selected.codeFamille || selected.code) && (
+            <span className="font-mono text-indigo-400">{selected.codeFamille ?? ''}{selected.code ? `/${selected.code}` : ''}</span>
+          )}
+        </div>
+      )}
+
       {open && suggestions.length > 0 && (
-        <div className="absolute z-50 top-full mt-1 left-0 right-0 bg-white border border-slate-200 rounded-lg shadow-xl max-h-52 overflow-y-auto">
+        <div className="absolute z-50 top-full mt-1 left-0 right-0 bg-white border border-slate-200 rounded-lg shadow-xl max-h-56 overflow-y-auto">
           {suggestions.map(p => (
-            <button
-              key={p.id}
-              type="button"
+            <button key={p.id} type="button"
               onMouseDown={e => { e.preventDefault(); pick(p); }}
               className={`w-full text-left px-3 py-2 text-xs flex items-center justify-between gap-2 transition-colors
-                ${p.id === value ? 'bg-primary/10 text-primary font-semibold' : 'hover:bg-slate-50 text-slate-700'}`}
-            >
-              <span className="truncate">{displayName(p)}</span>
-              <span className="text-slate-400 shrink-0">stock : {p.quantiteStock}</span>
+                ${p.id === value ? 'bg-primary/10 text-primary font-semibold' : 'hover:bg-slate-50 text-slate-700'}`}>
+              <div className="min-w-0">
+                <div className="truncate">{displayName(p)}</div>
+                {(p.codeFamille || p.code) && (
+                  <div className="font-mono text-indigo-500">{p.codeFamille ?? ''}{p.code ? `/${p.code}` : ''}</div>
+                )}
+              </div>
+              <span className="text-slate-400 shrink-0">×{p.quantiteStock}</span>
             </button>
           ))}
         </div>
@@ -188,6 +264,19 @@ export const Achats = () => {
   const [cmupPreview, setCmupPreview]     = useState<{ lignes: CmupLigne[]; totalDevise: number; totalFcfa: number } | null>(null);
   const [cmupLoading, setCmupLoading]     = useState(false);
   const previewTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // ── Modal Prix de vente ──
+  const [prixModal, setPrixModal]         = useState<any>(null);
+  const [lotConfig, setLotConfig]         = useState<LotConfig>({
+    fraisTransport: 0, fraisDouane: 0,
+    methodeRepartition: 'POIDS',
+    coeffDetailDefault: 1.3, coeffGrosDefault: 1.15,
+  });
+  const [lotLignes, setLotLignes]         = useState<LotLigne[]>([]);
+  const [lotAvertissements, setLotAvertissements] = useState<string[]>([]);
+  const [lotCalculating, setLotCalculating] = useState(false);
+  const [lotSubmitting, setLotSubmitting]   = useState(false);
+  const [lotCalculated, setLotCalculated]   = useState(false);
 
   // ── Filtres liste ──
   const [search, setSearch]   = useState('');
@@ -388,6 +477,107 @@ export const Achats = () => {
     }
   };
 
+  // ─── Modal Prix de vente ─────────────────────────────────────────
+  const openPrixModal = (achat: any) => {
+    const defaultCoeffDetail = 1.3;
+    const defaultCoeffGros   = 1.15;
+    const lignes: LotLigne[] = (achat.lignesAchat ?? []).map((l: any) => {
+      const poidsProduit  = l.produit?.poids  != null ? l.produit.poids  : '';
+      const volumeProduit = l.produit?.volume != null ? l.produit.volume : '';
+      return {
+        ligneAchatId: l.id,
+        produitId: l.produitId,
+        nomProduit: l.produit?.nomProduit ?? 'Produit',
+        quantite: l.quantite,
+        cmup: Number(l.produit?.cmupActuel ?? 0),
+        poidsOuVolume: poidsProduit !== '' ? poidsProduit : volumeProduit !== '' ? volumeProduit : '',
+        autofill: poidsProduit !== '' || volumeProduit !== '',
+        chargeUnitaire: 0,
+        coeffDetail: l.coeffDetail ?? defaultCoeffDetail,
+        coeffGros: l.coeffGros ?? defaultCoeffGros,
+        prixDetailSuggere: 0,
+        prixGrosSuggere: 0,
+        prixDetailFinal: '',
+        prixGrosFinal: '',
+      };
+    });
+    setLotLignes(lignes);
+    setLotConfig({ fraisTransport: 0, fraisDouane: 0, methodeRepartition: 'POIDS', coeffDetailDefault: defaultCoeffDetail, coeffGrosDefault: defaultCoeffGros });
+    setLotAvertissements([]);
+    setLotCalculated(false);
+    setPrixModal(achat);
+  };
+
+  const calculerPrix = async () => {
+    if (!prixModal) return;
+    setLotCalculating(true);
+    setLotAvertissements([]);
+    try {
+      const dto = {
+        fraisTransport: lotConfig.fraisTransport,
+        fraisDouane: lotConfig.fraisDouane,
+        methodeRepartition: lotConfig.methodeRepartition,
+        coeffDetailDefault: lotConfig.coeffDetailDefault,
+        coeffGrosDefault: lotConfig.coeffGrosDefault,
+        lignes: lotLignes.map(l => ({
+          produitId: l.produitId,
+          quantite: l.quantite,
+          prixUnitaireDevise: (prixModal.lignesAchat ?? []).find((la: any) => la.id === l.ligneAchatId)?.prixUnitaireDevise ?? 0,
+          poidsOuVolume: l.poidsOuVolume === '' ? undefined : Number(l.poidsOuVolume),
+          coeffDetail: l.coeffDetail,
+          coeffGros: l.coeffGros,
+        })),
+      };
+      const res = await achatApi.calculerLot(prixModal.id, dto);
+      setLotLignes(prev => prev.map(l => {
+        const r = (res.resultats ?? []).find((x: any) => x.produitId === l.produitId);
+        if (!r) return l;
+        return {
+          ...l,
+          chargeUnitaire: r.chargeUnitaire ?? 0,
+          prixDetailSuggere: r.prixDetailSuggere ?? 0,
+          prixGrosSuggere: r.prixGrosSuggere ?? 0,
+          prixDetailFinal: r.prixDetailSuggere ?? '',
+          prixGrosFinal: r.prixGrosSuggere ?? '',
+        };
+      }));
+      setLotAvertissements(res.avertissements ?? []);
+      setLotCalculated(true);
+    } catch (err: any) {
+      const msg = err.response?.data?.message || err.message;
+      alert('Erreur calcul : ' + (Array.isArray(msg) ? msg.join(', ') : msg));
+    } finally {
+      setLotCalculating(false);
+    }
+  };
+
+  const validerAvecPrix = async () => {
+    if (!prixModal) return;
+    setLotSubmitting(true);
+    try {
+      await achatApi.validerLot(prixModal.id, {
+        lignes: lotLignes.map(l => ({
+          ligneAchatId: l.ligneAchatId,
+          poidsOuVolume: l.poidsOuVolume === '' ? undefined : Number(l.poidsOuVolume),
+          coeffDetail: l.coeffDetail,
+          coeffGros: l.coeffGros,
+          prixDetailFinal: Number(l.prixDetailFinal) || 0,
+          prixGrosFinal: Number(l.prixGrosFinal) || 0,
+        })),
+      });
+      await fetchData();
+      setPrixModal(null);
+    } catch (err: any) {
+      const msg = err.response?.data?.message || err.message;
+      alert('Erreur validation : ' + (Array.isArray(msg) ? msg.join(', ') : msg));
+    } finally {
+      setLotSubmitting(false);
+    }
+  };
+
+  const manquePoids = lotLignes.filter(l => l.poidsOuVolume === '').length;
+  const peutValider = lotCalculated && manquePoids === 0 && lotLignes.every(l => Number(l.prixDetailFinal) > 0 && Number(l.prixGrosFinal) > 0);
+
   // ─── Export CSV ──────────────────────────────────────────────────
   const handleExportCSV = () => {
     if (!filtered.length) return;
@@ -469,13 +659,13 @@ export const Achats = () => {
                     <h2 className="text-lg font-bold text-slate-800">Valider l'achat ?</h2>
                   </div>
                   <p className="text-sm text-slate-600">
-                    Cette action est <strong>irréversible</strong>. Le stock sera incrémenté et le CMUP recalculé pour chaque produit.
+                    Définissez les <strong>frais, poids et coefficients</strong> pour calculer les prix de vente suggérés avant validation.
                   </p>
                   <div className="flex justify-end gap-3 pt-2">
                     <button onClick={() => setConfirmAction(null)} className="px-4 py-2 text-sm font-semibold text-slate-600 bg-slate-100 rounded-lg hover:bg-slate-200">Annuler</button>
-                    <button onClick={handleValider} disabled={isSubmitting}
-                      className="px-4 py-2 text-sm font-semibold text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 disabled:opacity-50">
-                      {isSubmitting ? 'Validation…' : 'Confirmer la validation'}
+                    <button onClick={() => { setConfirmAction(null); openPrixModal(confirmAction!.achat); }}
+                      className="px-4 py-2 text-sm font-semibold text-white bg-emerald-600 rounded-lg hover:bg-emerald-700">
+                      Définir les prix →
                     </button>
                   </div>
                 </>
@@ -547,8 +737,102 @@ export const Achats = () => {
                     <strong>Motif annulation :</strong> {selectedAchat.motifAnnulation}
                   </div>
                 )}
+
+                {/* ── Config lot prix de vente (VALIDE seulement) ── */}
+                {(selectedAchat.statutAchat ?? 'VALIDE') === 'VALIDE' && (() => {
+                  const methode: MethodeRepartition = selectedAchat.methodeRepartition ?? 'POIDS';
+                  const unite = methode === 'POIDS' ? 'kg' : 'cm³';
+                  const lignes: any[] = selectedAchat.lignesAchat ?? [];
+                  const totalPV = lignes.reduce((acc: number, l: any) => {
+                    const pv = methode === 'POIDS' ? (l.poidsUtilise ?? 0) : (l.volumeUtilise ?? 0);
+                    return acc + pv * l.quantite;
+                  }, 0);
+                  const tauxTransport = Number(selectedAchat.fraisTransport ?? 0);
+                  const tauxDouane    = Number(selectedAchat.fraisDouane    ?? 0);
+                  const tauxTotal     = tauxTransport + tauxDouane;
+                  const totalTransport = tauxTransport * totalPV;
+                  const totalDouane    = tauxDouane    * totalPV;
+                  const totalCharges   = tauxTotal     * totalPV;
+                  const hasLotData = tauxTransport > 0 || tauxDouane > 0 || totalPV > 0;
+                  if (!hasLotData) return null;
+                  return (
+                    <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-4 space-y-4">
+                      <div className="flex items-center justify-between">
+                        <h3 className="font-semibold text-indigo-800 text-sm uppercase tracking-wide">Frais de lot</h3>
+                        <span className="text-xs text-indigo-500 font-medium bg-indigo-100 px-2 py-0.5 rounded-full">
+                          Répartition par {methode} · Total lot : {totalPV.toLocaleString('fr-FR', { maximumFractionDigits: 3 })} {unite}
+                        </span>
+                      </div>
+
+                      {/* Grille taux → totaux */}
+                      <div className="grid grid-cols-3 gap-3">
+                        {/* Transport */}
+                        <div className="bg-white rounded-lg p-3 border border-indigo-100 space-y-1">
+                          <p className="text-xs text-indigo-500 font-semibold uppercase tracking-wide">Transport</p>
+                          <div className="flex items-baseline gap-1">
+                            <span className="text-lg font-bold text-slate-800">{tauxTransport.toLocaleString('fr-FR')}</span>
+                            <span className="text-xs text-slate-500">FCFA/{unite}</span>
+                          </div>
+                          <div className="border-t border-indigo-50 pt-1 flex items-baseline gap-1">
+                            <span className="text-sm font-semibold text-indigo-700">{totalTransport.toLocaleString('fr-FR')}</span>
+                            <span className="text-xs text-slate-500">FCFA total</span>
+                          </div>
+                          {totalPV > 0 && <p className="text-xs text-slate-400">{tauxTransport} × {totalPV.toLocaleString('fr-FR', { maximumFractionDigits: 3 })} {unite}</p>}
+                        </div>
+
+                        {/* Douane */}
+                        <div className="bg-white rounded-lg p-3 border border-indigo-100 space-y-1">
+                          <p className="text-xs text-indigo-500 font-semibold uppercase tracking-wide">Douane</p>
+                          <div className="flex items-baseline gap-1">
+                            <span className="text-lg font-bold text-slate-800">{tauxDouane.toLocaleString('fr-FR')}</span>
+                            <span className="text-xs text-slate-500">FCFA/{unite}</span>
+                          </div>
+                          <div className="border-t border-indigo-50 pt-1 flex items-baseline gap-1">
+                            <span className="text-sm font-semibold text-indigo-700">{totalDouane.toLocaleString('fr-FR')}</span>
+                            <span className="text-xs text-slate-500">FCFA total</span>
+                          </div>
+                          {totalPV > 0 && <p className="text-xs text-slate-400">{tauxDouane} × {totalPV.toLocaleString('fr-FR', { maximumFractionDigits: 3 })} {unite}</p>}
+                        </div>
+
+                        {/* Total charges */}
+                        <div className="bg-indigo-600 rounded-lg p-3 space-y-1">
+                          <p className="text-xs text-indigo-200 font-semibold uppercase tracking-wide">Total charges</p>
+                          <div className="flex items-baseline gap-1">
+                            <span className="text-lg font-bold text-white">{tauxTotal.toLocaleString('fr-FR')}</span>
+                            <span className="text-xs text-indigo-200">FCFA/{unite}</span>
+                          </div>
+                          <div className="border-t border-indigo-500 pt-1 flex items-baseline gap-1">
+                            <span className="text-sm font-bold text-white">{totalCharges.toLocaleString('fr-FR')}</span>
+                            <span className="text-xs text-indigo-200">FCFA total</span>
+                          </div>
+                          {totalPV > 0 && <p className="text-xs text-indigo-300">{tauxTotal} × {totalPV.toLocaleString('fr-FR', { maximumFractionDigits: 3 })} {unite}</p>}
+                        </div>
+                      </div>
+
+                      {/* Coefficients */}
+                      <div className="flex items-center gap-6 text-sm">
+                        <div>
+                          <span className="text-xs text-indigo-500 font-medium">Coeff détail (défaut) </span>
+                          <span className="font-bold text-slate-800">×{Number(selectedAchat.coeffDetailDefault ?? 1.3).toFixed(2)}</span>
+                        </div>
+                        <div>
+                          <span className="text-xs text-indigo-500 font-medium">Coeff gros (défaut) </span>
+                          <span className="font-bold text-slate-800">×{Number(selectedAchat.coeffGrosDefault ?? 1.15).toFixed(2)}</span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
+
                 {/* Lignes */}
-                {selectedAchat.lignesAchat?.length > 0 && (
+                {selectedAchat.lignesAchat?.length > 0 && (() => {
+                  const isValide = (selectedAchat.statutAchat ?? 'VALIDE') === 'VALIDE';
+                  const hasPrix  = isValide && selectedAchat.lignesAchat.some((l: any) => l.prixDetailFinal != null);
+                  const methodeL: MethodeRepartition = selectedAchat.methodeRepartition ?? 'POIDS';
+                  const uniteL   = methodeL === 'POIDS' ? 'kg' : 'cm³';
+                  const tauxTotalL = Number(selectedAchat.fraisTransport ?? 0) + Number(selectedAchat.fraisDouane ?? 0);
+                  const hasCharge  = hasPrix && tauxTotalL > 0;
+                  return (
                   <div>
                     <h3 className="font-bold text-slate-800 mb-2 flex items-center gap-2"><Package size={15} />Produits</h3>
                     <div className="border border-slate-200 rounded-xl overflow-x-auto">
@@ -560,9 +844,17 @@ export const Achats = () => {
                           <th className="px-4 py-2 text-right">P.U. FCFA</th>
                           <th className="px-4 py-2 text-right">CMUP avant</th>
                           <th className="px-4 py-2 text-right">CMUP après</th>
+                          {hasCharge && <th className="px-4 py-2 text-right">{uniteL}/unité</th>}
+                          {hasCharge && <th className="px-4 py-2 text-right">Charge/unité</th>}
+                          {hasPrix && <th className="px-4 py-2 text-right">Coeff det/gros</th>}
+                          {hasPrix && <th className="px-4 py-2 text-right">Prix détail</th>}
+                          {hasPrix && <th className="px-4 py-2 text-right">Prix gros</th>}
                         </tr></thead>
                         <tbody className="divide-y divide-slate-100">
-                          {selectedAchat.lignesAchat.map((l: any, i: number) => (
+                          {selectedAchat.lignesAchat.map((l: any, i: number) => {
+                            const pv = methodeL === 'POIDS' ? (l.poidsUtilise ?? null) : (l.volumeUtilise ?? null);
+                            const chargeUnitCalc = pv != null ? tauxTotalL * pv : null;
+                            return (
                             <tr key={l.id ?? i}>
                               <td className="px-4 py-2 font-medium text-slate-900">{l.produit?.nomProduit ?? '—'}</td>
                               <td className="px-4 py-2 text-center">{l.quantite}</td>
@@ -570,13 +862,39 @@ export const Achats = () => {
                               <td className="px-4 py-2 text-right">{fmt(l.prixUnitaireFcfa ?? l.prixUnitaire)}</td>
                               <td className="px-4 py-2 text-right text-slate-500">{l.cmupAvant != null ? fmt(l.cmupAvant) : '—'}</td>
                               <td className="px-4 py-2 text-right font-semibold text-primary">{l.cmupApres != null ? fmt(l.cmupApres) : '—'}</td>
+                              {hasCharge && (
+                                <td className="px-4 py-2 text-right text-slate-500">
+                                  {pv != null ? `${pv} ${uniteL}` : '—'}
+                                </td>
+                              )}
+                              {hasCharge && (
+                                <td className="px-4 py-2 text-right text-amber-700 font-medium">
+                                  {chargeUnitCalc != null ? `${Math.round(chargeUnitCalc * 100) / 100} FCFA` : '—'}
+                                </td>
+                              )}
+                              {hasPrix && (
+                                <td className="px-4 py-2 text-right text-slate-500 text-xs">
+                                  {l.coeffDetail != null ? `×${Number(l.coeffDetail).toFixed(2)} / ×${Number(l.coeffGros ?? 0).toFixed(2)}` : '—'}
+                                </td>
+                              )}
+                              {hasPrix && (
+                                <td className="px-4 py-2 text-right font-semibold text-emerald-700">
+                                  {l.prixDetailFinal != null ? fmt(l.prixDetailFinal) : '—'}
+                                </td>
+                              )}
+                              {hasPrix && (
+                                <td className="px-4 py-2 text-right font-semibold text-emerald-600">
+                                  {l.prixGrosFinal != null ? fmt(l.prixGrosFinal) : '—'}
+                                </td>
+                              )}
                             </tr>
-                          ))}
+                          )})}
                         </tbody>
                       </table>
                     </div>
                   </div>
-                )}
+                  );
+                })()}
               </div>
             </motion.div>
           </div>
@@ -963,6 +1281,226 @@ export const Achats = () => {
           })}
         </div>
       </div>
+
+      {/* ─── Modal Prix de vente ─────────────────────────────────── */}
+      <AnimatePresence>
+        {prixModal && (
+          <div className="fixed inset-0 z-50 flex items-start justify-center bg-slate-900/60 backdrop-blur-sm p-4 overflow-y-auto">
+            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-white rounded-2xl shadow-2xl w-full max-w-5xl my-8">
+              {/* Header */}
+              <div className="flex items-center justify-between p-6 border-b border-slate-100">
+                <div>
+                  <h2 className="text-xl font-bold text-slate-900">Prix de vente — {prixModal.fournisseur?.nomEntreprise}</h2>
+                  <p className="text-sm text-slate-500 mt-0.5">Configurez les frais et coefficients, calculez les prix suggérés, ajustez si besoin, puis validez.</p>
+                </div>
+                <button onClick={() => setPrixModal(null)} className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg"><X size={20} /></button>
+              </div>
+
+              <div className="p-6 space-y-6">
+                {/* ── Section 1 : Config lot ── */}
+                {(() => {
+                  const unite = lotConfig.methodeRepartition === 'POIDS' ? 'kg' : 'cm³';
+                  const totalPV = lotLignes.reduce((acc, l) => acc + (l.poidsOuVolume === '' ? 0 : Number(l.poidsOuVolume)) * l.quantite, 0);
+                  const totalTransport = lotConfig.fraisTransport * totalPV;
+                  const totalDouane   = lotConfig.fraisDouane   * totalPV;
+                  return (
+                  <div className="bg-slate-50 rounded-xl p-4 space-y-4">
+                    <h3 className="font-semibold text-slate-700 text-sm uppercase tracking-wide">Configuration du lot</h3>
+                    {/* Méthode d'abord pour que le label soit correct */}
+                    <div className="flex items-center gap-4">
+                      <span className="text-xs font-medium text-slate-600">Répartition par :</span>
+                      {(['POIDS', 'VOLUME'] as MethodeRepartition[]).map(m => (
+                        <label key={m} className="flex items-center gap-2 cursor-pointer">
+                          <input type="radio" name="methode" checked={lotConfig.methodeRepartition === m}
+                            onChange={() => { setLotConfig(c => ({ ...c, methodeRepartition: m })); setLotCalculated(false); }}
+                            className="accent-primary" />
+                          <span className="text-sm text-slate-700">{m === 'POIDS' ? 'Poids (kg)' : 'Volume (cm³)'}</span>
+                        </label>
+                      ))}
+                    </div>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      <div>
+                        <label className="block text-xs font-medium text-slate-600 mb-1">Transport (FCFA/{unite})</label>
+                        <input type="number" min={0} step={0.01} value={lotConfig.fraisTransport}
+                          onChange={e => { setLotConfig(c => ({ ...c, fraisTransport: Number(e.target.value) })); setLotCalculated(false); }}
+                          className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-primary/20 outline-none bg-white" />
+                        {totalPV > 0 && lotConfig.fraisTransport > 0 && (
+                          <p className="text-xs text-slate-400 mt-0.5">= {totalTransport.toLocaleString('fr-FR')} FCFA total</p>
+                        )}
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-slate-600 mb-1">Douane (FCFA/{unite})</label>
+                        <input type="number" min={0} step={0.01} value={lotConfig.fraisDouane}
+                          onChange={e => { setLotConfig(c => ({ ...c, fraisDouane: Number(e.target.value) })); setLotCalculated(false); }}
+                          className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-primary/20 outline-none bg-white" />
+                        {totalPV > 0 && lotConfig.fraisDouane > 0 && (
+                          <p className="text-xs text-slate-400 mt-0.5">= {totalDouane.toLocaleString('fr-FR')} FCFA total</p>
+                        )}
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-slate-600 mb-1">Coeff détail (défaut)</label>
+                        <input type="number" min={1.01} step={0.01} value={lotConfig.coeffDetailDefault}
+                          onChange={e => setLotConfig(c => ({ ...c, coeffDetailDefault: Number(e.target.value) }))}
+                          className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-primary/20 outline-none bg-white" />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-slate-600 mb-1">Coeff gros (défaut)</label>
+                        <input type="number" min={1.01} step={0.01} value={lotConfig.coeffGrosDefault}
+                          onChange={e => setLotConfig(c => ({ ...c, coeffGrosDefault: Number(e.target.value) }))}
+                          className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-primary/20 outline-none bg-white" />
+                      </div>
+                    </div>
+                    {totalPV > 0 && (
+                      <p className="text-xs text-slate-500">
+                        Total {unite === 'kg' ? 'poids' : 'volume'} du lot : <strong>{totalPV.toLocaleString('fr-FR', { maximumFractionDigits: 3 })} {unite}</strong>
+                        {(lotConfig.fraisTransport > 0 || lotConfig.fraisDouane > 0) && (
+                          <span> · Charges totales : <strong>{(totalTransport + totalDouane).toLocaleString('fr-FR')} FCFA</strong></span>
+                        )}
+                      </p>
+                    )}
+                  </div>
+                  );
+                })()}
+
+                {/* ── Avertissements ── */}
+                {lotAvertissements.length > 0 && (
+                  <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 space-y-1">
+                    <p className="text-xs font-semibold text-amber-700 uppercase tracking-wide mb-1">Avertissements</p>
+                    {lotAvertissements.map((w, i) => (
+                      <p key={i} className="text-sm text-amber-800 flex items-start gap-2"><AlertTriangle size={14} className="mt-0.5 shrink-0" />{w}</p>
+                    ))}
+                  </div>
+                )}
+
+                {/* ── Compteur poids manquants ── */}
+                {manquePoids > 0 && (
+                  <div className="bg-red-50 border border-red-200 rounded-xl p-3 flex items-center gap-2">
+                    <AlertTriangle size={16} className="text-red-500 shrink-0" />
+                    <p className="text-sm text-red-700">
+                      <strong>{manquePoids} produit{manquePoids > 1 ? 's' : ''}</strong> sans {lotConfig.methodeRepartition === 'POIDS' ? 'poids' : 'volume'} — remplissez les champs surlignés avant de valider.
+                    </p>
+                  </div>
+                )}
+
+                {/* ── Tableau produits ── */}
+                <div className="overflow-x-auto rounded-xl border border-slate-200">
+                  <table className="w-full text-sm">
+                    <thead className="bg-slate-50">
+                      <tr>
+                        <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Produit</th>
+                        <th className="text-right px-3 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Qté</th>
+                        <th className="text-right px-3 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">CMUP</th>
+                        <th className="px-3 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                          {lotConfig.methodeRepartition === 'POIDS' ? 'Poids (kg)' : 'Volume (m³)'}
+                        </th>
+                        <th className="px-3 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Coeff det.</th>
+                        <th className="px-3 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Coeff gros</th>
+                        <th className="text-right px-3 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Sug. détail</th>
+                        <th className="text-right px-3 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Sug. gros</th>
+                        <th className="px-3 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Prix détail final</th>
+                        <th className="px-3 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Prix gros final</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {(() => {
+                        const nouveaux = lotLignes.filter(l => !l.autofill);
+                        const deja     = lotLignes.filter(l => l.autofill);
+                        const renderRow = (l: LotLigne, idx: number) => (
+                          <tr key={l.ligneAchatId} className={idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/50'}>
+                            <td className="px-4 py-3 font-medium text-slate-800 max-w-[180px] truncate">{l.nomProduit}</td>
+                            <td className="px-3 py-3 text-right text-slate-600">{l.quantite}</td>
+                            <td className="px-3 py-3 text-right text-slate-600">{l.cmup.toLocaleString('fr-FR')}</td>
+                            <td className="px-3 py-3">
+                              <input type="number" min={0} step={0.001}
+                                value={l.poidsOuVolume}
+                                onChange={e => {
+                                  const v = e.target.value === '' ? '' : Number(e.target.value);
+                                  setLotLignes(prev => prev.map(x => x.ligneAchatId === l.ligneAchatId ? { ...x, poidsOuVolume: v } : x));
+                                  setLotCalculated(false);
+                                }}
+                                placeholder={l.autofill ? 'auto' : 'requis'}
+                                className={`w-24 px-2 py-1.5 border rounded-lg text-sm outline-none focus:ring-2 focus:ring-primary/20 ${l.poidsOuVolume === '' ? 'border-red-300 bg-red-50' : 'border-slate-200 bg-white'}`} />
+                            </td>
+                            <td className="px-3 py-3">
+                              <input type="number" min={1.01} step={0.01} value={l.coeffDetail}
+                                onChange={e => {
+                                  setLotLignes(prev => prev.map(x => x.ligneAchatId === l.ligneAchatId ? { ...x, coeffDetail: Number(e.target.value) } : x));
+                                  setLotCalculated(false);
+                                }}
+                                className="w-20 px-2 py-1.5 border border-slate-200 rounded-lg text-sm bg-white outline-none focus:ring-2 focus:ring-primary/20" />
+                            </td>
+                            <td className="px-3 py-3">
+                              <input type="number" min={1.01} step={0.01} value={l.coeffGros}
+                                onChange={e => {
+                                  setLotLignes(prev => prev.map(x => x.ligneAchatId === l.ligneAchatId ? { ...x, coeffGros: Number(e.target.value) } : x));
+                                  setLotCalculated(false);
+                                }}
+                                className="w-20 px-2 py-1.5 border border-slate-200 rounded-lg text-sm bg-white outline-none focus:ring-2 focus:ring-primary/20" />
+                            </td>
+                            <td className="px-3 py-3 text-right text-slate-500">
+                              {l.prixDetailSuggere > 0 ? <span className="text-emerald-700 font-medium">{l.prixDetailSuggere.toLocaleString('fr-FR')}</span> : '—'}
+                            </td>
+                            <td className="px-3 py-3 text-right text-slate-500">
+                              {l.prixGrosSuggere > 0 ? <span className="text-emerald-700 font-medium">{l.prixGrosSuggere.toLocaleString('fr-FR')}</span> : '—'}
+                            </td>
+                            <td className="px-3 py-3">
+                              <input type="number" min={0} value={l.prixDetailFinal}
+                                onChange={e => setLotLignes(prev => prev.map(x => x.ligneAchatId === l.ligneAchatId ? { ...x, prixDetailFinal: e.target.value === '' ? '' : Number(e.target.value) } : x))}
+                                className="w-24 px-2 py-1.5 border border-slate-200 rounded-lg text-sm bg-white outline-none focus:ring-2 focus:ring-primary/20" />
+                            </td>
+                            <td className="px-3 py-3">
+                              <input type="number" min={0} value={l.prixGrosFinal}
+                                onChange={e => setLotLignes(prev => prev.map(x => x.ligneAchatId === l.ligneAchatId ? { ...x, prixGrosFinal: e.target.value === '' ? '' : Number(e.target.value) } : x))}
+                                className="w-24 px-2 py-1.5 border border-slate-200 rounded-lg text-sm bg-white outline-none focus:ring-2 focus:ring-primary/20" />
+                            </td>
+                          </tr>
+                        );
+                        return (
+                          <>
+                            {nouveaux.length > 0 && (
+                              <>
+                                <tr><td colSpan={10} className="px-4 py-2 bg-indigo-50 text-xs font-semibold text-indigo-700 uppercase tracking-wide">Nouveaux produits — poids/volume à saisir</td></tr>
+                                {nouveaux.map((l, i) => renderRow(l, i))}
+                              </>
+                            )}
+                            {deja.length > 0 && (
+                              <>
+                                <tr><td colSpan={10} className="px-4 py-2 bg-emerald-50 text-xs font-semibold text-emerald-700 uppercase tracking-wide">Déjà ravitaillés — poids/volume pré-rempli</td></tr>
+                                {deja.map((l, i) => renderRow(l, i))}
+                              </>
+                            )}
+                          </>
+                        );
+                      })()}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div className="flex items-center justify-between p-6 border-t border-slate-100 bg-slate-50 rounded-b-2xl">
+                <button onClick={calculerPrix} disabled={lotCalculating || manquePoids > 0}
+                  className="flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-white bg-indigo-600 rounded-xl hover:bg-indigo-700 disabled:opacity-50 transition-colors">
+                  {lotCalculating ? <RefreshCw size={15} className="animate-spin" /> : <RefreshCw size={15} />}
+                  {lotCalculating ? 'Calcul en cours…' : 'Calculer les prix'}
+                </button>
+                <div className="flex items-center gap-3">
+                  <button onClick={() => setPrixModal(null)} className="px-5 py-2.5 text-sm font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl hover:bg-slate-50">
+                    Annuler
+                  </button>
+                  <button onClick={validerAvecPrix} disabled={!peutValider || lotSubmitting}
+                    className="flex items-center gap-2 px-6 py-2.5 text-sm font-semibold text-white bg-emerald-600 rounded-xl hover:bg-emerald-700 disabled:opacity-50 transition-colors"
+                    title={!lotCalculated ? 'Calculez les prix d\'abord' : manquePoids > 0 ? `${manquePoids} poids manquants` : ''}>
+                    <CheckCircle size={15} />
+                    {lotSubmitting ? 'Validation…' : 'Valider le lot'}
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 };

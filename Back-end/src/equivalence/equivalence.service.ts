@@ -3,12 +3,19 @@ import { createHash } from 'crypto';
 import { DatabaseService } from 'src/database/database.service';
 import { GeminiClient } from './gemini.client';
 import { SuggestEquivalenceDto } from './dto/suggest-equivalence.dto';
+import {
+  EQUIVALENCE_COMPONENT_CATEGORY,
+  EQUIVALENCE_INELIGIBLE_MESSAGE,
+  EQUIVALENCE_NO_CANDIDATE_MESSAGE,
+  isProductEligibleForEquivalence,
+  looksLikeElectronicComponentQuery,
+  normalizeEligibilityText,
+} from './equivalence-eligibility';
 
-const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24h
+const CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 const MAX_CANDIDATS = 300;
 const MAX_SUGGESTIONS = 5;
 
-/** Schéma JSON forcé renvoyé par Gemini. */
 const RESPONSE_SCHEMA = {
   type: 'OBJECT',
   properties: {
@@ -35,6 +42,8 @@ interface CandidatProduit {
   marque: string | null;
   description: string | null;
   categorie: string | null;
+  codeFamille: string | null;
+  code: string | null;
   quantiteStock: number;
   prixDetail: number | null;
   prixPromo: number | null;
@@ -51,28 +60,40 @@ export class EquivalenceService {
     private readonly gemini: GeminiClient,
   ) {}
 
-  // ── Pré-filtre : restreindre le catalogue à un sous-ensemble plausible ──
-
   private async candidatsParProduit(produitId: string): Promise<{
     cible: any;
     candidats: CandidatProduit[];
+    eligible: boolean;
   }> {
     const cible = await this.db.produit.findUnique({
       where: { id: produitId },
       include: { categorie: { select: { nom: true } } },
     });
-    if (!cible) throw new BadRequestException('Produit ciblé introuvable.');
+    if (!cible) throw new BadRequestException('Produit cible introuvable.');
+    if (!isProductEligibleForEquivalence(cible)) {
+      return { cible, candidats: [], eligible: false };
+    }
 
     const produits = await this.db.produit.findMany({
       where: {
         categorieId: cible.categorieId,
+        categorie: {
+          is: { nom: { equals: EQUIVALENCE_COMPONENT_CATEGORY, mode: 'insensitive' } },
+        },
         quantiteStock: { gt: 0 },
         id: { not: produitId },
       },
       include: { categorie: { select: { nom: true } } },
       take: MAX_CANDIDATS,
     });
-    return { cible, candidats: produits.map((p) => this.mapCandidat(p)) };
+
+    return {
+      cible,
+      candidats: produits
+        .filter((p) => isProductEligibleForEquivalence(p))
+        .map((p) => this.mapCandidat(p)),
+      eligible: true,
+    };
   }
 
   private async candidatsParTexte(query: string): Promise<CandidatProduit[]> {
@@ -83,11 +104,16 @@ export class EquivalenceService {
     const produits = await this.db.produit.findMany({
       where: {
         quantiteStock: { gt: 0 },
+        categorie: {
+          is: { nom: { equals: EQUIVALENCE_COMPONENT_CATEGORY, mode: insensitive } },
+        },
         OR: [
           { nomProduit: { contains: firstWord, mode: insensitive } },
           { marque: { contains: firstWord, mode: insensitive } },
           { description: { contains: q, mode: insensitive } },
-          { categorie: { nom: { contains: firstWord, mode: insensitive } } },
+          { codeFamille: { contains: q, mode: insensitive } },
+          { code: { contains: q, mode: insensitive } },
+          { categorie: { is: { nom: { contains: firstWord, mode: insensitive } } } },
         ],
       },
       include: { categorie: { select: { nom: true } } },
@@ -97,6 +123,50 @@ export class EquivalenceService {
     return produits.map((p) => this.mapCandidat(p));
   }
 
+  private buildLocalSuggestions(query: string, candidats: CandidatProduit[]) {
+    const tokens = normalizeEligibilityText(query)
+      .split(/[^a-z0-9]+/)
+      .filter((token) => token.length >= 2);
+
+    return candidats
+      .map((p) => {
+        const searchable = normalizeEligibilityText(
+          [
+            p.nomProduit,
+            p.marque,
+            p.categorie,
+            p.description,
+            p.codeFamille,
+            p.code,
+          ]
+            .filter(Boolean)
+            .join(' '),
+        );
+        const score = tokens.reduce(
+          (sum, token) => sum + (searchable.includes(token) ? 1 : 0),
+          0,
+        );
+        return { p, score };
+      })
+      .filter(({ score }) => score > 0)
+      .sort((a, b) => b.score - a.score || b.p.quantiteStock - a.p.quantiteStock)
+      .slice(0, MAX_SUGGESTIONS)
+      .map(({ p }) => ({
+        produitId: p.id,
+        nomProduit: p.nomProduit,
+        marque: p.marque,
+        codeFamille: p.codeFamille,
+        code: p.code,
+        quantiteStock: p.quantiteStock,
+        prixDetail: p.prixDetail,
+        prixPromo: p.prixPromo,
+        imageUrl: p.imageUrl,
+        raison: 'Suggestion catalogue basée sur les correspondances produit en stock.',
+        compatibilite: 'moyenne',
+        avertissement: 'Vérifier les caractéristiques techniques avant substitution.',
+      }));
+  }
+
   private mapCandidat(p: any): CandidatProduit {
     return {
       id: p.id,
@@ -104,6 +174,8 @@ export class EquivalenceService {
       marque: p.marque ?? null,
       description: p.description ?? null,
       categorie: p.categorie?.nom ?? null,
+      codeFamille: p.codeFamille ?? null,
+      code: p.code ?? null,
       quantiteStock: p.quantiteStock,
       prixDetail: p.prixDetail ?? null,
       prixPromo: p.prixPromo ?? null,
@@ -111,35 +183,32 @@ export class EquivalenceService {
     };
   }
 
-  // ── Construction du prompt (prix volontairement exclus) ─────────────────
-
   private buildPrompt(query: string, candidats: CandidatProduit[]): string {
     const liste = candidats
       .map((c) => {
         const desc = (c.description || '').slice(0, 160).replace(/\s+/g, ' ');
-        return `- id:${c.id} | ${c.nomProduit}${c.marque ? ` | marque:${c.marque}` : ''}${c.categorie ? ` | catégorie:${c.categorie}` : ''}${desc ? ` | ${desc}` : ''}`;
+        const ref = c.codeFamille && c.code ? ` | ref:${c.codeFamille}/${c.code}` : '';
+        return `- id:${c.id} | ${c.nomProduit}${ref}${c.marque ? ` | marque:${c.marque}` : ''}${c.categorie ? ` | categorie:${c.categorie}` : ''} | stock:${c.quantiteStock}${desc ? ` | ${desc}` : ''}`;
       })
       .join('\n');
 
     return [
-      "Tu es un expert en composants électroniques dans une boutique. Un client cherche une pièce que la boutique n'a peut-être pas exactement ; propose des équivalents fonctionnels parmi le STOCK disponible.",
+      "Tu es un expert en composants et pieces electroniques pour la branche X-electronic de NEWOTEG. Un client cherche une piece que la boutique n'a peut-etre pas exactement ; propose des equivalents fonctionnels parmi le STOCK disponible.",
       '',
-      'RÈGLES STRICTES :',
-      "1. Ne propose QUE des produits présents dans la liste ci-dessous (utilise leur id exact). N'invente JAMAIS de produit ni d'id.",
-      '2. Raisonne sur le rôle/les caractéristiques du composant demandé (type, tension, capacité, puissance, polarité…).',
-      "3. Refuse les substituts dangereux ou sous-dimensionnés (ex. tension nominale inférieure). En cas de doute, baisse la compatibilité ou ajoute un avertissement.",
+      'REGLES STRICTES :',
+      "1. Ne propose QUE des produits presents dans la liste ci-dessous (utilise leur id exact). N'invente JAMAIS de produit ni d'id.",
+      '2. Raisonne sur le role et les caracteristiques du composant demande (type, tension, capacite, puissance, polarite...).',
+      '3. Refuse les substituts dangereux ou sous-dimensionnes. En cas de doute, baisse la compatibilite ou ajoute un avertissement.',
       `4. Maximum ${MAX_SUGGESTIONS} suggestions, des plus pertinentes aux moins pertinentes.`,
-      '5. Si aucun équivalent valable : renvoie une liste vide. Ne force pas une réponse.',
-      "6. `compatibilite` ∈ {haute, moyenne, faible}. `raison` = 1 phrase technique. `avertissement` seulement si nécessaire.",
+      '5. Si aucun equivalent valable: renvoie une liste vide. Ne force pas une reponse.',
+      '6. compatibilite doit etre haute, moyenne ou faible. raison = 1 phrase technique.',
       '',
-      `COMPOSANT DEMANDÉ : ${query}`,
+      `COMPOSANT DEMANDE : ${query}`,
       '',
-      'STOCK DISPONIBLE :',
+      'CATALOGUE X-electronic EN STOCK :',
       liste,
     ].join('\n');
   }
-
-  // ── Cache ───────────────────────────────────────────────────────────────
 
   private cacheKey(query: string, candidats: CandidatProduit[]): string {
     const ids = candidats.map((c) => c.id).sort().join(',');
@@ -156,8 +225,6 @@ export class EquivalenceService {
     return hit.value;
   }
 
-  // ── Point d'entrée ──────────────────────────────────────────────────────
-
   async suggest(dto: SuggestEquivalenceDto) {
     if (!dto.query && !dto.produitId) {
       throw new BadRequestException('Fournissez une recherche (query) ou un produit (produitId).');
@@ -168,7 +235,10 @@ export class EquivalenceService {
     let produitVoulu: string | null = dto.produitId ?? null;
 
     if (dto.produitId) {
-      const { cible, candidats: c } = await this.candidatsParProduit(dto.produitId);
+      const { cible, candidats: c, eligible } = await this.candidatsParProduit(dto.produitId);
+      if (!eligible) {
+        return { query, suggestions: [], message: EQUIVALENCE_INELIGIBLE_MESSAGE };
+      }
       candidats = c;
       if (!query) {
         query = `${cible.nomProduit}${cible.marque ? ` (${cible.marque})` : ''}`;
@@ -181,7 +251,9 @@ export class EquivalenceService {
       return {
         query,
         suggestions: [],
-        message: 'Aucun produit en stock ne correspond pour proposer un équivalent.',
+        message: looksLikeElectronicComponentQuery(query)
+          ? EQUIVALENCE_NO_CANDIDATE_MESSAGE
+          : EQUIVALENCE_INELIGIBLE_MESSAGE,
       };
     }
 
@@ -190,9 +262,38 @@ export class EquivalenceService {
     if (cached) return cached;
 
     const prompt = this.buildPrompt(query, candidats);
-    const raw = await this.gemini.generateJson(prompt, RESPONSE_SCHEMA);
+    let raw: any;
+    try {
+      raw = await this.gemini.generateJson(prompt, RESPONSE_SCHEMA);
+    } catch (error: any) {
+      this.logger.warn(`Gemini unavailable, using local catalogue fallback: ${error?.message}`);
+      const suggestions = this.buildLocalSuggestions(query, candidats);
+      const result = {
+        query,
+        suggestions,
+        message: suggestions.length
+          ? 'Suggestions catalogue générées sans IA distante.'
+          : EQUIVALENCE_NO_CANDIDATE_MESSAGE,
+      };
 
-    // Anti-hallucination : ne garder que les produits réellement présents
+      this.db.suggestionEquivalence
+        .create({
+          data: {
+            query: query.slice(0, 255),
+            produitVoulu,
+            produitsSuggeres: suggestions,
+            vendeurId: dto.vendeurId ?? null,
+            source: dto.source ?? 'pos',
+          },
+        })
+        .catch((logError) =>
+          this.logger.debug(`Suggestion log skipped: ${logError?.message}`),
+        );
+
+      this.cache.set(key, { at: Date.now(), value: result });
+      return result;
+    }
+
     const byId = new Map(candidats.map((c) => [c.id, c]));
     const suggestions = (raw?.suggestions ?? [])
       .filter((s: any) => s && byId.has(s.produitId))
@@ -203,6 +304,8 @@ export class EquivalenceService {
           produitId: p.id,
           nomProduit: p.nomProduit,
           marque: p.marque,
+          codeFamille: p.codeFamille,
+          code: p.code,
           quantiteStock: p.quantiteStock,
           prixDetail: p.prixDetail,
           prixPromo: p.prixPromo,
@@ -215,9 +318,12 @@ export class EquivalenceService {
         };
       });
 
-    const result = { query, suggestions };
+    const result = {
+      query,
+      suggestions,
+      message: suggestions.length ? undefined : EQUIVALENCE_NO_CANDIDATE_MESSAGE,
+    };
 
-    // Journalisation best-effort
     this.db.suggestionEquivalence
       .create({
         data: {
@@ -228,13 +334,11 @@ export class EquivalenceService {
           source: dto.source ?? 'pos',
         },
       })
-      .catch(() => {});
+      .catch((error) => this.logger.debug(`Suggestion log skipped: ${error?.message}`));
 
     this.cache.set(key, { at: Date.now(), value: result });
     return result;
   }
-
-  // ── Supervision quota (admin) ───────────────────────────────────────────
 
   async stats() {
     const now = new Date();
@@ -244,6 +348,16 @@ export class EquivalenceService {
       this.db.suggestionEquivalence.count({ where: { createdAt: { gte: startOfDay } } }),
       this.db.suggestionEquivalence.count({ where: { createdAt: { gte: startOfMonth } } }),
     ]);
-    return { configured: this.gemini.isConfigured(), appelsJour: jour, appelsMois: mois };
+
+    return {
+      configured: this.gemini.isConfigured(),
+      model: this.gemini.getModel(),
+      appelsJour: jour,
+      appelsMois: mois,
+    };
+  }
+
+  health() {
+    return this.gemini.health();
   }
 }

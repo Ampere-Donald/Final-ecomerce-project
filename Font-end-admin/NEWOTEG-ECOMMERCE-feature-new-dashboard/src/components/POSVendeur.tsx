@@ -12,6 +12,7 @@ import { bonVenteApi, clientApi, produitApi, ticketApi, equivalenceApi, proforma
 import { useAdminAuth } from '../context/AdminAuthContext';
 import { can } from '../utils/permissions';
 import { ReceiptGenerator } from './ReceiptGenerator';
+import { bornesPrix, classerBande, exigeMotif, BANDE_STYLE } from '../utils/pricing';
 
 interface Produit {
   id: string;
@@ -20,9 +21,13 @@ interface Produit {
   prixDetail?: number;
   prixGros?: number;
   quantiteGros?: number;
+  prixDemiGros?: number;
   prixPromo?: number;
+  cmupActuel?: number;
   quantiteStock: number;
   imageUrl?: string | null;
+  categorie?: { id?: string; nom?: string } | null;
+  categorieNom?: string | null;
 }
 
 interface Client {
@@ -35,12 +40,14 @@ interface PanierLigne {
   produitId: string;
   nomProduit: string;
   prix: number;
-  prixDetail: number;
-  prixGros?: number;
-  quantiteGros?: number;
-  modePrix: 'DETAIL' | 'GROS';
   quantite: number;
   stockDispo: number;
+  // Références pour le calcul des bornes / bandes
+  prixGros?: number;
+  prixDemiGros?: number;
+  prixDetail?: number;
+  cmupActuel?: number;
+  motifRemise?: string;
 }
 
 interface Bon {
@@ -61,6 +68,29 @@ const resolveImgUrl = (raw?: string | null): string | null => {
   if (raw.startsWith('http://') || raw.startsWith('https://')) return raw;
   const base = (import.meta.env.VITE_API_URL || 'http://localhost:3000/api').replace('/api', '');
   return `${base}${raw.startsWith('/') ? '' : '/'}${raw}`;
+};
+
+const normalizeEligibilityText = (value?: string | null): string =>
+  (value || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim();
+
+const isEquivalenceEligibleProduct = (p: Produit): boolean =>
+  normalizeEligibilityText(p.categorie?.nom || p.categorieNom) === 'composants electroniques';
+
+const looksLikeElectronicComponentSearch = (query: string): boolean => {
+  const q = normalizeEligibilityText(query);
+  if (!q) return false;
+  const keywords = [
+    'diode', 'zener', 'transistor', 'mosfet', 'thyristor', 'triac',
+    'resistance', 'condensateur', 'capacitor', 'led', 'circuit',
+    'integre', 'regulateur', 'relais', 'fusible', 'inductance',
+    'bobine', 'quartz', 'capteur', 'optocoupleur', 'ampli',
+  ];
+  return keywords.some((word) => q.includes(word)) ||
+    /\b(1n|2n|bc|bd|bf|tip|irf|irfz|lm|ne|tl|uln|pc|moc|bt|bta|atmega|esp|stm|78\d{2}|79\d{2}|555)\w*/i.test(query);
 };
 
 const METHODES = [
@@ -98,6 +128,11 @@ export const POSVendeur = () => {
   const [bonsEnAttente, setBonsEnAttente] = useState<Bon[]>([]);
   const [monScore, setMonScore] = useState(0);
   const [activeTab, setActiveTab] = useState<'vente' | 'enAttente'>('vente');
+
+  // ── Recherche manuelle code famille / code ─────────────────────────────
+  const [codeSearchFamille, setCodeSearchFamille] = useState('');
+  const [codeSearchCode, setCodeSearchCode]       = useState('');
+  const [codeSearchLoading, setCodeSearchLoading] = useState(false);
 
   // ── Scan caméra code-barres ────────────────────────────────────────────
   const [scanOpen, setScanOpen]   = useState(false);
@@ -155,8 +190,7 @@ export const POSVendeur = () => {
     setPanier(prev => {
       const ex = prev.find(l => l.produitId === p.id);
       // Number() force la conversion depuis Prisma Decimal → number JS
-      const prixDetail = Number((p.prixPromo || null) ?? p.prixDetail ?? 0);
-      const prixGros = p.prixGros != null ? Number(p.prixGros) : null;
+      const prix = Number((p.prixPromo || null) ?? p.prixDetail ?? 0);
       if (ex) {
         if (ex.quantite >= p.quantiteStock) return prev;
         return prev.map(l => l.produitId === p.id ? { ...l, quantite: l.quantite + 1 } : l);
@@ -164,15 +198,76 @@ export const POSVendeur = () => {
       return [...prev, {
         produitId: p.id,
         nomProduit: p.nomProduit,
-        prix: prixDetail,
-        prixDetail,
-        prixGros,
-        quantiteGros: p.quantiteGros != null ? Number(p.quantiteGros) : null,
-        modePrix: 'DETAIL',
+        prix,
         quantite: 1,
         stockDispo: p.quantiteStock,
+        prixGros: p.prixGros,
+        prixDemiGros: p.prixDemiGros,
+        prixDetail: p.prixDetail,
+        cmupActuel: p.cmupActuel,
       }];
     });
+  };
+
+  // ── Prix variable par bornes (le serveur reste l'autorité) ─────────────
+  const refsLigne = (l: PanierLigne) => ({
+    prixGros: l.prixGros,
+    prixDemiGros: l.prixDemiGros,
+    prixDetail: l.prixDetail,
+    cmupActuel: l.cmupActuel,
+  });
+  const bornesDe = (l: PanierLigne) =>
+    bornesPrix(refsLigne(l), admin?.role, (admin as any)?.peutVendreSousDemiGros);
+  const setPrixLigne = (produitId: string, prix: number) =>
+    setPanier(prev => prev.map(l => l.produitId === produitId ? { ...l, prix } : l));
+  const setMotifLigne = (produitId: string, motif: string) =>
+    setPanier(prev => prev.map(l => l.produitId === produitId ? { ...l, motifRemise: motif } : l));
+
+  /** Première ligne en infraction (prix sous le minimum ou motif manquant), sinon null. */
+  const ligneInvalide = (): string | null => {
+    for (const l of panier) {
+      const bornes = bornesDe(l);
+      if (l.prix < bornes.min) {
+        return `${l.nomProduit} : prix sous le minimum autorisé (${fmtFCFA(bornes.min)}).`;
+      }
+      if (exigeMotif(l.prix, refsLigne(l)) && !(l.motifRemise || '').trim()) {
+        return `${l.nomProduit} : motif requis pour vendre sous le prix de détail.`;
+      }
+    }
+    return null;
+  };
+
+  /** Cellule prix éditable + bornes + couleur de bande + motif si sous le détail. */
+  const renderPrixLigne = (l: PanierLigne) => {
+    const refs = refsLigne(l);
+    const bornes = bornesDe(l);
+    const bande = classerBande(l.prix, refs);
+    const sousDetail = exigeMotif(l.prix, refs);
+    return (
+      <div className="mt-1 space-y-1">
+        <div className="flex items-center gap-2">
+          <input
+            type="number"
+            min={bornes.min}
+            step="any"
+            value={l.prix}
+            onChange={e => setPrixLigne(l.produitId, Number(e.target.value))}
+            className={`w-24 px-2 py-1 text-sm font-semibold rounded-lg border outline-none ${BANDE_STYLE[bande]}`}
+          />
+          <span className="text-[10px] text-slate-400 whitespace-nowrap">min {fmtFCFA(bornes.min)}</span>
+        </div>
+        {sousDetail && (
+          <input
+            type="text"
+            value={l.motifRemise || ''}
+            onChange={e => setMotifLigne(l.produitId, e.target.value)}
+            placeholder="Motif de la remise (obligatoire)"
+            maxLength={255}
+            className="w-full px-2 py-1 text-xs rounded-lg border border-amber-300 bg-amber-50 outline-none focus:border-amber-500"
+          />
+        )}
+      </div>
+    );
   };
 
   const changerQuantite = (produitId: string, delta: number) => {
@@ -180,11 +275,7 @@ export const POSVendeur = () => {
       .map(l => {
         if (l.produitId !== produitId) return l;
         const newQty = Math.max(0, Math.min(l.stockDispo, l.quantite + delta));
-        const seuil = l.quantiteGros ?? 0;
-        // Si on repasse sous le seuil, on revient automatiquement en Détail
-        const modePrix = (seuil > 0 && newQty < seuil) ? 'DETAIL' : l.modePrix;
-        const prix = modePrix === 'GROS' && l.prixGros != null ? Number(l.prixGros) : Number(l.prixDetail);
-        return { ...l, quantite: newQty, modePrix, prix };
+        return { ...l, quantite: newQty };
       })
       .filter(l => l.quantite > 0)
     );
@@ -192,19 +283,13 @@ export const POSVendeur = () => {
 
   const retirerLigne = (produitId: string) => setPanier(prev => prev.filter(l => l.produitId !== produitId));
 
-  const changerModePrix = (produitId: string, modePrix: 'DETAIL' | 'GROS') => {
-    setPanier(prev => prev.map(l => {
-      if (l.produitId !== produitId) return l;
-      const prix = modePrix === 'GROS' && l.prixGros != null ? Number(l.prixGros) : Number(l.prixDetail);
-      return { ...l, modePrix, prix };
-    }));
-  };
-
   const total = useMemo(() => panier.reduce((acc, l) => acc + l.prix * l.quantite, 0), [panier]);
 
   // ── Envoi ADMIN (ancien flux ticketApi) ───────────────────────────────
   const envoyerAdmin = async () => {
     if (!panier.length) return;
+    const invalide = ligneInvalide();
+    if (invalide) { setError(invalide); return; }
     setSubmitting(true);
     setError(null);
     setSuccess(null);
@@ -212,7 +297,12 @@ export const POSVendeur = () => {
       const ticket = await ticketApi.create({
         nomClient: nomClient.trim() || undefined,
         telephoneClient: telephoneClient.trim() || undefined,
-        lignes: panier.map(l => ({ produitId: l.produitId, quantite: l.quantite })),
+        lignes: panier.map(l => ({
+          produitId: l.produitId,
+          quantite: l.quantite,
+          prixUnitaire: l.prix,
+          motifRemise: (l.motifRemise || '').trim() || undefined,
+        })),
       });
       setSuccess(`Ticket ${ticket.numeroTicket} envoyé au caissier.`);
       setPanier([]);
@@ -230,6 +320,8 @@ export const POSVendeur = () => {
   // ── Envoi VENDEUR (nouveau flux bonVenteApi) ───────────────────────────
   const envoyerVendeur = async () => {
     if (!panier.length) return;
+    const invalide = ligneInvalide();
+    if (invalide) { setError(invalide); return; }
     setSubmitting(true);
     setError(null);
     setSuccess(null);
@@ -237,7 +329,12 @@ export const POSVendeur = () => {
       await bonVenteApi.create({
         clientId: selectedClientId || undefined,
         methodePaiement: paymentMethod,
-        lignes: panier.map(l => ({ produitId: l.produitId, quantite: l.quantite, prixUnitaire: l.prix })),
+        lignes: panier.map(l => ({
+          produitId: l.produitId,
+          quantite: l.quantite,
+          prixUnitaire: l.prix,
+          motifRemise: (l.motifRemise || '').trim() || undefined,
+        })),
       });
       setSuccess('Bon envoyé à la caissière.');
       setPanier([]);
@@ -300,8 +397,34 @@ export const POSVendeur = () => {
 
   const ajouterSuggestion = (s: any) => ajouterAuPanier({
     id: s.produitId, nomProduit: s.nomProduit, marque: s.marque,
-    prixDetail: s.prixDetail, prixGros: s.prixGros, quantiteGros: s.quantiteGros, prixPromo: s.prixPromo, quantiteStock: s.quantiteStock, imageUrl: s.imageUrl,
+    prixDetail: s.prixDetail, prixDemiGros: s.prixDemiGros, prixGros: s.prixGros, quantiteGros: s.quantiteGros,
+    prixPromo: s.prixPromo, cmupActuel: s.cmupActuel,
+    quantiteStock: s.quantiteStock, imageUrl: s.imageUrl,
   });
+
+  // ── Recherche manuelle par code famille / code ─────────────────────────
+  const rechercherParCode = async () => {
+    const cf = codeSearchFamille.trim();
+    const c  = codeSearchCode.trim();
+    if (!cf || !c) {
+      setError('Entrez le code famille ET le code.');
+      return;
+    }
+    setCodeSearchLoading(true);
+    setError(null);
+    try {
+      const p: any = await produitApi.findByCode(cf, c);
+      ajouterAuPanier(p as Produit);
+      setSuccess(`"${p.nomProduit}" ajouté au panier.`);
+      setCodeSearchFamille('');
+      setCodeSearchCode('');
+      setTimeout(() => setSuccess(null), 2500);
+    } catch {
+      setError(`Produit introuvable : famille "${cf}" / code "${c}"`);
+    } finally {
+      setCodeSearchLoading(false);
+    }
+  };
 
   // ── Scan caméra ────────────────────────────────────────────────────────
   const stopScan = useCallback(() => {
@@ -383,6 +506,7 @@ export const POSVendeur = () => {
   const renderProduit = (p: Produit) => {
     const prix = Number((p.prixPromo || null) ?? p.prixDetail ?? 0);
     const enRupture = p.quantiteStock <= 0;
+    const equivalenceEligible = isEquivalenceEligibleProduct(p);
     const img = resolveImgUrl(p.imageUrl);
     const contenu = (
       <>
@@ -401,10 +525,12 @@ export const POSVendeur = () => {
     if (enRupture) return (
       <div key={p.id} className="bg-white rounded-xl border border-slate-200 p-3">
         <div className="opacity-50">{contenu}</div>
-        <button onClick={() => ouvrirEquiv({ query: p.nomProduit, produitId: p.id })}
+        {equivalenceEligible && (
+          <button onClick={() => ouvrirEquiv({ query: p.nomProduit, produitId: p.id })}
           className="mt-2 w-full flex items-center justify-center gap-1.5 px-2 py-1.5 bg-violet-50 text-violet-700 text-xs font-bold rounded-lg hover:bg-violet-100">
           <Sparkles size={13} /> Équivalent (IA)
-        </button>
+          </button>
+        )}
       </div>
     );
     return (
@@ -428,24 +554,7 @@ export const POSVendeur = () => {
             <li key={l.produitId} className="flex items-center gap-2 pb-3 border-b border-slate-100 last:border-0">
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-slate-900 truncate">{l.nomProduit}</p>
-                <p className="text-xs text-slate-500">{fmtFCFA(l.prix)}</p>
-                {l.prixGros != null && l.quantiteGros != null && l.quantite >= l.quantiteGros && (
-                  <div className="mt-1 inline-flex rounded-lg border border-slate-200 bg-slate-50 p-0.5 text-[11px] font-semibold">
-                    <button
-                      onClick={() => changerModePrix(l.produitId, 'DETAIL')}
-                      className={`rounded-md px-2 py-0.5 ${l.modePrix === 'DETAIL' ? 'bg-white text-primary shadow-sm' : 'text-slate-500'}`}
-                    >
-                      Détail
-                    </button>
-                    <button
-                      onClick={() => changerModePrix(l.produitId, 'GROS')}
-                      className={`rounded-md px-2 py-0.5 ${l.modePrix === 'GROS' ? 'bg-white text-primary shadow-sm' : 'text-slate-500'}`}
-                      title={l.quantiteGros ? `Seuil : ${l.quantiteGros} unités` : 'Prix de gros'}
-                    >
-                      Gros {l.quantiteGros ? `(≥${l.quantiteGros})` : ''}
-                    </button>
-                  </div>
-                )}
+                {renderPrixLigne(l)}
               </div>
               <div className="flex items-center gap-1">
                 <button onClick={() => changerQuantite(l.produitId, -1)} className="p-1 rounded text-slate-400 hover:text-slate-700 hover:bg-slate-100"><Minus size={14} /></button>
@@ -475,24 +584,7 @@ export const POSVendeur = () => {
             <li key={l.produitId} className="flex items-center gap-2 pb-3 border-b border-slate-100 last:border-0">
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-slate-900 truncate">{l.nomProduit}</p>
-                <p className="text-xs text-slate-500">{fmtFCFA(l.prix)}</p>
-                {l.prixGros != null && l.quantiteGros != null && l.quantite >= l.quantiteGros && (
-                  <div className="mt-1 inline-flex rounded-lg border border-slate-200 bg-slate-50 p-0.5 text-[11px] font-semibold">
-                    <button
-                      onClick={() => changerModePrix(l.produitId, 'DETAIL')}
-                      className={`rounded-md px-2 py-0.5 ${l.modePrix === 'DETAIL' ? 'bg-white text-primary shadow-sm' : 'text-slate-500'}`}
-                    >
-                      Détail
-                    </button>
-                    <button
-                      onClick={() => changerModePrix(l.produitId, 'GROS')}
-                      className={`rounded-md px-2 py-0.5 ${l.modePrix === 'GROS' ? 'bg-white text-primary shadow-sm' : 'text-slate-500'}`}
-                      title={l.quantiteGros ? `Seuil : ${l.quantiteGros} unités` : 'Prix de gros'}
-                    >
-                      Gros {l.quantiteGros ? `(≥${l.quantiteGros})` : ''}
-                    </button>
-                  </div>
-                )}
+                {renderPrixLigne(l)}
               </div>
               <div className="flex items-center gap-1">
                 <button onClick={() => changerQuantite(l.produitId, -1)} className="p-1 rounded text-slate-400 hover:text-slate-700 hover:bg-slate-100"><Minus size={14} /></button>
@@ -571,7 +663,8 @@ export const POSVendeur = () => {
 
   // ── Catalogue commun ───────────────────────────────────────────────────
   const renderCatalogue = () => (
-    <div className="space-y-4">
+    <div className="space-y-3">
+      {/* Barre recherche nom + bouton scanner */}
       <div className="flex gap-2">
         <div className="relative flex-1">
           <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -588,11 +681,43 @@ export const POSVendeur = () => {
           <span className="hidden sm:inline text-sm font-medium">Scanner</span>
         </button>
       </div>
+
+      {/* Recherche manuelle code famille / code */}
+      <div className="flex flex-wrap gap-2 items-center bg-indigo-50 border border-indigo-200 rounded-xl px-3 py-2">
+        <span className="text-xs font-semibold text-indigo-400 uppercase tracking-wide shrink-0">Code :</span>
+        <input
+          type="text"
+          value={codeSearchFamille}
+          onChange={e => setCodeSearchFamille(e.target.value)}
+          onKeyDown={e => e.key === 'Enter' && rechercherParCode()}
+          placeholder="Code famille"
+          className="w-28 px-3 py-1.5 bg-white border border-indigo-200 rounded-lg text-sm font-mono focus:ring-2 focus:ring-indigo-300/40 outline-none placeholder:font-sans placeholder:text-slate-400"
+        />
+        <span className="text-indigo-300 font-bold">/</span>
+        <input
+          type="text"
+          value={codeSearchCode}
+          onChange={e => setCodeSearchCode(e.target.value)}
+          onKeyDown={e => e.key === 'Enter' && rechercherParCode()}
+          placeholder="Code article"
+          className="w-32 px-3 py-1.5 bg-white border border-indigo-200 rounded-lg text-sm font-mono focus:ring-2 focus:ring-indigo-300/40 outline-none placeholder:font-sans placeholder:text-slate-400"
+        />
+        <button
+          onClick={rechercherParCode}
+          disabled={codeSearchLoading || !codeSearchFamille.trim() || !codeSearchCode.trim()}
+          className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 text-white text-xs font-bold rounded-lg hover:bg-indigo-700 disabled:opacity-40 transition-colors"
+        >
+          {codeSearchLoading
+            ? <span className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
+            : <Plus size={13} />}
+          Ajouter
+        </button>
+      </div>
       {loading ? <div className="text-center text-slate-400 py-12">Chargement…</div>
         : produitsFiltres.length === 0 ? (
           <div className="text-center py-12 space-y-3">
             <p className="text-slate-400">Aucun produit trouvé.</p>
-            {search.trim().length >= 2 && (
+            {search.trim().length >= 2 && looksLikeElectronicComponentSearch(search) && (
               <button onClick={() => ouvrirEquiv({ query: search })}
                 className="inline-flex items-center gap-2 px-4 py-2.5 bg-violet-600 text-white text-sm font-bold rounded-xl shadow-md shadow-violet-600/20 hover:bg-violet-700">
                 <Sparkles size={16} /> Chercher un équivalent (IA)

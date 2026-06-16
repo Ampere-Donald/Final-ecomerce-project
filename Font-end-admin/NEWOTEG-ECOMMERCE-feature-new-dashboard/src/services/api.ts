@@ -170,6 +170,8 @@ export const achatApi = {
   annuler: (id: string, motifAnnulation?: string) =>
     api.post(`/achats/${id}/annuler`, { motifAnnulation }).then(res => res.data),
   delete: (id: string) => api.delete(`/achats/${id}`).then(res => res.data),
+  calculerLot: (id: string, data: any) => api.post(`/achats/${id}/calculer`, data).then(res => res.data),
+  validerLot: (id: string, data: any) => api.post(`/achats/${id}/valider-lot`, data).then(res => res.data),
 };
 
 // Taux de change
@@ -264,7 +266,7 @@ export const ticketApi = {
     clientId?: string;
     nomClient?: string;
     telephoneClient?: string;
-    lignes: { produitId: string; quantite: number }[];
+    lignes: { produitId: string; quantite: number; prixUnitaire?: number; motifRemise?: string }[];
   }) => api.post('/tickets', data).then(res => res.data),
   enAttente: () => api.get('/tickets/en-attente').then(res => res.data),
   mesTickets: () => api.get('/tickets/mes-tickets').then(res => res.data),
@@ -344,6 +346,7 @@ export const equivalenceApi = {
   suggest: (data: { query?: string; produitId?: string; source?: 'pos' | 'ecommerce'; vendeurId?: string }) =>
     api.post('/equivalence/suggest', data).then(res => res.data),
   stats: () => api.get('/equivalence/stats').then(res => res.data),
+  health: () => api.get('/equivalence/health').then(res => res.data),
 };
 
 // Roles

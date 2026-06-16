@@ -14,11 +14,14 @@ import { AchatService } from './achat.service';
 import { CreateAchatDto } from './dto/create-achat.dto';
 import { UpdateAchatDto } from './dto/update-achat.dto';
 import { AnnulerAchatDto } from './dto/annuler-achat.dto';
+import { CalculerLotDto } from './dto/calculer-lot.dto';
+import { ValiderLotDto } from './dto/valider-lot.dto';
 import { AdminAuthGuard } from '../admin-auth/admin-auth.guard';
 import { RolesGuard } from '../admin-auth/roles.guard';
 import { Roles } from '../admin-auth/roles.decorator';
 
 @UseGuards(AdminAuthGuard, RolesGuard)
+@Roles('SUPER_ADMIN', 'ADMIN', 'MANAGER')
 @Controller('achats')
 export class AchatController {
   constructor(private readonly achatService: AchatService) {}
@@ -49,6 +52,28 @@ export class AchatController {
   ) {
     const actor = { id: req.user.id, nom: req.user.nom, role: req.user.role };
     return this.achatService.update(id, dto, actor);
+  }
+
+  /** Calcule les prix suggérés sans écrire en DB (temps réel). */
+  @Roles('SUPER_ADMIN', 'ADMIN', 'MANAGER')
+  @Post(':id/calculer')
+  calculerLot(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: CalculerLotDto,
+  ) {
+    return this.achatService.calculerLot(id, dto);
+  }
+
+  /** Valide le lot avec les prix finaux → stock + CMUP + prixDetail/prixGros. */
+  @Roles('SUPER_ADMIN', 'ADMIN', 'MANAGER')
+  @Post(':id/valider-lot')
+  validerLot(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Request() req: any,
+    @Body() dto: ValiderLotDto,
+  ) {
+    const actor = { id: req.user.id, nom: req.user.nom, role: req.user.role };
+    return this.achatService.validerLot(id, dto, actor);
   }
 
   /** Valide un BROUILLON → impact stock + CMUP. Réservé aux gestionnaires. */
