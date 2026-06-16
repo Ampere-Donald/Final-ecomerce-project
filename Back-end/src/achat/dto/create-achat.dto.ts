@@ -24,6 +24,19 @@ export class LigneAchatDto {
   @Min(0)
   @Type(() => Number)
   prixUnitaireDevise: number;
+
+  // Poids/volume issus de l'import CSV — stockés sur le brouillon, appliqués au produit à la validation.
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  @Type(() => Number)
+  poids?: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  @Type(() => Number)
+  volume?: number;
 }
 
 export class CreateAchatDto {

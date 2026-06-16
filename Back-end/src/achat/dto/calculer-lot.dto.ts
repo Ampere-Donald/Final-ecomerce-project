@@ -21,6 +21,9 @@ export class LigneCalculDto {
   coeffDetail?: number;
 
   @IsOptional() @IsNumber() @Min(0.01) @Type(() => Number)
+  coeffDemiGros?: number;
+
+  @IsOptional() @IsNumber() @Min(0.01) @Type(() => Number)
   coeffGros?: number;
 }
 
@@ -36,6 +39,9 @@ export class CalculerLotDto {
 
   @IsNumber() @Min(1.01) @Type(() => Number)
   coeffDetailDefault: number;
+
+  @IsNumber() @Min(1.01) @Type(() => Number)
+  coeffDemiGrosDefault: number;
 
   @IsNumber() @Min(1.01) @Type(() => Number)
   coeffGrosDefault: number;

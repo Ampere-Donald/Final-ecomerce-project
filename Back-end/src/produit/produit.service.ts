@@ -201,7 +201,7 @@ export class ProduitService {
       },
     });
     if (!produit) {
-      throw new NotFoundException(`Produit introuvable pour le code famille "${codeFamille}" / code "${code}"`);
+      throw new NotFoundException(`Produit introuvable pour le code famille "${codeFamille}" / code article "${code}"`);
     }
     return produit;
   }
