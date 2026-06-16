@@ -120,7 +120,7 @@ export class FactureVirtuelleService {
           create: lignesVirtuelles,
         },
       },
-      include: { lignes: true },
+      include: { lignes: true, vendeur: { select: { nom: true } } },
     });
 
     if (!autoApproved) {

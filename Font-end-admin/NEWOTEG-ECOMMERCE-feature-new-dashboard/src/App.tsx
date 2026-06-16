@@ -35,6 +35,7 @@ import { Invoices } from './components/Invoices';
 import { Primes } from './components/Primes';
 import { Proformas } from './components/Proformas';
 import { ToastProvider } from './components/ui/Toast';
+import { FVAlertPopup } from './components/FVAlertPopup';
 
 export default function App() {
   return (
@@ -85,6 +86,7 @@ export default function App() {
             <Route path="settings" element={<Settings />} />
           </Route>
         </Routes>
+        <FVAlertPopup />
         </ToastProvider>
       </AdminAuthProvider>
     </BrowserRouter>
