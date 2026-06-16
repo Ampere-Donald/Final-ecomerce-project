@@ -21,6 +21,7 @@ interface Produit {
   imageUrl2?: string;
   imageUrl3?: string;
   prixDetail?: number;
+  prixDemiGros?: number;
   prixGros?: number;
   quantiteStock?: number;
   urlDatasheet?: string;
@@ -39,6 +40,7 @@ const FORM_INITIAL = {
   categorieId: '',
   description: '',
   prixDetail: '',
+  prixDemiGros: '',
   prixGros: '',
   quantiteStock: '0',
   seuilAlerte: '5',
@@ -60,6 +62,7 @@ const resolveImgUrl = (raw: string | null | undefined): string | null => {
 export const Produits = () => {
   const { admin } = useAdminAuth();
   const canDelete = can.deleteEntities(admin?.role);
+  const canEditPrices = can.peutModifierPrixProduit(admin?.role);
   // ─── State liste & recherche (état global stable) ─────────────────────────
   const [produits, setProduits] = useState<Produit[]>([]);
   const [categories, setCategories] = useState<Categorie[]>([]);
@@ -239,6 +242,7 @@ export const Produits = () => {
       categorieId: prod.categorie?.id ?? '',
       description: prod.description ?? '',
       prixDetail: prod.prixDetail != null ? String(prod.prixDetail) : '',
+      prixDemiGros: prod.prixDemiGros != null ? String(prod.prixDemiGros) : '',
       prixGros: prod.prixGros != null ? String(prod.prixGros) : '',
       quantiteStock: prod.quantiteStock != null ? String(prod.quantiteStock) : '0',
       seuilAlerte: (prod as any).seuilAlerte != null ? String((prod as any).seuilAlerte) : '5',
@@ -296,6 +300,7 @@ export const Produits = () => {
       dataToSend.append('categorieId', formData.categorieId);
       if (formData.description) dataToSend.append('description', formData.description);
       if (formData.prixDetail) dataToSend.append('prixDetail', formData.prixDetail);
+      if (formData.prixDemiGros) dataToSend.append('prixDemiGros', formData.prixDemiGros);
       if (formData.prixGros) dataToSend.append('prixGros', formData.prixGros);
       dataToSend.append('quantiteStock', formData.quantiteStock || '0');
       dataToSend.append('seuilAlerte', formData.seuilAlerte || '5');
@@ -836,6 +841,11 @@ export const Produits = () => {
                 </div>
 
                 {/* Prix & Stock */}
+                {!canEditPrices && (
+                  <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                    🔒 Seul le super admin peut modifier les prix. Les champs prix sont en lecture seule.
+                  </p>
+                )}
                 <div className="grid grid-cols-3 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-slate-700 mb-1">
@@ -845,9 +855,25 @@ export const Produits = () => {
                       type="number"
                       min={0}
                       step="any"
+                      disabled={!canEditPrices}
                       value={formData.prixDetail}
                       onChange={(e) => setFormData((f) => ({ ...f, prixDetail: e.target.value }))}
-                      className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+                      className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary/20 outline-none transition-all disabled:opacity-60 disabled:cursor-not-allowed disabled:bg-slate-100"
+                      placeholder="0"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">
+                      Prix Demi-Gros (FCFA)
+                    </label>
+                    <input
+                      type="number"
+                      min={0}
+                      step="any"
+                      disabled={!canEditPrices}
+                      value={formData.prixDemiGros}
+                      onChange={(e) => setFormData((f) => ({ ...f, prixDemiGros: e.target.value }))}
+                      className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary/20 outline-none transition-all disabled:opacity-60 disabled:cursor-not-allowed disabled:bg-slate-100"
                       placeholder="0"
                     />
                   </div>
@@ -859,9 +885,10 @@ export const Produits = () => {
                       type="number"
                       min={0}
                       step="any"
+                      disabled={!canEditPrices}
                       value={formData.prixGros}
                       onChange={(e) => setFormData((f) => ({ ...f, prixGros: e.target.value }))}
-                      className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+                      className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary/20 outline-none transition-all disabled:opacity-60 disabled:cursor-not-allowed disabled:bg-slate-100"
                       placeholder="0"
                     />
                   </div>
@@ -912,9 +939,10 @@ export const Produits = () => {
                         type="number"
                         min={0}
                         step="any"
+                        disabled={!canEditPrices}
                         value={formData.prixPromo}
                         onChange={(e) => setFormData((f) => ({ ...f, prixPromo: e.target.value }))}
-                        className="w-full px-4 py-2 bg-amber-50 border border-amber-200 rounded-lg focus:ring-2 focus:ring-amber-300/30 outline-none transition-all"
+                        className="w-full px-4 py-2 bg-amber-50 border border-amber-200 rounded-lg focus:ring-2 focus:ring-amber-300/30 outline-none transition-all disabled:opacity-60 disabled:cursor-not-allowed disabled:bg-slate-100"
                         placeholder="Laisser vide si pas de promo"
                       />
                     </div>

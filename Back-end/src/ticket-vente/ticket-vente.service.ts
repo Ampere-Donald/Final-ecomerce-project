@@ -10,6 +10,7 @@ import { DatabaseService } from 'src/database/database.service';
 import { NotificationService } from 'src/notification/notification.service';
 import { CaisseJourService } from 'src/caisse-jour/caisse-jour.service';
 import { CreateTicketDto } from './dto/create-ticket.dto';
+import { validerLignePrix } from 'src/pricing/pricing.util';
 
 const TICKET_VALIDITY_MS = 15 * 60 * 1000; // 15 minutes
 
@@ -59,8 +60,17 @@ export class TicketVenteService {
       throw new NotFoundException('Au moins un produit est introuvable.');
     }
 
+    // Rôle + autorisation de l'acteur (la base fait foi pour les bornes de prix)
+    const acteur = await this.db.adminUser.findUnique({
+      where: { id: vendeurId },
+      select: { nom: true, role: true, peutVendreSousDemiGros: true },
+    });
+    const role = acteur?.role;
+    const peutVendreSousDemiGros = acteur?.peutVendreSousDemiGros ?? false;
+
     const produitsById = new Map(produits.map((p) => [p.id, p]));
     let montantTotal = 0;
+    const ventesAPerte: { nom: string; prix: number; cmup: number }[] = [];
     const lignesData = dto.lignes.map((l) => {
       const p = produitsById.get(l.produitId)!;
       if (p.quantiteStock < l.quantite) {
@@ -68,7 +78,34 @@ export class TicketVenteService {
           `Stock insuffisant pour ${p.nomProduit} (disponible : ${p.quantiteStock}).`,
         );
       }
-      const prixUnitaire = this.toNumber(p.prixPromo ?? p.prixDetail ?? 0);
+      // Prix saisi (POS), sinon prix de référence du produit
+      const prixUnitaire =
+        l.prixUnitaire != null && l.prixUnitaire > 0
+          ? this.toNumber(l.prixUnitaire)
+          : this.toNumber(p.prixPromo ?? p.prixDetail ?? 0);
+
+      const produitPrix = {
+        prixGros: p.prixGros,
+        prixDemiGros: p.prixDemiGros,
+        prixDetail: p.prixDetail,
+        cmupActuel: this.toNumber(p.cmupActuel),
+        nomProduit: p.nomProduit,
+      };
+      const audit = validerLignePrix({
+        produit: produitPrix,
+        prix: prixUnitaire,
+        role,
+        peutVendreSousDemiGros,
+        motif: l.motifRemise,
+      });
+      if (audit.bandePrix === 'PERTE') {
+        ventesAPerte.push({
+          nom: p.nomProduit,
+          prix: prixUnitaire,
+          cmup: this.toNumber(p.cmupActuel),
+        });
+      }
+
       const sousTotal = prixUnitaire * l.quantite;
       montantTotal += sousTotal;
       return {
@@ -77,6 +114,9 @@ export class TicketVenteService {
         quantite: l.quantite,
         prixUnitaire,
         sousTotal,
+        prixReference: audit.prixReference,
+        bandePrix: audit.bandePrix,
+        motifRemise: audit.motifRemise,
       };
     });
 
@@ -103,6 +143,16 @@ export class TicketVenteService {
         `Nouveau ticket ${ticket.numeroTicket} en attente — ${montantTotal} FCFA`,
       )
       .catch(() => {});
+
+    // Alerte super admin pour toute vente à perte (prix < CMUP)
+    for (const v of ventesAPerte) {
+      this.notifications
+        .create(
+          'VENTE_MAJ',
+          `⚠️ Vente à perte : ${v.nom} vendu ${v.prix} FCFA (coût CMUP ${v.cmup} FCFA) — ticket ${numeroTicket} par ${acteur?.nom ?? 'inconnu'}.`,
+        )
+        .catch(() => {});
+    }
 
     return ticket;
   }
@@ -229,6 +279,9 @@ export class TicketVenteService {
               quantite: l.quantite,
               prixUnitaire: l.prixUnitaire,
               sousTotal: l.sousTotal,
+              prixReference: l.prixReference,
+              bandePrix: l.bandePrix,
+              motifRemise: l.motifRemise,
             })),
           },
         },

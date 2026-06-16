@@ -6,11 +6,15 @@ import {
 } from '@nestjs/common';
 import { MethodePaiement } from '@prisma/client';
 import { DatabaseService } from 'src/database/database.service';
-import { NotificationActor } from 'src/notification/notification.service';
+import {
+  NotificationActor,
+  NotificationService,
+} from 'src/notification/notification.service';
 import { TicketVenteService } from 'src/ticket-vente/ticket-vente.service';
 import { BonVenteEventsService } from './bon-vente.events.service';
 import { CreateBonDto } from './dto/create-bon.dto';
 import { EncaisserTicketDto } from 'src/ticket-vente/dto/encaisser-ticket.dto';
+import { validerLignePrix } from 'src/pricing/pricing.util';
 
 const TVA_TAUX = 0.1925;
 const TICKET_VALIDITY_MS = 15 * 60 * 1000;
@@ -21,6 +25,7 @@ export class BonVenteService {
     private readonly db: DatabaseService,
     private readonly events: BonVenteEventsService,
     private readonly ticketService: TicketVenteService,
+    private readonly notifications: NotificationService,
   ) {}
 
   private toNumber(value: unknown): number {
@@ -48,8 +53,17 @@ export class BonVenteService {
       throw new NotFoundException('Au moins un produit est introuvable');
     }
 
+    // Autorisation de l'acteur (flag chargé depuis la base, rôle faisant foi)
+    const acteur = await this.db.adminUser.findUnique({
+      where: { id: actor.id },
+      select: { role: true, peutVendreSousDemiGros: true },
+    });
+    const role = acteur?.role ?? actor.role;
+    const peutVendreSousDemiGros = acteur?.peutVendreSousDemiGros ?? false;
+
     const produitsById = new Map(produits.map((p) => [p.id, p]));
     let montantTotal = 0;
+    const ventesAPerte: { nom: string; prix: number; cmup: number }[] = [];
     const lignesData = dto.lignes.map((l) => {
       const p = produitsById.get(l.produitId)!;
       if (p.quantiteStock < l.quantite) {
@@ -57,7 +71,34 @@ export class BonVenteService {
           `Stock insuffisant pour ${p.nomProduit} (disponible : ${p.quantiteStock}).`,
         );
       }
-      const prixUnitaire = this.toNumber(p.prixPromo ?? p.prixDetail ?? 0);
+      // Prix saisi par le vendeur, sinon prix de référence du produit
+      const prixUnitaire =
+        l.prixUnitaire != null && l.prixUnitaire > 0
+          ? this.toNumber(l.prixUnitaire)
+          : this.toNumber(p.prixPromo ?? p.prixDetail ?? 0);
+
+      const produitPrix = {
+        prixGros: p.prixGros,
+        prixDemiGros: p.prixDemiGros,
+        prixDetail: p.prixDetail,
+        cmupActuel: this.toNumber(p.cmupActuel),
+        nomProduit: p.nomProduit,
+      };
+      const audit = validerLignePrix({
+        produit: produitPrix,
+        prix: prixUnitaire,
+        role,
+        peutVendreSousDemiGros,
+        motif: l.motifRemise,
+      });
+      if (audit.bandePrix === 'PERTE') {
+        ventesAPerte.push({
+          nom: p.nomProduit,
+          prix: prixUnitaire,
+          cmup: this.toNumber(p.cmupActuel),
+        });
+      }
+
       const sousTotal = prixUnitaire * l.quantite;
       montantTotal += sousTotal;
       return {
@@ -66,6 +107,9 @@ export class BonVenteService {
         quantite: l.quantite,
         prixUnitaire,
         sousTotal,
+        prixReference: audit.prixReference,
+        bandePrix: audit.bandePrix,
+        motifRemise: audit.motifRemise,
       };
     });
 
@@ -86,6 +130,18 @@ export class BonVenteService {
     });
 
     this.events.emit(ticket);
+
+    // Alerte super admin pour toute vente à perte (prix < CMUP)
+    for (const v of ventesAPerte) {
+      this.notifications
+        .create(
+          'VENTE_MAJ',
+          `⚠️ Vente à perte : ${v.nom} vendu ${v.prix} FCFA (coût CMUP ${v.cmup} FCFA) — bon ${numeroTicket} par ${actor.nom}.`,
+          actor,
+        )
+        .catch(() => {});
+    }
+
     return ticket;
   }
 

@@ -19,6 +19,16 @@ export class LigneTicketDto {
   @Min(1)
   @Type(() => Number)
   quantite: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Type(() => Number)
+  prixUnitaire?: number;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(255)
+  motifRemise?: string;
 }
 
 export class CreateTicketDto {

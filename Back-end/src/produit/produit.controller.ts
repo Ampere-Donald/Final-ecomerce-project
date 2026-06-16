@@ -23,8 +23,26 @@ import { CreateProduitDto } from './dto/create-produit.dto';
 import { UpdateProduitDto } from './dto/update-produit.dto';
 import { CloudinaryService } from '../cloudinary/cloudinary.service';
 import { AdminAuthGuard } from '../admin-auth/admin-auth.guard';
+import { OptionalAdminAuthGuard } from '../admin-auth/optional-admin-auth.guard';
 import { RolesGuard } from '../admin-auth/roles.guard';
 import { Roles } from '../admin-auth/roles.decorator';
+
+/** Champs de coût/fournisseur jamais exposés au public ni au personnel non-admin. */
+const CHAMPS_COUTS = [
+  'cmupActuel',
+  'dernierCoutAchatFcfa',
+  'derniereDeviseAchat',
+  'dernierFournisseurId',
+  'dernierAchatAt',
+];
+const peutVoirCouts = (user: any): boolean =>
+  !!user && ['SUPER_ADMIN', 'ADMIN', 'MANAGER'].includes(user.role);
+const masquerCouts = (p: any): any => {
+  if (!p || typeof p !== 'object') return p;
+  const copie: any = { ...p };
+  for (const f of CHAMPS_COUTS) delete copie[f];
+  return copie;
+};
 
 const imageFileFilter = (_req: any, file: Express.Multer.File, cb: any) => {
   if (!file.mimetype.match(/^image\/(jpeg|png|gif|webp)$/)) {
@@ -54,6 +72,7 @@ export class ProduitController {
   }
 
   @UseGuards(AdminAuthGuard, RolesGuard)
+  @Roles('SUPER_ADMIN', 'ADMIN')
   @Post()
   @UseInterceptors(FilesInterceptor('files', 3, memStore))
   async create(
@@ -89,6 +108,7 @@ export class ProduitController {
 
     // FormData string parsing
     if (createProduitDto.prixGros != null) createProduitDto.prixGros = parseFloat(String(createProduitDto.prixGros));
+    if (createProduitDto.prixDemiGros != null) createProduitDto.prixDemiGros = parseFloat(String(createProduitDto.prixDemiGros));
     if (createProduitDto.prixDetail != null) createProduitDto.prixDetail = parseFloat(String(createProduitDto.prixDetail));
     if (createProduitDto.quantiteStock != null) createProduitDto.quantiteStock = parseInt(String(createProduitDto.quantiteStock), 10);
     if (createProduitDto.seuilAlerte != null) createProduitDto.seuilAlerte = parseInt(String(createProduitDto.seuilAlerte), 10);
@@ -103,8 +123,10 @@ export class ProduitController {
     return this.produitService.create(createProduitDto, actor);
   }
 
+  @UseGuards(OptionalAdminAuthGuard)
   @Get()
-  findAll(
+  async findAll(
+    @Request() req: any,
     @Query('page') page?: string,
     @Query('limit') limit?: string,
     @Query('search') search?: string,
@@ -114,7 +136,7 @@ export class ProduitController {
     @Query('inStock') inStock?: string,
     @Query('sort') sort?: string,
   ) {
-    return this.produitService.findAll({
+    const result = await this.produitService.findAll({
       page: page ? parseInt(page, 10) : 1,
       limit: limit ? parseInt(limit, 10) : 1000,
       search,
@@ -124,6 +146,8 @@ export class ProduitController {
       inStock: inStock === 'true',
       sort,
     });
+    if (peutVoirCouts(req.user)) return result;
+    return { ...result, data: (result.data || []).map(masquerCouts) };
   }
 
   @Get('metadata')
@@ -215,16 +239,20 @@ export class ProduitController {
   @UseGuards(AdminAuthGuard, RolesGuard)
   @Roles('SUPER_ADMIN', 'ADMIN', 'MANAGER', 'VENDEUR')
   @Get('scan/:codeFamille/:code')
-  findByCode(
+  async findByCode(
+    @Request() req: any,
     @Param('codeFamille') codeFamille: string,
     @Param('code') code: string,
   ) {
-    return this.produitService.findByCode(codeFamille, code);
+    const produit = await this.produitService.findByCode(codeFamille, code);
+    return peutVoirCouts(req.user) ? produit : masquerCouts(produit);
   }
 
+  @UseGuards(OptionalAdminAuthGuard)
   @Get(':id')
-  findOne(@Param('id', ParseUUIDPipe) id: string) {
-    return this.produitService.findOne(id);
+  async findOne(@Request() req: any, @Param('id', ParseUUIDPipe) id: string) {
+    const produit = await this.produitService.findOne(id);
+    return peutVoirCouts(req.user) ? produit : masquerCouts(produit);
   }
 
   @UseGuards(AdminAuthGuard)
@@ -244,6 +272,7 @@ export class ProduitController {
   }
 
   @UseGuards(AdminAuthGuard, RolesGuard)
+  @Roles('SUPER_ADMIN', 'ADMIN')
   @Patch(':id')
   @UseInterceptors(FilesInterceptor('files', 3, memStore))
   async update(
@@ -288,6 +317,7 @@ export class ProduitController {
 
     // FormData string parsing
     if (updateProduitDto.prixGros != null) updateProduitDto.prixGros = parseFloat(String(updateProduitDto.prixGros));
+    if (updateProduitDto.prixDemiGros != null) updateProduitDto.prixDemiGros = parseFloat(String(updateProduitDto.prixDemiGros));
     if (updateProduitDto.prixDetail != null) updateProduitDto.prixDetail = parseFloat(String(updateProduitDto.prixDetail));
     if (updateProduitDto.quantiteStock != null) updateProduitDto.quantiteStock = parseInt(String(updateProduitDto.quantiteStock), 10);
     if (updateProduitDto.seuilAlerte != null) updateProduitDto.seuilAlerte = parseInt(String(updateProduitDto.seuilAlerte), 10);

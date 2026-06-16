@@ -56,6 +56,12 @@ export const can = {
   accessRoles: (r?: string) => isSuper(r),
   accessAccounts: (r?: string) => isSuper(r),
 
+  // ── Prix variable par bornes ────────────────────────────────
+  peutModifierPrixVente: (r?: string) => isAdmin(r) || isVendeur(r),
+  peutAutoriserPrixReduit: (r?: string) => isSuper(r),
+  // Modifier les prix d'un produit (détail/gros/demi-gros/promo) : super admin uniquement
+  peutModifierPrixProduit: (r?: string) => isSuper(r),
+
   // ── Bons de vente + Primes ──────────────────────────────────
   creerBon: (r?: string) => isVendeur(r),
   validerBon: (r?: string) => isCaissier(r) || isSuper(r),

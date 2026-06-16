@@ -18,6 +18,7 @@ import { RolesGuard } from '../admin-auth/roles.guard';
 import { Roles } from '../admin-auth/roles.decorator';
 
 @UseGuards(AdminAuthGuard, RolesGuard)
+@Roles('SUPER_ADMIN', 'ADMIN')
 @Controller('fournisseurs')
 export class FournisseurController {
   constructor(private readonly fournisseurService: FournisseurService) {}

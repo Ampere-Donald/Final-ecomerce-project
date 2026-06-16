@@ -4,7 +4,9 @@ import {
   IsInt,
   IsNumber,
   IsOptional,
+  IsString,
   IsUUID,
+  MaxLength,
   Min,
   ValidateNested,
 } from 'class-validator';
@@ -22,6 +24,11 @@ export class LigneBonDto {
   @IsNumber()
   @Type(() => Number)
   prixUnitaire: number;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(255)
+  motifRemise?: string;
 }
 
 export class CreateBonDto {
