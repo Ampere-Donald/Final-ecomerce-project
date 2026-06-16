@@ -138,7 +138,7 @@ export const ScanCode = () => {
 
   /* ── Recherche API ────────────────────────────────────────────────────── */
   const doSearch = async (cf: string, c: string) => {
-    if (!cf.trim() || !c.trim()) { setError('Code famille et code requis.'); return; }
+    if (!cf.trim() || !c.trim()) { setError('Code famille et code article requis.'); return; }
     setLoading(true);
     setError(null);
     setProduit(null);
@@ -319,7 +319,7 @@ export const ScanCode = () => {
               />
             </div>
             <div className="flex-1">
-              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Code</label>
+              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Code article</label>
               <input
                 type="text"
                 value={code}
@@ -395,7 +395,7 @@ export const ScanCode = () => {
                     <Tag size={11} /> Famille : {produit.codeFamille}
                   </span>
                   <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-100 text-xs font-mono text-slate-600">
-                    <Tag size={11} /> Code : {produit.code}
+                    <Tag size={11} /> Code article : {produit.code}
                   </span>
                 </div>
 

@@ -1,0 +1,554 @@
+backend terminal log:
+
+
+prisma:error
+Invalid `prisma.ligneAchat.update()` invocation:
+
+{
+  where: {
+    id: "c3e701b6-1429-4eae-991a-1e9d948af4f1"
+  },
+  data: {
+    prixUnitaireFcfa: new Prisma.Decimal("3.67"),
+    sousTotalFcfa: new Prisma.Decimal("532.15"),
+    coutUnitaireEntreeFcfa: new Prisma.Decimal("3.67"),
+    prixUnitaire: new Prisma.Decimal("3.67"),
+    sousTotal: new Prisma.Decimal("532.15"),
+    poidsUtilise: 10,
+    volumeUtilise: 10,
+    coeffDetail: 1.3,
+    coeffDemiGros: 1.22,
+    ~~~~~~~~~~~~~
+    coeffGros: 1.15,
+    prixDetailFinal: new Prisma.Decimal("12334"),
+    prixDemiGrosFinal: new Prisma.Decimal("11575"),
+    prixGrosFinal: new Prisma.Decimal("10911"),
+?   id?: String | StringFieldUpdateOperationsInput,
+?   quantite?: Int | IntFieldUpdateOperationsInput,
+?   prixUnitaireDevise?: Decimal | DecimalFieldUpdateOperationsInput,
+?   sousTotalDevise?: Decimal | DecimalFieldUpdateOperationsInput,
+?   stockAvant?: Int | NullableIntFieldUpdateOperationsInput | Null,
+?   stockApres?: Int | NullableIntFieldUpdateOperationsInput | Null,
+?   cmupAvant?: Decimal | NullableDecimalFieldUpdateOperationsInput | Null,
+?   cmupApres?: Decimal | NullableDecimalFieldUpdateOperationsInput | Null,
+?   version?: Int | IntFieldUpdateOperationsInput,
+?   chargeUnitaire?: Decimal | NullableDecimalFieldUpdateOperationsInput | Null,
+?   prixDetailSuggere?: Decimal | NullableDecimalFieldUpdateOperationsInput | Null,
+?   prixGrosSuggere?: Decimal | NullableDecimalFieldUpdateOperationsInput | Null,
+?   achat?: AchatUpdateOneRequiredWithoutLignesAchatNestedInput,
+?   produit?: ProduitUpdateOneRequiredWithoutLignesAchatNestedInput,
+?   mouvementCmup?: MouvementCmupUpdateOneWithoutLigneAchatNestedInput
+  }
+}
+
+Unknown argument `coeffDemiGros`. Available options are marked with ?.
+[Nest] 11456  - 06/15/2026, 9:39:51 AM    WARN [AUDIT] POST /api/achats/e1099be2-e052-4bdb-81d8-e168da941495/valider-lot FAILED by admin:admin@newoteg.local from 127.0.0.1 -
+Invalid `prisma.ligneAchat.update()` invocation:
+
+{
+  where: {
+    id: "c3e701b6-1429-4eae-991a-1e9d948af4f1"
+  },
+  data: {
+    prixUnitaireFcfa: new Prisma.Decimal("3.67"),
+    sousTotalFcfa: new Prisma.Decimal("532.15"),
+    coutUnitaireEntreeFcfa: new Prisma.Decimal("3.67"),
+    prixUnitaire: new Prisma.Decimal("3.67"),
+    sousTotal: new Prisma.Decimal("532.15"),
+    poidsUtilise: 10,
+    volumeUtilise: 10,
+    coeffDetail: 1.3,
+    coeffDemiGros: 1.22,
+    ~~~~~~~~~~~~~
+    coeffGros: 1.15,
+    prixDetailFinal: new Prisma.Decimal("12334"),
+    prixDemiGrosFinal: new Prisma.Decimal("11575"),
+    prixGrosFinal: new Prisma.Decimal("10911"),
+?   id?: String | StringFieldUpdateOperationsInput,
+?   quantite?: Int | IntFieldUpdateOperationsInput,
+?   prixUnitaireDevise?: Decimal | DecimalFieldUpdateOperationsInput,
+?   sousTotalDevise?: Decimal | DecimalFieldUpdateOperationsInput,
+?   stockAvant?: Int | NullableIntFieldUpdateOperationsInput | Null,
+?   stockApres?: Int | NullableIntFieldUpdateOperationsInput | Null,
+?   cmupAvant?: Decimal | NullableDecimalFieldUpdateOperationsInput | Null,
+?   cmupApres?: Decimal | NullableDecimalFieldUpdateOperationsInput | Null,
+?   version?: Int | IntFieldUpdateOperationsInput,
+?   chargeUnitaire?: Decimal | NullableDecimalFieldUpdateOperationsInput | Null,
+?   prixDetailSuggere?: Decimal | NullableDecimalFieldUpdateOperationsInput | Null,
+?   prixGrosSuggere?: Decimal | NullableDecimalFieldUpdateOperationsInput | Null,
+?   achat?: AchatUpdateOneRequiredWithoutLignesAchatNestedInput,
+?   produit?: ProduitUpdateOneRequiredWithoutLignesAchatNestedInput,
+?   mouvementCmup?: MouvementCmupUpdateOneWithoutLigneAchatNestedInput
+  }
+}
+
+Unknown argument `coeffDemiGros`. Available options are marked with ?.
+[Nest] 11456  - 06/15/2026, 9:39:51 AM   ERROR [ExceptionFilter] Unhandled exception
+PrismaClientValidationError:
+Invalid `prisma.ligneAchat.update()` invocation:
+
+{
+  where: {
+    id: "c3e701b6-1429-4eae-991a-1e9d948af4f1"
+  },
+  data: {
+    prixUnitaireFcfa: new Prisma.Decimal("3.67"),
+    sousTotalFcfa: new Prisma.Decimal("532.15"),
+    coutUnitaireEntreeFcfa: new Prisma.Decimal("3.67"),
+    prixUnitaire: new Prisma.Decimal("3.67"),
+    sousTotal: new Prisma.Decimal("532.15"),
+    poidsUtilise: 10,
+    volumeUtilise: 10,
+    coeffDetail: 1.3,
+    coeffDemiGros: 1.22,
+    ~~~~~~~~~~~~~
+    coeffGros: 1.15,
+    prixDetailFinal: new Prisma.Decimal("12334"),
+    prixDemiGrosFinal: new Prisma.Decimal("11575"),
+    prixGrosFinal: new Prisma.Decimal("10911"),
+?   id?: String | StringFieldUpdateOperationsInput,
+?   quantite?: Int | IntFieldUpdateOperationsInput,
+?   prixUnitaireDevise?: Decimal | DecimalFieldUpdateOperationsInput,
+?   sousTotalDevise?: Decimal | DecimalFieldUpdateOperationsInput,
+?   stockAvant?: Int | NullableIntFieldUpdateOperationsInput | Null,
+?   stockApres?: Int | NullableIntFieldUpdateOperationsInput | Null,
+?   cmupAvant?: Decimal | NullableDecimalFieldUpdateOperationsInput | Null,
+?   cmupApres?: Decimal | NullableDecimalFieldUpdateOperationsInput | Null,
+?   version?: Int | IntFieldUpdateOperationsInput,
+?   chargeUnitaire?: Decimal | NullableDecimalFieldUpdateOperationsInput | Null,
+?   prixDetailSuggere?: Decimal | NullableDecimalFieldUpdateOperationsInput | Null,
+?   prixGrosSuggere?: Decimal | NullableDecimalFieldUpdateOperationsInput | Null,
+?   achat?: AchatUpdateOneRequiredWithoutLignesAchatNestedInput,
+?   produit?: ProduitUpdateOneRequiredWithoutLignesAchatNestedInput,
+?   mouvementCmup?: MouvementCmupUpdateOneWithoutLigneAchatNestedInput
+  }
+}
+
+Unknown argument `coeffDemiGros`. Available options are marked with ?.
+    at throwValidationException (D:\Anime\NEWOTEG\Final-ecomerce-project\Back-end\node_modules\@prisma\client\src\runtime\core\errorRendering\throwValidationException.ts:46:9)
+    at zr.handleRequestError (D:\Anime\NEWOTEG\Final-ecomerce-project\Back-end\node_modules\@prisma\client\src\runtime\RequestHandler.ts:211:7)
+    at zr.handleAndLogRequestError (D:\Anime\NEWOTEG\Final-ecomerce-project\Back-end\node_modules\@prisma\client\src\runtime\RequestHandler.ts:183:12)
+    at zr.request (D:\Anime\NEWOTEG\Final-ecomerce-project\Back-end\node_modules\@prisma\client\src\runtime\RequestHandler.ts:152:12)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async a (D:\Anime\NEWOTEG\Final-ecomerce-project\Back-end\node_modules\@prisma\client\src\runtime\getPrismaClient.ts:808:24)
+    at async result.db.$transaction.timeout (D:\Anime\NEWOTEG\Final-ecomerce-project\Back-end\src\achat\achat.service.ts:389:9)
+    at async Proxy._transactionWithCallback (D:\Anime\NEWOTEG\Final-ecomerce-project\Back-end\node_modules\@prisma\client\src\runtime\getPrismaClient.ts:697:18)
+    at async AchatService.validerLot (D:\Anime\NEWOTEG\Final-ecomerce-project\Back-end\src\achat\achat.service.ts:363:20)
+
+
+
+
+frontend terminal log:
+
+
+ VITE v6.4.1  ready in 3306 ms
+
+  ➜  Local:   http://localhost:5174/
+  ➜  press h + enter to show help
+9:35:46 AM [vite] http proxy error: /api/produits/import/status
+AggregateError [ECONNREFUSED]:
+    at internalConnectMultiple (node:net:1122:18)
+    at afterConnectMultiple (node:net:1689:7)
+9:35:48 AM [vite] http proxy error: /api/produits/import/status
+AggregateError [ECONNREFUSED]:
+    at internalConnectMultiple (node:net:1122:18)
+    at afterConnectMultiple (node:net:1689:7) (x2)
+9:35:51 AM [vite] http proxy error: /api/produits/import/status
+AggregateError [ECONNREFUSED]:
+    at internalConnectMultiple (node:net:1122:18)
+    at afterConnectMultiple (node:net:1689:7) (x3)
+9:35:53 AM [vite] http proxy error: /api/produits/import/status
+AggregateError [ECONNREFUSED]:
+    at internalConnectMultiple (node:net:1122:18)
+    at afterConnectMultiple (node:net:1689:7) (x4)
+9:35:56 AM [vite] http proxy error: /api/produits/import/status
+AggregateError [ECONNREFUSED]:
+    at internalConnectMultiple (node:net:1122:18)
+    at afterConnectMultiple (node:net:1689:7) (x5)
+9:35:58 AM [vite] http proxy error: /api/produits/import/status
+AggregateError [ECONNREFUSED]:
+    at internalConnectMultiple (node:net:1122:18)
+    at afterConnectMultiple (node:net:1689:7) (x6)
+9:36:01 AM [vite] http proxy error: /api/notifications/unread-count
+AggregateError [ECONNREFUSED]:
+    at internalConnectMultiple (node:net:1122:18)
+    at afterConnectMultiple (node:net:1689:7)
+9:36:01 AM [vite] http proxy error: /api/produits/import/status
+AggregateError [ECONNREFUSED]:
+    at internalConnectMultiple (node:net:1122:18)
+    at afterConnectMultiple (node:net:1689:7)
+9:36:03 AM [vite] http proxy error: /api/produits/import/status
+AggregateError [ECONNREFUSED]:
+    at internalConnectMultiple (node:net:1122:18)
+    at afterConnectMultiple (node:net:1689:7) (x2)
+9:36:06 AM [vite] http proxy error: /api/produits/import/status
+AggregateError [ECONNREFUSED]:
+    at internalConnectMultiple (node:net:1122:18)
+    at afterConnectMultiple (node:net:1689:7) (x3)
+9:36:08 AM [vite] http proxy error: /api/produits/import/status
+AggregateError [ECONNREFUSED]:
+    at internalConnectMultiple (node:net:1122:18)
+    at afterConnectMultiple (node:net:1689:7) (x4)
+9:36:11 AM [vite] http proxy error: /api/produits/import/status
+AggregateError [ECONNREFUSED]:
+    at internalConnectMultiple (node:net:1122:18)
+    at afterConnectMultiple (node:net:1689:7) (x5)
+9:36:13 AM [vite] http proxy error: /api/produits/import/status
+AggregateError [ECONNREFUSED]:
+    at internalConnectMultiple (node:net:1122:18)
+    at afterConnectMultiple (node:net:1689:7) (x6)
+9:36:16 AM [vite] http proxy error: /api/produits/import/status
+AggregateError [ECONNREFUSED]:
+    at internalConnectMultiple (node:net:1122:18)
+    at afterConnectMultiple (node:net:1689:7) (x7)
+9:36:18 AM [vite] http proxy error: /api/produits/import/status
+AggregateError [ECONNREFUSED]:
+    at internalConnectMultiple (node:net:1122:18)
+    at afterConnectMultiple (node:net:1689:7) (x8)
+
+
+
+browser pop up notif:
+Erreur validation : Une erreur interne est survenue. Veuillez réessayer
+
+
+browser console:
+react-dom_client.js?v=00e0ed04:20103 Download the React DevTools for a better development experience: https://react.dev/link/react-devtools
+api/achats/e1099be2-e052-4bdb-81d8-e168da941495/valider-lot:1  Failed to load resource: the server responded with a status of 500 (Internal Server Error)
+api.ts:105  GET http://localhost:5174/api/produits/import/status net::ERR_NETWORK_CHANGED
+dispatchXhrRequest @ axios.js?v=00e0ed04:1784
+xhr @ axios.js?v=00e0ed04:1649
+dispatchRequest @ axios.js?v=00e0ed04:2210
+Promise.then
+_request @ axios.js?v=00e0ed04:2428
+request @ axios.js?v=00e0ed04:2324
+Axios.<computed> @ axios.js?v=00e0ed04:2464
+wrap @ axios.js?v=00e0ed04:8
+(anonymous) @ api.ts:105
+(anonymous) @ Header.tsx:87
+
+
+backend terminal log:
+
+[9:47:01 AM] Starting compilation in watch mode...
+
+[9:47:31 AM] Found 0 errors. Watching for file changes.
+
+[Nest] 10316  - 06/15/2026, 9:47:37 AM     LOG [Bootstrap] Running Prisma migrations...
+Loaded Prisma config from prisma.config.ts.
+
+Prisma schema loaded from prisma\schema.prisma.
+Datasource "db": PostgreSQL database "railway", schema "public" at "caboose.proxy.rlwy.net:12626"
+
+24 migrations found in prisma/migrations
+
+Applying migration `20260615000000_add_demi_gros`
+Error: P3018
+
+A migration failed to apply. New migrations cannot be applied before the error is recovered from. Read more about how to resolve migration issues in a production database: https://pris.ly/d/migrate-resolve
+
+Migration name: 20260615000000_add_demi_gros
+
+Database error code: 42701
+
+Database error:
+ERROR: column "prix_demi_gros" of relation "produit" already exists
+
+DbError { severity: "ERROR", parsed_severity: Some(Error), code: SqlState(E42701), message: "column \"prix_demi_gros\" of relation \"produit\" already exists", detail: None, hint: None, position: None, where_: None, schema: None, table: None, column: None, datatype: None, constraint: None, file: Some("tablecmds.c"), line: Some(7686), routine: Some("check_for_column_name_collision") }
+
+
+[Nest] 10316  - 06/15/2026, 9:47:55 AM   ERROR [Bootstrap] Failed to run Prisma migrations:
+[Nest] 10316  - 06/15/2026, 9:47:55 AM   ERROR [Bootstrap] Error: Command failed: npx prisma migrate deploy
+    at genericNodeError (node:internal/errors:984:15)
+    at wrappedFn (node:internal/errors:538:14)
+    at checkExecSyncError (node:child_process:891:11)
+    at execSync (node:child_process:963:15)
+    at bootstrap (D:\Anime\NEWOTEG\Final-ecomerce-project\Back-end\src\main.ts:19:5)
+    at Object.<anonymous> (D:\Anime\NEWOTEG\Final-ecomerce-project\Back-end\src\main.ts:74:1)
+    at Module._compile (node:internal/modules/cjs/loader:1529:14)
+    at Module._extensions..js (node:internal/modules/cjs/loader:1613:10)
+    at Module.load (node:internal/modules/cjs/loader:1275:32)
+    at Module._load (node:internal/modules/cjs/loader:1096:12) {
+  status: 1,
+  signal: null,
+  output: [
+    null,
+    null,
+    null
+  ],
+  pid: 46028,
+  stdout: null,
+  stderr: null
+}
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [NestFactory] Starting Nest application... +21ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM    WARN [MailService] SMTP credentials not configured (SMTP_HOST, SMTP_USER, SMTP_PASS). Emails will be logged to console instead.
+[Nest] 10316  - 06/15/2026, 9:47:55 AM    WARN [MailService] SMTP credentials not configured (SMTP_HOST, SMTP_USER, SMTP_PASS). Emails will be logged to console instead.
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [InstanceLoader] PassportModule dependencies initialized +17ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [InstanceLoader] PassportModule dependencies initialized +0ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [InstanceLoader] CloudinaryModule dependencies initialized +2ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [InstanceLoader] ConfigHostModule dependencies initialized +5ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [InstanceLoader] ThrottlerModule dependencies initialized +1ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [InstanceLoader] DiscoveryModule dependencies initialized +1ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [InstanceLoader] DatabaseModule dependencies initialized +4ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [InstanceLoader] AppModule dependencies initialized +13ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [InstanceLoader] ConfigModule dependencies initialized +2ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [InstanceLoader] ConfigModule dependencies initialized +1ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [InstanceLoader] ServeStaticModule dependencies initialized +5ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [InstanceLoader] ScheduleModule dependencies initialized +2ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [InstanceLoader] NewsletterModule dependencies initialized +15ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [InstanceLoader] JwtModule dependencies initialized +9ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [InstanceLoader] JwtModule dependencies initialized +0ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [InstanceLoader] CmupModule dependencies initialized +16ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [InstanceLoader] TauxChangeModule dependencies initialized +1ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [InstanceLoader] FactureModule dependencies initialized +1ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [InstanceLoader] PrimeModule dependencies initialized +5ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [InstanceLoader] NotificationModule dependencies initialized +2ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [InstanceLoader] AttributModule dependencies initialized +3ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [InstanceLoader] ValeurAttributModule dependencies initialized +2ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [InstanceLoader] ClientModule dependencies initialized +1ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [InstanceLoader] LigneAchatModule dependencies initialized +3ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [InstanceLoader] LigneVenteModule dependencies initialized +2ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [InstanceLoader] RoleModule dependencies initialized +1ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [InstanceLoader] SearchModule dependencies initialized +1ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [InstanceLoader] FavoriModule dependencies initialized +1ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [InstanceLoader] FournisseurModule dependencies initialized +3ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [InstanceLoader] VenteModule dependencies initialized +0ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [InstanceLoader] MouvementStockModule dependencies initialized +1ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [InstanceLoader] CaisseModule dependencies initialized +5ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [InstanceLoader] CaisseJourModule dependencies initialized +1ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [InstanceLoader] AchatModule dependencies initialized +3ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [InstanceLoader] CategorieModule dependencies initialized +3ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [InstanceLoader] ProduitModule dependencies initialized +0ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [InstanceLoader] CoffreModule dependencies initialized +2ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [InstanceLoader] ReglementModule dependencies initialized +4ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [InstanceLoader] EquivalenceModule dependencies initialized +0ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [InstanceLoader] EcheanceModule dependencies initialized +4ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [InstanceLoader] TicketVenteModule dependencies initialized +1ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [InstanceLoader] BonVenteModule dependencies initialized +1ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [InstanceLoader] AdminAuthModule dependencies initialized +1ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [InstanceLoader] AuthModule dependencies initialized +0ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [InstanceLoader] CommandeModule dependencies initialized +2ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RoutesResolver] AppController {/api}: +21ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api, GET} route +8ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RoutesResolver] CategorieController {/api/categories}: +0ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/categories, POST} route +5ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/categories, GET} route +3ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/categories/:id, GET} route +4ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/categories/:id/image, POST} route +2ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/categories/:id, PATCH} route +1ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/categories/:id, DELETE} route +2ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RoutesResolver] ProduitController {/api/produits}: +1ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/produits, POST} route +3ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/produits, GET} route +4ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/produits/metadata, GET} route +3ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/produits/flash, GET} route +2ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/produits/populaires, GET} route +1ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/produits/import/status, GET} route +1ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/produits/low-stock, GET} route +1ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/produits/import, POST} route +1ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/produits/cleanup-images, POST} route +1ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/produits/scan/:codeFamille/:code, GET} route +3ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/produits/:id, GET} route +5ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/produits/:id/image, POST} route +2ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/produits/:id, PATCH} route +12ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/produits/:id, DELETE} route +2ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RoutesResolver] AttributController {/api/attributs}: +0ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/attributs, POST} route +3ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/attributs, GET} route +1ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/attributs/:id, GET} route +1ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/attributs/:id, PATCH} route +1ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/attributs/:id, DELETE} route +1ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RoutesResolver] ValeurAttributController {/api/valeurs-attribut}: +1ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/valeurs-attribut, POST} route +2ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/valeurs-attribut, GET} route +5ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/valeurs-attribut/:id, GET} route +1ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/valeurs-attribut/:id, PATCH} route +3ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/valeurs-attribut/:id, DELETE} route +1ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RoutesResolver] FournisseurController {/api/fournisseurs}: +0ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/fournisseurs, POST} route +2ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/fournisseurs, GET} route +1ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/fournisseurs/:id, GET} route +1ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/fournisseurs/:id, PATCH} route +1ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/fournisseurs/:id, DELETE} route +6ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RoutesResolver] ClientController {/api/clients}: +1ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/clients, POST} route +1ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/clients, GET} route +1ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/clients/credits, GET} route +1ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/clients/:id, GET} route +1ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/clients/:id/encours, GET} route +1ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/clients/:id/credits, GET} route +1ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/clients/:id, PATCH} route +1ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/clients/:id, DELETE} route +1ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RoutesResolver] AchatController {/api/achats}: +1ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/achats, POST} route +7ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/achats, GET} route +1ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/achats/:id, GET} route +1ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/achats/:id, PATCH} route +1ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/achats/:id/calculer, POST} route +1ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/achats/:id/valider-lot, POST} route +1ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/achats/:id/valider, POST} route +1ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/achats/:id/annuler, POST} route +1ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/achats/:id, DELETE} route +1ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RoutesResolver] DatabaseController {/api/database}: +2ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RoutesResolver] CmupController {/api/cmup}: +6ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/cmup/preview, POST} route +1ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/cmup, GET} route +1ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/cmup/produits/:id/historique, GET} route +1ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RoutesResolver] NotificationController {/api/notifications}: +1ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/notifications, GET} route +1ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/notifications/all, GET} route +1ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/notifications/unread-count, GET} route +1ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/notifications/:id/read, PATCH} route +1ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/notifications/:id/unread, PATCH} route +5ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/notifications/read-all, PATCH} route +4ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RoutesResolver] LigneAchatController {/api/lignes-achat}: +1ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/lignes-achat, POST} route +1ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/lignes-achat, GET} route +1ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/lignes-achat/:id, GET} route +1ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/lignes-achat/:id, PATCH} route +1ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/lignes-achat/:id, DELETE} route +1ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RoutesResolver] VenteController {/api/ventes}: +4ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/ventes, POST} route +2ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/ventes, GET} route +3ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/ventes/:id, GET} route +1ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/ventes/:id, PATCH} route +1ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/ventes/:id, DELETE} route +1ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RoutesResolver] LigneVenteController {/api/lignes-vente}: +0ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/lignes-vente, POST} route +2ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/lignes-vente, GET} route +1ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/lignes-vente/:id, GET} route +1ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/lignes-vente/:id, PATCH} route +5ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/lignes-vente/:id, DELETE} route +2ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RoutesResolver] MouvementStockController {/api/mouvements-stock}: +1ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/mouvements-stock, POST} route +4ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/mouvements-stock, GET} route +1ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/mouvements-stock/:id, GET} route +1ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/mouvements-stock/:id, PATCH} route +3ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/mouvements-stock/:id, DELETE} route +2ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RoutesResolver] CaisseController {/api/caisse}: +2ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/caisse, POST} route +4ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/caisse, GET} route +2ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/caisse/solde, GET} route +1ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/caisse/solde-global, GET} route +1ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/caisse/transferer, POST} route +2ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/caisse/:id/annuler, POST} route +2ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/caisse/:id, GET} route +4ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RoutesResolver] CaisseJourController {/api/caisse-jour}: +0ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/caisse-jour/aujourdhui, GET} route +4ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/caisse-jour, GET} route +2ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/caisse-jour/:id, GET} route +1ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/caisse-jour/:id/fermer, POST} route +1ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/caisse-jour/:id/operation, POST} route +1ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RoutesResolver] TicketVenteController {/api/tickets}: +1ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/tickets, POST} route +3ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/tickets/en-attente, GET} route +3ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/tickets/mes-tickets, GET} route +1ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/tickets/jour, GET} route +4ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/tickets/:id, GET} route +1ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/tickets/:id/encaisser, POST} route +3ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/tickets/:id/annuler, POST} route +1ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RoutesResolver] CoffreController {/api/coffres}: +0ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/coffres, POST} route +2ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/coffres, GET} route +3ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/coffres/:id, GET} route +4ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/coffres/:id, PATCH} route +3ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/coffres/:id/sortie, POST} route +5ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/coffres/:id/cloturer, POST} route +3ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RoutesResolver] EcheanceController {/api/echeances}: +1ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/echeances, POST} route +4ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/echeances, GET} route +2ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/echeances/a-venir, GET} route +3ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/echeances/:id, GET} route +3ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/echeances/:id, PATCH} route +2ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/echeances/:id, DELETE} route +3ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/echeances/:id/declencher, POST} route +1ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RoutesResolver] ReglementController {/api/reglements}: +0ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/reglements, POST} route +3ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/reglements, GET} route +3ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/reglements/:id, DELETE} route +3ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RoutesResolver] AdminAuthController {/api/admin-auth}: +1ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/admin-auth/login, POST} route +3ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/admin-auth/login-pin, POST} route +1ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/admin-auth/me, GET} route +1ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/admin-auth/change-password, PATCH} route +1ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/admin-auth/seed, POST} route +1ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/admin-auth/admins, GET} route +1ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/admin-auth/admins, POST} route +1ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/admin-auth/admins/:id, PATCH} route +1ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/admin-auth/admins/:id/reset-password, PATCH} route +3ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/admin-auth/admins/:id/toggle-active, PATCH} route +8ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/admin-auth/admins/:id/activity, GET} route +2ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/admin-auth/admins/:id/role-history, GET} route +1ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/admin-auth/admins/:id, DELETE} route +1ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/admin-auth/:id/role, PATCH} route +1ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RoutesResolver] EquivalenceController {/api/equivalence}: +0ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/equivalence/suggest, POST} route +2ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/equivalence/stats, GET} route +3ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/equivalence/health, GET} route +2ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RoutesResolver] RoleController {/api/roles}: +2ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/roles, POST} route +1ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/roles, GET} route +1ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/roles/:id, GET} route +1ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/roles/:id, PATCH} route +1ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/roles/:id, DELETE} route +1ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RoutesResolver] CommandeController {/api/commandes}: +1ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/commandes, POST} route +1ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/commandes/checkout, POST} route +2ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/commandes, GET} route +5ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/commandes/my-orders, GET} route +2ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/commandes/:id/pickup, PATCH} route +2ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/commandes/:id, GET} route +1ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/commandes/:id, PATCH} route +1ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/commandes/:id/cancel, PATCH} route +1ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RouterExplorer] Mapped {/api/commandes/:id/reception, PATCH} route +1ms
+[Nest] 10316  - 06/15/2026, 9:47:55 AM     LOG [RoutesResolver] AuthController {/api/auth}: +1ms
+[Nest] 10316  - 06/15/2026, 9:47:56 AM     LOG [RouterExplorer] Mapped {/api/auth/signup, POST} route +1ms
+[Nest] 10316  - 06/15/2026, 9:47:56 AM     LOG [RouterExplorer] Mapped {/api/auth/login, POST} route +7ms
+[Nest] 10316  - 06/15/2026, 9:47:56 AM     LOG [RouterExplorer] Mapped {/api/auth/google, POST} route +1ms
+[Nest] 10316  - 06/15/2026, 9:47:56 AM     LOG [RouterExplorer] Mapped {/api/auth/me, GET} route +2ms
+[Nest] 10316  - 06/15/2026, 9:47:56 AM     LOG [RouterExplorer] Mapped {/api/auth/forgot-password, POST} route +1ms
+[Nest] 10316  - 06/15/2026, 9:47:56 AM     LOG [RouterExplorer] Mapped {/api/auth/reset-password, POST} route +1ms
+[Nest] 10316  - 06/15/2026, 9:47:56 AM     LOG [RoutesResolver] SearchController {/api/search}: +1ms
+[Nest] 10316  - 06/15/2026, 9:47:56 AM     LOG [RouterExplorer] Mapped {/api/search, GET} route +2ms
+[Nest] 10316  - 06/15/2026, 9:47:56 AM     LOG [RoutesResolver] FavoriController {/api/favoris}: +0ms
+[Nest] 10316  - 06/15/2026, 9:47:56 AM     LOG [RouterExplorer] Mapped {/api/favoris, GET} route +7ms
+[Nest] 10316  - 06/15/2026, 9:47:56 AM     LOG [RouterExplorer] Mapped {/api/favoris/:produitId, POST} route +1ms
+[Nest] 10316  - 06/15/2026, 9:47:56 AM     LOG [RouterExplorer] Mapped {/api/favoris/:produitId, DELETE} route +1ms
+[Nest] 10316  - 06/15/2026, 9:47:56 AM     LOG [RoutesResolver] NewsletterController {/api/newsletter}: +0ms
+[Nest] 10316  - 06/15/2026, 9:47:56 AM     LOG [RouterExplorer] Mapped {/api/newsletter, POST} route +2ms
+[Nest] 10316  - 06/15/2026, 9:47:56 AM     LOG [RoutesResolver] TauxChangeController {/api/taux-change}: +0ms
+[Nest] 10316  - 06/15/2026, 9:47:56 AM     LOG [RouterExplorer] Mapped {/api/taux-change/latest, GET} route +2ms
+[Nest] 10316  - 06/15/2026, 9:47:56 AM     LOG [RouterExplorer] Mapped {/api/taux-change/manual, POST} route +1ms
+[Nest] 10316  - 06/15/2026, 9:47:56 AM     LOG [RouterExplorer] Mapped {/api/taux-change/history, GET} route +1ms
+[Nest] 10316  - 06/15/2026, 9:47:56 AM     LOG [RoutesResolver] BonVenteController {/api/bons}: +0ms
+[Nest] 10316  - 06/15/2026, 9:47:56 AM     LOG [RouterExplorer] Mapped {/api/bons, POST} route +2ms
+[Nest] 10316  - 06/15/2026, 9:47:56 AM     LOG [RouterExplorer] Mapped {/api/bons/pending, GET} route +1ms
+[Nest] 10316  - 06/15/2026, 9:47:56 AM     LOG [RouterExplorer] Mapped {/api/bons/mes-bons, GET} route +6ms
+[Nest] 10316  - 06/15/2026, 9:47:56 AM     LOG [RouterExplorer] Mapped {/api/bons/:id/valider, POST} route +1ms
+[Nest] 10316  - 06/15/2026, 9:47:56 AM     LOG [RouterExplorer] Mapped {/api/bons/:id/annuler, POST} route +1ms
+[Nest] 10316  - 06/15/2026, 9:47:56 AM     LOG [RouterExplorer] Mapped {/api/bons/stream, GET} route +1ms
+[Nest] 10316  - 06/15/2026, 9:47:56 AM     LOG [RoutesResolver] FactureController {/api/factures}: +0ms
+[Nest] 10316  - 06/15/2026, 9:47:56 AM     LOG [RouterExplorer] Mapped {/api/factures, GET} route +2ms
+[Nest] 10316  - 06/15/2026, 9:47:56 AM     LOG [RouterExplorer] Mapped {/api/factures/:id, GET} route +0ms
+[Nest] 10316  - 06/15/2026, 9:47:56 AM     LOG [RouterExplorer] Mapped {/api/factures/:id/print, POST} route +0ms
+[Nest] 10316  - 06/15/2026, 9:47:56 AM     LOG [RoutesResolver] PrimeController {/api/primes}: +1ms
+[Nest] 10316  - 06/15/2026, 9:47:56 AM     LOG [RouterExplorer] Mapped {/api/primes/classement, GET} route +1ms
+[Nest] 10316  - 06/15/2026, 9:47:56 AM     LOG [RouterExplorer] Mapped {/api/primes/mon-score, GET} route +7ms
+[Nest] 10316  - 06/15/2026, 9:47:56 AM     LOG [RouterExplorer] Mapped {/api/primes/:id/valider, PATCH} route +2ms
+[Nest] 10316  - 06/15/2026, 9:47:56 AM     LOG [RouterExplorer] Mapped {/api/primes/:id/payer, PATCH} route +1ms
+[Nest] 10316  - 06/15/2026, 9:47:56 AM     LOG [CloudinaryService] Cloudinary configured successfully
+[Nest] 10316  - 06/15/2026, 9:47:56 AM     LOG [NestApplication] Nest application successfully started +68ms
+[Nest] 10316  - 06/15/2026, 9:47:56 AM     LOG [Bootstrap] Backend NEWOTEG started on port 3000
+
+frontend terminal log:
+D:\Anime\NEWOTEG\Final-ecomerce-project\Font-end-admin\NEWOTEG-ECOMMERCE-feature-new-dashboard>npm run dev
+
+> react-example@0.0.0 dev
+> vite --port=5174 --host=localhost
+
+
+  VITE v6.4.1  ready in 1948 ms
+
+  ➜  Local:   http://localhost:5174/
+  ➜  press h + enter to show help
+
