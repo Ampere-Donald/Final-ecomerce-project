@@ -20,6 +20,9 @@ import { useAdminAuth } from '../context/AdminAuthContext';
 import { FileCaissier } from './FileCaissier';
 import { ReceiptGenerator } from './ReceiptGenerator';
 import { FactureVirtuelleModal } from './FactureVirtuelleModal';
+import { useToast } from './ui/Toast';
+import { Proformas } from './Proformas';
+import { Invoices } from './Invoices';
 
 interface Operation {
   id: string;
@@ -81,7 +84,7 @@ export const CaisseJour = () => {
   const [facturesJour, setFacturesJour] = useState<FactureJour[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'encaisser' | 'encaissements' | 'mouvements'>('encaisser');
+  const [activeTab, setActiveTab] = useState<'encaisser' | 'encaissements' | 'mouvements' | 'proformas' | 'factures'>('encaisser');
   const [searchFacture, setSearchFacture] = useState('');
   const [printingFacture, setPrintingFacture] = useState<string | null>(null);
   const [receiptFacture, setReceiptFacture] = useState<FactureJour | null>(null);
@@ -108,9 +111,9 @@ export const CaisseJour = () => {
   // Modal facture virtuelle
   const [showFV, setShowFV] = useState(false);
   const [fvFactureId, setFvFactureId] = useState<string | null>(null);
-  const [fvSuccess, setFvSuccess] = useState<string | null>(null);
 
   const { admin } = useAdminAuth();
+  const toast = useToast();
 
   const charger = async () => {
     setError(null);
@@ -339,6 +342,8 @@ export const CaisseJour = () => {
           ['encaisser', 'À encaisser'],
           ['encaissements', 'Encaissements'],
           ['mouvements', 'Mouvements'],
+          ['proformas', 'Proformas'],
+          ['factures', 'Factures'],
         ] as const).map(([key, label]) => (
           <button
             key={key}
@@ -532,6 +537,10 @@ export const CaisseJour = () => {
 
       )}
 
+
+      {activeTab === 'proformas' && <Proformas />}
+
+      {activeTab === 'factures' && <Invoices />}
 
       {/* Modal Ajouter opération */}
       <AnimatePresence>
@@ -800,8 +809,7 @@ export const CaisseJour = () => {
           onSuccess={(pending) => {
             setShowFV(false);
             setFvFactureId(null);
-            setFvSuccess(pending ? 'Demande envoyée au SUPER_ADMIN pour approbation.' : 'Facture virtuelle créée !');
-            setTimeout(() => setFvSuccess(null), 4000);
+            toast.success(pending ? 'Demande envoyée au SUPER_ADMIN pour approbation.' : 'Facture virtuelle créée !');
           }}
         />
       )}

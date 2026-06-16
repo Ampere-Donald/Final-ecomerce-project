@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { Bell, Search, ChevronLeft, ChevronRight, CheckCheck, Eye, EyeOff, Filter } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Bell, Search, ChevronLeft, ChevronRight, CheckCheck, Eye, EyeOff, ArrowRight } from 'lucide-react';
 import { motion } from 'motion/react';
 import { notificationApi } from '../services/api';
 
@@ -56,6 +57,7 @@ const timeAgo = (date: string) => {
 };
 
 export const NotificationsPage = () => {
+  const navigate = useNavigate();
   const [data, setData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
@@ -179,7 +181,16 @@ export const NotificationsPage = () => {
                       )}
                     </div>
                     <p className="text-sm text-slate-800">{n.message}</p>
-                    <p className="text-xs text-slate-400 mt-1">{timeAgo(n.createdAt)}</p>
+                    <div className="flex items-center gap-2 mt-1">
+                      <p className="text-xs text-slate-400">{timeAgo(n.createdAt)}</p>
+                      {n.type === 'FACTURE_VIRTUELLE_DEMANDE' && (
+                        <button
+                          onClick={() => navigate('/invoices', { state: { tab: 'virtuelles' } })}
+                          className="flex items-center gap-1 text-xs font-semibold text-orange-600 hover:text-orange-700 bg-orange-50 hover:bg-orange-100 px-2 py-0.5 rounded-full transition-colors">
+                          Traiter <ArrowRight size={11} />
+                        </button>
+                      )}
+                    </div>
                   </div>
                   <button onClick={() => handleToggleRead(n)}
                     className="p-1.5 text-slate-400 hover:text-primary hover:bg-primary/10 rounded-lg transition-colors shrink-0" title={n.lue ? 'Marquer non lu' : 'Marquer lu'}>

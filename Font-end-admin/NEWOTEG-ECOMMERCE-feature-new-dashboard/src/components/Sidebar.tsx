@@ -24,7 +24,6 @@ import {
   AlertTriangle,
   ShoppingBag,
   Receipt,
-  FileText,
   PiggyBank,
   Calculator,
   Award,
@@ -96,8 +95,6 @@ export const Sidebar = ({ open, onClose }: SidebarProps) => {
       items: [
         ...add(can.accessPOSVendeur(role), { label: 'Vente en cours', icon: ShoppingBag, path: '/pos' }),
         ...add(can.accessMesTickets(role), { label: 'Mes tickets', icon: Receipt, path: '/mes-tickets' }),
-        ...add(can.voirProformas(role), { label: 'Proformas', icon: FileText, path: '/proformas' }),
-        ...add(can.voirFactures(role), { label: 'Factures', icon: Receipt, path: '/invoices' }),
         ...add(can.voirPrimes(role), { label: 'Primes vendeurs', icon: Award, path: '/primes' }),
       ],
     },

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { FileText, Printer, Search, ChevronDown, Ghost } from 'lucide-react';
 import { factureApi, getApiErrorMessage } from '../services/api';
@@ -31,7 +32,10 @@ interface Facture {
 }
 
 export const Invoices = () => {
-  const [activeTab, setActiveTab] = useState<'reelles' | 'virtuelles'>('reelles');
+  const location = useLocation();
+  const [activeTab, setActiveTab] = useState<'reelles' | 'virtuelles'>(
+    (location.state as any)?.tab === 'virtuelles' ? 'virtuelles' : 'reelles'
+  );
   const [factures, setFactures] = useState<Facture[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
