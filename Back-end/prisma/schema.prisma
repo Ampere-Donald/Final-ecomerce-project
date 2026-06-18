@@ -700,7 +700,60 @@ model ActivityLog {
   @@map("activity_log")
 }
 
+model Inventaire {
+  id          String            @id @default(uuid())
+  reference   String            @unique
+  statut      StatutInventaire  @default(EN_COURS)
+  perimetre   String            @db.VarChar(150)
+  categorieId String?           @map("categorie_id")
+  codeFamille String?           @map("code_famille") @db.VarChar(50)
+  createdById String            @map("created_by_id")
+  createdAt   DateTime          @default(now()) @map("created_at")
+  valideAt    DateTime?         @map("valide_at")
+  valideById  String?           @map("valide_by_id")
+  viaDelegation Boolean         @default(false) @map("via_delegation")
+  lignes      LigneInventaire[]
+
+  @@index([statut, createdAt])
+  @@map("inventaire")
+}
+
+model LigneInventaire {
+  id           String     @id @default(uuid())
+  inventaireId String     @map("inventaire_id")
+  produitId    String     @map("produit_id")
+  nomProduit   String     @map("nom_produit") @db.VarChar(150)
+  codeFamille  String?    @map("code_famille") @db.VarChar(50)
+  stockSysteme Int        @map("stock_systeme")
+  stockCompte  Int?       @map("stock_compte")
+  ecart        Int?
+  inventaire   Inventaire @relation(fields: [inventaireId], references: [id], onDelete: Cascade)
+
+  @@index([inventaireId])
+  @@map("ligne_inventaire")
+}
+
+model DelegationInventaire {
+  id          String   @id @default(uuid())
+  adminUserId String   @map("admin_user_id")
+  accordeById String   @map("accorde_par_id")
+  debutAt     DateTime @default(now()) @map("debut_at")
+  finAt       DateTime @map("fin_at")
+  active      Boolean  @default(true)
+  motif       String?  @db.VarChar(255)
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@index([adminUserId, active])
+  @@map("delegation_inventaire")
+}
+
 // ── Enums ─────────────────────────────────────────────────────────────────
+
+enum StatutInventaire {
+  EN_COURS
+  VALIDE
+  ANNULE
+}
 
 enum AdminRole {
   SUPER_ADMIN

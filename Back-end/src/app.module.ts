@@ -40,6 +40,7 @@ import { CmupModule } from './cmup/cmup.module';
 import { BonVenteModule } from './bon-vente/bon-vente.module';
 import { FactureModule } from './facture/facture.module';
 import { PrimeModule } from './prime/prime.module';
+import { InventaireModule } from './inventaire/inventaire.module';
 
 @Module({
   imports: [
@@ -87,6 +88,7 @@ import { PrimeModule } from './prime/prime.module';
     BonVenteModule,
     FactureModule,
     PrimeModule,
+    InventaireModule,
   ],
   controllers: [AppController],
   providers: [AppService],

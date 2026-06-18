@@ -39,8 +39,9 @@ export const can = {
   modifierProduits: (r?: string) => isAdmin(r),
   supprimerProduits: (r?: string) => isSuper(r),
   accessStock: (r?: string) => isAdmin(r),
+  accessInventaire: (r?: string) => isAdmin(r),
   accessAchats: (r?: string) => isAdmin(r),
-  accessCmup: (r?: string) => isAdmin(r),
+  accessCmup: (r?: string) => isSuper(r),
   accessScanCode: (r?: string) => !isCaissier(r),
   validerAchat: (r?: string) => isManager(r),
 

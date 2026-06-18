@@ -28,6 +28,7 @@ import {
   PiggyBank,
   Calculator,
   Award,
+  ClipboardList,
 } from 'lucide-react';
 import { useAdminAuth } from '../context/AdminAuthContext';
 import { brand } from '../config/brand';
@@ -115,6 +116,7 @@ export const Sidebar = ({ open, onClose }: SidebarProps) => {
         ...add(can.modifierProduits(role), { label: 'Catégories', icon: Tags, path: '/categories' }),
         ...add(can.modifierProduits(role), { label: 'Attributs', icon: Palette, path: '/attributs' }),
         ...add(can.accessStock(role), { label: 'Mouvements stock', icon: Activity, path: '/stock' }),
+        ...add(can.accessInventaire(role), { label: 'Inventaire', icon: ClipboardList, path: '/inventaire' }),
         ...add(can.accessStock(role), { label: 'Alertes stock', icon: AlertTriangle, path: '/stock-alerts' }),
         ...add(can.accessAchats(role), { label: 'Achats (Réappro)', icon: Truck, path: '/achats' }),
       ],

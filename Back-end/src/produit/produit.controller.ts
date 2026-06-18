@@ -36,7 +36,7 @@ const CHAMPS_COUTS = [
   'dernierAchatAt',
 ];
 const peutVoirCouts = (user: any): boolean =>
-  !!user && ['SUPER_ADMIN', 'ADMIN', 'MANAGER'].includes(user.role);
+  !!user && user.role === 'SUPER_ADMIN';
 const masquerCouts = (p: any): any => {
   if (!p || typeof p !== 'object') return p;
   const copie: any = { ...p };

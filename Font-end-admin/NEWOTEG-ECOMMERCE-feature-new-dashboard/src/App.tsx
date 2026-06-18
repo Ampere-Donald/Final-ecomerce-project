@@ -16,6 +16,7 @@ import { Clients } from './components/Clients';
 import { CreditsClients } from './components/CreditsClients';
 import { Fournisseurs } from './components/Fournisseurs';
 import { MouvementsStock } from './components/MouvementsStock';
+import { Inventaire } from './components/Inventaire';
 import { Caisse } from './components/Caisse';
 import { Coffres } from './components/Coffres';
 import { Echeances } from './components/Echeances';
@@ -52,6 +53,7 @@ export default function App() {
             <Route path="categories" element={<Categories />} />
 
             <Route path="stock" element={<MouvementsStock />} />
+            <Route path="inventaire" element={<RoleProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN']}><Inventaire /></RoleProtectedRoute>} />
             <Route path="stock-alerts" element={<StockAlerts />} />
             <Route path="ventes" element={<Ventes />} />
             <Route path="achats" element={<Achats />} />

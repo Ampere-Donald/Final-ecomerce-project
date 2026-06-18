@@ -378,4 +378,22 @@ export const adminRoleApi = {
     api.patch(`/admin-auth/${id}/role`, { role }).then(r => r.data),
 };
 
+// Inventaire par catégorie/famille + délégations
+export const inventaireApi = {
+  create: (data: { categorieId?: string; codeFamille?: string }) =>
+    api.post('/inventaires', data).then(r => r.data),
+  getAll: () => api.get('/inventaires').then(r => r.data),
+  getOne: (id: string) => api.get(`/inventaires/${id}`).then(r => r.data),
+  comptage: (id: string, lignes: { id: string; stockCompte: number }[]) =>
+    api.patch(`/inventaires/${id}/comptage`, { lignes }).then(r => r.data),
+  valider: (id: string) => api.post(`/inventaires/${id}/valider`, {}).then(r => r.data),
+  annuler: (id: string) => api.post(`/inventaires/${id}/annuler`, {}).then(r => r.data),
+  // Délégations (super admin)
+  listDelegations: () => api.get('/inventaires/delegations').then(r => r.data),
+  accorderDelegation: (data: { adminUserId: string; finAt: string; motif?: string }) =>
+    api.post('/inventaires/delegations', data).then(r => r.data),
+  revoquerDelegation: (id: string) =>
+    api.post(`/inventaires/delegations/${id}/revoquer`, {}).then(r => r.data),
+};
+
 export default api;

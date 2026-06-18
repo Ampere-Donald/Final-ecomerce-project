@@ -7,7 +7,7 @@ import { Roles } from '../admin-auth/roles.decorator';
 
 @Controller('cmup')
 @UseGuards(AdminAuthGuard, RolesGuard)
-@Roles('SUPER_ADMIN', 'ADMIN')
+@Roles('SUPER_ADMIN')
 export class CmupController {
   constructor(private readonly service: CmupService) {}
 

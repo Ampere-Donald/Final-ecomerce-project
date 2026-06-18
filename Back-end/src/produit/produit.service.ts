@@ -230,6 +230,9 @@ export class ProduitService {
       version: { increment: 1 },
     };
     this.retirerPrixSiNonSuperAdmin(updateData, actor);
+    // Le stock ne se modifie JAMAIS par l'édition produit : seulement via
+    // réapprovisionnement, vente, ou inventaire/ajustement tracé.
+    delete updateData.quantiteStock;
 
     if (updateData.finPromo) {
       updateData.finPromo = new Date(updateData.finPromo);
