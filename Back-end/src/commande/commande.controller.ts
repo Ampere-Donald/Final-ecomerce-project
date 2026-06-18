@@ -4,7 +4,9 @@ import {
   Post,
   Body,
   Patch,
+  Delete,
   Param,
+  Query,
   ParseUUIDPipe,
   UseGuards,
   Request,
@@ -69,6 +71,28 @@ export class CommandeController {
   @Get(':id')
   findOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.commandeService.findOne(id);
+  }
+
+  /** Super admin: clean old order history in bulk. */
+  @UseGuards(AdminAuthGuard, RolesGuard)
+  @Roles('SUPER_ADMIN')
+  @Delete('historique/cleanup')
+  cleanupHistory(
+    @Query('before') before?: string,
+    @Query('statut') statut?: string,
+    @Request() req?: any,
+  ) {
+    const actor = { id: req.user.id, nom: req.user.nom, role: req.user.role };
+    return this.commandeService.cleanupHistory({ before, statut }, actor);
+  }
+
+  /** Super admin: delete one obsolete order history entry. */
+  @UseGuards(AdminAuthGuard, RolesGuard)
+  @Roles('SUPER_ADMIN')
+  @Delete(':id')
+  remove(@Param('id', ParseUUIDPipe) id: string, @Request() req: any) {
+    const actor = { id: req.user.id, nom: req.user.nom, role: req.user.role };
+    return this.commandeService.remove(id, actor);
   }
 
   /**

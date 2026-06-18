@@ -4,7 +4,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { MethodePaiement } from '@prisma/client';
+import { Prisma, MethodePaiement } from '@prisma/client';
 import { DatabaseService } from 'src/database/database.service';
 import {
   NotificationActor,
@@ -71,11 +71,13 @@ export class BonVenteService {
           `Stock insuffisant pour ${p.nomProduit} (disponible : ${p.quantiteStock}).`,
         );
       }
-      // Prix saisi par le vendeur, sinon prix de référence du produit
+      // prixPromo = 0 doit être ignoré (pas de promo), seule une valeur > 0 est valide
+      const promoValide = p.prixPromo && this.toNumber(p.prixPromo) > 0 ? p.prixPromo : null;
+      // Prix saisi par le vendeur, sinon prix promo/référence du produit
       const prixUnitaire =
         l.prixUnitaire != null && l.prixUnitaire > 0
           ? this.toNumber(l.prixUnitaire)
-          : this.toNumber(p.prixPromo ?? p.prixDetail ?? 0);
+          : this.toNumber(promoValide ?? p.prixDetail ?? 0);
 
       const produitPrix = {
         prixGros: p.prixGros,
@@ -113,21 +115,23 @@ export class BonVenteService {
       };
     });
 
-    const numeroTicket = await this.generateNumeroTicket();
     const expiresAt = new Date(Date.now() + TICKET_VALIDITY_MS);
 
-    const ticket = await this.db.ticketVente.create({
-      data: {
-        numeroTicket,
-        vendeurId: actor.id,
-        clientId: dto.clientId ?? null,
-        montantTotal,
-        methodePaiement: dto.methodePaiement,
-        expiresAt,
-        lignes: { create: lignesData },
-      },
-      include: { lignes: true },
-    });
+    const ticket = await this.db.$transaction(async (tx) => {
+      const numeroTicket = await this.generateNumeroTicket(tx);
+      return tx.ticketVente.create({
+        data: {
+          numeroTicket,
+          vendeurId: actor.id,
+          clientId: dto.clientId ?? null,
+          montantTotal,
+          methodePaiement: dto.methodePaiement,
+          expiresAt,
+          lignes: { create: lignesData },
+        },
+        include: { lignes: true },
+      });
+    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
 
     this.events.emit(ticket);
 
@@ -136,7 +140,7 @@ export class BonVenteService {
       this.notifications
         .create(
           'VENTE_MAJ',
-          `⚠️ Vente à perte : ${v.nom} vendu ${v.prix} FCFA (coût CMUP ${v.cmup} FCFA) — bon ${numeroTicket} par ${actor.nom}.`,
+          `⚠️ Vente à perte : ${v.nom} vendu ${v.prix} FCFA (coût CMUP ${v.cmup} FCFA) — bon ${ticket.numeroTicket} par ${actor.nom}.`,
           actor,
         )
         .catch(() => {});
@@ -242,8 +246,16 @@ export class BonVenteService {
       where: {
         vendeurId_periode: { vendeurId: ticket.vendeurId, periode },
       },
-      create: { vendeurId: ticket.vendeurId, periode, nombreTickets: 1 },
-      update: { nombreTickets: { increment: 1 } },
+      create: {
+        vendeurId: ticket.vendeurId,
+        periode,
+        nombreTickets: 1,
+        montantTotal: totalTTC,
+      },
+      update: {
+        nombreTickets: { increment: 1 },
+        montantTotal: { increment: totalTTC },
+      },
     });
 
     return { bon: encaisse, facture };
@@ -267,20 +279,12 @@ export class BonVenteService {
 
   // ── Helpers ──────────────────────────────────────────────────────────────
 
-  private async generateNumeroTicket(): Promise<string> {
+  async generateNumeroTicket(tx: { ticketVente: { count: (...a: any[]) => Promise<number> } }): Promise<string> {
     const now = new Date();
     const datePart = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
-    const startOfDay = new Date(
-      now.getFullYear(),
-      now.getMonth(),
-      now.getDate(),
-    );
-    const endOfDay = new Date(
-      now.getFullYear(),
-      now.getMonth(),
-      now.getDate() + 1,
-    );
-    const countToday = await this.db.ticketVente.count({
+    const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+    const countToday = await tx.ticketVente.count({
       where: { createdAt: { gte: startOfDay, lt: endOfDay } },
     });
     return `T-${datePart}-${String(countToday + 1).padStart(4, '0')}`;

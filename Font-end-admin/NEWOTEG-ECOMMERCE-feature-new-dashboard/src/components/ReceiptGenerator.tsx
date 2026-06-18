@@ -15,7 +15,7 @@ interface LigneVente {
 }
 
 export interface ReceiptProps {
-  type: 'ticket' | 'facture';
+  type: 'ticket' | 'facture' | 'proforma' | 'factureVirtuelle';
   lignes: LigneVente[];
   montantTotal: number;
   methodePaiement: string;
@@ -26,8 +26,10 @@ export interface ReceiptProps {
     typeClient?: string;
     adresse?: string;
     nui?: string;
+    rccm?: string;
   };
   dateVente?: string;
+  notes?: string;
   onClose: () => void;
 }
 
@@ -35,12 +37,14 @@ export interface ReceiptProps {
 // Receipt number helpers (localStorage counter per year)
 // ---------------------------------------------------------------------------
 
-export function generateReceiptNumber(type: 'ticket' | 'facture'): string {
+export function generateReceiptNumber(type: 'ticket' | 'facture' | 'proforma'): string {
   const year = new Date().getFullYear();
-  const prefix = type === 'ticket' ? 'TIC' : 'FAC';
+  const prefix = type === 'ticket' ? 'TIC' : type === 'proforma' ? 'FP' : 'FAC';
   const key =
     type === 'ticket'
       ? `newoteg_ticket_counter_${year}`
+      : type === 'proforma'
+      ? `newoteg_proforma_counter_${year}`
       : `newoteg_invoice_counter_${year}`;
 
   const current = parseInt(localStorage.getItem(key) || '0', 10);
@@ -91,10 +95,12 @@ export const ReceiptGenerator: React.FC<ReceiptProps> = (props) => {
     numero,
     client,
     dateVente,
+    notes,
     onClose,
   } = props;
 
-  const [activeType, setActiveType] = React.useState<'ticket' | 'facture'>(initialType);
+  const [activeType, setActiveType] = React.useState<'ticket' | 'facture' | 'proforma' | 'factureVirtuelle'>(initialType === 'factureVirtuelle' ? 'facture' : initialType);
+  const isVirtuelle = initialType === 'factureVirtuelle';
   const printRef = useRef<HTMLDivElement>(null);
 
   // --- TVA calculation (prices are TTC) ---
@@ -134,7 +140,12 @@ export const ReceiptGenerator: React.FC<ReceiptProps> = (props) => {
 
     const pageSize = activeType === 'ticket'
       ? '@page { size: 80mm auto; margin: 5mm; }'
-      : '@page { size: A4 portrait; margin: 10mm; }';
+      : '@page { size: A4 portrait; margin: 8mm; }';
+    const printCompact = activeType !== 'ticket' ? `
+      @media print {
+        table td, table th { padding: 3px 6px !important; font-size: 11px !important; }
+        .facture-footer { break-inside: avoid !important; page-break-inside: avoid !important; }
+      }` : '';
 
     const win = window.open('', '_blank', 'width=900,height=700');
     if (!win) {
@@ -150,7 +161,8 @@ export const ReceiptGenerator: React.FC<ReceiptProps> = (props) => {
   <style>${css}</style>
   <style>
     ${pageSize}
-    body { margin: 0; padding: ${activeType === 'ticket' ? '0' : '20px'}; background: white; }
+    body { margin: 0; padding: ${activeType === 'ticket' ? '0' : '16px'}; background: white; }
+    ${printCompact}
   </style>
 </head>
 <body>${content.innerHTML}</body>
@@ -169,58 +181,189 @@ export const ReceiptGenerator: React.FC<ReceiptProps> = (props) => {
     const container = printRef.current;
     if (!container) return;
 
-    // Supprime temporairement les contraintes overflow/maxHeight
-    const prevOverflow = container.style.overflow;
-    const prevMaxHeight = container.style.maxHeight;
-    container.style.overflow = 'visible';
-    container.style.maxHeight = 'none';
+    // Ticket : html2canvas (format thermique variable, pas de pagination)
+    if (activeType === 'ticket') {
+      const prevOverflow = container.style.overflow;
+      const prevMaxHeight = container.style.maxHeight;
+      container.style.overflow = 'visible';
+      container.style.maxHeight = 'none';
+      try {
+        const [{ default: html2canvas }, { default: jsPDF }] = await Promise.all([
+          import('html2canvas-pro'),
+          import('jspdf'),
+        ]);
+        const target = (container.firstElementChild as HTMLElement) ?? container;
+        const canvas = await html2canvas(target, { scale: 2, useCORS: true, backgroundColor: '#ffffff', logging: false });
+        const imgData = canvas.toDataURL('image/png');
+        const ticketHeight = Math.max(120, Math.ceil((canvas.height * 80) / canvas.width) + 10);
+        const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: [80, ticketHeight] });
+        const margin = 4;
+        const contentWidth = pdf.internal.pageSize.getWidth() - margin * 2;
+        pdf.addImage(imgData, 'PNG', margin, margin, contentWidth, (canvas.height * contentWidth) / canvas.width);
+        pdf.save(`${numero}.pdf`);
+      } catch (err) {
+        console.error('Erreur PDF ticket:', err);
+        alert(`Erreur PDF: ${err instanceof Error ? err.message : String(err)}`);
+      } finally {
+        container.style.overflow = prevOverflow;
+        container.style.maxHeight = prevMaxHeight;
+      }
+      return;
+    }
 
+    // Facture / Proforma : jsPDF natif — pas de coupure de ligne
     try {
-      const [{ default: html2canvas }, { default: jsPDF }] = await Promise.all([
-        import('html2canvas-pro'),
+      const [{ default: jsPDF }, { default: autoTable }] = await Promise.all([
         import('jspdf'),
+        import('jspdf-autotable'),
       ]);
 
-      // Capture l'enfant direct (ticket ou facture), pas le conteneur scrollable
-      const target = (container.firstElementChild as HTMLElement) ?? container;
+      const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+      const W = pdf.internal.pageSize.getWidth();
+      const margin = 14;
+      const label = activeType === 'proforma' ? 'FACTURE PROFORMA' : 'FACTURE';
 
-      const canvas = await html2canvas(target, {
-        scale: 2,
-        useCORS: true,
-        backgroundColor: '#ffffff',
-        logging: false,
+      // ---- En-tête société ----
+      pdf.setFont('helvetica', 'bold');
+      pdf.setFontSize(14);
+      pdf.text('NEWOTEG SARL', margin, 20);
+      pdf.setFont('helvetica', 'normal');
+      pdf.setFontSize(9);
+      pdf.setTextColor(100);
+      pdf.text('Pièces Électroniques', margin, 26);
+      pdf.text('NUI: P00000000000X (placeholder)', margin, 31);
+      pdf.text('RCCM: RC/DLA/2024/X/00000 (placeholder)', margin, 36);
+      pdf.text('Douala, Cameroun | Tél: +237 6XX XXX XXX', margin, 41);
+
+      // ---- En-tête document (droite) ----
+      pdf.setFont('helvetica', 'bold');
+      pdf.setFontSize(13);
+      pdf.setTextColor(30);
+      pdf.text(label, W - margin, 20, { align: 'right' });
+      pdf.setFont('helvetica', 'normal');
+      pdf.setFontSize(9);
+      pdf.setTextColor(80);
+      pdf.text(`N° ${displayNumero}`, W - margin, 27, { align: 'right' });
+      pdf.text(`Date : ${fmtDate(dateVente)}`, W - margin, 33, { align: 'right' });
+
+      // ---- Bloc client ----
+      let cy = 52;
+      pdf.setDrawColor(200);
+      pdf.setFillColor(248, 248, 248);
+      pdf.roundedRect(margin, cy, W - margin * 2, client?.adresse || client?.telephone ? 28 : 20, 2, 2, 'FD');
+      pdf.setFontSize(7.5);
+      pdf.setTextColor(120);
+      pdf.text('FACTURÉ À', margin + 4, cy + 6);
+      pdf.setFontSize(10);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setTextColor(30);
+      pdf.text(client?.nom || 'Client comptoir', margin + 4, cy + 13);
+      pdf.setFont('helvetica', 'normal');
+      pdf.setFontSize(9);
+      pdf.setTextColor(80);
+      let clientY = cy + 19;
+      if (client?.telephone) { pdf.text(`Tél : ${client.telephone}`, margin + 4, clientY); clientY += 5; }
+      if (client?.adresse)   { pdf.text(client.adresse, margin + 4, clientY); clientY += 5; }
+      if (client?.nui)       { pdf.text(`NUI : ${client.nui}`, margin + 4, clientY); clientY += 5; }
+      if (client?.rccm)      { pdf.text(`RCCM : ${client.rccm}`, margin + 4, clientY); }
+
+      // ---- Tableau des lignes ----
+      const tableTop = cy + (client?.adresse || client?.telephone ? 34 : 26);
+      autoTable(pdf, {
+        startY: tableTop,
+        margin: { left: margin, right: margin },
+        head: [['Produit', 'Qté', 'PU HT (FCFA)', 'Total HT (FCFA)']],
+        body: lignesHT.map((l) => [
+          l.nomProduit,
+          String(l.quantite),
+          fmt(l.prixUnitaireHT),
+          fmt(l.sousTotalHT),
+        ]),
+        headStyles: { fillColor: [55, 65, 81], textColor: 255, fontStyle: 'bold', fontSize: 9 },
+        bodyStyles: { fontSize: 9, textColor: 40 },
+        alternateRowStyles: { fillColor: [248, 249, 250] },
+        columnStyles: {
+          0: { cellWidth: 'auto' },
+          1: { halign: 'center', cellWidth: 18 },
+          2: { halign: 'right', cellWidth: 38 },
+          3: { halign: 'right', cellWidth: 38 },
+        },
+        didDrawPage: (_data) => {
+          // numéro de page en pied
+          const pageCount = (pdf as unknown as { internal: { getNumberOfPages: () => number } }).internal.getNumberOfPages();
+          pdf.setFontSize(8);
+          pdf.setTextColor(160);
+          pdf.text(
+            `Page ${pageCount}`,
+            W / 2,
+            pdf.internal.pageSize.getHeight() - 8,
+            { align: 'center' },
+          );
+        },
       });
 
-      const imgData = canvas.toDataURL('image/png');
+      // ---- Totaux ----
+      const finalY = (pdf as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 6;
+      const totalsX = W - margin - 70;
+      pdf.setFontSize(9);
+      pdf.setTextColor(60);
+      pdf.text('Total HT', totalsX, finalY);
+      pdf.text(`${fmt(totalHT)} FCFA`, W - margin, finalY, { align: 'right' });
+      pdf.text('TVA 19,25%', totalsX, finalY + 6);
+      pdf.text(`${fmt(tva)} FCFA`, W - margin, finalY + 6, { align: 'right' });
+      pdf.setDrawColor(30);
+      pdf.line(totalsX, finalY + 9, W - margin, finalY + 9);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setFontSize(10);
+      pdf.setTextColor(20);
+      pdf.text('Total TTC', totalsX, finalY + 15);
+      pdf.text(`${fmt(totalTTC)} FCFA`, W - margin, finalY + 15, { align: 'right' });
 
-      if (activeType === 'ticket') {
-        const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a5' });
-        const pageWidth = pdf.internal.pageSize.getWidth();
-        const margin = 8;
-        const contentWidth = pageWidth - margin * 2;
-        const imgHeight = (canvas.height * contentWidth) / canvas.width;
-        pdf.addImage(imgData, 'PNG', margin, margin, contentWidth, imgHeight);
-        pdf.save(`${numero}.pdf`);
-      } else {
-        const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-        const pageWidth = pdf.internal.pageSize.getWidth();
-        const margin = 10;
-        const contentWidth = pageWidth - margin * 2;
-        const imgHeight = (canvas.height * contentWidth) / canvas.width;
-        pdf.addImage(imgData, 'PNG', margin, margin, contentWidth, imgHeight);
-        pdf.save(`${numero}.pdf`);
+      // ---- Paiement ----
+      pdf.setFont('helvetica', 'normal');
+      pdf.setFontSize(9);
+      pdf.setTextColor(80);
+      pdf.text(`Mode de paiement : ${methodePaiement}`, margin, finalY + 24);
+
+      // ---- Notes proforma ----
+      if (activeType === 'proforma') {
+        const noteText = notes?.trim() || 'Devis valable 30 jours. Prix sous réserve de disponibilité des stocks.';
+        pdf.setFontSize(8);
+        pdf.setTextColor(80);
+        pdf.setFont('helvetica', 'bold');
+        pdf.text('Notes :', margin, finalY + 31);
+        pdf.setFont('helvetica', 'normal');
+        const noteLines = pdf.splitTextToSize(noteText, W - margin * 2 - 15);
+        pdf.text(noteLines, margin + 15, finalY + 31);
       }
+
+      // ---- Conditions ----
+      pdf.setFontSize(8);
+      pdf.setTextColor(140);
+      pdf.setFont('helvetica', 'normal');
+      const conditions = activeType === 'proforma'
+        ? 'Document non fiscal, valable sous réserve de stock disponible.'
+        : 'Paiement à réception.';
+      pdf.text(conditions, margin, finalY + 38);
+
+      // ---- Signature ----
+      const sigY = finalY + 50;
+      pdf.setDrawColor(180);
+      pdf.line(W - margin - 48, sigY, W - margin, sigY);
+      pdf.setFontSize(8);
+      pdf.setTextColor(140);
+      pdf.text('Signature & cachet', W - margin - 24, sigY + 5, { align: 'center' });
+
+      pdf.save(`${numero}.pdf`);
     } catch (err) {
       console.error('Erreur génération PDF:', err);
       alert(`Erreur PDF: ${err instanceof Error ? err.message : String(err)}`);
-    } finally {
-      container.style.overflow = prevOverflow;
-      container.style.maxHeight = prevMaxHeight;
     }
   };
 
   // --- Derived display number ---
-  const displayNumero = numero;
+  const displayNumero = isVirtuelle && !numero.includes('•') ? `${numero} •` : numero;
+  const documentLabel = activeType === 'proforma' ? 'FACTURE PROFORMA' : 'FACTURE';
 
   // -----------------------------------------------------------------------
   // Ticket Compact (80mm thermal — ~302px)
@@ -319,7 +462,7 @@ export const ReceiptGenerator: React.FC<ReceiptProps> = (props) => {
           <p className="text-xs text-gray-500">Tél: {brand.phone}</p>
         </div>
         <div className="text-right">
-          <h2 className="text-lg font-bold text-gray-800">FACTURE</h2>
+          <h2 className="text-lg font-bold text-gray-800">{documentLabel}</h2>
           <p className="text-sm text-gray-600">N° {displayNumero}</p>
           <p className="text-sm text-gray-600">Date: {fmtDate(dateVente)}</p>
         </div>
@@ -334,6 +477,10 @@ export const ReceiptGenerator: React.FC<ReceiptProps> = (props) => {
         {client?.typeClient === 'professionnel' && client?.nui && (
           <p className="text-sm text-gray-600">NUI: {client.nui}</p>
         )}
+        {client?.nui && client?.typeClient !== 'professionnel' && (
+          <p className="text-sm text-gray-600">NUI: {client.nui}</p>
+        )}
+        {client?.rccm && <p className="text-sm text-gray-600">RCCM: {client.rccm}</p>}
       </div>
 
       {/* Table */}
@@ -362,39 +509,54 @@ export const ReceiptGenerator: React.FC<ReceiptProps> = (props) => {
         </tbody>
       </table>
 
-      {/* Totals */}
-      <div className="flex justify-end mb-8">
-        <div className="w-64">
-          <div className="flex justify-between py-1 text-sm">
-            <span>Total HT</span>
-            <span>{fmt(totalHT)} FCFA</span>
-          </div>
-          <div className="flex justify-between py-1 text-sm">
-            <span>TVA 19,25%</span>
-            <span>{fmt(tva)} FCFA</span>
-          </div>
-          <div className="flex justify-between py-2 text-base font-bold border-t-2 border-gray-800 mt-1">
-            <span>Total TTC</span>
-            <span>{fmt(totalTTC)} FCFA</span>
+      {/* Pied de facture — regroupé pour éviter coupure de page */}
+      <div style={{ breakInside: 'avoid', pageBreakInside: 'avoid' }}>
+        {/* Totals */}
+        <div className="flex justify-end mb-4">
+          <div className="w-64">
+            <div className="flex justify-between py-1 text-sm">
+              <span>Total HT</span>
+              <span>{fmt(totalHT)} FCFA</span>
+            </div>
+            <div className="flex justify-between py-1 text-sm">
+              <span>TVA 19,25%</span>
+              <span>{fmt(tva)} FCFA</span>
+            </div>
+            <div className="flex justify-between py-2 text-base font-bold border-t-2 border-gray-800 mt-1">
+              <span>Total TTC</span>
+              <span>{fmt(totalTTC)} FCFA</span>
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Payment method */}
-      <p className="text-sm text-gray-600 mb-6">
-        Mode de paiement : <span className="font-medium">{methodePaiement}</span>
-      </p>
+        {/* Payment method */}
+        <p className="text-sm text-gray-600 mb-3">
+          Mode de paiement : <span className="font-medium">{methodePaiement}</span>
+        </p>
 
-      {/* Conditions */}
-      <div className="border-t border-gray-300 pt-4 mb-8">
-        <p className="text-xs text-gray-500">Conditions : Paiement à réception</p>
-      </div>
+        {/* Notes proforma */}
+        {activeType === 'proforma' && (
+          <div className="border border-gray-200 rounded p-3 mb-3 bg-gray-50">
+            <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Notes</p>
+            <p className="text-sm text-gray-700">
+              {notes?.trim() || 'Devis valable 30 jours. Prix sous réserve de disponibilité des stocks.'}
+            </p>
+          </div>
+        )}
 
-      {/* Signature */}
-      <div className="flex justify-end mt-12">
-        <div className="text-center">
-          <div className="w-48 border-b border-gray-400 mb-1" style={{ height: 60 }} />
-          <p className="text-xs text-gray-500">Signature & cachet</p>
+        {/* Conditions */}
+        <div className="border-t border-gray-300 pt-3 mb-4">
+          <p className="text-xs text-gray-500">
+            Conditions : {activeType === 'proforma' ? 'Document non fiscal, valable sous réserve de stock disponible.' : 'Paiement à réception'}
+          </p>
+        </div>
+
+        {/* Signature */}
+        <div className="flex justify-end mt-4">
+          <div className="text-center">
+            <div className="w-48 border-b border-gray-400 mb-1" style={{ height: 40 }} />
+            <p className="text-xs text-gray-500">Signature & cachet</p>
+          </div>
         </div>
       </div>
     </div>
@@ -446,6 +608,16 @@ export const ReceiptGenerator: React.FC<ReceiptProps> = (props) => {
                 }`}
               >
                 Facture
+              </button>
+              <button
+                onClick={() => setActiveType('proforma')}
+                className={`px-3 py-1.5 transition-colors ${
+                  activeType === 'proforma'
+                    ? 'bg-indigo-600 text-white'
+                    : 'text-gray-300 hover:text-white'
+                }`}
+              >
+                Proforma
               </button>
             </div>
 

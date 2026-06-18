@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { venteApi, produitApi, clientApi, categorieApi } from '../services/api';
+import { FactureVirtuelleModal } from './FactureVirtuelleModal';
 import { ReceiptGenerator, generateReceiptNumber } from './ReceiptGenerator';
 
 /* ── Types ─────────────────────────────────────────────────────── */
@@ -17,6 +18,9 @@ interface CartItem {
   prixCatalogue: number;
   stock: number;
   imageUrl?: string;
+  prixGros?: number | null;
+  quantiteGros?: number | null;
+  modePrix: 'DETAIL' | 'GROS';
 }
 
 const PAYMENT_METHODS = [
@@ -70,6 +74,10 @@ export const Ventes = () => {
   const [lastVente, setLastVente] = useState<any>(null);
   const [showReceipt, setShowReceipt] = useState(false);
   const [receiptType, setReceiptType] = useState<'ticket' | 'facture'>('ticket');
+
+  // ── Facture virtuelle state ──
+  const [showFV, setShowFV] = useState(false);
+  const [fvFactureId, setFvFactureId] = useState<string | null>(null);
 
   // ── History state ──
   const [historySearch, setHistorySearch] = useState('');
@@ -265,10 +273,13 @@ export const Ventes = () => {
         produitId: produit.id,
         nomProduit: produit.nomProduit,
         quantite: 1,
-        prixUnitaire: produit.prixDetail ?? 0,
-        prixCatalogue: produit.prixDetail ?? 0,
+        prixUnitaire: Number(produit.prixDetail ?? 0),
+        prixCatalogue: Number(produit.prixDetail ?? 0),
         stock: produit.quantiteStock ?? 0,
         imageUrl: produit.imageUrl,
+        prixGros: produit.prixGros != null ? Number(produit.prixGros) : null,
+        quantiteGros: produit.quantiteGros != null ? Number(produit.quantiteGros) : null,
+        modePrix: 'DETAIL' as const,
       }];
     });
   };
@@ -278,12 +289,24 @@ export const Ventes = () => {
       if (c.produitId !== produitId) return c;
       const newQty = c.quantite + delta;
       if (newQty < 1 || newQty > c.stock) return c;
-      return { ...c, quantite: newQty };
+      const seuil = c.quantiteGros ?? 0;
+      // Si on repasse sous le seuil, retour automatique en Détail
+      const modePrix = (seuil > 0 && newQty < seuil) ? 'DETAIL' : c.modePrix;
+      const prix = modePrix === 'GROS' && c.prixGros != null ? Number(c.prixGros) : Number(c.prixCatalogue);
+      return { ...c, quantite: newQty, modePrix, prixUnitaire: prix };
     }));
   };
 
   const updatePrice = (produitId: string, price: number) => {
     setCart(prev => prev.map(c => c.produitId === produitId ? { ...c, prixUnitaire: price } : c));
+  };
+
+  const changerModePrix = (produitId: string, mode: 'DETAIL' | 'GROS') => {
+    setCart(prev => prev.map(c => {
+      if (c.produitId !== produitId) return c;
+      const prix = mode === 'GROS' && c.prixGros != null ? Number(c.prixGros) : Number(c.prixCatalogue);
+      return { ...c, modePrix: mode, prixUnitaire: prix };
+    }));
   };
 
   const removeFromCart = (produitId: string) => {
@@ -442,10 +465,18 @@ export const Ventes = () => {
             className="flex items-center gap-2 p-4 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-700 font-medium text-sm">
             <CheckCircle2 size={18} /> {successMessage}
             {lastVente && (
-              <button onClick={() => setShowReceipt(true)}
-                className="ml-auto flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 text-white rounded-lg text-xs font-bold hover:bg-emerald-700 transition-colors">
-                <Receipt size={14} /> Imprimer recu
-              </button>
+              <div className="ml-auto flex items-center gap-2">
+                <button onClick={() => setShowReceipt(true)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 text-white rounded-lg text-xs font-bold hover:bg-emerald-700 transition-colors">
+                  <Receipt size={14} /> Imprimer recu
+                </button>
+                {lastVente.factureId && (
+                  <button onClick={() => { setFvFactureId(lastVente.factureId!); setShowFV(true); }}
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-bold hover:bg-blue-700 transition-colors">
+                    <Receipt size={14} /> Facture virtuelle
+                  </button>
+                )}
+              </div>
             )}
           </motion.div>
         )}
@@ -525,7 +556,7 @@ export const Ventes = () => {
 
                             {/* Price + Stock */}
                             <div className="flex items-center gap-2 flex-shrink-0">
-                              <span className="text-sm font-bold text-primary">{(p.prixDetail ?? 0).toLocaleString()} F</span>
+                              <span className="text-sm font-bold text-primary">{(Number(p.prixDetail ?? 0)).toLocaleString()} F</span>
                               <span className={`text-xs font-bold px-1.5 py-0.5 rounded-full ${outOfStock ? 'bg-red-100 text-red-600' : 'bg-emerald-100 text-emerald-600'}`}>
                                 {p.quantiteStock ?? 0}
                               </span>
@@ -639,7 +670,7 @@ export const Ventes = () => {
                         <p className="text-sm font-semibold text-slate-900 truncate">{p.nomProduit}</p>
                         {p.marque && <p className="text-xs text-slate-400 truncate">{p.marque}</p>}
                         <div className="flex items-center justify-between mt-2">
-                          <span className="text-sm font-bold text-primary">{(p.prixDetail ?? 0).toLocaleString()} F</span>
+                          <span className="text-sm font-bold text-primary">{(Number(p.prixDetail ?? 0)).toLocaleString()} F</span>
                           <span className={`text-xs font-bold px-1.5 py-0.5 rounded-full ${outOfStock ? 'bg-red-100 text-red-600' : 'bg-emerald-100 text-emerald-600'}`}>
                             {p.quantiteStock ?? 0}
                           </span>
@@ -743,6 +774,24 @@ export const Ventes = () => {
                             {priceDiffBadge(item)}
                             <span className="text-xs text-slate-400">Cat: {item.prixCatalogue.toLocaleString()} F</span>
                           </div>
+                          {/* Toggle Détail / Gros — visible uniquement si seuil atteint */}
+                          {item.prixGros != null && item.quantiteGros != null && item.quantite >= item.quantiteGros && (
+                            <div className="mt-1.5 inline-flex rounded-lg border border-slate-200 bg-slate-50 p-0.5 text-[11px] font-semibold">
+                              <button
+                                onClick={() => changerModePrix(item.produitId, 'DETAIL')}
+                                className={`rounded-md px-2 py-0.5 transition-colors ${item.modePrix === 'DETAIL' ? 'bg-white text-primary shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                              >
+                                Détail
+                              </button>
+                              <button
+                                onClick={() => changerModePrix(item.produitId, 'GROS')}
+                                className={`rounded-md px-2 py-0.5 transition-colors ${item.modePrix === 'GROS' ? 'bg-white text-primary shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                                title={item.quantiteGros ? `Seuil conseillé : ${item.quantiteGros} unités` : 'Prix de gros'}
+                              >
+                                Gros {item.quantiteGros ? `(≥${item.quantiteGros})` : ''}
+                              </button>
+                            </div>
+                          )}
                         </div>
                         <button onClick={() => removeFromCart(item.produitId)} className="text-slate-300 hover:text-red-500 transition-colors">
                           <Trash2 size={14} />
@@ -990,7 +1039,7 @@ export const Ventes = () => {
                   <div className="grid grid-cols-2 gap-3">
                     <div className="p-3 bg-primary/5 rounded-xl border border-primary/10">
                       <p className="text-xs font-semibold text-primary mb-1">Prix détail</p>
-                      <p className="text-lg font-bold text-primary">{(selectedProduit.prixDetail ?? 0).toLocaleString()} F</p>
+                      <p className="text-lg font-bold text-primary">{(Number(selectedProduit.prixDetail ?? 0)).toLocaleString()} F</p>
                     </div>
                     <div className="p-3 bg-slate-50 rounded-xl">
                       <p className="text-xs font-semibold text-slate-600 mb-1">Prix gros</p>
@@ -1023,7 +1072,7 @@ export const Ventes = () => {
                       <span className="text-sm font-medium text-amber-700">Produit populaire</span>
                     </div>
                   )}
-                  {selectedProduit.prixPromo && selectedProduit.prixPromo < (selectedProduit.prixDetail ?? 0) && (
+                  {selectedProduit.prixPromo && Number(selectedProduit.prixPromo) < Number(selectedProduit.prixDetail ?? 0) && (
                     <div className="flex items-center gap-2 p-2 bg-red-50 rounded-lg">
                       <span className="text-red-500">🏷️</span>
                       <span className="text-sm font-medium text-red-700">
@@ -1281,6 +1330,20 @@ export const Ventes = () => {
           client={lastVente._client}
           dateVente={lastVente.dateVente}
           onClose={() => setShowReceipt(false)}
+        />
+      )}
+
+      {/* Modal facture virtuelle */}
+      {showFV && fvFactureId && (
+        <FactureVirtuelleModal
+          factureReelleId={fvFactureId}
+          onClose={() => { setShowFV(false); setFvFactureId(null); }}
+          onSuccess={(pending) => {
+            setShowFV(false);
+            setFvFactureId(null);
+            setSuccessMessage(pending ? 'Demande FV envoyée au SUPER_ADMIN.' : 'Facture virtuelle créée !');
+            setTimeout(() => setSuccessMessage(''), 4000);
+          }}
         />
       )}
     </motion.div>

@@ -11,6 +11,7 @@ model Categorie {
   nom         String    @unique @db.VarChar(100)
   description String?
   imageUrl    String?   @map("image_url")
+  quantiteGros Int?      @map("quantite_gros")
   version     Int       @default(1)
   produits    Produit[]
 
@@ -27,8 +28,9 @@ model Produit {
   version              Int              @default(1)
   imageUrl             String?          @map("image_url")
   prixDetail           Float?           @map("prix_detail")
-  prixGros             Float?           @map("prix_gros")
   prixDemiGros         Float?           @map("prix_demi_gros")
+  prixGros             Float?           @map("prix_gros")
+  quantiteGros         Int?             @map("quantite_gros")
   quantiteStock        Int              @default(0) @map("quantite_stock")
   seuilAlerte          Int              @default(5) @map("seuil_alerte")
   urlDatasheet         String?          @map("url_datasheet")
@@ -115,12 +117,16 @@ model Client {
   otpCode      String?     @map("otp_code")
   otpExpiresAt DateTime?   @map("otp_expires_at")
   typeClient   TypeClient  @default(PARTICULIER) @map("type_client")
+  niu          String?     @db.VarChar(50)
+  rccm         String?     @db.VarChar(50)
   googleId     String?     @unique @map("google_id")
   bonsVente    BonVente[]
   commandes    Commande[]
   factures     Facture[]
+  proformas    Proforma[]
   favoris      Favori[]
   ventes       Vente[]
+  facturesVirtuelles FactureVirtuelle[]
 
   @@map("client")
 }
@@ -147,8 +153,9 @@ model Achat {
   fraisTransport     Decimal            @default(0) @map("frais_transport") @db.Decimal(12, 2)
   fraisDouane        Decimal            @default(0) @map("frais_douane") @db.Decimal(12, 2)
   methodeRepartition MethodeRepartition @default(POIDS) @map("methode_repartition")
-  coeffDetailDefault Float              @default(1.3) @map("coeff_detail_default")
-  coeffGrosDefault   Float              @default(1.15) @map("coeff_gros_default")
+  coeffDetailDefault   Float              @default(1.3)  @map("coeff_detail_default")
+  coeffDemiGrosDefault Float              @default(1.22) @map("coeff_demi_gros_default")
+  coeffGrosDefault     Float              @default(1.15) @map("coeff_gros_default")
   fournisseur        Fournisseur        @relation(fields: [fournisseurId], references: [id])
   caisses            Caisse[]
   lignesAchat        LigneAchat[]
@@ -180,10 +187,13 @@ model LigneAchat {
   volumeUtilise          Float?         @map("volume_utilise")
   chargeUnitaire         Decimal?       @map("charge_unitaire") @db.Decimal(12, 2)
   coeffDetail            Float?         @map("coeff_detail")
+  coeffDemiGros          Float?         @map("coeff_demi_gros")
   coeffGros              Float?         @map("coeff_gros")
   prixDetailSuggere      Decimal?       @map("prix_detail_suggere") @db.Decimal(12, 2)
+  prixDemiGrosSuggere    Decimal?       @map("prix_demi_gros_suggere") @db.Decimal(12, 2)
   prixGrosSuggere        Decimal?       @map("prix_gros_suggere") @db.Decimal(12, 2)
   prixDetailFinal        Decimal?       @map("prix_detail_final") @db.Decimal(12, 2)
+  prixDemiGrosFinal      Decimal?       @map("prix_demi_gros_final") @db.Decimal(12, 2)
   prixGrosFinal          Decimal?       @map("prix_gros_final") @db.Decimal(12, 2)
   achat                  Achat          @relation(fields: [achatId], references: [id], onDelete: Cascade)
   produit                Produit        @relation(fields: [produitId], references: [id])
@@ -288,6 +298,7 @@ model Facture {
   vendeur         AdminUser       @relation("FacturesVendeur", fields: [vendeurId], references: [id])
   caissier        AdminUser?      @relation("FacturesCaissier", fields: [caissierId], references: [id])
   lignes          FactureLigne[]
+  factureVirtuelle FactureVirtuelle?
 
   @@map("facture")
 }
@@ -306,11 +317,46 @@ model FactureLigne {
   @@map("facture_ligne")
 }
 
+model Proforma {
+  id             String          @id @default(uuid())
+  numero         String          @unique
+  vendeurId      String          @map("vendeur_id")
+  clientId       String?         @map("client_id")
+  clientNom      String?         @map("client_nom") @db.VarChar(150)
+  clientNiu      String?         @map("client_niu") @db.VarChar(50)
+  clientRccm     String?         @map("client_rccm") @db.VarChar(50)
+  statut         StatutProforma  @default(EN_COURS)
+  dateCreation   DateTime        @default(now()) @map("date_creation")
+  dateExpiration DateTime        @map("date_expiration")
+  montantTotal   Decimal         @default(0) @map("montant_total") @db.Decimal(12, 2)
+  notes          String?
+  lignes         ProformaLigne[]
+  vendeur        AdminUser       @relation("ProformasVendeur", fields: [vendeurId], references: [id])
+  client         Client?         @relation(fields: [clientId], references: [id])
+
+  @@index([statut, dateExpiration])
+  @@index([vendeurId, dateCreation])
+  @@map("proforma")
+}
+
+model ProformaLigne {
+  id           String   @id @default(uuid())
+  proformaId   String   @map("proforma_id")
+  produitId    String?  @map("produit_id")
+  nomProduit   String   @map("nom_produit") @db.VarChar(150)
+  quantite     Int
+  prixUnitaire Decimal  @map("prix_unitaire") @db.Decimal(10, 2)
+  sousTotal    Decimal  @map("sous_total") @db.Decimal(12, 2)
+  proforma     Proforma @relation(fields: [proformaId], references: [id], onDelete: Cascade)
+
+  @@map("proforma_ligne")
+}
 model PrimeVendeur {
   id            String      @id @default(uuid())
   vendeurId     String      @map("vendeur_id")
   periode       String
   nombreTickets Int         @default(0) @map("nombre_tickets")
+  montantTotal  Decimal     @default(0) @map("montant_total") @db.Decimal(12, 2)
   statut        StatutPrime @default(EN_COURS)
   valideeById   String?     @map("validee_by")
   valideeAt     DateTime?   @map("validee_at")
@@ -337,6 +383,7 @@ model Vente {
   lignesVente     LigneVente[]
   reglements      Reglement[]
   ticket          TicketVente?
+  factureVirtuelle FactureVirtuelle?
   client          Client?         @relation(fields: [clientId], references: [id])
   vendeur         AdminUser?      @relation("VenteVendeur", fields: [vendeurId], references: [id])
 
@@ -666,7 +713,10 @@ model AdminUser {
   primesVendeur       PrimeVendeur[] @relation("PrimesVendeur")
   primesValidees      PrimeVendeur[] @relation("PrimesValidees")
   ticketsVendeur      TicketVente[]  @relation("TicketsVendeur")
+  proformasVendeur    Proforma[]     @relation("ProformasVendeur")
   ventesEffectuees    Vente[]        @relation("VenteVendeur")
+  facturesVirtuellesVendeur    FactureVirtuelle[]  @relation("FacturesVirtuellesVendeur")
+  facturesVirtuellesApprouveur FactureVirtuelle[]  @relation("FacturesVirtuellesApprouveur")
 
   @@map("admin_user")
 }
@@ -800,6 +850,11 @@ enum StatutPrime {
   PAYEE
 }
 
+enum StatutProforma {
+  EN_COURS
+  ACCEPTEE
+  TRANSFORMEE
+}
 enum TypeFacture {
   FACTURE
   TICKET_CAISSE
@@ -920,4 +975,63 @@ enum TypeNotification {
   BON_VALIDE
   BON_ANNULE
   PRIME_MAJ
+  FACTURE_VIRTUELLE_DEMANDE
+  FACTURE_VIRTUELLE_APPROUVEE
+  FACTURE_VIRTUELLE_REFUSEE
 }
+
+enum StatutFactureVirtuelle {
+  EN_ATTENTE
+  APPROUVEE
+  REFUSEE
+}
+
+enum ModeMajoration {
+  GLOBAL
+  PAR_LIGNE
+}
+
+model FactureVirtuelle {
+  id                    String                   @id @default(uuid())
+  numero                String                   @unique
+  factureReelleId       String                   @unique @map("facture_reelle_id")
+  venteId               String                   @unique @map("vente_id")
+  clientId              String?                  @map("client_id")
+  vendeurId             String                   @map("vendeur_id")
+  approuveurId          String?                  @map("approuveur_id")
+  dateCreation          DateTime                 @default(now()) @map("date_creation")
+  dateApprobation       DateTime?                @map("date_approbation")
+  pourcentageMajoration Decimal                  @map("pourcentage_majoration") @db.Decimal(5, 2)
+  totalTTC              Decimal                  @map("total_ttc") @db.Decimal(12, 2)
+  totalReelTTC          Decimal                  @map("total_reel_ttc") @db.Decimal(12, 2)
+  margeDemarcheur       Decimal                  @map("marge_demarcheur") @db.Decimal(12, 2)
+  modeMajoration        ModeMajoration           @default(GLOBAL) @map("mode_majoration")
+  statut                StatutFactureVirtuelle   @default(EN_ATTENTE)
+  motifRefus            String?                  @map("motif_refus")
+  printCount            Int                      @default(0) @map("print_count")
+
+  factureReelle         Facture                  @relation(fields: [factureReelleId], references: [id])
+  vente                 Vente                    @relation(fields: [venteId], references: [id])
+  client                Client?                  @relation(fields: [clientId], references: [id])
+  vendeur               AdminUser                @relation("FacturesVirtuellesVendeur", fields: [vendeurId], references: [id])
+  approuveur            AdminUser?               @relation("FacturesVirtuellesApprouveur", fields: [approuveurId], references: [id])
+  lignes                FactureVirtuelleLigne[]
+
+  @@map("facture_virtuelle")
+}
+
+model FactureVirtuelleLigne {
+  id                    String             @id @default(uuid())
+  factureVirtuelleId    String             @map("facture_virtuelle_id")
+  nomProduit            String             @map("nom_produit") @db.VarChar(150)
+  quantite              Int
+  prixUnitaireReelTTC   Decimal            @map("prix_unitaire_reel_ttc") @db.Decimal(10, 2)
+  pourcentageLigne      Decimal            @map("pourcentage_ligne") @db.Decimal(5, 2)
+  prixUnitaireTTC       Decimal            @map("prix_unitaire_ttc") @db.Decimal(10, 2)
+  sousTotalTTC          Decimal            @map("sous_total_ttc") @db.Decimal(12, 2)
+
+  factureVirtuelle      FactureVirtuelle   @relation(fields: [factureVirtuelleId], references: [id], onDelete: Cascade)
+
+  @@map("facture_virtuelle_ligne")
+}
+

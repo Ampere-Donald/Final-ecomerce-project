@@ -78,11 +78,13 @@ export class TicketVenteService {
           `Stock insuffisant pour ${p.nomProduit} (disponible : ${p.quantiteStock}).`,
         );
       }
-      // Prix saisi (POS), sinon prix de référence du produit
+      // prixPromo = 0 doit être ignoré (pas de promo), seule une valeur > 0 est valide
+      const promoValide = p.prixPromo && this.toNumber(p.prixPromo) > 0 ? p.prixPromo : null;
+      // Prix saisi (POS), sinon prix promo/référence du produit
       const prixUnitaire =
         l.prixUnitaire != null && l.prixUnitaire > 0
           ? this.toNumber(l.prixUnitaire)
-          : this.toNumber(p.prixPromo ?? p.prixDetail ?? 0);
+          : this.toNumber(promoValide ?? p.prixDetail ?? 0);
 
       const produitPrix = {
         prixGros: p.prixGros,
@@ -287,27 +289,47 @@ export class TicketVenteService {
         },
       });
 
-      // 2. Décrémenter stock de façon atomique (re-vérification au moment de l'encaissement — audit P2)
-      for (const l of ticket.lignes) {
-        const updated = await tx.produit.updateMany({
-          where: { id: l.produitId, quantiteStock: { gte: l.quantite } },
-          data: { quantiteStock: { decrement: l.quantite } },
-        });
-        if (updated.count === 0) {
-          const p = await tx.produit.findUnique({ where: { id: l.produitId }, select: { nomProduit: true, quantiteStock: true } });
-          throw new BadRequestException(
-            `Stock insuffisant pour ${p?.nomProduit ?? l.nomProduit}. Disponible: ${p?.quantiteStock ?? 0}, Demandé: ${l.quantite}`,
-          );
-        }
-        await tx.mouvementStock.create({
-          data: {
-            produitId: l.produitId,
-            typeMouvement: 'SORTIE',
-            quantite: l.quantite,
-            motif: `Vente ticket ${ticket.numeroTicket}`,
-          },
-        });
+      // 2. Décrémenter stock en parallèle (re-vérification atomique — audit P2)
+      const stockResults = await Promise.all(
+        ticket.lignes.map((l) =>
+          tx.produit.updateMany({
+            where: { id: l.produitId, quantiteStock: { gte: l.quantite } },
+            data: { quantiteStock: { decrement: l.quantite } },
+          }),
+        ),
+      );
+      const insuffisant = stockResults
+        .map((r, i) => (r.count === 0 ? ticket.lignes[i] : null))
+        .filter(Boolean);
+      if (insuffisant.length > 0) {
+        // Récupérer les données réelles (en parallèle) pour le message d'erreur
+        const details = await Promise.all(
+          insuffisant.map((l) =>
+            tx.produit.findUnique({
+              where: { id: l!.produitId },
+              select: { nomProduit: true, quantiteStock: true },
+            }),
+          ),
+        );
+        throw new BadRequestException(
+          details
+            .map((p, i) => `Stock insuffisant pour ${p?.nomProduit ?? insuffisant[i]!.nomProduit} (dispo: ${p?.quantiteStock ?? 0}, demandé: ${insuffisant[i]!.quantite})`)
+            .join(' | '),
+        );
       }
+      // Créer les mouvements de stock en parallèle
+      await Promise.all(
+        ticket.lignes.map((l) =>
+          tx.mouvementStock.create({
+            data: {
+              produitId: l.produitId,
+              typeMouvement: 'SORTIE',
+              quantite: l.quantite,
+              motif: `Vente ticket ${ticket.numeroTicket}`,
+            },
+          }),
+        ),
+      );
 
       // 3. Pour le crédit : tracer l'acompte comme premier règlement
       let reglementId: string | null = null;

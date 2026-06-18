@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+﻿import React, { useEffect, useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   Wallet,
@@ -11,8 +11,18 @@ import {
   X,
   RefreshCw,
   CheckCircle2,
+  FileText,
+  Printer,
+  Search,
 } from 'lucide-react';
-import { caisseJourApi } from '../services/api';
+import { caisseJourApi, factureApi, getApiErrorMessage } from '../services/api';
+import { useAdminAuth } from '../context/AdminAuthContext';
+import { FileCaissier } from './FileCaissier';
+import { ReceiptGenerator } from './ReceiptGenerator';
+import { FactureVirtuelleModal } from './FactureVirtuelleModal';
+import { useToast } from './ui/Toast';
+import { Proformas } from './Proformas';
+import { Invoices } from './Invoices';
 
 interface Operation {
   id: string;
@@ -31,6 +41,20 @@ interface CaisseJourData {
   statut: 'OUVERTE' | 'FERMEE';
   soldeCloture?: string | number | null;
   solde: number;
+}
+
+interface FactureJour {
+  id: string;
+  numero: string;
+  type: 'FACTURE' | 'TICKET_CAISSE';
+  dateEmission: string;
+  totalTTC: number | string;
+  methodePaiement: string;
+  printCount: number;
+  vendeur?: { nom: string } | null;
+  caissier?: { nom: string } | null;
+  client?: { nom: string; telephone?: string } | null;
+  lignes?: Array<{ nomProduit: string; quantite: number; sousTotalTTC: number | string }>;
 }
 
 const fmtFCFA = (n: number | string): string => {
@@ -57,8 +81,13 @@ const fmtHeure = (d: string): string =>
 export const CaisseJour = () => {
   const [cj, setCj] = useState<CaisseJourData | null>(null);
   const [operations, setOperations] = useState<Operation[]>([]);
+  const [facturesJour, setFacturesJour] = useState<FactureJour[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'encaisser' | 'encaissements' | 'mouvements' | 'proformas' | 'factures'>('encaisser');
+  const [searchFacture, setSearchFacture] = useState('');
+  const [printingFacture, setPrintingFacture] = useState<string | null>(null);
+  const [receiptFacture, setReceiptFacture] = useState<FactureJour | null>(null);
 
   // Modal ajout opération
   const [showAdd, setShowAdd] = useState(false);
@@ -74,6 +103,18 @@ export const CaisseJour = () => {
   const [fermerSubmitting, setFermerSubmitting] = useState(false);
   const [fermerError, setFermerError] = useState<string | null>(null);
 
+  // Modal réouverture (SUPER_ADMIN uniquement)
+  const [showRouvrir, setShowRouvrir] = useState(false);
+  const [rouvrirSubmitting, setRouvrirSubmitting] = useState(false);
+  const [rouvrirError, setRouvrirError] = useState<string | null>(null);
+
+  // Modal facture virtuelle
+  const [showFV, setShowFV] = useState(false);
+  const [fvFactureId, setFvFactureId] = useState<string | null>(null);
+
+  const { admin } = useAdminAuth();
+  const toast = useToast();
+
   const charger = async () => {
     setError(null);
     try {
@@ -83,8 +124,10 @@ export const CaisseJour = () => {
         const detail = await caisseJourApi.getOne(data.id);
         setOperations(detail.operations || []);
       }
+      const factures = await factureApi.getAll();
+      setFacturesJour(Array.isArray(factures) ? factures : []);
     } catch (e: any) {
-      setError(e?.response?.data?.message || 'Erreur de chargement.');
+      setError(getApiErrorMessage(e, 'Erreur de chargement.'));
     } finally {
       setLoading(false);
     }
@@ -107,6 +150,44 @@ export const CaisseJour = () => {
     }
     return { entrees: e, sorties: s };
   }, [operations]);
+
+  const encaissementsDuJour = useMemo(() => {
+    if (!cj?.date) return [];
+    const target = new Date(cj.date).toDateString();
+    return facturesJour.filter((f) => new Date(f.dateEmission).toDateString() === target);
+  }, [cj?.date, facturesJour]);
+
+  const encaissementsFiltres = useMemo(() => {
+    const q = searchFacture.trim().toLowerCase();
+    if (!q) return encaissementsDuJour;
+    return encaissementsDuJour.filter(
+      (f) =>
+        f.numero.toLowerCase().includes(q) ||
+        f.vendeur?.nom.toLowerCase().includes(q) ||
+        f.caissier?.nom.toLowerCase().includes(q) ||
+        f.client?.nom.toLowerCase().includes(q),
+    );
+  }, [encaissementsDuJour, searchFacture]);
+
+  const totalEncaissements = useMemo(
+    () => encaissementsDuJour.reduce((sum, f) => sum + (Number(f.totalTTC) || 0), 0),
+    [encaissementsDuJour],
+  );
+
+  const handlePrintFacture = async (f: FactureJour) => {
+    setPrintingFacture(f.id);
+    try {
+      await factureApi.print(f.id);
+      setFacturesJour((prev) =>
+        prev.map((x) => x.id === f.id ? { ...x, printCount: (x.printCount || 0) + 1 } : x),
+      );
+      setReceiptFacture(f);
+    } catch {
+      setReceiptFacture(f);
+    } finally {
+      setPrintingFacture(null);
+    }
+  };
 
   const handleAddOperation = async () => {
     if (!cj) return;
@@ -154,6 +235,22 @@ export const CaisseJour = () => {
       setFermerError(Array.isArray(msg) ? msg.join(', ') : String(msg));
     } finally {
       setFermerSubmitting(false);
+    }
+  };
+
+  const handleRouvrir = async () => {
+    if (!cj) return;
+    setRouvrirError(null);
+    setRouvrirSubmitting(true);
+    try {
+      await caisseJourApi.rouvrir(cj.id);
+      setShowRouvrir(false);
+      await charger();
+    } catch (e: any) {
+      const msg = e?.response?.data?.message || e?.message;
+      setRouvrirError(Array.isArray(msg) ? msg.join(', ') : String(msg));
+    } finally {
+      setRouvrirSubmitting(false);
     }
   };
 
@@ -211,6 +308,15 @@ export const CaisseJour = () => {
               </button>
             </>
           )}
+          {!ouverte && admin?.role === 'SUPER_ADMIN' && (
+            <button
+              onClick={() => setShowRouvrir(true)}
+              className="flex items-center gap-2 px-3 py-2 text-sm font-bold bg-amber-500 text-white rounded-lg hover:bg-amber-600"
+            >
+              <RefreshCw size={14} />
+              Rouvrir la caisse
+            </button>
+          )}
         </div>
       </div>
 
@@ -230,6 +336,26 @@ export const CaisseJour = () => {
           </span>
         </div>
       )}
+
+      <div className="flex flex-wrap gap-2 rounded-xl border border-slate-200 bg-white p-2">
+        {([
+          ['encaisser', 'À encaisser'],
+          ['encaissements', 'Encaissements'],
+          ['mouvements', 'Mouvements'],
+          ['proformas', 'Proformas'],
+          ['factures', 'Factures'],
+        ] as const).map(([key, label]) => (
+          <button
+            key={key}
+            onClick={() => setActiveTab(key)}
+            className={`rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${
+              activeTab === key ? 'bg-primary text-white' : 'text-slate-600 hover:bg-slate-100'
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="bg-white p-5 rounded-2xl border border-slate-200">
@@ -255,6 +381,106 @@ export const CaisseJour = () => {
         </div>
       </div>
 
+      {activeTab === 'encaisser' && (
+        <FileCaissier />
+      )}
+
+      {activeTab === 'encaissements' && (
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div className="rounded-2xl border border-slate-200 bg-white p-5">
+              <p className="text-sm text-slate-500">Encaissements du jour</p>
+              <p className="mt-1 text-2xl font-bold text-slate-900">{encaissementsDuJour.length}</p>
+            </div>
+            <div className="rounded-2xl border border-slate-200 bg-white p-5">
+              <p className="text-sm text-slate-500">Montant encaissé</p>
+              <p className="mt-1 text-2xl font-bold text-primary">{fmtFCFA(totalEncaissements)}</p>
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-slate-200 bg-white">
+            <div className="flex flex-col gap-3 border-b border-slate-100 p-5 md:flex-row md:items-center md:justify-between">
+              <div>
+                <h3 className="font-bold text-slate-900">Tickets et factures du jour</h3>
+                <p className="text-sm text-slate-500">Historique imprimable des ventes encaissées aujourd'hui.</p>
+              </div>
+              <div className="relative w-full md:w-80">
+                <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input
+                  value={searchFacture}
+                  onChange={(e) => setSearchFacture(e.target.value)}
+                  placeholder="Rechercher numero, client..."
+                  className="w-full rounded-lg border border-slate-200 bg-slate-50 py-2 pl-9 pr-3 text-sm outline-none focus:border-primary"
+                />
+              </div>
+            </div>
+
+            {encaissementsFiltres.length === 0 ? (
+              <div className="py-12 text-center text-slate-400">
+                <FileText size={36} className="mx-auto mb-2 opacity-40" />
+                <p className="text-sm">Aucun encaissement trouve pour cette date.</p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead className="border-b border-slate-100 bg-slate-50 text-xs uppercase tracking-wider text-slate-500">
+                    <tr>
+                      <th className="px-4 py-3 text-left">Numero</th>
+                      <th className="px-4 py-3 text-left">Type</th>
+                      <th className="px-4 py-3 text-left">Heure</th>
+                      <th className="px-4 py-3 text-left">Vendeur</th>
+                      <th className="px-4 py-3 text-left">Client</th>
+                      <th className="px-4 py-3 text-right">Total</th>
+                      <th className="px-4 py-3 text-center">Impressions</th>
+                      <th className="px-4 py-3 text-center">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-50">
+                    {encaissementsFiltres.map((f) => (
+                      <tr key={f.id} className="hover:bg-slate-50">
+                        <td className="px-4 py-3 font-mono text-xs font-bold text-slate-900">{f.numero}</td>
+                        <td className="px-4 py-3">
+                          <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-bold text-slate-700">
+                            {f.type === 'TICKET_CAISSE' ? 'Ticket' : 'Facture'}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-slate-500">{fmtHeure(f.dateEmission)}</td>
+                        <td className="px-4 py-3 text-slate-700">{f.vendeur?.nom ?? '-'}</td>
+                        <td className="px-4 py-3 text-slate-600">{f.client?.nom ?? 'Comptoir'}</td>
+                        <td className="px-4 py-3 text-right font-bold text-primary">{fmtFCFA(f.totalTTC)}</td>
+                        <td className="px-4 py-3 text-center text-slate-500">{f.printCount || 0}</td>
+                        <td className="px-4 py-3 text-center">
+                          <div className="flex items-center justify-center gap-1">
+                            <button
+                              onClick={() => handlePrintFacture(f)}
+                              disabled={printingFacture === f.id}
+                              className="inline-flex items-center gap-1.5 rounded-lg bg-slate-100 px-2.5 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-200 disabled:opacity-50"
+                              title="Imprimer"
+                            >
+                              <Printer size={13} />
+                              {printingFacture === f.id ? '...' : 'Imprimer'}
+                            </button>
+                            <button
+                              onClick={() => { setFvFactureId(f.id); setShowFV(true); }}
+                              className="inline-flex items-center gap-1 rounded-lg bg-blue-50 px-2.5 py-1.5 text-xs font-medium text-blue-700 hover:bg-blue-100"
+                              title="Facture virtuelle"
+                            >
+                              <FileText size={13} />
+                              FV
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'mouvements' && (
       <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
         <div className="p-5 border-b border-slate-100">
           <h3 className="font-bold text-slate-900">Opérations</h3>
@@ -308,6 +534,13 @@ export const CaisseJour = () => {
           </div>
         )}
       </div>
+
+      )}
+
+
+      {activeTab === 'proformas' && <Proformas />}
+
+      {activeTab === 'factures' && <Invoices />}
 
       {/* Modal Ajouter opération */}
       <AnimatePresence>
@@ -494,6 +727,111 @@ export const CaisseJour = () => {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Modal Rouvrir la caisse — SUPER_ADMIN uniquement */}
+      <AnimatePresence>
+        {showRouvrir && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+            onClick={() => !rouvrirSubmitting && setShowRouvrir(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-white rounded-2xl shadow-2xl max-w-md w-full"
+            >
+              <div className="flex items-center justify-between p-5 border-b border-slate-100">
+                <h3 className="font-bold text-lg text-slate-900">
+                  Rouvrir la caisse du jour
+                </h3>
+                <button
+                  onClick={() => !rouvrirSubmitting && setShowRouvrir(false)}
+                  className="p-1 text-slate-400 hover:text-slate-700"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+              <div className="p-5 space-y-4">
+                <div className="p-4 bg-amber-50 rounded-lg border border-amber-200 text-amber-900 text-sm space-y-2">
+                  <p className="font-bold flex items-center gap-2">
+                    <AlertCircle size={16} />
+                    Action sensible — Traçabilité activée
+                  </p>
+                  <p>
+                    Cette action réouvrira la caisse fermée du{' '}
+                    <strong>{cj ? fmtDateLong(cj.date) : ''}</strong>.
+                  </p>
+                  <p>
+                    Elle sera <strong>enregistrée dans l'audit</strong> avec votre
+                    identifiant, l'heure et la date. Toute réouverture non justifiée
+                    engage votre responsabilité.
+                  </p>
+                </div>
+                {rouvrirError && (
+                  <div className="flex items-center gap-2 p-2 rounded bg-red-50 text-red-700 text-sm border border-red-200">
+                    <AlertCircle size={14} />
+                    {rouvrirError}
+                  </div>
+                )}
+              </div>
+              <div className="p-5 border-t border-slate-100 flex gap-2">
+                <button
+                  onClick={() => !rouvrirSubmitting && setShowRouvrir(false)}
+                  disabled={rouvrirSubmitting}
+                  className="flex-1 px-4 py-2.5 border border-slate-200 text-slate-700 font-medium rounded-lg hover:bg-slate-50 disabled:opacity-50"
+                >
+                  Annuler
+                </button>
+                <button
+                  onClick={handleRouvrir}
+                  disabled={rouvrirSubmitting}
+                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-amber-500 text-white font-bold rounded-lg hover:bg-amber-600 disabled:opacity-50"
+                >
+                  <RefreshCw size={16} />
+                  {rouvrirSubmitting ? 'Réouverture…' : 'Confirmer la réouverture'}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Modal facture virtuelle */}
+      {showFV && fvFactureId && (
+        <FactureVirtuelleModal
+          factureReelleId={fvFactureId}
+          onClose={() => { setShowFV(false); setFvFactureId(null); }}
+          onSuccess={(pending) => {
+            setShowFV(false);
+            setFvFactureId(null);
+            toast.success(pending ? 'Demande envoyée au SUPER_ADMIN pour approbation.' : 'Facture virtuelle créée !');
+          }}
+        />
+      )}
+
+      {receiptFacture && (
+        <ReceiptGenerator
+          type={receiptFacture.type === 'FACTURE' ? 'facture' : 'ticket'}
+          numero={receiptFacture.numero}
+          dateVente={receiptFacture.dateEmission}
+          methodePaiement={receiptFacture.methodePaiement}
+          montantTotal={Number(receiptFacture.totalTTC)}
+          client={receiptFacture.client ? { nom: receiptFacture.client.nom, telephone: receiptFacture.client.telephone } : undefined}
+          lignes={(receiptFacture.lignes || []).map((l) => ({
+            nomProduit: l.nomProduit,
+            quantite: l.quantite,
+            prixUnitaire: l.quantite > 0 ? Math.round(Number(l.sousTotalTTC) / l.quantite) : 0,
+            sousTotal: Number(l.sousTotalTTC),
+          }))}
+          onClose={() => setReceiptFacture(null)}
+        />
+      )}
     </motion.div>
   );
 };
+

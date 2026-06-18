@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import {
-  PlusCircle, Search, Download, ShoppingBag, X, Pencil, Trash2, Eye,
+  PlusCircle, Search, Download, Upload, ShoppingBag, X, Pencil, Trash2, Eye,
   Package, Calendar, RefreshCw, CheckCircle, XCircle, AlertTriangle, Plus, Minus,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -19,6 +19,7 @@ interface LotConfig {
   fraisDouane: number;
   methodeRepartition: MethodeRepartition;
   coeffDetailDefault: number;
+  coeffDemiGrosDefault: number;
   coeffGrosDefault: number;
 }
 
@@ -32,10 +33,13 @@ interface LotLigne {
   autofill: boolean;
   chargeUnitaire: number;
   coeffDetail: number;
+  coeffDemiGros: number;
   coeffGros: number;
   prixDetailSuggere: number;
+  prixDemiGrosSuggere: number;
   prixGrosSuggere: number;
   prixDetailFinal: number | '';
+  prixDemiGrosFinal: number | '';
   prixGrosFinal: number | '';
 }
 
@@ -43,6 +47,8 @@ interface LigneForme {
   produitId: string;
   quantite: number;
   prixUnitaireDevise: number;
+  poids?: number;
+  volume?: number;
 }
 
 interface FormState {
@@ -197,7 +203,7 @@ const ProduitSearch = ({ value, produits, onChange }: ProduitSearchProps) => {
           <input type="text" value={codeProd} autoComplete="off"
             onChange={e => { setCodeProd(e.target.value); setOpen(true); }}
             onFocus={() => setOpen(true)}
-            placeholder="Code (ex: 101001)"
+            placeholder="Code article (ex: 101001)"
             className="w-1/2 px-2 py-2 bg-white border border-indigo-200 rounded-lg text-xs font-mono focus:ring-2 focus:ring-indigo-300 outline-none" />
         </div>
       )}
@@ -260,6 +266,10 @@ export const Achats = () => {
   const [isSubmitting, setIsSubmitting]   = useState(false);
   const [tauxLoading, setTauxLoading]     = useState(false);
 
+  // ── Import CSV des lignes ──
+  const csvInputRef = useRef<HTMLInputElement>(null);
+  const [csvReport, setCsvReport] = useState<{ added: number; updated: number; withDims: number; unmatched: string[] } | null>(null);
+
   // ── CMUP Preview ──
   const [cmupPreview, setCmupPreview]     = useState<{ lignes: CmupLigne[]; totalDevise: number; totalFcfa: number } | null>(null);
   const [cmupLoading, setCmupLoading]     = useState(false);
@@ -270,7 +280,7 @@ export const Achats = () => {
   const [lotConfig, setLotConfig]         = useState<LotConfig>({
     fraisTransport: 0, fraisDouane: 0,
     methodeRepartition: 'POIDS',
-    coeffDetailDefault: 1.3, coeffGrosDefault: 1.15,
+    coeffDetailDefault: 1.3, coeffDemiGrosDefault: 1.22, coeffGrosDefault: 1.15,
   });
   const [lotLignes, setLotLignes]         = useState<LotLigne[]>([]);
   const [lotAvertissements, setLotAvertissements] = useState<string[]>([]);
@@ -358,6 +368,7 @@ export const Achats = () => {
     setEditingAchat(null);
     setForm({ ...FORM_INITIAL });
     setCmupPreview(null);
+    setCsvReport(null);
     setIsFormOpen(true);
   };
 
@@ -384,11 +395,159 @@ export const Achats = () => {
     setIsFormOpen(false);
     setEditingAchat(null);
     setCmupPreview(null);
+    setCsvReport(null);
   };
 
   // ─── Gestion des lignes ──────────────────────────────────────────
   const addLigne = () =>
     updateForm({ lignes: [...form.lignes, { produitId: '', quantite: 1, prixUnitaireDevise: 0 }] });
+
+  // ─── Import CSV des lignes produits ──────────────────────────────
+  // Colonnes (insensible accents/casse) :
+  // code_famille, code, devise, taux_change, quantite, prix_unitaire, poids, volume
+  const downloadCsvTemplate = () => {
+    const csv = '﻿' + [
+      'code_famille,code,devise,taux_change,quantite,prix_unitaire,poids,volume',
+      '101,101001,CNY,82.5,10,35.5,1.2,800',
+      '102,102050,CNY,82.5,5,12,0.5,300',
+    ].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'modele_achat.csv';
+    document.body.appendChild(link); link.click(); document.body.removeChild(link);
+  };
+
+  interface CsvRow {
+    produitId: string;
+    quantite: number;
+    prixUnitaireDevise: number;
+    poids?: number;
+    volume?: number;
+  }
+
+  const parseCsvLignes = (text: string) => {
+    const norm = (s: string) =>
+      s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]/g, '');
+    const num = (s: string) => parseFloat((s ?? '').replace(/\s/g, '').replace(',', '.'));
+    const rawLines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+    const empty = { rows: [] as CsvRow[], unmatched: [] as string[], devise: undefined as Devise | undefined, taux: undefined as number | undefined };
+    if (!rawLines.length) return empty;
+
+    const header = rawLines[0];
+    const delim = (header.match(/;/g)?.length ?? 0) > (header.match(/,/g)?.length ?? 0) ? ';' : ',';
+    const split = (l: string) => l.split(delim).map(c => c.trim().replace(/^"(.*)"$/, '$1'));
+
+    const cols = split(header).map(norm);
+    // Résolution stricte (exact d'abord) pour éviter que "code" matche "code_famille"
+    const resolve = (exacts: string[], partials: string[] = []) => {
+      for (const k of exacts) { const i = cols.indexOf(norm(k)); if (i !== -1) return i; }
+      for (const k of partials) { const i = cols.findIndex(c => c.includes(norm(k))); if (i !== -1) return i; }
+      return -1;
+    };
+    const iFam    = resolve(['codefamille', 'famille', 'codefam'], ['famille']);
+    const iCode   = resolve(['code']);
+    const iDevise = resolve(['devise', 'currency', 'monnaie'], ['devise']);
+    const iTaux   = resolve(['tauxchange', 'taux', 'tauxversfcfa'], ['taux']);
+    const iQte    = resolve(['quantite', 'qte', 'qty'], ['quantite', 'qte']);
+    const iPrix   = resolve(['prixunitaire', 'prixunitairedevise', 'prix', 'cout', 'cost'], ['prix', 'cout']);
+    const iPoids  = resolve(['poids', 'weight', 'kg'], ['poids']);
+    const iVolume = resolve(['volume', 'cm3', 'vol'], ['volume']);
+    const hasHeader = [iFam, iCode, iDevise, iTaux, iQte, iPrix, iPoids, iVolume].some(i => i !== -1);
+
+    // Sans en-tête reconnu : ordre du modèle
+    const map = hasHeader
+      ? { fam: iFam, code: iCode, devise: iDevise, taux: iTaux, qte: iQte, prix: iPrix, poids: iPoids, volume: iVolume }
+      : { fam: 0, code: 1, devise: 2, taux: 3, qte: 4, prix: 5, poids: 6, volume: 7 };
+
+    const dataLines = hasHeader ? rawLines.slice(1) : rawLines;
+    const rows: CsvRow[] = [];
+    const unmatched: string[] = [];
+    let devise: Devise | undefined;
+    let taux: number | undefined;
+
+    for (const line of dataLines) {
+      const cells = split(line);
+      const get = (i: number) => (i >= 0 && i < cells.length ? cells[i] : '');
+      const fam  = get(map.fam).trim();
+      const code = get(map.code).trim();
+      const qte  = parseInt(get(map.qte), 10);
+      const prix = num(get(map.prix));
+      const poids  = num(get(map.poids));
+      const volume = num(get(map.volume));
+      if (!fam && !code) continue; // ligne vide
+
+      // Devise / taux : pris sur la première ligne qui les renseigne
+      if (!devise) {
+        const d = get(map.devise).trim().toUpperCase();
+        if ((DEVISES as string[]).includes(d)) devise = d as Devise;
+      }
+      if (taux == null) {
+        const t = num(get(map.taux));
+        if (Number.isFinite(t) && t > 0) taux = t;
+      }
+
+      let produit: any = null;
+      if (fam && code) produit = produits.find(p => (p.codeFamille ?? '') === fam && (p.code ?? '') === code);
+      if (!produit && code) produit = produits.find(p => (p.code ?? '') === code);
+
+      if (!produit) {
+        unmatched.push(`${fam}/${code}`.replace(/^\/|\/$/g, ''));
+        continue;
+      }
+      rows.push({
+        produitId: produit.id,
+        quantite: Number.isFinite(qte) && qte > 0 ? qte : 1,
+        prixUnitaireDevise: Number.isFinite(prix) && prix >= 0
+          ? prix
+          : Number(produit.dernierCoutAchatFcfa ?? produit.prixGros ?? 0),
+        poids:  Number.isFinite(poids)  && poids  >= 0 ? poids  : undefined,
+        volume: Number.isFinite(volume) && volume >= 0 ? volume : undefined,
+      });
+    }
+    return { rows, unmatched, devise, taux };
+  };
+
+  const handleCsvFile = async (file: File) => {
+    setCsvReport(null);
+    try {
+      const text = await file.text();
+      const { rows, unmatched, devise, taux } = parseCsvLignes(text);
+      if (!rows.length) {
+        setCsvReport({ added: 0, updated: 0, withDims: 0, unmatched });
+        alert('Aucune ligne valide trouvée dans le CSV.' + (unmatched.length ? `\nNon trouvés : ${unmatched.join(', ')}` : ''));
+        return;
+      }
+
+      // 1) Devise + taux au niveau de l'achat
+      const patch: Partial<FormState> = {};
+      if (devise) patch.devise = devise;
+      if (taux != null) { patch.tauxVersFcfa = taux; patch.sourceTaux = 'MANUEL'; }
+
+      // 2) Fusion des lignes : produit déjà présent → quantité + prix (+ poids/volume) mis à jour.
+      //    Le poids/volume reste sur le brouillon ; le produit n'est touché qu'à la validation.
+      const byId = new Map<string, LigneForme>();
+      for (const l of form.lignes) if (l.produitId) byId.set(l.produitId, l);
+      let added = 0, updated = 0, withDims = 0;
+      for (const r of rows) {
+        if (byId.has(r.produitId)) updated++; else added++;
+        if (r.poids != null || r.volume != null) withDims++;
+        byId.set(r.produitId, {
+          produitId: r.produitId,
+          quantite: r.quantite,
+          prixUnitaireDevise: r.prixUnitaireDevise,
+          poids: r.poids,
+          volume: r.volume,
+        });
+      }
+      updateForm({ ...patch, lignes: Array.from(byId.values()) });
+      setCsvReport({ added, updated, withDims, unmatched });
+    } catch {
+      alert('Impossible de lire le fichier CSV.');
+    } finally {
+      if (csvInputRef.current) csvInputRef.current.value = '';
+    }
+  };
 
   const removeLigne = (i: number) =>
     updateForm({ lignes: form.lignes.filter((_, idx) => idx !== i) });
@@ -479,11 +638,13 @@ export const Achats = () => {
 
   // ─── Modal Prix de vente ─────────────────────────────────────────
   const openPrixModal = (achat: any) => {
-    const defaultCoeffDetail = 1.3;
-    const defaultCoeffGros   = 1.15;
+    const defaultCoeffDetail  = 1.3;
+    const defaultCoeffDemiGros = 1.22;
+    const defaultCoeffGros    = 1.15;
     const lignes: LotLigne[] = (achat.lignesAchat ?? []).map((l: any) => {
-      const poidsProduit  = l.produit?.poids  != null ? l.produit.poids  : '';
-      const volumeProduit = l.produit?.volume != null ? l.produit.volume : '';
+      // Priorité au poids/volume pré-saisi sur le brouillon (import CSV), sinon valeur du produit.
+      const poidsProduit  = l.poidsUtilise  != null ? l.poidsUtilise  : (l.produit?.poids  != null ? l.produit.poids  : '');
+      const volumeProduit = l.volumeUtilise != null ? l.volumeUtilise : (l.produit?.volume != null ? l.produit.volume : '');
       return {
         ligneAchatId: l.id,
         produitId: l.produitId,
@@ -493,16 +654,19 @@ export const Achats = () => {
         poidsOuVolume: poidsProduit !== '' ? poidsProduit : volumeProduit !== '' ? volumeProduit : '',
         autofill: poidsProduit !== '' || volumeProduit !== '',
         chargeUnitaire: 0,
-        coeffDetail: l.coeffDetail ?? defaultCoeffDetail,
-        coeffGros: l.coeffGros ?? defaultCoeffGros,
-        prixDetailSuggere: 0,
-        prixGrosSuggere: 0,
-        prixDetailFinal: '',
-        prixGrosFinal: '',
+        coeffDetail:  l.coeffDetail  ?? defaultCoeffDetail,
+        coeffDemiGros: l.coeffDemiGros ?? defaultCoeffDemiGros,
+        coeffGros:    l.coeffGros    ?? defaultCoeffGros,
+        prixDetailSuggere:  0,
+        prixDemiGrosSuggere: 0,
+        prixGrosSuggere:    0,
+        prixDetailFinal:  '',
+        prixDemiGrosFinal: '',
+        prixGrosFinal:    '',
       };
     });
     setLotLignes(lignes);
-    setLotConfig({ fraisTransport: 0, fraisDouane: 0, methodeRepartition: 'POIDS', coeffDetailDefault: defaultCoeffDetail, coeffGrosDefault: defaultCoeffGros });
+    setLotConfig({ fraisTransport: 0, fraisDouane: 0, methodeRepartition: 'POIDS', coeffDetailDefault: defaultCoeffDetail, coeffDemiGrosDefault: defaultCoeffDemiGros, coeffGrosDefault: defaultCoeffGros });
     setLotAvertissements([]);
     setLotCalculated(false);
     setPrixModal(achat);
@@ -517,15 +681,17 @@ export const Achats = () => {
         fraisTransport: lotConfig.fraisTransport,
         fraisDouane: lotConfig.fraisDouane,
         methodeRepartition: lotConfig.methodeRepartition,
-        coeffDetailDefault: lotConfig.coeffDetailDefault,
-        coeffGrosDefault: lotConfig.coeffGrosDefault,
+        coeffDetailDefault:  lotConfig.coeffDetailDefault,
+        coeffDemiGrosDefault: lotConfig.coeffDemiGrosDefault,
+        coeffGrosDefault:    lotConfig.coeffGrosDefault,
         lignes: lotLignes.map(l => ({
           produitId: l.produitId,
           quantite: l.quantite,
           prixUnitaireDevise: (prixModal.lignesAchat ?? []).find((la: any) => la.id === l.ligneAchatId)?.prixUnitaireDevise ?? 0,
           poidsOuVolume: l.poidsOuVolume === '' ? undefined : Number(l.poidsOuVolume),
-          coeffDetail: l.coeffDetail,
-          coeffGros: l.coeffGros,
+          coeffDetail:  l.coeffDetail,
+          coeffDemiGros: l.coeffDemiGros,
+          coeffGros:    l.coeffGros,
         })),
       };
       const res = await achatApi.calculerLot(prixModal.id, dto);
@@ -534,11 +700,13 @@ export const Achats = () => {
         if (!r) return l;
         return {
           ...l,
-          chargeUnitaire: r.chargeUnitaire ?? 0,
-          prixDetailSuggere: r.prixDetailSuggere ?? 0,
-          prixGrosSuggere: r.prixGrosSuggere ?? 0,
-          prixDetailFinal: r.prixDetailSuggere ?? '',
-          prixGrosFinal: r.prixGrosSuggere ?? '',
+          chargeUnitaire:     r.chargeUnitaire     ?? 0,
+          prixDetailSuggere:  r.prixDetailSuggere  ?? 0,
+          prixDemiGrosSuggere: r.prixDemiGrosSuggere ?? 0,
+          prixGrosSuggere:    r.prixGrosSuggere    ?? 0,
+          prixDetailFinal:    r.prixDetailSuggere  ?? '',
+          prixDemiGrosFinal:  r.prixDemiGrosSuggere ?? '',
+          prixGrosFinal:      r.prixGrosSuggere    ?? '',
         };
       }));
       setLotAvertissements(res.avertissements ?? []);
@@ -556,13 +724,21 @@ export const Achats = () => {
     setLotSubmitting(true);
     try {
       await achatApi.validerLot(prixModal.id, {
+        fraisTransport:       lotConfig.fraisTransport,
+        fraisDouane:          lotConfig.fraisDouane,
+        methodeRepartition:   lotConfig.methodeRepartition,
+        coeffDetailDefault:   lotConfig.coeffDetailDefault,
+        coeffDemiGrosDefault: lotConfig.coeffDemiGrosDefault,
+        coeffGrosDefault:     lotConfig.coeffGrosDefault,
         lignes: lotLignes.map(l => ({
-          ligneAchatId: l.ligneAchatId,
-          poidsOuVolume: l.poidsOuVolume === '' ? undefined : Number(l.poidsOuVolume),
-          coeffDetail: l.coeffDetail,
-          coeffGros: l.coeffGros,
-          prixDetailFinal: Number(l.prixDetailFinal) || 0,
-          prixGrosFinal: Number(l.prixGrosFinal) || 0,
+          ligneAchatId:    l.ligneAchatId,
+          poidsOuVolume:   l.poidsOuVolume === '' ? undefined : Number(l.poidsOuVolume),
+          coeffDetail:     l.coeffDetail,
+          coeffDemiGros:   l.coeffDemiGros,
+          coeffGros:       l.coeffGros,
+          prixDetailFinal:   Number(l.prixDetailFinal)  || 0,
+          prixDemiGrosFinal: Number(l.prixDemiGrosFinal) || 0,
+          prixGrosFinal:     Number(l.prixGrosFinal)    || 0,
         })),
       });
       await fetchData();
@@ -576,7 +752,8 @@ export const Achats = () => {
   };
 
   const manquePoids = lotLignes.filter(l => l.poidsOuVolume === '').length;
-  const peutValider = lotCalculated && manquePoids === 0 && lotLignes.every(l => Number(l.prixDetailFinal) > 0 && Number(l.prixGrosFinal) > 0);
+  const peutValider = lotCalculated && manquePoids === 0 && lotLignes.every(l =>
+    Number(l.prixDetailFinal) > 0 && Number(l.prixDemiGrosFinal) > 0 && Number(l.prixGrosFinal) > 0);
 
   // ─── Export CSV ──────────────────────────────────────────────────
   const handleExportCSV = () => {
@@ -641,7 +818,7 @@ export const Achats = () => {
           <p className="text-sm text-slate-500 mt-1">Multi-devises (FCFA / NGN / CNY) — BROUILLON → VALIDE</p>
         </div>
         <button onClick={openCreate}
-          className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-opacity-90 font-semibold shadow-sm">
+          className="flex items-center justify-center gap-2 w-full sm:w-auto px-4 py-2 bg-primary text-white rounded-lg hover:bg-opacity-90 font-semibold shadow-sm">
           <PlusCircle size={18} /><span>Nouvel achat</span>
         </button>
       </div>
@@ -810,10 +987,14 @@ export const Achats = () => {
                       </div>
 
                       {/* Coefficients */}
-                      <div className="flex items-center gap-6 text-sm">
+                      <div className="flex items-center gap-6 text-sm flex-wrap">
                         <div>
                           <span className="text-xs text-indigo-500 font-medium">Coeff détail (défaut) </span>
                           <span className="font-bold text-slate-800">×{Number(selectedAchat.coeffDetailDefault ?? 1.3).toFixed(2)}</span>
+                        </div>
+                        <div>
+                          <span className="text-xs text-indigo-500 font-medium">Coeff demi-gros (défaut) </span>
+                          <span className="font-bold text-slate-800">×{Number(selectedAchat.coeffDemiGrosDefault ?? 1.22).toFixed(2)}</span>
                         </div>
                         <div>
                           <span className="text-xs text-indigo-500 font-medium">Coeff gros (défaut) </span>
@@ -846,8 +1027,9 @@ export const Achats = () => {
                           <th className="px-4 py-2 text-right">CMUP après</th>
                           {hasCharge && <th className="px-4 py-2 text-right">{uniteL}/unité</th>}
                           {hasCharge && <th className="px-4 py-2 text-right">Charge/unité</th>}
-                          {hasPrix && <th className="px-4 py-2 text-right">Coeff det/gros</th>}
+                          {hasPrix && <th className="px-4 py-2 text-right">Coefficients</th>}
                           {hasPrix && <th className="px-4 py-2 text-right">Prix détail</th>}
+                          {hasPrix && <th className="px-4 py-2 text-right">Prix D-gros</th>}
                           {hasPrix && <th className="px-4 py-2 text-right">Prix gros</th>}
                         </tr></thead>
                         <tbody className="divide-y divide-slate-100">
@@ -874,12 +1056,19 @@ export const Achats = () => {
                               )}
                               {hasPrix && (
                                 <td className="px-4 py-2 text-right text-slate-500 text-xs">
-                                  {l.coeffDetail != null ? `×${Number(l.coeffDetail).toFixed(2)} / ×${Number(l.coeffGros ?? 0).toFixed(2)}` : '—'}
+                                  {l.coeffDetail != null
+                                    ? `×${Number(l.coeffDetail).toFixed(2)} / ×${Number(l.coeffDemiGros ?? 0).toFixed(2)} / ×${Number(l.coeffGros ?? 0).toFixed(2)}`
+                                    : '—'}
                                 </td>
                               )}
                               {hasPrix && (
                                 <td className="px-4 py-2 text-right font-semibold text-emerald-700">
                                   {l.prixDetailFinal != null ? fmt(l.prixDetailFinal) : '—'}
+                                </td>
+                              )}
+                              {hasPrix && (
+                                <td className="px-4 py-2 text-right font-semibold text-violet-700">
+                                  {l.prixDemiGrosFinal != null ? fmt(l.prixDemiGrosFinal) : '—'}
                                 </td>
                               )}
                               {hasPrix && (
@@ -998,13 +1187,51 @@ export const Achats = () => {
                   {/* Section 4 — Lignes produits */}
                   {!editingAchat && (
                     <div>
-                      <div className="flex items-center justify-between mb-3">
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
                         <h3 className="text-sm font-semibold text-slate-700 flex items-center gap-2"><Package size={14} />Produits</h3>
-                        <button type="button" onClick={addLigne}
-                          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-primary bg-primary/10 rounded-lg hover:bg-primary/20">
-                          <Plus size={13} />Ajouter une ligne
-                        </button>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <input ref={csvInputRef} type="file" accept=".csv,text/csv" className="hidden"
+                            onChange={e => { const f = e.target.files?.[0]; if (f) handleCsvFile(f); }} />
+                          <button type="button" onClick={downloadCsvTemplate}
+                            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-500 bg-slate-100 rounded-lg hover:bg-slate-200">
+                            <Download size={13} />Modèle
+                          </button>
+                          <button type="button" onClick={() => csvInputRef.current?.click()}
+                            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-indigo-600 bg-indigo-50 rounded-lg hover:bg-indigo-100">
+                            <Upload size={13} />Importer CSV
+                          </button>
+                          <button type="button" onClick={addLigne}
+                            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-primary bg-primary/10 rounded-lg hover:bg-primary/20">
+                            <Plus size={13} />Ajouter une ligne
+                          </button>
+                        </div>
                       </div>
+
+                      {/* Rapport d'import CSV */}
+                      {csvReport && (
+                        <div className={`mb-3 rounded-xl p-3 text-xs flex items-start gap-2 ${csvReport.unmatched.length ? 'bg-amber-50 border border-amber-200 text-amber-800' : 'bg-emerald-50 border border-emerald-200 text-emerald-800'}`}>
+                          {csvReport.unmatched.length
+                            ? <AlertTriangle size={14} className="mt-0.5 shrink-0" />
+                            : <CheckCircle size={14} className="mt-0.5 shrink-0" />}
+                          <div>
+                            <strong>
+                              {csvReport.added > 0 && `${csvReport.added} ajoutée${csvReport.added > 1 ? 's' : ''}`}
+                              {csvReport.added > 0 && csvReport.updated > 0 && ' · '}
+                              {csvReport.updated > 0 && `${csvReport.updated} mise${csvReport.updated > 1 ? 's' : ''} à jour`}
+                              {csvReport.added === 0 && csvReport.updated === 0 && 'Aucune ligne importée'}
+                              {(csvReport.added > 0 || csvReport.updated > 0) && '.'}
+                            </strong>
+                            {csvReport.withDims > 0 && (
+                              <span> {csvReport.withDims} avec poids/volume (appliqués à la validation).</span>
+                            )}
+                            {csvReport.unmatched.length > 0 && (
+                              <span> {csvReport.unmatched.length} non trouvé{csvReport.unmatched.length > 1 ? 's' : ''} : {csvReport.unmatched.slice(0, 8).join(', ')}{csvReport.unmatched.length > 8 ? '…' : ''}</span>
+                            )}
+                            <span className="block mt-1 text-slate-500">Devise et taux appliqués depuis le CSV si présents.</span>
+                          </div>
+                        </div>
+                      )}
+
                       <div className="space-y-2">
                         {form.lignes.map((ligne, i) => {
                           const produit = produits.find(p => p.id === ligne.produitId);
@@ -1319,7 +1546,7 @@ export const Achats = () => {
                         </label>
                       ))}
                     </div>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
                       <div>
                         <label className="block text-xs font-medium text-slate-600 mb-1">Transport (FCFA/{unite})</label>
                         <input type="number" min={0} step={0.01} value={lotConfig.fraisTransport}
@@ -1342,6 +1569,12 @@ export const Achats = () => {
                         <label className="block text-xs font-medium text-slate-600 mb-1">Coeff détail (défaut)</label>
                         <input type="number" min={1.01} step={0.01} value={lotConfig.coeffDetailDefault}
                           onChange={e => setLotConfig(c => ({ ...c, coeffDetailDefault: Number(e.target.value) }))}
+                          className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-primary/20 outline-none bg-white" />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-slate-600 mb-1">Coeff demi-gros (défaut)</label>
+                        <input type="number" min={1.01} step={0.01} value={lotConfig.coeffDemiGrosDefault}
+                          onChange={e => setLotConfig(c => ({ ...c, coeffDemiGrosDefault: Number(e.target.value) }))}
                           className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-primary/20 outline-none bg-white" />
                       </div>
                       <div>
@@ -1392,14 +1625,17 @@ export const Achats = () => {
                         <th className="text-right px-3 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Qté</th>
                         <th className="text-right px-3 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">CMUP</th>
                         <th className="px-3 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">
-                          {lotConfig.methodeRepartition === 'POIDS' ? 'Poids (kg)' : 'Volume (m³)'}
+                          {lotConfig.methodeRepartition === 'POIDS' ? 'Poids (kg)' : 'Volume (cm³)'}
                         </th>
-                        <th className="px-3 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Coeff det.</th>
-                        <th className="px-3 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Coeff gros</th>
+                        <th className="px-3 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">C. détail</th>
+                        <th className="px-3 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">C. D-gros</th>
+                        <th className="px-3 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">C. gros</th>
                         <th className="text-right px-3 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Sug. détail</th>
+                        <th className="text-right px-3 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Sug. D-gros</th>
                         <th className="text-right px-3 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Sug. gros</th>
-                        <th className="px-3 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Prix détail final</th>
-                        <th className="px-3 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Prix gros final</th>
+                        <th className="px-3 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Prix détail</th>
+                        <th className="px-3 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Prix D-gros</th>
+                        <th className="px-3 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Prix gros</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
@@ -1428,7 +1664,15 @@ export const Achats = () => {
                                   setLotLignes(prev => prev.map(x => x.ligneAchatId === l.ligneAchatId ? { ...x, coeffDetail: Number(e.target.value) } : x));
                                   setLotCalculated(false);
                                 }}
-                                className="w-20 px-2 py-1.5 border border-slate-200 rounded-lg text-sm bg-white outline-none focus:ring-2 focus:ring-primary/20" />
+                                className="w-16 px-2 py-1.5 border border-slate-200 rounded-lg text-sm bg-white outline-none focus:ring-2 focus:ring-primary/20" />
+                            </td>
+                            <td className="px-3 py-3">
+                              <input type="number" min={1.01} step={0.01} value={l.coeffDemiGros}
+                                onChange={e => {
+                                  setLotLignes(prev => prev.map(x => x.ligneAchatId === l.ligneAchatId ? { ...x, coeffDemiGros: Number(e.target.value) } : x));
+                                  setLotCalculated(false);
+                                }}
+                                className="w-16 px-2 py-1.5 border border-slate-200 rounded-lg text-sm bg-white outline-none focus:ring-2 focus:ring-primary/20" />
                             </td>
                             <td className="px-3 py-3">
                               <input type="number" min={1.01} step={0.01} value={l.coeffGros}
@@ -1436,10 +1680,13 @@ export const Achats = () => {
                                   setLotLignes(prev => prev.map(x => x.ligneAchatId === l.ligneAchatId ? { ...x, coeffGros: Number(e.target.value) } : x));
                                   setLotCalculated(false);
                                 }}
-                                className="w-20 px-2 py-1.5 border border-slate-200 rounded-lg text-sm bg-white outline-none focus:ring-2 focus:ring-primary/20" />
+                                className="w-16 px-2 py-1.5 border border-slate-200 rounded-lg text-sm bg-white outline-none focus:ring-2 focus:ring-primary/20" />
                             </td>
                             <td className="px-3 py-3 text-right text-slate-500">
                               {l.prixDetailSuggere > 0 ? <span className="text-emerald-700 font-medium">{l.prixDetailSuggere.toLocaleString('fr-FR')}</span> : '—'}
+                            </td>
+                            <td className="px-3 py-3 text-right text-slate-500">
+                              {l.prixDemiGrosSuggere > 0 ? <span className="text-violet-700 font-medium">{l.prixDemiGrosSuggere.toLocaleString('fr-FR')}</span> : '—'}
                             </td>
                             <td className="px-3 py-3 text-right text-slate-500">
                               {l.prixGrosSuggere > 0 ? <span className="text-emerald-700 font-medium">{l.prixGrosSuggere.toLocaleString('fr-FR')}</span> : '—'}
@@ -1447,6 +1694,11 @@ export const Achats = () => {
                             <td className="px-3 py-3">
                               <input type="number" min={0} value={l.prixDetailFinal}
                                 onChange={e => setLotLignes(prev => prev.map(x => x.ligneAchatId === l.ligneAchatId ? { ...x, prixDetailFinal: e.target.value === '' ? '' : Number(e.target.value) } : x))}
+                                className="w-24 px-2 py-1.5 border border-slate-200 rounded-lg text-sm bg-white outline-none focus:ring-2 focus:ring-primary/20" />
+                            </td>
+                            <td className="px-3 py-3">
+                              <input type="number" min={0} value={l.prixDemiGrosFinal}
+                                onChange={e => setLotLignes(prev => prev.map(x => x.ligneAchatId === l.ligneAchatId ? { ...x, prixDemiGrosFinal: e.target.value === '' ? '' : Number(e.target.value) } : x))}
                                 className="w-24 px-2 py-1.5 border border-slate-200 rounded-lg text-sm bg-white outline-none focus:ring-2 focus:ring-primary/20" />
                             </td>
                             <td className="px-3 py-3">
@@ -1460,13 +1712,13 @@ export const Achats = () => {
                           <>
                             {nouveaux.length > 0 && (
                               <>
-                                <tr><td colSpan={10} className="px-4 py-2 bg-indigo-50 text-xs font-semibold text-indigo-700 uppercase tracking-wide">Nouveaux produits — poids/volume à saisir</td></tr>
+                                <tr><td colSpan={13} className="px-4 py-2 bg-indigo-50 text-xs font-semibold text-indigo-700 uppercase tracking-wide">Nouveaux produits — poids/volume à saisir</td></tr>
                                 {nouveaux.map((l, i) => renderRow(l, i))}
                               </>
                             )}
                             {deja.length > 0 && (
                               <>
-                                <tr><td colSpan={10} className="px-4 py-2 bg-emerald-50 text-xs font-semibold text-emerald-700 uppercase tracking-wide">Déjà ravitaillés — poids/volume pré-rempli</td></tr>
+                                <tr><td colSpan={13} className="px-4 py-2 bg-emerald-50 text-xs font-semibold text-emerald-700 uppercase tracking-wide">Déjà ravitaillés — poids/volume pré-rempli</td></tr>
                                 {deja.map((l, i) => renderRow(l, i))}
                               </>
                             )}

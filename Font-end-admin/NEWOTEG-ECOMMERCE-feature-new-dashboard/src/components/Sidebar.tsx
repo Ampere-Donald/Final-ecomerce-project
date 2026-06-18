@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+﻿import React, { useEffect, useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import {
   LayoutDashboard,
@@ -23,7 +23,6 @@ import {
   Bell,
   AlertTriangle,
   ShoppingBag,
-  ListChecks,
   Receipt,
   PiggyBank,
   Calculator,
@@ -98,8 +97,6 @@ export const Sidebar = ({ open, onClose }: SidebarProps) => {
       items: [
         ...add(can.accessPOSVendeur(role), { label: 'Vente en cours', icon: ShoppingBag, path: '/pos' }),
         ...add(can.accessMesTickets(role), { label: 'Mes tickets', icon: Receipt, path: '/mes-tickets' }),
-        ...add(can.accessFileCaissier(role), { label: "File d'attente", icon: ListChecks, path: '/file-caissier' }),
-        ...add(can.voirFactures(role), { label: 'Factures', icon: Receipt, path: '/invoices' }),
         ...add(can.voirPrimes(role), { label: 'Primes vendeurs', icon: Award, path: '/primes' }),
       ],
     },

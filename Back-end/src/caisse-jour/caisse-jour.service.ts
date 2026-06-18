@@ -175,6 +175,89 @@ export class CaisseJourService {
     return enriched;
   }
 
+  async statsCaissier(caissierId: string, periode: string) {
+    const [year, month] = (periode || '').split('-').map(Number);
+    if (!year || !month) {
+      throw new BadRequestException('La periode doit etre au format YYYY-MM.');
+    }
+
+    const start = new Date(year, month - 1, 1);
+    const end = new Date(year, month, 1);
+
+    const [factures, caissesJour] = await Promise.all([
+      this.db.facture.findMany({
+        where: {
+          caissierId,
+          dateEmission: { gte: start, lt: end },
+        },
+        include: {
+          lignes: true,
+          vendeur: { select: { id: true, nom: true } },
+          client: { select: { id: true, nom: true, prenom: true } },
+        },
+        orderBy: { dateEmission: 'desc' },
+      }),
+      this.db.caisseJour.findMany({
+        where: {
+          caissierId,
+          date: { gte: start, lt: end },
+        },
+        include: {
+          operations: {
+            where: { annulee: false },
+            orderBy: { dateOperation: 'asc' },
+          },
+        },
+        orderBy: { date: 'asc' },
+      }),
+    ]);
+
+    const parMode: Record<string, number> = {};
+    const parJourMap = new Map<string, { date: string; nb: number; montant: number }>();
+    let montantTotal = 0;
+    let creditsAccordes = 0;
+
+    for (const f of factures) {
+      const montant = this.toNumber(f.totalTTC);
+      montantTotal += montant;
+      parMode[f.methodePaiement] = (parMode[f.methodePaiement] || 0) + montant;
+      if (f.methodePaiement === 'CREDIT') creditsAccordes += montant;
+
+      const date = f.dateEmission.toISOString().slice(0, 10);
+      const row = parJourMap.get(date) || { date, nb: 0, montant: 0 };
+      row.nb += 1;
+      row.montant += montant;
+      parJourMap.set(date, row);
+    }
+
+    const ecarts = caissesJour.map((cj) => {
+      const theorique = cj.operations.reduce((acc, op) => {
+        const montant = this.toNumber(op.montant);
+        return op.typeOperation === 'ENTREE' ? acc + montant : acc - montant;
+      }, 0);
+      const reel = cj.soldeCloture == null ? null : this.toNumber(cj.soldeCloture);
+      return {
+        date: cj.date.toISOString().slice(0, 10),
+        theorique,
+        reel,
+        ecart: reel == null ? null : reel - theorique,
+        statut: cj.statut,
+      };
+    });
+
+    return {
+      caissierId,
+      periode,
+      nbEncaissements: factures.length,
+      montantTotal,
+      parMode,
+      creditsAccordes,
+      ecarts,
+      parJour: Array.from(parJourMap.values()).sort((a, b) => a.date.localeCompare(b.date)),
+      transactions: factures,
+    };
+  }
+
   /**
    * Ferme la caisse du jour et transfère son solde vers la caisse globale
    * via une seule ligne d'opération récapitulative.
@@ -231,5 +314,60 @@ export class CaisseJourService {
       .catch(() => {});
 
     return result;
+  }
+
+  /**
+   * Rouvre une caisse du jour fermée.
+   * Réservé au SUPER_ADMIN uniquement.
+   * L'action est tracée dans la caisse globale pour audit.
+   */
+  async rouvrir(caisseJourId: string, rouvertParId: string) {
+    const cj = await this.db.caisseJour.findUnique({
+      where: { id: caisseJourId },
+    });
+    if (!cj) {
+      throw new NotFoundException(`Caisse du jour ${caisseJourId} introuvable.`);
+    }
+    if (cj.statut === 'OUVERTE') {
+      throw new BadRequestException('Cette caisse du jour est déjà ouverte.');
+    }
+
+    const dateLabel = cj.date.toISOString().slice(0, 10);
+
+    const updated = await this.db.$transaction(async (tx: any) => {
+      const result = await tx.caisseJour.update({
+        where: { id: caisseJourId },
+        data: {
+          statut: 'OUVERTE',
+          fermetureAt: null,
+          soldeCloture: null,
+        },
+      });
+
+      // Trace d'audit obligatoire dans la caisse globale
+      await tx.caisse.create({
+        data: {
+          typeOperation: 'ENTREE' as TypeOperation,
+          montant: 0,
+          motif: `[AUDIT] Réouverture caisse du jour ${dateLabel} par SUPER_ADMIN (id: ${rouvertParId})`,
+          effectueePar: rouvertParId,
+        },
+      });
+
+      return result;
+    });
+
+    this.logger.warn(
+      `AUDIT — Caisse du jour ${dateLabel} (id: ${caisseJourId}) réouverte par SUPER_ADMIN (id: ${rouvertParId}) le ${new Date().toISOString()}`,
+    );
+
+    this.notifications
+      .create(
+        'CAISSE_MAJ',
+        `Caisse du jour ${dateLabel} réouverte par un administrateur.`,
+      )
+      .catch(() => {});
+
+    return updated;
   }
 }

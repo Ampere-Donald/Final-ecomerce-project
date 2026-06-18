@@ -37,6 +37,26 @@ api.interceptors.response.use(
   },
 );
 
+const DB_SCHEMA_ERROR_CODES = new Set(['P2021', 'P2022']);
+
+export const getApiErrorMessage = (err: any, fallback: string): string => {
+  const data = err?.response?.data;
+
+  if (DB_SCHEMA_ERROR_CODES.has(data?.code)) {
+    return "Base de données non synchronisée : les tables ou colonnes nécessaires n'existent pas encore. Appliquez la migration Prisma avant de tester ce module.";
+  }
+
+  if (Array.isArray(data?.message)) {
+    return data.message.join(' ');
+  }
+
+  if (typeof data?.message === 'string' && data.message.trim()) {
+    return data.message;
+  }
+
+  return fallback;
+};
+
 // ── Admin Auth API ───────────────────────────────────────────────────────
 export const adminAuthApi = {
   login: (username: string, motDePasse: string) =>
@@ -227,9 +247,13 @@ export const caisseJourApi = {
   aujourdhui: () => api.get('/caisse-jour/aujourdhui').then(res => res.data),
   historique: (from?: string, to?: string) =>
     api.get('/caisse-jour', { params: { from, to } }).then(res => res.data),
+  statsCaissier: (id: string, periode: string) =>
+    api.get(`/caisse-jour/caissier/${id}`, { params: { periode } }).then(res => res.data),
   getOne: (id: string) => api.get(`/caisse-jour/${id}`).then(res => res.data),
   fermer: (id: string, note?: string) =>
     api.post(`/caisse-jour/${id}/fermer`, { note }).then(res => res.data),
+  rouvrir: (id: string) =>
+    api.post(`/caisse-jour/${id}/rouvrir`).then(res => res.data),
   addOperation: (
     id: string,
     data: { typeOperation: 'ENTREE' | 'SORTIE'; montant: number; motif: string },
@@ -277,6 +301,9 @@ export const commandeApi = {
   getAll: () => api.get('/commandes').then(toArray),
   getOne: (id: string) => api.get(`/commandes/${id}`).then(res => res.data),
   update: (id: string, data: any) => api.patch(`/commandes/${id}`, data).then(res => res.data),
+  delete: (id: string) => api.delete(`/commandes/${id}`).then(res => res.data),
+  cleanupHistory: (params: { before?: string; statut?: string }) =>
+    api.delete('/commandes/historique/cleanup', { params }).then(res => res.data),
   processPickup: (id: string, data: { paiementSurPlace: boolean; methodePaiement?: string }) =>
     api.patch(`/commandes/${id}/pickup`, data).then(res => res.data),
 };
@@ -368,9 +395,31 @@ export const factureApi = {
 export const primeApi = {
   classement: (periode: string) =>
     api.get('/primes/classement', { params: { periode } }).then(r => r.data),
+  detailVendeur: (id: string, periode: string) =>
+    api.get(`/primes/vendeur/${id}`, { params: { periode } }).then(r => r.data),
   monScore: () => api.get('/primes/mon-score').then(r => r.data),
   valider: (id: string) => api.patch(`/primes/${id}/valider`).then(r => r.data),
   payer: (id: string) => api.patch(`/primes/${id}/payer`).then(r => r.data),
+};
+
+export const proformaApi = {
+  getAll: (params?: any) => api.get('/proformas', { params }).then(r => r.data),
+  getOne: (id: string) => api.get(`/proformas/${id}`).then(r => r.data),
+  create: (data: any) => api.post('/proformas', data).then(r => r.data),
+  update: (id: string, data: any) => api.patch(`/proformas/${id}`, data).then(r => r.data),
+  transformer: (id: string, body: { methodePaiement: string }) =>
+    api.post(`/proformas/${id}/transformer`, body).then(r => r.data),
+  remove: (id: string) => api.delete(`/proformas/${id}`).then(r => r.data),
+};
+
+export const factureVirtuelleApi = {
+  create: (data: any) => api.post('/facture-virtuelle', data).then(r => r.data),
+  getAll: (params?: any) => api.get('/facture-virtuelle', { params }).then(r => r.data),
+  getOne: (id: string) => api.get(`/facture-virtuelle/${id}`).then(r => r.data),
+  approuver: (id: string) => api.post(`/facture-virtuelle/${id}/approuver`).then(r => r.data),
+  refuser: (id: string, motif: string) => api.post(`/facture-virtuelle/${id}/refuser`, { motif }).then(r => r.data),
+  print: (id: string) => api.post(`/facture-virtuelle/${id}/print`).then(r => r.data),
+  remove: (id: string) => api.delete(`/facture-virtuelle/${id}`).then(r => r.data),
 };
 
 export const adminRoleApi = {

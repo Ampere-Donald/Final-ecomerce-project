@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { motion } from 'motion/react';
-import { FileText, Printer, Search, ChevronDown } from 'lucide-react';
-import { factureApi } from '../services/api';
+import { FileText, Printer, Search, ChevronDown, Ghost } from 'lucide-react';
+import { factureApi, getApiErrorMessage } from '../services/api';
 import { ReceiptGenerator } from './ReceiptGenerator';
+import { FactureVirtuelle } from './FactureVirtuelle';
 
 const fmtFCFA = (n: number | string): string => {
   const v = Number(n) || 0;
@@ -24,11 +26,16 @@ interface Facture {
   methodePaiement: string;
   printCount: number;
   vendeur?: { nom: string } | null;
+  caissier?: { nom: string } | null;
   client?: { nom: string; telephone?: string } | null;
   lignes?: Array<{ nomProduit: string; quantite: number; sousTotalTTC: number | string }>;
 }
 
 export const Invoices = () => {
+  const location = useLocation();
+  const [activeTab, setActiveTab] = useState<'reelles' | 'virtuelles'>(
+    (location.state as any)?.tab === 'virtuelles' ? 'virtuelles' : 'reelles'
+  );
   const [factures, setFactures] = useState<Facture[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -45,8 +52,8 @@ export const Invoices = () => {
       if (filterType) params.type = filterType;
       const data = await factureApi.getAll(params);
       setFactures(Array.isArray(data) ? data : []);
-    } catch {
-      setError('Impossible de charger les factures.');
+    } catch (err: any) {
+      setError(getApiErrorMessage(err, 'Impossible de charger les factures.'));
     } finally {
       setLoading(false);
     }
@@ -65,7 +72,7 @@ export const Invoices = () => {
       );
       setReceiptFacture(f);
     } catch {
-      // si l'API échoue, on ouvre quand même le reçu
+      // Si l'API échoue, on ouvre quand même le reçu.
       setReceiptFacture(f);
     } finally {
       setPrinting(null);
@@ -77,6 +84,7 @@ export const Invoices = () => {
       !search ||
       f.numero.toLowerCase().includes(search.toLowerCase()) ||
       f.vendeur?.nom.toLowerCase().includes(search.toLowerCase()) ||
+      f.caissier?.nom.toLowerCase().includes(search.toLowerCase()) ||
       f.client?.nom.toLowerCase().includes(search.toLowerCase()),
   );
 
@@ -90,11 +98,31 @@ export const Invoices = () => {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Factures</h1>
-          <p className="text-sm text-slate-500">
-            {factures.length} facture{factures.length !== 1 ? 's' : ''} au total
-          </p>
+          <p className="text-sm text-slate-500">Factures réelles et factures virtuelles démarcheurs</p>
         </div>
       </div>
+
+      {/* Onglets */}
+      <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl w-fit">
+        <button
+          onClick={() => setActiveTab('reelles')}
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === 'reelles' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+        >
+          <FileText size={15} /> Factures réelles
+        </button>
+        <button
+          onClick={() => setActiveTab('virtuelles')}
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === 'virtuelles' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+        >
+          <Ghost size={15} /> Factures virtuelles
+        </button>
+      </div>
+
+      {/* Contenu onglet Factures virtuelles */}
+      {activeTab === 'virtuelles' && <FactureVirtuelle />}
+
+      {/* Contenu onglet Factures réelles */}
+      {activeTab === 'reelles' && <>
 
       {/* Filtres */}
       <div className="flex flex-col gap-3 sm:flex-row">
@@ -102,7 +130,7 @@ export const Invoices = () => {
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
           <input
             type="text"
-            placeholder="Rechercher par numéro, vendeur, client…"
+            placeholder="Rechercher par numero, vendeur, caissier, client..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full rounded-lg border border-slate-200 bg-white py-2 pl-9 pr-4 text-sm outline-none focus:border-primary"
@@ -146,6 +174,7 @@ export const Invoices = () => {
                 <th className="px-4 py-3 text-left">Type</th>
                 <th className="px-4 py-3 text-left">Date</th>
                 <th className="px-4 py-3 text-left">Vendeur</th>
+                <th className="px-4 py-3 text-left">Caissier</th>
                 <th className="px-4 py-3 text-left">Client</th>
                 <th className="px-4 py-3 text-right">Total TTC</th>
                 <th className="px-4 py-3 text-center">Impressions</th>
@@ -173,6 +202,7 @@ export const Invoices = () => {
                     {new Date(f.dateEmission).toLocaleDateString('fr-FR')}
                   </td>
                   <td className="px-4 py-3 text-slate-700">{f.vendeur?.nom ?? '—'}</td>
+                  <td className="px-4 py-3 text-slate-700">{f.caissier?.nom ?? '—'}</td>
                   <td className="px-4 py-3 text-slate-600">{f.client?.nom ?? 'Comptoir'}</td>
                   <td className="px-4 py-3 text-right font-bold text-primary">
                     {fmtFCFA(f.totalTTC)}
@@ -213,6 +243,9 @@ export const Invoices = () => {
           onClose={() => setReceiptFacture(null)}
         />
       )}
+
+      {/* Fin onglet factures réelles */}
+      </>}
     </motion.div>
   );
 };

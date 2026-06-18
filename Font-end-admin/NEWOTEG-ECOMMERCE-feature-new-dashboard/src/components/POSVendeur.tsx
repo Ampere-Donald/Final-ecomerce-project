@@ -3,13 +3,15 @@ import { motion, AnimatePresence } from 'motion/react';
 import {
   Search, Plus, Minus, Trash2, Send, ShoppingCart,
   CheckCircle2, AlertCircle, Sparkles, X, Clock, Receipt,
-  User as UserIcon, Phone, ScanBarcode, CameraOff,
+  User as UserIcon, Phone, Printer, ScanBarcode, CameraOff,
 } from 'lucide-react';
 import { BrowserMultiFormatReader } from '@zxing/browser';
 import { NotFoundException } from '@zxing/library';
 import { useNavigate } from 'react-router-dom';
-import { bonVenteApi, clientApi, produitApi, ticketApi, equivalenceApi } from '../services/api';
+import { bonVenteApi, clientApi, produitApi, ticketApi, equivalenceApi, proformaApi, factureVirtuelleApi, getApiErrorMessage } from '../services/api';
 import { useAdminAuth } from '../context/AdminAuthContext';
+import { can } from '../utils/permissions';
+import { ReceiptGenerator } from './ReceiptGenerator';
 import { bornesPrix, classerBande, exigeMotif, BANDE_STYLE } from '../utils/pricing';
 
 interface Produit {
@@ -17,8 +19,9 @@ interface Produit {
   nomProduit: string;
   marque?: string;
   prixDetail?: number;
-  prixDemiGros?: number;
   prixGros?: number;
+  quantiteGros?: number;
+  prixDemiGros?: number;
   prixPromo?: number;
   cmupActuel?: number;
   quantiteStock: number;
@@ -112,6 +115,7 @@ export const POSVendeur = () => {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [proformaToPrint, setProformaToPrint] = useState<any | null>(null);
 
   // ── Admin : client texte libre ─────────────────────────────────────────
   const [nomClient, setNomClient] = useState('');
@@ -185,7 +189,8 @@ export const POSVendeur = () => {
     if (p.quantiteStock <= 0) return;
     setPanier(prev => {
       const ex = prev.find(l => l.produitId === p.id);
-      const prix = p.prixPromo ?? p.prixDetail ?? 0;
+      // Number() force la conversion depuis Prisma Decimal → number JS
+      const prix = Number((p.prixPromo || null) ?? p.prixDetail ?? 0);
       if (ex) {
         if (ex.quantite >= p.quantiteStock) return prev;
         return prev.map(l => l.produitId === p.id ? { ...l, quantite: l.quantite + 1 } : l);
@@ -267,9 +272,11 @@ export const POSVendeur = () => {
 
   const changerQuantite = (produitId: string, delta: number) => {
     setPanier(prev => prev
-      .map(l => l.produitId === produitId
-        ? { ...l, quantite: Math.max(0, Math.min(l.stockDispo, l.quantite + delta)) }
-        : l)
+      .map(l => {
+        if (l.produitId !== produitId) return l;
+        const newQty = Math.max(0, Math.min(l.stockDispo, l.quantite + delta));
+        return { ...l, quantite: newQty };
+      })
       .filter(l => l.quantite > 0)
     );
   };
@@ -301,7 +308,7 @@ export const POSVendeur = () => {
       setPanier([]);
       setNomClient('');
       setTelephoneClient('');
-      setTimeout(() => navigate('/mes-tickets'), 1200);
+      setTimeout(() => navigate(can.accessCaisseJour(admin?.role) ? '/caisse-jour' : '/mes-tickets'), 1200);
     } catch (e: any) {
       const msg = e?.response?.data?.message || e?.message || 'Erreur inconnue';
       setError(Array.isArray(msg) ? msg.join(', ') : String(msg));
@@ -344,6 +351,29 @@ export const POSVendeur = () => {
     }
   };
 
+  const creerProforma = async () => {
+    if (!panier.length) return;
+    setSubmitting(true);
+    setError(null);
+    setSuccess(null);
+    try {
+      const proforma = await proformaApi.create({
+        clientId: selectedClientId || undefined,
+        lignes: panier.map(l => ({ produitId: l.produitId, quantite: l.quantite, prixUnitaire: l.prix })),
+      });
+      setProformaToPrint(proforma);
+      setSuccess(`Proforma ${proforma.numero} creee.`);
+      setPanier([]);
+      setSelectedClientId('');
+      setPanierMobileOpen(false);
+    } catch (e: any) {
+      const msg = e?.response?.data?.message || e?.message || 'Erreur inconnue';
+      setError(Array.isArray(msg) ? msg.join(', ') : String(msg));
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const annulerBon = async (id: string) => {
     try { await bonVenteApi.annuler(id); await loadBons(); }
     catch (e: any) { setError(e?.response?.data?.message || 'Impossible d\'annuler.'); }
@@ -367,7 +397,7 @@ export const POSVendeur = () => {
 
   const ajouterSuggestion = (s: any) => ajouterAuPanier({
     id: s.produitId, nomProduit: s.nomProduit, marque: s.marque,
-    prixDetail: s.prixDetail, prixDemiGros: s.prixDemiGros, prixGros: s.prixGros,
+    prixDetail: s.prixDetail, prixDemiGros: s.prixDemiGros, prixGros: s.prixGros, quantiteGros: s.quantiteGros,
     prixPromo: s.prixPromo, cmupActuel: s.cmupActuel,
     quantiteStock: s.quantiteStock, imageUrl: s.imageUrl,
   });
@@ -474,7 +504,7 @@ export const POSVendeur = () => {
 
   // ── Rendu carte produit (commun) ───────────────────────────────────────
   const renderProduit = (p: Produit) => {
-    const prix = p.prixPromo ?? p.prixDetail ?? 0;
+    const prix = Number((p.prixPromo || null) ?? p.prixDetail ?? 0);
     const enRupture = p.quantiteStock <= 0;
     const equivalenceEligible = isEquivalenceEligibleProduct(p);
     const img = resolveImgUrl(p.imageUrl);
@@ -582,6 +612,10 @@ export const POSVendeur = () => {
         <button onClick={onEnvoyer ?? envoyerVendeur} disabled={!panier.length || submitting}
           className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-primary text-white font-bold rounded-xl shadow-md shadow-primary/20 hover:bg-opacity-90 disabled:opacity-50">
           <Send size={18} />{submitting ? 'Envoi…' : 'Envoyer à la caissière'}
+        </button>
+        <button onClick={creerProforma} disabled={!panier.length || submitting}
+          className="w-full flex items-center justify-center gap-2 px-4 py-3 border border-slate-200 bg-white text-slate-700 font-bold rounded-xl hover:bg-slate-50 disabled:opacity-50">
+          <Printer size={18} />{submitting ? 'Creation...' : 'Creer proforma'}
         </button>
       </div>
     </>
@@ -731,7 +765,7 @@ export const POSVendeur = () => {
               {equivLoading ? <div className="text-center text-slate-400 py-8">Recherche…</div>
                 : equivError ? <div className="flex items-center gap-2 p-3 rounded-lg bg-amber-50 text-amber-700 border border-amber-200 text-sm"><AlertCircle size={16} />{equivError}</div>
                   : equivResults.map(s => {
-                    const prix = s.prixPromo ?? s.prixDetail ?? 0;
+                    const prix = Number((s.prixPromo || null) ?? s.prixDetail ?? 0);
                     const compatCfg: Record<string, string> = { haute: 'bg-emerald-100 text-emerald-700', moyenne: 'bg-amber-100 text-amber-700', faible: 'bg-red-100 text-red-700' };
                     return (
                       <div key={s.produitId} className="rounded-xl border border-slate-200 p-3">
@@ -967,6 +1001,28 @@ export const POSVendeur = () => {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {proformaToPrint && (
+        <ReceiptGenerator
+          type="proforma"
+          numero={proformaToPrint.numero}
+          dateVente={proformaToPrint.dateCreation}
+          methodePaiement="A regler"
+          montantTotal={Number(proformaToPrint.montantTotal)}
+          client={{
+            nom: proformaToPrint.client?.nom || proformaToPrint.clientNom || 'Client comptoir',
+            nui: proformaToPrint.client?.niu || proformaToPrint.clientNiu || undefined,
+            rccm: proformaToPrint.client?.rccm || proformaToPrint.clientRccm || undefined,
+          }}
+          lignes={(proformaToPrint.lignes || []).map((l: any) => ({
+            nomProduit: l.nomProduit,
+            quantite: Number(l.quantite),
+            prixUnitaire: Number(l.prixUnitaire),
+            sousTotal: Number(l.sousTotal),
+          }))}
+          onClose={() => setProformaToPrint(null)}
+        />
+      )}
 
       {renderEquivModal()}
       {renderScanModal()}

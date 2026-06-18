@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { Devise, StatutAchat } from '@prisma/client';
+import { Devise, StatutAchat, StatutPaiement } from '@prisma/client';
 import { Decimal } from '@prisma/client/runtime/client';
 import { DatabaseService } from 'src/database/database.service';
 import { NotificationService, NotificationActor } from 'src/notification/notification.service';
@@ -41,6 +41,9 @@ export class AchatService {
         coutUnitaireEntreeFcfa: prixUnitaireFcfa,
         prixUnitaire: prixUnitaireFcfa,
         sousTotal: sousTotalFcfa,
+        // Pré-saisie issue du CSV (le produit n'est touché qu'à la validation)
+        poidsUtilise: l.poids ?? null,
+        volumeUtilise: l.volume ?? null,
       };
     });
 
@@ -203,11 +206,12 @@ export class AchatService {
         )
         .toDecimalPlaces(2);
 
-      // 4. Passer l'achat en VALIDE
+      // 4. Passer l'achat en VALIDE + marquer comme payé
       return tx.achat.update({
         where: { id },
         data: {
           statutAchat: StatutAchat.VALIDE,
+          statutPaiement: StatutPaiement.PAYE,
           validatedAt: new Date(),
           validatedById: actor?.id ?? null,
           montantTotalFcfa: totalFcfa,
@@ -271,52 +275,59 @@ export class AchatService {
 
     // fraisTransport et fraisDouane sont des taux par kg ou par cm³
     const fraisTaux = Number(dto.fraisTransport) + Number(dto.fraisDouane);
-    const isVolume = dto.methodeRepartition === 'VOLUME';
+    const isVolume  = dto.methodeRepartition === 'VOLUME';
 
-    // Total poids/volume du lot (informatif, retourné dans la réponse)
+    // Total poids/volume du lot (informatif)
     const totalPV = dto.lignes.reduce((acc, l) => acc + (l.poidsOuVolume ?? 0) * l.quantite, 0);
+
+    // Les produits sont déjà chargés via findOne → lignesAchat.produit : pas de requête supplémentaire
+    const produitMap = new Map<string, any>(
+      achat.lignesAchat.map((l: any) => [l.produitId, l.produit]),
+    );
 
     const avertissements: string[] = [];
 
-    const resultats = await Promise.all(
-      dto.lignes.map(async (l) => {
-        const produit = await this.db.produit.findUnique({ where: { id: l.produitId } });
-        if (!produit) throw new NotFoundException(`Produit ${l.produitId} introuvable.`);
+    const resultats = dto.lignes.map((l) => {
+      const produit = produitMap.get(l.produitId);
+      if (!produit) throw new NotFoundException(`Produit ${l.produitId} introuvable dans cet achat.`);
 
-        const cmup = Number(produit.cmupActuel ?? 0);
-        const pv = l.poidsOuVolume ?? 0;
+      const cmup           = Number(produit.cmupActuel ?? 0);
+      const pv             = l.poidsOuVolume ?? 0;
+      const chargeUnitaire = fraisTaux * pv;
 
-        // Charge unitaire = taux_frais × poids_ou_volume_par_unité
-        const chargeUnitaire = fraisTaux * pv;
+      const base      = cmup + chargeUnitaire;
+      const cDetail   = l.coeffDetail   ?? dto.coeffDetailDefault;
+      const cDemiGros = l.coeffDemiGros ?? dto.coeffDemiGrosDefault;
+      const cGros     = l.coeffGros     ?? dto.coeffGrosDefault;
 
-        const base = cmup + chargeUnitaire;
-        const cDetail = l.coeffDetail ?? dto.coeffDetailDefault;
-        const cGros   = l.coeffGros   ?? dto.coeffGrosDefault;
+      if (cGros >= cDemiGros) {
+        avertissements.push(`${produit.nomProduit} : coeffGros (${cGros}) ≥ coeffDemiGros (${cDemiGros})`);
+      }
+      if (cDemiGros >= cDetail) {
+        avertissements.push(`${produit.nomProduit} : coeffDemiGros (${cDemiGros}) ≥ coeffDetail (${cDetail})`);
+      }
+      if (cDetail < 1 || cDemiGros < 1 || cGros < 1) {
+        avertissements.push(`${produit.nomProduit} : coefficient < 1 → vente à perte`);
+      }
+      if (cDetail > 5) {
+        avertissements.push(`${produit.nomProduit} : coeffDetail élevé (${cDetail})`);
+      }
 
-        if (cGros >= cDetail) {
-          avertissements.push(`${produit.nomProduit} : coeffGros (${cGros}) ≥ coeffDetail (${cDetail})`);
-        }
-        if (cDetail < 1 || cGros < 1) {
-          avertissements.push(`${produit.nomProduit} : coefficient < 1 → vente à perte`);
-        }
-        if (cDetail > 5) {
-          avertissements.push(`${produit.nomProduit} : coeffDetail élevé (${cDetail})`);
-        }
-
-        return {
-          produitId: l.produitId,
-          nomProduit: produit.nomProduit,
-          cmup,
-          chargeUnitaire: Math.round(chargeUnitaire * 100) / 100,
-          coeffDetail: cDetail,
-          coeffGros: cGros,
-          prixDetailSuggere: Math.round(base * cDetail),
-          prixGrosSuggere:   Math.round(base * cGros),
-          poidsOuVolumeConnu: isVolume ? produit.volume : produit.poids,
-          poidsOuVolumeSaisi: pv,
-        };
-      }),
-    );
+      return {
+        produitId:          l.produitId,
+        nomProduit:         produit.nomProduit,
+        cmup,
+        chargeUnitaire:     Math.round(chargeUnitaire * 100) / 100,
+        coeffDetail:        cDetail,
+        coeffDemiGros:      cDemiGros,
+        coeffGros:          cGros,
+        prixDetailSuggere:  Math.round(base * cDetail),
+        prixDemiGrosSuggere: Math.round(base * cDemiGros),
+        prixGrosSuggere:    Math.round(base * cGros),
+        poidsOuVolumeConnu: isVolume ? produit.volume : produit.poids,
+        poidsOuVolumeSaisi: pv,
+      };
+    });
 
     return { resultats, avertissements, totalPV, fraisTaux };
   }
@@ -334,14 +345,18 @@ export class AchatService {
       throw new BadRequestException("L'achat n'a aucune ligne.");
     }
 
-    // Validation des coefficients
+    // Validation des coefficients (ordre : gros < demi-gros < détail)
     for (const l of dto.lignes) {
-      if (l.coeffGros != null && l.coeffDetail != null && l.coeffGros >= l.coeffDetail) {
-        throw new BadRequestException(
-          `coeffGros (${l.coeffGros}) doit être inférieur à coeffDetail (${l.coeffDetail}).`,
-        );
+      const cD = l.coeffDetail  ?? dto.coeffDetailDefault;
+      const cM = l.coeffDemiGros ?? dto.coeffDemiGrosDefault;
+      const cG = l.coeffGros    ?? dto.coeffGrosDefault;
+      if (cG >= cM) {
+        throw new BadRequestException(`coeffGros (${cG}) doit être inférieur à coeffDemiGros (${cM}).`);
       }
-      if ((l.coeffDetail != null && l.coeffDetail < 1) || (l.coeffGros != null && l.coeffGros < 1)) {
+      if (cM >= cD) {
+        throw new BadRequestException(`coeffDemiGros (${cM}) doit être inférieur à coeffDetail (${cD}).`);
+      }
+      if (cD < 1 || cM < 1 || cG < 1) {
         throw new BadRequestException('Un coefficient < 1 entraînerait une vente à perte.');
       }
     }
@@ -385,21 +400,24 @@ export class AchatService {
             sousTotal: ligneCalc.sousTotalFcfa,
             poidsUtilise: ligneDto.poidsOuVolume ?? null,
             volumeUtilise: ligneDto.poidsOuVolume ?? null,
-            coeffDetail: ligneDto.coeffDetail ?? null,
-            coeffGros: ligneDto.coeffGros ?? null,
-            prixDetailFinal: new Decimal(ligneDto.prixDetailFinal),
-            prixGrosFinal: new Decimal(ligneDto.prixGrosFinal),
+            coeffDetail:   ligneDto.coeffDetail   ?? null,
+            coeffDemiGros: ligneDto.coeffDemiGros  ?? null,
+            coeffGros:     ligneDto.coeffGros      ?? null,
+            prixDetailFinal:   new Decimal(ligneDto.prixDetailFinal),
+            prixDemiGrosFinal: new Decimal(ligneDto.prixDemiGrosFinal),
+            prixGrosFinal:     new Decimal(ligneDto.prixGrosFinal),
           },
         });
 
         // Mise à jour du produit : prix de vente + poids/volume de référence
         const produitUpdate: any = {
-          prixDetail: ligneDto.prixDetailFinal,
-          prixGros: ligneDto.prixGrosFinal,
+          prixDetail:   ligneDto.prixDetailFinal,
+          prixDemiGros: ligneDto.prixDemiGrosFinal,
+          prixGros:     ligneDto.prixGrosFinal,
           dernierFournisseurId: achat.fournisseurId,
         };
         if (ligneDto.poidsOuVolume != null) {
-          if (achat.methodeRepartition === 'POIDS') {
+          if (dto.methodeRepartition === 'POIDS') {
             produitUpdate.poids = ligneDto.poidsOuVolume;
           } else {
             produitUpdate.volume = ligneDto.poidsOuVolume;
@@ -427,16 +445,23 @@ export class AchatService {
         .reduce((acc, l) => acc.plus(l.prixUnitaireDevise.mul(l.quantite)), new Decimal(0))
         .toDecimalPlaces(2);
 
-      // 4. Passer en VALIDE
+      // 4. Passer en VALIDE + sauvegarder la config du lot + marquer comme payé
       return tx.achat.update({
         where: { id: achatId },
         data: {
-          statutAchat: StatutAchat.VALIDE,
+          statutAchat:    StatutAchat.VALIDE,
+          statutPaiement: StatutPaiement.PAYE,
           validatedAt: new Date(),
           validatedById: actor?.id ?? null,
           montantTotalFcfa: totalFcfa,
           montantTotalDevise: totalDevise,
           montantTotal: totalFcfa,
+          fraisTransport:      new Decimal(dto.fraisTransport),
+          fraisDouane:         new Decimal(dto.fraisDouane),
+          methodeRepartition:  dto.methodeRepartition,
+          coeffDetailDefault:  dto.coeffDetailDefault,
+          coeffDemiGrosDefault: dto.coeffDemiGrosDefault,
+          coeffGrosDefault:    dto.coeffGrosDefault,
           version: { increment: 1 },
         },
         include: {

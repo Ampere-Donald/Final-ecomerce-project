@@ -40,6 +40,12 @@ export class CreateProduitDto {
   prixGros?: number;
 
   @IsOptional()
+  @IsInt()
+  @Min(0)
+  @Type(() => Number)
+  quantiteGros?: number;
+
+  @IsOptional()
   @IsNumber()
   @Min(0)
   @Type(() => Number)
@@ -81,4 +87,16 @@ export class CreateProduitDto {
   @Transform(({ value }) => value === 'true' || value === true)
   @IsBoolean()
   isPopulaire?: boolean;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  @Type(() => Number)
+  poids?: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  @Type(() => Number)
+  volume?: number;
 }

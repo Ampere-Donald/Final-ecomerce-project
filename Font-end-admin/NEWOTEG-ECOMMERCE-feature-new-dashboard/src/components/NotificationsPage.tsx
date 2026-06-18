@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { Bell, Search, ChevronLeft, ChevronRight, CheckCheck, Eye, EyeOff, Filter } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Bell, Search, ChevronLeft, ChevronRight, CheckCheck, Eye, EyeOff, ArrowRight } from 'lucide-react';
 import { motion } from 'motion/react';
 import { notificationApi } from '../services/api';
 
@@ -28,9 +29,15 @@ const typeLabels: Record<string, string> = {
   CAISSE_MAJ: 'Caisse modifiée',
   CAISSE_SUPPRIMEE: 'Caisse supprimée',
   MOUVEMENT_STOCK_CREE: 'Mouvement stock',
+  FACTURE_VIRTUELLE_DEMANDE: 'FV — Demande',
+  FACTURE_VIRTUELLE_APPROUVEE: 'FV — Approuvée',
+  FACTURE_VIRTUELLE_REFUSEE: 'FV — Refusée',
 };
 
 const typeBadgeColor = (type: string) => {
+  if (type === 'FACTURE_VIRTUELLE_DEMANDE') return 'bg-orange-100 text-orange-700 ring-2 ring-orange-300';
+  if (type === 'FACTURE_VIRTUELLE_APPROUVEE') return 'bg-green-100 text-green-700';
+  if (type === 'FACTURE_VIRTUELLE_REFUSEE') return 'bg-red-100 text-red-700';
   if (type.includes('SUPPRIM')) return 'bg-red-100 text-red-700';
   if (type.includes('CREE') || type.includes('CREEE')) return 'bg-green-100 text-green-700';
   if (type.includes('MAJ') || type.includes('STATUT')) return 'bg-blue-100 text-blue-700';
@@ -50,6 +57,7 @@ const timeAgo = (date: string) => {
 };
 
 export const NotificationsPage = () => {
+  const navigate = useNavigate();
   const [data, setData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
@@ -173,7 +181,16 @@ export const NotificationsPage = () => {
                       )}
                     </div>
                     <p className="text-sm text-slate-800">{n.message}</p>
-                    <p className="text-xs text-slate-400 mt-1">{timeAgo(n.createdAt)}</p>
+                    <div className="flex items-center gap-2 mt-1">
+                      <p className="text-xs text-slate-400">{timeAgo(n.createdAt)}</p>
+                      {n.type === 'FACTURE_VIRTUELLE_DEMANDE' && (
+                        <button
+                          onClick={() => navigate('/invoices', { state: { tab: 'virtuelles' } })}
+                          className="flex items-center gap-1 text-xs font-semibold text-orange-600 hover:text-orange-700 bg-orange-50 hover:bg-orange-100 px-2 py-0.5 rounded-full transition-colors">
+                          Traiter <ArrowRight size={11} />
+                        </button>
+                      )}
+                    </div>
                   </div>
                   <button onClick={() => handleToggleRead(n)}
                     className="p-1.5 text-slate-400 hover:text-primary hover:bg-primary/10 rounded-lg transition-colors shrink-0" title={n.lue ? 'Marquer non lu' : 'Marquer lu'}>

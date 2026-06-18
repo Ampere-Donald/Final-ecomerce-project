@@ -1,4 +1,4 @@
-import {
+﻿import {
   Body,
   Controller,
   Get,
@@ -40,6 +40,14 @@ export class CaisseJourController {
   }
 
   /** Détail d'une caisse du jour : caisse + opérations + solde. */
+  @Get('caissier/:id')
+  @Roles('SUPER_ADMIN', 'ADMIN')
+  statsCaissier(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Query('periode') periode: string,
+  ) {
+    return this.service.statsCaissier(id, periode);
+  }
   @Get(':id')
   @Roles('SUPER_ADMIN', 'ADMIN', 'CAISSIER')
   one(@Param('id', ParseUUIDPipe) id: string) {
@@ -58,6 +66,19 @@ export class CaisseJourController {
     @Body() dto: FermerCaisseDto,
   ) {
     return this.service.fermer(id, req.user.id, dto?.note);
+  }
+
+  /**
+   * Réouvre une caisse du jour fermée. Réservé au SUPER_ADMIN uniquement.
+   * Action tracée avec audit obligatoire.
+   */
+  @Post(':id/rouvrir')
+  @Roles('SUPER_ADMIN')
+  rouvrir(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Request() req: any,
+  ) {
+    return this.service.rouvrir(id, req.user.id);
   }
 
   /**
@@ -80,3 +101,4 @@ export class CaisseJourController {
     );
   }
 }
+

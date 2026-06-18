@@ -28,6 +28,8 @@ export const can = {
   accessMesTickets: (r?: string) => isAdmin(r) || isVendeur(r),
   accessFileCaissier: (r?: string) => isAdmin(r) || isCaissier(r),
   accessTicketsJour: (r?: string) => isAdmin(r),
+  creerProforma: (r?: string) => isAdmin(r) || isVendeur(r),
+  voirProformas: (r?: string) => isAdmin(r) || isVendeur(r) || isCaissier(r),
 
   // ── E-commerce ──────────────────────────────────────────────
   accessCommandesEnLigne: (r?: string) => isAdmin(r) || isVendeur(r),
@@ -69,6 +71,8 @@ export const can = {
   voirPrimes: (r?: string) => isAdmin(r),
   validerPrime: (r?: string) => isSuper(r),
   voirFactures: (r?: string) => isAdmin(r) || isCaissier(r),
+  voirFacturesVirtuelles: (r?: string) => isAdmin(r) || isCaissier(r) || isVendeur(r),
+  approuverFactureVirtuelle: (r?: string) => isSuper(r),
   voirMarges: (r?: string) => isAdmin(r),
   voirSoldeGlobal: (r?: string) => isAdmin(r),
 
