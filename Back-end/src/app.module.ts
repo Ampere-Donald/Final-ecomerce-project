@@ -43,6 +43,7 @@ import { PrimeModule } from './prime/prime.module';
 import { InventaireModule } from './inventaire/inventaire.module';
 import { ProformaModule } from './proforma/proforma.module';
 import { FactureVirtuelleModule } from './facture-virtuelle/facture-virtuelle.module';
+import { PaieModule } from './paie/paie.module';
 
 @Module({
   imports: [
@@ -93,6 +94,7 @@ import { FactureVirtuelleModule } from './facture-virtuelle/facture-virtuelle.mo
     InventaireModule,
     ProformaModule,
     FactureVirtuelleModule,
+    PaieModule,
   ],
   controllers: [AppController],
   providers: [AppService],

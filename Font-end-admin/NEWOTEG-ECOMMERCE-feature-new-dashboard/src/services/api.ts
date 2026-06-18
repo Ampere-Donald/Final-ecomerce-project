@@ -445,4 +445,28 @@ export const inventaireApi = {
     api.post(`/inventaires/delegations/${id}/revoquer`, {}).then(r => r.data),
 };
 
+// Paie — salariés & bulletins de paie
+export const paieApi = {
+  // Paramètres employeur (en-tête légal du bulletin + taux)
+  getParametres: () => api.get('/paie/parametres').then(r => r.data),
+  updateParametres: (data: any) => api.put('/paie/parametres', data).then(r => r.data),
+  // Salariés
+  listSalaries: () => api.get('/paie/salaries').then(r => r.data),
+  getSalarie: (id: string) => api.get(`/paie/salaries/${id}`).then(r => r.data),
+  createSalarie: (data: any) => api.post('/paie/salaries', data).then(r => r.data),
+  updateSalarie: (id: string, data: any) => api.patch(`/paie/salaries/${id}`, data).then(r => r.data),
+  toggleSalarieActif: (id: string) => api.patch(`/paie/salaries/${id}/toggle-actif`).then(r => r.data),
+  // Bulletins
+  listBulletins: (params?: { periode?: string; salarieId?: string; statut?: string }) =>
+    api.get('/paie/bulletins', { params }).then(r => r.data),
+  getBulletin: (id: string) => api.get(`/paie/bulletins/${id}`).then(r => r.data),
+  previewBulletin: (data: any) => api.post('/paie/bulletins/preview', data).then(r => r.data),
+  createBulletin: (data: any) => api.post('/paie/bulletins', data).then(r => r.data),
+  updateBulletin: (id: string, data: any) => api.patch(`/paie/bulletins/${id}`, data).then(r => r.data),
+  validerBulletin: (id: string) => api.post(`/paie/bulletins/${id}/valider`, {}).then(r => r.data),
+  payerBulletin: (id: string, data?: any) => api.post(`/paie/bulletins/${id}/payer`, data || {}).then(r => r.data),
+  annulerBulletin: (id: string) => api.post(`/paie/bulletins/${id}/annuler`, {}).then(r => r.data),
+  removeBulletin: (id: string) => api.delete(`/paie/bulletins/${id}`).then(r => r.data),
+};
+
 export default api;
