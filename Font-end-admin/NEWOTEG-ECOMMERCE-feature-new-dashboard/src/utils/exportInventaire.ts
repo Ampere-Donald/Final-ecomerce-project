@@ -1,4 +1,6 @@
 import { jsPDF } from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import { brand } from '../config/brand';
 
 export interface LigneInv {
   produitId: string;
@@ -61,68 +63,116 @@ export function exportInventaireCSV(inv: InventaireExport, prix: PrixMap = {}) {
   );
 }
 
+// Palette épurée (slate)
+const ENCRE: [number, number, number] = [30, 41, 59];      // slate-800
+const GRIS: [number, number, number] = [100, 116, 139];     // slate-500
+const LIGNE_ALT: [number, number, number] = [247, 248, 250];
+const VERT: [number, number, number] = [22, 163, 74];
+const ROUGE: [number, number, number] = [220, 38, 38];
+
 export function exportInventairePDF(inv: InventaireExport, prix: PrixMap = {}) {
   const avecCout = coutsDisponibles(prix);
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-  const marginX = 12;
-  let y = 16;
+  const pageW = doc.internal.pageSize.getWidth();
+  const pageH = doc.internal.pageSize.getHeight();
+  const margin = 14;
+  const dateEdition = new Date().toLocaleString('fr-FR');
 
-  doc.setFontSize(15);
-  doc.text(`Inventaire ${inv.reference}`, marginX, y);
-  y += 6;
-  doc.setFontSize(10);
-  doc.setTextColor(90);
-  doc.text(`${inv.perimetre}  •  Statut : ${inv.statut}`, marginX, y);
-  y += 8;
-  doc.setTextColor(0);
-
-  // En-têtes de colonnes
-  const cols = avecCout
-    ? [
-        { t: 'Produit', x: marginX, w: 70 },
-        { t: 'Sys.', x: marginX + 72 },
-        { t: 'Compté', x: marginX + 90 },
-        { t: 'Écart', x: marginX + 112 },
-        { t: 'Val. coût', x: marginX + 134 },
-      ]
-    : [
-        { t: 'Produit', x: marginX, w: 95 },
-        { t: 'Système', x: marginX + 100 },
-        { t: 'Compté', x: marginX + 130 },
-        { t: 'Écart', x: marginX + 160 },
-      ];
-
-  doc.setFontSize(9);
-  doc.setFont(undefined, 'bold');
-  cols.forEach((c) => doc.text(c.t, c.x, y));
-  y += 2;
-  doc.setDrawColor(200);
-  doc.line(marginX, y, 200, y);
-  y += 4;
-  doc.setFont(undefined, 'normal');
-
-  const nouvellePage = () => {
-    doc.addPage();
-    y = 16;
-  };
-
-  for (const l of inv.lignes) {
-    if (y > 285) nouvellePage();
+  // ── Totaux ──
+  let totalSys = 0, totalEcart = 0, totalValVente = 0, totalValCout = 0;
+  inv.lignes.forEach((l) => {
     const p = prix[l.produitId] || {};
-    const nom = l.nomProduit.length > 42 ? l.nomProduit.slice(0, 41) + '…' : l.nomProduit;
-    doc.text(nom, cols[0].x, y);
-    if (avecCout) {
-      doc.text(String(l.stockSysteme), cols[1].x, y);
-      doc.text(l.stockCompte != null ? String(l.stockCompte) : '—', cols[2].x, y);
-      doc.text(l.ecart != null ? String(l.ecart) : '—', cols[3].x, y);
-      doc.text(fmt(Math.round((Number(p.cmupActuel) || 0) * l.stockSysteme)), cols[4].x, y);
-    } else {
-      doc.text(String(l.stockSysteme), cols[1].x, y);
-      doc.text(l.stockCompte != null ? String(l.stockCompte) : '—', cols[2].x, y);
-      doc.text(l.ecart != null ? String(l.ecart) : '—', cols[3].x, y);
-    }
-    y += 6;
-  }
+    totalSys += l.stockSysteme;
+    if (l.ecart != null) totalEcart += l.ecart;
+    totalValVente += (Number(p.prixDetail) || 0) * l.stockSysteme;
+    totalValCout += (Number(p.cmupActuel) || 0) * l.stockSysteme;
+  });
+
+  // ── Corps du tableau ──
+  const head = avecCout
+    ? [['Produit', 'Famille', 'Stock sys.', 'Compté', 'Écart', 'Valeur coût']]
+    : [['Produit', 'Famille', 'Stock système', 'Compté', 'Écart']];
+
+  const body = inv.lignes.map((l) => {
+    const p = prix[l.produitId] || {};
+    const base = [
+      l.nomProduit,
+      l.codeFamille || '—',
+      String(l.stockSysteme),
+      l.stockCompte != null ? String(l.stockCompte) : '—',
+      l.ecart != null ? (l.ecart > 0 ? `+${l.ecart}` : String(l.ecart)) : '—',
+    ];
+    if (avecCout) base.push(fmt(Math.round((Number(p.cmupActuel) || 0) * l.stockSysteme)));
+    return base;
+  });
+
+  const foot = avecCout
+    ? [['Total', '', String(totalSys), '', totalEcart > 0 ? `+${totalEcart}` : String(totalEcart), `${fmt(Math.round(totalValCout))} FCFA`]]
+    : [['Total', '', String(totalSys), '', totalEcart > 0 ? `+${totalEcart}` : String(totalEcart)]];
+
+  const idxEcart = 4;
+  const idxNum = avecCout ? [2, 3, 4, 5] : [2, 3, 4];
+
+  autoTable(doc, {
+    head,
+    body,
+    foot,
+    startY: 42,
+    margin: { left: margin, right: margin, top: 42 },
+    theme: 'striped',
+    styles: { font: 'helvetica', fontSize: 9, cellPadding: 2.4, textColor: [40, 40, 40], lineColor: [226, 232, 240], lineWidth: 0.1 },
+    headStyles: { fillColor: ENCRE, textColor: 255, fontStyle: 'bold', fontSize: 9, halign: 'left' },
+    footStyles: { fillColor: [241, 245, 249], textColor: ENCRE, fontStyle: 'bold', fontSize: 9 },
+    alternateRowStyles: { fillColor: LIGNE_ALT },
+    columnStyles: idxNum.reduce((acc, i) => { acc[i] = { halign: 'right', cellWidth: avecCout ? 22 : 28 }; return acc; }, { 1: { textColor: GRIS } } as any),
+    // Coloration de l'écart (vert/rouge)
+    didParseCell: (data: any) => {
+      if (data.section === 'body' && data.column.index === idxEcart) {
+        const v = data.cell.raw as string;
+        if (v && v.startsWith('+')) data.cell.styles.textColor = VERT;
+        else if (v && v.startsWith('-')) data.cell.styles.textColor = ROUGE;
+        else data.cell.styles.textColor = GRIS;
+        data.cell.styles.fontStyle = 'bold';
+      }
+    },
+    // En-tête + pied de page sur chaque page
+    didDrawPage: (data: any) => {
+      // En-tête
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(16);
+      doc.setTextColor(...ENCRE);
+      doc.text(brand.companyName, margin, 20);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
+      doc.setTextColor(...GRIS);
+      doc.text(brand.branchName, margin, 25);
+
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(13);
+      doc.setTextColor(...ENCRE);
+      doc.text("Fiche d'inventaire", pageW - margin, 20, { align: 'right' });
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
+      doc.setTextColor(...GRIS);
+      doc.text(inv.reference, pageW - margin, 25, { align: 'right' });
+
+      // Bandeau d'infos
+      doc.setDrawColor(226, 232, 240);
+      doc.line(margin, 30, pageW - margin, 30);
+      doc.setFontSize(9);
+      doc.setTextColor(...ENCRE);
+      doc.text(`${inv.perimetre}`, margin, 36);
+      doc.setTextColor(...GRIS);
+      doc.text(`Statut : ${inv.statut.replace('_', ' ')}    Valeur stock (vente) : ${fmt(Math.round(totalValVente))} FCFA`, pageW - margin, 36, { align: 'right' });
+
+      // Pied de page
+      const pageNo = (doc as any).internal.getNumberOfPages();
+      doc.setFontSize(8);
+      doc.setTextColor(...GRIS);
+      doc.text(`Édité le ${dateEdition}`, margin, pageH - 8);
+      doc.text(`Page ${data.pageNumber} / ${pageNo}`, pageW - margin, pageH - 8, { align: 'right' });
+    },
+  });
 
   doc.save(`inventaire_${inv.reference}.pdf`);
 }
