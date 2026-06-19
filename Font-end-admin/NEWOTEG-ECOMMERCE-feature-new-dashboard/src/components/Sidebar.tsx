@@ -18,7 +18,6 @@ import {
   LogOut,
   X,
   Shield,
-  Palette,
   UserCog,
   Bell,
   AlertTriangle,
@@ -113,7 +112,6 @@ export const Sidebar = ({ open, onClose }: SidebarProps) => {
       items: [
         ...add(can.voirProduits(role), { label: 'Produits', icon: Package, path: '/produits' }),
         ...add(can.modifierProduits(role), { label: 'Catégories', icon: Tags, path: '/categories' }),
-        ...add(can.modifierProduits(role), { label: 'Attributs', icon: Palette, path: '/attributs' }),
         ...add(can.accessStock(role), { label: 'Mouvements stock', icon: Activity, path: '/stock' }),
         ...add(can.accessInventaire(role), { label: 'Inventaire', icon: ClipboardList, path: '/inventaire' }),
         ...add(can.accessStock(role), { label: 'Alertes stock', icon: AlertTriangle, path: '/stock-alerts' }),
