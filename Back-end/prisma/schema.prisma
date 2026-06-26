@@ -22,6 +22,7 @@ model Produit {
   id                   String           @id @default(uuid())
   categorieId          String           @map("id_categorie")
   nomProduit           String           @map("nom_produit") @db.VarChar(150)
+  designationEn        String?          @map("designation_en") @db.VarChar(200)
   marque               String?          @db.VarChar(100)
   description          String?
   dateAjout            DateTime         @default(now()) @map("date_ajout")
@@ -798,12 +799,56 @@ model DelegationInventaire {
   @@map("delegation_inventaire")
 }
 
+model CommandeFournisseur {
+  id            String                     @id @default(uuid())
+  reference     String                     @unique
+  fournisseurId String                     @map("fournisseur_id")
+  devise        Devise                     @default(FCFA)
+  tauxVersFcfa  Decimal                    @default(1) @map("taux_vers_fcfa") @db.Decimal(12, 6)
+  statut        StatutCommandeFournisseur  @default(BROUILLON)
+  notes         String?                    @db.VarChar(500)
+  totalDevise   Decimal                    @default(0) @map("total_devise") @db.Decimal(14, 2)
+  totalFcfa     Decimal                    @default(0) @map("total_fcfa") @db.Decimal(14, 2)
+  achatId       String?                    @map("achat_id")
+  createdById   String                     @map("created_by_id")
+  createdAt     DateTime                   @default(now()) @map("created_at")
+  envoyeeAt     DateTime?                  @map("envoyee_at")
+  recueAt       DateTime?                  @map("recue_at")
+  lignes        LigneCommandeFournisseur[]
+
+  @@index([statut, createdAt])
+  @@map("commande_fournisseur")
+}
+
+model LigneCommandeFournisseur {
+  id            String              @id @default(uuid())
+  commandeId    String              @map("commande_id")
+  produitId     String              @map("produit_id")
+  designationEn String?             @map("designation_en") @db.VarChar(200)
+  nomProduit    String              @map("nom_produit") @db.VarChar(150)
+  quantite      Int
+  rate          Decimal             @default(0) @db.Decimal(12, 2)
+  prixNegocie   Decimal             @default(0) @map("prix_negocie") @db.Decimal(12, 2)
+  sousTotal     Decimal             @default(0) @map("sous_total") @db.Decimal(14, 2)
+  commande      CommandeFournisseur @relation(fields: [commandeId], references: [id], onDelete: Cascade)
+
+  @@index([commandeId])
+  @@map("ligne_commande_fournisseur")
+}
+
 // ── Enums ─────────────────────────────────────────────────────────────────
 
 enum StatutInventaire {
   EN_COURS
   VALIDE
   ANNULE
+}
+
+enum StatutCommandeFournisseur {
+  BROUILLON
+  ENVOYEE
+  RECUE
+  ANNULEE
 }
 
 enum AdminRole {

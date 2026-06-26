@@ -45,6 +45,7 @@ export const can = {
   supprimerProduits: (r?: string) => isSuper(r),
   accessStock: (r?: string) => isAdmin(r),
   accessInventaire: (r?: string) => isAdmin(r),
+  accessCommandeFournisseur: (r?: string) => isSuper(r),
   accessAchats: (r?: string) => isAdmin(r),
   accessCmup: (r?: string) => isSuper(r),
   accessScanCode: (r?: string) => !isCaissier(r),

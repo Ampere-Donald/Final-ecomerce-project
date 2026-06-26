@@ -349,6 +349,13 @@ export class ProduitController {
 
   @UseGuards(AdminAuthGuard, RolesGuard)
   @Roles('SUPER_ADMIN', 'ADMIN')
+  @Post(':id/traduire')
+  traduire(@Param('id', ParseUUIDPipe) id: string) {
+    return this.produitService.traduire(id);
+  }
+
+  @UseGuards(AdminAuthGuard, RolesGuard)
+  @Roles('SUPER_ADMIN', 'ADMIN')
   @Delete(':id')
   remove(@Param('id', ParseUUIDPipe) id: string, @Request() req: any) {
     const actor = { id: req.user.id, nom: req.user.nom, role: req.user.role };

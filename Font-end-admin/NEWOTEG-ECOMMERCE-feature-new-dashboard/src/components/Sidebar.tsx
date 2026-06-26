@@ -115,6 +115,7 @@ export const Sidebar = ({ open, onClose }: SidebarProps) => {
         ...add(can.accessStock(role), { label: 'Mouvements stock', icon: Activity, path: '/stock' }),
         ...add(can.accessInventaire(role), { label: 'Inventaire', icon: ClipboardList, path: '/inventaire' }),
         ...add(can.accessStock(role), { label: 'Alertes stock', icon: AlertTriangle, path: '/stock-alerts' }),
+        ...add(can.accessCommandeFournisseur(role), { label: 'Bons de commande', icon: ShoppingBag, path: '/commandes-fournisseur' }),
         ...add(can.accessAchats(role), { label: 'Achats (Réappro)', icon: Truck, path: '/achats' }),
       ],
     },

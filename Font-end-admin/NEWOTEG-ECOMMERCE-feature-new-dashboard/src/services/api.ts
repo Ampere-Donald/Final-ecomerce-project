@@ -126,6 +126,21 @@ export const produitApi = {
   getLowStock: () => api.get('/produits/low-stock').then(toArray),
   findByCode: (codeFamille: string, code: string) =>
     api.get(`/produits/scan/${encodeURIComponent(codeFamille)}/${encodeURIComponent(code)}`).then(res => res.data),
+  traduire: (id: string) => api.post(`/produits/${id}/traduire`, {}).then(res => res.data),
+};
+
+// Bons de commande fournisseur (bilingue, suggestion auto, conversion en achat)
+export const commandeFournisseurApi = {
+  create: (data: { fournisseurId: string; devise?: string; tauxVersFcfa?: number; notes?: string; lignes: { produitId: string; quantite: number; rate?: number; prixNegocie?: number }[] }) =>
+    api.post('/commandes-fournisseur', data).then(r => r.data),
+  getAll: () => api.get('/commandes-fournisseur').then(r => r.data),
+  getOne: (id: string) => api.get(`/commandes-fournisseur/${id}`).then(r => r.data),
+  update: (id: string, data: any) => api.patch(`/commandes-fournisseur/${id}`, data).then(r => r.data),
+  suggestions: (params: { categorieId?: string; codeFamille?: string }) =>
+    api.get('/commandes-fournisseur/suggestions', { params }).then(r => r.data),
+  envoyer: (id: string) => api.post(`/commandes-fournisseur/${id}/envoyer`, {}).then(r => r.data),
+  convertirAchat: (id: string) => api.post(`/commandes-fournisseur/${id}/convertir-achat`, {}).then(r => r.data),
+  annuler: (id: string) => api.post(`/commandes-fournisseur/${id}/annuler`, {}).then(r => r.data),
 };
 
 // Catégories

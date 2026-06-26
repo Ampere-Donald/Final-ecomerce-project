@@ -2,6 +2,7 @@ import { Injectable, NotFoundException, BadRequestException, Logger, InternalSer
 import { DatabaseService } from 'src/database/database.service';
 import { NotificationService, NotificationActor } from 'src/notification/notification.service';
 import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
+import { GeminiClient } from 'src/equivalence/gemini.client';
 import { CreateProduitDto } from './dto/create-produit.dto';
 import { UpdateProduitDto } from './dto/update-produit.dto';
 import { Readable } from 'stream';
@@ -19,7 +20,39 @@ export class ProduitService {
     private readonly db: DatabaseService,
     private readonly notifications: NotificationService,
     private readonly cloudinary: CloudinaryService,
+    private readonly gemini: GeminiClient,
   ) {}
+
+  /**
+   * Traduit le nom français du produit en désignation anglaise commerciale
+   * courte (pour les bons de commande fournisseur) via l'IA, et la sauvegarde.
+   */
+  async traduire(id: string) {
+    const produit = await this.db.produit.findUnique({
+      where: { id },
+      select: { id: true, nomProduit: true, marque: true },
+    });
+    if (!produit) throw new NotFoundException(`Produit ${id} introuvable`);
+
+    const libelle = [produit.marque, produit.nomProduit].filter(Boolean).join(' ');
+    const res = await this.gemini.generateJson(
+      `Traduis ce nom de produit (composants/accessoires électroniques) du français vers l'anglais commercial, court et standard utilisé sur une facture fournisseur. Réponds uniquement la désignation anglaise, sans phrase. Produit : "${libelle}".`,
+      {
+        type: 'OBJECT',
+        properties: { designationEn: { type: 'STRING' } },
+        required: ['designationEn'],
+      },
+    );
+    const designationEn = String(res?.designationEn || '').slice(0, 200).trim();
+    if (!designationEn) {
+      throw new InternalServerErrorException('Traduction IA vide.');
+    }
+    return this.db.produit.update({
+      where: { id },
+      data: { designationEn },
+      select: { id: true, nomProduit: true, designationEn: true },
+    });
+  }
 
   private importStatus = {
     isImporting: false,
