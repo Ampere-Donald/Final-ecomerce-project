@@ -6,6 +6,6 @@ import { GeminiClient } from './gemini.client';
 @Module({
   controllers: [EquivalenceController],
   providers: [EquivalenceService, GeminiClient],
-  exports: [EquivalenceService],
+  exports: [EquivalenceService, GeminiClient],
 })
 export class EquivalenceModule {}

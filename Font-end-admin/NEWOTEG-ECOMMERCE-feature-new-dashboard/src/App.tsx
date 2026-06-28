@@ -16,6 +16,8 @@ import { Clients } from './components/Clients';
 import { CreditsClients } from './components/CreditsClients';
 import { Fournisseurs } from './components/Fournisseurs';
 import { MouvementsStock } from './components/MouvementsStock';
+import { Inventaire } from './components/Inventaire';
+import { CommandeFournisseur } from './components/CommandeFournisseur';
 import { Caisse } from './components/Caisse';
 import { Coffres } from './components/Coffres';
 import { Echeances } from './components/Echeances';
@@ -33,6 +35,7 @@ import { Employes } from './components/Employes';
 import { CmupValorisation } from './components/CmupValorisation';
 import { Invoices } from './components/Invoices';
 import { Primes } from './components/Primes';
+import { Paie } from './components/Paie';
 import { Proformas } from './components/Proformas';
 import { ToastProvider } from './components/ui/Toast';
 import { FVAlertPopup } from './components/FVAlertPopup';
@@ -54,9 +57,11 @@ export default function App() {
             <Route path="categories" element={<Categories />} />
 
             <Route path="stock" element={<MouvementsStock />} />
+            <Route path="inventaire" element={<RoleProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN']}><Inventaire /></RoleProtectedRoute>} />
             <Route path="stock-alerts" element={<StockAlerts />} />
             <Route path="ventes" element={<Ventes />} />
             <Route path="achats" element={<Achats />} />
+            <Route path="commandes-fournisseur" element={<RoleProtectedRoute allowedRoles={['SUPER_ADMIN']}><CommandeFournisseur /></RoleProtectedRoute>} />
             <Route path="cmup" element={<RoleProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN']}><CmupValorisation /></RoleProtectedRoute>} />
             <Route path="clients" element={<Clients />} />
             <Route path="credits" element={<RoleProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN', 'CAISSIER']}><CreditsClients /></RoleProtectedRoute>} />
@@ -81,6 +86,7 @@ export default function App() {
             {/* Factures + Primes (Plan Implementation) */}
             <Route path="invoices" element={<RoleProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN', 'CAISSIER', 'VENDEUR']}><Invoices /></RoleProtectedRoute>} />
             <Route path="primes" element={<RoleProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN']}><Primes /></RoleProtectedRoute>} />
+            <Route path="paie" element={<RoleProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN']}><Paie /></RoleProtectedRoute>} />
 
             <Route path="employes" element={<RoleProtectedRoute allowedRoles={['SUPER_ADMIN']}><Employes /></RoleProtectedRoute>} />
             <Route path="settings" element={<Settings />} />

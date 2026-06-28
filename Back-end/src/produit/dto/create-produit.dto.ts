@@ -9,6 +9,11 @@ export class CreateProduitDto {
   @MaxLength(150)
   nomProduit: string;
 
+  @IsOptional()
+  @IsString()
+  @MaxLength(200)
+  designationEn?: string;
+
   @IsString()
   @MaxLength(100)
   marque: string;

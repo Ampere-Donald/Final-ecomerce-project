@@ -18,7 +18,6 @@ import {
   LogOut,
   X,
   Shield,
-  Palette,
   UserCog,
   Bell,
   AlertTriangle,
@@ -27,6 +26,8 @@ import {
   PiggyBank,
   Calculator,
   Award,
+  ClipboardList,
+  Banknote,
 } from 'lucide-react';
 import { useAdminAuth } from '../context/AdminAuthContext';
 import { brand } from '../config/brand';
@@ -86,6 +87,7 @@ export const Sidebar = ({ open, onClose }: SidebarProps) => {
         ...add(can.accessCaisseJour(role), { label: 'Caisse du jour', icon: Wallet, path: '/caisse-jour' }),
         ...add(can.accessCaisseGlobale(role), { label: 'Caisse globale', icon: Landmark, path: '/caisse' }),
         ...add(can.accessCoffres(role), { label: 'Coffres', icon: PiggyBank, path: '/coffres' }),
+        ...add(can.accessPaie(role), { label: 'Paie', icon: Banknote, path: '/paie' }),
         ...add(can.accessCredits(role), { label: 'Crédits clients', icon: HandCoins, path: '/credits' }),
         ...add(can.accessEcheances(role), { label: 'Échéances', icon: AlarmClock, path: '/echeances' }),
         ...add(can.accessCmup(role), { label: 'CMUP & Valorisation', icon: Calculator, path: '/cmup' }),
@@ -110,9 +112,10 @@ export const Sidebar = ({ open, onClose }: SidebarProps) => {
       items: [
         ...add(can.voirProduits(role), { label: 'Produits', icon: Package, path: '/produits' }),
         ...add(can.modifierProduits(role), { label: 'Catégories', icon: Tags, path: '/categories' }),
-        ...add(can.modifierProduits(role), { label: 'Attributs', icon: Palette, path: '/attributs' }),
         ...add(can.accessStock(role), { label: 'Mouvements stock', icon: Activity, path: '/stock' }),
+        ...add(can.accessInventaire(role), { label: 'Inventaire', icon: ClipboardList, path: '/inventaire' }),
         ...add(can.accessStock(role), { label: 'Alertes stock', icon: AlertTriangle, path: '/stock-alerts' }),
+        ...add(can.accessCommandeFournisseur(role), { label: 'Bons de commande', icon: ShoppingBag, path: '/commandes-fournisseur' }),
         ...add(can.accessAchats(role), { label: 'Achats (Réappro)', icon: Truck, path: '/achats' }),
       ],
     },

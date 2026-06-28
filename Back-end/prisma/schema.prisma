@@ -22,6 +22,7 @@ model Produit {
   id                   String           @id @default(uuid())
   categorieId          String           @map("id_categorie")
   nomProduit           String           @map("nom_produit") @db.VarChar(150)
+  designationEn        String?          @map("designation_en") @db.VarChar(200)
   marque               String?          @db.VarChar(100)
   description          String?
   dateAjout            DateTime         @default(now()) @map("date_ajout")
@@ -31,7 +32,6 @@ model Produit {
   prixDemiGros         Float?           @map("prix_demi_gros")
   prixGros             Float?           @map("prix_gros")
   quantiteGros         Int?             @map("quantite_gros")
-  prixDemiGros         Float?           @map("prix_demi_gros")
   quantiteStock        Int              @default(0) @map("quantite_stock")
   seuilAlerte          Int              @default(5) @map("seuil_alerte")
   urlDatasheet         String?          @map("url_datasheet")
@@ -718,6 +718,7 @@ model AdminUser {
   ventesEffectuees    Vente[]        @relation("VenteVendeur")
   facturesVirtuellesVendeur    FactureVirtuelle[]  @relation("FacturesVirtuellesVendeur")
   facturesVirtuellesApprouveur FactureVirtuelle[]  @relation("FacturesVirtuellesApprouveur")
+  salarie                      Salarie?
 
   @@map("admin_user")
 }
@@ -751,7 +752,104 @@ model ActivityLog {
   @@map("activity_log")
 }
 
-// -- Enums ---------------------------------------------------------------------
+model Inventaire {
+  id          String            @id @default(uuid())
+  reference   String            @unique
+  statut      StatutInventaire  @default(EN_COURS)
+  perimetre   String            @db.VarChar(150)
+  categorieId String?           @map("categorie_id")
+  codeFamille String?           @map("code_famille") @db.VarChar(50)
+  createdById String            @map("created_by_id")
+  createdAt   DateTime          @default(now()) @map("created_at")
+  valideAt    DateTime?         @map("valide_at")
+  valideById  String?           @map("valide_by_id")
+  viaDelegation Boolean         @default(false) @map("via_delegation")
+  lignes      LigneInventaire[]
+
+  @@index([statut, createdAt])
+  @@map("inventaire")
+}
+
+model LigneInventaire {
+  id           String     @id @default(uuid())
+  inventaireId String     @map("inventaire_id")
+  produitId    String     @map("produit_id")
+  nomProduit   String     @map("nom_produit") @db.VarChar(150)
+  codeFamille  String?    @map("code_famille") @db.VarChar(50)
+  stockSysteme Int        @map("stock_systeme")
+  stockCompte  Int?       @map("stock_compte")
+  ecart        Int?
+  inventaire   Inventaire @relation(fields: [inventaireId], references: [id], onDelete: Cascade)
+
+  @@index([inventaireId])
+  @@map("ligne_inventaire")
+}
+
+model DelegationInventaire {
+  id          String   @id @default(uuid())
+  adminUserId String   @map("admin_user_id")
+  accordeById String   @map("accorde_par_id")
+  debutAt     DateTime @default(now()) @map("debut_at")
+  finAt       DateTime @map("fin_at")
+  active      Boolean  @default(true)
+  motif       String?  @db.VarChar(255)
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@index([adminUserId, active])
+  @@map("delegation_inventaire")
+}
+
+model CommandeFournisseur {
+  id            String                     @id @default(uuid())
+  reference     String                     @unique
+  fournisseurId String                     @map("fournisseur_id")
+  devise        Devise                     @default(FCFA)
+  tauxVersFcfa  Decimal                    @default(1) @map("taux_vers_fcfa") @db.Decimal(12, 6)
+  statut        StatutCommandeFournisseur  @default(BROUILLON)
+  notes         String?                    @db.VarChar(500)
+  totalDevise   Decimal                    @default(0) @map("total_devise") @db.Decimal(14, 2)
+  totalFcfa     Decimal                    @default(0) @map("total_fcfa") @db.Decimal(14, 2)
+  achatId       String?                    @map("achat_id")
+  createdById   String                     @map("created_by_id")
+  createdAt     DateTime                   @default(now()) @map("created_at")
+  envoyeeAt     DateTime?                  @map("envoyee_at")
+  recueAt       DateTime?                  @map("recue_at")
+  lignes        LigneCommandeFournisseur[]
+
+  @@index([statut, createdAt])
+  @@map("commande_fournisseur")
+}
+
+model LigneCommandeFournisseur {
+  id            String              @id @default(uuid())
+  commandeId    String              @map("commande_id")
+  produitId     String              @map("produit_id")
+  designationEn String?             @map("designation_en") @db.VarChar(200)
+  nomProduit    String              @map("nom_produit") @db.VarChar(150)
+  quantite      Int
+  rate          Decimal             @default(0) @db.Decimal(12, 2)
+  prixNegocie   Decimal             @default(0) @map("prix_negocie") @db.Decimal(12, 2)
+  sousTotal     Decimal             @default(0) @map("sous_total") @db.Decimal(14, 2)
+  commande      CommandeFournisseur @relation(fields: [commandeId], references: [id], onDelete: Cascade)
+
+  @@index([commandeId])
+  @@map("ligne_commande_fournisseur")
+}
+
+// ── Enums ─────────────────────────────────────────────────────────────────
+
+enum StatutInventaire {
+  EN_COURS
+  VALIDE
+  ANNULE
+}
+
+enum StatutCommandeFournisseur {
+  BROUILLON
+  ENVOYEE
+  RECUE
+  ANNULEE
+}
 
 enum AdminRole {
   SUPER_ADMIN
@@ -981,5 +1079,138 @@ model FactureVirtuelleLigne {
   factureVirtuelle      FactureVirtuelle   @relation(fields: [factureVirtuelleId], references: [id], onDelete: Cascade)
 
   @@map("facture_virtuelle_ligne")
+}
+
+// ── Paie / Bulletins de salaire ─────────────────────────────────────────────
+
+model ParametrePaie {
+  id                  String   @id @default("default")
+  raisonSociale       String?  @map("raison_sociale") @db.VarChar(200)
+  adresse             String?
+  ville               String?  @db.VarChar(100)
+  niu                 String?  @db.VarChar(50)
+  rccm                String?  @db.VarChar(50)
+  cnpsEmployeur       String?  @map("cnps_employeur") @db.VarChar(50)
+  secteurActivite     String?  @map("secteur_activite") @db.VarChar(150)
+  telephone           String?  @db.VarChar(30)
+  email               String?  @db.VarChar(100)
+  logoUrl             String?  @map("logo_url")
+  signataireNom       String?  @map("signataire_nom") @db.VarChar(150)
+  signataireQualite   String?  @map("signataire_qualite") @db.VarChar(150)
+  tauxCnps            Decimal  @default(4.2) @map("taux_cnps") @db.Decimal(6, 3)
+  plafondCnps         Decimal  @default(750000) @map("plafond_cnps") @db.Decimal(12, 2)
+  tauxCfc             Decimal  @default(1) @map("taux_cfc") @db.Decimal(6, 3)
+  tauxCac             Decimal  @default(10) @map("taux_cac") @db.Decimal(6, 3)
+  abattementIrppAnnuel Decimal @default(500000) @map("abattement_irpp_annuel") @db.Decimal(12, 2)
+  tauxFraisProIrpp    Decimal  @default(30) @map("taux_frais_pro_irpp") @db.Decimal(6, 3)
+  updatedAt           DateTime @default(now()) @updatedAt @map("updated_at")
+
+  @@map("parametre_paie")
+}
+
+model Salarie {
+  id              String          @id @default(uuid())
+  matricule       String          @unique @db.VarChar(50)
+  nom             String          @db.VarChar(150)
+  prenom          String?         @db.VarChar(150)
+  telephone       String?         @db.VarChar(30)
+  email           String?         @db.VarChar(100)
+  adresse         String?
+  dateNaissance   DateTime?       @map("date_naissance")
+  lieuNaissance   String?         @map("lieu_naissance") @db.VarChar(150)
+  numeroCnps      String?         @map("numero_cnps") @db.VarChar(50)
+  niu             String?         @db.VarChar(50)
+  poste           String          @db.VarChar(150)
+  categorie       String?         @db.VarChar(50)
+  echelon         String?         @db.VarChar(50)
+  dateEmbauche    DateTime        @map("date_embauche")
+  typeContrat     TypeContrat     @default(CDI) @map("type_contrat")
+  dateFinContrat  DateTime?       @map("date_fin_contrat")
+  salaireBase     Decimal         @default(0) @map("salaire_base") @db.Decimal(12, 2)
+  primesParDefaut Json?           @map("primes_par_defaut")
+  modePaiement    MethodePaiement @default(VIREMENT) @map("mode_paiement")
+  banque          String?         @db.VarChar(150)
+  compteBancaire  String?         @map("compte_bancaire") @db.VarChar(50)
+  actif           Boolean         @default(true)
+  adminUserId     String?         @unique @map("admin_user_id")
+  createdAt       DateTime        @default(now()) @map("created_at")
+  updatedAt       DateTime        @default(now()) @updatedAt @map("updated_at")
+  adminUser       AdminUser?      @relation(fields: [adminUserId], references: [id])
+  bulletins       BulletinPaie[]
+
+  @@index([actif])
+  @@map("salarie")
+}
+
+model BulletinPaie {
+  id              String           @id @default(uuid())
+  numero          String           @unique
+  salarieId       String           @map("salarie_id")
+  periode         String           @db.VarChar(7)
+  joursTravailles Int              @default(30) @map("jours_travailles")
+  salarieNom      String           @map("salarie_nom") @db.VarChar(150)
+  matricule       String?          @db.VarChar(50)
+  numeroCnps      String?          @map("numero_cnps") @db.VarChar(50)
+  poste           String?          @db.VarChar(150)
+  categorie       String?          @db.VarChar(50)
+  dateEmbauche    DateTime?        @map("date_embauche")
+  brutTotal       Decimal          @default(0) @map("brut_total") @db.Decimal(12, 2)
+  cnps            Decimal          @default(0) @db.Decimal(12, 2)
+  irpp            Decimal          @default(0) @db.Decimal(12, 2)
+  cac             Decimal          @default(0) @db.Decimal(12, 2)
+  cfc             Decimal          @default(0) @db.Decimal(12, 2)
+  autresRetenues  Decimal          @default(0) @map("autres_retenues") @db.Decimal(12, 2)
+  totalRetenues   Decimal          @default(0) @map("total_retenues") @db.Decimal(12, 2)
+  netAPayer       Decimal          @default(0) @map("net_a_payer") @db.Decimal(12, 2)
+  modePaiement    MethodePaiement? @map("mode_paiement")
+  statut          StatutBulletin   @default(BROUILLON)
+  datePaiement    DateTime?        @map("date_paiement")
+  valideParId     String?          @map("valide_par_id")
+  valideAt        DateTime?        @map("valide_at")
+  createdById     String?          @map("created_by_id")
+  createdAt       DateTime         @default(now()) @map("created_at")
+  updatedAt       DateTime         @default(now()) @updatedAt @map("updated_at")
+  salarie         Salarie          @relation(fields: [salarieId], references: [id])
+  lignes          BulletinLigne[]
+
+  @@unique([salarieId, periode])
+  @@index([periode, statut])
+  @@map("bulletin_paie")
+}
+
+model BulletinLigne {
+  id         String             @id @default(uuid())
+  bulletinId String             @map("bulletin_id")
+  type       TypeLigneBulletin
+  libelle    String             @db.VarChar(150)
+  base       Decimal?           @db.Decimal(12, 2)
+  taux       Decimal?           @db.Decimal(6, 3)
+  montant    Decimal            @default(0) @db.Decimal(12, 2)
+  ordre      Int                @default(0)
+  systeme    Boolean            @default(false)
+  bulletin   BulletinPaie       @relation(fields: [bulletinId], references: [id], onDelete: Cascade)
+
+  @@index([bulletinId])
+  @@map("bulletin_ligne")
+}
+
+enum TypeContrat {
+  CDI
+  CDD
+  STAGE
+  INTERIM
+  TACHERON
+}
+
+enum StatutBulletin {
+  BROUILLON
+  VALIDE
+  PAYE
+  ANNULE
+}
+
+enum TypeLigneBulletin {
+  GAIN
+  RETENUE
 }
 

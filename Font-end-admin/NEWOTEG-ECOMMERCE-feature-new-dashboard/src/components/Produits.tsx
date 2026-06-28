@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef, useMemo } from 'react';
-import { PlusCircle, Search, Edit2, Trash2, Tag, X, Upload, Image as ImageIcon, AlertTriangle, Zap, Star, FileSpreadsheet, CheckCircle2, XCircle, Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { PlusCircle, Search, Edit2, Trash2, Tag, X, Upload, Image as ImageIcon, AlertTriangle, Zap, Star, FileSpreadsheet, CheckCircle2, XCircle, Loader2, ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { produitApi, categorieApi } from '../services/api';
 import { useAdminAuth } from '../context/AdminAuthContext';
@@ -37,6 +37,7 @@ interface Produit {
 // ─── État initial du formulaire isolé ─────────────────────────────────────────
 const FORM_INITIAL = {
   nomProduit: '',
+  designationEn: '',
   marque: '',
   categorieId: '',
   description: '',
@@ -126,6 +127,20 @@ export const Produits = () => {
   // ─── State modale (état local isolé → pas de re-rendu du tableau) ─────────
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduit, setEditingProduit] = useState<Produit | null>(null);
+  const [traduisant, setTraduisant] = useState(false);
+
+  const traduireDesignation = async () => {
+    if (!editingProduit) return;
+    setTraduisant(true);
+    try {
+      const res = await produitApi.traduire(editingProduit.id);
+      setFormData((f) => ({ ...f, designationEn: res?.designationEn || f.designationEn }));
+    } catch (e: any) {
+      alert(e?.response?.data?.message || 'Traduction indisponible.');
+    } finally {
+      setTraduisant(false);
+    }
+  };
   const [formData, setFormData] = useState({ ...FORM_INITIAL });
 
   type ImageSlot = {
@@ -240,6 +255,7 @@ export const Produits = () => {
     setEditingProduit(prod);
     setFormData({
       nomProduit: prod.nomProduit ?? '',
+      designationEn: (prod as any).designationEn ?? '',
       marque: prod.marque ?? '',
       categorieId: prod.categorie?.id ?? '',
       description: prod.description ?? '',
@@ -299,6 +315,7 @@ export const Produits = () => {
     try {
       const dataToSend = new FormData();
       dataToSend.append('nomProduit', formData.nomProduit);
+      if (formData.designationEn) dataToSend.append('designationEn', formData.designationEn);
       dataToSend.append('marque', formData.marque);
       dataToSend.append('categorieId', formData.categorieId);
       if (formData.description) dataToSend.append('description', formData.description);
@@ -774,6 +791,32 @@ export const Produits = () => {
                   />
                 </div>
 
+                {/* Désignation anglaise (pour les bons de commande fournisseur) */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">
+                    Désignation (EN) <span className="text-xs font-normal text-slate-400">— pour le fournisseur</span>
+                  </label>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      maxLength={200}
+                      value={formData.designationEn}
+                      onChange={(e) => setFormData((f) => ({ ...f, designationEn: e.target.value }))}
+                      className="flex-1 px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+                      placeholder="Ex: NPN Transistor 2N3904"
+                    />
+                    <button
+                      type="button"
+                      disabled={!editingProduit || traduisant}
+                      onClick={traduireDesignation}
+                      title={!editingProduit ? 'Enregistrez le produit d’abord' : 'Traduire avec l’IA'}
+                      className="flex items-center gap-1.5 px-3 py-2 bg-violet-600 text-white text-sm font-bold rounded-lg hover:bg-violet-700 disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap"
+                    >
+                      <Sparkles size={15} />{traduisant ? '…' : 'Traduire'}
+                    </button>
+                  </div>
+                </div>
+
                 {/* Catégorie + Marque */}
                 <div className="grid grid-cols-2 gap-4">
                   <div>
@@ -912,16 +955,18 @@ export const Produits = () => {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-slate-700 mb-1">
-                      Quantité
+                      Quantité {editingProduit && <span className="text-xs font-normal text-slate-400">(via Réappro / Inventaire)</span>}
                     </label>
                     <input
                       type="number"
                       min={0}
                       step="1"
+                      disabled={!!editingProduit}
                       value={formData.quantiteStock}
                       onChange={(e) => setFormData((f) => ({ ...f, quantiteStock: e.target.value }))}
-                      className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+                      className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary/20 outline-none transition-all disabled:opacity-60 disabled:cursor-not-allowed disabled:bg-slate-100"
                       placeholder="0"
+                      title={editingProduit ? 'Le stock se modifie via Réapprovisionnement ou Inventaire' : undefined}
                     />
                   </div>
                   <div>

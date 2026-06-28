@@ -40,8 +40,11 @@ import { CmupModule } from './cmup/cmup.module';
 import { BonVenteModule } from './bon-vente/bon-vente.module';
 import { FactureModule } from './facture/facture.module';
 import { PrimeModule } from './prime/prime.module';
+import { InventaireModule } from './inventaire/inventaire.module';
 import { ProformaModule } from './proforma/proforma.module';
 import { FactureVirtuelleModule } from './facture-virtuelle/facture-virtuelle.module';
+import { CommandeFournisseurModule } from './commande-fournisseur/commande-fournisseur.module';
+import { PaieModule } from './paie/paie.module';
 
 @Module({
   imports: [
@@ -89,8 +92,11 @@ import { FactureVirtuelleModule } from './facture-virtuelle/facture-virtuelle.mo
     BonVenteModule,
     FactureModule,
     PrimeModule,
+    InventaireModule,
     ProformaModule,
     FactureVirtuelleModule,
+    PaieModule,
+    CommandeFournisseurModule,
   ],
   controllers: [AppController],
   providers: [AppService],

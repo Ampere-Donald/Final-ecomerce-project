@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { DatabaseService } from 'src/database/database.service';
 import { NotificationService, NotificationActor } from 'src/notification/notification.service';
 import { CreateMouvementStockDto } from './dto/create-mouvement-stock.dto';
@@ -14,6 +14,13 @@ export class MouvementStockService {
   async create(createMouvementStockDto: CreateMouvementStockDto, actor?: NotificationActor) {
     const { produitId, typeMouvement, quantite, ...rest } =
       createMouvementStockDto;
+
+    // Un ajustement manuel de stock doit toujours être justifié (traçabilité).
+    if (typeMouvement === 'AJUSTEMENT' && !(rest.motif && rest.motif.trim())) {
+      throw new BadRequestException(
+        'Un motif est obligatoire pour un ajustement de stock.',
+      );
+    }
 
     const mouvement = await this.db.$transaction(async (tx: any) => {
       const m = await tx.mouvementStock.create({

@@ -126,6 +126,21 @@ export const produitApi = {
   getLowStock: () => api.get('/produits/low-stock').then(toArray),
   findByCode: (codeFamille: string, code: string) =>
     api.get(`/produits/scan/${encodeURIComponent(codeFamille)}/${encodeURIComponent(code)}`).then(res => res.data),
+  traduire: (id: string) => api.post(`/produits/${id}/traduire`, {}).then(res => res.data),
+};
+
+// Bons de commande fournisseur (bilingue, suggestion auto, conversion en achat)
+export const commandeFournisseurApi = {
+  create: (data: { fournisseurId: string; devise?: string; tauxVersFcfa?: number; notes?: string; lignes: { produitId: string; quantite: number; rate?: number; prixNegocie?: number }[] }) =>
+    api.post('/commandes-fournisseur', data).then(r => r.data),
+  getAll: () => api.get('/commandes-fournisseur').then(r => r.data),
+  getOne: (id: string) => api.get(`/commandes-fournisseur/${id}`).then(r => r.data),
+  update: (id: string, data: any) => api.patch(`/commandes-fournisseur/${id}`, data).then(r => r.data),
+  suggestions: (params: { categorieId?: string; codeFamille?: string }) =>
+    api.get('/commandes-fournisseur/suggestions', { params }).then(r => r.data),
+  envoyer: (id: string) => api.post(`/commandes-fournisseur/${id}/envoyer`, {}).then(r => r.data),
+  convertirAchat: (id: string) => api.post(`/commandes-fournisseur/${id}/convertir-achat`, {}).then(r => r.data),
+  annuler: (id: string) => api.post(`/commandes-fournisseur/${id}/annuler`, {}).then(r => r.data),
 };
 
 // Catégories
@@ -425,6 +440,48 @@ export const factureVirtuelleApi = {
 export const adminRoleApi = {
   changerRole: (id: string, role: string) =>
     api.patch(`/admin-auth/${id}/role`, { role }).then(r => r.data),
+};
+
+// Inventaire par catégorie/famille + délégations
+export const inventaireApi = {
+  create: (data: { categorieId?: string; codeFamille?: string }) =>
+    api.post('/inventaires', data).then(r => r.data),
+  getAll: () => api.get('/inventaires').then(r => r.data),
+  getOne: (id: string) => api.get(`/inventaires/${id}`).then(r => r.data),
+  comptage: (id: string, lignes: { id: string; stockCompte: number }[]) =>
+    api.patch(`/inventaires/${id}/comptage`, { lignes }).then(r => r.data),
+  valider: (id: string) => api.post(`/inventaires/${id}/valider`, {}).then(r => r.data),
+  annuler: (id: string) => api.post(`/inventaires/${id}/annuler`, {}).then(r => r.data),
+  // Délégations (super admin)
+  listDelegations: () => api.get('/inventaires/delegations').then(r => r.data),
+  accorderDelegation: (data: { adminUserId: string; finAt: string; motif?: string }) =>
+    api.post('/inventaires/delegations', data).then(r => r.data),
+  revoquerDelegation: (id: string) =>
+    api.post(`/inventaires/delegations/${id}/revoquer`, {}).then(r => r.data),
+};
+
+// Paie — salariés & bulletins de paie
+export const paieApi = {
+  // Paramètres employeur (en-tête légal du bulletin + taux)
+  getParametres: () => api.get('/paie/parametres').then(r => r.data),
+  updateParametres: (data: any) => api.put('/paie/parametres', data).then(r => r.data),
+  // Salariés
+  listSalaries: () => api.get('/paie/salaries').then(r => r.data),
+  getSalarie: (id: string) => api.get(`/paie/salaries/${id}`).then(r => r.data),
+  createSalarie: (data: any) => api.post('/paie/salaries', data).then(r => r.data),
+  updateSalarie: (id: string, data: any) => api.patch(`/paie/salaries/${id}`, data).then(r => r.data),
+  toggleSalarieActif: (id: string) => api.patch(`/paie/salaries/${id}/toggle-actif`).then(r => r.data),
+  // Bulletins
+  listBulletins: (params?: { periode?: string; salarieId?: string; statut?: string }) =>
+    api.get('/paie/bulletins', { params }).then(r => r.data),
+  getBulletin: (id: string) => api.get(`/paie/bulletins/${id}`).then(r => r.data),
+  previewBulletin: (data: any) => api.post('/paie/bulletins/preview', data).then(r => r.data),
+  createBulletin: (data: any) => api.post('/paie/bulletins', data).then(r => r.data),
+  updateBulletin: (id: string, data: any) => api.patch(`/paie/bulletins/${id}`, data).then(r => r.data),
+  validerBulletin: (id: string) => api.post(`/paie/bulletins/${id}/valider`, {}).then(r => r.data),
+  payerBulletin: (id: string, data?: any) => api.post(`/paie/bulletins/${id}/payer`, data || {}).then(r => r.data),
+  annulerBulletin: (id: string) => api.post(`/paie/bulletins/${id}/annuler`, {}).then(r => r.data),
+  removeBulletin: (id: string) => api.delete(`/paie/bulletins/${id}`).then(r => r.data),
 };
 
 export default api;
