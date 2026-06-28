@@ -142,6 +142,12 @@ export const POSVendeur = () => {
   const scanReaderRef = useRef<BrowserMultiFormatReader | null>(null);
   const scanActiveRef = useRef(false);
 
+  // ── Barcode reader USB/Bluetooth (écoute globale clavier) ──────────────
+  const barcodeBufferRef = useRef('');
+  const lastKeyTimeRef   = useRef(0);
+  const barcodeTimerRef  = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const searchInputRef   = useRef<HTMLInputElement>(null);
+
   // ── Équivalents IA (commun) ─────────────────────────────────────────────
   const [equivOpen, setEquivOpen] = useState(false);
   const [equivQuery, setEquivQuery] = useState('');
@@ -437,27 +443,17 @@ export const POSVendeur = () => {
   const handleBarcode = useCallback(async (raw: string) => {
     stopScan();
     setScanOpen(false);
-    // Parser : code_famille/code
-    let codeFamille = '', code = '';
-    for (const sep of ['/', '-', '|']) {
-      const idx = raw.indexOf(sep);
-      if (idx > 0 && idx < raw.length - 1) {
-        codeFamille = raw.slice(0, idx);
-        code = raw.slice(idx + 1);
-        break;
-      }
-    }
-    if (!codeFamille || !code) {
-      setError(`Format de code-barres non reconnu : "${raw}". Attendu : code_famille/code`);
-      return;
-    }
     try {
-      const p: any = await produitApi.findByCode(codeFamille, code);
+      const p: any = await produitApi.findByRawScan(raw);
+      if (p.quantiteStock <= 0) {
+        setError(`"${p.nomProduit}" est en rupture de stock.`);
+        return;
+      }
       ajouterAuPanier(p as Produit);
       setSuccess(`"${p.nomProduit}" ajouté au panier.`);
       setTimeout(() => setSuccess(null), 2500);
     } catch {
-      setError(`Produit introuvable : famille ${codeFamille} / code ${code}`);
+      setError(`Produit introuvable pour le code-barres "${raw}".`);
     }
   }, [stopScan]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -501,6 +497,58 @@ export const POSVendeur = () => {
     else stopScan();
     return () => stopScan();
   }, [scanOpen]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── Barcode reader USB/Bluetooth — écoute globale clavier ─────────────
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      const now = Date.now();
+      const tag = (e.target as HTMLElement).tagName;
+      const isInSearch = e.target === searchInputRef.current;
+
+      // Ignorer les autres champs texte (client, téléphone, codes, etc.)
+      if (!isInSearch && (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT')) return;
+
+      if (e.key === 'Enter') {
+        if (barcodeTimerRef.current) { clearTimeout(barcodeTimerRef.current); barcodeTimerRef.current = null; }
+        const buf = barcodeBufferRef.current;
+        barcodeBufferRef.current = '';
+        if (buf.length >= 4) {
+          // Si le scan a eu lieu dans la barre de recherche, vider le champ
+          if (isInSearch) { e.preventDefault(); setSearch(''); }
+          handleBarcode(buf);
+        }
+        return;
+      }
+
+      if (e.key.length !== 1) return;
+
+      // Réinitialiser si trop de temps s'est écoulé (> 100ms = frappe humaine)
+      if (now - lastKeyTimeRef.current > 100) barcodeBufferRef.current = '';
+      // Douchette : certaines envoient les chiffres "shiftés" (! ) # * ( ...).
+      // On lit la touche PHYSIQUE (e.code) pour récupérer le vrai chiffre,
+      // indépendamment de Shift et de la disposition clavier.
+      const ch = /^(Digit|Numpad)[0-9]$/.test(e.code) ? e.code.slice(-1) : e.key;
+      barcodeBufferRef.current += ch;
+      lastKeyTimeRef.current = now;
+
+      // Fallback : traiter si le reader n'envoie pas d'Entrée
+      if (barcodeTimerRef.current) clearTimeout(barcodeTimerRef.current);
+      barcodeTimerRef.current = setTimeout(() => {
+        const buf = barcodeBufferRef.current;
+        barcodeBufferRef.current = '';
+        if (buf.length >= 4) {
+          if (isInSearch) setSearch('');
+          handleBarcode(buf);
+        }
+      }, 80);
+    };
+
+    document.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.removeEventListener('keydown', onKeyDown);
+      if (barcodeTimerRef.current) clearTimeout(barcodeTimerRef.current);
+    };
+  }, [handleBarcode]);
 
   // ── Rendu carte produit (commun) ───────────────────────────────────────
   const renderProduit = (p: Produit) => {
@@ -668,7 +716,7 @@ export const POSVendeur = () => {
       <div className="flex gap-2">
         <div className="relative flex-1">
           <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-          <input type="text" value={search} onChange={e => setSearch(e.target.value)}
+          <input ref={searchInputRef} type="text" value={search} onChange={e => setSearch(e.target.value)}
             placeholder="Rechercher un produit ou une marque…"
             className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none" />
         </div>

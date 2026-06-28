@@ -253,6 +253,51 @@ export class ProduitService {
     return produit;
   }
 
+  async findByRawScan(raw: string) {
+    const include = {
+      categorie: true,
+      attributs: { include: { valeurs: true } },
+    };
+
+    // Construire toutes les combinaisons possibles en une seule requête OR
+    const conditions: any[] = [
+      { code: raw },
+      { codeFamille: raw },
+    ];
+
+    // Séparateurs explicites
+    for (const sep of ['/', '-', '|']) {
+      const idx = raw.indexOf(sep);
+      if (idx > 0 && idx < raw.length - 1) {
+        conditions.push({ codeFamille: raw.slice(0, idx), code: raw.slice(idx + 1) });
+      }
+    }
+
+    // Découpage positionnel : 3 premiers = codeFamille, reste = code
+    if (raw.length > 3) {
+      const cf = raw.slice(0, 3);
+      const c  = raw.slice(3);
+      conditions.push({ codeFamille: cf, code: c });
+      conditions.push({ codeFamille: c, code: cf });
+    }
+
+    // Découpage positionnel : 3 derniers = code, reste = codeFamille
+    if (raw.length > 3 && raw.length !== 6) {
+      const cf = raw.slice(0, raw.length - 3);
+      const c  = raw.slice(-3);
+      conditions.push({ codeFamille: cf, code: c });
+      conditions.push({ codeFamille: c, code: cf });
+    }
+
+    const produit = await this.db.produit.findFirst({
+      where: { OR: conditions },
+      include,
+    });
+
+    if (!produit) throw new NotFoundException(`Produit introuvable pour le code-barres "${raw}"`);
+    return produit;
+  }
+
   async update(id: string, updateProduitDto: UpdateProduitDto, actor?: NotificationActor) {
     await this.findOne(id);
 
