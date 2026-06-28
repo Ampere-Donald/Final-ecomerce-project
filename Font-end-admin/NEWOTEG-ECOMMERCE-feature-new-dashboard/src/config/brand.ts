@@ -4,5 +4,5 @@ export const brand = {
   branchName: 'X-electronic',
   branchDescription: 'Composants et pièces électroniques',
   city: 'Douala, Cameroun',
-  phone: '+237 6XX XXX XXX',
+  phone: '+237 699 96 61 60',
 };

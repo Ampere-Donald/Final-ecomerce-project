@@ -1,7 +1,9 @@
-import React, { useRef, useMemo } from 'react';
+import React, { useRef } from 'react';
 import { Printer, FileText, X, Download } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { brand } from '../config/brand';
+import { printRaw } from '../services/qzPrinter';
+import { buildTicketEscPos } from '../services/ticketEscpos';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -103,24 +105,6 @@ export const ReceiptGenerator: React.FC<ReceiptProps> = (props) => {
   const isVirtuelle = initialType === 'factureVirtuelle';
   const printRef = useRef<HTMLDivElement>(null);
 
-  // --- TVA calculation (prices are TTC) ---
-  const { totalHT, tva, totalTTC } = useMemo(() => {
-    const ttc = montantTotal;
-    const ht = ttc / 1.1925;
-    const t = ttc - ht;
-    return { totalHT: ht, tva: t, totalTTC: ttc };
-  }, [montantTotal]);
-
-  // Per-line HT values
-  const lignesHT = useMemo(
-    () =>
-      lignes.map((l) => ({
-        ...l,
-        prixUnitaireHT: l.prixUnitaire / 1.1925,
-        sousTotalHT: l.sousTotal / 1.1925,
-      })),
-    [lignes],
-  );
 
   // --- Actions ---
   const openPrintWindow = (saveAsPdf = false) => {
@@ -139,7 +123,7 @@ export const ReceiptGenerator: React.FC<ReceiptProps> = (props) => {
       .join('\n');
 
     const pageSize = activeType === 'ticket'
-      ? '@page { size: 80mm auto; margin: 5mm; }'
+      ? '@page { size: 58mm auto; margin: 0; }'
       : '@page { size: A4 portrait; margin: 8mm; }';
     const printCompact = activeType !== 'ticket' ? `
       @media print {
@@ -161,7 +145,26 @@ export const ReceiptGenerator: React.FC<ReceiptProps> = (props) => {
   <style>${css}</style>
   <style>
     ${pageSize}
-    body { margin: 0; padding: ${activeType === 'ticket' ? '0' : '16px'}; background: white; }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: ${activeType === 'ticket' ? '3mm' : '16px'};
+      background: white;
+    }
+    ${activeType === 'ticket' ? `
+      body > div {
+        width: 100% !important;
+        max-width: 100% !important;
+      }
+      table {
+        width: 100% !important;
+        table-layout: fixed;
+      }
+      td:last-child {
+        text-align: right !important;
+        white-space: nowrap;
+      }
+    ` : ''}
     ${printCompact}
   </style>
 </head>
@@ -175,7 +178,65 @@ export const ReceiptGenerator: React.FC<ReceiptProps> = (props) => {
     }, 400);
   };
 
-  const handlePrint = () => openPrintWindow(false);
+  // Repli : ancienne impression via le navigateur (iframe 58 mm). Utilisée
+  // uniquement si QZ Tray n'est pas lancé, pour ne jamais bloquer la caisse.
+  const printTicketBrowserFallback = () => {
+    const zone = document.getElementById('receipt-print-zone');
+    if (!zone) return;
+    const ticketDiv = zone.firstElementChild as HTMLElement | null;
+    if (!ticketDiv) return;
+
+    // Clone ticket and strip the hardcoded 220px width so it fills the paper
+    const clone = ticketDiv.cloneNode(true) as HTMLElement;
+    clone.style.width = '';
+    clone.style.margin = '0';
+
+    // Iframe isolé : son propre document = @page 58mm appliqué sans conflit
+    // avec la page React (pas de modal position:fixed, pas de A4 par défaut)
+    const iframe = document.createElement('iframe');
+    iframe.setAttribute('style', 'position:absolute;left:-9999px;top:0;width:58mm;height:1px;border:0;');
+    document.body.appendChild(iframe);
+
+    const doc = iframe.contentDocument;
+    if (!doc) { iframe.remove(); return; }
+
+    doc.open();
+    doc.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><style>'
+      + '@page{size:58mm auto;margin:0}'
+      + 'body{margin:0;padding:3mm;background:#fff;box-sizing:border-box}'
+      + '</style></head><body></body></html>');
+    doc.close();
+    doc.body.appendChild(clone);
+
+    setTimeout(() => {
+      iframe.contentWindow!.focus();
+      iframe.contentWindow!.print();
+      setTimeout(() => iframe.remove(), 2000);
+    }, 150);
+  };
+
+  const handlePrint = async () => {
+    // Factures / proformas A4 : impression PDF navigateur inchangée.
+    if (activeType !== 'ticket') { openPrintWindow(false); return; }
+
+    // Ticket 58 mm : impression directe ESC/POS via QZ Tray (fiable, sans Chrome).
+    try {
+      await printRaw(
+        buildTicketEscPos({
+          lignes,
+          montantTotal,
+          methodePaiement,
+          numero: displayNumero,
+          client: client ? { nom: client.nom, telephone: client.telephone } : null,
+          dateVente,
+        }),
+      );
+    } catch (e) {
+      // QZ Tray éteint / non autorisé → repli automatique sur l'impression navigateur.
+      console.warn('QZ Tray indisponible — repli sur impression navigateur.', e);
+      printTicketBrowserFallback();
+    }
+  };
 
   const handleExportPDF = async () => {
     const container = printRef.current;
@@ -195,8 +256,8 @@ export const ReceiptGenerator: React.FC<ReceiptProps> = (props) => {
         const target = (container.firstElementChild as HTMLElement) ?? container;
         const canvas = await html2canvas(target, { scale: 2, useCORS: true, backgroundColor: '#ffffff', logging: false });
         const imgData = canvas.toDataURL('image/png');
-        const ticketHeight = Math.max(120, Math.ceil((canvas.height * 80) / canvas.width) + 10);
-        const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: [80, ticketHeight] });
+        const ticketHeight = Math.max(120, Math.ceil((canvas.height * 58) / canvas.width) + 10);
+        const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: [58, ticketHeight] });
         const margin = 4;
         const contentWidth = pdf.internal.pageSize.getWidth() - margin * 2;
         pdf.addImage(imgData, 'PNG', margin, margin, contentWidth, (canvas.height * contentWidth) / canvas.width);
@@ -233,7 +294,7 @@ export const ReceiptGenerator: React.FC<ReceiptProps> = (props) => {
       pdf.text('Pièces Électroniques', margin, 26);
       pdf.text('NUI: P00000000000X (placeholder)', margin, 31);
       pdf.text('RCCM: RC/DLA/2024/X/00000 (placeholder)', margin, 36);
-      pdf.text('Douala, Cameroun | Tél: +237 6XX XXX XXX', margin, 41);
+      pdf.text(`${brand.city} | Tél: ${brand.phone}`, margin, 41);
 
       // ---- En-tête document (droite) ----
       pdf.setFont('helvetica', 'bold');
@@ -272,12 +333,12 @@ export const ReceiptGenerator: React.FC<ReceiptProps> = (props) => {
       autoTable(pdf, {
         startY: tableTop,
         margin: { left: margin, right: margin },
-        head: [['Produit', 'Qté', 'PU HT (FCFA)', 'Total HT (FCFA)']],
-        body: lignesHT.map((l) => [
+        head: [['Produit', 'Qté', 'PU (FCFA)', 'Total (FCFA)']],
+        body: lignes.map((l) => [
           l.nomProduit,
           String(l.quantite),
-          fmt(l.prixUnitaireHT),
-          fmt(l.sousTotalHT),
+          fmt(l.prixUnitaire),
+          fmt(l.sousTotal),
         ]),
         headStyles: { fillColor: [55, 65, 81], textColor: 255, fontStyle: 'bold', fontSize: 9 },
         bodyStyles: { fontSize: 9, textColor: 40 },
@@ -305,25 +366,19 @@ export const ReceiptGenerator: React.FC<ReceiptProps> = (props) => {
       // ---- Totaux ----
       const finalY = (pdf as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 6;
       const totalsX = W - margin - 70;
-      pdf.setFontSize(9);
-      pdf.setTextColor(60);
-      pdf.text('Total HT', totalsX, finalY);
-      pdf.text(`${fmt(totalHT)} FCFA`, W - margin, finalY, { align: 'right' });
-      pdf.text('TVA 19,25%', totalsX, finalY + 6);
-      pdf.text(`${fmt(tva)} FCFA`, W - margin, finalY + 6, { align: 'right' });
       pdf.setDrawColor(30);
-      pdf.line(totalsX, finalY + 9, W - margin, finalY + 9);
+      pdf.line(totalsX, finalY + 2, W - margin, finalY + 2);
       pdf.setFont('helvetica', 'bold');
       pdf.setFontSize(10);
       pdf.setTextColor(20);
-      pdf.text('Total TTC', totalsX, finalY + 15);
-      pdf.text(`${fmt(totalTTC)} FCFA`, W - margin, finalY + 15, { align: 'right' });
+      pdf.text('TOTAL', totalsX, finalY + 8);
+      pdf.text(`${fmt(montantTotal)} FCFA`, W - margin, finalY + 8, { align: 'right' });
 
       // ---- Paiement ----
       pdf.setFont('helvetica', 'normal');
       pdf.setFontSize(9);
       pdf.setTextColor(80);
-      pdf.text(`Mode de paiement : ${methodePaiement}`, margin, finalY + 24);
+      pdf.text(`Mode de paiement : ${methodePaiement}`, margin, finalY + 18);
 
       // ---- Notes proforma ----
       if (activeType === 'proforma') {
@@ -331,10 +386,10 @@ export const ReceiptGenerator: React.FC<ReceiptProps> = (props) => {
         pdf.setFontSize(8);
         pdf.setTextColor(80);
         pdf.setFont('helvetica', 'bold');
-        pdf.text('Notes :', margin, finalY + 31);
+        pdf.text('Notes :', margin, finalY + 25);
         pdf.setFont('helvetica', 'normal');
         const noteLines = pdf.splitTextToSize(noteText, W - margin * 2 - 15);
-        pdf.text(noteLines, margin + 15, finalY + 31);
+        pdf.text(noteLines, margin + 15, finalY + 25);
       }
 
       // ---- Conditions ----
@@ -344,10 +399,10 @@ export const ReceiptGenerator: React.FC<ReceiptProps> = (props) => {
       const conditions = activeType === 'proforma'
         ? 'Document non fiscal, valable sous réserve de stock disponible.'
         : 'Paiement à réception.';
-      pdf.text(conditions, margin, finalY + 38);
+      pdf.text(conditions, margin, finalY + 32);
 
       // ---- Signature ----
-      const sigY = finalY + 50;
+      const sigY = finalY + 44;
       pdf.setDrawColor(180);
       pdf.line(W - margin - 48, sigY, W - margin, sigY);
       pdf.setFontSize(8);
@@ -366,79 +421,115 @@ export const ReceiptGenerator: React.FC<ReceiptProps> = (props) => {
   const documentLabel = activeType === 'proforma' ? 'FACTURE PROFORMA' : 'FACTURE';
 
   // -----------------------------------------------------------------------
-  // Ticket Compact (80mm thermal — ~302px)
+  // Ticket Compact — 58mm paper, 48mm printable zone
+  // All styles are inline to be 100% reliable in @media print context.
   // -----------------------------------------------------------------------
+  const S = {
+    root: {
+      width: 220,
+      fontFamily: "'Courier New', Courier, monospace",
+      fontSize: 9,
+      color: '#000',
+      background: '#fff',
+      margin: '0 auto',
+      padding: '4px 0',
+    } as React.CSSProperties,
+    center: { textAlign: 'center' as const },
+    dashedBorder: { borderTop: '1px dashed #666' },
+    sep: { borderTop: '1px dashed #666', margin: '4px 0' } as React.CSSProperties,
+    row: { display: 'flex', justifyContent: 'space-between' } as React.CSSProperties,
+    bold: { fontWeight: 'bold' } as React.CSSProperties,
+    mb2: { marginBottom: 4 } as React.CSSProperties,
+    mt2: { marginTop: 4 } as React.CSSProperties,
+    table: {
+      width: '100%',
+      borderCollapse: 'collapse' as const,
+      tableLayout: 'fixed' as const,
+      fontSize: 9,
+      lineHeight: 1.5,
+    } as React.CSSProperties,
+    tdLeft: { textAlign: 'left' as const, wordBreak: 'break-word' as const, paddingBottom: 2, paddingRight: 3 },
+    tdRight: { textAlign: 'right' as const, paddingBottom: 2 },
+  };
+
   const TicketCompact = () => (
-    <div
-      className="mx-auto bg-white text-black"
-      style={{ width: 302, fontFamily: "'Courier New', Courier, monospace", fontSize: 12 }}
-    >
-      {/* Header */}
-      <div className="text-center border-b border-dashed border-gray-400 pb-2 mb-2">
-        <p className="font-bold text-sm tracking-wide">{brand.legalName}</p>
-        <p className="text-[10px] font-semibold">{brand.branchName}</p>
-        <p className="text-[10px]">{brand.branchDescription}</p>
-        <p className="text-[10px]">{brand.city}</p>
-        <p className="text-[10px]">Tél: {brand.phone}</p>
+    <div style={S.root}>
+
+      {/* ── En-tête ── */}
+      <div style={{ ...S.center, borderBottom: '1px dashed #666', paddingBottom: 5, marginBottom: 5 }}>
+        <p style={{ ...S.bold, fontSize: 13, letterSpacing: 1 }}>{brand.legalName}</p>
+        <p style={{ ...S.bold, fontSize: 9 }}>{brand.branchName}</p>
+        <p style={{ fontSize: 9 }}>{brand.branchDescription}</p>
+        <p style={{ fontSize: 9 }}>{brand.city}</p>
+        <p style={{ fontSize: 9 }}>Tél: {brand.phone}</p>
       </div>
 
-      {/* Date + numero */}
-      <div className="flex justify-between text-[10px] mb-2">
+      {/* ── Date + N° ticket ── */}
+      <div style={{ ...S.row, ...S.mb2, fontSize: 9 }}>
         <span>{fmtDateTime(dateVente)}</span>
         <span>{displayNumero}</span>
       </div>
 
-      {/* Client (optional) */}
+      {/* ── Client (optionnel) ── */}
       {client && (
-        <div className="text-[10px] border-b border-dashed border-gray-400 pb-1 mb-1">
+        <div style={{ fontSize: 9, borderBottom: '1px dashed #666', paddingBottom: 3, marginBottom: 4 }}>
           <p>Client: {client.nom}</p>
           {client.telephone && <p>Tél: {client.telephone}</p>}
         </div>
       )}
 
-      {/* Separator */}
-      <div className="border-b border-dashed border-gray-400 mb-1" />
+      {/* ── Séparateur ── */}
+      <div style={S.sep} />
 
-      {/* Lines */}
-      <div className="mb-1">
-        {lignes.map((l, i) => (
-          <div key={i} className="flex justify-between text-[11px] leading-tight py-[1px]">
-            <span className="break-words mr-1">
-              {l.nomProduit} x{l.quantite}
-            </span>
-            <span className="whitespace-nowrap">{fmt(l.sousTotal)}</span>
-          </div>
-        ))}
-      </div>
+      {/* ── Lignes de vente ──
+           col1 = 58% (~112px) : nom produit (word-wrap autorisé)
+           col2 = 42% (~81px)  : montant (max "1 000 000 FCFA" = 14 chars ≈ 76px)
+      */}
+      <table style={{ ...S.table, marginBottom: 4 }}>
+        <colgroup>
+          <col style={{ width: '58%' }} />
+          <col style={{ width: '42%' }} />
+        </colgroup>
+        <tbody>
+          {lignes.map((l, i) => (
+            <tr key={i}>
+              <td style={S.tdLeft}>{l.nomProduit} x{l.quantite}</td>
+              <td style={S.tdRight}>{fmt(l.sousTotal)} FCFA</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
 
-      {/* Separator */}
-      <div className="border-b border-dashed border-gray-400 mb-1" />
+      {/* ── Séparateur ── */}
+      <div style={S.sep} />
 
-      {/* Totals */}
-      <div className="text-[11px] space-y-[2px]">
-        <div className="flex justify-between">
-          <span>Sous-total HT</span>
-          <span>{fmt(totalHT)} FCFA</span>
-        </div>
-        <div className="flex justify-between">
-          <span>TVA 19,25%</span>
-          <span>{fmt(tva)} FCFA</span>
-        </div>
-        <div className="flex justify-between font-bold text-sm pt-1 border-t border-dashed border-gray-400">
-          <span>TOTAL TTC</span>
-          <span>{fmt(totalTTC)} FCFA</span>
-        </div>
-      </div>
+      {/* ── Totaux ──
+           col1 = 50% (~90px) : libellé
+           col2 = 50% (~90px) : montant
+      */}
+      <table style={S.table}>
+        <colgroup>
+          <col style={{ width: '50%' }} />
+          <col style={{ width: '50%' }} />
+        </colgroup>
+        <tbody>
+          <tr style={{ ...S.bold, fontSize: 10 }}>
+            <td style={{ paddingTop: 2 }}>TOTAL</td>
+            <td style={{ textAlign: 'right', paddingTop: 2 }}>{fmt(montantTotal)} FCFA</td>
+          </tr>
+        </tbody>
+      </table>
 
-      {/* Payment */}
-      <div className="text-[10px] mt-2 border-t border-dashed border-gray-400 pt-1">
+      {/* ── Paiement ── */}
+      <div style={{ fontSize: 9, marginTop: 5, borderTop: '1px dashed #666', paddingTop: 3 }}>
         <p>Paiement: {methodePaiement}</p>
       </div>
 
-      {/* Footer */}
-      <div className="text-center text-[10px] mt-3 border-t border-dashed border-gray-400 pt-2">
+      {/* ── Pied de ticket ── */}
+      <div style={{ ...S.center, fontSize: 9, marginTop: 6, borderTop: '1px dashed #666', paddingTop: 5 }}>
         <p>Merci pour votre achat !</p>
       </div>
+
     </div>
   );
 
@@ -489,20 +580,20 @@ export const ReceiptGenerator: React.FC<ReceiptProps> = (props) => {
           <tr className="bg-gray-100">
             <th className="text-left py-2 px-3 border border-gray-300 font-semibold">Produit</th>
             <th className="text-center py-2 px-3 border border-gray-300 font-semibold w-16">Qté</th>
-            <th className="text-right py-2 px-3 border border-gray-300 font-semibold w-28">PU HT</th>
-            <th className="text-right py-2 px-3 border border-gray-300 font-semibold w-28">Total HT</th>
+            <th className="text-right py-2 px-3 border border-gray-300 font-semibold w-28">PU (FCFA)</th>
+            <th className="text-right py-2 px-3 border border-gray-300 font-semibold w-28">Total (FCFA)</th>
           </tr>
         </thead>
         <tbody>
-          {lignesHT.map((l, i) => (
+          {lignes.map((l, i) => (
             <tr key={i} className={i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
               <td className="py-2 px-3 border border-gray-300">{l.nomProduit}</td>
               <td className="py-2 px-3 border border-gray-300 text-center">{l.quantite}</td>
               <td className="py-2 px-3 border border-gray-300 text-right">
-                {fmt(l.prixUnitaireHT)} FCFA
+                {fmt(l.prixUnitaire)} FCFA
               </td>
               <td className="py-2 px-3 border border-gray-300 text-right">
-                {fmt(l.sousTotalHT)} FCFA
+                {fmt(l.sousTotal)} FCFA
               </td>
             </tr>
           ))}
@@ -514,17 +605,9 @@ export const ReceiptGenerator: React.FC<ReceiptProps> = (props) => {
         {/* Totals */}
         <div className="flex justify-end mb-4">
           <div className="w-64">
-            <div className="flex justify-between py-1 text-sm">
-              <span>Total HT</span>
-              <span>{fmt(totalHT)} FCFA</span>
-            </div>
-            <div className="flex justify-between py-1 text-sm">
-              <span>TVA 19,25%</span>
-              <span>{fmt(tva)} FCFA</span>
-            </div>
             <div className="flex justify-between py-2 text-base font-bold border-t-2 border-gray-800 mt-1">
-              <span>Total TTC</span>
-              <span>{fmt(totalTTC)} FCFA</span>
+              <span>TOTAL</span>
+              <span>{fmt(montantTotal)} FCFA</span>
             </div>
           </div>
         </div>
