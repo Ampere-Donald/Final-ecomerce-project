@@ -1,4 +1,3 @@
-import tailwindcss from '@tailwindcss/vite';
 import legacy from '@vitejs/plugin-legacy';
 import react from '@vitejs/plugin-react';
 import path from 'path';
@@ -9,7 +8,6 @@ export default defineConfig(({mode}) => {
   return {
     plugins: [
       react(),
-      tailwindcss(),
       // Génère des bundles transpilés + polyfills pour les anciens
       // navigateurs Android (WebView/Chrome < 87)
       legacy({
