@@ -29,6 +29,9 @@ api.interceptors.response.use(
     if (err.response?.status === 401) {
       localStorage.removeItem('newoteg_admin_token');
       localStorage.removeItem('newoteg_admin_user');
+      if (typeof caches !== 'undefined') {
+        caches.delete('newoteg-offline-data-v1').catch(() => {});
+      }
       if (window.location.pathname !== '/login') {
         window.location.href = '/login?expired=1';
       }

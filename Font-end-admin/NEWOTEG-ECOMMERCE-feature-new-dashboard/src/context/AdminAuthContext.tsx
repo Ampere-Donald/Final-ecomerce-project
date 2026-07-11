@@ -23,6 +23,17 @@ const AdminAuthContext = createContext<AdminAuthContextType | null>(null);
 
 const TOKEN_KEY = 'newoteg_admin_token';
 const USER_KEY = 'newoteg_admin_user';
+const OFFLINE_CACHE_NAME = 'newoteg-offline-data-v1';
+
+// Vide le cache PWA de consultation hors-ligne pour éviter qu'un utilisateur
+// suivant ne voie les données mises en cache pour le compte précédent
+// (le service worker ne peut pas lire le token/l'identité, donc cette purge
+// applicative est le seul point de contrôle).
+const clearOfflineCache = () => {
+  if (typeof caches !== 'undefined') {
+    caches.delete(OFFLINE_CACHE_NAME).catch(() => {});
+  }
+};
 
 export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [admin, setAdmin] = useState<AdminUser | null>(() => {
@@ -57,6 +68,7 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   const login = useCallback(async (username: string, password: string) => {
     const data = await adminAuthApi.login(username, password);
+    clearOfflineCache();
     localStorage.setItem(TOKEN_KEY, data.access_token);
     localStorage.setItem(USER_KEY, JSON.stringify(data.admin));
     setAdmin(data.admin);
@@ -64,6 +76,7 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   const loginPin = useCallback(async (username: string, pin: string) => {
     const data = await adminAuthApi.loginPin(username, pin);
+    clearOfflineCache();
     localStorage.setItem(TOKEN_KEY, data.access_token);
     localStorage.setItem(USER_KEY, JSON.stringify(data.admin));
     setAdmin(data.admin);
@@ -72,6 +85,7 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const logout = useCallback(() => {
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(USER_KEY);
+    clearOfflineCache();
     setAdmin(null);
   }, []);
 

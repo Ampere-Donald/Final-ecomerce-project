@@ -39,6 +39,7 @@ import { Paie } from './components/Paie';
 import { Proformas } from './components/Proformas';
 import { ToastProvider } from './components/ui/Toast';
 import { FVAlertPopup } from './components/FVAlertPopup';
+import { UserGuide } from './components/UserGuide';
 
 export default function App() {
   return (
@@ -89,6 +90,7 @@ export default function App() {
             <Route path="paie" element={<RoleProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN']}><Paie /></RoleProtectedRoute>} />
 
             <Route path="employes" element={<RoleProtectedRoute allowedRoles={['SUPER_ADMIN']}><Employes /></RoleProtectedRoute>} />
+            <Route path="guide" element={<UserGuide />} />
             <Route path="settings" element={<Settings />} />
           </Route>
         </Routes>

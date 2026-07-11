@@ -26,8 +26,10 @@ const variantClass: Record<Variant, string> = {
 };
 
 const sizeClass: Record<Size, string> = {
-  sm: 'text-xs px-3 py-1.5',
-  md: 'text-sm px-4 py-2',
+  // min-h-44px uniquement en dessous de md : garantit une zone tactile confortable
+  // sur téléphone/tablette sans alourdir la densité des tableaux desktop.
+  sm: 'text-xs px-3 py-1.5 max-md:min-h-[44px]',
+  md: 'text-sm px-4 py-2 max-md:min-h-[44px]',
   lg: 'text-base px-6 py-3',
 };
 

@@ -1,9 +1,11 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Bell, X, Check, CheckCheck, ShoppingCart, Package, Tags, TrendingUp, TrendingDown, AlertCircle, Menu, Loader2, UserCog, Factory, Wallet, Activity } from 'lucide-react';
+import { Search, Bell, X, Check, CheckCheck, ShoppingCart, Package, Tags, TrendingUp, TrendingDown, AlertCircle, Menu, Loader2, UserCog, Factory, Wallet, Activity, WifiOff, Download } from 'lucide-react';
 import { notificationApi, searchApi, produitApi } from '../services/api';
 import { useAdminAuth } from '../context/AdminAuthContext';
 import { can } from '../utils/permissions';
+import { useOnlineStatus } from '../hooks/useOnlineStatus';
+import { useInstallPrompt } from '../hooks/useInstallPrompt';
 
 interface HeaderProps {
   onMenuClick: () => void;
@@ -62,6 +64,8 @@ function relativeTime(dateStr: string) {
 export const Header = ({ onMenuClick }: HeaderProps) => {
   const navigate = useNavigate();
   const { admin } = useAdminAuth();
+  const isOnline = useOnlineStatus();
+  const { canInstall, promptInstall } = useInstallPrompt();
 
   /* ── Import Status ────────────────────────────────────────────── */
   const [importStatus, setImportStatus] = useState<{ isImporting: boolean; progress: number; message: string; error: string | null } | null>(null);
@@ -178,6 +182,12 @@ export const Header = ({ onMenuClick }: HeaderProps) => {
 
   return (
     <div className="flex flex-col sticky top-0 z-50 w-full shrink-0">
+      {!isOnline && (
+        <div className="bg-amber-50 border-b border-amber-100 flex items-center justify-center gap-2 px-4 py-1.5 shrink-0 z-20 text-xs font-bold text-amber-800">
+          <WifiOff size={13} />
+          Mode hors-ligne — certaines données affichées peuvent être anciennes
+        </div>
+      )}
       {importStatus?.isImporting && (
         <div className="bg-blue-50 border-b border-blue-100 flex flex-col justify-center px-4 py-1.5 shrink-0 z-20">
            <div className="flex items-center justify-between text-xs text-blue-800 font-bold mb-1 w-full">
@@ -256,6 +266,17 @@ export const Header = ({ onMenuClick }: HeaderProps) => {
           </div>
         )}
       </div>
+
+      {/* ── Installer l'application ─────────────────────────────────── */}
+      {canInstall && (
+        <button
+          onClick={promptInstall}
+          className="hidden sm:flex items-center gap-1.5 rounded-lg border border-primary/20 bg-primary/5 px-3 py-2 text-xs font-bold text-primary hover:bg-primary/10 transition-colors flex-shrink-0"
+        >
+          <Download size={14} />
+          Installer l'application
+        </button>
+      )}
 
       {/* ── Bell ─────────────────────────────────────────────────── */}
       <div ref={bellRef} className="relative flex items-center">

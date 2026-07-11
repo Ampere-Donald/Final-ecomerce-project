@@ -421,60 +421,103 @@ export const CaisseJour = () => {
                 <p className="text-sm">Aucun encaissement trouve pour cette date.</p>
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead className="border-b border-slate-100 bg-slate-50 text-xs uppercase tracking-wider text-slate-500">
-                    <tr>
-                      <th className="px-4 py-3 text-left">Numero</th>
-                      <th className="px-4 py-3 text-left">Type</th>
-                      <th className="px-4 py-3 text-left">Heure</th>
-                      <th className="px-4 py-3 text-left">Vendeur</th>
-                      <th className="px-4 py-3 text-left">Client</th>
-                      <th className="px-4 py-3 text-right">Total</th>
-                      <th className="px-4 py-3 text-center">Impressions</th>
-                      <th className="px-4 py-3 text-center">Action</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-50">
-                    {encaissementsFiltres.map((f) => (
-                      <tr key={f.id} className="hover:bg-slate-50">
-                        <td className="px-4 py-3 font-mono text-xs font-bold text-slate-900">{f.numero}</td>
-                        <td className="px-4 py-3">
-                          <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-bold text-slate-700">
-                            {f.type === 'TICKET_CAISSE' ? 'Ticket' : 'Facture'}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3 text-slate-500">{fmtHeure(f.dateEmission)}</td>
-                        <td className="px-4 py-3 text-slate-700">{f.vendeur?.nom ?? '-'}</td>
-                        <td className="px-4 py-3 text-slate-600">{f.client?.nom ?? 'Comptoir'}</td>
-                        <td className="px-4 py-3 text-right font-bold text-primary">{fmtFCFA(f.totalTTC)}</td>
-                        <td className="px-4 py-3 text-center text-slate-500">{f.printCount || 0}</td>
-                        <td className="px-4 py-3 text-center">
-                          <div className="flex items-center justify-center gap-1">
-                            <button
-                              onClick={() => handlePrintFacture(f)}
-                              disabled={printingFacture === f.id}
-                              className="inline-flex items-center gap-1.5 rounded-lg bg-slate-100 px-2.5 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-200 disabled:opacity-50"
-                              title="Imprimer"
-                            >
-                              <Printer size={13} />
-                              {printingFacture === f.id ? '...' : 'Imprimer'}
-                            </button>
-                            <button
-                              onClick={() => { setFvFactureId(f.id); setShowFV(true); }}
-                              className="inline-flex items-center gap-1 rounded-lg bg-blue-50 px-2.5 py-1.5 text-xs font-medium text-blue-700 hover:bg-blue-100"
-                              title="Facture virtuelle"
-                            >
-                              <FileText size={13} />
-                              FV
-                            </button>
-                          </div>
-                        </td>
+              <>
+                <div className="hidden md:block overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead className="border-b border-slate-100 bg-slate-50 text-xs uppercase tracking-wider text-slate-500">
+                      <tr>
+                        <th className="px-4 py-3 text-left">Numero</th>
+                        <th className="px-4 py-3 text-left">Type</th>
+                        <th className="px-4 py-3 text-left">Heure</th>
+                        <th className="px-4 py-3 text-left">Vendeur</th>
+                        <th className="px-4 py-3 text-left">Client</th>
+                        <th className="px-4 py-3 text-right">Total</th>
+                        <th className="px-4 py-3 text-center">Impressions</th>
+                        <th className="px-4 py-3 text-center">Action</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <tbody className="divide-y divide-slate-50">
+                      {encaissementsFiltres.map((f) => (
+                        <tr key={f.id} className="hover:bg-slate-50">
+                          <td className="px-4 py-3 font-mono text-xs font-bold text-slate-900">{f.numero}</td>
+                          <td className="px-4 py-3">
+                            <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-bold text-slate-700">
+                              {f.type === 'TICKET_CAISSE' ? 'Ticket' : 'Facture'}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-slate-500">{fmtHeure(f.dateEmission)}</td>
+                          <td className="px-4 py-3 text-slate-700">{f.vendeur?.nom ?? '-'}</td>
+                          <td className="px-4 py-3 text-slate-600">{f.client?.nom ?? 'Comptoir'}</td>
+                          <td className="px-4 py-3 text-right font-bold text-primary">{fmtFCFA(f.totalTTC)}</td>
+                          <td className="px-4 py-3 text-center text-slate-500">{f.printCount || 0}</td>
+                          <td className="px-4 py-3 text-center">
+                            <div className="flex items-center justify-center gap-1">
+                              <button
+                                onClick={() => handlePrintFacture(f)}
+                                disabled={printingFacture === f.id}
+                                className="inline-flex items-center gap-1.5 rounded-lg bg-slate-100 px-2.5 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-200 disabled:opacity-50"
+                                title="Imprimer"
+                              >
+                                <Printer size={13} />
+                                {printingFacture === f.id ? '...' : 'Imprimer'}
+                              </button>
+                              <button
+                                onClick={() => { setFvFactureId(f.id); setShowFV(true); }}
+                                className="inline-flex items-center gap-1 rounded-lg bg-blue-50 px-2.5 py-1.5 text-xs font-medium text-blue-700 hover:bg-blue-100"
+                                title="Facture virtuelle"
+                              >
+                                <FileText size={13} />
+                                FV
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* ── Cards (mobile) ── */}
+                <div className="md:hidden divide-y divide-slate-100">
+                  {encaissementsFiltres.map((f) => (
+                    <div key={f.id} className="p-4">
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="font-mono text-xs font-bold text-slate-900">{f.numero}</p>
+                        <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-700">
+                          {f.type === 'TICKET_CAISSE' ? 'Ticket' : 'Facture'}
+                        </span>
+                      </div>
+                      <div className="mt-1 flex items-center justify-between text-xs text-slate-500">
+                        <span>{fmtHeure(f.dateEmission)} · {f.vendeur?.nom ?? '-'}</span>
+                        <span className="font-bold text-primary text-sm">{fmtFCFA(f.totalTTC)}</span>
+                      </div>
+                      <p className="mt-0.5 text-xs text-slate-500">{f.client?.nom ?? 'Comptoir'}</p>
+                      <div className="mt-2 flex items-center justify-between">
+                        <span className="text-[11px] text-slate-400">{f.printCount || 0} impression{(f.printCount || 0) !== 1 ? 's' : ''}</span>
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            onClick={() => handlePrintFacture(f)}
+                            disabled={printingFacture === f.id}
+                            className="inline-flex min-h-[44px] items-center gap-1.5 rounded-lg bg-slate-100 px-3 text-xs font-medium text-slate-700 hover:bg-slate-200 disabled:opacity-50"
+                            title="Imprimer"
+                          >
+                            <Printer size={13} />
+                            {printingFacture === f.id ? '...' : 'Imprimer'}
+                          </button>
+                          <button
+                            onClick={() => { setFvFactureId(f.id); setShowFV(true); }}
+                            className="inline-flex min-h-[44px] items-center gap-1 rounded-lg bg-blue-50 px-3 text-xs font-medium text-blue-700 hover:bg-blue-100"
+                            title="Facture virtuelle"
+                          >
+                            <FileText size={13} />
+                            FV
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </>
             )}
           </div>
         </div>

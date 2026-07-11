@@ -2,6 +2,7 @@ import legacy from '@vitejs/plugin-legacy';
 import react from '@vitejs/plugin-react';
 import path from 'path';
 import {defineConfig, loadEnv} from 'vite';
+import {VitePWA} from 'vite-plugin-pwa';
 
 export default defineConfig(({mode}) => {
   const env = loadEnv(mode, '.', '');
@@ -9,10 +10,54 @@ export default defineConfig(({mode}) => {
     plugins: [
       react(),
       // Génère des bundles transpilés + polyfills pour les anciens
-      // navigateurs Android (WebView/Chrome < 87)
+      // navigateurs Android (parc boutique jusqu'à Android 5/6, Chrome mis à jour via Play Store)
       legacy({
-        targets: ['defaults', 'chrome >= 64', 'android >= 7'],
+        targets: ['defaults', 'chrome >= 64', 'android >= 5'],
         modernPolyfills: true,
+      }),
+      // PWA installable (icône écran d'accueil, plein écran, cache de consultation
+      // hors-ligne en lecture seule). Doit rester APRÈS legacy() dans cet ordre.
+      VitePWA({
+        registerType: 'autoUpdate',
+        includeAssets: ['logo.png', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/icon-maskable-512.png'],
+        manifest: {
+          name: 'Newoteg Admin',
+          short_name: 'Newoteg',
+          description: 'Administration boutique et e-commerce Newoteg',
+          start_url: '/',
+          scope: '/',
+          display: 'standalone',
+          orientation: 'any',
+          theme_color: '#1c19a3',
+          background_color: '#f6f6f8',
+          icons: [
+            { src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' },
+            { src: '/icons/icon-512.png', sizes: '512x512', type: 'image/png' },
+            { src: '/icons/icon-maskable-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+          ],
+        },
+        workbox: {
+          // Le HTML/JS/CSS buildés sont précachés (network falling back to cache).
+          globPatterns: ['**/*.{js,css,html,svg,png,ico,woff2}'],
+          // Le bundle principal (legacy inclus) dépasse la limite par défaut de 2 MiB.
+          maximumFileSizeToCacheInBytes: 6 * 1024 * 1024,
+          navigateFallbackDenylist: [/^\/api\//, /^\/uploads\//],
+          runtimeCaching: [
+            {
+              // Consultation hors-ligne en lecture seule (catalogue, prix, clients, taux).
+              // Jamais les endpoints d'écriture, jamais /uploads (images lourdes).
+              urlPattern: ({url, request}) =>
+                request.method === 'GET' &&
+                /^\/api\/(produits|categories|clients|taux-change)(\/|$)/.test(url.pathname),
+              handler: 'StaleWhileRevalidate',
+              options: {
+                cacheName: 'newoteg-offline-data-v1',
+                expiration: {maxEntries: 50, maxAgeSeconds: 30 * 60},
+                cacheableResponse: {statuses: [200]},
+              },
+            },
+          ],
+        },
       }),
     ],
     define: {

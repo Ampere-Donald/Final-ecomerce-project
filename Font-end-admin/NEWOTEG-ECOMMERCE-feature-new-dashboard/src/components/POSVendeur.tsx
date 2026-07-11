@@ -604,12 +604,12 @@ export const POSVendeur = () => {
                 <p className="text-sm font-medium text-slate-900 truncate">{l.nomProduit}</p>
                 {renderPrixLigne(l)}
               </div>
-              <div className="flex items-center gap-1">
-                <button onClick={() => changerQuantite(l.produitId, -1)} className="p-1 rounded text-slate-400 hover:text-slate-700 hover:bg-slate-100"><Minus size={14} /></button>
+              <div className="flex items-center gap-0.5">
+                <button onClick={() => changerQuantite(l.produitId, -1)} className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded text-slate-400 hover:text-slate-700 hover:bg-slate-100"><Minus size={14} /></button>
                 <span className="w-6 text-center text-sm font-semibold">{l.quantite}</span>
-                <button onClick={() => changerQuantite(l.produitId, 1)} disabled={l.quantite >= l.stockDispo} className="p-1 rounded text-slate-400 hover:text-slate-700 hover:bg-slate-100 disabled:opacity-30"><Plus size={14} /></button>
+                <button onClick={() => changerQuantite(l.produitId, 1)} disabled={l.quantite >= l.stockDispo} className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded text-slate-400 hover:text-slate-700 hover:bg-slate-100 disabled:opacity-30"><Plus size={14} /></button>
               </div>
-              <button onClick={() => retirerLigne(l.produitId)} className="p-1 text-red-400 hover:text-red-600"><Trash2 size={14} /></button>
+              <button onClick={() => retirerLigne(l.produitId)} className="flex min-h-[44px] min-w-[44px] items-center justify-center text-red-400 hover:text-red-600"><Trash2 size={14} /></button>
             </li>
           ))}
         </ul>}
@@ -634,12 +634,12 @@ export const POSVendeur = () => {
                 <p className="text-sm font-medium text-slate-900 truncate">{l.nomProduit}</p>
                 {renderPrixLigne(l)}
               </div>
-              <div className="flex items-center gap-1">
-                <button onClick={() => changerQuantite(l.produitId, -1)} className="p-1 rounded text-slate-400 hover:text-slate-700 hover:bg-slate-100"><Minus size={14} /></button>
+              <div className="flex items-center gap-0.5">
+                <button onClick={() => changerQuantite(l.produitId, -1)} className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded text-slate-400 hover:text-slate-700 hover:bg-slate-100"><Minus size={14} /></button>
                 <span className="w-6 text-center text-sm font-semibold">{l.quantite}</span>
-                <button onClick={() => changerQuantite(l.produitId, 1)} disabled={l.quantite >= l.stockDispo} className="p-1 rounded text-slate-400 hover:text-slate-700 hover:bg-slate-100 disabled:opacity-30"><Plus size={14} /></button>
+                <button onClick={() => changerQuantite(l.produitId, 1)} disabled={l.quantite >= l.stockDispo} className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded text-slate-400 hover:text-slate-700 hover:bg-slate-100 disabled:opacity-30"><Plus size={14} /></button>
               </div>
-              <button onClick={() => retirerLigne(l.produitId)} className="p-1 text-red-400 hover:text-red-600"><Trash2 size={14} /></button>
+              <button onClick={() => retirerLigne(l.produitId)} className="flex min-h-[44px] min-w-[44px] items-center justify-center text-red-400 hover:text-red-600"><Trash2 size={14} /></button>
             </li>
           ))}
         </ul>}

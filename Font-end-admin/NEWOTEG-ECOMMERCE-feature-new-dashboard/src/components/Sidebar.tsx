@@ -28,6 +28,7 @@ import {
   Award,
   ClipboardList,
   Banknote,
+  BookOpen,
 } from 'lucide-react';
 import { useAdminAuth } from '../context/AdminAuthContext';
 import { brand } from '../config/brand';
@@ -131,6 +132,7 @@ export const Sidebar = ({ open, onClose }: SidebarProps) => {
     {
       label: 'Système',
       items: [
+        ...add(can.accessGuide(role), { label: 'Guide utilisateur', icon: BookOpen, path: '/guide' }),
         ...add(can.accessParametres(role), { label: 'Paramètres', icon: Settings, path: '/settings' }),
       ],
     },

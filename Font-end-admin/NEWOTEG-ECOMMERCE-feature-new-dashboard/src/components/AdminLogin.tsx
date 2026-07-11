@@ -1,15 +1,21 @@
 import React, { useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAdminAuth } from '../context/AdminAuthContext';
-import { AlertTriangle, ArrowRight, Eye, EyeOff, Hash, Lock, ShieldCheck, User, X } from 'lucide-react';
+import { AlertTriangle, ArrowRight, Download, Eye, EyeOff, Hash, Lock, MoreVertical, ShieldCheck, User, X } from 'lucide-react';
 import { brand } from '../config/brand';
+import { useInstallPrompt } from '../hooks/useInstallPrompt';
 
 type LoginMode = 'password' | 'pin';
+
+const isStandalone = () =>
+  window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone === true;
 
 export const AdminLogin: React.FC = () => {
   const { login, loginPin } = useAdminAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const { canInstall, promptInstall } = useInstallPrompt();
+  const [showManualInstallHint, setShowManualInstallHint] = useState(false);
   const [mode, setMode] = useState<LoginMode>('password');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -243,6 +249,34 @@ export const AdminLogin: React.FC = () => {
                   {loading ? 'Vérification...' : 'Entrer avec le PIN'}
                   {!loading && <Hash size={18} />}
                 </button>
+              </div>
+            )}
+
+            {!isStandalone() && (
+              <div className="mt-6 rounded-lg border border-slate-200 bg-slate-50 p-3 text-center">
+                {canInstall ? (
+                  <button
+                    type="button"
+                    onClick={() => promptInstall()}
+                    className="inline-flex items-center gap-2 rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-slate-800"
+                  >
+                    <Download size={16} />
+                    Installer l'application sur cet appareil
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setShowManualInstallHint((v) => !v)}
+                    className="text-xs font-semibold text-slate-600 underline decoration-dotted hover:text-slate-900"
+                  >
+                    📲 Installer l'application sur cet appareil
+                  </button>
+                )}
+                {showManualInstallHint && !canInstall && (
+                  <p className="mt-2 flex items-center justify-center gap-1 text-xs text-slate-500">
+                    Menu <MoreVertical size={13} className="inline" /> de Chrome → « Ajouter à l'écran d'accueil »
+                  </p>
+                )}
               </div>
             )}
 

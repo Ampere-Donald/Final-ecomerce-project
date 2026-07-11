@@ -59,6 +59,7 @@ export const can = {
   accessEmployes: (r?: string) => isSuper(r),
 
   // ── Système ─────────────────────────────────────────────────
+  accessGuide: (_r?: string) => true,
   accessParametres: (r?: string) => isSuper(r),
   accessRoles: (r?: string) => isSuper(r),
   accessAccounts: (r?: string) => isSuper(r),
