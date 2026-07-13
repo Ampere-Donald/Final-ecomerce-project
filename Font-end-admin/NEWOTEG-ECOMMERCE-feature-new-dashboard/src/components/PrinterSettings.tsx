@@ -12,12 +12,15 @@ import {
 import { buildTicketEscPos } from '../services/ticketEscpos';
 import {
   getPrinterName,
+  getPrinterHost,
+  disconnect,
   isAndroidDevice,
   isPhysicalPrinter,
   listPrinters,
   printRaw,
   QZ_TRAY_DOWNLOAD_URL,
   setPrinterName,
+  setPrinterHost,
 } from '../services/qzPrinter';
 
 type DetectionState = 'checking' | 'ready' | 'bridge-missing' | 'no-printer' | 'mobile';
@@ -26,6 +29,10 @@ type Feedback = { kind: 'success' | 'error'; text: string } | null;
 function friendlyConnectionError(error: unknown): string {
   const message = error instanceof Error ? error.message : String(error);
   if (/closed before|connect|socket|websocket|qz/i.test(message)) {
+    const host = getPrinterHost();
+    if (host) {
+      return `Impossible de joindre QZ Tray sur ${host}. Vérifiez le Wi-Fi, l’adresse du PC, le port WSS 8181 et le certificat QZ installé sur cet appareil.`;
+    }
     return "QZ Tray n'est pas lancé sur cet ordinateur.";
   }
   return message || "Le service d'impression local ne répond pas.";
@@ -37,10 +44,12 @@ export function PrinterSettings() {
   const [selected, setSelected] = useState(getPrinterName() || '');
   const [feedback, setFeedback] = useState<Feedback>(null);
   const [testing, setTesting] = useState(false);
+  const [host, setHost] = useState(getPrinterHost());
+  const [savingHost, setSavingHost] = useState(false);
 
   const detect = useCallback(async () => {
     setFeedback(null);
-    if (isAndroidDevice()) {
+    if (isAndroidDevice() && !getPrinterHost()) {
       setState('mobile');
       return;
     }
@@ -66,6 +75,26 @@ export function PrinterSettings() {
       setFeedback({ kind: 'error', text: friendlyConnectionError(error) });
     }
   }, []);
+
+  const saveHost = async () => {
+    setSavingHost(true);
+    setFeedback(null);
+    try {
+      setPrinterHost(host);
+      await disconnect();
+      setFeedback({
+        kind: 'success',
+        text: host.trim()
+          ? 'Poste d’impression enregistré. Nouvelle détection en cours…'
+          : 'Impression locale sélectionnée. Nouvelle détection en cours…',
+      });
+      await detect();
+    } catch (error) {
+      setFeedback({ kind: 'error', text: friendlyConnectionError(error) });
+    } finally {
+      setSavingHost(false);
+    }
+  };
 
   useEffect(() => {
     void detect();
@@ -117,6 +146,30 @@ export function PrinterSettings() {
       </div>
 
       <div className="space-y-6 p-6 sm:p-8">
+        <div className="surface grid gap-3 p-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
+          <label className="space-y-2 text-sm font-semibold text-slate-700">
+            Poste QZ Tray
+            <input
+              type="text"
+              value={host}
+              onChange={(event) => setHost(event.target.value)}
+              placeholder={isAndroidDevice() ? 'Ex. 192.168.1.20' : 'Vide = cet ordinateur'}
+              inputMode="url"
+              autoCapitalize="none"
+              spellCheck={false}
+              className="field block"
+            />
+            <span className="block text-xs font-normal text-slate-500">
+              Sur Android, indiquez l’adresse IP fixe du PC auquel l’Epson est branchée. Sur ce PC, laissez vide.
+            </span>
+          </label>
+          <button type="button" onClick={() => void saveHost()} disabled={savingHost}
+            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-primary px-4 text-sm font-bold text-white disabled:opacity-50">
+            {savingHost ? <Loader2 size={16} className="animate-spin" /> : <MonitorCog size={16} />}
+            Enregistrer et tester
+          </button>
+        </div>
+
         <ol className="grid gap-3 sm:grid-cols-3" aria-label="État de la chaîne d’impression">
           {[
             { label: 'Application', detail: 'Newoteg ouvert', ok: true, icon: MonitorCog },
@@ -145,7 +198,7 @@ export function PrinterSettings() {
             <Smartphone size={19} className="mt-0.5 shrink-0" />
             <div>
               <p className="font-bold">Téléphone ou tablette détecté</p>
-              <p className="mt-1 text-sky-800">L’APK actuel ne contient pas encore le module natif USB/Bluetooth. Utilisez une imprimante réseau reliée à un poste QZ Tray, ou ajoutez le module Android dédié.</p>
+              <p className="mt-1 text-sky-800">Indiquez ci-dessus l’adresse IP du PC boutique qui exécute QZ Tray et auquel l’Epson TM-T20II est branchée en USB.</p>
             </div>
           </div>
         )}

@@ -61,3 +61,31 @@ jobs:
       - run: npm run lint
       - run: npm run build
       - run: npm audit --omit=dev --audit-level=high
+
+  android:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./Font-end-admin/NEWOTEG-ECOMMERCE-feature-new-dashboard
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: Font-end-admin/NEWOTEG-ECOMMERCE-feature-new-dashboard/package-lock.json
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: gradle
+      - uses: android-actions/setup-android@v3
+      - run: npm ci
+      - run: npm run build
+      - run: npx cap sync android
+      - run: chmod +x android/gradlew
+      - run: ./android/gradlew -p android assembleDebug
+      - uses: actions/upload-artifact@v4
+        with:
+          name: newoteg-admin-debug-apk
+          path: Font-end-admin/NEWOTEG-ECOMMERCE-feature-new-dashboard/android/app/build/outputs/apk/debug/app-debug.apk

@@ -10,6 +10,7 @@
 import qz from 'qz-tray';
 
 const PRINTER_CACHE_KEY = 'newoteg_printer_name';
+const PRINTER_HOST_KEY = 'newoteg_printer_host';
 
 export const QZ_TRAY_DOWNLOAD_URL = 'https://qz.io/download/';
 
@@ -40,7 +41,13 @@ export async function connect(): Promise<void> {
   configureSecurity();
   if (isConnected()) return;
   if (!connecting) {
-    connecting = qz.websocket.connect().finally(() => {
+    const host = getPrinterHost();
+    if (host && typeof qz.websocket.setUsingSurf === 'function') {
+      qz.websocket.setUsingSurf(false);
+    }
+    connecting = qz.websocket.connect(host
+      ? { host, usingSecure: true, retries: 1, delay: 1 }
+      : undefined).finally(() => {
       connecting = null;
     });
   }
@@ -74,6 +81,31 @@ export function setPrinterName(name: string) {
 
 export function getPrinterName(): string | null {
   return localStorage.getItem(PRINTER_CACHE_KEY);
+}
+
+export function getPrinterHost(): string {
+  return localStorage.getItem(PRINTER_HOST_KEY) || '';
+}
+
+export function setPrinterHost(value: string) {
+  const host = value
+    .trim()
+    .replace(/^wss?:\/\//i, '')
+    .replace(/\/$/, '');
+  if (host && !/^[A-Za-z0-9.-]+$/.test(host)) {
+    throw new Error('Saisissez uniquement l’adresse IP ou le nom du poste, sans port.');
+  }
+  if (host) localStorage.setItem(PRINTER_HOST_KEY, host);
+  else localStorage.removeItem(PRINTER_HOST_KEY);
+}
+
+export async function disconnect(): Promise<void> {
+  if (isConnected()) await qz.websocket.disconnect();
+}
+
+export function getConnectionInfo(): { host: string; port: number; socket: string } | null {
+  if (!isConnected()) return null;
+  return qz.websocket.getConnectionInfo() || null;
 }
 
 export async function listPrinters(): Promise<string[]> {

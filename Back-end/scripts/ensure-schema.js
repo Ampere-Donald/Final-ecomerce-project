@@ -24,6 +24,8 @@ const SQL_STATEMENTS = [
   `ALTER TABLE "admin_user" ADD COLUMN IF NOT EXISTS "photo_url" TEXT;`,
   `ALTER TABLE "admin_user" ADD COLUMN IF NOT EXISTS "updated_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP;`,
   `ALTER TABLE "admin_user" ADD COLUMN IF NOT EXISTS "created_by" TEXT;`,
+  `ALTER TABLE "admin_user" ADD COLUMN IF NOT EXISTS "failed_login_attempts" INTEGER NOT NULL DEFAULT 0;`,
+  `ALTER TABLE "admin_user" ADD COLUMN IF NOT EXISTS "locked_until" TIMESTAMP(3);`,
   `ALTER TABLE "admin_user" ALTER COLUMN "mot_de_passe" DROP NOT NULL;`,
   `WITH candidates AS (
     SELECT
@@ -117,6 +119,8 @@ const SQL_STATEMENTS = [
     CONSTRAINT "ticket_vente_pkey" PRIMARY KEY ("id")
   );`,
   `CREATE UNIQUE INDEX IF NOT EXISTS "ticket_vente_numero_ticket_key" ON "ticket_vente"("numero_ticket");`,
+  `ALTER TABLE "ticket_vente" ADD COLUMN IF NOT EXISTS "idempotency_key" VARCHAR(64);`,
+  `CREATE UNIQUE INDEX IF NOT EXISTS "ticket_vente_idempotency_key_key" ON "ticket_vente"("idempotency_key");`,
   `CREATE UNIQUE INDEX IF NOT EXISTS "ticket_vente_vente_id_key" ON "ticket_vente"("vente_id");`,
   `CREATE INDEX IF NOT EXISTS "ticket_vente_statut_expires_at_idx" ON "ticket_vente"("statut", "expires_at");`,
   `CREATE INDEX IF NOT EXISTS "ticket_vente_vendeur_id_created_at_idx" ON "ticket_vente"("vendeur_id", "created_at");`,
@@ -169,6 +173,23 @@ const SQL_STATEMENTS = [
   `ALTER TABLE "ligne_bon" ADD COLUMN IF NOT EXISTS "prix_reference" DECIMAL(10,2);`,
   `ALTER TABLE "ligne_bon" ADD COLUMN IF NOT EXISTS "bande_prix" VARCHAR(20);`,
   `ALTER TABLE "ligne_bon" ADD COLUMN IF NOT EXISTS "motif_remise" VARCHAR(255);`,
+
+  // Continuité de caisse 2026 : séquences, annulation auditée et idempotence
+  `CREATE TABLE IF NOT EXISTS "document_sequence" (
+    "id" TEXT NOT NULL,
+    "type" VARCHAR(30) NOT NULL,
+    "period" VARCHAR(20) NOT NULL,
+    "value" INTEGER NOT NULL DEFAULT 0,
+    "updated_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "document_sequence_pkey" PRIMARY KEY ("id")
+  );`,
+  `CREATE UNIQUE INDEX IF NOT EXISTS "document_sequence_type_period_key" ON "document_sequence"("type", "period");`,
+  `ALTER TABLE "vente" ADD COLUMN IF NOT EXISTS "annulee" BOOLEAN NOT NULL DEFAULT false;`,
+  `ALTER TABLE "vente" ADD COLUMN IF NOT EXISTS "motif_annulation" VARCHAR(255);`,
+  `ALTER TABLE "vente" ADD COLUMN IF NOT EXISTS "annulee_at" TIMESTAMP(3);`,
+  `ALTER TABLE "vente" ADD COLUMN IF NOT EXISTS "annulee_by" TEXT;`,
+  `ALTER TABLE "vente" ADD COLUMN IF NOT EXISTS "idempotency_key" VARCHAR(64);`,
+  `CREATE UNIQUE INDEX IF NOT EXISTS "vente_idempotency_key_key" ON "vente"("idempotency_key");`,
 
   // ── Table: commande ──
   `CREATE TABLE IF NOT EXISTS "commande" (

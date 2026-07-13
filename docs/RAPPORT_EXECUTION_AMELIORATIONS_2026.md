@@ -16,7 +16,7 @@
 | 7 — Design system et UX mobile | Terminée | Tokens, accessibilité, zones tactiles et récupération d’erreur |
 | 8 — Tableau de bord actionnable | Terminée | Alertes reliées aux écrans de résolution et KPI documentés |
 | 9 — Dépendances et observabilité | Terminée | Audits, corrélation, santé et CI multi-projets |
-| 10 — Android et impression mobile | À exécuter | Voir plan directeur |
+| 10 — Android et impression mobile | Logiciel terminé, recette boutique requise | Hôte QZ réseau, WSS, guide et build Android CI |
 
 ## Résultats mesurés
 
@@ -67,6 +67,9 @@
 - audits de production ramenés à 3 alertes modérées backend, 1 faible admin et 0 côté client ;
 - remplacement de la dépendance Excel sans correctif et mise à niveau de Nodemailer ;
 - identifiant de corrélation HTTP, route de santé API/base/stockage et CI sur les trois applications.
+- configuration Android d’un poste QZ distant avec reconnexion et diagnostic sécurisé ;
+- guide de certificat, pare-feu, IP fixe et recette Epson sur réseau local ;
+- build PWA et synchronisation Capacitor validés ; compilation APK automatisée en CI avec Java 21 et Android SDK.
 
 ## Validation externe encore nécessaire
 
