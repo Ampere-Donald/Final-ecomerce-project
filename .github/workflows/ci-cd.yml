@@ -42,6 +42,7 @@ jobs:
           cache-dependency-path: Font-end-admin/NEWOTEG-ECOMMERCE-feature-new-dashboard/package-lock.json
       - run: npm ci
       - run: npx tsc --noEmit
+      - run: npm run test:offline
       - run: npm run build
       - run: npm audit --omit=dev --audit-level=high
 

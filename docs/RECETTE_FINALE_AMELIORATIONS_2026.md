@@ -8,11 +8,12 @@
 | Contrôle | Résultat |
 |---|---|
 | Backend build NestJS + Prisma | Réussi |
-| Backend Jest | 15 suites, 84 tests réussis |
+| Backend Jest | 21 suites, 104 tests réussis |
 | `GET /api/health` sur backend local | HTTP 200 ; API, base et stockage `ok` |
 | Admin TypeScript | Réussi |
 | Admin build PWA moderne + legacy | Réussi |
-| Admin précache PWA | Environ 4,08 Mo |
+| Admin précache PWA | Environ 4,11 Mo |
+| Tests hors ligne frontend | 5 réussis : avant, pendant, après coupure, conflit stock et diagnostic |
 | Site client ESLint | 0 erreur, 0 avertissement |
 | Site client build | Réussi |
 | Audit production backend | 3 modérées, aucune élevée/critique |
@@ -29,7 +30,13 @@
 - numérotation transactionnelle ;
 - création atomique vente/facture/stock/caisse ;
 - annulation auditée ;
+- remboursement distinct, atomique et protégé contre le double traitement ;
+- original/duplicata et journal d’impression par poste/utilisateur ;
 - file hors ligne persistante et synchronisation ;
+- conflits stock visibles, relançables et journalisés ;
+- pagination serveur du catalogue et recherches POS/autocomplétion distantes ;
+- paniers suspendus, avertissement de sortie et métriques Caisse Express ;
+- tableau de bord adapté au rôle et périodes comparées hors ventes annulées ;
 - builds responsive et chargement par route ;
 - santé base/stockage et références de diagnostic.
 

@@ -54,3 +54,15 @@ Sur le PC auquel l’imprimante est directement branchée, laisser le champ **Po
 | Fonctionne sur PC mais pas Android | Pare-feu privé, port WSS 8181 et origine autorisée |
 
 Un navigateur ou une APK ne peut pas installer silencieusement un pilote Windows : cette opération exige les droits administrateur du poste. Après l’installation initiale du pilote et de QZ Tray, Newoteg détecte et mémorise automatiquement l’imprimante.
+
+## Assistant Windows fourni
+
+Depuis la racine du projet, ouvrir PowerShell **en tant qu’administrateur** puis exécuter :
+
+```powershell
+.\scripts\Install-NewotegPrintStation.ps1 `
+  -EpsonDriverInf "C:\Pilotes\EpsonTM-T20II\driver.inf" `
+  -QzInstaller "C:\Installateurs\qz-tray.exe"
+```
+
+Ajouter `-AllowPrivateQzPort` uniquement sur le PC qui doit recevoir les impressions Android par le réseau privé. Le script installe le `.inf` avec l’outil Windows officiel, lance QZ Tray, démarre le spooler si nécessaire et affiche le nom exact de l’imprimante détectée. Les fichiers Epson et QZ doivent être obtenus et vérifiés avant l’exécution ; ils ne sont pas intégrés à l’application.

@@ -34,6 +34,8 @@
 
 Après validation, le champ scanner reprend le focus pour la vente suivante.
 
+Si le client doit patienter, utiliser **Attente** : le panier, le client et le moyen de paiement sont conservés sur ce poste. **Reprendre** restaure le panier ; contrôler le stock avant validation. Fermer la page avec un panier actif déclenche un avertissement.
+
 ## Coupure Internet
 
 La vente est conservée sur l’appareil et reçoit un identifiant anti-doublon. Le bandeau indique le nombre d’opérations en attente.
@@ -42,11 +44,19 @@ La vente est conservée sur l’appareil et reçoit un identifiant anti-doublon.
 2. Continuer uniquement les opérations autorisées.
 3. Au retour du réseau, laisser la synchronisation automatique s’exécuter.
 4. Ouvrir **Opérations hors ligne** si une ligne est en erreur.
+   - **Nouvelle tentative requise** : réessayer lorsque le serveur est stable.
+   - **Conflit de stock** : contrôler le stock réel, puis réessayer ou retirer la ligne après décision du responsable.
 5. Ne supprimer une opération qu’après vérification par un responsable.
 
 ## Annulation
 
 Une vente encaissée n’est jamais supprimée silencieusement. L’annulation exige un motif, restitue le stock et reste visible dans l’historique.
+
+Le **remboursement** est une opération différente, réservée au SUPER_ADMIN : il crée une sortie de caisse et un retour de stock. Ne pas utiliser l’annulation lorsqu’un client a réellement reçu puis retourné la marchandise.
+
+## Réimpression
+
+Le reçu indique **ORIGINAL** à la première impression et **DUPLICATA** ensuite. Toute tentative réussie ou échouée est visible dans **Journal impressions** avec le poste et l’utilisateur. Réimprimer le document existant ; ne jamais recréer la vente.
 
 ## Assistance
 
