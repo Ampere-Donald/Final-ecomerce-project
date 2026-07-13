@@ -16,6 +16,9 @@ const api = axios.create({
 
 // ── Auth interceptors ────────────────────────────────────────────────────
 api.interceptors.request.use((config) => {
+  config.headers['X-Request-Id'] = typeof crypto.randomUUID === 'function'
+    ? crypto.randomUUID()
+    : `web-${Date.now()}-${Math.random().toString(36).slice(2)}`;
   const token = localStorage.getItem('newoteg_admin_token');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
@@ -44,20 +47,21 @@ const DB_SCHEMA_ERROR_CODES = new Set(['P2021', 'P2022']);
 
 export const getApiErrorMessage = (err: any, fallback: string): string => {
   const data = err?.response?.data;
+  const reference = data?.requestId ? ` Référence : ${data.requestId}` : '';
 
   if (DB_SCHEMA_ERROR_CODES.has(data?.code)) {
     return "Base de données non synchronisée : les tables ou colonnes nécessaires n'existent pas encore. Appliquez la migration Prisma avant de tester ce module.";
   }
 
   if (Array.isArray(data?.message)) {
-    return data.message.join(' ');
+    return data.message.join(' ') + reference;
   }
 
   if (typeof data?.message === 'string' && data.message.trim()) {
-    return data.message;
+    return data.message + reference;
   }
 
-  return fallback;
+  return fallback + reference;
 };
 
 // ── Admin Auth API ───────────────────────────────────────────────────────

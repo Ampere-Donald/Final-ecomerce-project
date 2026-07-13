@@ -8,6 +8,7 @@ import cookieParser from 'cookie-parser';
 import { AllExceptionsFilter } from './common/filters/http-exception.filter';
 import { AuditLogInterceptor } from './common/interceptors/audit-log.interceptor';
 import 'dotenv/config';
+import { correlationIdMiddleware } from './common/middleware/correlation-id.middleware';
 
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
@@ -24,6 +25,7 @@ async function bootstrap() {
   }
 
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  app.use(correlationIdMiddleware);
 
   // ── Security headers ───────────────────────────────────────────────────
   app.use(helmet({
@@ -62,7 +64,8 @@ async function bootstrap() {
       ...envOrigins,
     ],
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Request-Id'],
+    exposedHeaders: ['X-Request-Id'],
     credentials: true,
   });
 

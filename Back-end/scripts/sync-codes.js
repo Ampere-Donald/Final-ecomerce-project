@@ -9,7 +9,7 @@ require('dotenv').config();
 const { PrismaClient } = require('@prisma/client');
 const { PrismaPg } = require('@prisma/adapter-pg');
 const { Pool } = require('pg');
-const XLSX = require('xlsx');
+const readXlsxFile = require('read-excel-file/node');
 const path = require('path');
 
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
@@ -21,9 +21,11 @@ const normalize = (s) => String(s ?? '').trim().toLowerCase();
 
 async function main() {
   // ── Lecture du fichier xlsx ───────────────────────────────────────────────
-  const wb = XLSX.readFile(XLSX_PATH);
-  const ws = wb.Sheets[wb.SheetNames[0]];
-  const rows = XLSX.utils.sheet_to_json(ws);
+  const table = await readXlsxFile(XLSX_PATH);
+  const headers = (table.shift() || []).map((value) => String(value ?? '').trim());
+  const rows = table
+    .filter((row) => row.some((value) => value !== null && value !== ''))
+    .map((row) => Object.fromEntries(headers.map((header, index) => [header, row[index]])));
 
   console.log(`\n📂 Fichier : ${rows.length} articles`);
 
