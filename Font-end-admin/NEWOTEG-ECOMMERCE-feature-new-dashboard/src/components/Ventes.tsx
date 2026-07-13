@@ -73,6 +73,7 @@ export const Ventes = () => {
   const [errorMessage, setErrorMessage] = useState('');
   const [lastVente, setLastVente] = useState<any>(null);
   const [showReceipt, setShowReceipt] = useState(false);
+  const [autoPrintReceipt, setAutoPrintReceipt] = useState(false);
   const [receiptType, setReceiptType] = useState<'ticket' | 'facture'>('ticket');
 
   // ── Facture virtuelle state ──
@@ -367,6 +368,8 @@ export const Ventes = () => {
         _methodePaiement: paymentMethod,
         _client: client ? { nom: client.nom, telephone: client.telephone, typeClient: client.typeClient } : undefined,
       });
+      setAutoPrintReceipt(rType === 'ticket');
+      setShowReceipt(true);
       setCart([]);
       setSelectedClientId('');
       setClientSearch('');
@@ -489,7 +492,7 @@ export const Ventes = () => {
             <CheckCircle2 size={18} /> {successMessage}
             {lastVente && (
               <div className="ml-auto flex items-center gap-2">
-                <button onClick={() => setShowReceipt(true)}
+                <button onClick={() => { setAutoPrintReceipt(false); setShowReceipt(true); }}
                   className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 text-white rounded-lg text-xs font-bold hover:bg-emerald-700 transition-colors">
                   <Receipt size={14} /> Imprimer recu
                 </button>
@@ -1229,6 +1232,7 @@ export const Ventes = () => {
                           _client: client ? { nom: client.nom, telephone: client.telephone, typeClient: client.typeClient } : undefined,
                         });
                         setSelectedVente(null);
+                        setAutoPrintReceipt(false);
                         setShowReceipt(true);
                       }}
                         className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg text-sm font-bold hover:opacity-90 transition-opacity">
@@ -1360,7 +1364,8 @@ export const Ventes = () => {
           numero={lastVente._receiptNumber || ''}
           client={lastVente._client}
           dateVente={lastVente.dateVente}
-          onClose={() => setShowReceipt(false)}
+          autoPrint={autoPrintReceipt}
+          onClose={() => { setShowReceipt(false); setAutoPrintReceipt(false); }}
         />
       )}
 

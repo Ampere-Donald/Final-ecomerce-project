@@ -32,6 +32,7 @@ export interface ReceiptProps {
   };
   dateVente?: string;
   notes?: string;
+  autoPrint?: boolean;
   onClose: () => void;
 }
 
@@ -77,12 +78,14 @@ export const ReceiptGenerator: React.FC<ReceiptProps> = (props) => {
     client,
     dateVente,
     notes,
+    autoPrint = false,
     onClose,
   } = props;
 
   const [activeType, setActiveType] = React.useState<'ticket' | 'facture' | 'proforma' | 'factureVirtuelle'>(initialType === 'factureVirtuelle' ? 'facture' : initialType);
   const isVirtuelle = initialType === 'factureVirtuelle';
   const printRef = useRef<HTMLDivElement>(null);
+  const autoPrintTriggeredRef = useRef(false);
 
 
   // --- Actions ---
@@ -397,6 +400,12 @@ export const ReceiptGenerator: React.FC<ReceiptProps> = (props) => {
 
   // --- Derived display number ---
   const displayNumero = isVirtuelle && !numero.includes('•') ? `${numero} •` : numero;
+
+  React.useEffect(() => {
+    if (!autoPrint || autoPrintTriggeredRef.current) return;
+    autoPrintTriggeredRef.current = true;
+    void handlePrint();
+  }, [autoPrint]);
   const documentLabel = activeType === 'proforma' ? 'FACTURE PROFORMA' : 'FACTURE';
 
   // -----------------------------------------------------------------------
