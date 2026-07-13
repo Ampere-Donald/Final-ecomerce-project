@@ -148,6 +148,7 @@ export const POSVendeur = () => {
   const lastKeyTimeRef   = useRef(0);
   const barcodeTimerRef  = useRef<ReturnType<typeof setTimeout> | null>(null);
   const searchInputRef   = useRef<HTMLInputElement>(null);
+  const catalogRequestRef = useRef(0);
 
   // ── Équivalents IA (commun) ─────────────────────────────────────────────
   const [equivOpen, setEquivOpen] = useState(false);
@@ -169,13 +170,30 @@ export const POSVendeur = () => {
     } catch {}
   }, []);
 
+  const loadCatalog = useCallback(async (query: string) => {
+    const requestId = ++catalogRequestRef.current;
+    setLoading(true);
+    try {
+      const response = await produitApi.list({
+        page: 1,
+        limit: 60,
+        search: query.trim() || undefined,
+        inStock: true,
+        sort: 'name_asc',
+      });
+      if (requestId === catalogRequestRef.current) {
+        setProduits(Array.isArray(response?.data) ? response.data : []);
+        setError(null);
+      }
+    } catch {
+      if (requestId === catalogRequestRef.current) setError('Impossible de charger les produits.');
+    } finally {
+      if (requestId === catalogRequestRef.current) setLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     let mounted = true;
-    produitApi.getAll()
-      .then((data: any[]) => { if (mounted) setProduits(data || []); })
-      .catch(() => setError('Impossible de charger les produits.'))
-      .finally(() => setLoading(false));
-
     if (isVendeur) {
       clientApi.getAll().then((data: any[]) => { if (mounted) setClients(data || []); }).catch(() => {});
       loadBons();
@@ -184,22 +202,23 @@ export const POSVendeur = () => {
   }, [isVendeur, loadBons]);
 
   useEffect(() => {
+    const timer = window.setTimeout(() => { void loadCatalog(search); }, 250);
+    return () => window.clearTimeout(timer);
+  }, [loadCatalog, search]);
+
+  useEffect(() => {
     const handleSynchronizedSale = () => {
-      void produitApi.getAll().then((data: any[]) => setProduits(data || [])).catch(() => {});
+      void loadCatalog(search);
       if (isVendeur) void loadBons();
     };
     window.addEventListener(OFFLINE_SYNC_COMPLETED_EVENT, handleSynchronizedSale);
     return () => window.removeEventListener(OFFLINE_SYNC_COMPLETED_EVENT, handleSynchronizedSale);
-  }, [isVendeur, loadBons]);
+  }, [isVendeur, loadBons, loadCatalog, search]);
 
   // ── Catalogue ──────────────────────────────────────────────────────────
   const produitsFiltres = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    if (!q) return produits.slice(0, 60);
-    return produits.filter(p =>
-      p.nomProduit.toLowerCase().includes(q) || (p.marque || '').toLowerCase().includes(q)
-    ).slice(0, 60);
-  }, [produits, search]);
+    return produits.slice(0, 60);
+  }, [produits]);
 
   const ajouterAuPanier = (p: Produit) => {
     if (p.quantiteStock <= 0) return;

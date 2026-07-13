@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef, useMemo } from 'react';
+import React, { useCallback, useEffect, useState, useRef } from 'react';
 import { PlusCircle, Search, Edit2, Trash2, Tag, X, Upload, Image as ImageIcon, AlertTriangle, Zap, Star, FileSpreadsheet, CheckCircle2, XCircle, Loader2, ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { produitApi, categorieApi } from '../services/api';
@@ -68,6 +68,7 @@ export const Produits = () => {
   const canEditPrices = can.peutModifierPrixProduit(admin?.role);
   // ─── State liste & recherche (état global stable) ─────────────────────────
   const [produits, setProduits] = useState<Produit[]>([]);
+  const [totalProducts, setTotalProducts] = useState(0);
   const [categories, setCategories] = useState<Categorie[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -82,6 +83,35 @@ export const Produits = () => {
   const [globalImportMessage, setGlobalImportMessage] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 50;
+  const productRequestRef = useRef(0);
+
+  const loadProducts = useCallback(async () => {
+    const requestId = ++productRequestRef.current;
+    setLoading(true);
+    try {
+      const response = await produitApi.list({
+        page: currentPage,
+        limit: itemsPerPage,
+        search: searchTerm.trim() || undefined,
+        categoryId: categoryFilter || undefined,
+        codeFamille: codeFamilleFilter.trim() || undefined,
+        code: codeFilter.trim() || undefined,
+        sort: sortOrder === 'az' ? 'name_asc' : sortOrder === 'za' ? 'name_desc' : undefined,
+      });
+      if (requestId === productRequestRef.current) {
+        setProduits(Array.isArray(response?.data) ? response.data : []);
+        setTotalProducts(Number(response?.meta?.total) || 0);
+      }
+    } catch (error) {
+      console.error('Erreur chargement produits :', error);
+      if (requestId === productRequestRef.current) {
+        setProduits([]);
+        setTotalProducts(0);
+      }
+    } finally {
+      if (requestId === productRequestRef.current) setLoading(false);
+    }
+  }, [categoryFilter, codeFamilleFilter, codeFilter, currentPage, searchTerm, sortOrder]);
 
   useEffect(() => {
     let timeoutId: NodeJS.Timeout | null = null;
@@ -176,67 +206,21 @@ export const Produits = () => {
 
   // ─── Chargement initial unique ([] strict) ────────────────────────────────
   useEffect(() => {
-    const fetchAll = async () => {
-      try {
-        setLoading(true);
-        const [produitsData, categoriesData] = await Promise.all([
-          produitApi.getAll(),
-          categorieApi.getAll(),
-        ]);
-        setProduits(produitsData);
-        setCategories(categoriesData);
-      } catch (err) {
-        console.error('Erreur chargement :', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchAll();
+    categorieApi.getAll()
+      .then(setCategories)
+      .catch((error) => console.error('Erreur chargement catégories :', error));
   }, []); // ← TABLEAU VIDE STRICT : un seul appel au montage
 
   // ─── Liste filtrée mémoïsée (0 appel API, insensible à la casse) ─────────
-  const filteredProduits = useMemo(() => {
-    let result = produits;
-
-    if (categoryFilter) {
-      result = result.filter(p => p.categorie?.id === categoryFilter);
-    }
-
-    if (searchTerm.trim()) {
-      const term = searchTerm.toLowerCase();
-      result = result.filter(
-        (p) =>
-          (p.nomProduit ?? '').toLowerCase().includes(term) ||
-          (p.marque ?? '').toLowerCase().includes(term)
-      );
-    }
-
-    if (codeFamilleFilter.trim()) {
-      const cf = codeFamilleFilter.trim().toLowerCase();
-      result = result.filter(p => (p.codeFamille ?? '').toLowerCase().includes(cf));
-    }
-
-    if (codeFilter.trim()) {
-      const c = codeFilter.trim().toLowerCase();
-      result = result.filter(p => (p.code ?? '').toLowerCase().includes(c));
-    }
-
-    if (sortOrder === 'az') {
-      result = [...result].sort((a, b) => (a.nomProduit || '').localeCompare(b.nomProduit || ''));
-    } else if (sortOrder === 'za') {
-      result = [...result].sort((a, b) => (b.nomProduit || '').localeCompare(a.nomProduit || ''));
-    }
-
-    return result;
-  }, [produits, searchTerm, categoryFilter, sortOrder, codeFamilleFilter, codeFilter]);
+  useEffect(() => {
+    const timer = window.setTimeout(() => { void loadProducts(); }, 300);
+    return () => window.clearTimeout(timer);
+  }, [loadProducts]);
 
   // ─── Pagination ──────────────────────────────────────────────────────────
   useEffect(() => { setCurrentPage(1); }, [searchTerm, categoryFilter, sortOrder, codeFamilleFilter, codeFilter]);
-  const totalPages = Math.max(1, Math.ceil(filteredProduits.length / itemsPerPage));
-  const paginatedProduits = useMemo(() => {
-    const start = (currentPage - 1) * itemsPerPage;
-    return filteredProduits.slice(start, start + itemsPerPage);
-  }, [filteredProduits, currentPage]);
+  const totalPages = Math.max(1, Math.ceil(totalProducts / itemsPerPage));
+  const paginatedProduits = produits;
 
   // ─── Ouvrir modale Ajout ──────────────────────────────────────────────────
   const openAddModal = () => {
@@ -355,6 +339,7 @@ export const Produits = () => {
         setProduits((prev) => [newProduit, ...prev]);
       }
 
+      await loadProducts();
       closeModal();
     } catch (err: any) {
       console.error('Erreur soumission :', err);
@@ -376,11 +361,11 @@ export const Produits = () => {
     setDeletingId(null);
     try {
       await produitApi.delete(id);
+      await loadProducts();
     } catch (err) {
       console.error('Erreur suppression :', err);
       // Révocation si l'API échoue : on recharge
-      const produitsData = await produitApi.getAll();
-      setProduits(produitsData);
+      await loadProducts();
       alert('La suppression a échoué.');
     }
   };
@@ -659,11 +644,10 @@ export const Produits = () => {
                       }
                       // Refresh products list
                       try {
-                        const [produitsData, categoriesData] = await Promise.all([
-                          produitApi.getAll(),
+                        const [, categoriesData] = await Promise.all([
+                          loadProducts(),
                           categorieApi.getAll(),
                         ]);
-                        setProduits(produitsData);
                         setCategories(categoriesData);
                       } catch { /* refresh failed — not critical */ }
                     } catch (err: any) {
@@ -1350,8 +1334,7 @@ export const Produits = () => {
         {!loading && (
           <div className="flex flex-col sm:flex-row items-center justify-between px-4 md:px-6 py-3 border-t border-slate-100 text-xs text-slate-500 bg-slate-50/50">
             <div>
-              Affichage {filteredProduits.length === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1} à {Math.min(currentPage * itemsPerPage, filteredProduits.length)} sur {filteredProduits.length} produit(s)
-              {searchTerm && ` (filtrés sur ${produits.length} au total)`}
+              Affichage {totalProducts === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1} à {Math.min(currentPage * itemsPerPage, totalProducts)} sur {totalProducts} produit(s)
             </div>
             
             {totalPages > 1 && (

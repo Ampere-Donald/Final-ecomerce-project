@@ -139,13 +139,28 @@ export class ProduitService {
     limit?: number;
     search?: string;
     categoryId?: string;
+    codeFamille?: string;
+    code?: string;
     minPrice?: number;
     maxPrice?: number;
     inStock?: boolean;
     sort?: string;
   } = {}) {
-    const { page = 1, limit = 1000, search, categoryId, minPrice, maxPrice, inStock, sort } = params;
-    const skip = (page - 1) * limit;
+    const {
+      page = 1,
+      limit = 50,
+      search,
+      categoryId,
+      codeFamille,
+      code,
+      minPrice,
+      maxPrice,
+      inStock,
+      sort,
+    } = params;
+    const safePage = Number.isFinite(page) ? Math.max(1, Math.floor(page)) : 1;
+    const safeLimit = Number.isFinite(limit) ? Math.min(500, Math.max(1, Math.floor(limit))) : 50;
+    const skip = (safePage - 1) * safeLimit;
 
     const where: any = {};
 
@@ -160,6 +175,9 @@ export class ProduitService {
     if (categoryId) {
       where.categorieId = categoryId;
     }
+
+    if (codeFamille) where.codeFamille = { contains: codeFamille, mode: 'insensitive' };
+    if (code) where.code = { contains: code, mode: 'insensitive' };
 
     if (minPrice !== undefined || maxPrice !== undefined) {
       where.prixDetail = {};
@@ -193,7 +211,7 @@ export class ProduitService {
       this.db.produit.findMany({
         where,
         skip,
-        take: limit,
+        take: safeLimit,
         include: {
           categorie: true,
           attributs: true,
@@ -207,8 +225,9 @@ export class ProduitService {
       data,
       meta: {
         total,
-        page,
-        lastPage: Math.ceil(total / limit),
+        page: safePage,
+        limit: safeLimit,
+        lastPage: Math.ceil(total / safeLimit),
       },
     };
   }

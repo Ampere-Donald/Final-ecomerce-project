@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search } from 'lucide-react';
 import apiClient from '../../utils/apiClient';
@@ -9,26 +9,25 @@ const SearchBar = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [results, setResults] = useState([]);
     const [isOpen, setIsOpen] = useState(false);
+    const requestRef = useRef(0);
 
     // Autocomplete : recherche dynamique via l'API produits
     useEffect(() => {
         if (!searchQuery.trim()) return;
 
         const handler = setTimeout(async () => {
+            const requestId = ++requestRef.current;
             try {
-                const res = await apiClient.get('/produits');
+                const res = await apiClient.get('/produits', {
+                    params: { search: searchQuery.trim(), limit: 6, sort: 'name_asc' },
+                });
+                if (requestId !== requestRef.current) return;
                 const products = Array.isArray(res.data) ? res.data : res.data?.data || [];
-                const filtered = products
-                    .filter((p) =>
-                        p.nomProduit.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                        (p.marque && p.marque.toLowerCase().includes(searchQuery.toLowerCase()))
-                    )
-                    .slice(0, 6)
-                    .map((p) => p.nomProduit);
-                setResults(filtered);
-                setIsOpen(filtered.length > 0);
+                const matches = products.map((product) => ({ id: product.id, label: product.nomProduit }));
+                setResults(matches);
+                setIsOpen(matches.length > 0);
             } catch {
-                setResults([]);
+                if (requestId === requestRef.current) setResults([]);
             }
         }, 300);
 
@@ -38,6 +37,7 @@ const SearchBar = () => {
     const handleQueryChange = (value) => {
         setSearchQuery(value);
         if (!value.trim()) {
+            requestRef.current += 1;
             setResults([]);
             setIsOpen(false);
         }
@@ -52,9 +52,9 @@ const SearchBar = () => {
     };
 
     const handleSelectResult = (result) => {
-        setSearchQuery(result);
+        setSearchQuery(result.label);
         setIsOpen(false);
-        navigate(`/catalogue?search=${encodeURIComponent(result)}`);
+        navigate(`/catalogue?search=${encodeURIComponent(result.label)}`);
     };
 
     return (
@@ -74,14 +74,14 @@ const SearchBar = () => {
 
             {isOpen && results.length > 0 && (
                 <ul className="search-bar__dropdown">
-                    {results.map((result, index) => (
-                        <li key={index} className="search-bar__item">
+                    {results.map((result) => (
+                        <li key={result.id} className="search-bar__item">
                             <button
                                 type="button"
                                 className="search-bar__item-btn"
                                 onMouseDown={() => handleSelectResult(result)}
                             >
-                                {result}
+                                {result.label}
                             </button>
                         </li>
                     ))}

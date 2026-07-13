@@ -85,7 +85,17 @@ const toArray = (res: any): any[] => {
 
 // Produits
 export const produitApi = {
-  getAll: () => api.get('/produits?limit=20000').then(toArray),
+  list: (params?: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    categoryId?: string;
+    codeFamille?: string;
+    code?: string;
+    sort?: string;
+    inStock?: boolean;
+  }) => api.get('/produits', { params }).then(res => res.data),
+  getAll: () => api.get('/produits', { params: { limit: 500 } }).then(toArray),
   getOne: (id: string) => api.get(`/produits/${id}`).then(res => res.data),
   create: (data: any) => {
     if (data instanceof FormData) {
