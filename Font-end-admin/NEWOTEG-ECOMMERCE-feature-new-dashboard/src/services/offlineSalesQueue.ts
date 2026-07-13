@@ -24,6 +24,13 @@ export type QueuedSale = {
   state?: OfflineOperationState;
   errorCode?: string;
   lastError?: string;
+  diagnosticReported?: boolean;
+};
+
+export type SynchronizationErrorDetail = {
+  state: Exclude<OfflineOperationState, 'PENDING'>;
+  code: string;
+  message: string;
 };
 
 export function newSaleId(): string {
@@ -94,11 +101,7 @@ export async function removeQueuedSale(id: string): Promise<void> {
   notifyQueueChanged();
 }
 
-export function classifySynchronizationError(error: unknown): {
-  state: Exclude<OfflineOperationState, 'PENDING'>;
-  code: string;
-  message: string;
-} {
+export function classifySynchronizationError(error: unknown): SynchronizationErrorDetail {
   const candidate = error as {
     message?: string;
     response?: { status?: number; data?: { message?: string | string[]; code?: string } };
@@ -120,6 +123,7 @@ export async function processQueuedOperations(
   remove: (id: string) => Promise<void>,
   update: (sale: QueuedSale) => Promise<void>,
   isOnline: () => boolean,
+  reportFailure?: (sale: QueuedSale, detail: SynchronizationErrorDetail) => Promise<void>,
 ): Promise<{ synchronized: number; failed: number; conflicts: number }> {
   let synchronized = 0;
   let failed = 0;
@@ -134,12 +138,22 @@ export async function processQueuedOperations(
       failed += 1;
       const detail = classifySynchronizationError(error);
       if (detail.state === 'CONFLICT') conflicts += 1;
+      let diagnosticReported = false;
+      if (reportFailure) {
+        try {
+          await reportFailure(sale, detail);
+          diagnosticReported = true;
+        } catch {
+          // La panne peut empêcher le rapport ; il sera renvoyé au retour du réseau.
+        }
+      }
       await update({
         ...sale,
         attempts: sale.attempts + 1,
         state: detail.state,
         errorCode: detail.code,
         lastError: detail.message,
+        diagnosticReported,
       });
       if (!isOnline()) break;
     }
@@ -150,15 +164,33 @@ export async function processQueuedOperations(
 export async function synchronizeQueuedSales(
   send: (kind: OfflineOperationKind, payload: Record<string, unknown>) => Promise<unknown>,
   onlyIds?: string[],
+  reportFailure?: (sale: QueuedSale, detail: SynchronizationErrorDetail) => Promise<void>,
 ): Promise<{ synchronized: number; failed: number; conflicts: number }> {
   const all = await listQueuedSales();
   const queued = onlyIds?.length ? all.filter((sale) => onlyIds.includes(sale.id)) : all;
+  if (reportFailure) {
+    for (const sale of queued.filter((item) => item.lastError && !item.diagnosticReported)) {
+      const detail: SynchronizationErrorDetail = {
+        state: sale.state === 'CONFLICT' ? 'CONFLICT' : 'RETRY',
+        code: sale.errorCode || 'NETWORK_OR_SERVER',
+        message: sale.lastError || 'Synchronisation refusée',
+      };
+      try {
+        await reportFailure(sale, detail);
+        sale.diagnosticReported = true;
+        await updateQueuedSale(sale);
+      } catch {
+        break;
+      }
+    }
+  }
   const result = await processQueuedOperations(
     queued,
     send,
     removeQueuedSale,
     updateQueuedSale,
     () => navigator.onLine,
+    reportFailure,
   );
   if (result.synchronized > 0) {
     window.dispatchEvent(new CustomEvent(OFFLINE_SYNC_COMPLETED_EVENT, { detail: result }));

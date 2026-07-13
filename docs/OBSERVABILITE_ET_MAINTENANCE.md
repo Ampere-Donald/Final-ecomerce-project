@@ -16,6 +16,13 @@ Lorsqu’un utilisateur signale une erreur, demander la « Référence » affich
 
 Le statut HTTP est 200 si tout va bien et 503 si un composant est dégradé. L’état d’impression reste local au poste et apparaît dans le tableau de bord et les paramètres d’impression.
 
+## Journaux impression et synchronisation
+
+- Chaque tentative d’impression est enregistrée dans `print_event` avec document, original/duplicata, résultat, poste, imprimante, utilisateur et code d’échec. Le contenu du ticket n’est pas journalisé.
+- Les échecs de synchronisation sont ajoutés au journal d’activité avec le code, le type d’opération, l’identifiant idempotent, le poste et `X-Request-Id`. Le panier, le client, le montant et les moyens d’authentification ne sont jamais envoyés au diagnostic.
+- Si le réseau empêche l’envoi du diagnostic, la file locale conserve l’indicateur et l’envoie au retour de la connexion avant la nouvelle tentative.
+- Les administrateurs consultent les impressions dans **Journal impressions** et les événements de synchronisation dans l’activité du compte concerné.
+
 ## Audits de dépendances
 
 État de production après correction le 13 juillet 2026 :

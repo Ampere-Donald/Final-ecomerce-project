@@ -1,14 +1,16 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { CloudOff, RefreshCw } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { bonVenteApi, ticketApi, venteApi } from '../services/api';
+import { bonVenteApi, diagnosticApi, ticketApi, venteApi } from '../services/api';
 import {
   listQueuedSales,
   OFFLINE_QUEUE_EVENT,
   synchronizeQueuedSales,
   type QueuedSale,
+  type SynchronizationErrorDetail,
 } from '../services/offlineSalesQueue';
 import { useOnlineStatus } from '../hooks/useOnlineStatus';
+import { getWorkstationId } from '../services/workstation';
 
 export function OfflineSyncStatus() {
   const isOnline = useOnlineStatus();
@@ -23,11 +25,19 @@ export function OfflineSyncStatus() {
     syncingRef.current = true;
     setSyncing(true);
     try {
+      const reportFailure = (item: QueuedSale, detail: SynchronizationErrorDetail) => diagnosticApi.record({
+        action: 'SYNC_FAILURE',
+        code: detail.code,
+        operationKind: item.kind,
+        operationId: item.id,
+        workstationId: getWorkstationId(),
+        state: detail.state,
+      });
       await synchronizeQueuedSales((kind, payload) => {
         if (kind === 'BON') return bonVenteApi.create(payload);
         if (kind === 'TICKET') return ticketApi.create(payload as any);
         return venteApi.create(payload);
-      });
+      }, undefined, reportFailure);
       await refresh();
     } finally {
       syncingRef.current = false;

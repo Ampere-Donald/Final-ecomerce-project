@@ -72,3 +72,18 @@ test('stock insuffisant : classe le refus en conflit traitable', () => {
     message: 'Stock insuffisant pour ce produit',
   });
 });
+
+test('échec serveur : envoie seulement le diagnostic technique et marque le rapport', async () => {
+  const updated: QueuedSale[] = [];
+  const reports: Array<{ id: string; code: string }> = [];
+  await processQueuedOperations(
+    [operation('a', 0)],
+    async () => { throw { response: { status: 409, data: { message: 'Stock insuffisant' } } }; },
+    async () => undefined,
+    async (item) => { updated.push(item); },
+    () => true,
+    async (item, detail) => { reports.push({ id: item.id, code: detail.code }); },
+  );
+  assert.deepEqual(reports, [{ id: 'a', code: 'STOCK_CONFLICT' }]);
+  assert.equal(updated[0].diagnosticReported, true);
+});

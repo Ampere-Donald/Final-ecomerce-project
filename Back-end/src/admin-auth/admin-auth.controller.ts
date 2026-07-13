@@ -19,10 +19,15 @@ import { ChangePasswordDto, UpdateAdminDto, ResetPasswordDto, ChangeRoleDto } fr
 import { AdminAuthGuard } from './admin-auth.guard';
 import { RolesGuard } from './roles.guard';
 import { Roles } from './roles.decorator';
+import { ActivityLogService } from './activity-log.service';
+import { DiagnosticEventDto } from './dto/diagnostic-event.dto';
 
 @Controller('admin-auth')
 export class AdminAuthController {
-  constructor(private readonly adminAuthService: AdminAuthService) {}
+  constructor(
+    private readonly adminAuthService: AdminAuthService,
+    private readonly activityLog: ActivityLogService,
+  ) {}
 
   @Throttle({ default: { ttl: 60000, limit: 5 } })
   @Post('login')
@@ -55,6 +60,24 @@ export class AdminAuthController {
   @Post('revoke-sessions')
   revokeSessions(@Request() req: any) {
     return this.adminAuthService.revokeSessions(req.user.id);
+  }
+
+  @UseGuards(AdminAuthGuard, RolesGuard)
+  @Roles('SUPER_ADMIN', 'ADMIN', 'CAISSIER', 'VENDEUR')
+  @Post('diagnostic-events')
+  async recordDiagnostic(
+    @Request() req: any,
+    @Body() dto: DiagnosticEventDto,
+  ) {
+    await this.activityLog.log(req.user.id, dto.action, {
+      code: dto.code,
+      operationKind: dto.operationKind,
+      operationId: dto.operationId,
+      workstationId: dto.workstationId,
+      state: dto.state,
+      correlationId: req.headers['x-request-id'],
+    }, req.ip, req.headers['user-agent']);
+    return { recorded: true };
   }
 
   // ── CRUD Comptes Admin (SUPER_ADMIN only) ──────────────────────────────

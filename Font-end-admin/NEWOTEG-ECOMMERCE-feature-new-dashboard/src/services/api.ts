@@ -426,6 +426,17 @@ export const factureApi = {
   print: (id: string) => api.post(`/factures/${id}/print`).then(r => r.data),
 };
 
+export const diagnosticApi = {
+  record: (data: {
+    action: 'SYNC_FAILURE' | 'FRONTEND_ERROR';
+    code: string;
+    operationKind?: 'VENTE' | 'BON' | 'TICKET';
+    operationId?: string;
+    workstationId?: string;
+    state?: 'RETRY' | 'CONFLICT';
+  }) => api.post('/admin-auth/diagnostic-events', data).then(res => res.data),
+};
+
 export const documentPrintApi = {
   record: (data: {
     documentType: 'TICKET' | 'FACTURE' | 'PROFORMA' | 'FACTURE_VIRTUELLE';

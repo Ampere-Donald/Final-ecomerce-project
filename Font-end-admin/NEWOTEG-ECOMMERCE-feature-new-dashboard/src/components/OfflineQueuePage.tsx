@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { AlertTriangle, CheckCircle2, CloudOff, RefreshCw, Trash2, Wifi } from 'lucide-react';
-import { bonVenteApi, ticketApi, venteApi } from '../services/api';
+import { bonVenteApi, diagnosticApi, ticketApi, venteApi } from '../services/api';
 import {
   listQueuedSales,
   OFFLINE_POLICY,
@@ -9,7 +9,9 @@ import {
   synchronizeQueuedSales,
   type OfflineOperationKind,
   type QueuedSale,
+  type SynchronizationErrorDetail,
 } from '../services/offlineSalesQueue';
+import { getWorkstationId } from '../services/workstation';
 import { useOnlineStatus } from '../hooks/useOnlineStatus';
 import { errorMessage, useToast } from './ui/Toast';
 
@@ -58,11 +60,21 @@ export function OfflineQueuePage() {
     return venteApi.create(payload);
   }, []);
 
+  const reportFailure = useCallback((item: QueuedSale, detail: SynchronizationErrorDetail) =>
+    diagnosticApi.record({
+      action: 'SYNC_FAILURE',
+      code: detail.code,
+      operationKind: item.kind,
+      operationId: item.id,
+      workstationId: getWorkstationId(),
+      state: detail.state,
+    }), []);
+
   const synchronize = async () => {
     if (!isOnline || syncing) return;
     setSyncing(true);
     try {
-      const result = await synchronizeQueuedSales(send);
+      const result = await synchronizeQueuedSales(send, undefined, reportFailure);
       await refresh();
       if (result.synchronized > 0) toast.success(`${result.synchronized} opération(s) synchronisée(s).`);
       if (result.failed > 0) toast.warning(`${result.failed} opération(s) nécessite(nt) une vérification.`);
@@ -83,7 +95,7 @@ export function OfflineQueuePage() {
     if (!isOnline || syncingId) return;
     setSyncingId(item.id);
     try {
-      const result = await synchronizeQueuedSales(send, [item.id]);
+      const result = await synchronizeQueuedSales(send, [item.id], reportFailure);
       await refresh();
       if (result.synchronized === 1) toast.success('Opération synchronisée sans doublon.');
       else if (result.conflicts > 0) toast.warning('Le conflit de stock persiste. Corrigez le stock ou retirez l’opération après contrôle.');
