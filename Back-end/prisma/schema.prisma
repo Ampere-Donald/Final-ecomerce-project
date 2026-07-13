@@ -371,29 +371,33 @@ model PrimeVendeur {
 }
 
 model Vente {
-  id               String            @id @default(uuid())
-  clientId         String?           @map("id_client")
-  dateVente        DateTime          @default(now()) @map("date_vente")
-  montantTotal     Decimal           @map("montant_total") @db.Decimal(12, 2)
-  montantPaye      Decimal           @default(0) @map("montant_paye") @db.Decimal(12, 2)
-  methodePaiement  MethodePaiement   @map("methode_paiement")
-  statutPaiement   StatutPaiement    @default(PAYE) @map("statut_paiement")
-  vendeurId        String?           @map("vendeur_id")
-  idempotencyKey   String?           @unique @map("idempotency_key") @db.VarChar(64)
-  version          Int               @default(1)
-  annulee          Boolean           @default(false)
-  motifAnnulation  String?           @map("motif_annulation") @db.VarChar(255)
-  annuleeAt        DateTime?         @map("annulee_at")
-  annuleeById      String?           @map("annulee_by")
-  bonVente         BonVente?
-  caisses          Caisse[]
-  facture          Facture?
-  lignesVente      LigneVente[]
-  reglements       Reglement[]
-  ticket           TicketVente?
-  factureVirtuelle FactureVirtuelle?
-  client           Client?           @relation(fields: [clientId], references: [id])
-  vendeur          AdminUser?        @relation("VenteVendeur", fields: [vendeurId], references: [id])
+  id                 String            @id @default(uuid())
+  clientId           String?           @map("id_client")
+  dateVente          DateTime          @default(now()) @map("date_vente")
+  montantTotal       Decimal           @map("montant_total") @db.Decimal(12, 2)
+  montantPaye        Decimal           @default(0) @map("montant_paye") @db.Decimal(12, 2)
+  methodePaiement    MethodePaiement   @map("methode_paiement")
+  statutPaiement     StatutPaiement    @default(PAYE) @map("statut_paiement")
+  vendeurId          String?           @map("vendeur_id")
+  idempotencyKey     String?           @unique @map("idempotency_key") @db.VarChar(64)
+  version            Int               @default(1)
+  annulee            Boolean           @default(false)
+  motifAnnulation    String?           @map("motif_annulation") @db.VarChar(255)
+  annuleeAt          DateTime?         @map("annulee_at")
+  annuleeById        String?           @map("annulee_by")
+  remboursee         Boolean           @default(false)
+  motifRemboursement String?           @map("motif_remboursement") @db.VarChar(255)
+  rembourseeAt       DateTime?         @map("remboursee_at")
+  rembourseeById     String?           @map("remboursee_by")
+  bonVente           BonVente?
+  caisses            Caisse[]
+  facture            Facture?
+  lignesVente        LigneVente[]
+  reglements         Reglement[]
+  ticket             TicketVente?
+  factureVirtuelle   FactureVirtuelle?
+  client             Client?           @relation(fields: [clientId], references: [id])
+  vendeur            AdminUser?        @relation("VenteVendeur", fields: [vendeurId], references: [id])
 
   @@index([clientId, statutPaiement])
   @@map("vente")

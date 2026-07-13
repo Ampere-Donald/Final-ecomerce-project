@@ -10,6 +10,7 @@ import { venteApi, produitApi, clientApi, categorieApi } from '../services/api';
 import { FactureVirtuelleModal } from './FactureVirtuelleModal';
 import { ReceiptGenerator } from './ReceiptGenerator';
 import { enqueueSale, newSaleId, OFFLINE_SYNC_COMPLETED_EVENT } from '../services/offlineSalesQueue';
+import { useAdminAuth } from '../context/AdminAuthContext';
 import {
   getSaleMetricSummary,
   listSuspendedCarts,
@@ -51,6 +52,7 @@ const resolveImgUrl = (url?: string | null) => {
 
 /* ═══════════════════════════════════════════════════════════════ */
 export const Ventes = () => {
+  const { admin } = useAdminAuth();
   const [activeTab, setActiveTab] = useState<'pos' | 'history'>('pos');
 
   // ── Shared data ──
@@ -105,6 +107,7 @@ export const Ventes = () => {
   // ── History state ──
   const [historySearch, setHistorySearch] = useState('');
   const [selectedVente, setSelectedVente] = useState<any>(null);
+  const [financialActionLoading, setFinancialActionLoading] = useState(false);
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
 
@@ -505,6 +508,32 @@ export const Ventes = () => {
     return () => document.removeEventListener('keydown', handleExpressShortcut);
   }, [activeTab, cart.length, submitting, handleSubmitSale]);
 
+  const handleFinancialAction = async (kind: 'CANCEL' | 'REFUND') => {
+    if (!selectedVente || admin?.role !== 'SUPER_ADMIN') return;
+    const label = kind === 'REFUND' ? 'remboursement client' : 'annulation administrative';
+    const motif = window.prompt(`Motif obligatoire de ${label} :`)?.trim();
+    if (!motif || motif.length < 3) return;
+    if (!window.confirm(`Confirmer ${label} de la vente #${selectedVente.id.slice(0, 8)} ?`)) return;
+    setFinancialActionLoading(true);
+    setErrorMessage('');
+    try {
+      const updated = kind === 'REFUND'
+        ? await venteApi.refund(selectedVente.id, motif)
+        : await venteApi.cancel(selectedVente.id, motif);
+      setSelectedVente(updated);
+      setVentes((current) => current.map((vente) => vente.id === updated.id ? updated : vente));
+      await loadProducts();
+      setSuccessMessage(kind === 'REFUND'
+        ? 'Vente remboursée : sortie de caisse et retour de stock enregistrés.'
+        : 'Vente annulée : écriture d’origine neutralisée et stock restitué.');
+    } catch (error: any) {
+      const message = error?.response?.data?.message || error?.message || 'Traitement impossible.';
+      setErrorMessage(Array.isArray(message) ? message.join(', ') : String(message));
+    } finally {
+      setFinancialActionLoading(false);
+    }
+  };
+
   const filteredHistory = useMemo(() => {
     let result = ventes;
     if (dateFrom) {
@@ -549,6 +578,12 @@ export const Ventes = () => {
     const cls = statut === 'PAYE' ? 'bg-emerald-100 text-emerald-800' :
       statut === 'PARTIEL' ? 'bg-amber-100 text-amber-800' : 'bg-red-100 text-red-800';
     return <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${cls}`}>{statut}</span>;
+  };
+
+  const saleStatusBadge = (vente: any) => {
+    if (vente.annulee) return <span className="inline-flex rounded-full bg-slate-200 px-2 py-1 text-xs font-bold text-slate-700">Annulée</span>;
+    if (vente.remboursee) return <span className="inline-flex rounded-full bg-red-100 px-2 py-1 text-xs font-bold text-red-700">Remboursée</span>;
+    return statutBadge(vente.statutPaiement);
   };
 
   /* ═══ RENDER ═════════════════════════════════════════════════ */
@@ -1290,7 +1325,11 @@ export const Ventes = () => {
                       </div>
                       <div>
                         <p className="text-xs text-slate-500 font-medium">Statut</p>
-                        {statutBadge(selectedVente.statutPaiement)}
+                        {selectedVente.annulee
+                          ? <span className="inline-flex rounded-full bg-slate-200 px-2 py-1 text-xs font-bold text-slate-700">Annulée</span>
+                          : selectedVente.remboursee
+                            ? <span className="inline-flex rounded-full bg-red-100 px-2 py-1 text-xs font-bold text-red-700">Remboursée</span>
+                            : statutBadge(selectedVente.statutPaiement)}
                       </div>
                     </div>
                     <div>
@@ -1329,7 +1368,19 @@ export const Ventes = () => {
                       )}
                     </div>
                     {/* Print receipt button */}
-                    <div className="flex justify-end pt-2">
+                    <div className="flex flex-wrap justify-end gap-2 pt-2">
+                      {admin?.role === 'SUPER_ADMIN' && !selectedVente.annulee && !selectedVente.remboursee && (
+                        <>
+                          <button type="button" onClick={() => void handleFinancialAction('CANCEL')} disabled={financialActionLoading}
+                            className="flex items-center gap-2 rounded-lg border border-slate-300 px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50 disabled:opacity-50">
+                            <X size={16} /> Annuler administrativement
+                          </button>
+                          <button type="button" onClick={() => void handleFinancialAction('REFUND')} disabled={financialActionLoading}
+                            className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm font-bold text-red-700 hover:bg-red-100 disabled:opacity-50">
+                            <Banknote size={16} /> Rembourser le client
+                          </button>
+                        </>
+                      )}
                       <button onClick={() => {
                         const client = selectedVente.client;
                         const rType = client?.typeClient === 'PROFESSIONNEL' ? 'facture' as const : 'ticket' as const;
@@ -1424,7 +1475,7 @@ export const Ventes = () => {
                         </td>
                         <td className="px-6 py-4 text-xs font-semibold uppercase">{v.methodePaiement}</td>
                         <td className="px-6 py-4 font-bold text-slate-900">{Number(v.montantTotal).toLocaleString()} FCFA</td>
-                        <td className="px-6 py-4">{statutBadge(v.statutPaiement)}</td>
+                        <td className="px-6 py-4">{saleStatusBadge(v)}</td>
                         <td className="px-6 py-4 text-right">
                           <button onClick={() => setSelectedVente(v)} className="p-1.5 text-slate-400 hover:text-primary hover:bg-primary/10 rounded-lg transition-colors">
                             <Eye size={16} />
@@ -1451,7 +1502,7 @@ export const Ventes = () => {
                   <div key={v.id} className="p-4 space-y-2" onClick={() => setSelectedVente(v)}>
                     <div className="flex items-center justify-between">
                       <span className="font-mono font-bold text-primary text-sm">{v.id.substring(0, 8)}</span>
-                      {statutBadge(v.statutPaiement)}
+                      {saleStatusBadge(v)}
                     </div>
                     <div className="flex items-center justify-between text-sm">
                       <span className="font-medium text-slate-700">{v.client ? `${v.client.nom}` : 'Client Anonyme'}</span>

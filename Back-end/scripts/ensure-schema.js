@@ -207,6 +207,10 @@ const SQL_STATEMENTS = [
   `ALTER TABLE "vente" ADD COLUMN IF NOT EXISTS "motif_annulation" VARCHAR(255);`,
   `ALTER TABLE "vente" ADD COLUMN IF NOT EXISTS "annulee_at" TIMESTAMP(3);`,
   `ALTER TABLE "vente" ADD COLUMN IF NOT EXISTS "annulee_by" TEXT;`,
+  `ALTER TABLE "vente" ADD COLUMN IF NOT EXISTS "remboursee" BOOLEAN NOT NULL DEFAULT false;`,
+  `ALTER TABLE "vente" ADD COLUMN IF NOT EXISTS "motif_remboursement" VARCHAR(255);`,
+  `ALTER TABLE "vente" ADD COLUMN IF NOT EXISTS "remboursee_at" TIMESTAMP(3);`,
+  `ALTER TABLE "vente" ADD COLUMN IF NOT EXISTS "remboursee_by" TEXT;`,
   `ALTER TABLE "vente" ADD COLUMN IF NOT EXISTS "idempotency_key" VARCHAR(64);`,
   `CREATE UNIQUE INDEX IF NOT EXISTS "vente_idempotency_key_key" ON "vente"("idempotency_key");`,
 

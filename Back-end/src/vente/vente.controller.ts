@@ -17,6 +17,7 @@ import { AdminAuthGuard } from '../admin-auth/admin-auth.guard';
 import { RolesGuard } from '../admin-auth/roles.guard';
 import { Roles } from '../admin-auth/roles.decorator';
 import { CancelVenteDto } from './dto/cancel-vente.dto';
+import { RefundVenteDto } from './dto/refund-vente.dto';
 
 @UseGuards(AdminAuthGuard, RolesGuard)
 @Controller('ventes')
@@ -62,5 +63,16 @@ export class VenteController {
   ) {
     const actor = { id: req.user.id, nom: req.user.nom, role: req.user.role };
     return this.venteService.remove(id, actor, dto.motif);
+  }
+
+  @Roles('SUPER_ADMIN')
+  @Post(':id/rembourser')
+  refund(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Request() req: any,
+    @Body() dto: RefundVenteDto,
+  ) {
+    const actor = { id: req.user.id, nom: req.user.nom, role: req.user.role };
+    return this.venteService.refund(id, actor, dto.motif);
   }
 }

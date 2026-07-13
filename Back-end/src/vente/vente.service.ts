@@ -229,9 +229,15 @@ export class VenteService {
   async remove(id: string, actor?: NotificationActor, motif?: string) {
     const vente = await this.findOne(id);
     if (vente.annulee) throw new BadRequestException('Cette vente est deja annulee.');
+    if (vente.remboursee) throw new BadRequestException('Une vente remboursee ne peut pas etre annulee.');
     if (!actor) throw new BadRequestException("L'auteur de l'annulation est requis.");
     const reason = motif?.trim() || 'Annulation administrative';
     const result = await this.db.$transaction(async (tx) => {
+      const claimed = await tx.vente.updateMany({
+        where: { id, annulee: false, remboursee: false },
+        data: { annulee: true, motifAnnulation: reason, annuleeById: actor.id, annuleeAt: new Date(), version: { increment: 1 } },
+      });
+      if (claimed.count !== 1) throw new BadRequestException('Cette vente a deja ete traitee.');
       for (const ligne of vente.lignesVente) {
         await tx.produit.update({
           where: { id: ligne.produitId },
@@ -250,13 +256,66 @@ export class VenteService {
         where: { venteId: id, annulee: false },
         data: { annulee: true, motifAnnulation: reason, annuleeById: actor.id, annuleeAt: new Date() },
       });
-      return tx.vente.update({
+      return tx.vente.findUnique({
         where: { id },
-        data: { annulee: true, motifAnnulation: reason, annuleeById: actor.id, annuleeAt: new Date(), version: { increment: 1 } },
         include: { client: true, facture: true, lignesVente: { include: { produit: true } } },
       });
     });
     this.notifications.create('VENTE_MAJ', `Vente annulée — ${vente.montantTotal} FCFA — ${reason}`, actor).catch(() => {});
+    return result;
+  }
+
+  async refund(id: string, actor: NotificationActor, motif: string) {
+    const vente = await this.findOne(id);
+    if (vente.annulee) throw new BadRequestException('Une vente annulee ne peut pas etre remboursee.');
+    if (vente.remboursee) throw new BadRequestException('Cette vente est deja remboursee.');
+    const reason = motif.trim();
+
+    const result = await this.db.$transaction(async (tx) => {
+      const claimed = await tx.vente.updateMany({
+        where: { id, annulee: false, remboursee: false },
+        data: {
+          remboursee: true,
+          motifRemboursement: reason,
+          rembourseeById: actor.id,
+          rembourseeAt: new Date(),
+          version: { increment: 1 },
+        },
+      });
+      if (claimed.count !== 1) throw new BadRequestException('Cette vente a deja ete traitee.');
+
+      for (const ligne of vente.lignesVente) {
+        await tx.produit.update({
+          where: { id: ligne.produitId },
+          data: { quantiteStock: { increment: ligne.quantite }, version: { increment: 1 } },
+        });
+        await tx.mouvementStock.create({
+          data: {
+            produitId: ligne.produitId,
+            typeMouvement: 'RETOUR',
+            quantite: ligne.quantite,
+            motif: `Remboursement vente #${vente.id} - ${reason}`,
+          },
+        });
+      }
+
+      await tx.caisse.create({
+        data: {
+          typeOperation: 'SORTIE',
+          montant: vente.montantTotal,
+          motif: `Remboursement vente #${vente.id} - ${reason}`,
+          venteId: vente.id,
+          effectueePar: actor.id,
+        },
+      });
+
+      return tx.vente.findUnique({
+        where: { id },
+        include: { client: true, facture: true, lignesVente: { include: { produit: true } } },
+      });
+    });
+
+    this.notifications.create('VENTE_MAJ', `Vente remboursee - ${vente.montantTotal} FCFA - ${reason}`, actor).catch(() => {});
     return result;
   }
 }

@@ -192,6 +192,8 @@ export const venteApi = {
   getOne: (id: string) => api.get(`/ventes/${id}`).then(res => res.data),
   create: (data: any) => api.post('/ventes', data).then(res => res.data),
   update: (id: string, data: any) => api.patch(`/ventes/${id}`, data).then(res => res.data),
+  cancel: (id: string, motif: string) => api.delete(`/ventes/${id}`, { data: { motif } }).then(res => res.data),
+  refund: (id: string, motif: string) => api.post(`/ventes/${id}/rembourser`, { motif }).then(res => res.data),
 };
 
 // Achats
