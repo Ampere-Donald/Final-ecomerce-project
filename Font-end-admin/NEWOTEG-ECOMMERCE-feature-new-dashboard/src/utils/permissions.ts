@@ -63,6 +63,7 @@ export const can = {
   accessParametres: (r?: string) => isSuper(r),
   accessRoles: (r?: string) => isSuper(r),
   accessAccounts: (r?: string) => isSuper(r),
+  accessPrintAudit: (r?: string) => isAdmin(r),
 
   // ── Prix variable par bornes ────────────────────────────────
   peutModifierPrixVente: (r?: string) => isAdmin(r) || isVendeur(r),

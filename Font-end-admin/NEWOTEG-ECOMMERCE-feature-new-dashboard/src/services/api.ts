@@ -416,6 +416,20 @@ export const factureApi = {
   print: (id: string) => api.post(`/factures/${id}/print`).then(r => r.data),
 };
 
+export const documentPrintApi = {
+  record: (data: {
+    documentType: 'TICKET' | 'FACTURE' | 'PROFORMA' | 'FACTURE_VIRTUELLE';
+    documentId?: string;
+    documentNumber: string;
+    status: 'SUCCESS' | 'FAILED';
+    workstationId?: string;
+    printerName?: string;
+    errorCode?: string;
+  }) => api.post('/factures/print-events', data).then(r => r.data),
+  list: (params?: { documentType?: string; documentNumber?: string }) =>
+    api.get('/factures/print-events', { params }).then(r => r.data),
+};
+
 export const primeApi = {
   classement: (periode: string) =>
     api.get('/primes/classement', { params: { periode } }).then(r => r.data),

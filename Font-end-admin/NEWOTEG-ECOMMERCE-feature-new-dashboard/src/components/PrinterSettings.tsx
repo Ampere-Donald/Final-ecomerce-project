@@ -22,6 +22,7 @@ import {
   setPrinterName,
   setPrinterHost,
 } from '../services/qzPrinter';
+import { getWorkstationName, setWorkstationName } from '../services/workstation';
 
 type DetectionState = 'checking' | 'ready' | 'bridge-missing' | 'no-printer' | 'mobile';
 type Feedback = { kind: 'success' | 'error'; text: string } | null;
@@ -46,6 +47,7 @@ export function PrinterSettings() {
   const [testing, setTesting] = useState(false);
   const [host, setHost] = useState(getPrinterHost());
   const [savingHost, setSavingHost] = useState(false);
+  const [workstationName, setWorkstationNameValue] = useState(getWorkstationName());
 
   const detect = useCallback(async () => {
     setFeedback(null);
@@ -81,6 +83,7 @@ export function PrinterSettings() {
     setFeedback(null);
     try {
       setPrinterHost(host);
+      setWorkstationName(workstationName);
       await disconnect();
       setFeedback({
         kind: 'success',
@@ -146,7 +149,21 @@ export function PrinterSettings() {
       </div>
 
       <div className="space-y-6 p-6 sm:p-8">
-        <div className="surface grid gap-3 p-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
+        <div className="surface grid gap-3 p-4 sm:grid-cols-2 sm:items-end">
+          <label className="space-y-2 text-sm font-semibold text-slate-700">
+            Nom de ce poste
+            <input
+              type="text"
+              value={workstationName}
+              onChange={(event) => setWorkstationNameValue(event.target.value)}
+              placeholder="Ex. Caisse 1"
+              maxLength={50}
+              className="field block"
+            />
+            <span className="block text-xs font-normal text-slate-500">
+              Ce nom apparaît dans l’historique des impressions.
+            </span>
+          </label>
           <label className="space-y-2 text-sm font-semibold text-slate-700">
             Poste QZ Tray
             <input
@@ -164,7 +181,7 @@ export function PrinterSettings() {
             </span>
           </label>
           <button type="button" onClick={() => void saveHost()} disabled={savingHost}
-            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-primary px-4 text-sm font-bold text-white disabled:opacity-50">
+            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-primary px-4 text-sm font-bold text-white disabled:opacity-50 sm:col-span-2 sm:justify-self-end">
             {savingHost ? <Loader2 size={16} className="animate-spin" /> : <MonitorCog size={16} />}
             Enregistrer et tester
           </button>

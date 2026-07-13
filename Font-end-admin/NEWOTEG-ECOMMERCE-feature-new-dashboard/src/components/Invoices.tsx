@@ -63,20 +63,8 @@ export const Invoices = () => {
     charger();
   }, [filterType]);
 
-  const handlePrint = async (f: Facture) => {
-    setPrinting(f.id);
-    try {
-      await factureApi.print(f.id);
-      setFactures((prev) =>
-        prev.map((x) => x.id === f.id ? { ...x, printCount: (x.printCount || 0) + 1 } : x),
-      );
-      setReceiptFacture(f);
-    } catch {
-      // Si l'API échoue, on ouvre quand même le reçu.
-      setReceiptFacture(f);
-    } finally {
-      setPrinting(null);
-    }
+  const handlePrint = (f: Facture) => {
+    setReceiptFacture(f);
   };
 
   const filtered = factures.filter(
@@ -228,6 +216,8 @@ export const Invoices = () => {
       {/* Reçu imprimable */}
       {receiptFacture && (
         <ReceiptGenerator
+          documentId={receiptFacture.id}
+          printCount={receiptFacture.printCount || 0}
           type={receiptFacture.type === 'FACTURE' ? 'facture' : 'ticket'}
           numero={receiptFacture.numero}
           dateVente={receiptFacture.dateEmission}
@@ -240,6 +230,12 @@ export const Invoices = () => {
             prixUnitaire: l.quantite > 0 ? Math.round(Number(l.sousTotalTTC) / l.quantite) : 0,
             sousTotal: Number(l.sousTotalTTC),
           }))}
+          onPrintRecorded={({ printCount }) => {
+            setFactures((prev) =>
+              prev.map((item) => item.id === receiptFacture.id ? { ...item, printCount } : item),
+            );
+            setReceiptFacture((current) => current ? { ...current, printCount } : current);
+          }}
           onClose={() => setReceiptFacture(null)}
         />
       )}

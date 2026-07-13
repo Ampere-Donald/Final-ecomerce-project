@@ -331,6 +331,7 @@ model Proforma {
   dateExpiration DateTime        @map("date_expiration")
   montantTotal   Decimal         @default(0) @map("montant_total") @db.Decimal(12, 2)
   notes          String?
+  printCount     Int             @default(0) @map("print_count")
   lignes         ProformaLigne[]
   vendeur        AdminUser       @relation("ProformasVendeur", fields: [vendeurId], references: [id])
   client         Client?         @relation(fields: [clientId], references: [id])
@@ -728,6 +729,7 @@ model AdminUser {
   ventesEffectuees             Vente[]            @relation("VenteVendeur")
   facturesVirtuellesVendeur    FactureVirtuelle[] @relation("FacturesVirtuellesVendeur")
   facturesVirtuellesApprouveur FactureVirtuelle[] @relation("FacturesVirtuellesApprouveur")
+  printEvents                  PrintEvent[]
   salarie                      Salarie?
 
   @@map("admin_user")
@@ -742,6 +744,25 @@ model DocumentSequence {
 
   @@unique([type, period])
   @@map("document_sequence")
+}
+
+model PrintEvent {
+  id             String    @id @default(uuid())
+  documentType   String    @map("document_type") @db.VarChar(30)
+  documentId     String?   @map("document_id")
+  documentNumber String    @map("document_number") @db.VarChar(80)
+  mode           String    @db.VarChar(20)
+  status         String    @db.VarChar(20)
+  workstationId  String?   @map("workstation_id") @db.VarChar(100)
+  printerName    String?   @map("printer_name") @db.VarChar(200)
+  actorId        String    @map("actor_id")
+  errorCode      String?   @map("error_code") @db.VarChar(100)
+  createdAt      DateTime  @default(now()) @map("created_at")
+  actor          AdminUser @relation(fields: [actorId], references: [id], onDelete: Restrict)
+
+  @@index([documentType, documentNumber, createdAt])
+  @@index([actorId, createdAt])
+  @@map("print_event")
 }
 
 model RoleHistory {

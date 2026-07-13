@@ -43,6 +43,7 @@ const Paie = lazy(() => import('./components/Paie').then((m) => ({ default: m.Pa
 const Proformas = lazy(() => import('./components/Proformas').then((m) => ({ default: m.Proformas })));
 const UserGuide = lazy(() => import('./components/UserGuide').then((m) => ({ default: m.UserGuide })));
 const OfflineQueuePage = lazy(() => import('./components/OfflineQueuePage').then((m) => ({ default: m.OfflineQueuePage })));
+const PrintAuditPage = lazy(() => import('./components/PrintAuditPage').then((m) => ({ default: m.PrintAuditPage })));
 
 const RouteFallback = () => (
   <div className="flex min-h-[40vh] items-center justify-center text-sm font-semibold text-slate-500">
@@ -103,6 +104,7 @@ export default function App() {
             <Route path="employes" element={<RoleProtectedRoute allowedRoles={['SUPER_ADMIN']}><Employes /></RoleProtectedRoute>} />
             <Route path="guide" element={<UserGuide />} />
             <Route path="offline-queue" element={<RoleProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN', 'CAISSIER', 'VENDEUR']}><OfflineQueuePage /></RoleProtectedRoute>} />
+            <Route path="print-audit" element={<RoleProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN']}><PrintAuditPage /></RoleProtectedRoute>} />
             <Route path="settings" element={<Settings />} />
           </Route>
         </Routes>

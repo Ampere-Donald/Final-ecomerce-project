@@ -2,8 +2,11 @@ import React, { useRef } from 'react';
 import { Printer, FileText, X, Download } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { brand } from '../config/brand';
-import { printRaw } from '../services/qzPrinter';
+import { classifyPrinterError, printRaw } from '../services/qzPrinter';
 import { buildTicketEscPos } from '../services/ticketEscpos';
+import { documentPrintApi } from '../services/api';
+import { getWorkstationId } from '../services/workstation';
+import { useToast } from './ui/Toast';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -33,6 +36,9 @@ export interface ReceiptProps {
   dateVente?: string;
   notes?: string;
   autoPrint?: boolean;
+  documentId?: string;
+  printCount?: number;
+  onPrintRecorded?: (result: { printCount: number; mode: 'ORIGINAL' | 'DUPLICATA' }) => void;
   onClose: () => void;
 }
 
@@ -79,6 +85,9 @@ export const ReceiptGenerator: React.FC<ReceiptProps> = (props) => {
     dateVente,
     notes,
     autoPrint = false,
+    documentId,
+    printCount = 0,
+    onPrintRecorded,
     onClose,
   } = props;
 
@@ -86,12 +95,14 @@ export const ReceiptGenerator: React.FC<ReceiptProps> = (props) => {
   const isVirtuelle = initialType === 'factureVirtuelle';
   const printRef = useRef<HTMLDivElement>(null);
   const autoPrintTriggeredRef = useRef(false);
+  const [successfulPrints, setSuccessfulPrints] = React.useState(printCount);
+  const toast = useToast();
 
 
   // --- Actions ---
   const openPrintWindow = (saveAsPdf = false) => {
     const content = printRef.current;
-    if (!content) return;
+    if (!content) return false;
 
     // Collect all CSS from the current page (Tailwind + custom styles)
     const css = Array.from(document.styleSheets)
@@ -116,7 +127,7 @@ export const ReceiptGenerator: React.FC<ReceiptProps> = (props) => {
     const win = window.open('', '_blank', 'width=900,height=700');
     if (!win) {
       alert('Veuillez autoriser les popups pour imprimer.');
-      return;
+      return false;
     }
 
     win.document.write(`<!DOCTYPE html>
@@ -158,15 +169,16 @@ export const ReceiptGenerator: React.FC<ReceiptProps> = (props) => {
       win.print();
       win.close();
     }, 400);
+    return true;
   };
 
   // Repli : ancienne impression via le navigateur (iframe 58 mm). Utilisée
   // uniquement si QZ Tray n'est pas lancé, pour ne jamais bloquer la caisse.
   const printTicketBrowserFallback = () => {
     const zone = document.getElementById('receipt-print-zone');
-    if (!zone) return;
+    if (!zone) return false;
     const ticketDiv = zone.firstElementChild as HTMLElement | null;
-    if (!ticketDiv) return;
+    if (!ticketDiv) return false;
 
     // Clone ticket and strip the hardcoded 220px width so it fills the paper
     const clone = ticketDiv.cloneNode(true) as HTMLElement;
@@ -180,7 +192,7 @@ export const ReceiptGenerator: React.FC<ReceiptProps> = (props) => {
     document.body.appendChild(iframe);
 
     const doc = iframe.contentDocument;
-    if (!doc) { iframe.remove(); return; }
+    if (!doc) { iframe.remove(); return false; }
 
     doc.open();
     doc.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><style>'
@@ -195,15 +207,53 @@ export const ReceiptGenerator: React.FC<ReceiptProps> = (props) => {
       iframe.contentWindow!.print();
       setTimeout(() => iframe.remove(), 2000);
     }, 150);
+    return true;
+  };
+
+  const recordPrintAttempt = async (
+    status: 'SUCCESS' | 'FAILED',
+    printerName?: string,
+    errorCode?: string,
+  ) => {
+    try {
+      const documentType = initialType === 'factureVirtuelle'
+        ? 'FACTURE_VIRTUELLE'
+        : initialType === 'proforma'
+          ? 'PROFORMA'
+          : initialType === 'ticket'
+            ? 'TICKET'
+            : 'FACTURE';
+      const result = await documentPrintApi.record({
+        documentType,
+        documentId,
+        documentNumber: numero,
+        status,
+        workstationId: getWorkstationId(),
+        printerName,
+        errorCode,
+      });
+      if (status === 'SUCCESS') {
+        setSuccessfulPrints(result.printCount);
+        onPrintRecorded?.({ printCount: result.printCount, mode: result.mode });
+      }
+    } catch (auditError) {
+      console.error('Impossible de journaliser le résultat d’impression', auditError);
+    }
   };
 
   const handlePrint = async () => {
     // Factures / proformas A4 : impression PDF navigateur inchangée.
-    if (activeType !== 'ticket') { openPrintWindow(false); return; }
+    if (activeType !== 'ticket') {
+      const opened = openPrintWindow(false);
+      await recordPrintAttempt(opened ? 'SUCCESS' : 'FAILED', 'NAVIGATEUR', opened ? undefined : 'POPUP_BLOCKED');
+      if (opened) toast.info('Fenêtre d’impression ouverte. La vente reste enregistrée même si vous annulez l’impression.');
+      else toast.error('Le navigateur a bloqué la fenêtre d’impression. Autorisez les fenêtres pop-up puis réessayez.');
+      return;
+    }
 
     // Ticket 58 mm : impression directe ESC/POS via QZ Tray (fiable, sans Chrome).
     try {
-      await printRaw(
+      const printer = await printRaw(
         buildTicketEscPos({
           lignes,
           montantTotal,
@@ -213,10 +263,21 @@ export const ReceiptGenerator: React.FC<ReceiptProps> = (props) => {
           dateVente,
         }),
       );
+      await recordPrintAttempt('SUCCESS', printer);
+      toast.success(`Ticket envoyé à ${printer}.`);
     } catch (e) {
       // QZ Tray éteint / non autorisé → repli automatique sur l'impression navigateur.
       console.warn('QZ Tray indisponible — repli sur impression navigateur.', e);
-      printTicketBrowserFallback();
+      const printerError = classifyPrinterError(e);
+      await recordPrintAttempt('FAILED', undefined, printerError.code);
+      toast.warning(`${printerError.message} Ouverture de l’impression navigateur de secours.`);
+      const fallbackStarted = printTicketBrowserFallback();
+      if (fallbackStarted) {
+        await recordPrintAttempt('SUCCESS', 'NAVIGATEUR');
+      } else {
+        await recordPrintAttempt('FAILED', 'NAVIGATEUR', 'POPUP_BLOCKED');
+        toast.error('Le navigateur a aussi bloqué l’impression de secours. La vente est conservée : utilisez « Imprimer » pour réessayer.');
+      }
     }
   };
 
@@ -407,6 +468,7 @@ export const ReceiptGenerator: React.FC<ReceiptProps> = (props) => {
     void handlePrint();
   }, [autoPrint]);
   const documentLabel = activeType === 'proforma' ? 'FACTURE PROFORMA' : 'FACTURE';
+  const printModeLabel = successfulPrints > 0 ? 'DUPLICATA' : 'ORIGINAL';
 
   // -----------------------------------------------------------------------
   // Ticket Compact — 58mm paper, 48mm printable zone
@@ -450,6 +512,7 @@ export const ReceiptGenerator: React.FC<ReceiptProps> = (props) => {
         <p style={{ fontSize: 9 }}>{brand.branchDescription}</p>
         <p style={{ fontSize: 9 }}>{brand.city}</p>
         <p style={{ fontSize: 9 }}>Tél: {brand.phone}</p>
+        <p style={{ ...S.bold, fontSize: 9, marginTop: 3 }}>{printModeLabel}</p>
       </div>
 
       {/* ── Date + N° ticket ── */}
@@ -542,6 +605,7 @@ export const ReceiptGenerator: React.FC<ReceiptProps> = (props) => {
         </div>
         <div className="text-right">
           <h2 className="text-lg font-bold text-gray-800">{documentLabel}</h2>
+          <p className="text-xs font-bold tracking-widest text-gray-500">{printModeLabel}</p>
           <p className="text-sm text-gray-600">N° {displayNumero}</p>
           <p className="text-sm text-gray-600">Date: {fmtDate(dateVente)}</p>
         </div>

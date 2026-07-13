@@ -1381,6 +1381,8 @@ export const Ventes = () => {
       {/* Receipt Modal */}
       {showReceipt && lastVente && (
         <ReceiptGenerator
+          documentId={lastVente.facture?.id}
+          printCount={lastVente.facture?.printCount || 0}
           type={receiptType}
           lignes={lastVente._lignes || []}
           montantTotal={lastVente._montantTotal || lastVente.montantTotal || 0}
@@ -1389,6 +1391,11 @@ export const Ventes = () => {
           client={lastVente._client}
           dateVente={lastVente.dateVente}
           autoPrint={autoPrintReceipt}
+          onPrintRecorded={({ printCount }) => {
+            setLastVente((current: any) => current
+              ? { ...current, facture: current.facture ? { ...current.facture, printCount } : current.facture }
+              : current);
+          }}
           onClose={() => { setShowReceipt(false); setAutoPrintReceipt(false); }}
         />
       )}

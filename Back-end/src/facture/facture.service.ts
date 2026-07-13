@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { TypeFacture } from '@prisma/client';
 import { DatabaseService } from 'src/database/database.service';
+import { RecordPrintDto } from './dto/record-print.dto';
 
 type FactureFilters = {
   type?: TypeFacture;
@@ -43,12 +44,86 @@ export class FactureService {
   }
 
   async incrementPrintCount(id: string) {
-    const facture = await this.db.facture.update({
-      where: { id },
-      data: { printCount: { increment: 1 } },
-      select: { printCount: true },
+    const facture = await this.findOne(id);
+    return this.recordPrint({
+      documentType: facture.type === 'FACTURE' ? 'FACTURE' : 'TICKET',
+      documentId: facture.id,
+      documentNumber: facture.numero,
+      status: 'SUCCESS',
+      workstationId: 'legacy-client',
+    }, facture.caissierId || facture.vendeurId);
+  }
+
+  async recordPrint(dto: RecordPrintDto, actorId: string) {
+    return this.db.$transaction(async (tx) => {
+      const previousSuccesses = await tx.printEvent.count({
+        where: {
+          documentType: dto.documentType,
+          documentNumber: dto.documentNumber,
+          status: 'SUCCESS',
+        },
+      });
+      let mode = previousSuccesses === 0 ? 'ORIGINAL' : 'DUPLICATA';
+      let printCount = previousSuccesses;
+
+      if (dto.status === 'SUCCESS') {
+        printCount += 1;
+        if (dto.documentId && ['TICKET', 'FACTURE'].includes(dto.documentType)) {
+          const updated = await tx.facture.update({
+            where: { id: dto.documentId },
+            data: { printCount: { increment: 1 } },
+            select: { printCount: true },
+          });
+          printCount = updated.printCount;
+          mode = printCount === 1 ? 'ORIGINAL' : 'DUPLICATA';
+        } else if (dto.documentId && dto.documentType === 'PROFORMA') {
+          const updated = await tx.proforma.update({
+            where: { id: dto.documentId },
+            data: { printCount: { increment: 1 } },
+            select: { printCount: true },
+          });
+          printCount = updated.printCount;
+          mode = printCount === 1 ? 'ORIGINAL' : 'DUPLICATA';
+        } else if (dto.documentId && dto.documentType === 'FACTURE_VIRTUELLE') {
+          const updated = await tx.factureVirtuelle.update({
+            where: { id: dto.documentId },
+            data: { printCount: { increment: 1 } },
+            select: { printCount: true },
+          });
+          printCount = updated.printCount;
+          mode = printCount === 1 ? 'ORIGINAL' : 'DUPLICATA';
+        }
+      }
+
+      const event = await tx.printEvent.create({
+        data: {
+          documentType: dto.documentType,
+          documentId: dto.documentId,
+          documentNumber: dto.documentNumber,
+          mode,
+          status: dto.status,
+          workstationId: dto.workstationId,
+          printerName: dto.printerName,
+          actorId,
+          errorCode: dto.errorCode,
+        },
+      });
+      return { event, printCount, mode };
     });
-    return facture;
+  }
+
+  listPrintEvents(documentType?: string, documentNumber?: string) {
+    return this.db.printEvent.findMany({
+      where: {
+        ...(documentType ? { documentType } : {}),
+        ...(documentNumber ? { documentNumber } : {}),
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 200,
+      include: {
+        actor: { select: { id: true, nom: true, username: true, role: true } },
+      },
+    });
   }
 
   private defaultInclude() {

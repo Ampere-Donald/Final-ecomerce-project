@@ -1125,6 +1125,8 @@ export const POSVendeur = () => {
 
       {proformaToPrint && (
         <ReceiptGenerator
+          documentId={proformaToPrint.id}
+          printCount={proformaToPrint.printCount || 0}
           type="proforma"
           numero={proformaToPrint.numero}
           dateVente={proformaToPrint.dateCreation}
@@ -1141,6 +1143,8 @@ export const POSVendeur = () => {
             prixUnitaire: Number(l.prixUnitaire),
             sousTotal: Number(l.sousTotal),
           }))}
+          onPrintRecorded={({ printCount }) =>
+            setProformaToPrint((current: any) => current ? { ...current, printCount } : current)}
           onClose={() => setProformaToPrint(null)}
         />
       )}

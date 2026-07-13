@@ -22,4 +22,21 @@ describe('DocumentNumberService', () => {
       service.nextDaily('TICKET_QUEUE', 'T-', undefined, new Date(2026, 6, 13, 12)),
     ).resolves.toBe('T-20260713-0007');
   });
+
+  it('ne duplique aucun numéro lorsque deux caisses demandent en parallèle', async () => {
+    let value = 0;
+    const upsert = jest.fn().mockImplementation(async () => {
+      const nextValue = ++value;
+      await Promise.resolve();
+      return { nextValue };
+    });
+    const service = new DocumentNumberService({ documentSequence: { upsert } } as any);
+
+    const numbers = await Promise.all(
+      Array.from({ length: 20 }, () =>
+        service.nextAnnual('TICKET_CAISSE', 'TIC-', undefined, new Date('2026-07-13T10:00:00Z'))),
+    );
+
+    expect(new Set(numbers).size).toBe(20);
+  });
 });

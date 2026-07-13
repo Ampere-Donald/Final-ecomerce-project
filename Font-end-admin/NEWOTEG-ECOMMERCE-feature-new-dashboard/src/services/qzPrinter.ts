@@ -17,6 +17,34 @@ export const QZ_TRAY_DOWNLOAD_URL = 'https://qz.io/download/';
 let securityConfigured = false;
 let connecting: Promise<void> | null = null;
 
+export type PrinterErrorCode =
+  | 'QZ_UNAVAILABLE'
+  | 'QZ_PERMISSION_DENIED'
+  | 'PRINTER_NOT_FOUND'
+  | 'PAPER_OUT'
+  | 'QUEUE_BLOCKED'
+  | 'PRINT_FAILED';
+
+export function classifyPrinterError(error: unknown): { code: PrinterErrorCode; message: string } {
+  const raw = error instanceof Error ? error.message : String(error || '');
+  if (/paper|media\s*(?:empty|out)|out of paper/i.test(raw)) {
+    return { code: 'PAPER_OUT', message: 'L’imprimante n’a plus de papier. Rechargez le rouleau 58 mm puis réessayez.' };
+  }
+  if (/offline|paused|spool|queue|not accepting|job.*stuck/i.test(raw)) {
+    return { code: 'QUEUE_BLOCKED', message: 'La file d’impression est arrêtée ou bloquée. Ouvrez la file Windows, relancez-la puis réessayez.' };
+  }
+  if (/denied|certificate|signature|security|not trusted|authorization/i.test(raw)) {
+    return { code: 'QZ_PERMISSION_DENIED', message: 'QZ Tray a refusé l’autorisation. Autorisez Newoteg dans QZ Tray puis réessayez.' };
+  }
+  if (/printer.*(?:not found|unavailable)|no printer|cannot find printer|aucune imprimante/i.test(raw)) {
+    return { code: 'PRINTER_NOT_FOUND', message: 'L’Epson TM-T20II ou son pilote Windows est introuvable. Vérifiez le câble USB, le pilote et le nom de la file.' };
+  }
+  if (/closed before|connect|socket|websocket|qz/i.test(raw)) {
+    return { code: 'QZ_UNAVAILABLE', message: 'QZ Tray ne répond pas. Lancez-le sur le poste d’impression puis réessayez.' };
+  }
+  return { code: 'PRINT_FAILED', message: raw || 'L’impression a échoué pour une raison inconnue.' };
+}
+
 // Déploiement mono-poste, non signé : on ne fournit ni certificat ni signature.
 // QZ Tray affiche alors UNE fenêtre « Autoriser ce site à imprimer ? » au premier
 // usage — cocher « Se souvenir » la supprime définitivement.
@@ -135,10 +163,11 @@ function uint8ToBase64(bytes: Uint8Array): string {
 }
 
 // Envoie les octets ESC/POS bruts à l'imprimante via QZ Tray.
-export async function printRaw(bytes: Uint8Array): Promise<void> {
+export async function printRaw(bytes: Uint8Array): Promise<string> {
   await connect();
   const printer = await resolvePrinter();
   const cfg = qz.configs.create(printer);
   const data = [{ type: 'raw', format: 'command', flavor: 'base64', data: uint8ToBase64(bytes) }];
   await qz.print(cfg, data);
+  return printer;
 }
