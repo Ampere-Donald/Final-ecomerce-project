@@ -7,7 +7,7 @@ import {
 import { motion, AnimatePresence } from 'motion/react';
 import { venteApi, produitApi, clientApi, categorieApi } from '../services/api';
 import { FactureVirtuelleModal } from './FactureVirtuelleModal';
-import { ReceiptGenerator, generateReceiptNumber } from './ReceiptGenerator';
+import { ReceiptGenerator } from './ReceiptGenerator';
 
 /* ── Types ─────────────────────────────────────────────────────── */
 interface CartItem {
@@ -361,7 +361,7 @@ export const Ventes = () => {
       setReceiptType(rType);
       setLastVente({
         ...result,
-        _receiptNumber: generateReceiptNumber(rType),
+        _receiptNumber: result.facture?.numero || result.id,
         _lignes: cart.map(c => ({ nomProduit: c.nomProduit, quantite: c.quantite, prixUnitaire: c.prixUnitaire, sousTotal: c.quantite * c.prixUnitaire })),
         _montantTotal: cartTotal,
         _methodePaiement: paymentMethod,
@@ -1186,7 +1186,7 @@ export const Ventes = () => {
                         setReceiptType(rType);
                         setLastVente({
                           ...selectedVente,
-                          _receiptNumber: generateReceiptNumber(rType),
+                          _receiptNumber: selectedVente.facture?.numero || selectedVente.id,
                           _lignes: (selectedVente.lignesVente || []).map((l: any) => ({
                             nomProduit: l.produit?.nomProduit || 'Produit',
                             quantite: l.quantite,

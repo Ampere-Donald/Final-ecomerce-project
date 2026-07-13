@@ -16,6 +16,7 @@ import { UpdateVenteDto } from './dto/update-vente.dto';
 import { AdminAuthGuard } from '../admin-auth/admin-auth.guard';
 import { RolesGuard } from '../admin-auth/roles.guard';
 import { Roles } from '../admin-auth/roles.decorator';
+import { CancelVenteDto } from './dto/cancel-vente.dto';
 
 @UseGuards(AdminAuthGuard, RolesGuard)
 @Controller('ventes')
@@ -54,8 +55,12 @@ export class VenteController {
 
   @Roles('SUPER_ADMIN')
   @Delete(':id')
-  remove(@Param('id', ParseUUIDPipe) id: string, @Request() req: any) {
+  remove(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Request() req: any,
+    @Body() dto: CancelVenteDto,
+  ) {
     const actor = { id: req.user.id, nom: req.user.nom, role: req.user.role };
-    return this.venteService.remove(id, actor);
+    return this.venteService.remove(id, actor, dto.motif);
   }
 }

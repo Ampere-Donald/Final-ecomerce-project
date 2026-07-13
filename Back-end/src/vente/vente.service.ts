@@ -8,12 +8,14 @@ import { NotificationService, NotificationActor } from 'src/notification/notific
 import { CreateVenteDto } from './dto/create-vente.dto';
 import { UpdateVenteDto } from './dto/update-vente.dto';
 import { validerLignePrix, type LignePrixResult } from 'src/pricing/pricing.util';
+import { DocumentNumberService } from 'src/database/document-number.service';
 
 @Injectable()
 export class VenteService {
   constructor(
     private readonly db: DatabaseService,
     private readonly notifications: NotificationService,
+    private readonly documentNumbers: DocumentNumberService,
   ) {}
 
   async create(createVenteDto: CreateVenteDto, actor?: NotificationActor) {
@@ -127,7 +129,46 @@ export class VenteService {
         },
       });
 
-      return vente;
+      if (!actor) return vente;
+
+      const isFacture = vente.client?.typeClient === 'PROFESSIONNEL';
+      const totalTTC = Number(vente.montantTotal);
+      const totalHT = totalTTC / 1.1925;
+      const facture = await tx.facture.create({
+        data: {
+          numero: await this.documentNumbers.nextAnnual(
+            isFacture ? 'FACTURE' : 'TICKET_CAISSE',
+            isFacture ? 'FAC-' : 'TIC-',
+            tx,
+          ),
+          type: isFacture ? 'FACTURE' : 'TICKET_CAISSE',
+          venteId: vente.id,
+          clientId: vente.clientId ?? undefined,
+          vendeurId: actor.id,
+          caissierId: actor.id,
+          totalHT,
+          tva: totalTTC - totalHT,
+          totalTTC,
+          methodePaiement: vente.methodePaiement,
+          lignes: {
+            create: vente.lignesVente.map((ligne) => {
+              const prixTTC = Number(ligne.prixUnitaire);
+              const sousTotalTTC = Number(ligne.sousTotal);
+              return {
+                nomProduit: ligne.produit.nomProduit,
+                quantite: ligne.quantite,
+                prixUnitaireHT: prixTTC / 1.1925,
+                prixUnitaireTTC: prixTTC,
+                sousTotalHT: sousTotalTTC / 1.1925,
+                sousTotalTTC,
+              };
+            }),
+          },
+        },
+        include: { lignes: true },
+      });
+
+      return { ...vente, facture };
     });
 
     this.notifications.create('VENTE_CREEE', `Vente enregistrée — ${result.montantTotal} FCFA`, actor).catch(() => {});
@@ -138,6 +179,7 @@ export class VenteService {
     return await this.db.vente.findMany({
       include: {
         client: true,
+        facture: true,
         lignesVente: { include: { produit: true } },
       },
     });
@@ -148,6 +190,7 @@ export class VenteService {
       where: { id },
       include: {
         client: true,
+        facture: true,
         lignesVente: { include: { produit: true } },
       },
     });
@@ -174,12 +217,37 @@ export class VenteService {
     return vente;
   }
 
-  async remove(id: string, actor?: NotificationActor) {
+  async remove(id: string, actor?: NotificationActor, motif?: string) {
     const vente = await this.findOne(id);
-    const result = await this.db.vente.delete({
-      where: { id },
+    if (vente.annulee) throw new BadRequestException('Cette vente est deja annulee.');
+    if (!actor) throw new BadRequestException("L'auteur de l'annulation est requis.");
+    const reason = motif?.trim() || 'Annulation administrative';
+    const result = await this.db.$transaction(async (tx) => {
+      for (const ligne of vente.lignesVente) {
+        await tx.produit.update({
+          where: { id: ligne.produitId },
+          data: { quantiteStock: { increment: ligne.quantite }, version: { increment: 1 } },
+        });
+        await tx.mouvementStock.create({
+          data: {
+            produitId: ligne.produitId,
+            typeMouvement: 'ENTREE',
+            quantite: ligne.quantite,
+            motif: `Annulation vente #${vente.id} - ${reason}`,
+          },
+        });
+      }
+      await tx.caisse.updateMany({
+        where: { venteId: id, annulee: false },
+        data: { annulee: true, motifAnnulation: reason, annuleeById: actor.id, annuleeAt: new Date() },
+      });
+      return tx.vente.update({
+        where: { id },
+        data: { annulee: true, motifAnnulation: reason, annuleeById: actor.id, annuleeAt: new Date(), version: { increment: 1 } },
+        include: { client: true, facture: true, lignesVente: { include: { produit: true } } },
+      });
     });
-    this.notifications.create('VENTE_MAJ', `Vente supprimée — ${vente.montantTotal} FCFA`, actor).catch(() => {});
+    this.notifications.create('VENTE_MAJ', `Vente annulée — ${vente.montantTotal} FCFA — ${reason}`, actor).catch(() => {});
     return result;
   }
 }

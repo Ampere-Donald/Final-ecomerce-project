@@ -16,6 +16,7 @@ import {
   UserCheck,
 } from 'lucide-react';
 import { bonVenteApi, caisseJourApi, clientApi } from '../services/api';
+import { subscribeAuthenticatedSse } from '../services/authenticatedSse';
 import { useToast, errorMessage } from './ui/Toast';
 
 type Methode = 'ESPECES' | 'CARTE' | 'VIREMENT' | 'MOBILE_MONEY' | 'CREDIT';
@@ -152,14 +153,7 @@ export const FileCaissier = () => {
     charger();
 
     // SSE — notifications temps réel quand un vendeur envoie un bon
-    const token = localStorage.getItem('newoteg_admin_token');
-    const rawUrl = import.meta.env.VITE_API_URL || '/api';
-    const baseUrl = rawUrl.endsWith('/api') ? rawUrl.replace(/\/api$/, '') : rawUrl;
-    const es = new EventSource(`${baseUrl}/api/bons/stream?token=${token}`);
-    es.onmessage = () => { charger(); };
-    es.onerror = () => { es.close(); };
-
-    return () => { es.close(); };
+    return subscribeAuthenticatedSse('/bons/stream', () => { void charger(); });
   }, []);
 
   // Charge la liste des clients (pour les ventes à crédit)

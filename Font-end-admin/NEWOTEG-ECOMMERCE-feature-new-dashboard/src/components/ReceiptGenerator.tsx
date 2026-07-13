@@ -36,27 +36,6 @@ export interface ReceiptProps {
 }
 
 // ---------------------------------------------------------------------------
-// Receipt number helpers (localStorage counter per year)
-// ---------------------------------------------------------------------------
-
-export function generateReceiptNumber(type: 'ticket' | 'facture' | 'proforma'): string {
-  const year = new Date().getFullYear();
-  const prefix = type === 'ticket' ? 'TIC' : type === 'proforma' ? 'FP' : 'FAC';
-  const key =
-    type === 'ticket'
-      ? `newoteg_ticket_counter_${year}`
-      : type === 'proforma'
-      ? `newoteg_proforma_counter_${year}`
-      : `newoteg_invoice_counter_${year}`;
-
-  const current = parseInt(localStorage.getItem(key) || '0', 10);
-  const next = current + 1;
-  localStorage.setItem(key, String(next));
-
-  return `${prefix}-${year}-${String(next).padStart(4, '0')}`;
-}
-
-// ---------------------------------------------------------------------------
 // Formatting helpers
 // ---------------------------------------------------------------------------
 

@@ -12,10 +12,11 @@ import {
   Request,
 } from '@nestjs/common';
 import { AdminRole } from '@prisma/client';
+import { Throttle } from '@nestjs/throttler';
 import { AdminAuthService } from './admin-auth.service';
 import { AdminLoginDto, AdminPinLoginDto } from './dto/admin-login.dto';
 import { CreateAdminDto } from './dto/create-admin.dto';
-import { UpdateAdminDto, ResetPasswordDto } from './dto/update-admin.dto';
+import { ChangePasswordDto, UpdateAdminDto, ResetPasswordDto } from './dto/update-admin.dto';
 import { AdminAuthGuard } from './admin-auth.guard';
 import { RolesGuard } from './roles.guard';
 import { Roles } from './roles.decorator';
@@ -24,11 +25,13 @@ import { Roles } from './roles.decorator';
 export class AdminAuthController {
   constructor(private readonly adminAuthService: AdminAuthService) {}
 
+  @Throttle({ default: { ttl: 60000, limit: 5 } })
   @Post('login')
   async login(@Body() dto: AdminLoginDto) {
     return this.adminAuthService.login(dto.username || dto.email || '', dto.motDePasse, dto.pin);
   }
 
+  @Throttle({ default: { ttl: 60000, limit: 5 } })
   @Post('login-pin')
   async loginPin(@Body() dto: AdminPinLoginDto) {
     return this.adminAuthService.loginWithPin(dto.username, dto.pin);
@@ -44,14 +47,9 @@ export class AdminAuthController {
   @Patch('change-password')
   async changePassword(
     @Request() req: any,
-    @Body() body: { oldPassword: string; newPassword: string },
+    @Body() body: ChangePasswordDto,
   ) {
     return this.adminAuthService.changePassword(req.user.id, body.oldPassword, body.newPassword);
-  }
-
-  @Post('seed')
-  async seed(@Body() body: { email: string; motDePasse: string; nom: string; username?: string }) {
-    return this.adminAuthService.seedFirstAdmin(body.email, body.motDePasse, body.nom, body.username);
   }
 
   // ── CRUD Comptes Admin (SUPER_ADMIN only) ──────────────────────────────

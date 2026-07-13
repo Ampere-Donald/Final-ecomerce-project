@@ -11,6 +11,8 @@ import qz from 'qz-tray';
 
 const PRINTER_CACHE_KEY = 'newoteg_printer_name';
 
+export const QZ_TRAY_DOWNLOAD_URL = 'https://qz.io/download/';
+
 let securityConfigured = false;
 let connecting: Promise<void> | null = null;
 
@@ -48,21 +50,15 @@ export async function connect(): Promise<void> {
 // Trouve l'imprimante ticket : valeur mémorisée, sinon une Epson / TM-T20,
 // sinon l'imprimante Windows par défaut. Le résultat est mis en cache.
 export async function resolvePrinter(): Promise<string> {
+  const installed = (await listPrinters()).filter(isPhysicalPrinter);
   const cached = localStorage.getItem(PRINTER_CACHE_KEY);
-  if (cached) return cached;
+  if (cached) {
+    if (installed.includes(cached)) return cached;
+    localStorage.removeItem(PRINTER_CACHE_KEY);
+  }
 
-  let name: string | undefined;
-  for (const query of ['EPSON', 'TM-T20']) {
-    if (name) break;
-    try {
-      name = await qz.printers.find(query);
-    } catch {
-      /* pas trouvé pour cette recherche — on continue */
-    }
-  }
-  if (!name) {
-    name = await qz.printers.getDefault();
-  }
+  const thermalName = /epson|tm-t\d|pos|thermal|receipt|ticket|xprinter|rongta|gprinter|munbyn|star|bixolon/i;
+  const name = installed.find((printer) => thermalName.test(printer)) || installed[0];
   if (!name) throw new Error('Aucune imprimante détectée par QZ Tray.');
 
   localStorage.setItem(PRINTER_CACHE_KEY, name);
@@ -71,7 +67,28 @@ export async function resolvePrinter(): Promise<string> {
 
 // Permet de forcer manuellement le nom de l'imprimante (réglages).
 export function setPrinterName(name: string) {
-  localStorage.setItem(PRINTER_CACHE_KEY, name);
+  const normalized = name.trim();
+  if (normalized) localStorage.setItem(PRINTER_CACHE_KEY, normalized);
+  else localStorage.removeItem(PRINTER_CACHE_KEY);
+}
+
+export function getPrinterName(): string | null {
+  return localStorage.getItem(PRINTER_CACHE_KEY);
+}
+
+export async function listPrinters(): Promise<string[]> {
+  await connect();
+  const result = await qz.printers.find();
+  if (Array.isArray(result)) return result.filter((name): name is string => typeof name === 'string');
+  return typeof result === 'string' && result ? [result] : [];
+}
+
+export function isPhysicalPrinter(name: string): boolean {
+  return !/pdf|xps|onenote|fax|document writer|print to file/i.test(name);
+}
+
+export function isAndroidDevice(): boolean {
+  return /Android/i.test(navigator.userAgent);
 }
 
 // Uint8Array → base64, par blocs pour éviter un dépassement de pile sur de gros

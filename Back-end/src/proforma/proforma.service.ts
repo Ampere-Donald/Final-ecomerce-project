@@ -11,6 +11,7 @@ import { BonVenteService } from 'src/bon-vente/bon-vente.service';
 import { DatabaseService } from 'src/database/database.service';
 import { CreateProformaDto, LigneProformaDto } from './dto/create-proforma.dto';
 import { UpdateProformaDto } from './dto/update-proforma.dto';
+import { DocumentNumberService } from 'src/database/document-number.service';
 
 const PROFORMA_VALIDITY_DAYS = 30;
 const TICKET_VALIDITY_MS = 15 * 60 * 1000;
@@ -23,6 +24,7 @@ export class ProformaService {
     private readonly db: DatabaseService,
     private readonly events: BonVenteEventsService,
     private readonly bonVente: BonVenteService,
+    private readonly documentNumbers: DocumentNumberService,
   ) {}
 
   private toNumber(value: unknown): number {
@@ -48,13 +50,7 @@ export class ProformaService {
   }
 
   private async generateNumero(): Promise<string> {
-    const year = new Date().getFullYear();
-    const start = new Date(year, 0, 1);
-    const end = new Date(year + 1, 0, 1);
-    const count = await this.db.proforma.count({
-      where: { dateCreation: { gte: start, lt: end } },
-    });
-    return `FP-${year}-${String(count + 1).padStart(4, '0')}`;
+    return this.documentNumbers.nextAnnual('PROFORMA', 'FP-');
   }
 
   private dateExpiration() {

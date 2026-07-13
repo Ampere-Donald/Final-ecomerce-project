@@ -1,8 +1,9 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { X, CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
 import { factureVirtuelleApi } from '../services/api';
 import { useAdminAuth } from '../context/AdminAuthContext';
+import { subscribeAuthenticatedSse } from '../services/authenticatedSse';
 
 interface FVAlert {
   id: string;
@@ -22,29 +23,18 @@ export const FVAlertPopup: React.FC = () => {
   const [refusing, setRefusing] = useState<Record<string, boolean>>({});
   const [motifs, setMotifs] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState<Record<string, boolean>>({});
-  const esRef = useRef<EventSource | null>(null);
-
   useEffect(() => {
     if (admin?.role !== 'SUPER_ADMIN') return;
 
-    const token = localStorage.getItem('newoteg_admin_token');
-    const rawUrl = import.meta.env.VITE_API_URL || '/api';
-    const baseUrl = rawUrl.endsWith('/api') ? rawUrl.replace(/\/api$/, '') : rawUrl;
-    const es = new EventSource(`${baseUrl}/api/facture-virtuelle/pending?token=${token}`);
-
-    es.onmessage = (e) => {
-      try {
-        const fv: FVAlert = typeof e.data === 'string' ? JSON.parse(e.data) : e.data;
+    return subscribeAuthenticatedSse<FVAlert>(
+      '/facture-virtuelle/pending',
+      (fv) => {
         setAlerts((prev) => {
           if (prev.some((a) => a.id === fv.id)) return prev;
           return [fv, ...prev];
         });
-      } catch { /* ignore parse errors */ }
-    };
-    es.onerror = () => { es.close(); };
-    esRef.current = es;
-
-    return () => { es.close(); };
+      },
+    );
   }, [admin?.role]);
 
   const dismiss = (id: string) =>

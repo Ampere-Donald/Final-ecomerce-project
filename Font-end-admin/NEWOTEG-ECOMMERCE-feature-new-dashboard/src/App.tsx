@@ -1,51 +1,59 @@
+import { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AdminAuthProvider } from './context/AdminAuthContext';
 import { AdminProtectedRoute } from './components/AdminProtectedRoute';
 import { RoleProtectedRoute } from './components/RoleProtectedRoute';
 import { AdminLogin } from './components/AdminLogin';
 import { Layout } from './components/Layout';
-import { Dashboard } from './components/Dashboard';
-import { Orders } from './components/Orders';
-import { Settings } from './components/Settings';
-import { Produits } from './components/Produits';
-import { Categories } from './components/Categories';
-
-import { Ventes } from './components/Ventes';
-import { Achats } from './components/Achats';
-import { Clients } from './components/Clients';
-import { CreditsClients } from './components/CreditsClients';
-import { Fournisseurs } from './components/Fournisseurs';
-import { MouvementsStock } from './components/MouvementsStock';
-import { Inventaire } from './components/Inventaire';
-import { CommandeFournisseur } from './components/CommandeFournisseur';
-import { Caisse } from './components/Caisse';
-import { Coffres } from './components/Coffres';
-import { Echeances } from './components/Echeances';
-import { Roles } from './components/Roles';
-import { Attributs } from './components/Attributs';
-import { AdminAccounts } from './components/AdminAccounts';
-import { NotificationsPage } from './components/NotificationsPage';
-import { StockAlerts } from './components/StockAlerts';
-import { POSVendeur } from './components/POSVendeur';
-import { MesTickets } from './components/MesTickets';
-import { FileCaissier } from './components/FileCaissier';
-import { CaisseJour } from './components/CaisseJour';
-import { Analyses } from './components/Analyses';
-import { Employes } from './components/Employes';
-import { CmupValorisation } from './components/CmupValorisation';
-import { Invoices } from './components/Invoices';
-import { Primes } from './components/Primes';
-import { Paie } from './components/Paie';
-import { Proformas } from './components/Proformas';
 import { ToastProvider } from './components/ui/Toast';
 import { FVAlertPopup } from './components/FVAlertPopup';
-import { UserGuide } from './components/UserGuide';
+
+const Dashboard = lazy(() => import('./components/Dashboard').then((m) => ({ default: m.Dashboard })));
+const Orders = lazy(() => import('./components/Orders').then((m) => ({ default: m.Orders })));
+const Settings = lazy(() => import('./components/Settings').then((m) => ({ default: m.Settings })));
+const Produits = lazy(() => import('./components/Produits').then((m) => ({ default: m.Produits })));
+const Categories = lazy(() => import('./components/Categories').then((m) => ({ default: m.Categories })));
+const Ventes = lazy(() => import('./components/Ventes').then((m) => ({ default: m.Ventes })));
+const Achats = lazy(() => import('./components/Achats').then((m) => ({ default: m.Achats })));
+const Clients = lazy(() => import('./components/Clients').then((m) => ({ default: m.Clients })));
+const CreditsClients = lazy(() => import('./components/CreditsClients').then((m) => ({ default: m.CreditsClients })));
+const Fournisseurs = lazy(() => import('./components/Fournisseurs').then((m) => ({ default: m.Fournisseurs })));
+const MouvementsStock = lazy(() => import('./components/MouvementsStock').then((m) => ({ default: m.MouvementsStock })));
+const Inventaire = lazy(() => import('./components/Inventaire').then((m) => ({ default: m.Inventaire })));
+const CommandeFournisseur = lazy(() => import('./components/CommandeFournisseur').then((m) => ({ default: m.CommandeFournisseur })));
+const Caisse = lazy(() => import('./components/Caisse').then((m) => ({ default: m.Caisse })));
+const Coffres = lazy(() => import('./components/Coffres').then((m) => ({ default: m.Coffres })));
+const Echeances = lazy(() => import('./components/Echeances').then((m) => ({ default: m.Echeances })));
+const Roles = lazy(() => import('./components/Roles').then((m) => ({ default: m.Roles })));
+const Attributs = lazy(() => import('./components/Attributs').then((m) => ({ default: m.Attributs })));
+const AdminAccounts = lazy(() => import('./components/AdminAccounts').then((m) => ({ default: m.AdminAccounts })));
+const NotificationsPage = lazy(() => import('./components/NotificationsPage').then((m) => ({ default: m.NotificationsPage })));
+const StockAlerts = lazy(() => import('./components/StockAlerts').then((m) => ({ default: m.StockAlerts })));
+const POSVendeur = lazy(() => import('./components/POSVendeur').then((m) => ({ default: m.POSVendeur })));
+const MesTickets = lazy(() => import('./components/MesTickets').then((m) => ({ default: m.MesTickets })));
+const FileCaissier = lazy(() => import('./components/FileCaissier').then((m) => ({ default: m.FileCaissier })));
+const CaisseJour = lazy(() => import('./components/CaisseJour').then((m) => ({ default: m.CaisseJour })));
+const Analyses = lazy(() => import('./components/Analyses').then((m) => ({ default: m.Analyses })));
+const Employes = lazy(() => import('./components/Employes').then((m) => ({ default: m.Employes })));
+const CmupValorisation = lazy(() => import('./components/CmupValorisation').then((m) => ({ default: m.CmupValorisation })));
+const Invoices = lazy(() => import('./components/Invoices').then((m) => ({ default: m.Invoices })));
+const Primes = lazy(() => import('./components/Primes').then((m) => ({ default: m.Primes })));
+const Paie = lazy(() => import('./components/Paie').then((m) => ({ default: m.Paie })));
+const Proformas = lazy(() => import('./components/Proformas').then((m) => ({ default: m.Proformas })));
+const UserGuide = lazy(() => import('./components/UserGuide').then((m) => ({ default: m.UserGuide })));
+
+const RouteFallback = () => (
+  <div className="flex min-h-[40vh] items-center justify-center text-sm font-semibold text-slate-500">
+    Chargement de l’écran…
+  </div>
+);
 
 export default function App() {
   return (
     <BrowserRouter>
       <AdminAuthProvider>
         <ToastProvider>
+        <Suspense fallback={<RouteFallback />}>
         <Routes>
           <Route path="/login" element={<AdminLogin />} />
           <Route path="/" element={<AdminProtectedRoute><Layout /></AdminProtectedRoute>}>
@@ -94,6 +102,7 @@ export default function App() {
             <Route path="settings" element={<Settings />} />
           </Route>
         </Routes>
+        </Suspense>
         <FVAlertPopup />
         </ToastProvider>
       </AdminAuthProvider>

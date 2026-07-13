@@ -11,6 +11,7 @@ import { NotificationService } from 'src/notification/notification.service';
 import { CaisseJourService } from 'src/caisse-jour/caisse-jour.service';
 import { CreateTicketDto } from './dto/create-ticket.dto';
 import { validerLignePrix } from 'src/pricing/pricing.util';
+import { DocumentNumberService } from 'src/database/document-number.service';
 
 const TICKET_VALIDITY_MS = 15 * 60 * 1000; // 15 minutes
 
@@ -22,6 +23,7 @@ export class TicketVenteService {
     private readonly db: DatabaseService,
     private readonly notifications: NotificationService,
     private readonly caisseJour: CaisseJourService,
+    private readonly documentNumbers: DocumentNumberService,
   ) {}
 
   private toNumber(value: unknown): number {
@@ -32,15 +34,7 @@ export class TicketVenteService {
 
   /** Génère un numéro lisible : T-YYYYMMDD-NNNN où NNNN est l'ordre du jour. */
   private async generateNumeroTicket(): Promise<string> {
-    const now = new Date();
-    const datePart = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
-    const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
-    const countToday = await this.db.ticketVente.count({
-      where: { createdAt: { gte: startOfDay, lt: endOfDay } },
-    });
-    const seq = String(countToday + 1).padStart(4, '0');
-    return `T-${datePart}-${seq}`;
+    return this.documentNumbers.nextDaily('TICKET_QUEUE', 'T-');
   }
 
   /**
@@ -378,7 +372,39 @@ export class TicketVenteService {
         include: { lignes: true, vente: true },
       });
 
-      return updated;
+      const totalHT = montantTotal / 1.1925;
+      const facture = await tx.facture.create({
+        data: {
+          numero: await this.documentNumbers.nextAnnual('TICKET_CAISSE', 'TIC-', tx),
+          type: 'TICKET_CAISSE',
+          ticketId,
+          venteId: vente.id,
+          clientId: clientId ?? undefined,
+          vendeurId: ticket.vendeurId,
+          caissierId,
+          totalHT,
+          tva: montantTotal - totalHT,
+          totalTTC: montantTotal,
+          methodePaiement,
+          lignes: {
+            create: ticket.lignes.map((ligne) => {
+              const prixTTC = this.toNumber(ligne.prixUnitaire);
+              const sousTotalTTC = this.toNumber(ligne.sousTotal);
+              return {
+                nomProduit: ligne.nomProduit,
+                quantite: ligne.quantite,
+                prixUnitaireHT: prixTTC / 1.1925,
+                prixUnitaireTTC: prixTTC,
+                sousTotalHT: sousTotalTTC / 1.1925,
+                sousTotalTTC,
+              };
+            }),
+          },
+        },
+        include: { lignes: true, client: true },
+      });
+
+      return { ...updated, facture };
     });
 
     this.notifications
