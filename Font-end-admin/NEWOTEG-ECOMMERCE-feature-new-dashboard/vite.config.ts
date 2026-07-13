@@ -39,10 +39,25 @@ export default defineConfig(({mode}) => {
         workbox: {
           // Le HTML/JS/CSS buildés sont précachés (network falling back to cache).
           globPatterns: ['**/*.{js,css,html,svg,png,ico,woff2}'],
+          globIgnores: [
+            'assets/{Analyses,POSVendeur,jspdf.es.min,jspdf.plugin.autotable,html2canvas.esm,html2canvas-pro.esm,jszip.min,qzPrinter,Paie,Achats,Produits}-*.js',
+            'assets/{Analyses,POSVendeur,jspdf.es.min,jspdf.plugin.autotable,html2canvas.esm,html2canvas-pro.esm,jszip.min,qzPrinter,Paie,Achats,Produits}-legacy-*.js',
+          ],
           // Le bundle principal (legacy inclus) dépasse la limite par défaut de 2 MiB.
-          maximumFileSizeToCacheInBytes: 6 * 1024 * 1024,
+          maximumFileSizeToCacheInBytes: 2 * 1024 * 1024,
           navigateFallbackDenylist: [/^\/api\//, /^\/uploads\//],
           runtimeCaching: [
+            {
+              urlPattern: ({url, request}) =>
+                request.destination === 'script' &&
+                /^\/assets\/(Analyses|POSVendeur|jspdf|html2canvas|jszip|qzPrinter|Paie|Achats|Produits)-/.test(url.pathname),
+              handler: 'CacheFirst',
+              options: {
+                cacheName: 'newoteg-on-demand-modules-v1',
+                expiration: {maxEntries: 30, maxAgeSeconds: 7 * 24 * 60 * 60},
+                cacheableResponse: {statuses: [200]},
+              },
+            },
             {
               // Consultation hors-ligne en lecture seule (catalogue, prix, clients, taux).
               // Jamais les endpoints d'écriture, jamais /uploads (images lourdes).

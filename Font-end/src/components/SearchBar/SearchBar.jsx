@@ -12,11 +12,7 @@ const SearchBar = () => {
 
     // Autocomplete : recherche dynamique via l'API produits
     useEffect(() => {
-        if (!searchQuery.trim()) {
-            setResults([]);
-            setIsOpen(false);
-            return;
-        }
+        if (!searchQuery.trim()) return;
 
         const handler = setTimeout(async () => {
             try {
@@ -38,6 +34,14 @@ const SearchBar = () => {
 
         return () => clearTimeout(handler);
     }, [searchQuery]);
+
+    const handleQueryChange = (value) => {
+        setSearchQuery(value);
+        if (!value.trim()) {
+            setResults([]);
+            setIsOpen(false);
+        }
+    };
 
     const handleSubmit = (e) => {
         e?.preventDefault();
@@ -62,7 +66,7 @@ const SearchBar = () => {
                     className="search-bar__input"
                     placeholder="Rechercher un composant..."
                     value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onChange={(e) => handleQueryChange(e.target.value)}
                     onFocus={() => searchQuery.trim() && results.length > 0 && setIsOpen(true)}
                     onBlur={() => setTimeout(() => setIsOpen(false), 200)}
                 />

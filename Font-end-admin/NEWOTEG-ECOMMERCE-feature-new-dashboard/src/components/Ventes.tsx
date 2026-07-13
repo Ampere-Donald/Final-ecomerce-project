@@ -369,8 +369,10 @@ export const Ventes = () => {
       });
       setCart([]);
       setSelectedClientId('');
+      setClientSearch('');
       setSuccessMessage(`Vente enregistree — ${cartTotal.toLocaleString()} FCFA`);
       setTimeout(() => setSuccessMessage(''), 8000);
+      setTimeout(() => searchInputRef.current?.focus(), 0);
       // Refresh products (updated stock) and ventes
       const [prodRes, ventesRes] = await Promise.allSettled([produitApi.getAll(), venteApi.getAll()]);
       if (prodRes.status === 'fulfilled') {
@@ -391,6 +393,27 @@ export const Ventes = () => {
   };
 
   /* ═══ HISTORY LOGIC ══════════════════════════════════════════ */
+  useEffect(() => {
+    if (activeTab !== 'pos') return;
+    const handleExpressShortcut = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement;
+      const editing = ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName);
+      if (event.key === '/' && !editing) {
+        event.preventDefault();
+        searchInputRef.current?.focus();
+        return;
+      }
+      if (!['F2', 'F3', 'F4', 'F8'].includes(event.key)) return;
+      event.preventDefault();
+      if (event.key === 'F2') setPaymentMethod('ESPECES');
+      if (event.key === 'F3') setPaymentMethod('MOBILE_MONEY');
+      if (event.key === 'F4') setPaymentMethod('CARTE');
+      if (event.key === 'F8' && cart.length > 0 && !submitting) void handleSubmitSale();
+    };
+    document.addEventListener('keydown', handleExpressShortcut);
+    return () => document.removeEventListener('keydown', handleExpressShortcut);
+  }, [activeTab, cart.length, submitting, handleSubmitSale]);
+
   const filteredHistory = useMemo(() => {
     let result = ventes;
     if (dateFrom) {
@@ -841,7 +864,15 @@ export const Ventes = () => {
             {/* Payment Method */}
             {cart.length > 0 && (
               <div className="bg-white border border-slate-200 rounded-2xl p-4 space-y-4">
-                <h3 className="font-bold text-sm text-slate-900">Mode de paiement</h3>
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <h3 className="font-bold text-sm text-slate-900">Mode de paiement</h3>
+                  <div className="flex flex-wrap gap-1 text-[10px] font-bold text-slate-500" aria-label="Raccourcis caisse">
+                    <span className="rounded bg-slate-100 px-1.5 py-1">F2 Espèces</span>
+                    <span className="rounded bg-slate-100 px-1.5 py-1">F3 Mobile</span>
+                    <span className="rounded bg-slate-100 px-1.5 py-1">F4 Carte</span>
+                    <span className="rounded bg-primary/10 px-1.5 py-1 text-primary">F8 Valider</span>
+                  </div>
+                </div>
                 <div className="grid grid-cols-2 gap-2">
                   {PAYMENT_METHODS.map(pm => {
                     const Icon = pm.icon;

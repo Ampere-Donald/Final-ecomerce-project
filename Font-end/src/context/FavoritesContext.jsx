@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 
 // ── Favorites Context ─────────────────────────────────────────────────────────
@@ -12,7 +13,7 @@ const initFavorites = () => {
             const parsed = JSON.parse(stored);
             return Array.isArray(parsed) ? parsed : [];
         }
-    } catch { }
+    } catch { /* stockage local invalide : favoris vides */ }
     return [];
 };
 

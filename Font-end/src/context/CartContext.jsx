@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useReducer, useEffect, useCallback, useState } from 'react';
 
 // ── Cart Context ─────────────────────────────────────────────────────────────
@@ -67,7 +68,7 @@ const initCart = () => {
             const parsed = JSON.parse(stored);
             return Array.isArray(parsed) ? parsed : [];
         }
-    } catch { }
+    } catch { /* stockage local invalide : panier vide */ }
     return [];
 };
 

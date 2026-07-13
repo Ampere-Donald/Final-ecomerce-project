@@ -64,7 +64,7 @@ const HeroBanner = () => {
             setCurrentSlide((prev) => (prev + 1) % heroSlides.length);
         }, 5000); // 5 seconds per slide
         return () => clearInterval(timer);
-    }, []);
+    }, [heroSlides.length]);
 
     const nextSlide = () => {
         setCurrentSlide((prev) => (prev + 1) % heroSlides.length);

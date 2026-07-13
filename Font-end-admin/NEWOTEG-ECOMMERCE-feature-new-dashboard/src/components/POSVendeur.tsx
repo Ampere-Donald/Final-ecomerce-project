@@ -348,7 +348,8 @@ export const POSVendeur = () => {
       setPaymentMethod('ESPECES');
       setPanierMobileOpen(false);
       await loadBons();
-      setActiveTab('enAttente');
+      setActiveTab('vente');
+      setTimeout(() => searchInputRef.current?.focus(), 0);
     } catch (e: any) {
       const msg = e?.response?.data?.message || e?.message || 'Erreur inconnue';
       setError(Array.isArray(msg) ? msg.join(', ') : String(msg));
@@ -384,6 +385,29 @@ export const POSVendeur = () => {
     try { await bonVenteApi.annuler(id); await loadBons(); }
     catch (e: any) { setError(e?.response?.data?.message || 'Impossible d\'annuler.'); }
   };
+
+  useEffect(() => {
+    if (activeTab !== 'vente' || scanOpen || equivOpen) return;
+    const handleExpressShortcut = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement;
+      const editing = ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName);
+      if (event.key === '/' && !editing) {
+        event.preventDefault();
+        searchInputRef.current?.focus();
+        return;
+      }
+      if (!['F2', 'F3', 'F4', 'F8'].includes(event.key)) return;
+      event.preventDefault();
+      if (event.key === 'F2') setPaymentMethod('ESPECES');
+      if (event.key === 'F3') setPaymentMethod('MOBILE_MONEY');
+      if (event.key === 'F4') setPaymentMethod('CARTE');
+      if (event.key === 'F8' && panier.length > 0 && !submitting) {
+        void (isVendeur ? envoyerVendeur() : envoyerAdmin());
+      }
+    };
+    document.addEventListener('keydown', handleExpressShortcut);
+    return () => document.removeEventListener('keydown', handleExpressShortcut);
+  }, [activeTab, scanOpen, equivOpen, panier.length, submitting, isVendeur, envoyerVendeur, envoyerAdmin]);
 
   // ── Équivalents IA ─────────────────────────────────────────────────────
   const lancerEquiv = async (opts: { query?: string; produitId?: string }) => {
@@ -501,6 +525,7 @@ export const POSVendeur = () => {
   // ── Barcode reader USB/Bluetooth — écoute globale clavier ─────────────
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
+      if (e.defaultPrevented) return;
       const now = Date.now();
       const tag = (e.target as HTMLElement).tagName;
       const isInSearch = e.target === searchInputRef.current;
@@ -653,6 +678,12 @@ export const POSVendeur = () => {
           <option value="">Client comptoir</option>
           {clients.map(c => <option key={c.id} value={c.id}>{c.nom} {c.prenom || ''}</option>)}
         </select>
+        <div className="flex flex-wrap gap-1 text-[10px] font-bold text-slate-500" aria-label="Raccourcis vente">
+          <span className="rounded bg-slate-100 px-1.5 py-1">F2 Espèces</span>
+          <span className="rounded bg-slate-100 px-1.5 py-1">F3 Mobile</span>
+          <span className="rounded bg-slate-100 px-1.5 py-1">F4 Carte</span>
+          <span className="rounded bg-primary/10 px-1.5 py-1 text-primary">F8 Envoyer</span>
+        </div>
         <select value={paymentMethod} onChange={e => setPaymentMethod(e.target.value)}
           className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm outline-none focus:border-primary">
           {METHODES.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}

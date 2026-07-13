@@ -196,7 +196,7 @@ const Catalogue = () => {
 
         const urlPage = Number(searchParams.get('page')) || 1;
         if (urlPage !== currentPage) setCurrentPage(urlPage);
-    }, [searchParams]);
+    }, [searchParams, selectedCategory, searchQuery, currentPage]);
 
     // Sync URL params (Push local state to URL)
     useEffect(() => {
