@@ -3,12 +3,21 @@ import {
   Search, Download, ShoppingCart, X, Eye, Package, Calendar, Plus, Minus, Trash2,
   CreditCard, Banknote, Smartphone, Building2, UserPlus, CheckCircle2, AlertTriangle,
   Clock, Receipt, Filter, ChevronLeft, ChevronRight, ListFilter,
+  Pause, Play,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { venteApi, produitApi, clientApi, categorieApi } from '../services/api';
 import { FactureVirtuelleModal } from './FactureVirtuelleModal';
 import { ReceiptGenerator } from './ReceiptGenerator';
 import { enqueueSale, newSaleId, OFFLINE_SYNC_COMPLETED_EVENT } from '../services/offlineSalesQueue';
+import {
+  getSaleMetricSummary,
+  listSuspendedCarts,
+  recordSaleMetric,
+  removeSuspendedCart,
+  saveSuspendedCart,
+  type SuspendedCart,
+} from '../services/cashierProductivity';
 
 /* ── Types ─────────────────────────────────────────────────────── */
 interface CartItem {
@@ -23,6 +32,9 @@ interface CartItem {
   quantiteGros?: number | null;
   modePrix: 'DETAIL' | 'GROS';
 }
+
+type DirectSaleContext = { paymentMethod: string; selectedClientId: string };
+const DIRECT_SALE_SCOPE = 'direct_sale';
 
 const PAYMENT_METHODS = [
   { value: 'ESPECES', label: 'Especes', icon: Banknote },
@@ -78,6 +90,13 @@ export const Ventes = () => {
   const [showReceipt, setShowReceipt] = useState(false);
   const [autoPrintReceipt, setAutoPrintReceipt] = useState(false);
   const [receiptType, setReceiptType] = useState<'ticket' | 'facture'>('ticket');
+  const [suspendedCarts, setSuspendedCarts] = useState<SuspendedCart<CartItem, DirectSaleContext>[]>(
+    () => listSuspendedCarts<CartItem, DirectSaleContext>(DIRECT_SALE_SCOPE),
+  );
+  const [showSuspendedCarts, setShowSuspendedCarts] = useState(false);
+  const [saleMetrics, setSaleMetrics] = useState(() => getSaleMetricSummary(DIRECT_SALE_SCOPE));
+  const saleStartedAtRef = useRef<number | null>(null);
+  const saleInteractionsRef = useRef(0);
 
   // ── Facture virtuelle state ──
   const [showFV, setShowFV] = useState(false);
@@ -312,6 +331,68 @@ export const Ventes = () => {
 
   const cartTotal = useMemo(() => cart.reduce((sum, c) => sum + c.quantite * c.prixUnitaire, 0), [cart]);
 
+  useEffect(() => {
+    if (cart.length > 0 && saleStartedAtRef.current === null) {
+      saleStartedAtRef.current = performance.now();
+      saleInteractionsRef.current = 0;
+    }
+    if (cart.length === 0) {
+      saleStartedAtRef.current = null;
+      saleInteractionsRef.current = 0;
+    }
+  }, [cart.length]);
+
+  useEffect(() => {
+    if (cart.length === 0) return;
+    const warnBeforeLeaving = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = '';
+    };
+    window.addEventListener('beforeunload', warnBeforeLeaving);
+    return () => window.removeEventListener('beforeunload', warnBeforeLeaving);
+  }, [cart.length]);
+
+  const recordInteraction = () => {
+    if (cart.length > 0) saleInteractionsRef.current += 1;
+  };
+
+  const completeSaleMetric = () => {
+    if (saleStartedAtRef.current === null) return;
+    const summary = recordSaleMetric(
+      DIRECT_SALE_SCOPE,
+      performance.now() - saleStartedAtRef.current,
+      saleInteractionsRef.current,
+    );
+    setSaleMetrics(summary);
+    saleStartedAtRef.current = null;
+    saleInteractionsRef.current = 0;
+  };
+
+  const suspendCurrentCart = () => {
+    if (cart.length === 0) return;
+    setSuspendedCarts(saveSuspendedCart(DIRECT_SALE_SCOPE, cart, { paymentMethod, selectedClientId }));
+    setCart([]);
+    setSelectedClientId('');
+    setPaymentMethod('ESPECES');
+    saleStartedAtRef.current = null;
+    saleInteractionsRef.current = 0;
+    setSuccessMessage('Panier mis en attente. Vous pouvez démarrer une nouvelle vente.');
+    setShowSuspendedCarts(true);
+    setTimeout(() => searchInputRef.current?.focus(), 0);
+  };
+
+  const resumeSuspendedCart = (entry: SuspendedCart<CartItem, DirectSaleContext>) => {
+    if (cart.length > 0 && !window.confirm('Remplacer le panier actuel par ce panier en attente ?')) return;
+    setCart(entry.items);
+    setPaymentMethod(entry.context.paymentMethod || 'ESPECES');
+    setSelectedClientId(entry.context.selectedClientId || '');
+    saleStartedAtRef.current = performance.now();
+    saleInteractionsRef.current = 0;
+    setSuspendedCarts(removeSuspendedCart<CartItem, DirectSaleContext>(DIRECT_SALE_SCOPE, entry.id));
+    setShowSuspendedCarts(false);
+    setSuccessMessage('Panier repris. Vérifiez le stock avant de valider.');
+  };
+
   const priceDiffBadge = (item: CartItem) => {
     if (item.prixCatalogue === 0 || item.prixUnitaire === item.prixCatalogue) return null;
     const diff = Math.round(((item.prixUnitaire - item.prixCatalogue) / item.prixCatalogue) * 100);
@@ -354,6 +435,7 @@ export const Ventes = () => {
     try {
       if (!navigator.onLine) {
         await enqueueSale(payload);
+        completeSaleMetric();
         setCart([]);
         setSelectedClientId('');
         setClientSearch('');
@@ -376,6 +458,7 @@ export const Ventes = () => {
       });
       setAutoPrintReceipt(rType === 'ticket');
       setShowReceipt(true);
+      completeSaleMetric();
       setCart([]);
       setSelectedClientId('');
       setClientSearch('');
@@ -388,6 +471,7 @@ export const Ventes = () => {
     } catch (err: any) {
       if (!err?.response) {
         await enqueueSale(payload);
+        completeSaleMetric();
         setCart([]);
         setSuccessMessage('Connexion interrompue — vente conservée pour synchronisation.');
       } else {
@@ -411,6 +495,7 @@ export const Ventes = () => {
       }
       if (!['F2', 'F3', 'F4', 'F8'].includes(event.key)) return;
       event.preventDefault();
+      if (cart.length > 0) saleInteractionsRef.current += 1;
       if (event.key === 'F2') setPaymentMethod('ESPECES');
       if (event.key === 'F3') setPaymentMethod('MOBILE_MONEY');
       if (event.key === 'F4') setPaymentMethod('CARTE');
@@ -468,7 +553,7 @@ export const Ventes = () => {
 
   /* ═══ RENDER ═════════════════════════════════════════════════ */
   return (
-    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
+    <motion.div onClickCapture={recordInteraction} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
       {/* Header + Tabs */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
@@ -781,10 +866,33 @@ export const Ventes = () => {
             <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden">
               <div className="p-4 border-b border-slate-100 flex items-center justify-between">
                 <h3 className="font-bold text-slate-900 flex items-center gap-2"><ShoppingCart size={18} /> Panier</h3>
-                {cart.length > 0 && (
-                  <button onClick={() => setCart([])} className="text-xs text-red-500 hover:text-red-700 font-medium">Vider</button>
-                )}
+                <div className="flex items-center gap-2">
+                  {suspendedCarts.length > 0 && (
+                    <button type="button" onClick={() => setShowSuspendedCarts((open) => !open)} className="inline-flex min-h-9 items-center gap-1 rounded-lg bg-amber-50 px-2 text-xs font-bold text-amber-700 hover:bg-amber-100">
+                      <Play size={13} /> Reprendre ({suspendedCarts.length})
+                    </button>
+                  )}
+                  {cart.length > 0 && (
+                    <>
+                      <button type="button" onClick={suspendCurrentCart} className="inline-flex min-h-9 items-center gap-1 rounded-lg bg-slate-100 px-2 text-xs font-bold text-slate-700 hover:bg-slate-200">
+                        <Pause size={13} /> Attente
+                      </button>
+                      <button type="button" onClick={() => setCart([])} className="min-h-9 px-1 text-xs font-medium text-red-500 hover:text-red-700">Vider</button>
+                    </>
+                  )}
+                </div>
               </div>
+
+              {showSuspendedCarts && suspendedCarts.length > 0 && (
+                <div className="space-y-2 border-b border-amber-200 bg-amber-50 p-3">
+                  {suspendedCarts.map((entry) => (
+                    <button key={entry.id} type="button" onClick={() => resumeSuspendedCart(entry)} className="flex min-h-11 w-full items-center justify-between gap-3 rounded-xl border border-amber-200 bg-white px-3 text-left hover:border-amber-400">
+                      <span><span className="block text-sm font-bold text-slate-800">{entry.items.length} article{entry.items.length > 1 ? 's' : ''}</span><span className="text-xs text-slate-500">{new Date(entry.createdAt).toLocaleString('fr-FR')}</span></span>
+                      <span className="text-xs font-bold text-amber-700">Reprendre</span>
+                    </button>
+                  ))}
+                </div>
+              )}
 
               {cart.length === 0 ? (
                 <div className="p-8 text-center text-slate-400">
@@ -879,6 +987,11 @@ export const Ventes = () => {
                     <span className="rounded bg-primary/10 px-1.5 py-1 text-primary">F8 Valider</span>
                   </div>
                 </div>
+                {saleMetrics.completedSales > 0 && (
+                  <p className="rounded-lg bg-indigo-50 px-3 py-2 text-xs font-medium text-indigo-700">
+                    Moyenne locale : {Math.round(saleMetrics.averageDurationMs / 1000)} s · {saleMetrics.averageInteractions} interaction{saleMetrics.averageInteractions > 1 ? 's' : ''} par vente ({saleMetrics.completedSales} mesurée{saleMetrics.completedSales > 1 ? 's' : ''}).
+                  </p>
+                )}
                 <div className="grid grid-cols-2 gap-2">
                   {PAYMENT_METHODS.map(pm => {
                     const Icon = pm.icon;

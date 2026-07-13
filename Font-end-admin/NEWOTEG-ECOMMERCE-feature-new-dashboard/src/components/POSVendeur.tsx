@@ -207,6 +207,16 @@ export const POSVendeur = () => {
   }, [loadCatalog, search]);
 
   useEffect(() => {
+    if (panier.length === 0) return;
+    const warnBeforeLeaving = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = '';
+    };
+    window.addEventListener('beforeunload', warnBeforeLeaving);
+    return () => window.removeEventListener('beforeunload', warnBeforeLeaving);
+  }, [panier.length]);
+
+  useEffect(() => {
     const handleSynchronizedSale = () => {
       void loadCatalog(search);
       if (isVendeur) void loadBons();
