@@ -3,6 +3,7 @@ import { AlertTriangle, CheckCircle2, CloudOff, RefreshCw, Trash2, Wifi } from '
 import { bonVenteApi, ticketApi, venteApi } from '../services/api';
 import {
   listQueuedSales,
+  OFFLINE_POLICY,
   OFFLINE_QUEUE_EVENT,
   removeQueuedSale,
   synchronizeQueuedSales,
@@ -31,6 +32,7 @@ export function OfflineQueuePage() {
   const [items, setItems] = useState<QueuedSale[]>([]);
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
+  const [syncingId, setSyncingId] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
     try {
@@ -77,7 +79,24 @@ export function OfflineQueuePage() {
     toast.info('Opération retirée de la file hors ligne.');
   };
 
+  const retryOne = async (item: QueuedSale) => {
+    if (!isOnline || syncingId) return;
+    setSyncingId(item.id);
+    try {
+      const result = await synchronizeQueuedSales(send, [item.id]);
+      await refresh();
+      if (result.synchronized === 1) toast.success('Opération synchronisée sans doublon.');
+      else if (result.conflicts > 0) toast.warning('Le conflit de stock persiste. Corrigez le stock ou retirez l’opération après contrôle.');
+      else toast.warning('Le serveur n’a pas encore accepté cette opération.');
+    } catch (error) {
+      toast.error(`Nouvelle tentative impossible : ${errorMessage(error)}`);
+    } finally {
+      setSyncingId(null);
+    }
+  };
+
   const failedCount = useMemo(() => items.filter((item) => item.lastError).length, [items]);
+  const conflictCount = useMemo(() => items.filter((item) => item.state === 'CONFLICT').length, [items]);
 
   return (
     <div className="mx-auto max-w-6xl space-y-6 p-4 sm:p-6">
@@ -96,6 +115,12 @@ export function OfflineQueuePage() {
         </button>
       </header>
 
+      <aside className="rounded-2xl border border-sky-200 bg-sky-50 p-4 text-sm text-sky-950">
+        <p className="font-bold">Politique hors ligne</p>
+        <p className="mt-1">Autorisées : ventes directes, bons vendeur et tickets caisse. Les crédits, inventaires, achats et modifications de stock exigent le serveur.</p>
+        <p className="mt-2 text-xs text-sky-800">{OFFLINE_POLICY.stockRule} {OFFLINE_POLICY.orderingRule}</p>
+      </aside>
+
       <section className="grid gap-3 sm:grid-cols-3" aria-label="État de synchronisation">
         <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
           <p className="text-xs font-bold uppercase tracking-wider text-slate-500">Connexion</p>
@@ -110,6 +135,7 @@ export function OfflineQueuePage() {
         <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
           <p className="text-xs font-bold uppercase tracking-wider text-slate-500">À vérifier</p>
           <p className={`mt-2 text-2xl font-bold ${failedCount ? 'text-amber-700' : 'text-emerald-700'}`}>{failedCount}</p>
+          {conflictCount > 0 && <p className="mt-1 text-xs font-bold text-red-700">dont {conflictCount} conflit{conflictCount > 1 ? 's' : ''} de stock</p>}
         </div>
       </section>
 
@@ -127,7 +153,7 @@ export function OfflineQueuePage() {
             {items.map((item) => (
               <li key={item.id} className="p-4 sm:p-5">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
-                  <span className={`mt-0.5 w-fit rounded-xl p-2.5 ${item.lastError ? 'bg-amber-50 text-amber-700' : 'bg-slate-100 text-slate-600'}`}>
+                  <span className={`mt-0.5 w-fit rounded-xl p-2.5 ${item.state === 'CONFLICT' ? 'bg-red-50 text-red-700' : item.lastError ? 'bg-amber-50 text-amber-700' : 'bg-slate-100 text-slate-600'}`}>
                     {item.lastError ? <AlertTriangle size={20} /> : <CloudOff size={20} />}
                   </span>
                   <div className="min-w-0 flex-1">
@@ -140,14 +166,23 @@ export function OfflineQueuePage() {
                     </p>
                     <p className="mt-1 truncate font-mono text-[11px] text-slate-400" title={item.id}>ID {item.id}</p>
                     {item.lastError && (
-                      <p className="mt-3 rounded-lg bg-amber-50 px-3 py-2 text-xs font-medium text-amber-900">{item.lastError}</p>
+                      <p className={`mt-3 rounded-lg px-3 py-2 text-xs font-medium ${item.state === 'CONFLICT' ? 'bg-red-50 text-red-900' : 'bg-amber-50 text-amber-900'}`}>
+                        <span className="font-bold">{item.state === 'CONFLICT' ? 'Conflit de stock' : 'Nouvelle tentative requise'}{item.errorCode ? ` · ${item.errorCode}` : ''}</span><br />
+                        {item.lastError}
+                      </p>
                     )}
                   </div>
-                  <button type="button" onClick={() => void discard(item)}
-                    className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-red-200 px-3 py-2 text-xs font-bold text-red-700 hover:bg-red-50"
-                    aria-label={`Supprimer ${kindLabels[item.kind] || item.kind} de la file`}>
-                    <Trash2 size={15} /> Supprimer
-                  </button>
+                  <div className="flex flex-col gap-2 sm:min-w-32">
+                    <button type="button" onClick={() => void retryOne(item)} disabled={!isOnline || syncingId !== null}
+                      className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg bg-primary px-3 py-2 text-xs font-bold text-white disabled:opacity-50">
+                      <RefreshCw size={15} className={syncingId === item.id ? 'animate-spin' : ''} /> Réessayer
+                    </button>
+                    <button type="button" onClick={() => void discard(item)}
+                      className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-red-200 px-3 py-2 text-xs font-bold text-red-700 hover:bg-red-50"
+                      aria-label={`Supprimer ${kindLabels[item.kind] || item.kind} de la file`}>
+                      <Trash2 size={15} /> Supprimer
+                    </button>
+                  </div>
                 </div>
               </li>
             ))}

@@ -7,6 +7,13 @@ export const OFFLINE_SYNC_COMPLETED_EVENT = 'newoteg:offline-synchronized';
 const notifyQueueChanged = () => window.dispatchEvent(new Event(OFFLINE_QUEUE_EVENT));
 
 export type OfflineOperationKind = 'VENTE' | 'BON' | 'TICKET';
+export type OfflineOperationState = 'PENDING' | 'RETRY' | 'CONFLICT';
+
+export const OFFLINE_POLICY = {
+  allowed: ['VENTE', 'BON', 'TICKET'] as OfflineOperationKind[],
+  stockRule: 'Le stock affiché hors ligne est indicatif. Le serveur reste l’autorité et refuse la synchronisation si le stock réel est insuffisant.',
+  orderingRule: 'Les opérations sont envoyées de la plus ancienne à la plus récente avec un identifiant idempotent.',
+} as const;
 
 export type QueuedSale = {
   id: string;
@@ -14,6 +21,8 @@ export type QueuedSale = {
   payload: Record<string, unknown>;
   createdAt: string;
   attempts: number;
+  state?: OfflineOperationState;
+  errorCode?: string;
   lastError?: string;
 };
 
@@ -54,7 +63,14 @@ async function withStore<T>(mode: IDBTransactionMode, action: (store: IDBObjectS
 
 async function enqueueOperation(kind: OfflineOperationKind, payload: Record<string, unknown>): Promise<QueuedSale> {
   const id = String(payload.idempotencyKey || newSaleId());
-  const queued: QueuedSale = { id, kind, payload: { ...payload, idempotencyKey: id }, createdAt: new Date().toISOString(), attempts: 0 };
+  const queued: QueuedSale = {
+    id,
+    kind,
+    payload: { ...payload, idempotencyKey: id },
+    createdAt: new Date().toISOString(),
+    attempts: 0,
+    state: 'PENDING',
+  };
   await withStore('readwrite', (store) => store.put(queued));
   notifyQueueChanged();
   return queued;
@@ -78,29 +94,74 @@ export async function removeQueuedSale(id: string): Promise<void> {
   notifyQueueChanged();
 }
 
-export async function synchronizeQueuedSales(
+export function classifySynchronizationError(error: unknown): {
+  state: Exclude<OfflineOperationState, 'PENDING'>;
+  code: string;
+  message: string;
+} {
+  const candidate = error as {
+    message?: string;
+    response?: { status?: number; data?: { message?: string | string[]; code?: string } };
+  };
+  const serverMessage = candidate?.response?.data?.message;
+  const message = Array.isArray(serverMessage)
+    ? serverMessage.join(', ')
+    : serverMessage || candidate?.message || 'Synchronisation refusée';
+  const status = candidate?.response?.status;
+  const conflict = status === 409 || /stock|quantit[eé].*(?:insuffisant|indisponible)|rupture/i.test(message);
+  return conflict
+    ? { state: 'CONFLICT', code: candidate?.response?.data?.code || 'STOCK_CONFLICT', message }
+    : { state: 'RETRY', code: status ? `HTTP_${status}` : 'NETWORK_OR_SERVER', message };
+}
+
+export async function processQueuedOperations(
+  queued: QueuedSale[],
   send: (kind: OfflineOperationKind, payload: Record<string, unknown>) => Promise<unknown>,
-): Promise<{ synchronized: number; failed: number }> {
-  const queued = (await listQueuedSales()).sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+  remove: (id: string) => Promise<void>,
+  update: (sale: QueuedSale) => Promise<void>,
+  isOnline: () => boolean,
+): Promise<{ synchronized: number; failed: number; conflicts: number }> {
   let synchronized = 0;
   let failed = 0;
+  let conflicts = 0;
 
-  for (const sale of queued) {
+  for (const sale of [...queued].sort((a, b) => a.createdAt.localeCompare(b.createdAt))) {
     try {
       await send(sale.kind || 'VENTE', sale.payload);
-      await removeQueuedSale(sale.id);
+      await remove(sale.id);
       synchronized += 1;
     } catch (error) {
       failed += 1;
-      const message = error instanceof Error ? error.message : 'Synchronisation refusée';
-      await updateQueuedSale({ ...sale, attempts: sale.attempts + 1, lastError: message });
-      if (!navigator.onLine) break;
+      const detail = classifySynchronizationError(error);
+      if (detail.state === 'CONFLICT') conflicts += 1;
+      await update({
+        ...sale,
+        attempts: sale.attempts + 1,
+        state: detail.state,
+        errorCode: detail.code,
+        lastError: detail.message,
+      });
+      if (!isOnline()) break;
     }
   }
-  if (synchronized > 0) {
-    window.dispatchEvent(new CustomEvent(OFFLINE_SYNC_COMPLETED_EVENT, {
-      detail: { synchronized, failed },
-    }));
+  return { synchronized, failed, conflicts };
+}
+
+export async function synchronizeQueuedSales(
+  send: (kind: OfflineOperationKind, payload: Record<string, unknown>) => Promise<unknown>,
+  onlyIds?: string[],
+): Promise<{ synchronized: number; failed: number; conflicts: number }> {
+  const all = await listQueuedSales();
+  const queued = onlyIds?.length ? all.filter((sale) => onlyIds.includes(sale.id)) : all;
+  const result = await processQueuedOperations(
+    queued,
+    send,
+    removeQueuedSale,
+    updateQueuedSale,
+    () => navigator.onLine,
+  );
+  if (result.synchronized > 0) {
+    window.dispatchEvent(new CustomEvent(OFFLINE_SYNC_COMPLETED_EVENT, { detail: result }));
   }
-  return { synchronized, failed };
+  return result;
 }
