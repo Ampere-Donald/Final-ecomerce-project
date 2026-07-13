@@ -8,7 +8,7 @@ const isVendeur = (role?: string) => role === 'VENDEUR';
 
 export const can = {
   // ── Pilotage ────────────────────────────────────────────────
-  accessDashboard: (r?: string) => isAdmin(r),
+  accessDashboard: (r?: string) => Boolean(r),
   accessAnalyses: (r?: string) => isAdmin(r),
   accessNotificationsPage: (r?: string) => isAdmin(r),
 
@@ -60,7 +60,7 @@ export const can = {
 
   // ── Système ─────────────────────────────────────────────────
   accessGuide: (_r?: string) => true,
-  accessParametres: (r?: string) => isSuper(r),
+  accessParametres: (r?: string) => Boolean(r),
   accessRoles: (r?: string) => isSuper(r),
   accessAccounts: (r?: string) => isSuper(r),
   accessPrintAudit: (r?: string) => isAdmin(r),

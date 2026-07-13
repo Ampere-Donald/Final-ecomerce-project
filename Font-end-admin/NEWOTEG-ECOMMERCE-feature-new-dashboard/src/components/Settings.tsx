@@ -103,7 +103,9 @@ export const Settings = () => {
     { key: 'profile' as Tab, label: 'Infos Profil', icon: User },
     { key: 'printer' as Tab, label: 'Imprimante tickets', icon: PrinterIcon },
     { key: 'security' as Tab, label: 'Sécurité', icon: Shield },
-    { key: 'ia' as Tab, label: 'IA & Équivalences', icon: Sparkles },
+    ...(['SUPER_ADMIN', 'ADMIN'].includes(admin?.role || '')
+      ? [{ key: 'ia' as Tab, label: 'IA & Équivalences', icon: Sparkles }]
+      : []),
   ];
 
   const inputClass = 'w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all';
