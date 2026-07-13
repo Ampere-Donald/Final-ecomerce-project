@@ -11,8 +11,9 @@
 | 2 — Intégrité caisse | Terminée | Séquences atomiques, transactions et migrations |
 | 3 — Epson boutique | Logiciel prêt, test physique requis | Diagnostic et profil TM-T20II 58 mm |
 | 4 — Performance | Terminée | Builds mesurés et lint client propre |
-| 5 — Caisse Express | En cours | Raccourcis et retour scanner implémentés |
-| 6 à 10 | À exécuter | Voir plan directeur |
+| 5 — Caisse Express | Terminée | Raccourcis, retour scanner et impression automatique |
+| 6 — Hors ligne | Terminée | IndexedDB, idempotence backend et écran de contrôle |
+| 7 à 10 | À exécuter | Voir plan directeur |
 
 ## Résultats mesurés
 
@@ -37,8 +38,8 @@
 ### Backend
 
 - Build NestJS/Prisma : réussi.
-- Suites de tests : **14 réussies**.
-- Tests : **82 réussis**.
+- Suites de tests : **15 réussies**.
+- Tests : **83 réussis**.
 
 ## Fonctions livrées à ce stade
 
@@ -54,6 +55,9 @@
 - modules lourds PWA chargés et mis en cache à la demande ;
 - raccourcis Caisse Express : `/`, F2, F3, F4 et F8 ;
 - retour automatique au champ scanner après une vente directe ou un bon vendeur.
+- file persistante IndexedDB pour ventes, bons et tickets hors ligne ;
+- identifiants idempotents contrôlés par des index uniques en base ;
+- synchronisation automatique au retour du réseau et écran de traitement des conflits.
 
 ## Validation externe encore nécessaire
 

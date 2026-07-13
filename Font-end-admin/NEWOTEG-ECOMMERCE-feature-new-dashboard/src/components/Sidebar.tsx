@@ -29,6 +29,7 @@ import {
   ClipboardList,
   Banknote,
   BookOpen,
+  CloudOff,
 } from 'lucide-react';
 import { useAdminAuth } from '../context/AdminAuthContext';
 import { brand } from '../config/brand';
@@ -132,6 +133,7 @@ export const Sidebar = ({ open, onClose }: SidebarProps) => {
     {
       label: 'Système',
       items: [
+        ...add(Boolean(role), { label: 'Opérations hors ligne', icon: CloudOff, path: '/offline-queue' }),
         ...add(can.accessGuide(role), { label: 'Guide utilisateur', icon: BookOpen, path: '/guide' }),
         ...add(can.accessParametres(role), { label: 'Paramètres', icon: Settings, path: '/settings' }),
       ],

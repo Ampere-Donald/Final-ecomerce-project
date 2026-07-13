@@ -41,6 +41,13 @@ export class BonVenteService {
    * Émet un événement SSE pour les caissiers connectés.
    */
   async create(dto: CreateBonDto, actor: NotificationActor) {
+    if (dto.idempotencyKey) {
+      const existing = await this.db.ticketVente.findUnique({
+        where: { idempotencyKey: dto.idempotencyKey },
+        include: { lignes: true },
+      });
+      if (existing) return existing;
+    }
     if (!dto.lignes?.length) {
       throw new BadRequestException('Le bon doit contenir au moins une ligne');
     }
@@ -123,6 +130,7 @@ export class BonVenteService {
       return tx.ticketVente.create({
         data: {
           numeroTicket,
+          idempotencyKey: dto.idempotencyKey,
           vendeurId: actor.id,
           clientId: dto.clientId ?? null,
           montantTotal,

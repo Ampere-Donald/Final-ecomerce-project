@@ -378,6 +378,7 @@ model Vente {
   methodePaiement  MethodePaiement   @map("methode_paiement")
   statutPaiement   StatutPaiement    @default(PAYE) @map("statut_paiement")
   vendeurId        String?           @map("vendeur_id")
+  idempotencyKey   String?           @unique @map("idempotency_key") @db.VarChar(64)
   version          Int               @default(1)
   annulee          Boolean           @default(false)
   motifAnnulation  String?           @map("motif_annulation") @db.VarChar(255)
@@ -421,6 +422,7 @@ model Reglement {
 model TicketVente {
   id              String           @id @default(uuid())
   numeroTicket    String           @unique @map("numero_ticket") @db.VarChar(20)
+  idempotencyKey  String?          @unique @map("idempotency_key") @db.VarChar(64)
   vendeurId       String           @map("vendeur_id")
   caissierId      String?          @map("caissier_id")
   clientId        String?          @map("client_id")

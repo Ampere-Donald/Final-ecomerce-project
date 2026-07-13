@@ -13,6 +13,7 @@ import { useAdminAuth } from '../context/AdminAuthContext';
 import { can } from '../utils/permissions';
 import { ReceiptGenerator } from './ReceiptGenerator';
 import { bornesPrix, classerBande, exigeMotif, BANDE_STYLE } from '../utils/pricing';
+import { enqueueBon, enqueueTicket, newSaleId, OFFLINE_SYNC_COMPLETED_EVENT } from '../services/offlineSalesQueue';
 
 interface Produit {
   id: string;
@@ -157,7 +158,7 @@ export const POSVendeur = () => {
   const [equivResults, setEquivResults] = useState<any[]>([]);
 
   // ── Chargement ─────────────────────────────────────────────────────────
-  const loadBons = async () => {
+  const loadBons = useCallback(async () => {
     try {
       const [bonsData, scoreData] = await Promise.all([
         bonVenteApi.mesBons(),
@@ -166,7 +167,7 @@ export const POSVendeur = () => {
       setBonsEnAttente((bonsData || []).filter((b: Bon) => b.statut === 'EN_ATTENTE'));
       setMonScore(Number(scoreData?.nombreTickets || 0));
     } catch {}
-  };
+  }, []);
 
   useEffect(() => {
     let mounted = true;
@@ -180,7 +181,16 @@ export const POSVendeur = () => {
       loadBons();
     }
     return () => { mounted = false; };
-  }, [isVendeur]);
+  }, [isVendeur, loadBons]);
+
+  useEffect(() => {
+    const handleSynchronizedSale = () => {
+      void produitApi.getAll().then((data: any[]) => setProduits(data || [])).catch(() => {});
+      if (isVendeur) void loadBons();
+    };
+    window.addEventListener(OFFLINE_SYNC_COMPLETED_EVENT, handleSynchronizedSale);
+    return () => window.removeEventListener(OFFLINE_SYNC_COMPLETED_EVENT, handleSynchronizedSale);
+  }, [isVendeur, loadBons]);
 
   // ── Catalogue ──────────────────────────────────────────────────────────
   const produitsFiltres = useMemo(() => {
@@ -299,25 +309,41 @@ export const POSVendeur = () => {
     setSubmitting(true);
     setError(null);
     setSuccess(null);
+    const payload = {
+      idempotencyKey: newSaleId(),
+      nomClient: nomClient.trim() || undefined,
+      telephoneClient: telephoneClient.trim() || undefined,
+      lignes: panier.map(l => ({
+        produitId: l.produitId,
+        quantite: l.quantite,
+        prixUnitaire: l.prix,
+        motifRemise: (l.motifRemise || '').trim() || undefined,
+      })),
+    };
     try {
-      const ticket = await ticketApi.create({
-        nomClient: nomClient.trim() || undefined,
-        telephoneClient: telephoneClient.trim() || undefined,
-        lignes: panier.map(l => ({
-          produitId: l.produitId,
-          quantite: l.quantite,
-          prixUnitaire: l.prix,
-          motifRemise: (l.motifRemise || '').trim() || undefined,
-        })),
-      });
+      if (!navigator.onLine) {
+        await enqueueTicket(payload);
+        setSuccess('Ticket conservé hors ligne — envoi automatique au retour du réseau.');
+        setPanier([]);
+        setNomClient('');
+        setTelephoneClient('');
+        return;
+      }
+      const ticket = await ticketApi.create(payload);
       setSuccess(`Ticket ${ticket.numeroTicket} envoyé au caissier.`);
       setPanier([]);
       setNomClient('');
       setTelephoneClient('');
       setTimeout(() => navigate(can.accessCaisseJour(admin?.role) ? '/caisse-jour' : '/mes-tickets'), 1200);
     } catch (e: any) {
-      const msg = e?.response?.data?.message || e?.message || 'Erreur inconnue';
-      setError(Array.isArray(msg) ? msg.join(', ') : String(msg));
+      if (!e?.response) {
+        await enqueueTicket(payload);
+        setPanier([]);
+        setSuccess('Connexion interrompue — ticket conservé localement.');
+      } else {
+        const msg = e?.response?.data?.message || e?.message || 'Erreur inconnue';
+        setError(Array.isArray(msg) ? msg.join(', ') : String(msg));
+      }
     } finally {
       setSubmitting(false);
     }
@@ -331,17 +357,27 @@ export const POSVendeur = () => {
     setSubmitting(true);
     setError(null);
     setSuccess(null);
+    const payload = {
+      idempotencyKey: newSaleId(),
+      clientId: selectedClientId || undefined,
+      methodePaiement: paymentMethod,
+      lignes: panier.map(l => ({
+        produitId: l.produitId,
+        quantite: l.quantite,
+        prixUnitaire: l.prix,
+        motifRemise: (l.motifRemise || '').trim() || undefined,
+      })),
+    };
     try {
-      await bonVenteApi.create({
-        clientId: selectedClientId || undefined,
-        methodePaiement: paymentMethod,
-        lignes: panier.map(l => ({
-          produitId: l.produitId,
-          quantite: l.quantite,
-          prixUnitaire: l.prix,
-          motifRemise: (l.motifRemise || '').trim() || undefined,
-        })),
-      });
+      if (!navigator.onLine) {
+        await enqueueBon(payload);
+        setSuccess('Bon conservé hors ligne — envoi automatique au retour du réseau.');
+        setPanier([]);
+        setSelectedClientId('');
+        setPaymentMethod('ESPECES');
+        return;
+      }
+      await bonVenteApi.create(payload);
       setSuccess('Bon envoyé à la caissière.');
       setPanier([]);
       setSelectedClientId('');
@@ -351,8 +387,14 @@ export const POSVendeur = () => {
       setActiveTab('vente');
       setTimeout(() => searchInputRef.current?.focus(), 0);
     } catch (e: any) {
-      const msg = e?.response?.data?.message || e?.message || 'Erreur inconnue';
-      setError(Array.isArray(msg) ? msg.join(', ') : String(msg));
+      if (!e?.response) {
+        await enqueueBon(payload);
+        setPanier([]);
+        setSuccess('Connexion interrompue — bon conservé localement.');
+      } else {
+        const msg = e?.response?.data?.message || e?.message || 'Erreur inconnue';
+        setError(Array.isArray(msg) ? msg.join(', ') : String(msg));
+      }
     } finally {
       setSubmitting(false);
     }

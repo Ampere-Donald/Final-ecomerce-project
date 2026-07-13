@@ -41,6 +41,7 @@ const Primes = lazy(() => import('./components/Primes').then((m) => ({ default: 
 const Paie = lazy(() => import('./components/Paie').then((m) => ({ default: m.Paie })));
 const Proformas = lazy(() => import('./components/Proformas').then((m) => ({ default: m.Proformas })));
 const UserGuide = lazy(() => import('./components/UserGuide').then((m) => ({ default: m.UserGuide })));
+const OfflineQueuePage = lazy(() => import('./components/OfflineQueuePage').then((m) => ({ default: m.OfflineQueuePage })));
 
 const RouteFallback = () => (
   <div className="flex min-h-[40vh] items-center justify-center text-sm font-semibold text-slate-500">
@@ -99,6 +100,7 @@ export default function App() {
 
             <Route path="employes" element={<RoleProtectedRoute allowedRoles={['SUPER_ADMIN']}><Employes /></RoleProtectedRoute>} />
             <Route path="guide" element={<UserGuide />} />
+            <Route path="offline-queue" element={<RoleProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN', 'CAISSIER', 'VENDEUR']}><OfflineQueuePage /></RoleProtectedRoute>} />
             <Route path="settings" element={<Settings />} />
           </Route>
         </Routes>

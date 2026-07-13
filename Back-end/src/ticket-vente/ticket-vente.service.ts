@@ -42,6 +42,13 @@ export class TicketVenteService {
    * Vérifie le stock des produits et fige les prix actuels.
    */
   async create(vendeurId: string, dto: CreateTicketDto) {
+    if (dto.idempotencyKey) {
+      const existing = await this.db.ticketVente.findUnique({
+        where: { idempotencyKey: dto.idempotencyKey },
+        include: { lignes: true },
+      });
+      if (existing) return existing;
+    }
     if (!dto.lignes || dto.lignes.length === 0) {
       throw new BadRequestException('Le ticket doit contenir au moins une ligne.');
     }
@@ -122,6 +129,7 @@ export class TicketVenteService {
     const ticket = await this.db.ticketVente.create({
       data: {
         numeroTicket,
+        idempotencyKey: dto.idempotencyKey,
         vendeurId,
         clientId: dto.clientId ?? null,
         nomClient: dto.nomClient ?? null,

@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { venteApi, produitApi, clientApi, categorieApi } from '../services/api';
 import { FactureVirtuelleModal } from './FactureVirtuelleModal';
 import { ReceiptGenerator } from './ReceiptGenerator';
+import { enqueueSale, newSaleId, OFFLINE_SYNC_COMPLETED_EVENT } from '../services/offlineSalesQueue';
 
 /* ── Types ─────────────────────────────────────────────────────── */
 interface CartItem {
@@ -112,6 +113,13 @@ export const Ventes = () => {
   }, []);
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
+
+  useEffect(() => {
+    const handleSynchronizedSale = () => void fetchAll();
+    window.addEventListener(OFFLINE_SYNC_COMPLETED_EVENT, handleSynchronizedSale);
+    return () => window.removeEventListener(OFFLINE_SYNC_COMPLETED_EVENT, handleSynchronizedSale);
+  }, [fetchAll]);
+
 
   /* ═══ POS LOGIC ═══════════════════════════════════════════════ */
   
@@ -344,17 +352,27 @@ export const Ventes = () => {
     if (cart.length === 0) return;
     setSubmitting(true);
     setErrorMessage('');
+    const payload = {
+      idempotencyKey: newSaleId(),
+      clientId: selectedClientId || undefined,
+      montantTotal: cartTotal,
+      methodePaiement: paymentMethod,
+      lignesVente: cart.map(c => ({
+        produitId: c.produitId,
+        quantite: c.quantite,
+        prixUnitaire: c.prixUnitaire,
+      })),
+    };
     try {
-      const payload = {
-        clientId: selectedClientId || undefined,
-        montantTotal: cartTotal,
-        methodePaiement: paymentMethod,
-        lignesVente: cart.map(c => ({
-          produitId: c.produitId,
-          quantite: c.quantite,
-          prixUnitaire: c.prixUnitaire,
-        })),
-      };
+      if (!navigator.onLine) {
+        await enqueueSale(payload);
+        setCart([]);
+        setSelectedClientId('');
+        setClientSearch('');
+        setSuccessMessage('Vente enregistrée hors ligne — synchronisation automatique au retour du réseau.');
+        setTimeout(() => searchInputRef.current?.focus(), 0);
+        return;
+      }
       const result = await venteApi.create(payload);
       // Determine receipt type from client
       const client = selectedClientId ? clients.find(c => c.id === selectedClientId) : null;
@@ -389,7 +407,13 @@ export const Ventes = () => {
       }
       if (ventesRes.status === 'fulfilled') setVentes(ventesRes.value);
     } catch (err: any) {
-      setErrorMessage(err.response?.data?.message || 'Erreur lors de la vente');
+      if (!err?.response) {
+        await enqueueSale(payload);
+        setCart([]);
+        setSuccessMessage('Connexion interrompue — vente conservée pour synchronisation.');
+      } else {
+        setErrorMessage(err.response?.data?.message || 'Erreur lors de la vente');
+      }
     } finally {
       setSubmitting(false);
     }

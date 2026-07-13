@@ -34,6 +34,10 @@ export class LigneTicketDto {
 export class CreateTicketDto {
   @IsOptional()
   @IsUUID()
+  idempotencyKey?: string;
+
+  @IsOptional()
+  @IsUUID()
   clientId?: string;
 
   @IsOptional()

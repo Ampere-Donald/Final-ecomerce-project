@@ -19,7 +19,15 @@ export class VenteService {
   ) {}
 
   async create(createVenteDto: CreateVenteDto, actor?: NotificationActor) {
-    const { lignesVente, ...venteData } = createVenteDto;
+    const { lignesVente, idempotencyKey, ...venteData } = createVenteDto;
+
+    if (idempotencyKey) {
+      const existing = await this.db.vente.findUnique({
+        where: { idempotencyKey },
+        include: { client: true, facture: true, lignesVente: { include: { produit: true } } },
+      });
+      if (existing) return existing;
+    }
 
     // Filet de sécurité : bornes de prix selon le rôle de l'acteur (si connu)
     const acteur = actor
@@ -70,6 +78,7 @@ export class VenteService {
       const vente = await tx.vente.create({
         data: {
           ...venteData,
+          idempotencyKey,
           vendeurId: actor?.id,
           lignesVente: {
             create: lignesVente.map((ligne) => {
