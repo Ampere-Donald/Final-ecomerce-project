@@ -7,6 +7,7 @@ import { AdminLogin } from './components/AdminLogin';
 import { Layout } from './components/Layout';
 import { ToastProvider } from './components/ui/Toast';
 import { FVAlertPopup } from './components/FVAlertPopup';
+import { AppErrorBoundary } from './components/AppErrorBoundary';
 
 const Dashboard = lazy(() => import('./components/Dashboard').then((m) => ({ default: m.Dashboard })));
 const Orders = lazy(() => import('./components/Orders').then((m) => ({ default: m.Orders })));
@@ -51,6 +52,7 @@ const RouteFallback = () => (
 
 export default function App() {
   return (
+    <AppErrorBoundary>
     <BrowserRouter>
       <AdminAuthProvider>
         <ToastProvider>
@@ -109,5 +111,6 @@ export default function App() {
         </ToastProvider>
       </AdminAuthProvider>
     </BrowserRouter>
+    </AppErrorBoundary>
   );
 }

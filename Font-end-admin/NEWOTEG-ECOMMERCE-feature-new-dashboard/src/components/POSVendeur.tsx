@@ -964,7 +964,7 @@ export const POSVendeur = () => {
 
         {/* Barre mobile admin */}
         {panier.length > 0 && (
-          <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-slate-200 shadow-[0_-4px_12px_rgba(0,0,0,0.08)] px-4 py-3">
+          <div className="mobile-safe-bottom lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-slate-200 shadow-[0_-4px_12px_rgba(0,0,0,0.08)] px-4 pt-3">
             <button onClick={() => setPanierMobileOpen(true)}
               className="w-full flex items-center justify-between gap-3 px-4 py-3 bg-primary text-white font-bold rounded-xl">
               <span className="flex items-center gap-2"><ShoppingCart size={18} />{panier.length} article{panier.length > 1 ? 's' : ''}</span>
@@ -1096,7 +1096,7 @@ export const POSVendeur = () => {
 
       {/* Barre mobile vendeur */}
       {activeTab === 'vente' && panier.length > 0 && (
-        <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-slate-200 shadow-[0_-4px_12px_rgba(0,0,0,0.08)] px-4 py-3">
+        <div className="mobile-safe-bottom lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-slate-200 shadow-[0_-4px_12px_rgba(0,0,0,0.08)] px-4 pt-3">
           <button onClick={() => setPanierMobileOpen(true)}
             className="w-full flex items-center justify-between gap-3 px-4 py-3 bg-primary text-white font-bold rounded-xl">
             <span className="flex items-center gap-2"><ShoppingCart size={18} />{panier.length} article{panier.length > 1 ? 's' : ''}</span>

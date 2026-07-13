@@ -13,7 +13,9 @@
 | 4 — Performance | Terminée | Builds mesurés et lint client propre |
 | 5 — Caisse Express | Terminée | Raccourcis, retour scanner et impression automatique |
 | 6 — Hors ligne | Terminée | IndexedDB, idempotence backend et écran de contrôle |
-| 7 à 10 | À exécuter | Voir plan directeur |
+| 7 — Design system et UX mobile | Terminée | Tokens, accessibilité, zones tactiles et récupération d’erreur |
+| 8 — Tableau de bord actionnable | Terminée | Alertes reliées aux écrans de résolution et KPI documentés |
+| 9 à 10 | À exécuter | Voir plan directeur |
 
 ## Résultats mesurés
 
@@ -58,6 +60,9 @@
 - file persistante IndexedDB pour ventes, bons et tickets hors ligne ;
 - identifiants idempotents contrôlés par des index uniques en base ;
 - synchronisation automatique au retour du réseau et écran de traitement des conflits.
+- design system sémantique, focus clavier et cibles tactiles de 44 px ;
+- actions de caisse mobiles compatibles avec la zone sûre Android ;
+- tableau de bord relié à la caisse, aux tickets, au stock, au hors-ligne et à l’impression.
 
 ## Validation externe encore nécessaire
 

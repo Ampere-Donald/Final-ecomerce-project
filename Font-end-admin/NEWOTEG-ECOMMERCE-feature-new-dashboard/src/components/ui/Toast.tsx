@@ -1,4 +1,4 @@
-import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { CheckCircle2, AlertCircle, Info, AlertTriangle, X } from 'lucide-react';
 
@@ -66,18 +66,18 @@ export const ToastProvider = ({ children }: { children: React.ReactNode }) => {
     [remove],
   );
 
-  const api: ToastContextValue = {
+  const api = useMemo<ToastContextValue>(() => ({
     show,
     success: (m, d) => show(m, 'success', d),
     error: (m, d) => show(m, 'error', d ?? 6000),
     info: (m, d) => show(m, 'info', d),
     warning: (m, d) => show(m, 'warning', d ?? 5000),
-  };
+  }), [show]);
 
   return (
     <ToastContext.Provider value={api}>
       {children}
-      <div className="fixed top-4 right-4 z-[100] flex flex-col gap-2 pointer-events-none">
+      <div className="pointer-events-none fixed inset-x-3 top-3 z-[100] flex flex-col gap-2 sm:inset-x-auto sm:right-4 sm:top-4" aria-live="polite" aria-atomic="true">
         <AnimatePresence>
           {toasts.map((t) => {
             const s = styles[t.type];
@@ -93,7 +93,9 @@ export const ToastProvider = ({ children }: { children: React.ReactNode }) => {
                 <Icon size={18} className="flex-shrink-0 mt-0.5" />
                 <p className="flex-1 text-sm font-medium">{t.message}</p>
                 <button
+                  type="button"
                   onClick={() => remove(t.id)}
+                  aria-label="Fermer la notification"
                   className="opacity-60 hover:opacity-100 transition-opacity"
                 >
                   <X size={14} />
