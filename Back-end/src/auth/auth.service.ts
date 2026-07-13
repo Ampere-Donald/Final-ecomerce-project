@@ -12,6 +12,7 @@ import { LoginDto } from './dto/login.dto';
 import * as bcrypt from 'bcrypt';
 import { randomInt } from 'crypto';
 import { OAuth2Client } from 'google-auth-library';
+import { MailService } from './mail.service';
 
 const googleClient = new OAuth2Client();
 
@@ -20,6 +21,7 @@ export class AuthService {
   constructor(
     private readonly db: DatabaseService,
     private readonly jwt: JwtService,
+    private readonly mail: MailService,
   ) {}
 
   /* ── helpers ────────────────────────────────────────────── */
@@ -199,10 +201,7 @@ export class AuthService {
       data: { otpCode: hashedOtp, otpExpiresAt: this.otpExpiry() },
     });
 
-    // TODO: Send OTP via email (SMTP). For now logged to console in dev only.
-    if (process.env.NODE_ENV !== 'production') {
-      console.log(`[DEV ONLY] OTP for ${email}: ${otp}`);
-    }
+    await this.mail.sendOtpEmail(email, otp, client.nom);
     return {
       message: 'Un code de réinitialisation a été envoyé à votre adresse email.',
     };

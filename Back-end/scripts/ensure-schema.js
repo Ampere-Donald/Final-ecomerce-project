@@ -26,6 +26,7 @@ const SQL_STATEMENTS = [
   `ALTER TABLE "admin_user" ADD COLUMN IF NOT EXISTS "created_by" TEXT;`,
   `ALTER TABLE "admin_user" ADD COLUMN IF NOT EXISTS "failed_login_attempts" INTEGER NOT NULL DEFAULT 0;`,
   `ALTER TABLE "admin_user" ADD COLUMN IF NOT EXISTS "locked_until" TIMESTAMP(3);`,
+  `ALTER TABLE "admin_user" ADD COLUMN IF NOT EXISTS "session_version" INTEGER NOT NULL DEFAULT 0;`,
   `ALTER TABLE "admin_user" ALTER COLUMN "mot_de_passe" DROP NOT NULL;`,
   `WITH candidates AS (
     SELECT
@@ -178,8 +179,8 @@ const SQL_STATEMENTS = [
   `CREATE TABLE IF NOT EXISTS "document_sequence" (
     "id" TEXT NOT NULL,
     "type" VARCHAR(30) NOT NULL,
-    "period" VARCHAR(20) NOT NULL,
-    "value" INTEGER NOT NULL DEFAULT 0,
+    "period" VARCHAR(10) NOT NULL,
+    "next_value" INTEGER NOT NULL DEFAULT 1,
     "updated_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT "document_sequence_pkey" PRIMARY KEY ("id")
   );`,

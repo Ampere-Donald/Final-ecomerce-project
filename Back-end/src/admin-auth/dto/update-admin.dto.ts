@@ -46,7 +46,13 @@ export class UpdateAdminDto {
 
 export class ResetPasswordDto {
   @IsString()
+  @MinLength(8)
   newPassword: string;
+}
+
+export class ChangeRoleDto {
+  @IsEnum(AdminRole)
+  role: AdminRole;
 }
 
 export class ChangePasswordDto {

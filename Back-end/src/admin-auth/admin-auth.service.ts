@@ -115,7 +115,7 @@ export class AdminAuthService {
     const hashed = await bcrypt.hash(newPassword, 12);
     await this.db.adminUser.update({
       where: { id: adminId },
-      data: { motDePasse: hashed },
+      data: { motDePasse: hashed, sessionVersion: { increment: 1 } },
     });
     await this.activityLog.log(admin.id, 'PASSWORD_CHANGED');
 
@@ -200,6 +200,9 @@ export class AdminAuthService {
       data.pinCode = await bcrypt.hash(dto.pin, 10);
       delete data.pin;
     }
+    if (dto.motDePasse || dto.pin || dto.role || dto.isActive !== undefined) {
+      data.sessionVersion = { increment: 1 };
+    }
 
     const roleChanged = dto.role && dto.role !== admin.role;
     const updated = await this.db.$transaction(async (tx) => {
@@ -237,7 +240,7 @@ export class AdminAuthService {
     const hashed = await bcrypt.hash(newPassword, 12);
     await this.db.adminUser.update({
       where: { id },
-      data: { motDePasse: hashed },
+      data: { motDePasse: hashed, sessionVersion: { increment: 1 } },
     });
 
     this.logger.log(`Password reset for ${admin.username} by ${actor.nom}`);
@@ -256,7 +259,7 @@ export class AdminAuthService {
 
     const updated = await this.db.adminUser.update({
       where: { id },
-      data: { isActive: !admin.isActive },
+      data: { isActive: !admin.isActive, sessionVersion: { increment: 1 } },
     });
 
     this.logger.log(
@@ -294,7 +297,7 @@ export class AdminAuthService {
     if (!admin) throw new NotFoundException('Employe introuvable');
     return this.db.adminUser.update({
       where: { id },
-      data: { role },
+      data: { role, sessionVersion: { increment: 1 } },
       select: { id: true, nom: true, email: true, role: true, isActive: true },
     });
   }
@@ -314,6 +317,15 @@ export class AdminAuthService {
     await this.notifications.create('COMPTE_SUPPRIME', `Compte ${admin.nom} (${admin.role}) supprime`, actor);
 
     return { message: 'Compte supprime' };
+  }
+
+  async revokeSessions(adminId: string) {
+    await this.db.adminUser.update({
+      where: { id: adminId },
+      data: { sessionVersion: { increment: 1 } },
+    });
+    await this.activityLog.log(adminId, 'SESSIONS_REVOKED');
+    return { message: 'Toutes les sessions ont ete revoquees' };
   }
 
   private async findByUsernameOrEmail(usernameOrEmail: string) {
@@ -366,6 +378,7 @@ export class AdminAuthService {
       role: admin.role,
       nom: admin.nom,
       type: 'admin',
+      sessionVersion: admin.sessionVersion,
     };
     const accessToken = this.jwt.sign(payload, { expiresIn: expiresIn as any });
     return {

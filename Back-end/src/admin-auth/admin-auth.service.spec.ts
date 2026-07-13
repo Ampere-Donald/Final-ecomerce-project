@@ -26,6 +26,7 @@ describe('AdminAuthService login security', () => {
       pinCode: 'pin-hash',
       failedLoginAttempts: 0,
       lockedUntil: null,
+      sessionVersion: 0,
       peutVendreSousDemiGros: false,
       photoUrl: null,
       lastLoginAt: null,
@@ -89,6 +90,24 @@ describe('AdminAuthService login security', () => {
     expect(db.adminUser.update).toHaveBeenCalledWith({
       where: { id: admin.id },
       data: expect.objectContaining({ failedLoginAttempts: 0, lockedUntil: null }),
+    });
+  });
+
+  it('inclut la version de session dans le JWT', async () => {
+    admin.sessionVersion = 7;
+    compareMock.mockResolvedValue(true);
+    await service.loginWithPassword('caissier', 'correct');
+    expect((service as any).jwt.sign).toHaveBeenCalledWith(
+      expect.objectContaining({ sessionVersion: 7 }),
+      expect.any(Object),
+    );
+  });
+
+  it('revoque toutes les sessions en incrementant leur version', async () => {
+    await service.revokeSessions(admin.id);
+    expect(db.adminUser.update).toHaveBeenCalledWith({
+      where: { id: admin.id },
+      data: { sessionVersion: { increment: 1 } },
     });
   });
 });
