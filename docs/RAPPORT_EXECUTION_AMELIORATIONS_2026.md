@@ -23,8 +23,8 @@
 ### Panneau admin
 
 - Bundle initial moderne avant découpage : environ **2,57 Mo**.
-- Bundle initial moderne après découpage : environ **483 Ko**.
-- Réduction du bundle initial : environ **81 %**.
+- Bundle initial moderne après découpage et diagnostic QZ : environ **502 Ko**.
+- Réduction du bundle initial : environ **80 %**.
 - Temps de build observé avant : **2 min 54 s**.
 - Temps de build après : environ **1 min 31 s**.
 - Précache PWA avant optimisation : environ **8,11 Mo**.
@@ -44,6 +44,7 @@
 - Suites de tests : **21 réussies**.
 - Tests : **104 réussis**.
 - Tests hors ligne frontend : **5 réussis**.
+- Tests des statuts d’impression : **6 réussis**.
 
 ## Fonctions livrées à ce stade
 
@@ -57,6 +58,8 @@
 - annulation de vente traçable avec restitution du stock ;
 - remboursement client distinct de l’annulation, avec sortie de caisse et mouvement de stock RETOUR atomiques ;
 - diagnostic Epson TM-T20II et ticket de test ;
+- interrogation des statuts Winspool via QZ avant impression (papier, hors ligne, file bloquée) ;
+- assistant de recette boutique avec rapport JSON/Markdown qui ne marque jamais automatiquement un contrôle physique comme réussi ;
 - journal central des impressions : original, duplicata, échec, poste, utilisateur et imprimante ;
 - routes admin et client chargées à la demande ;
 - modules lourds PWA chargés et mis en cache à la demande ;
@@ -78,6 +81,7 @@
 - diagnostics d’impression et de synchronisation centralisés sans panier, client, montant, PIN, jeton ou mot de passe ;
 - configuration Android d’un poste QZ distant avec reconnexion et diagnostic sécurisé ;
 - guide de certificat, pare-feu, IP fixe et recette Epson sur réseau local ;
+- politique TLS Android autorisant le certificat QZ installé par l’utilisateur sans activer HTTP/WS ;
 - assistant PowerShell administrateur pour installer un pilote `.inf`, préparer QZ et contrôler le poste ;
 - build PWA et synchronisation Capacitor validés ; compilation APK automatisée en CI avec Java 21 et Android SDK.
 

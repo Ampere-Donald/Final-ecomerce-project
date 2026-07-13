@@ -8,19 +8,27 @@ Cette architecture évite un pilote USB spécifique sur chaque téléphone. Le P
 
 ## 1. Préparer le PC boutique
 
-1. Installer le pilote Windows Epson TM-T20II.
-2. Vérifier une impression Windows et le papier thermique 58 mm.
-3. Installer QZ Tray et activer son lancement automatique.
+1. Installer le pilote Windows **Epson Advanced Printer Driver (APD)** compatible TM-T20II.
+2. Installer physiquement le guide papier 58 mm et régler la largeur 58 mm dans la mémoire de l’imprimante, puis vérifier une impression Windows. Epson précise que le retour à 80 mm n’est plus recommandé après utilisation en 58 mm : [guide technique officiel TM-T20II](https://download4.epson.biz/sec_pubs/bs/pdf/TM-T20II_trg_en_revG.pdf).
+3. Installer QZ Tray 2.2 ou plus récent ; cette version se lance normalement à l’ouverture de session Windows.
 4. Attribuer au PC une adresse IP locale fixe ou une réservation DHCP, par exemple `192.168.1.20`.
-5. Configurer QZ Tray en serveur d’impression selon le guide officiel.
+5. Régénérer le certificat QZ avec **exactement** cette IP ou ce nom DNS, puis relancer QZ Tray.
 6. Autoriser uniquement le port sécurisé WSS 8181 dans le pare-feu Windows sur le profil réseau privé.
 7. Limiter l’origine autorisée à `https://admin.newoteg.com` lorsque la configuration QZ le permet.
 
-QZ documente l’option de connexion distante `qz.websocket.connect({ host: "192.168.1.2" })`, les ports WSS sécurisés et l’installation du certificat sur Android : [guide officiel Print Server](https://qz.io/docs/print-server), [API WebSocket officielle](https://qz.io/api/qz.websocket), [options de sécurité QZ](https://qz.io/docs/command-line).
+QZ documente l’option de connexion distante `qz.websocket.connect({ host: "192.168.1.2" })`, la génération `certgen --host`, les ports WSS sécurisés et la copie de `root-ca.crt` : [guide officiel Print Server](https://qz.io/docs/print-server), [API WebSocket officielle](https://qz.io/api/qz.websocket), [déploiement QZ](https://qz.io/docs/deployment).
 
 ## 2. Installer le certificat sur Android
 
-Le site admin est en HTTPS ; Android doit donc établir une connexion WSS de confiance vers QZ. Suivre la partie Android du guide Print Server pour copier et installer le certificat généré par QZ.
+Le site admin est en HTTPS ; Android doit donc établir une connexion WSS de confiance vers QZ.
+
+1. Dans QZ Tray sur le PC : **Advanced > Troubleshooting/Diagnostics > Browse Shared Folder**.
+2. Copier `root-ca.crt` vers le téléphone par un moyen privé.
+3. Sur Android, ouvrir les réglages de sécurité et installer ce fichier comme **certificat d’autorité de certification (CA)**. Le libellé exact varie selon la marque du téléphone.
+4. Supprimer la copie téléchargée après l’installation.
+5. Ne conserver ce certificat que sur les appareils Newoteg autorisés.
+
+L’APK Newoteg déclare explicitement la confiance envers les autorités installées par l’utilisateur, exigée sur Android récent pour ce certificat local, tout en interdisant le trafic HTTP/WS non chiffré. La configuration suit le mécanisme Android officiel `Network Security Configuration` : [documentation Android](https://developer.android.com/privacy-and-security/security-config).
 
 Ne pas utiliser le port WS non chiffré 8182 et ne pas désactiver la vérification TLS dans l’application.
 
@@ -57,12 +65,33 @@ Un navigateur ou une APK ne peut pas installer silencieusement un pilote Windows
 
 ## Assistant Windows fourni
 
-Depuis la racine du projet, ouvrir PowerShell **en tant qu’administrateur** puis exécuter :
+Depuis la racine du projet, ouvrir PowerShell **en tant qu’administrateur** puis exécuter, en remplaçant l’IP par la réservation DHCP réelle du PC :
 
 ```powershell
 .\scripts\Install-NewotegPrintStation.ps1 `
   -EpsonDriverInf "C:\Pilotes\EpsonTM-T20II\driver.inf" `
-  -QzInstaller "C:\Installateurs\qz-tray.exe"
+  -QzInstaller "C:\Installateurs\qz-tray.exe" `
+  -SilentQzInstall `
+  -QzServerHost "192.168.1.20" `
+  -AllowPrivateQzPort
 ```
 
-Ajouter `-AllowPrivateQzPort` uniquement sur le PC qui doit recevoir les impressions Android par le réseau privé. Le script installe le `.inf` avec l’outil Windows officiel, lance QZ Tray, démarre le spooler si nécessaire et affiche le nom exact de l’imprimante détectée. Les fichiers Epson et QZ doivent être obtenus et vérifiés avant l’exécution ; ils ne sont pas intégrés à l’application.
+Le script installe le `.inf` avec l’outil Windows officiel, installe QZ silencieusement si demandé, génère le certificat pour l’hôte déclaré, lance QZ Tray, démarre le spooler et limite le port 8181 au profil privé et au sous-réseau local. Omettre `-SilentQzInstall` pour voir l’assistant QZ. Omettre les deux options réseau sur un poste qui imprime uniquement en local.
+
+Les fichiers Epson et QZ doivent être obtenus et vérifiés avant l’exécution ; ils ne sont pas intégrés à l’application. Un navigateur ou une APK ne peut pas franchir silencieusement la demande d’administration Windows.
+
+## Recette probante et rapport
+
+Sur le poste boutique, après installation et avec l’Epson branchée, lancer :
+
+```powershell
+.\scripts\Invoke-NewotegShopAcceptance.ps1 `
+  -ExpectedPrinterName "EPSON TM-T20II Receipt" `
+  -QzServerHost "192.168.1.20" `
+  -RequireRemotePrint `
+  -RunWindowsTestPage
+```
+
+Remplacer `EPSON TM-T20II Receipt` par le nom exact affiché par le premier script. La recette contrôle automatiquement le spooler, le pilote, la file, QZ, le démarrage déclaré, le réseau privé, le pare-feu, WSS 8181 et le certificat. Elle demande ensuite une confirmation explicite pour les observations physiques, le lecteur, le mode hors ligne, les rôles et l’affichage mobile, puis exige la durée chronométrée d’une vente standard. Elle produit un rapport Markdown et JSON dans `Documents\Newoteg-Recette` et renvoie un code non nul tant qu’un contrôle échoue ou reste non exécuté.
+
+Ne jamais éditer manuellement ce rapport pour transformer un échec en réussite. Après un changement d’IP du PC, régénérer le certificat, le réinstaller sur Android et refaire toute la recette.

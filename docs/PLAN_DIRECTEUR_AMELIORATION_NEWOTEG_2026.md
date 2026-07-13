@@ -1,8 +1,8 @@
 # Plan directeur d’amélioration de Newoteg
 
-**Version :** 1.0 — proposition à valider
+**Version :** 1.1 — suivi d’exécution du plan validé
 **Date :** 13 juillet 2026
-**Statut :** VALIDÉ — EXÉCUTION EN COURS
+**Statut :** VALIDÉ — LOGICIEL EXÉCUTÉ, RECETTE BOUTIQUE EN ATTENTE
 **Périmètre :** backend NestJS, site client React, panneau admin React/PWA, application Android Capacitor, caisse et impression Epson TM-T20II.
 
 ## 1. Objectif général
@@ -37,6 +37,7 @@ Le travail sera réalisé par phases. Une phase n’est terminée que lorsque se
 - QZ Tray est utilisé comme pont entre le navigateur et Windows.
 - Un écran de détection, sélection et test d’imprimante a été ajouté.
 - La configuration est prête à être testée sur un ordinateur de la boutique.
+- Un assistant de recette exporte les preuves automatiques et les confirmations physiques ; aucun résultat final ne sera déclaré sans ce rapport sur le poste réel.
 - L’impression silencieuse de production nécessite encore le déploiement QZ Tray et une stratégie de signature.
 
 ### Risques actuels majeurs

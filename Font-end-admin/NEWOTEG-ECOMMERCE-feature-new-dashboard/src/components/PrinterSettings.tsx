@@ -11,8 +11,10 @@ import {
 } from 'lucide-react';
 import { buildTicketEscPos } from '../services/ticketEscpos';
 import {
+  classifyPrinterError,
   getPrinterName,
   getPrinterHost,
+  inspectPrinterStatus,
   disconnect,
   isAndroidDevice,
   isPhysicalPrinter,
@@ -22,21 +24,22 @@ import {
   setPrinterName,
   setPrinterHost,
 } from '../services/qzPrinter';
+import type { PrinterReadiness } from '../services/printerStatus';
 import { getWorkstationName, setWorkstationName } from '../services/workstation';
 
 type DetectionState = 'checking' | 'ready' | 'bridge-missing' | 'no-printer' | 'mobile';
 type Feedback = { kind: 'success' | 'error'; text: string } | null;
 
 function friendlyConnectionError(error: unknown): string {
-  const message = error instanceof Error ? error.message : String(error);
-  if (/closed before|connect|socket|websocket|qz/i.test(message)) {
+  const diagnostic = classifyPrinterError(error);
+  if (diagnostic.code === 'QZ_UNAVAILABLE') {
     const host = getPrinterHost();
     if (host) {
       return `Impossible de joindre QZ Tray sur ${host}. Vérifiez le Wi-Fi, l’adresse du PC, le port WSS 8181 et le certificat QZ installé sur cet appareil.`;
     }
     return "QZ Tray n'est pas lancé sur cet ordinateur.";
   }
-  return message || "Le service d'impression local ne répond pas.";
+  return diagnostic.message;
 }
 
 export function PrinterSettings() {
@@ -48,9 +51,11 @@ export function PrinterSettings() {
   const [host, setHost] = useState(getPrinterHost());
   const [savingHost, setSavingHost] = useState(false);
   const [workstationName, setWorkstationNameValue] = useState(getWorkstationName());
+  const [readiness, setReadiness] = useState<PrinterReadiness | null>(null);
 
   const detect = useCallback(async () => {
     setFeedback(null);
+    setReadiness(null);
     if (isAndroidDevice() && !getPrinterHost()) {
       setState('mobile');
       return;
@@ -70,6 +75,7 @@ export function PrinterSettings() {
       const next = saved && detected.includes(saved) ? saved : epson || detected[0];
       setSelected(next);
       setPrinterName(next);
+      setReadiness(await inspectPrinterStatus(next));
       setState('ready');
     } catch (error) {
       setPrinters([]);
@@ -103,10 +109,16 @@ export function PrinterSettings() {
     void detect();
   }, [detect]);
 
-  const selectPrinter = (name: string) => {
+  const selectPrinter = async (name: string) => {
     setSelected(name);
     setPrinterName(name);
-    setFeedback({ kind: 'success', text: `Imprimante enregistrée : ${name}` });
+    setReadiness(null);
+    const current = await inspectPrinterStatus(name);
+    setReadiness(current);
+    setFeedback({
+      kind: current.state === 'PAPER_OUT' || current.state === 'QUEUE_BLOCKED' ? 'error' : 'success',
+      text: `${name} — ${current.message}`,
+    });
   };
 
   const testPrinter = async () => {
@@ -121,7 +133,14 @@ export function PrinterSettings() {
         methodePaiement: 'TEST',
         numero: 'DIAGNOSTIC',
       }));
-      setFeedback({ kind: 'success', text: 'Ticket de test envoyé à l’imprimante.' });
+      const current = await inspectPrinterStatus(selected);
+      setReadiness(current);
+      setFeedback({
+        kind: current.state === 'PAPER_OUT' || current.state === 'QUEUE_BLOCKED' ? 'error' : 'success',
+        text: current.state === 'PAPER_OUT' || current.state === 'QUEUE_BLOCKED'
+          ? current.message
+          : 'Ticket de test envoyé. Confirmez maintenant la sortie physique, la coupe et la lisibilité.',
+      });
     } catch (error) {
       setFeedback({ kind: 'error', text: friendlyConnectionError(error) });
     } finally {
@@ -130,7 +149,8 @@ export function PrinterSettings() {
   };
 
   const bridgeOk = state === 'ready' || state === 'no-printer';
-  const printerOk = state === 'ready';
+  const printerBlocked = readiness?.state === 'PAPER_OUT' || readiness?.state === 'QUEUE_BLOCKED';
+  const printerOk = state === 'ready' && readiness?.state === 'READY' && !printerBlocked;
 
   return (
     <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
@@ -191,7 +211,7 @@ export function PrinterSettings() {
           {[
             { label: 'Application', detail: 'Newoteg ouvert', ok: true, icon: MonitorCog },
             { label: 'Pont local', detail: bridgeOk ? 'QZ Tray actif' : 'À installer', ok: bridgeOk, icon: RefreshCw },
-            { label: 'Imprimante', detail: printerOk ? selected : 'Non détectée', ok: printerOk, icon: Printer },
+            { label: 'Imprimante', detail: state === 'ready' ? readiness?.message || selected : 'Non détectée', ok: printerOk, icon: Printer },
           ].map((step) => (
             <li key={step.label} className={`rounded-xl border p-4 ${step.ok ? 'border-emerald-200 bg-emerald-50' : 'border-amber-200 bg-amber-50'}`}>
               <div className="flex items-center gap-2">
@@ -246,7 +266,7 @@ export function PrinterSettings() {
           <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
             <label className="space-y-2 text-sm font-semibold text-slate-700">
               Imprimante utilisée pour les tickets
-              <select value={selected} onChange={(event) => selectPrinter(event.target.value)} className="block w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20">
+              <select value={selected} onChange={(event) => void selectPrinter(event.target.value)} className="block w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20">
                 {printers.map((printer) => <option key={printer} value={printer}>{printer}</option>)}
               </select>
             </label>

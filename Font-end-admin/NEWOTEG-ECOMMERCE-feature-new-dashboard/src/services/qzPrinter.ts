@@ -8,6 +8,11 @@
 // -----------------------------------------------------------------------------
 
 import qz from 'qz-tray';
+import {
+  evaluatePrinterStatus,
+  type PrinterReadiness,
+  type PrinterStatusEvent,
+} from './printerStatus';
 
 const PRINTER_CACHE_KEY = 'newoteg_printer_name';
 const PRINTER_HOST_KEY = 'newoteg_printer_host';
@@ -74,7 +79,13 @@ export async function connect(): Promise<void> {
       qz.websocket.setUsingSurf(false);
     }
     connecting = qz.websocket.connect(host
-      ? { host, usingSecure: true, retries: 1, delay: 1 }
+      ? {
+          host,
+          usingSecure: true,
+          port: { secure: [8181], insecure: [] },
+          retries: 1,
+          delay: 1,
+        }
       : undefined).finally(() => {
       connecting = null;
     });
@@ -143,6 +154,37 @@ export async function listPrinters(): Promise<string[]> {
   return typeof result === 'string' && result ? [result] : [];
 }
 
+// QZ 2.1+ traduit les statuts Winspool (papier, hors-ligne, file en pause).
+// L'absence de statut n'est pas considérée comme un échec : certains pilotes
+// anciens ne publient rien, et le ticket physique de diagnostic reste l'arbitre.
+export async function inspectPrinterStatus(
+  printerName: string,
+  waitMs = 450,
+): Promise<PrinterReadiness> {
+  await connect();
+  const events: PrinterStatusEvent[] = [];
+  qz.printers.setPrinterCallbacks((event: PrinterStatusEvent) => {
+    if (!event.printerName || event.printerName === printerName) events.push(event);
+  });
+
+  try {
+    await qz.printers.startListening(printerName);
+    await qz.printers.getStatus();
+    await new Promise((resolve) => window.setTimeout(resolve, waitMs));
+    return evaluatePrinterStatus(events);
+  } catch {
+    return evaluatePrinterStatus(events);
+  } finally {
+    try {
+      await qz.printers.stopListening();
+    } catch {
+      // Le diagnostic ne doit pas empêcher une impression si le pilote ne
+      // prend pas en charge l'écoute des statuts.
+    }
+    qz.printers.setPrinterCallbacks([]);
+  }
+}
+
 export function isPhysicalPrinter(name: string): boolean {
   return !/pdf|xps|onenote|fax|document writer|print to file/i.test(name);
 }
@@ -166,6 +208,10 @@ function uint8ToBase64(bytes: Uint8Array): string {
 export async function printRaw(bytes: Uint8Array): Promise<string> {
   await connect();
   const printer = await resolvePrinter();
+  const readiness = await inspectPrinterStatus(printer);
+  if (readiness.state === 'PAPER_OUT' || readiness.state === 'QUEUE_BLOCKED') {
+    throw new Error(readiness.message);
+  }
   const cfg = qz.configs.create(printer);
   const data = [{ type: 'raw', format: 'command', flavor: 'base64', data: uint8ToBase64(bytes) }];
   await qz.print(cfg, data);
