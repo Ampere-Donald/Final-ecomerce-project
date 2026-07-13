@@ -43,6 +43,7 @@ export const Ventes = () => {
 
   // ── Shared data ──
   const [produits, setProduits] = useState<any[]>([]);
+  const [totalProducts, setTotalProducts] = useState(0);
   const [categories, setCategories] = useState<any[]>([]);
   const [clients, setClients] = useState<any[]>([]);
   const [ventes, setVentes] = useState<any[]>([]);
@@ -62,6 +63,7 @@ export const Ventes = () => {
   const PRODUCTS_PER_PAGE = 60;
   const searchInputRef = useRef<HTMLInputElement>(null);
   const suggestionsRef = useRef<HTMLDivElement>(null);
+  const productsRequestRef = useRef(0);
 
   const [cart, setCart] = useState<CartItem[]>([]);
   const [paymentMethod, setPaymentMethod] = useState('ESPECES');
@@ -91,71 +93,57 @@ export const Ventes = () => {
   const fetchAll = useCallback(async () => {
     setLoading(true);
     const results = await Promise.allSettled([
-      produitApi.getAll(),
       categorieApi.getAll(),
       clientApi.getAll(),
       venteApi.getAll(),
     ]);
-    if (results[0].status === 'fulfilled') {
-      const rawProduits = results[0].value;
-      // Enrich products with category info
-      const cats = results[1].status === 'fulfilled' ? results[1].value : [];
-      const enriched = rawProduits.map(p => ({
-        ...p,
-        categorie: cats.find((c: any) => c.id === p.categorieId) || null,
-      }));
-      setProduits(enriched);
-    }
-    if (results[1].status === 'fulfilled') setCategories(results[1].value);
-    if (results[2].status === 'fulfilled') setClients(results[2].value);
-    if (results[3].status === 'fulfilled') setVentes(results[3].value);
+    if (results[0].status === 'fulfilled') setCategories(results[0].value);
+    if (results[1].status === 'fulfilled') setClients(results[1].value);
+    if (results[2].status === 'fulfilled') setVentes(results[2].value);
     setLoading(false);
   }, []);
+
+  const loadProducts = useCallback(async () => {
+    const requestId = ++productsRequestRef.current;
+    try {
+      const response = await produitApi.list({
+        page: currentPage,
+        limit: PRODUCTS_PER_PAGE,
+        search: productSearch.trim() || undefined,
+        categoryId: selectedCategoryId || undefined,
+        inStock: inStockOnly || undefined,
+      });
+      if (requestId !== productsRequestRef.current) return;
+      setProduits(Array.isArray(response?.data) ? response.data : []);
+      setTotalProducts(Number(response?.meta?.total) || 0);
+    } catch {
+      if (requestId === productsRequestRef.current) {
+        setProduits([]);
+        setTotalProducts(0);
+      }
+    }
+  }, [currentPage, inStockOnly, productSearch, selectedCategoryId]);
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
 
   useEffect(() => {
-    const handleSynchronizedSale = () => void fetchAll();
+    const timer = window.setTimeout(() => { void loadProducts(); }, 250);
+    return () => window.clearTimeout(timer);
+  }, [loadProducts]);
+
+  useEffect(() => {
+    const handleSynchronizedSale = () => { void fetchAll(); void loadProducts(); };
     window.addEventListener(OFFLINE_SYNC_COMPLETED_EVENT, handleSynchronizedSale);
     return () => window.removeEventListener(OFFLINE_SYNC_COMPLETED_EVENT, handleSynchronizedSale);
-  }, [fetchAll]);
+  }, [fetchAll, loadProducts]);
 
 
   /* ═══ POS LOGIC ═══════════════════════════════════════════════ */
   
   // Filter products without artificial limit - full catalog access
-  const filteredProducts = useMemo(() => {
-    let result = produits;
-    
-    // Search filter
-    if (productSearch.trim()) {
-      const term = productSearch.toLowerCase();
-      result = result.filter(p =>
-        p.nomProduit?.toLowerCase().includes(term) ||
-        p.marque?.toLowerCase().includes(term) ||
-        p.description?.toLowerCase().includes(term)
-      );
-    }
-    
-    // Category filter
-    if (selectedCategoryId) {
-      result = result.filter(p => p.categorieId === selectedCategoryId);
-    }
-    
-    // In stock filter
-    if (inStockOnly) {
-      result = result.filter(p => (p.quantiteStock ?? 0) > 0);
-    }
-    
-    return result;
-  }, [produits, productSearch, selectedCategoryId, inStockOnly]);
-
   // Pagination
-  const totalPages = Math.ceil(filteredProducts.length / PRODUCTS_PER_PAGE);
-  const paginatedProducts = useMemo(() => {
-    const start = (currentPage - 1) * PRODUCTS_PER_PAGE;
-    return filteredProducts.slice(start, start + PRODUCTS_PER_PAGE);
-  }, [filteredProducts, currentPage]);
+  const totalPages = Math.ceil(totalProducts / PRODUCTS_PER_PAGE);
+  const paginatedProducts = produits;
 
   // Reset to page 1 when filters change
   useEffect(() => {
@@ -395,16 +383,7 @@ export const Ventes = () => {
       setTimeout(() => setSuccessMessage(''), 8000);
       setTimeout(() => searchInputRef.current?.focus(), 0);
       // Refresh products (updated stock) and ventes
-      const [prodRes, ventesRes] = await Promise.allSettled([produitApi.getAll(), venteApi.getAll()]);
-      if (prodRes.status === 'fulfilled') {
-        // Re-enrich with current categories
-        const cats = categories.length > 0 ? categories : (await categorieApi.getAll());
-        const enriched = prodRes.value.map((p: any) => ({
-          ...p,
-          categorie: cats.find((c: any) => c.id === p.categorieId) || null,
-        }));
-        setProduits(enriched);
-      }
+      const [, ventesRes] = await Promise.allSettled([loadProducts(), venteApi.getAll()]);
       if (ventesRes.status === 'fulfilled') setVentes(ventesRes.value);
     } catch (err: any) {
       if (!err?.response) {
@@ -678,9 +657,9 @@ export const Ventes = () => {
             {!loading && (
               <div className="flex items-center justify-between text-xs text-slate-500">
                 <span>
-                  {filteredProducts.length === 0 
-                    ? 'Aucun produit' 
-                    : `${filteredProducts.length.toLocaleString()} produit${filteredProducts.length > 1 ? 's' : ''} trouvé${filteredProducts.length > 1 ? 's' : ''}`
+                  {totalProducts === 0
+                    ? 'Aucun produit'
+                    : `${totalProducts.toLocaleString()} produit${totalProducts > 1 ? 's' : ''} trouvé${totalProducts > 1 ? 's' : ''}`
                   }
                   {hasActiveFilters && ` (sur ${produits.length.toLocaleString()})`}
                 </span>
@@ -733,7 +712,7 @@ export const Ventes = () => {
                       </div>
                     );
                   })}
-                  {filteredProducts.length === 0 && (
+                  {totalProducts === 0 && (
                     <div className="col-span-full text-center py-8 text-slate-400">
                       <Package size={32} className="mx-auto mb-2 opacity-50" />
                       <p className="text-sm">Aucun produit trouvé</p>
