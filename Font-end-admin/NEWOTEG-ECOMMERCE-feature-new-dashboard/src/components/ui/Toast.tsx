@@ -9,14 +9,15 @@ interface Toast {
   type: ToastType;
   message: string;
   durationMs?: number;
+  dedupeKey?: string;
 }
 
 interface ToastContextValue {
-  show: (message: string, type?: ToastType, durationMs?: number) => void;
-  success: (message: string, durationMs?: number) => void;
-  error: (message: string, durationMs?: number) => void;
-  info: (message: string, durationMs?: number) => void;
-  warning: (message: string, durationMs?: number) => void;
+  show: (message: string, type?: ToastType, durationMs?: number, dedupeKey?: string) => void;
+  success: (message: string, durationMs?: number, dedupeKey?: string) => void;
+  error: (message: string, durationMs?: number, dedupeKey?: string) => void;
+  info: (message: string, durationMs?: number, dedupeKey?: string) => void;
+  warning: (message: string, durationMs?: number, dedupeKey?: string) => void;
 }
 
 const ToastContext = createContext<ToastContextValue | null>(null);
@@ -56,9 +57,12 @@ export const ToastProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   const show = useCallback(
-    (message: string, type: ToastType = 'info', durationMs = 4000) => {
+    (message: string, type: ToastType = 'info', durationMs = 4000, dedupeKey?: string) => {
       const id = `t-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-      setToasts((prev) => [...prev, { id, type, message, durationMs }]);
+      setToasts((prev) => [
+        ...prev.filter((toast) => !dedupeKey || toast.dedupeKey !== dedupeKey),
+        { id, type, message, durationMs, dedupeKey },
+      ].slice(-5));
       if (durationMs > 0) {
         setTimeout(() => remove(id), durationMs);
       }
@@ -68,10 +72,10 @@ export const ToastProvider = ({ children }: { children: React.ReactNode }) => {
 
   const api = useMemo<ToastContextValue>(() => ({
     show,
-    success: (m, d) => show(m, 'success', d),
-    error: (m, d) => show(m, 'error', d ?? 6000),
-    info: (m, d) => show(m, 'info', d),
-    warning: (m, d) => show(m, 'warning', d ?? 5000),
+    success: (m, d, key) => show(m, 'success', d, key),
+    error: (m, d, key) => show(m, 'error', d ?? 6000, key),
+    info: (m, d, key) => show(m, 'info', d, key),
+    warning: (m, d, key) => show(m, 'warning', d ?? 5000, key),
   }), [show]);
 
   return (

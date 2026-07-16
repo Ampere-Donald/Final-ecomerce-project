@@ -8,7 +8,7 @@ export const Layout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
-    <div className="flex min-h-screen bg-background-light">
+    <div className="flex h-screen overflow-hidden bg-background-light">
       <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
       {/* Overlay mobile pour fermer la sidebar */}
@@ -19,10 +19,10 @@ export const Layout = () => {
         />
       )}
 
-      <main className="flex-1 flex flex-col min-w-0">
+      <main className="flex h-screen flex-1 flex-col min-w-0 overflow-hidden">
         <Header onMenuClick={() => setSidebarOpen(prev => !prev)} />
         <OfflineSyncStatus />
-        <div className="flex-1 overflow-y-auto px-3 py-4 sm:px-5 md:p-8">
+        <div className="min-h-0 flex-1 overflow-y-auto px-3 py-4 sm:px-5 md:p-8">
           <div className="max-w-7xl mx-auto">
             <Outlet />
           </div>

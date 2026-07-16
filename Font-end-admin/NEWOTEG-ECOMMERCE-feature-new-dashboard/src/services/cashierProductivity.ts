@@ -15,6 +15,13 @@ export type SaleMetricSummary = {
 
 const suspendedKey = (scope: string) => `newoteg_suspended_carts_${scope}`;
 const metricsKey = (scope: string) => `newoteg_sale_metrics_${scope}`;
+const activeDraftKey = (scope: string) => `newoteg_active_cart_${scope}`;
+
+export type ActiveCartDraft<TItem, TContext> = {
+  updatedAt: string;
+  items: TItem[];
+  context: TContext;
+};
 
 function readJson<T>(key: string, fallback: T): T {
   try {
@@ -52,6 +59,38 @@ export function removeSuspendedCart<TItem, TContext>(
   const next = listSuspendedCarts<TItem, TContext>(scope).filter((entry) => entry.id !== id);
   localStorage.setItem(suspendedKey(scope), JSON.stringify(next));
   return next;
+}
+
+export function getActiveCartDraft<TItem, TContext>(
+  scope: string,
+): ActiveCartDraft<TItem, TContext> | null {
+  return readJson<ActiveCartDraft<TItem, TContext> | null>(activeDraftKey(scope), null);
+}
+
+export function saveActiveCartDraft<TItem, TContext>(
+  scope: string,
+  items: TItem[],
+  context: TContext,
+): ActiveCartDraft<TItem, TContext> {
+  const draft: ActiveCartDraft<TItem, TContext> = {
+    updatedAt: new Date().toISOString(),
+    items,
+    context,
+  };
+  try {
+    localStorage.setItem(activeDraftKey(scope), JSON.stringify(draft));
+  } catch {
+    // La vente reste utilisable même si le stockage local est indisponible ou plein.
+  }
+  return draft;
+}
+
+export function clearActiveCartDraft(scope: string): void {
+  try {
+    localStorage.removeItem(activeDraftKey(scope));
+  } catch {
+    // Aucun blocage de l'interface si le stockage local est indisponible.
+  }
 }
 
 export function getSaleMetricSummary(scope: string): SaleMetricSummary {

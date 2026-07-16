@@ -12,8 +12,14 @@ import { bonVenteApi, clientApi, produitApi, ticketApi, equivalenceApi, proforma
 import { useAdminAuth } from '../context/AdminAuthContext';
 import { can } from '../utils/permissions';
 import { ReceiptGenerator } from './ReceiptGenerator';
+import { useToast } from './ui/Toast';
 import { bornesPrix, classerBande, exigeMotif, BANDE_STYLE } from '../utils/pricing';
 import { enqueueBon, enqueueTicket, newSaleId, OFFLINE_SYNC_COMPLETED_EVENT } from '../services/offlineSalesQueue';
+import {
+  clearActiveCartDraft,
+  getActiveCartDraft,
+  saveActiveCartDraft,
+} from '../services/cashierProductivity';
 
 interface Produit {
   id: string;
@@ -49,6 +55,13 @@ interface PanierLigne {
   prixDetail?: number;
   cmupActuel?: number;
   motifRemise?: string;
+}
+
+interface PosDraftContext {
+  nomClient: string;
+  telephoneClient: string;
+  selectedClientId: string;
+  paymentMethod: string;
 }
 
 interface Bon {
@@ -105,27 +118,43 @@ const METHODES = [
 export const POSVendeur = () => {
   const { admin } = useAdminAuth();
   const navigate = useNavigate();
+  const toast = useToast();
   const isVendeur = admin?.role === 'VENDEUR';
+  const cartDraftScope = `pos_${admin?.id || admin?.username || admin?.role || 'anonymous'}`;
+  const initialDraftRef = useRef(
+    getActiveCartDraft<PanierLigne, PosDraftContext>(cartDraftScope),
+  );
+  const initialDraft = initialDraftRef.current;
 
   // ── Catalogue (commun) ─────────────────────────────────────────────────
   const [produits, setProduits] = useState<Produit[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const [panier, setPanier] = useState<PanierLigne[]>([]);
+  const [panier, setPanierState] = useState<PanierLigne[]>(() => initialDraft?.items || []);
+  const panierRef = useRef(panier);
+  const setPanier = useCallback((nextValue: React.SetStateAction<PanierLigne[]>) => {
+    const next = typeof nextValue === 'function'
+      ? (nextValue as (previous: PanierLigne[]) => PanierLigne[])(panierRef.current)
+      : nextValue;
+    panierRef.current = next;
+    setPanierState(next);
+  }, []);
   const [panierMobileOpen, setPanierMobileOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [proformaToPrint, setProformaToPrint] = useState<any | null>(null);
+  const [lastAddedProductId, setLastAddedProductId] = useState<string | null>(null);
+  const feedbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // ── Admin : client texte libre ─────────────────────────────────────────
-  const [nomClient, setNomClient] = useState('');
-  const [telephoneClient, setTelephoneClient] = useState('');
+  const [nomClient, setNomClient] = useState(initialDraft?.context.nomClient || '');
+  const [telephoneClient, setTelephoneClient] = useState(initialDraft?.context.telephoneClient || '');
 
   // ── Vendeur : client dropdown + paiement + bons en attente ────────────
   const [clients, setClients] = useState<Client[]>([]);
-  const [selectedClientId, setSelectedClientId] = useState('');
-  const [paymentMethod, setPaymentMethod] = useState('ESPECES');
+  const [selectedClientId, setSelectedClientId] = useState(initialDraft?.context.selectedClientId || '');
+  const [paymentMethod, setPaymentMethod] = useState(initialDraft?.context.paymentMethod || 'ESPECES');
   const [bonsEnAttente, setBonsEnAttente] = useState<Bon[]>([]);
   const [monScore, setMonScore] = useState(0);
   const [activeTab, setActiveTab] = useState<'vente' | 'enAttente'>('vente');
@@ -207,6 +236,29 @@ export const POSVendeur = () => {
   }, [loadCatalog, search]);
 
   useEffect(() => {
+    if (initialDraft?.items.length) {
+      toast.info(`Vente en cours restauree : ${initialDraft.items.reduce((sum, item) => sum + item.quantite, 0)} unite(s).`);
+    }
+  }, [initialDraft, toast]);
+
+  useEffect(() => {
+    if (panier.length === 0) {
+      clearActiveCartDraft(cartDraftScope);
+      return;
+    }
+    saveActiveCartDraft<PanierLigne, PosDraftContext>(cartDraftScope, panier, {
+      nomClient,
+      telephoneClient,
+      selectedClientId,
+      paymentMethod,
+    });
+  }, [cartDraftScope, nomClient, panier, paymentMethod, selectedClientId, telephoneClient]);
+
+  useEffect(() => () => {
+    if (feedbackTimerRef.current) clearTimeout(feedbackTimerRef.current);
+  }, []);
+
+  useEffect(() => {
     if (panier.length === 0) return;
     const warnBeforeLeaving = (event: BeforeUnloadEvent) => {
       event.preventDefault();
@@ -230,17 +282,24 @@ export const POSVendeur = () => {
     return produits.slice(0, 60);
   }, [produits]);
 
-  const ajouterAuPanier = (p: Produit) => {
-    if (p.quantiteStock <= 0) return;
-    setPanier(prev => {
-      const ex = prev.find(l => l.produitId === p.id);
-      // Number() force la conversion depuis Prisma Decimal → number JS
-      const prix = Number((p.prixPromo || null) ?? p.prixDetail ?? 0);
-      if (ex) {
-        if (ex.quantite >= p.quantiteStock) return prev;
-        return prev.map(l => l.produitId === p.id ? { ...l, quantite: l.quantite + 1 } : l);
-      }
-      return [...prev, {
+  const ajouterAuPanier = (p: Produit): boolean => {
+    if (p.quantiteStock <= 0) {
+      toast.error(`"${p.nomProduit}" est en rupture de stock.`, 5000, 'pos-cart-feedback');
+      return false;
+    }
+
+    const current = panierRef.current;
+    const existing = current.find(l => l.produitId === p.id);
+    if (existing && existing.quantite >= p.quantiteStock) {
+      toast.warning(`Stock maximal atteint pour "${p.nomProduit}" : ${p.quantiteStock} unite(s).`, 4000, 'pos-cart-feedback');
+      return false;
+    }
+
+    const prix = Number((p.prixPromo || null) ?? p.prixDetail ?? 0);
+    const nextQuantity = existing ? existing.quantite + 1 : 1;
+    const next = existing
+      ? current.map(l => l.produitId === p.id ? { ...l, quantite: nextQuantity } : l)
+      : [...current, {
         produitId: p.id,
         nomProduit: p.nomProduit,
         prix,
@@ -251,7 +310,14 @@ export const POSVendeur = () => {
         prixDetail: p.prixDetail,
         cmupActuel: p.cmupActuel,
       }];
-    });
+
+    setPanier(next);
+    setError(null);
+    setLastAddedProductId(p.id);
+    if (feedbackTimerRef.current) clearTimeout(feedbackTimerRef.current);
+    feedbackTimerRef.current = setTimeout(() => setLastAddedProductId(null), 700);
+    toast.success(`"${p.nomProduit}" ajoute au panier — quantite : ${nextQuantity}.`, 1800, 'pos-cart-feedback');
+    return true;
   };
 
   // ── Prix variable par bornes (le serveur reste l'autorité) ─────────────
@@ -329,6 +395,7 @@ export const POSVendeur = () => {
   const retirerLigne = (produitId: string) => setPanier(prev => prev.filter(l => l.produitId !== produitId));
 
   const total = useMemo(() => panier.reduce((acc, l) => acc + l.prix * l.quantite, 0), [panier]);
+  const totalUnits = useMemo(() => panier.reduce((acc, l) => acc + l.quantite, 0), [panier]);
 
   // ── Envoi ADMIN (ancien flux ticketApi) ───────────────────────────────
   const envoyerAdmin = async () => {
@@ -515,13 +582,13 @@ export const POSVendeur = () => {
     setError(null);
     try {
       const p: any = await produitApi.findByCode(cf, c);
-      ajouterAuPanier(p as Produit);
-      setSuccess(`"${p.nomProduit}" ajouté au panier.`);
-      setCodeSearchFamille('');
-      setCodeSearchCode('');
-      setTimeout(() => setSuccess(null), 2500);
+      if (ajouterAuPanier(p as Produit)) {
+        setCodeSearchFamille('');
+        setCodeSearchCode('');
+      }
     } catch {
       setError(`Produit introuvable : famille "${cf}" / code "${c}"`);
+      toast.error(`Produit introuvable : famille "${cf}" / code "${c}".`);
     } finally {
       setCodeSearchLoading(false);
     }
@@ -542,15 +609,15 @@ export const POSVendeur = () => {
       const p: any = await produitApi.findByRawScan(raw);
       if (p.quantiteStock <= 0) {
         setError(`"${p.nomProduit}" est en rupture de stock.`);
+        toast.error(`"${p.nomProduit}" est en rupture de stock.`);
         return;
       }
       ajouterAuPanier(p as Produit);
-      setSuccess(`"${p.nomProduit}" ajouté au panier.`);
-      setTimeout(() => setSuccess(null), 2500);
     } catch {
       setError(`Produit introuvable pour le code-barres "${raw}".`);
+      toast.error(`Produit introuvable pour le code-barres "${raw}".`);
     }
-  }, [stopScan]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [stopScan, toast]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const startScan = useCallback(async () => {
     setScanError(null);
@@ -650,6 +717,8 @@ export const POSVendeur = () => {
   const renderProduit = (p: Produit) => {
     const prix = Number((p.prixPromo || null) ?? p.prixDetail ?? 0);
     const enRupture = p.quantiteStock <= 0;
+    const lignePanier = panier.find(l => l.produitId === p.id);
+    const justAdded = lastAddedProductId === p.id;
     const equivalenceEligible = isEquivalenceEligibleProduct(p);
     const img = resolveImgUrl(p.imageUrl);
     const contenu = (
@@ -679,7 +748,17 @@ export const POSVendeur = () => {
     );
     return (
       <button key={p.id} onClick={() => ajouterAuPanier(p)}
-        className="group bg-white rounded-xl border border-slate-200 p-3 text-left transition-all hover:border-primary/40 hover:shadow-md">
+        aria-label={`Ajouter ${p.nomProduit} au panier${lignePanier ? `, quantite actuelle ${lignePanier.quantite}` : ''}`}
+        className={`group relative bg-white rounded-xl border p-3 text-left transition-all duration-150 active:scale-[0.98] motion-reduce:transform-none hover:border-primary/40 hover:shadow-md ${
+          lignePanier ? 'border-primary/40 ring-2 ring-primary/15' : 'border-slate-200'
+        } ${justAdded ? 'bg-emerald-50 ring-4 ring-emerald-200' : ''}`}>
+        {lignePanier && (
+          <span className={`absolute right-2 top-2 z-10 flex h-6 min-w-6 items-center justify-center rounded-full px-1.5 text-xs font-black text-white transition-transform ${
+            justAdded ? 'scale-110 bg-emerald-600' : 'bg-primary'
+          }`}>
+            {lignePanier.quantite}
+          </span>
+        )}
         {contenu}
       </button>
     );
@@ -689,13 +768,15 @@ export const POSVendeur = () => {
   const renderPanierAdmin = (onEnvoyer?: () => void) => (
     <>
       <h3 className="font-bold text-lg text-slate-900 mb-4 flex items-center gap-2">
-        <ShoppingCart size={20} className="text-primary" /> Panier ({panier.length})
+        <ShoppingCart size={20} className="text-primary" /> Panier ({totalUnits} unite{totalUnits > 1 ? 's' : ''})
       </h3>
       {panier.length === 0
         ? <p className="text-sm text-slate-400 text-center py-8">Aucun produit sélectionné.</p>
         : <ul className="space-y-3 max-h-64 overflow-y-auto">
           {panier.map(l => (
-            <li key={l.produitId} className="flex items-center gap-2 pb-3 border-b border-slate-100 last:border-0">
+            <li key={l.produitId} className={`flex items-center gap-2 rounded-lg pb-3 transition-colors border-b border-slate-100 last:border-0 ${
+              lastAddedProductId === l.produitId ? 'bg-emerald-50 px-2 pt-2' : ''
+            }`}>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-slate-900 truncate">{l.nomProduit}</p>
                 {renderPrixLigne(l)}
@@ -725,7 +806,9 @@ export const POSVendeur = () => {
         ? <p className="text-sm text-slate-400 text-center py-8">Aucun produit sélectionné.</p>
         : <ul className="space-y-3 max-h-64 overflow-y-auto">
           {panier.map(l => (
-            <li key={l.produitId} className="flex items-center gap-2 pb-3 border-b border-slate-100 last:border-0">
+            <li key={l.produitId} className={`flex items-center gap-2 rounded-lg pb-3 transition-colors border-b border-slate-100 last:border-0 ${
+              lastAddedProductId === l.produitId ? 'bg-emerald-50 px-2 pt-2' : ''
+            }`}>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-slate-900 truncate">{l.nomProduit}</p>
                 {renderPrixLigne(l)}
@@ -965,7 +1048,7 @@ export const POSVendeur = () => {
           <div className="lg:col-span-2">{renderCatalogue()}</div>
 
           {/* Panier desktop admin */}
-          <div className="hidden lg:block space-y-4">
+          <div className="hidden lg:block sticky top-4 self-start max-h-[calc(100vh-7rem)] space-y-4 overflow-y-auto pr-1">
             <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
               {renderPanierAdmin()}
             </div>
@@ -995,8 +1078,10 @@ export const POSVendeur = () => {
         {panier.length > 0 && (
           <div className="mobile-safe-bottom lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-slate-200 shadow-[0_-4px_12px_rgba(0,0,0,0.08)] px-4 pt-3">
             <button onClick={() => setPanierMobileOpen(true)}
-              className="w-full flex items-center justify-between gap-3 px-4 py-3 bg-primary text-white font-bold rounded-xl">
-              <span className="flex items-center gap-2"><ShoppingCart size={18} />{panier.length} article{panier.length > 1 ? 's' : ''}</span>
+              className={`w-full flex items-center justify-between gap-3 px-4 py-3 bg-primary text-white font-bold rounded-xl transition-shadow ${
+                lastAddedProductId ? 'ring-4 ring-emerald-300 shadow-lg' : ''
+              }`}>
+              <span className="flex items-center gap-2"><ShoppingCart size={18} />{totalUnits} unite{totalUnits > 1 ? 's' : ''}</span>
               <span>{fmtFCFA(total)}</span>
             </button>
           </div>
@@ -1011,7 +1096,7 @@ export const POSVendeur = () => {
                 onClick={e => e.stopPropagation()}
                 className="absolute bottom-0 left-0 right-0 bg-white rounded-t-2xl max-h-[85vh] overflow-y-auto">
                 <div className="flex items-center justify-between p-5 border-b border-slate-100">
-                  <h3 className="font-bold text-lg text-slate-900 flex items-center gap-2"><ShoppingCart size={20} className="text-primary" />Panier ({panier.length})</h3>
+                  <h3 className="font-bold text-lg text-slate-900 flex items-center gap-2"><ShoppingCart size={20} className="text-primary" />Panier ({totalUnits} unite{totalUnits > 1 ? 's' : ''})</h3>
                   <button onClick={() => setPanierMobileOpen(false)} className="p-1 text-slate-400"><X size={20} /></button>
                 </div>
                 <div className="p-5 space-y-3">
@@ -1082,10 +1167,10 @@ export const POSVendeur = () => {
       {activeTab === 'vente' ? (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2">{renderCatalogue()}</div>
-          <div className="hidden lg:block">
+          <div className="hidden lg:block sticky top-4 self-start max-h-[calc(100vh-7rem)] overflow-y-auto pr-1">
             <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
               <h3 className="font-bold text-lg text-slate-900 mb-4 flex items-center gap-2">
-                <ShoppingCart size={20} className="text-primary" /> Panier ({panier.length})
+                <ShoppingCart size={20} className="text-primary" /> Panier ({totalUnits} unite{totalUnits > 1 ? 's' : ''})
               </h3>
               {renderPanierVendeur()}
             </div>
@@ -1127,8 +1212,10 @@ export const POSVendeur = () => {
       {activeTab === 'vente' && panier.length > 0 && (
         <div className="mobile-safe-bottom lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-slate-200 shadow-[0_-4px_12px_rgba(0,0,0,0.08)] px-4 pt-3">
           <button onClick={() => setPanierMobileOpen(true)}
-            className="w-full flex items-center justify-between gap-3 px-4 py-3 bg-primary text-white font-bold rounded-xl">
-            <span className="flex items-center gap-2"><ShoppingCart size={18} />{panier.length} article{panier.length > 1 ? 's' : ''}</span>
+            className={`w-full flex items-center justify-between gap-3 px-4 py-3 bg-primary text-white font-bold rounded-xl transition-shadow ${
+              lastAddedProductId ? 'ring-4 ring-emerald-300 shadow-lg' : ''
+            }`}>
+            <span className="flex items-center gap-2"><ShoppingCart size={18} />{totalUnits} unite{totalUnits > 1 ? 's' : ''}</span>
             <span>{fmtFCFA(total)}</span>
           </button>
         </div>
@@ -1143,7 +1230,7 @@ export const POSVendeur = () => {
               onClick={e => e.stopPropagation()}
               className="absolute bottom-0 left-0 right-0 bg-white rounded-t-2xl max-h-[85vh] overflow-y-auto">
               <div className="flex items-center justify-between p-5 border-b border-slate-100">
-                <h3 className="font-bold text-lg text-slate-900 flex items-center gap-2"><ShoppingCart size={20} className="text-primary" />Panier ({panier.length})</h3>
+                <h3 className="font-bold text-lg text-slate-900 flex items-center gap-2"><ShoppingCart size={20} className="text-primary" />Panier ({totalUnits} unite{totalUnits > 1 ? 's' : ''})</h3>
                 <button onClick={() => setPanierMobileOpen(false)} className="p-1 text-slate-400"><X size={20} /></button>
               </div>
               <div className="p-5">{renderPanierVendeur(() => { setPanierMobileOpen(false); envoyerVendeur(); })}</div>

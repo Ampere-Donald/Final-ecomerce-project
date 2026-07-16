@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
+import { useEffect, useState, useMemo, useCallback, useRef, type SetStateAction } from 'react';
 import {
   Search, Download, ShoppingCart, X, Eye, Package, Calendar, Plus, Minus, Trash2,
   CreditCard, Banknote, Smartphone, Building2, UserPlus, CheckCircle2, AlertTriangle,
@@ -11,11 +11,16 @@ import { FactureVirtuelleModal } from './FactureVirtuelleModal';
 import { ReceiptGenerator } from './ReceiptGenerator';
 import { enqueueSale, newSaleId, OFFLINE_SYNC_COMPLETED_EVENT } from '../services/offlineSalesQueue';
 import { useAdminAuth } from '../context/AdminAuthContext';
+import { ConfirmDialog } from './ui/ConfirmDialog';
+import { useToast } from './ui/Toast';
 import {
+  clearActiveCartDraft,
+  getActiveCartDraft,
   getSaleMetricSummary,
   listSuspendedCarts,
   recordSaleMetric,
   removeSuspendedCart,
+  saveActiveCartDraft,
   saveSuspendedCart,
   type SuspendedCart,
 } from '../services/cashierProductivity';
@@ -53,7 +58,13 @@ const resolveImgUrl = (url?: string | null) => {
 /* ═══════════════════════════════════════════════════════════════ */
 export const Ventes = () => {
   const { admin } = useAdminAuth();
+  const toast = useToast();
   const [activeTab, setActiveTab] = useState<'pos' | 'history'>('pos');
+  const activeCartScope = `${DIRECT_SALE_SCOPE}_${admin?.id || admin?.username || admin?.role || 'anonymous'}`;
+  const initialDraftRef = useRef(
+    getActiveCartDraft<CartItem, DirectSaleContext>(activeCartScope),
+  );
+  const initialDraft = initialDraftRef.current;
 
   // ── Shared data ──
   const [produits, setProduits] = useState<any[]>([]);
@@ -79,9 +90,17 @@ export const Ventes = () => {
   const suggestionsRef = useRef<HTMLDivElement>(null);
   const productsRequestRef = useRef(0);
 
-  const [cart, setCart] = useState<CartItem[]>([]);
-  const [paymentMethod, setPaymentMethod] = useState('ESPECES');
-  const [selectedClientId, setSelectedClientId] = useState<string>('');
+  const [cart, setCartState] = useState<CartItem[]>(() => initialDraft?.items || []);
+  const cartRef = useRef(cart);
+  const setCart = useCallback((nextValue: SetStateAction<CartItem[]>) => {
+    const next = typeof nextValue === 'function'
+      ? (nextValue as (previous: CartItem[]) => CartItem[])(cartRef.current)
+      : nextValue;
+    cartRef.current = next;
+    setCartState(next);
+  }, []);
+  const [paymentMethod, setPaymentMethod] = useState(initialDraft?.context.paymentMethod || 'ESPECES');
+  const [selectedClientId, setSelectedClientId] = useState<string>(initialDraft?.context.selectedClientId || '');
   const [clientSearch, setClientSearch] = useState('');
   const [showClientForm, setShowClientForm] = useState(false);
   const [newClient, setNewClient] = useState({ nom: '', telephone: '', typeClient: 'PARTICULIER' as string });
@@ -99,6 +118,10 @@ export const Ventes = () => {
   const [saleMetrics, setSaleMetrics] = useState(() => getSaleMetricSummary(DIRECT_SALE_SCOPE));
   const saleStartedAtRef = useRef<number | null>(null);
   const saleInteractionsRef = useRef(0);
+  const [lastAddedProductId, setLastAddedProductId] = useState<string | null>(null);
+  const [showClearCartConfirm, setShowClearCartConfirm] = useState(false);
+  const [pendingResumeCart, setPendingResumeCart] = useState<SuspendedCart<CartItem, DirectSaleContext> | null>(null);
+  const feedbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // ── Facture virtuelle state ──
   const [showFV, setShowFV] = useState(false);
@@ -154,6 +177,27 @@ export const Ventes = () => {
   }, [loadProducts]);
 
   useEffect(() => {
+    if (initialDraft?.items.length) {
+      toast.info(`Vente directe restauree : ${initialDraft.items.reduce((sum, item) => sum + item.quantite, 0)} unite(s).`);
+    }
+  }, [initialDraft, toast]);
+
+  useEffect(() => {
+    if (cart.length === 0) {
+      clearActiveCartDraft(activeCartScope);
+      return;
+    }
+    saveActiveCartDraft<CartItem, DirectSaleContext>(activeCartScope, cart, {
+      paymentMethod,
+      selectedClientId,
+    });
+  }, [activeCartScope, cart, paymentMethod, selectedClientId]);
+
+  useEffect(() => () => {
+    if (feedbackTimerRef.current) clearTimeout(feedbackTimerRef.current);
+  }, []);
+
+  useEffect(() => {
     const handleSynchronizedSale = () => { void fetchAll(); void loadProducts(); };
     window.addEventListener(OFFLINE_SYNC_COMPLETED_EVENT, handleSynchronizedSale);
     return () => window.removeEventListener(OFFLINE_SYNC_COMPLETED_EVENT, handleSynchronizedSale);
@@ -197,9 +241,7 @@ export const Ventes = () => {
 
   const addToCartFromModal = () => {
     if (!selectedProduit) return;
-    for (let i = 0; i < modalQty; i++) {
-      addToCart(selectedProduit);
-    }
+    addToCart(selectedProduit, modalQty);
     closeProduitDetail();
   };
 
@@ -280,27 +322,49 @@ export const Ventes = () => {
     ).slice(0, 20);
   }, [clients, clientSearch]);
 
-  const addToCart = (produit: any) => {
-    setCart(prev => {
-      const existing = prev.find(c => c.produitId === produit.id);
-      if (existing) {
-        if (existing.quantite >= (produit.quantiteStock ?? 0)) return prev;
-        return prev.map(c => c.produitId === produit.id ? { ...c, quantite: c.quantite + 1 } : c);
-      }
-      if ((produit.quantiteStock ?? 0) <= 0) return prev;
-      return [...prev, {
+  const addToCart = (produit: any, requestedQuantity = 1): number => {
+    const stock = Number(produit.quantiteStock ?? 0);
+    if (stock <= 0) {
+      toast.error(`"${produit.nomProduit}" est en rupture de stock.`, 5000, 'direct-cart-feedback');
+      return 0;
+    }
+
+    const current = cartRef.current;
+    const existing = current.find(c => c.produitId === produit.id);
+    const currentQuantity = existing?.quantite || 0;
+    const availableQuantity = stock - currentQuantity;
+    if (availableQuantity <= 0) {
+      toast.warning(`Stock maximal atteint pour "${produit.nomProduit}" : ${stock} unite(s).`, 4000, 'direct-cart-feedback');
+      return 0;
+    }
+
+    const addedQuantity = Math.min(Math.max(1, requestedQuantity), availableQuantity);
+    const nextQuantity = currentQuantity + addedQuantity;
+    const next = existing
+      ? current.map(c => c.produitId === produit.id ? { ...c, quantite: nextQuantity } : c)
+      : [...current, {
         produitId: produit.id,
         nomProduit: produit.nomProduit,
-        quantite: 1,
+        quantite: addedQuantity,
         prixUnitaire: Number(produit.prixDetail ?? 0),
         prixCatalogue: Number(produit.prixDetail ?? 0),
-        stock: produit.quantiteStock ?? 0,
+        stock,
         imageUrl: produit.imageUrl,
         prixGros: produit.prixGros != null ? Number(produit.prixGros) : null,
         quantiteGros: produit.quantiteGros != null ? Number(produit.quantiteGros) : null,
         modePrix: 'DETAIL' as const,
       }];
-    });
+
+    setCart(next);
+    setErrorMessage('');
+    setLastAddedProductId(produit.id);
+    if (feedbackTimerRef.current) clearTimeout(feedbackTimerRef.current);
+    feedbackTimerRef.current = setTimeout(() => setLastAddedProductId(null), 700);
+    toast.success(`"${produit.nomProduit}" ajoute au panier — quantite : ${nextQuantity}.`, 1800, 'direct-cart-feedback');
+    if (addedQuantity < requestedQuantity) {
+      toast.warning(`Quantite limitee au stock disponible : ${stock} unite(s).`, 4000, 'direct-cart-feedback');
+    }
+    return addedQuantity;
   };
 
   const updateQuantity = (produitId: string, delta: number) => {
@@ -333,6 +397,7 @@ export const Ventes = () => {
   };
 
   const cartTotal = useMemo(() => cart.reduce((sum, c) => sum + c.quantite * c.prixUnitaire, 0), [cart]);
+  const totalUnits = useMemo(() => cart.reduce((sum, c) => sum + c.quantite, 0), [cart]);
 
   useEffect(() => {
     if (cart.length > 0 && saleStartedAtRef.current === null) {
@@ -384,8 +449,16 @@ export const Ventes = () => {
     setTimeout(() => searchInputRef.current?.focus(), 0);
   };
 
-  const resumeSuspendedCart = (entry: SuspendedCart<CartItem, DirectSaleContext>) => {
-    if (cart.length > 0 && !window.confirm('Remplacer le panier actuel par ce panier en attente ?')) return;
+  const clearCurrentCart = () => {
+    setCart([]);
+    setSelectedClientId('');
+    setClientSearch('');
+    setPaymentMethod('ESPECES');
+    toast.info('Panier vide.');
+    setTimeout(() => searchInputRef.current?.focus(), 0);
+  };
+
+  const applySuspendedCart = (entry: SuspendedCart<CartItem, DirectSaleContext>) => {
     setCart(entry.items);
     setPaymentMethod(entry.context.paymentMethod || 'ESPECES');
     setSelectedClientId(entry.context.selectedClientId || '');
@@ -394,6 +467,14 @@ export const Ventes = () => {
     setSuspendedCarts(removeSuspendedCart<CartItem, DirectSaleContext>(DIRECT_SALE_SCOPE, entry.id));
     setShowSuspendedCarts(false);
     setSuccessMessage('Panier repris. Vérifiez le stock avant de valider.');
+  };
+
+  const resumeSuspendedCart = (entry: SuspendedCart<CartItem, DirectSaleContext>) => {
+    if (cart.length > 0) {
+      setPendingResumeCart(entry);
+      return;
+    }
+    applySuspendedCart(entry);
   };
 
   const priceDiffBadge = (item: CartItem) => {
@@ -801,34 +882,45 @@ export const Ventes = () => {
                     const img = resolveImgUrl(p.imageUrl) || '/logo.png';
                     return (
                       <div key={p.id}
-                        className={`relative bg-white border rounded-xl p-3 text-left transition-all hover:shadow-md ${outOfStock ? 'opacity-50 border-slate-200' : 'border-slate-200 hover:border-primary/30 cursor-pointer'} ${inCart ? 'ring-2 ring-primary/30' : ''}`}
-                        onClick={() => !outOfStock && addToCart(p)}
+                        className={`relative bg-white border rounded-xl p-3 text-left transition-all duration-150 hover:shadow-md ${outOfStock ? 'opacity-50 border-slate-200' : 'border-slate-200 hover:border-primary/30 active:scale-[0.98] motion-reduce:transform-none'} ${inCart ? 'ring-2 ring-primary/30' : ''} ${lastAddedProductId === p.id ? 'bg-emerald-50 ring-4 ring-emerald-200' : ''}`}
                       >
                         {/* View details button */}
                         <button
-                          onClick={e => { e.stopPropagation(); openProduitDetail(p); }}
-                          className="absolute top-2 left-2 z-10 w-7 h-7 flex items-center justify-center rounded-full bg-white/90 shadow-sm text-slate-500 hover:text-primary hover:bg-white transition-colors"
+                          type="button"
+                          onClick={() => openProduitDetail(p)}
+                          className="absolute top-2 left-2 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white/90 shadow-sm text-slate-500 transition-colors hover:bg-white hover:text-primary max-md:h-11 max-md:w-11"
                           title="Voir les détails"
+                          aria-label={`Voir les details de ${p.nomProduit}`}
                         >
                           <Eye size={14} />
                         </button>
 
-                        <div className="w-full h-20 flex items-center justify-center rounded-lg mb-2 bg-slate-50">
-                          <img src={img} alt="" className="max-w-full max-h-full object-contain" onError={e => { (e.target as HTMLImageElement).src = '/logo.png'; }} />
-                        </div>
-                        <p className="text-sm font-semibold text-slate-900 truncate">{p.nomProduit}</p>
-                        {p.marque && <p className="text-xs text-slate-400 truncate">{p.marque}</p>}
-                        <div className="flex items-center justify-between mt-2">
-                          <span className="text-sm font-bold text-primary">{(Number(p.prixDetail ?? 0)).toLocaleString()} F</span>
-                          <span className={`text-xs font-bold px-1.5 py-0.5 rounded-full ${outOfStock ? 'bg-red-100 text-red-600' : 'bg-emerald-100 text-emerald-600'}`}>
-                            {p.quantiteStock ?? 0}
-                          </span>
-                        </div>
-                        {inCart && (
-                          <div className="absolute top-2 right-2 w-5 h-5 bg-primary text-white rounded-full flex items-center justify-center text-[10px] font-bold">
-                            {inCart.quantite}
+                        <button
+                          type="button"
+                          disabled={outOfStock}
+                          onClick={() => addToCart(p)}
+                          aria-label={outOfStock
+                            ? `${p.nomProduit} en rupture de stock`
+                            : `Ajouter ${p.nomProduit} au panier${inCart ? `, quantite actuelle ${inCart.quantite}` : ''}`}
+                          className="block w-full text-left disabled:cursor-not-allowed"
+                        >
+                          <div className="w-full h-20 flex items-center justify-center rounded-lg mb-2 bg-slate-50">
+                            <img src={img} alt="" className="max-w-full max-h-full object-contain" onError={e => { (e.target as HTMLImageElement).src = '/logo.png'; }} />
                           </div>
-                        )}
+                          <p className="text-sm font-semibold text-slate-900 truncate">{p.nomProduit}</p>
+                          {p.marque && <p className="text-xs text-slate-400 truncate">{p.marque}</p>}
+                          <div className="flex items-center justify-between mt-2">
+                            <span className="text-sm font-bold text-primary">{(Number(p.prixDetail ?? 0)).toLocaleString()} F</span>
+                            <span className={`text-xs font-bold px-1.5 py-0.5 rounded-full ${outOfStock ? 'bg-red-100 text-red-600' : 'bg-emerald-100 text-emerald-600'}`}>
+                              {p.quantiteStock ?? 0}
+                            </span>
+                          </div>
+                          {inCart && (
+                            <span className="absolute top-2 right-2 w-5 h-5 bg-primary text-white rounded-full flex items-center justify-center text-[10px] font-bold">
+                              {inCart.quantite}
+                            </span>
+                          )}
+                        </button>
                       </div>
                     );
                   })}
@@ -896,11 +988,13 @@ export const Ventes = () => {
           </div>
 
           {/* Right: Cart + Payment */}
-          <div className="lg:col-span-2 space-y-4">
+          <div className="lg:col-span-2 space-y-4 lg:sticky lg:top-4 lg:self-start lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto lg:pr-1">
             {/* Cart */}
             <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden">
               <div className="p-4 border-b border-slate-100 flex items-center justify-between">
-                <h3 className="font-bold text-slate-900 flex items-center gap-2"><ShoppingCart size={18} /> Panier</h3>
+                <h3 className="font-bold text-slate-900 flex items-center gap-2">
+                  <ShoppingCart size={18} /> Panier · {totalUnits} unite{totalUnits > 1 ? 's' : ''}
+                </h3>
                 <div className="flex items-center gap-2">
                   {suspendedCarts.length > 0 && (
                     <button type="button" onClick={() => setShowSuspendedCarts((open) => !open)} className="inline-flex min-h-9 items-center gap-1 rounded-lg bg-amber-50 px-2 text-xs font-bold text-amber-700 hover:bg-amber-100">
@@ -912,7 +1006,7 @@ export const Ventes = () => {
                       <button type="button" onClick={suspendCurrentCart} className="inline-flex min-h-9 items-center gap-1 rounded-lg bg-slate-100 px-2 text-xs font-bold text-slate-700 hover:bg-slate-200">
                         <Pause size={13} /> Attente
                       </button>
-                      <button type="button" onClick={() => setCart([])} className="min-h-9 px-1 text-xs font-medium text-red-500 hover:text-red-700">Vider</button>
+                      <button type="button" onClick={() => setShowClearCartConfirm(true)} className="min-h-9 px-1 text-xs font-medium text-red-500 hover:text-red-700">Vider</button>
                     </>
                   )}
                 </div>
@@ -922,7 +1016,7 @@ export const Ventes = () => {
                 <div className="space-y-2 border-b border-amber-200 bg-amber-50 p-3">
                   {suspendedCarts.map((entry) => (
                     <button key={entry.id} type="button" onClick={() => resumeSuspendedCart(entry)} className="flex min-h-11 w-full items-center justify-between gap-3 rounded-xl border border-amber-200 bg-white px-3 text-left hover:border-amber-400">
-                      <span><span className="block text-sm font-bold text-slate-800">{entry.items.length} article{entry.items.length > 1 ? 's' : ''}</span><span className="text-xs text-slate-500">{new Date(entry.createdAt).toLocaleString('fr-FR')}</span></span>
+                      <span><span className="block text-sm font-bold text-slate-800">{entry.items.reduce((sum, item) => sum + item.quantite, 0)} unite(s)</span><span className="text-xs text-slate-500">{new Date(entry.createdAt).toLocaleString('fr-FR')}</span></span>
                       <span className="text-xs font-bold text-amber-700">Reprendre</span>
                     </button>
                   ))}
@@ -938,7 +1032,9 @@ export const Ventes = () => {
               ) : (
                 <div className="divide-y divide-slate-100 max-h-[40vh] overflow-y-auto">
                   {cart.map(item => (
-                    <div key={item.produitId} className="p-3 space-y-2">
+                    <div key={item.produitId} className={`p-3 space-y-2 transition-colors ${
+                      lastAddedProductId === item.produitId ? 'bg-emerald-50' : ''
+                    }`}>
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-semibold text-slate-900 truncate">{item.nomProduit}</p>
@@ -965,21 +1061,34 @@ export const Ventes = () => {
                             </div>
                           )}
                         </div>
-                        <button onClick={() => removeFromCart(item.produitId)} className="text-slate-300 hover:text-red-500 transition-colors">
+                        <button
+                          type="button"
+                          onClick={() => removeFromCart(item.produitId)}
+                          className="flex h-10 w-10 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-red-50 hover:text-red-500 max-md:h-11 max-md:w-11"
+                          aria-label={`Retirer ${item.nomProduit} du panier`}
+                        >
                           <Trash2 size={14} />
                         </button>
                       </div>
                       <div className="flex items-center justify-between gap-3">
                         {/* Quantity */}
                         <div className="flex items-center gap-1">
-                          <button onClick={() => updateQuantity(item.produitId, -1)}
-                            className="w-7 h-7 flex items-center justify-center rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors">
+                          <button
+                            type="button"
+                            onClick={() => updateQuantity(item.produitId, -1)}
+                            className="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-100 text-slate-600 transition-colors hover:bg-slate-200 max-md:h-11 max-md:w-11"
+                            aria-label={`Diminuer la quantite de ${item.nomProduit}`}
+                          >
                             <Minus size={12} />
                           </button>
                           <span className="w-8 text-center text-sm font-bold">{item.quantite}</span>
-                          <button onClick={() => updateQuantity(item.produitId, 1)}
+                          <button
+                            type="button"
+                            onClick={() => updateQuantity(item.produitId, 1)}
                             disabled={item.quantite >= item.stock}
-                            className="w-7 h-7 flex items-center justify-center rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors disabled:opacity-40">
+                            className="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-100 text-slate-600 transition-colors hover:bg-slate-200 disabled:opacity-40 max-md:h-11 max-md:w-11"
+                            aria-label={`Augmenter la quantite de ${item.nomProduit}`}
+                          >
                             <Plus size={12} />
                           </button>
                           <span className="text-[10px] text-slate-400 ml-1">/ {item.stock}</span>
@@ -1556,6 +1665,26 @@ export const Ventes = () => {
           }}
         />
       )}
+
+      <ConfirmDialog
+        open={showClearCartConfirm}
+        title="Vider le panier ?"
+        description={`Les ${totalUnits} unite${totalUnits > 1 ? 's' : ''} seront retirees de la vente en cours.`}
+        confirmLabel="Vider le panier"
+        onConfirm={clearCurrentCart}
+        onClose={() => setShowClearCartConfirm(false)}
+      />
+      <ConfirmDialog
+        open={Boolean(pendingResumeCart)}
+        title="Remplacer le panier en cours ?"
+        description={`Le panier actuel de ${totalUnits} unite${totalUnits > 1 ? 's' : ''} sera remplace par le panier en attente.`}
+        confirmLabel="Reprendre ce panier"
+        variant="primary"
+        onConfirm={() => {
+          if (pendingResumeCart) applySuspendedCart(pendingResumeCart);
+        }}
+        onClose={() => setPendingResumeCart(null)}
+      />
     </motion.div>
   );
 };
