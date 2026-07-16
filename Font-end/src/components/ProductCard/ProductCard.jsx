@@ -13,7 +13,7 @@ const ProductCard = ({ product, badge }) => {
     const { toggleFavorite, isFavorite } = useFavorites();
     const { addToCart } = useCart();
     const isLiked = isFavorite(product.code);
-    const [imgSrc, setImgSrc] = useState(product.image || '');
+    const imgSrc = product.image || '';
     const [imgError, setImgError] = useState(false);
 
     const isBackorder = (product.stock ?? 0) <= 0;

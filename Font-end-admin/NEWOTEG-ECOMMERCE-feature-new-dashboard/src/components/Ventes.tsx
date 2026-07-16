@@ -1,13 +1,29 @@
-import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
+import { useEffect, useState, useMemo, useCallback, useRef, type SetStateAction } from 'react';
 import {
   Search, Download, ShoppingCart, X, Eye, Package, Calendar, Plus, Minus, Trash2,
   CreditCard, Banknote, Smartphone, Building2, UserPlus, CheckCircle2, AlertTriangle,
   Clock, Receipt, Filter, ChevronLeft, ChevronRight, ListFilter,
+  Pause, Play,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { venteApi, produitApi, clientApi, categorieApi } from '../services/api';
 import { FactureVirtuelleModal } from './FactureVirtuelleModal';
-import { ReceiptGenerator, generateReceiptNumber } from './ReceiptGenerator';
+import { ReceiptGenerator } from './ReceiptGenerator';
+import { enqueueSale, newSaleId, OFFLINE_SYNC_COMPLETED_EVENT } from '../services/offlineSalesQueue';
+import { useAdminAuth } from '../context/AdminAuthContext';
+import { ConfirmDialog } from './ui/ConfirmDialog';
+import { useToast } from './ui/Toast';
+import {
+  clearActiveCartDraft,
+  getActiveCartDraft,
+  getSaleMetricSummary,
+  listSuspendedCarts,
+  recordSaleMetric,
+  removeSuspendedCart,
+  saveActiveCartDraft,
+  saveSuspendedCart,
+  type SuspendedCart,
+} from '../services/cashierProductivity';
 
 /* ── Types ─────────────────────────────────────────────────────── */
 interface CartItem {
@@ -22,6 +38,9 @@ interface CartItem {
   quantiteGros?: number | null;
   modePrix: 'DETAIL' | 'GROS';
 }
+
+type DirectSaleContext = { paymentMethod: string; selectedClientId: string };
+const DIRECT_SALE_SCOPE = 'direct_sale';
 
 const PAYMENT_METHODS = [
   { value: 'ESPECES', label: 'Especes', icon: Banknote },
@@ -38,10 +57,18 @@ const resolveImgUrl = (url?: string | null) => {
 
 /* ═══════════════════════════════════════════════════════════════ */
 export const Ventes = () => {
+  const { admin } = useAdminAuth();
+  const toast = useToast();
   const [activeTab, setActiveTab] = useState<'pos' | 'history'>('pos');
+  const activeCartScope = `${DIRECT_SALE_SCOPE}_${admin?.id || admin?.username || admin?.role || 'anonymous'}`;
+  const initialDraftRef = useRef(
+    getActiveCartDraft<CartItem, DirectSaleContext>(activeCartScope),
+  );
+  const initialDraft = initialDraftRef.current;
 
   // ── Shared data ──
   const [produits, setProduits] = useState<any[]>([]);
+  const [totalProducts, setTotalProducts] = useState(0);
   const [categories, setCategories] = useState<any[]>([]);
   const [clients, setClients] = useState<any[]>([]);
   const [ventes, setVentes] = useState<any[]>([]);
@@ -61,10 +88,19 @@ export const Ventes = () => {
   const PRODUCTS_PER_PAGE = 60;
   const searchInputRef = useRef<HTMLInputElement>(null);
   const suggestionsRef = useRef<HTMLDivElement>(null);
+  const productsRequestRef = useRef(0);
 
-  const [cart, setCart] = useState<CartItem[]>([]);
-  const [paymentMethod, setPaymentMethod] = useState('ESPECES');
-  const [selectedClientId, setSelectedClientId] = useState<string>('');
+  const [cart, setCartState] = useState<CartItem[]>(() => initialDraft?.items || []);
+  const cartRef = useRef(cart);
+  const setCart = useCallback((nextValue: SetStateAction<CartItem[]>) => {
+    const next = typeof nextValue === 'function'
+      ? (nextValue as (previous: CartItem[]) => CartItem[])(cartRef.current)
+      : nextValue;
+    cartRef.current = next;
+    setCartState(next);
+  }, []);
+  const [paymentMethod, setPaymentMethod] = useState(initialDraft?.context.paymentMethod || 'ESPECES');
+  const [selectedClientId, setSelectedClientId] = useState<string>(initialDraft?.context.selectedClientId || '');
   const [clientSearch, setClientSearch] = useState('');
   const [showClientForm, setShowClientForm] = useState(false);
   const [newClient, setNewClient] = useState({ nom: '', telephone: '', typeClient: 'PARTICULIER' as string });
@@ -73,7 +109,19 @@ export const Ventes = () => {
   const [errorMessage, setErrorMessage] = useState('');
   const [lastVente, setLastVente] = useState<any>(null);
   const [showReceipt, setShowReceipt] = useState(false);
+  const [autoPrintReceipt, setAutoPrintReceipt] = useState(false);
   const [receiptType, setReceiptType] = useState<'ticket' | 'facture'>('ticket');
+  const [suspendedCarts, setSuspendedCarts] = useState<SuspendedCart<CartItem, DirectSaleContext>[]>(
+    () => listSuspendedCarts<CartItem, DirectSaleContext>(DIRECT_SALE_SCOPE),
+  );
+  const [showSuspendedCarts, setShowSuspendedCarts] = useState(false);
+  const [saleMetrics, setSaleMetrics] = useState(() => getSaleMetricSummary(DIRECT_SALE_SCOPE));
+  const saleStartedAtRef = useRef<number | null>(null);
+  const saleInteractionsRef = useRef(0);
+  const [lastAddedProductId, setLastAddedProductId] = useState<string | null>(null);
+  const [showClearCartConfirm, setShowClearCartConfirm] = useState(false);
+  const [pendingResumeCart, setPendingResumeCart] = useState<SuspendedCart<CartItem, DirectSaleContext> | null>(null);
+  const feedbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // ── Facture virtuelle state ──
   const [showFV, setShowFV] = useState(false);
@@ -82,6 +130,7 @@ export const Ventes = () => {
   // ── History state ──
   const [historySearch, setHistorySearch] = useState('');
   const [selectedVente, setSelectedVente] = useState<any>(null);
+  const [financialActionLoading, setFinancialActionLoading] = useState(false);
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
 
@@ -89,64 +138,78 @@ export const Ventes = () => {
   const fetchAll = useCallback(async () => {
     setLoading(true);
     const results = await Promise.allSettled([
-      produitApi.getAll(),
       categorieApi.getAll(),
       clientApi.getAll(),
       venteApi.getAll(),
     ]);
-    if (results[0].status === 'fulfilled') {
-      const rawProduits = results[0].value;
-      // Enrich products with category info
-      const cats = results[1].status === 'fulfilled' ? results[1].value : [];
-      const enriched = rawProduits.map(p => ({
-        ...p,
-        categorie: cats.find((c: any) => c.id === p.categorieId) || null,
-      }));
-      setProduits(enriched);
-    }
-    if (results[1].status === 'fulfilled') setCategories(results[1].value);
-    if (results[2].status === 'fulfilled') setClients(results[2].value);
-    if (results[3].status === 'fulfilled') setVentes(results[3].value);
+    if (results[0].status === 'fulfilled') setCategories(results[0].value);
+    if (results[1].status === 'fulfilled') setClients(results[1].value);
+    if (results[2].status === 'fulfilled') setVentes(results[2].value);
     setLoading(false);
   }, []);
 
+  const loadProducts = useCallback(async () => {
+    const requestId = ++productsRequestRef.current;
+    try {
+      const response = await produitApi.list({
+        page: currentPage,
+        limit: PRODUCTS_PER_PAGE,
+        search: productSearch.trim() || undefined,
+        categoryId: selectedCategoryId || undefined,
+        inStock: inStockOnly || undefined,
+      });
+      if (requestId !== productsRequestRef.current) return;
+      setProduits(Array.isArray(response?.data) ? response.data : []);
+      setTotalProducts(Number(response?.meta?.total) || 0);
+    } catch {
+      if (requestId === productsRequestRef.current) {
+        setProduits([]);
+        setTotalProducts(0);
+      }
+    }
+  }, [currentPage, inStockOnly, productSearch, selectedCategoryId]);
+
   useEffect(() => { fetchAll(); }, [fetchAll]);
 
-  /* ═══ POS LOGIC ═══════════════════════════════════════════════ */
-  
-  // Filter products without artificial limit - full catalog access
-  const filteredProducts = useMemo(() => {
-    let result = produits;
-    
-    // Search filter
-    if (productSearch.trim()) {
-      const term = productSearch.toLowerCase();
-      result = result.filter(p =>
-        p.nomProduit?.toLowerCase().includes(term) ||
-        p.marque?.toLowerCase().includes(term) ||
-        p.description?.toLowerCase().includes(term)
-      );
-    }
-    
-    // Category filter
-    if (selectedCategoryId) {
-      result = result.filter(p => p.categorieId === selectedCategoryId);
-    }
-    
-    // In stock filter
-    if (inStockOnly) {
-      result = result.filter(p => (p.quantiteStock ?? 0) > 0);
-    }
-    
-    return result;
-  }, [produits, productSearch, selectedCategoryId, inStockOnly]);
+  useEffect(() => {
+    const timer = window.setTimeout(() => { void loadProducts(); }, 250);
+    return () => window.clearTimeout(timer);
+  }, [loadProducts]);
 
+  useEffect(() => {
+    if (initialDraft?.items.length) {
+      toast.info(`Vente directe restauree : ${initialDraft.items.reduce((sum, item) => sum + item.quantite, 0)} unite(s).`);
+    }
+  }, [initialDraft, toast]);
+
+  useEffect(() => {
+    if (cart.length === 0) {
+      clearActiveCartDraft(activeCartScope);
+      return;
+    }
+    saveActiveCartDraft<CartItem, DirectSaleContext>(activeCartScope, cart, {
+      paymentMethod,
+      selectedClientId,
+    });
+  }, [activeCartScope, cart, paymentMethod, selectedClientId]);
+
+  useEffect(() => () => {
+    if (feedbackTimerRef.current) clearTimeout(feedbackTimerRef.current);
+  }, []);
+
+  useEffect(() => {
+    const handleSynchronizedSale = () => { void fetchAll(); void loadProducts(); };
+    window.addEventListener(OFFLINE_SYNC_COMPLETED_EVENT, handleSynchronizedSale);
+    return () => window.removeEventListener(OFFLINE_SYNC_COMPLETED_EVENT, handleSynchronizedSale);
+  }, [fetchAll, loadProducts]);
+
+
+  /* ═══ POS LOGIC ═══════════════════════════════════════════════ */
+
+  // Filter products without artificial limit - full catalog access
   // Pagination
-  const totalPages = Math.ceil(filteredProducts.length / PRODUCTS_PER_PAGE);
-  const paginatedProducts = useMemo(() => {
-    const start = (currentPage - 1) * PRODUCTS_PER_PAGE;
-    return filteredProducts.slice(start, start + PRODUCTS_PER_PAGE);
-  }, [filteredProducts, currentPage]);
+  const totalPages = Math.ceil(totalProducts / PRODUCTS_PER_PAGE);
+  const paginatedProducts = produits;
 
   // Reset to page 1 when filters change
   useEffect(() => {
@@ -178,9 +241,7 @@ export const Ventes = () => {
 
   const addToCartFromModal = () => {
     if (!selectedProduit) return;
-    for (let i = 0; i < modalQty; i++) {
-      addToCart(selectedProduit);
-    }
+    addToCart(selectedProduit, modalQty);
     closeProduitDetail();
   };
 
@@ -261,27 +322,49 @@ export const Ventes = () => {
     ).slice(0, 20);
   }, [clients, clientSearch]);
 
-  const addToCart = (produit: any) => {
-    setCart(prev => {
-      const existing = prev.find(c => c.produitId === produit.id);
-      if (existing) {
-        if (existing.quantite >= (produit.quantiteStock ?? 0)) return prev;
-        return prev.map(c => c.produitId === produit.id ? { ...c, quantite: c.quantite + 1 } : c);
-      }
-      if ((produit.quantiteStock ?? 0) <= 0) return prev;
-      return [...prev, {
+  const addToCart = (produit: any, requestedQuantity = 1): number => {
+    const stock = Number(produit.quantiteStock ?? 0);
+    if (stock <= 0) {
+      toast.error(`"${produit.nomProduit}" est en rupture de stock.`, 5000, 'direct-cart-feedback');
+      return 0;
+    }
+
+    const current = cartRef.current;
+    const existing = current.find(c => c.produitId === produit.id);
+    const currentQuantity = existing?.quantite || 0;
+    const availableQuantity = stock - currentQuantity;
+    if (availableQuantity <= 0) {
+      toast.warning(`Stock maximal atteint pour "${produit.nomProduit}" : ${stock} unite(s).`, 4000, 'direct-cart-feedback');
+      return 0;
+    }
+
+    const addedQuantity = Math.min(Math.max(1, requestedQuantity), availableQuantity);
+    const nextQuantity = currentQuantity + addedQuantity;
+    const next = existing
+      ? current.map(c => c.produitId === produit.id ? { ...c, quantite: nextQuantity } : c)
+      : [...current, {
         produitId: produit.id,
         nomProduit: produit.nomProduit,
-        quantite: 1,
+        quantite: addedQuantity,
         prixUnitaire: Number(produit.prixDetail ?? 0),
         prixCatalogue: Number(produit.prixDetail ?? 0),
-        stock: produit.quantiteStock ?? 0,
+        stock,
         imageUrl: produit.imageUrl,
         prixGros: produit.prixGros != null ? Number(produit.prixGros) : null,
         quantiteGros: produit.quantiteGros != null ? Number(produit.quantiteGros) : null,
         modePrix: 'DETAIL' as const,
       }];
-    });
+
+    setCart(next);
+    setErrorMessage('');
+    setLastAddedProductId(produit.id);
+    if (feedbackTimerRef.current) clearTimeout(feedbackTimerRef.current);
+    feedbackTimerRef.current = setTimeout(() => setLastAddedProductId(null), 700);
+    toast.success(`"${produit.nomProduit}" ajoute au panier — quantite : ${nextQuantity}.`, 1800, 'direct-cart-feedback');
+    if (addedQuantity < requestedQuantity) {
+      toast.warning(`Quantite limitee au stock disponible : ${stock} unite(s).`, 4000, 'direct-cart-feedback');
+    }
+    return addedQuantity;
   };
 
   const updateQuantity = (produitId: string, delta: number) => {
@@ -314,6 +397,85 @@ export const Ventes = () => {
   };
 
   const cartTotal = useMemo(() => cart.reduce((sum, c) => sum + c.quantite * c.prixUnitaire, 0), [cart]);
+  const totalUnits = useMemo(() => cart.reduce((sum, c) => sum + c.quantite, 0), [cart]);
+
+  useEffect(() => {
+    if (cart.length > 0 && saleStartedAtRef.current === null) {
+      saleStartedAtRef.current = performance.now();
+      saleInteractionsRef.current = 0;
+    }
+    if (cart.length === 0) {
+      saleStartedAtRef.current = null;
+      saleInteractionsRef.current = 0;
+    }
+  }, [cart.length]);
+
+  useEffect(() => {
+    if (cart.length === 0) return;
+    const warnBeforeLeaving = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = '';
+    };
+    window.addEventListener('beforeunload', warnBeforeLeaving);
+    return () => window.removeEventListener('beforeunload', warnBeforeLeaving);
+  }, [cart.length]);
+
+  const recordInteraction = () => {
+    if (cart.length > 0) saleInteractionsRef.current += 1;
+  };
+
+  const completeSaleMetric = () => {
+    if (saleStartedAtRef.current === null) return;
+    const summary = recordSaleMetric(
+      DIRECT_SALE_SCOPE,
+      performance.now() - saleStartedAtRef.current,
+      saleInteractionsRef.current,
+    );
+    setSaleMetrics(summary);
+    saleStartedAtRef.current = null;
+    saleInteractionsRef.current = 0;
+  };
+
+  const suspendCurrentCart = () => {
+    if (cart.length === 0) return;
+    setSuspendedCarts(saveSuspendedCart(DIRECT_SALE_SCOPE, cart, { paymentMethod, selectedClientId }));
+    setCart([]);
+    setSelectedClientId('');
+    setPaymentMethod('ESPECES');
+    saleStartedAtRef.current = null;
+    saleInteractionsRef.current = 0;
+    setSuccessMessage('Panier mis en attente. Vous pouvez démarrer une nouvelle vente.');
+    setShowSuspendedCarts(true);
+    setTimeout(() => searchInputRef.current?.focus(), 0);
+  };
+
+  const clearCurrentCart = () => {
+    setCart([]);
+    setSelectedClientId('');
+    setClientSearch('');
+    setPaymentMethod('ESPECES');
+    toast.info('Panier vide.');
+    setTimeout(() => searchInputRef.current?.focus(), 0);
+  };
+
+  const applySuspendedCart = (entry: SuspendedCart<CartItem, DirectSaleContext>) => {
+    setCart(entry.items);
+    setPaymentMethod(entry.context.paymentMethod || 'ESPECES');
+    setSelectedClientId(entry.context.selectedClientId || '');
+    saleStartedAtRef.current = performance.now();
+    saleInteractionsRef.current = 0;
+    setSuspendedCarts(removeSuspendedCart<CartItem, DirectSaleContext>(DIRECT_SALE_SCOPE, entry.id));
+    setShowSuspendedCarts(false);
+    setSuccessMessage('Panier repris. Vérifiez le stock avant de valider.');
+  };
+
+  const resumeSuspendedCart = (entry: SuspendedCart<CartItem, DirectSaleContext>) => {
+    if (cart.length > 0) {
+      setPendingResumeCart(entry);
+      return;
+    }
+    applySuspendedCart(entry);
+  };
 
   const priceDiffBadge = (item: CartItem) => {
     if (item.prixCatalogue === 0 || item.prixUnitaire === item.prixCatalogue) return null;
@@ -343,17 +505,28 @@ export const Ventes = () => {
     if (cart.length === 0) return;
     setSubmitting(true);
     setErrorMessage('');
+    const payload = {
+      idempotencyKey: newSaleId(),
+      clientId: selectedClientId || undefined,
+      montantTotal: cartTotal,
+      methodePaiement: paymentMethod,
+      lignesVente: cart.map(c => ({
+        produitId: c.produitId,
+        quantite: c.quantite,
+        prixUnitaire: c.prixUnitaire,
+      })),
+    };
     try {
-      const payload = {
-        clientId: selectedClientId || undefined,
-        montantTotal: cartTotal,
-        methodePaiement: paymentMethod,
-        lignesVente: cart.map(c => ({
-          produitId: c.produitId,
-          quantite: c.quantite,
-          prixUnitaire: c.prixUnitaire,
-        })),
-      };
+      if (!navigator.onLine) {
+        await enqueueSale(payload);
+        completeSaleMetric();
+        setCart([]);
+        setSelectedClientId('');
+        setClientSearch('');
+        setSuccessMessage('Vente enregistrée hors ligne — synchronisation automatique au retour du réseau.');
+        setTimeout(() => searchInputRef.current?.focus(), 0);
+        return;
+      }
       const result = await venteApi.create(payload);
       // Determine receipt type from client
       const client = selectedClientId ? clients.find(c => c.id === selectedClientId) : null;
@@ -361,36 +534,87 @@ export const Ventes = () => {
       setReceiptType(rType);
       setLastVente({
         ...result,
-        _receiptNumber: generateReceiptNumber(rType),
+        _receiptNumber: result.facture?.numero || result.id,
         _lignes: cart.map(c => ({ nomProduit: c.nomProduit, quantite: c.quantite, prixUnitaire: c.prixUnitaire, sousTotal: c.quantite * c.prixUnitaire })),
         _montantTotal: cartTotal,
         _methodePaiement: paymentMethod,
         _client: client ? { nom: client.nom, telephone: client.telephone, typeClient: client.typeClient } : undefined,
       });
+      setAutoPrintReceipt(rType === 'ticket');
+      setShowReceipt(true);
+      completeSaleMetric();
       setCart([]);
       setSelectedClientId('');
+      setClientSearch('');
       setSuccessMessage(`Vente enregistree — ${cartTotal.toLocaleString()} FCFA`);
       setTimeout(() => setSuccessMessage(''), 8000);
+      setTimeout(() => searchInputRef.current?.focus(), 0);
       // Refresh products (updated stock) and ventes
-      const [prodRes, ventesRes] = await Promise.allSettled([produitApi.getAll(), venteApi.getAll()]);
-      if (prodRes.status === 'fulfilled') {
-        // Re-enrich with current categories
-        const cats = categories.length > 0 ? categories : (await categorieApi.getAll());
-        const enriched = prodRes.value.map((p: any) => ({
-          ...p,
-          categorie: cats.find((c: any) => c.id === p.categorieId) || null,
-        }));
-        setProduits(enriched);
-      }
+      const [, ventesRes] = await Promise.allSettled([loadProducts(), venteApi.getAll()]);
       if (ventesRes.status === 'fulfilled') setVentes(ventesRes.value);
     } catch (err: any) {
-      setErrorMessage(err.response?.data?.message || 'Erreur lors de la vente');
+      if (!err?.response) {
+        await enqueueSale(payload);
+        completeSaleMetric();
+        setCart([]);
+        setSuccessMessage('Connexion interrompue — vente conservée pour synchronisation.');
+      } else {
+        setErrorMessage(err.response?.data?.message || 'Erreur lors de la vente');
+      }
     } finally {
       setSubmitting(false);
     }
   };
 
   /* ═══ HISTORY LOGIC ══════════════════════════════════════════ */
+  useEffect(() => {
+    if (activeTab !== 'pos') return;
+    const handleExpressShortcut = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement;
+      const editing = ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName);
+      if (event.key === '/' && !editing) {
+        event.preventDefault();
+        searchInputRef.current?.focus();
+        return;
+      }
+      if (!['F2', 'F3', 'F4', 'F8'].includes(event.key)) return;
+      event.preventDefault();
+      if (cart.length > 0) saleInteractionsRef.current += 1;
+      if (event.key === 'F2') setPaymentMethod('ESPECES');
+      if (event.key === 'F3') setPaymentMethod('MOBILE_MONEY');
+      if (event.key === 'F4') setPaymentMethod('CARTE');
+      if (event.key === 'F8' && cart.length > 0 && !submitting) void handleSubmitSale();
+    };
+    document.addEventListener('keydown', handleExpressShortcut);
+    return () => document.removeEventListener('keydown', handleExpressShortcut);
+  }, [activeTab, cart.length, submitting, handleSubmitSale]);
+
+  const handleFinancialAction = async (kind: 'CANCEL' | 'REFUND') => {
+    if (!selectedVente || admin?.role !== 'SUPER_ADMIN') return;
+    const label = kind === 'REFUND' ? 'remboursement client' : 'annulation administrative';
+    const motif = window.prompt(`Motif obligatoire de ${label} :`)?.trim();
+    if (!motif || motif.length < 3) return;
+    if (!window.confirm(`Confirmer ${label} de la vente #${selectedVente.id.slice(0, 8)} ?`)) return;
+    setFinancialActionLoading(true);
+    setErrorMessage('');
+    try {
+      const updated = kind === 'REFUND'
+        ? await venteApi.refund(selectedVente.id, motif)
+        : await venteApi.cancel(selectedVente.id, motif);
+      setSelectedVente(updated);
+      setVentes((current) => current.map((vente) => vente.id === updated.id ? updated : vente));
+      await loadProducts();
+      setSuccessMessage(kind === 'REFUND'
+        ? 'Vente remboursée : sortie de caisse et retour de stock enregistrés.'
+        : 'Vente annulée : écriture d’origine neutralisée et stock restitué.');
+    } catch (error: any) {
+      const message = error?.response?.data?.message || error?.message || 'Traitement impossible.';
+      setErrorMessage(Array.isArray(message) ? message.join(', ') : String(message));
+    } finally {
+      setFinancialActionLoading(false);
+    }
+  };
+
   const filteredHistory = useMemo(() => {
     let result = ventes;
     if (dateFrom) {
@@ -437,9 +661,15 @@ export const Ventes = () => {
     return <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${cls}`}>{statut}</span>;
   };
 
+  const saleStatusBadge = (vente: any) => {
+    if (vente.annulee) return <span className="inline-flex rounded-full bg-slate-200 px-2 py-1 text-xs font-bold text-slate-700">Annulée</span>;
+    if (vente.remboursee) return <span className="inline-flex rounded-full bg-red-100 px-2 py-1 text-xs font-bold text-red-700">Remboursée</span>;
+    return statutBadge(vente.statutPaiement);
+  };
+
   /* ═══ RENDER ═════════════════════════════════════════════════ */
   return (
-    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
+    <motion.div onClickCapture={recordInteraction} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
       {/* Header + Tabs */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
@@ -466,7 +696,7 @@ export const Ventes = () => {
             <CheckCircle2 size={18} /> {successMessage}
             {lastVente && (
               <div className="ml-auto flex items-center gap-2">
-                <button onClick={() => setShowReceipt(true)}
+                <button onClick={() => { setAutoPrintReceipt(false); setShowReceipt(true); }}
                   className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 text-white rounded-lg text-xs font-bold hover:bg-emerald-700 transition-colors">
                   <Receipt size={14} /> Imprimer recu
                 </button>
@@ -628,9 +858,9 @@ export const Ventes = () => {
             {!loading && (
               <div className="flex items-center justify-between text-xs text-slate-500">
                 <span>
-                  {filteredProducts.length === 0 
-                    ? 'Aucun produit' 
-                    : `${filteredProducts.length.toLocaleString()} produit${filteredProducts.length > 1 ? 's' : ''} trouvé${filteredProducts.length > 1 ? 's' : ''}`
+                  {totalProducts === 0
+                    ? 'Aucun produit'
+                    : `${totalProducts.toLocaleString()} produit${totalProducts > 1 ? 's' : ''} trouvé${totalProducts > 1 ? 's' : ''}`
                   }
                   {hasActiveFilters && ` (sur ${produits.length.toLocaleString()})`}
                 </span>
@@ -652,38 +882,55 @@ export const Ventes = () => {
                     const img = resolveImgUrl(p.imageUrl) || '/logo.png';
                     return (
                       <div key={p.id}
-                        className={`relative bg-white border rounded-xl p-3 text-left transition-all hover:shadow-md ${outOfStock ? 'opacity-50 border-slate-200' : 'border-slate-200 hover:border-primary/30 cursor-pointer'} ${inCart ? 'ring-2 ring-primary/30' : ''}`}
-                        onClick={() => !outOfStock && addToCart(p)}
+                        className={`relative rounded-xl border border-slate-200 p-3 text-left transition-all duration-150 hover:shadow-sm ${
+                          outOfStock
+                            ? 'opacity-50'
+                            : 'hover:border-slate-300 active:scale-[0.98] motion-reduce:transform-none'
+                        } ${lastAddedProductId === p.id ? 'bg-emerald-50' : 'bg-white'}`}
                       >
                         {/* View details button */}
                         <button
-                          onClick={e => { e.stopPropagation(); openProduitDetail(p); }}
-                          className="absolute top-2 left-2 z-10 w-7 h-7 flex items-center justify-center rounded-full bg-white/90 shadow-sm text-slate-500 hover:text-primary hover:bg-white transition-colors"
+                          type="button"
+                          onClick={() => openProduitDetail(p)}
+                          className="absolute top-2 left-2 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white/90 shadow-sm text-slate-500 transition-colors hover:bg-white hover:text-slate-800 max-md:h-11 max-md:w-11"
                           title="Voir les détails"
+                          aria-label={`Voir les details de ${p.nomProduit}`}
                         >
                           <Eye size={14} />
                         </button>
 
-                        <div className="w-full h-20 flex items-center justify-center rounded-lg mb-2 bg-slate-50">
-                          <img src={img} alt="" className="max-w-full max-h-full object-contain" onError={e => { (e.target as HTMLImageElement).src = '/logo.png'; }} />
-                        </div>
-                        <p className="text-sm font-semibold text-slate-900 truncate">{p.nomProduit}</p>
-                        {p.marque && <p className="text-xs text-slate-400 truncate">{p.marque}</p>}
-                        <div className="flex items-center justify-between mt-2">
-                          <span className="text-sm font-bold text-primary">{(Number(p.prixDetail ?? 0)).toLocaleString()} F</span>
-                          <span className={`text-xs font-bold px-1.5 py-0.5 rounded-full ${outOfStock ? 'bg-red-100 text-red-600' : 'bg-emerald-100 text-emerald-600'}`}>
-                            {p.quantiteStock ?? 0}
-                          </span>
-                        </div>
-                        {inCart && (
-                          <div className="absolute top-2 right-2 w-5 h-5 bg-primary text-white rounded-full flex items-center justify-center text-[10px] font-bold">
-                            {inCart.quantite}
+                        <button
+                          type="button"
+                          disabled={outOfStock}
+                          onClick={() => addToCart(p)}
+                          aria-label={outOfStock
+                            ? `${p.nomProduit} en rupture de stock`
+                            : `Ajouter ${p.nomProduit} au panier${inCart ? `, quantite actuelle ${inCart.quantite}` : ''}`}
+                          className="block w-full text-left disabled:cursor-not-allowed"
+                        >
+                          <div className="w-full h-20 flex items-center justify-center rounded-lg mb-2 bg-slate-50">
+                            <img src={img} alt="" className="max-w-full max-h-full object-contain" onError={e => { (e.target as HTMLImageElement).src = '/logo.png'; }} />
                           </div>
-                        )}
+                          <p className="text-sm font-semibold text-slate-900 truncate">{p.nomProduit}</p>
+                          {p.marque && <p className="text-xs text-slate-400 truncate">{p.marque}</p>}
+                          <div className="flex items-center justify-between mt-2">
+                            <span className="text-sm font-bold text-primary">{(Number(p.prixDetail ?? 0)).toLocaleString()} F</span>
+                            <span className={`text-xs font-bold px-1.5 py-0.5 rounded-full ${outOfStock ? 'bg-red-100 text-red-600' : 'bg-emerald-100 text-emerald-600'}`}>
+                              {p.quantiteStock ?? 0}
+                            </span>
+                          </div>
+                          {inCart && (
+                            <span className={`absolute top-2 right-2 flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-[10px] font-bold text-white ${
+                              lastAddedProductId === p.id ? 'bg-emerald-600' : 'bg-slate-800'
+                            }`}>
+                              {inCart.quantite}
+                            </span>
+                          )}
+                        </button>
                       </div>
                     );
                   })}
-                  {filteredProducts.length === 0 && (
+                  {totalProducts === 0 && (
                     <div className="col-span-full text-center py-8 text-slate-400">
                       <Package size={32} className="mx-auto mb-2 opacity-50" />
                       <p className="text-sm">Aucun produit trouvé</p>
@@ -747,15 +994,40 @@ export const Ventes = () => {
           </div>
 
           {/* Right: Cart + Payment */}
-          <div className="lg:col-span-2 space-y-4">
+          <div className="lg:col-span-2 space-y-4 lg:sticky lg:top-4 lg:self-start lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto lg:pr-1">
             {/* Cart */}
             <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden">
               <div className="p-4 border-b border-slate-100 flex items-center justify-between">
-                <h3 className="font-bold text-slate-900 flex items-center gap-2"><ShoppingCart size={18} /> Panier</h3>
-                {cart.length > 0 && (
-                  <button onClick={() => setCart([])} className="text-xs text-red-500 hover:text-red-700 font-medium">Vider</button>
-                )}
+                <h3 className="font-bold text-slate-900 flex items-center gap-2">
+                  <ShoppingCart size={18} /> Panier · {totalUnits} unite{totalUnits > 1 ? 's' : ''}
+                </h3>
+                <div className="flex items-center gap-2">
+                  {suspendedCarts.length > 0 && (
+                    <button type="button" onClick={() => setShowSuspendedCarts((open) => !open)} className="inline-flex min-h-9 items-center gap-1 rounded-lg bg-amber-50 px-2 text-xs font-bold text-amber-700 hover:bg-amber-100">
+                      <Play size={13} /> Reprendre ({suspendedCarts.length})
+                    </button>
+                  )}
+                  {cart.length > 0 && (
+                    <>
+                      <button type="button" onClick={suspendCurrentCart} className="inline-flex min-h-9 items-center gap-1 rounded-lg bg-slate-100 px-2 text-xs font-bold text-slate-700 hover:bg-slate-200">
+                        <Pause size={13} /> Attente
+                      </button>
+                      <button type="button" onClick={() => setShowClearCartConfirm(true)} className="min-h-9 px-1 text-xs font-medium text-red-500 hover:text-red-700">Vider</button>
+                    </>
+                  )}
+                </div>
               </div>
+
+              {showSuspendedCarts && suspendedCarts.length > 0 && (
+                <div className="space-y-2 border-b border-amber-200 bg-amber-50 p-3">
+                  {suspendedCarts.map((entry) => (
+                    <button key={entry.id} type="button" onClick={() => resumeSuspendedCart(entry)} className="flex min-h-11 w-full items-center justify-between gap-3 rounded-xl border border-amber-200 bg-white px-3 text-left hover:border-amber-400">
+                      <span><span className="block text-sm font-bold text-slate-800">{entry.items.reduce((sum, item) => sum + item.quantite, 0)} unite(s)</span><span className="text-xs text-slate-500">{new Date(entry.createdAt).toLocaleString('fr-FR')}</span></span>
+                      <span className="text-xs font-bold text-amber-700">Reprendre</span>
+                    </button>
+                  ))}
+                </div>
+              )}
 
               {cart.length === 0 ? (
                 <div className="p-8 text-center text-slate-400">
@@ -766,7 +1038,9 @@ export const Ventes = () => {
               ) : (
                 <div className="divide-y divide-slate-100 max-h-[40vh] overflow-y-auto">
                   {cart.map(item => (
-                    <div key={item.produitId} className="p-3 space-y-2">
+                    <div key={item.produitId} className={`p-3 space-y-2 transition-colors ${
+                      lastAddedProductId === item.produitId ? 'bg-emerald-50' : ''
+                    }`}>
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-semibold text-slate-900 truncate">{item.nomProduit}</p>
@@ -793,21 +1067,34 @@ export const Ventes = () => {
                             </div>
                           )}
                         </div>
-                        <button onClick={() => removeFromCart(item.produitId)} className="text-slate-300 hover:text-red-500 transition-colors">
+                        <button
+                          type="button"
+                          onClick={() => removeFromCart(item.produitId)}
+                          className="flex h-10 w-10 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-red-50 hover:text-red-500 max-md:h-11 max-md:w-11"
+                          aria-label={`Retirer ${item.nomProduit} du panier`}
+                        >
                           <Trash2 size={14} />
                         </button>
                       </div>
                       <div className="flex items-center justify-between gap-3">
                         {/* Quantity */}
                         <div className="flex items-center gap-1">
-                          <button onClick={() => updateQuantity(item.produitId, -1)}
-                            className="w-7 h-7 flex items-center justify-center rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors">
+                          <button
+                            type="button"
+                            onClick={() => updateQuantity(item.produitId, -1)}
+                            className="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-100 text-slate-600 transition-colors hover:bg-slate-200 max-md:h-11 max-md:w-11"
+                            aria-label={`Diminuer la quantite de ${item.nomProduit}`}
+                          >
                             <Minus size={12} />
                           </button>
                           <span className="w-8 text-center text-sm font-bold">{item.quantite}</span>
-                          <button onClick={() => updateQuantity(item.produitId, 1)}
+                          <button
+                            type="button"
+                            onClick={() => updateQuantity(item.produitId, 1)}
                             disabled={item.quantite >= item.stock}
-                            className="w-7 h-7 flex items-center justify-center rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors disabled:opacity-40">
+                            className="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-100 text-slate-600 transition-colors hover:bg-slate-200 disabled:opacity-40 max-md:h-11 max-md:w-11"
+                            aria-label={`Augmenter la quantite de ${item.nomProduit}`}
+                          >
                             <Plus size={12} />
                           </button>
                           <span className="text-[10px] text-slate-400 ml-1">/ {item.stock}</span>
@@ -841,7 +1128,20 @@ export const Ventes = () => {
             {/* Payment Method */}
             {cart.length > 0 && (
               <div className="bg-white border border-slate-200 rounded-2xl p-4 space-y-4">
-                <h3 className="font-bold text-sm text-slate-900">Mode de paiement</h3>
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <h3 className="font-bold text-sm text-slate-900">Mode de paiement</h3>
+                  <div className="flex flex-wrap gap-1 text-[10px] font-bold text-slate-500" aria-label="Raccourcis caisse">
+                    <span className="rounded bg-slate-100 px-1.5 py-1">F2 Espèces</span>
+                    <span className="rounded bg-slate-100 px-1.5 py-1">F3 Mobile</span>
+                    <span className="rounded bg-slate-100 px-1.5 py-1">F4 Carte</span>
+                    <span className="rounded bg-primary/10 px-1.5 py-1 text-primary">F8 Valider</span>
+                  </div>
+                </div>
+                {saleMetrics.completedSales > 0 && (
+                  <p className="rounded-lg bg-indigo-50 px-3 py-2 text-xs font-medium text-indigo-700">
+                    Moyenne locale : {Math.round(saleMetrics.averageDurationMs / 1000)} s · {saleMetrics.averageInteractions} interaction{saleMetrics.averageInteractions > 1 ? 's' : ''} par vente ({saleMetrics.completedSales} mesurée{saleMetrics.completedSales > 1 ? 's' : ''}).
+                  </p>
+                )}
                 <div className="grid grid-cols-2 gap-2">
                   {PAYMENT_METHODS.map(pm => {
                     const Icon = pm.icon;
@@ -1140,7 +1440,11 @@ export const Ventes = () => {
                       </div>
                       <div>
                         <p className="text-xs text-slate-500 font-medium">Statut</p>
-                        {statutBadge(selectedVente.statutPaiement)}
+                        {selectedVente.annulee
+                          ? <span className="inline-flex rounded-full bg-slate-200 px-2 py-1 text-xs font-bold text-slate-700">Annulée</span>
+                          : selectedVente.remboursee
+                            ? <span className="inline-flex rounded-full bg-red-100 px-2 py-1 text-xs font-bold text-red-700">Remboursée</span>
+                            : statutBadge(selectedVente.statutPaiement)}
                       </div>
                     </div>
                     <div>
@@ -1179,14 +1483,26 @@ export const Ventes = () => {
                       )}
                     </div>
                     {/* Print receipt button */}
-                    <div className="flex justify-end pt-2">
+                    <div className="flex flex-wrap justify-end gap-2 pt-2">
+                      {admin?.role === 'SUPER_ADMIN' && !selectedVente.annulee && !selectedVente.remboursee && (
+                        <>
+                          <button type="button" onClick={() => void handleFinancialAction('CANCEL')} disabled={financialActionLoading}
+                            className="flex items-center gap-2 rounded-lg border border-slate-300 px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50 disabled:opacity-50">
+                            <X size={16} /> Annuler administrativement
+                          </button>
+                          <button type="button" onClick={() => void handleFinancialAction('REFUND')} disabled={financialActionLoading}
+                            className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm font-bold text-red-700 hover:bg-red-100 disabled:opacity-50">
+                            <Banknote size={16} /> Rembourser le client
+                          </button>
+                        </>
+                      )}
                       <button onClick={() => {
                         const client = selectedVente.client;
                         const rType = client?.typeClient === 'PROFESSIONNEL' ? 'facture' as const : 'ticket' as const;
                         setReceiptType(rType);
                         setLastVente({
                           ...selectedVente,
-                          _receiptNumber: generateReceiptNumber(rType),
+                          _receiptNumber: selectedVente.facture?.numero || selectedVente.id,
                           _lignes: (selectedVente.lignesVente || []).map((l: any) => ({
                             nomProduit: l.produit?.nomProduit || 'Produit',
                             quantite: l.quantite,
@@ -1198,6 +1514,7 @@ export const Ventes = () => {
                           _client: client ? { nom: client.nom, telephone: client.telephone, typeClient: client.typeClient } : undefined,
                         });
                         setSelectedVente(null);
+                        setAutoPrintReceipt(false);
                         setShowReceipt(true);
                       }}
                         className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg text-sm font-bold hover:opacity-90 transition-opacity">
@@ -1273,7 +1590,7 @@ export const Ventes = () => {
                         </td>
                         <td className="px-6 py-4 text-xs font-semibold uppercase">{v.methodePaiement}</td>
                         <td className="px-6 py-4 font-bold text-slate-900">{Number(v.montantTotal).toLocaleString()} FCFA</td>
-                        <td className="px-6 py-4">{statutBadge(v.statutPaiement)}</td>
+                        <td className="px-6 py-4">{saleStatusBadge(v)}</td>
                         <td className="px-6 py-4 text-right">
                           <button onClick={() => setSelectedVente(v)} className="p-1.5 text-slate-400 hover:text-primary hover:bg-primary/10 rounded-lg transition-colors">
                             <Eye size={16} />
@@ -1300,7 +1617,7 @@ export const Ventes = () => {
                   <div key={v.id} className="p-4 space-y-2" onClick={() => setSelectedVente(v)}>
                     <div className="flex items-center justify-between">
                       <span className="font-mono font-bold text-primary text-sm">{v.id.substring(0, 8)}</span>
-                      {statutBadge(v.statutPaiement)}
+                      {saleStatusBadge(v)}
                     </div>
                     <div className="flex items-center justify-between text-sm">
                       <span className="font-medium text-slate-700">{v.client ? `${v.client.nom}` : 'Client Anonyme'}</span>
@@ -1322,6 +1639,8 @@ export const Ventes = () => {
       {/* Receipt Modal */}
       {showReceipt && lastVente && (
         <ReceiptGenerator
+          documentId={lastVente.facture?.id}
+          printCount={lastVente.facture?.printCount || 0}
           type={receiptType}
           lignes={lastVente._lignes || []}
           montantTotal={lastVente._montantTotal || lastVente.montantTotal || 0}
@@ -1329,7 +1648,13 @@ export const Ventes = () => {
           numero={lastVente._receiptNumber || ''}
           client={lastVente._client}
           dateVente={lastVente.dateVente}
-          onClose={() => setShowReceipt(false)}
+          autoPrint={autoPrintReceipt}
+          onPrintRecorded={({ printCount }) => {
+            setLastVente((current: any) => current
+              ? { ...current, facture: current.facture ? { ...current.facture, printCount } : current.facture }
+              : current);
+          }}
+          onClose={() => { setShowReceipt(false); setAutoPrintReceipt(false); }}
         />
       )}
 
@@ -1346,6 +1671,26 @@ export const Ventes = () => {
           }}
         />
       )}
+
+      <ConfirmDialog
+        open={showClearCartConfirm}
+        title="Vider le panier ?"
+        description={`Les ${totalUnits} unite${totalUnits > 1 ? 's' : ''} seront retirees de la vente en cours.`}
+        confirmLabel="Vider le panier"
+        onConfirm={clearCurrentCart}
+        onClose={() => setShowClearCartConfirm(false)}
+      />
+      <ConfirmDialog
+        open={Boolean(pendingResumeCart)}
+        title="Remplacer le panier en cours ?"
+        description={`Le panier actuel de ${totalUnits} unite${totalUnits > 1 ? 's' : ''} sera remplace par le panier en attente.`}
+        confirmLabel="Reprendre ce panier"
+        variant="primary"
+        onConfirm={() => {
+          if (pendingResumeCart) applySuspendedCart(pendingResumeCart);
+        }}
+        onClose={() => setPendingResumeCart(null)}
+      />
     </motion.div>
   );
 };

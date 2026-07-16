@@ -1,4 +1,4 @@
-import { IsBoolean, IsEmail, IsEnum, IsOptional, IsString, Matches, MinLength } from 'class-validator';
+import { IsBoolean, IsEmail, IsEnum, IsNotEmpty, IsOptional, IsString, Matches, MinLength } from 'class-validator';
 import { AdminRole } from '@prisma/client';
 
 export class UpdateAdminDto {
@@ -46,5 +46,21 @@ export class UpdateAdminDto {
 
 export class ResetPasswordDto {
   @IsString()
+  @MinLength(8)
+  newPassword: string;
+}
+
+export class ChangeRoleDto {
+  @IsEnum(AdminRole)
+  role: AdminRole;
+}
+
+export class ChangePasswordDto {
+  @IsString()
+  @IsNotEmpty()
+  oldPassword: string;
+
+  @IsString()
+  @MinLength(8)
   newPassword: string;
 }

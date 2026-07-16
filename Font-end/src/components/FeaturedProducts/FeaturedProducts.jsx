@@ -26,9 +26,12 @@ const useCountdown = (targetDate) => {
                 s: totalSeconds % 60,
             };
         };
-        setTime(calcRemaining());
+        const initialTimer = setTimeout(() => setTime(calcRemaining()), 0);
         const timer = setInterval(() => setTime(calcRemaining()), 1000);
-        return () => clearInterval(timer);
+        return () => {
+            clearTimeout(initialTimer);
+            clearInterval(timer);
+        };
     }, [targetDate]);
 
     return time;
@@ -38,7 +41,7 @@ const useCountdown = (targetDate) => {
 const useSnapCarousel = (itemCount, autoPlayMs = 0) => {
     const trackRef = useRef(null);
     const [activeIndex, setActiveIndex] = useState(0);
-    const [dotCount, setDotCount] = useState(0);
+    const dotCount = itemCount;
     const isHovered = useRef(false);
 
     // Observe which card is in view to update dots
@@ -63,11 +66,6 @@ const useSnapCarousel = (itemCount, autoPlayMs = 0) => {
 
         Array.from(cards).forEach((card) => observer.observe(card));
         return () => observer.disconnect();
-    }, [itemCount]);
-
-    // Compute dot count based on visible cards
-    useEffect(() => {
-        setDotCount(itemCount);
     }, [itemCount]);
 
     const scrollTo = useCallback((index) => {

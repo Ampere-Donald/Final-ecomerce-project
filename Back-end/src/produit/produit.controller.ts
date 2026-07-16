@@ -134,6 +134,8 @@ export class ProduitController {
     @Query('limit') limit?: string,
     @Query('search') search?: string,
     @Query('categoryId') categoryId?: string,
+    @Query('codeFamille') codeFamille?: string,
+    @Query('code') code?: string,
     @Query('minPrice') minPrice?: string,
     @Query('maxPrice') maxPrice?: string,
     @Query('inStock') inStock?: string,
@@ -141,9 +143,11 @@ export class ProduitController {
   ) {
     const result = await this.produitService.findAll({
       page: page ? parseInt(page, 10) : 1,
-      limit: limit ? parseInt(limit, 10) : 1000,
+      limit: limit ? parseInt(limit, 10) : 50,
       search,
       categoryId,
+      codeFamille,
+      code,
       minPrice: minPrice ? parseFloat(minPrice) : undefined,
       maxPrice: maxPrice ? parseFloat(maxPrice) : undefined,
       inStock: inStock === 'true',

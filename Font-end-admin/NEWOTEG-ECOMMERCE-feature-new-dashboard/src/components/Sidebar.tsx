@@ -30,6 +30,8 @@ import {
   Banknote,
   BookOpen,
   ScanBarcode,
+  CloudOff,
+  History,
 } from 'lucide-react';
 import { useAdminAuth } from '../context/AdminAuthContext';
 import { brand } from '../config/brand';
@@ -134,6 +136,8 @@ export const Sidebar = ({ open, onClose }: SidebarProps) => {
     {
       label: 'Système',
       items: [
+        ...add(can.accessPrintAudit(role), { label: 'Journal impressions', icon: History, path: '/print-audit' }),
+        ...add(Boolean(role), { label: 'Opérations hors ligne', icon: CloudOff, path: '/offline-queue' }),
         ...add(can.accessGuide(role), { label: 'Guide utilisateur', icon: BookOpen, path: '/guide' }),
         ...add(can.accessParametres(role), { label: 'Paramètres', icon: Settings, path: '/settings' }),
       ],
@@ -149,7 +153,7 @@ export const Sidebar = ({ open, onClose }: SidebarProps) => {
       end={item.path === '/'}
       onClick={onClose}
       className={({ isActive }) =>
-        `flex items-center gap-3 px-3 py-2 rounded-lg transition-colors font-medium ${
+        `flex min-h-11 items-center gap-3 px-3 py-2 rounded-lg transition-colors font-medium ${
           isActive ? 'bg-primary/10 text-primary' : 'text-slate-600 hover:bg-slate-50 hover:text-primary'
         }`
       }
@@ -173,7 +177,9 @@ export const Sidebar = ({ open, onClose }: SidebarProps) => {
     `}>
       <div className="p-6 border-b border-slate-100 flex items-center gap-3">
         <button
+          type="button"
           onClick={onClose}
+          aria-label="Fermer le menu"
           className="md:hidden absolute right-4 top-4 p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
         >
           <X size={20} />
@@ -216,10 +222,12 @@ export const Sidebar = ({ open, onClose }: SidebarProps) => {
             <p className="text-xs text-slate-500">{role || 'Utilisateur'}</p>
           </div>
           <button
+            type="button"
             onClick={() => {
               if (window.confirm('Voulez-vous vraiment vous déconnecter ?')) logout();
             }}
             title="Se déconnecter"
+            aria-label="Se déconnecter"
             className="text-slate-400 hover:text-red-500 transition-colors"
           >
             <LogOut size={16} />

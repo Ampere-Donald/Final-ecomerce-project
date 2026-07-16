@@ -32,6 +32,10 @@ export class LigneVenteDto {
 export class CreateVenteDto {
   @IsOptional()
   @IsUUID()
+  idempotencyKey?: string;
+
+  @IsOptional()
+  @IsUUID()
   clientId?: string;
 
   @IsNumber()

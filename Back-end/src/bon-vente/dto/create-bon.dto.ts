@@ -34,6 +34,10 @@ export class LigneBonDto {
 export class CreateBonDto {
   @IsOptional()
   @IsUUID()
+  idempotencyKey?: string;
+
+  @IsOptional()
+  @IsUUID()
   clientId?: string;
 
   @IsEnum(MethodePaiement)

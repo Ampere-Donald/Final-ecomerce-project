@@ -16,6 +16,7 @@ import {
   UserCheck,
 } from 'lucide-react';
 import { bonVenteApi, caisseJourApi, clientApi } from '../services/api';
+import { subscribeAuthenticatedSse } from '../services/authenticatedSse';
 import { useToast, errorMessage } from './ui/Toast';
 
 type Methode = 'ESPECES' | 'CARTE' | 'VIREMENT' | 'MOBILE_MONEY' | 'CREDIT';
@@ -79,6 +80,7 @@ const TicketRow = ({
   onSelect: () => void;
 }) => {
   const c = useCountdown(ticket.expiresAt);
+  const totalUnits = ticket.lignes.reduce((sum, ligne) => sum + ligne.quantite, 0);
   return (
     <button
       onClick={onSelect}
@@ -103,7 +105,7 @@ const TicketRow = ({
         </p>
       )}
       <p className="text-xs text-slate-400 mb-2">
-        {ticket.lignes.length} article{ticket.lignes.length > 1 ? 's' : ''}
+        {totalUnits} unite{totalUnits > 1 ? 's' : ''} · {ticket.lignes.length} reference{ticket.lignes.length > 1 ? 's' : ''}
       </p>
       <div className="flex items-center justify-between pt-2 border-t border-slate-100">
         <span className="text-xs text-slate-500">Total</span>
@@ -152,14 +154,7 @@ export const FileCaissier = () => {
     charger();
 
     // SSE — notifications temps réel quand un vendeur envoie un bon
-    const token = localStorage.getItem('newoteg_admin_token');
-    const rawUrl = import.meta.env.VITE_API_URL || '/api';
-    const baseUrl = rawUrl.endsWith('/api') ? rawUrl.replace(/\/api$/, '') : rawUrl;
-    const es = new EventSource(`${baseUrl}/api/bons/stream?token=${token}`);
-    es.onmessage = () => { charger(); };
-    es.onerror = () => { es.close(); };
-
-    return () => { es.close(); };
+    return subscribeAuthenticatedSse('/bons/stream', () => { void charger(); });
   }, []);
 
   // Charge la liste des clients (pour les ventes à crédit)
@@ -242,6 +237,10 @@ export const FileCaissier = () => {
       ),
     [tickets],
   );
+  const selectedTotalUnits = useMemo(
+    () => selected?.lignes.reduce((sum, ligne) => sum + ligne.quantite, 0) || 0,
+    [selected],
+  );
 
   return (
     <motion.div
@@ -295,7 +294,7 @@ export const FileCaissier = () => {
         <div className="text-center text-slate-400 py-16">
           <ListChecks size={48} className="mx-auto mb-3 opacity-40" />
           <p className="font-medium">Aucun ticket en attente.</p>
-          <p className="text-xs mt-1">La file se rafraîchit automatiquement toutes les 10 secondes.</p>
+          <p className="text-xs mt-1">La file se met à jour en temps réel dès qu'un vendeur envoie un bon.</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -319,9 +318,9 @@ export const FileCaissier = () => {
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
               onClick={(e) => e.stopPropagation()}
-              className="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto"
+              className="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-hidden flex flex-col"
             >
-              <div className="flex items-center justify-between p-5 border-b border-slate-100">
+              <div className="flex items-center justify-between p-5 border-b border-slate-100 shrink-0">
                 <h3 className="font-bold text-lg text-slate-900">
                   Encaisser ticket
                 </h3>
@@ -333,7 +332,7 @@ export const FileCaissier = () => {
                 </button>
               </div>
 
-              <div className="p-5 space-y-4">
+              <div className="p-5 space-y-4 overflow-y-auto flex-1">
                 <div>
                   <p className="font-mono text-sm font-bold">{selected.numeroTicket}</p>
                   {selected.nomClient && (
@@ -473,7 +472,12 @@ export const FileCaissier = () => {
                 )}
               </div>
 
-              <div className="p-5 border-t border-slate-100 flex gap-2">
+              <div className="p-5 border-t border-slate-100 bg-white shrink-0 space-y-3">
+                <div className="flex items-center justify-between text-xs text-slate-500">
+                  <span>{selectedTotalUnits} unite{selectedTotalUnits > 1 ? 's' : ''}</span>
+                  <span>{methode === 'CREDIT' ? 'Vente a credit' : methodes.find((item) => item.value === methode)?.label}</span>
+                </div>
+                <div className="flex gap-2">
                 <button
                   onClick={() => !submitting && setSelected(null)}
                   disabled={submitting}
@@ -493,6 +497,7 @@ export const FileCaissier = () => {
                       ? 'Valider à crédit'
                       : 'Encaisser'}
                 </button>
+                </div>
               </div>
             </motion.div>
           </motion.div>

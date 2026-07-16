@@ -35,7 +35,7 @@ const Checkout = () => {
             if (!phone && user.telephone) setPhone(user.telephone);
             if (!email && user.email) setEmail(user.email);
         }
-    }, [isAuthenticated, user]);
+    }, [isAuthenticated, user, fullName, phone, email]);
 
     // ── Submission state ────────────────────────────────────
     const [isSubmitting, setIsSubmitting] = useState(false);

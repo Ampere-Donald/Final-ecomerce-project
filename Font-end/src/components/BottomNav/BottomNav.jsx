@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect } from 'react';
+import { createElement, useRef, useState, useEffect } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { Home, LayoutGrid, ShoppingCart, Heart, User } from 'lucide-react';
 import { useCart } from '../../context/CartContext';
@@ -48,7 +48,7 @@ const BottomNav = () => {
 
   return (
     <nav className={`bottom-nav ${visible ? '' : 'bottom-nav--hidden'}`} aria-label="Mobile navigation">
-      {tabs.map(({ to, icon: Icon, label, badge, auth }) => {
+      {tabs.map(({ to, icon, label, badge, auth }) => {
         const href = auth && !token ? '/login' : to;
         return (
           <NavLink
@@ -59,7 +59,7 @@ const BottomNav = () => {
             }
           >
             <span className="bottom-nav__icon-wrap">
-              <Icon size={22} strokeWidth={1.8} />
+              {createElement(icon, { size: 22, strokeWidth: 1.8 })}
               {badge > 0 && <span className="bottom-nav__badge">{badge > 99 ? '99+' : badge}</span>}
             </span>
             <span className="bottom-nav__label">{label}</span>

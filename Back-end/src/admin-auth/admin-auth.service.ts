@@ -19,6 +19,8 @@ import { UpdateAdminDto } from './dto/update-admin.dto';
 @Injectable()
 export class AdminAuthService {
   private readonly logger = new Logger('AdminAuth');
+  private static readonly MAX_FAILED_LOGINS = 5;
+  private static readonly LOCK_DURATION_MS = 15 * 60 * 1000;
 
   constructor(
     private readonly db: DatabaseService,
@@ -46,20 +48,20 @@ export class AdminAuthService {
       throw new UnauthorizedException('Compte desactive');
     }
 
+    this.assertNotLocked(admin);
+
     if (!admin.motDePasse) {
       throw new UnauthorizedException('Ce compte ne peut pas se connecter par mot de passe');
     }
 
     const valid = await bcrypt.compare(password, admin.motDePasse);
     if (!valid) {
+      await this.recordFailedLogin(admin);
       this.logger.warn(`Invalid password for admin: ${admin.username}`);
       throw new UnauthorizedException("Nom d'utilisateur ou mot de passe incorrect");
     }
 
-    await this.db.adminUser.update({
-      where: { id: admin.id },
-      data: { lastLoginAt: new Date() },
-    });
+    await this.recordSuccessfulLogin(admin.id);
     await this.activityLog.log(admin.id, 'LOGIN_PASSWORD');
 
     this.logger.log(`Admin logged in: ${admin.username} (${admin.role})`);
@@ -73,6 +75,8 @@ export class AdminAuthService {
       throw new UnauthorizedException('Identifiants invalides');
     }
 
+    this.assertNotLocked(admin);
+
     if (!admin.pinCode) {
       throw new UnauthorizedException("Ce compte n'a pas de PIN configure");
     }
@@ -83,13 +87,11 @@ export class AdminAuthService {
 
     const valid = await bcrypt.compare(pin, admin.pinCode);
     if (!valid) {
+      await this.recordFailedLogin(admin);
       throw new UnauthorizedException('Identifiants invalides');
     }
 
-    await this.db.adminUser.update({
-      where: { id: admin.id },
-      data: { lastLoginAt: new Date() },
-    });
+    await this.recordSuccessfulLogin(admin.id);
     await this.activityLog.log(admin.id, 'LOGIN_PIN');
 
     this.logger.log(`PIN login: ${admin.username} (${admin.role})`);
@@ -113,33 +115,12 @@ export class AdminAuthService {
     const hashed = await bcrypt.hash(newPassword, 12);
     await this.db.adminUser.update({
       where: { id: adminId },
-      data: { motDePasse: hashed },
+      data: { motDePasse: hashed, sessionVersion: { increment: 1 } },
     });
     await this.activityLog.log(admin.id, 'PASSWORD_CHANGED');
 
     this.logger.log(`Admin password changed: ${admin.username}`);
     return { message: 'Mot de passe modifie avec succes' };
-  }
-
-  async seedFirstAdmin(email: string, password: string, nom: string, username?: string) {
-    const count = await this.db.adminUser.count();
-    if (count > 0) {
-      throw new BadRequestException('Un admin existe deja. Seed desactive.');
-    }
-
-    const hashed = await bcrypt.hash(password, 12);
-    const admin = await this.db.adminUser.create({
-      data: {
-        email,
-        username: this.normalizeUsername(username || this.usernameFromEmail(email) || nom),
-        motDePasse: hashed,
-        nom,
-        role: 'SUPER_ADMIN',
-      },
-    });
-
-    this.logger.log(`First admin seeded: ${admin.username}`);
-    return this.serializeAdmin(admin);
   }
 
   async findAllAdmins() {
@@ -219,6 +200,9 @@ export class AdminAuthService {
       data.pinCode = await bcrypt.hash(dto.pin, 10);
       delete data.pin;
     }
+    if (dto.motDePasse || dto.pin || dto.role || dto.isActive !== undefined) {
+      data.sessionVersion = { increment: 1 };
+    }
 
     const roleChanged = dto.role && dto.role !== admin.role;
     const updated = await this.db.$transaction(async (tx) => {
@@ -256,7 +240,7 @@ export class AdminAuthService {
     const hashed = await bcrypt.hash(newPassword, 12);
     await this.db.adminUser.update({
       where: { id },
-      data: { motDePasse: hashed },
+      data: { motDePasse: hashed, sessionVersion: { increment: 1 } },
     });
 
     this.logger.log(`Password reset for ${admin.username} by ${actor.nom}`);
@@ -275,7 +259,7 @@ export class AdminAuthService {
 
     const updated = await this.db.adminUser.update({
       where: { id },
-      data: { isActive: !admin.isActive },
+      data: { isActive: !admin.isActive, sessionVersion: { increment: 1 } },
     });
 
     this.logger.log(
@@ -313,7 +297,7 @@ export class AdminAuthService {
     if (!admin) throw new NotFoundException('Employe introuvable');
     return this.db.adminUser.update({
       where: { id },
-      data: { role },
+      data: { role, sessionVersion: { increment: 1 } },
       select: { id: true, nom: true, email: true, role: true, isActive: true },
     });
   }
@@ -335,12 +319,53 @@ export class AdminAuthService {
     return { message: 'Compte supprime' };
   }
 
+  async revokeSessions(adminId: string) {
+    await this.db.adminUser.update({
+      where: { id: adminId },
+      data: { sessionVersion: { increment: 1 } },
+    });
+    await this.activityLog.log(adminId, 'SESSIONS_REVOKED');
+    return { message: 'Toutes les sessions ont ete revoquees' };
+  }
+
   private async findByUsernameOrEmail(usernameOrEmail: string) {
     const value = usernameOrEmail.trim();
     const normalized = this.normalizeUsername(value);
     return this.db.adminUser.findFirst({
       where: {
         OR: [{ username: normalized }, { email: value.toLowerCase() }],
+      },
+    });
+  }
+
+  private assertNotLocked(admin: AdminUser): void {
+    if (admin.lockedUntil && admin.lockedUntil.getTime() > Date.now()) {
+      throw new UnauthorizedException('Trop de tentatives. Reessayez dans 15 minutes.');
+    }
+  }
+
+  private async recordFailedLogin(admin: AdminUser): Promise<void> {
+    const previousAttempts = admin.lockedUntil && admin.lockedUntil.getTime() <= Date.now()
+      ? 0
+      : admin.failedLoginAttempts;
+    const failedLoginAttempts = previousAttempts + 1;
+    const lockedUntil = failedLoginAttempts >= AdminAuthService.MAX_FAILED_LOGINS
+      ? new Date(Date.now() + AdminAuthService.LOCK_DURATION_MS)
+      : null;
+
+    await this.db.adminUser.update({
+      where: { id: admin.id },
+      data: { failedLoginAttempts, lockedUntil },
+    });
+  }
+
+  private async recordSuccessfulLogin(adminId: string): Promise<void> {
+    await this.db.adminUser.update({
+      where: { id: adminId },
+      data: {
+        lastLoginAt: new Date(),
+        failedLoginAttempts: 0,
+        lockedUntil: null,
       },
     });
   }
@@ -353,6 +378,7 @@ export class AdminAuthService {
       role: admin.role,
       nom: admin.nom,
       type: 'admin',
+      sessionVersion: admin.sessionVersion,
     };
     const accessToken = this.jwt.sign(payload, { expiresIn: expiresIn as any });
     return {

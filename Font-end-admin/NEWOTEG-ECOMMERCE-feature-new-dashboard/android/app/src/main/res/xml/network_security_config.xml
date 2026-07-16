@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <!--
+      QZ Tray génère une autorité locale propre au poste boutique. Android 7+
+      n'accorde plus sa confiance aux autorités ajoutées par l'utilisateur par
+      défaut ; Newoteg l'autorise explicitement tout en interdisant HTTP/WS.
+    -->
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <certificates src="system" />
+            <certificates src="user" />
+        </trust-anchors>
+    </base-config>
+</network-security-config>

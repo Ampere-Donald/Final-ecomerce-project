@@ -18,9 +18,6 @@ export class MailService {
         port,
         secure: port === 465,
         auth: { user, pass },
-        // LWS shared hosting presents a *.lwspanel.com certificate for mail.newoteg.com
-        // This is standard on shared hosting — the connection is still encrypted via STARTTLS
-        tls: { rejectUnauthorized: false },
       });
       this.logger.log('SMTP transporter configured');
     } else {
@@ -98,13 +95,11 @@ export class MailService {
         this.logger.error(
           `Failed to send OTP email to ${to}: ${error.message}`,
         );
-        this.logger.warn(
-          `[SMTP FALLBACK] OTP for ${to}: ${otp}`,
-        );
+        this.logger.warn(`OTP delivery failed for ${to}; the code was not logged.`);
         return false;
       }
     } else {
-      this.logger.warn(`[DEV MODE] OTP for ${to}: ${otp}`);
+      this.logger.warn(`OTP for ${to} was not sent because SMTP is not configured; the code was not logged.`);
       return false;
     }
   }

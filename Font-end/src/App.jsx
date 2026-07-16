@@ -1,22 +1,30 @@
+import { lazy, Suspense } from 'react'
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom'
 import Header from './components/Header/Header'
-import Home from './pages/Home/Home'
-import Catalogue from './pages/Catalogue/Catalogue'
-import ProductDetails from './pages/ProductDetails/ProductDetails'
-import Checkout from './pages/Checkout/Checkout'
-import About from './pages/About/About'
-import Contact from './pages/Contact/Contact'
-import Terms from './pages/Terms/Terms'
-import Privacy from './pages/Privacy/Privacy'
-import Login from './pages/Auth/Login'
-import Signup from './pages/Auth/Signup'
-import Profile from './pages/Profile/Profile'
-import Favorites from './pages/Favorites/Favorites'
 import ProtectedRoute from './components/ProtectedRoute/ProtectedRoute'
 import Toast from './components/Toast/Toast'
 import BottomNav from './components/BottomNav/BottomNav'
 import MiniCart from './components/MiniCart/MiniCart'
-import NotFound from './pages/NotFound/NotFound'
+
+const Home = lazy(() => import('./pages/Home/Home'))
+const Catalogue = lazy(() => import('./pages/Catalogue/Catalogue'))
+const ProductDetails = lazy(() => import('./pages/ProductDetails/ProductDetails'))
+const Checkout = lazy(() => import('./pages/Checkout/Checkout'))
+const About = lazy(() => import('./pages/About/About'))
+const Contact = lazy(() => import('./pages/Contact/Contact'))
+const Terms = lazy(() => import('./pages/Terms/Terms'))
+const Privacy = lazy(() => import('./pages/Privacy/Privacy'))
+const Login = lazy(() => import('./pages/Auth/Login'))
+const Signup = lazy(() => import('./pages/Auth/Signup'))
+const Profile = lazy(() => import('./pages/Profile/Profile'))
+const Favorites = lazy(() => import('./pages/Favorites/Favorites'))
+const NotFound = lazy(() => import('./pages/NotFound/NotFound'))
+
+const PageFallback = () => (
+  <div role="status" aria-live="polite" style={{ minHeight: '45vh', display: 'grid', placeItems: 'center', color: '#64748b', fontWeight: 600 }}>
+    Chargement…
+  </div>
+)
 
 function AppContent() {
   const location = useLocation()
@@ -26,6 +34,7 @@ function AppContent() {
       <Header />
       <main className="app__content">
         <div key={location.pathname} className="page-enter">
+          <Suspense fallback={<PageFallback />}>
           <Routes location={location}>
             <Route path="/" element={<Home />} />
             <Route path="/catalogue" element={<Catalogue />} />
@@ -47,6 +56,7 @@ function AppContent() {
             {/* 404 */}
             <Route path="*" element={<NotFound />} />
           </Routes>
+          </Suspense>
         </div>
       </main>
       <Toast />

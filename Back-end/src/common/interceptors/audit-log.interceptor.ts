@@ -14,6 +14,7 @@ export class AuditLogInterceptor implements NestInterceptor {
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
     const req = context.switchToHttp().getRequest();
     const method = req.method;
+    const requestId = req.requestId || 'no-request-id';
 
     if (['POST', 'PATCH', 'PUT', 'DELETE'].includes(method)) {
       const user = req.user;
@@ -26,12 +27,12 @@ export class AuditLogInterceptor implements NestInterceptor {
         tap({
           next: () => {
             this.logger.log(
-              `${method} ${req.url} by ${userInfo} from ${req.ip} [${Date.now() - start}ms]`,
+              `[${requestId}] ${method} ${req.url} by ${userInfo} from ${req.ip} [${Date.now() - start}ms]`,
             );
           },
           error: (err) => {
             this.logger.warn(
-              `${method} ${req.url} FAILED by ${userInfo} from ${req.ip} - ${err.message}`,
+              `[${requestId}] ${method} ${req.url} FAILED by ${userInfo} from ${req.ip} - ${err.message}`,
             );
           },
         }),

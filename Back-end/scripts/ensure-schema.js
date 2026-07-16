@@ -24,6 +24,9 @@ const SQL_STATEMENTS = [
   `ALTER TABLE "admin_user" ADD COLUMN IF NOT EXISTS "photo_url" TEXT;`,
   `ALTER TABLE "admin_user" ADD COLUMN IF NOT EXISTS "updated_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP;`,
   `ALTER TABLE "admin_user" ADD COLUMN IF NOT EXISTS "created_by" TEXT;`,
+  `ALTER TABLE "admin_user" ADD COLUMN IF NOT EXISTS "failed_login_attempts" INTEGER NOT NULL DEFAULT 0;`,
+  `ALTER TABLE "admin_user" ADD COLUMN IF NOT EXISTS "locked_until" TIMESTAMP(3);`,
+  `ALTER TABLE "admin_user" ADD COLUMN IF NOT EXISTS "session_version" INTEGER NOT NULL DEFAULT 0;`,
   `ALTER TABLE "admin_user" ALTER COLUMN "mot_de_passe" DROP NOT NULL;`,
   `WITH candidates AS (
     SELECT
@@ -117,6 +120,8 @@ const SQL_STATEMENTS = [
     CONSTRAINT "ticket_vente_pkey" PRIMARY KEY ("id")
   );`,
   `CREATE UNIQUE INDEX IF NOT EXISTS "ticket_vente_numero_ticket_key" ON "ticket_vente"("numero_ticket");`,
+  `ALTER TABLE "ticket_vente" ADD COLUMN IF NOT EXISTS "idempotency_key" VARCHAR(64);`,
+  `CREATE UNIQUE INDEX IF NOT EXISTS "ticket_vente_idempotency_key_key" ON "ticket_vente"("idempotency_key");`,
   `CREATE UNIQUE INDEX IF NOT EXISTS "ticket_vente_vente_id_key" ON "ticket_vente"("vente_id");`,
   `CREATE INDEX IF NOT EXISTS "ticket_vente_statut_expires_at_idx" ON "ticket_vente"("statut", "expires_at");`,
   `CREATE INDEX IF NOT EXISTS "ticket_vente_vendeur_id_created_at_idx" ON "ticket_vente"("vendeur_id", "created_at");`,
@@ -169,6 +174,45 @@ const SQL_STATEMENTS = [
   `ALTER TABLE "ligne_bon" ADD COLUMN IF NOT EXISTS "prix_reference" DECIMAL(10,2);`,
   `ALTER TABLE "ligne_bon" ADD COLUMN IF NOT EXISTS "bande_prix" VARCHAR(20);`,
   `ALTER TABLE "ligne_bon" ADD COLUMN IF NOT EXISTS "motif_remise" VARCHAR(255);`,
+
+  // Continuité de caisse 2026 : séquences, annulation auditée et idempotence
+  `CREATE TABLE IF NOT EXISTS "document_sequence" (
+    "id" TEXT NOT NULL,
+    "type" VARCHAR(30) NOT NULL,
+    "period" VARCHAR(10) NOT NULL,
+    "next_value" INTEGER NOT NULL DEFAULT 1,
+    "updated_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "document_sequence_pkey" PRIMARY KEY ("id")
+  );`,
+  `CREATE UNIQUE INDEX IF NOT EXISTS "document_sequence_type_period_key" ON "document_sequence"("type", "period");`,
+  `ALTER TABLE "proforma" ADD COLUMN IF NOT EXISTS "print_count" INTEGER NOT NULL DEFAULT 0;`,
+  `CREATE TABLE IF NOT EXISTS "print_event" (
+    "id" TEXT NOT NULL,
+    "document_type" VARCHAR(30) NOT NULL,
+    "document_id" TEXT,
+    "document_number" VARCHAR(80) NOT NULL,
+    "mode" VARCHAR(20) NOT NULL,
+    "status" VARCHAR(20) NOT NULL,
+    "workstation_id" VARCHAR(100),
+    "printer_name" VARCHAR(200),
+    "actor_id" TEXT NOT NULL,
+    "error_code" VARCHAR(100),
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "print_event_pkey" PRIMARY KEY ("id")
+  );`,
+  `CREATE INDEX IF NOT EXISTS "print_event_document_type_document_number_created_at_idx" ON "print_event"("document_type", "document_number", "created_at");`,
+  `CREATE INDEX IF NOT EXISTS "print_event_actor_id_created_at_idx" ON "print_event"("actor_id", "created_at");`,
+  `DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'print_event_actor_id_fkey') THEN ALTER TABLE "print_event" ADD CONSTRAINT "print_event_actor_id_fkey" FOREIGN KEY ("actor_id") REFERENCES "admin_user"("id") ON DELETE RESTRICT ON UPDATE CASCADE; END IF; END $$;`,
+  `ALTER TABLE "vente" ADD COLUMN IF NOT EXISTS "annulee" BOOLEAN NOT NULL DEFAULT false;`,
+  `ALTER TABLE "vente" ADD COLUMN IF NOT EXISTS "motif_annulation" VARCHAR(255);`,
+  `ALTER TABLE "vente" ADD COLUMN IF NOT EXISTS "annulee_at" TIMESTAMP(3);`,
+  `ALTER TABLE "vente" ADD COLUMN IF NOT EXISTS "annulee_by" TEXT;`,
+  `ALTER TABLE "vente" ADD COLUMN IF NOT EXISTS "remboursee" BOOLEAN NOT NULL DEFAULT false;`,
+  `ALTER TABLE "vente" ADD COLUMN IF NOT EXISTS "motif_remboursement" VARCHAR(255);`,
+  `ALTER TABLE "vente" ADD COLUMN IF NOT EXISTS "remboursee_at" TIMESTAMP(3);`,
+  `ALTER TABLE "vente" ADD COLUMN IF NOT EXISTS "remboursee_by" TEXT;`,
+  `ALTER TABLE "vente" ADD COLUMN IF NOT EXISTS "idempotency_key" VARCHAR(64);`,
+  `CREATE UNIQUE INDEX IF NOT EXISTS "vente_idempotency_key_key" ON "vente"("idempotency_key");`,
 
   // ── Table: commande ──
   `CREATE TABLE IF NOT EXISTS "commande" (

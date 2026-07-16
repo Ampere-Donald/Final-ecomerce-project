@@ -15,6 +15,10 @@ import {
   PackageX,
   BarChart3,
   HandCoins,
+  CloudOff,
+  Printer,
+  PlayCircle,
+  ShoppingBag,
 } from 'lucide-react';
 import {
   caisseApi,
@@ -24,9 +28,11 @@ import {
   echeanceApi,
   produitApi,
   clientApi,
+  bonVenteApi,
 } from '../services/api';
 import { useAdminAuth } from '../context/AdminAuthContext';
 import { can } from '../utils/permissions';
+import { listQueuedSales, OFFLINE_QUEUE_EVENT } from '../services/offlineSalesQueue';
 
 const fmtFCFA = (n: number | string | null | undefined): string => {
   const v = typeof n === 'string' ? parseFloat(n) : n ?? 0;
@@ -78,9 +84,10 @@ export const Dashboard = () => {
   const { admin } = useAdminAuth();
   const role = admin?.role;
   const peutAnalyses = can.accessAnalyses(role);
+  const isAdminRole = ['SUPER_ADMIN', 'ADMIN'].includes(role || '');
 
   const [soldeCaisseJour, setSoldeCaisseJour] = useState<number | null>(null);
-  const [caisseJourFermee, setCaisseJourFermee] = useState(false);
+  const [caisseJourStatut, setCaisseJourStatut] = useState<'OUVERTE' | 'FERMEE' | 'ABSENTE' | 'INCONNUE'>('INCONNUE');
   const [soldeGlobale, setSoldeGlobale] = useState<number | null>(null);
   const [nbCommandesEnAttente, setNbCommandesEnAttente] = useState<number | null>(null);
   const [commandesAnciennes, setCommandesAnciennes] = useState(0);
@@ -90,11 +97,45 @@ export const Dashboard = () => {
   const [produitsRupture, setProduitsRupture] = useState(0);
   const [encoursTotal, setEncoursTotal] = useState<number | null>(null);
   const [topDebiteurs, setTopDebiteurs] = useState<any[]>([]);
+  const [operationsHorsLigne, setOperationsHorsLigne] = useState(0);
+  const [imprimanteDisponible, setImprimanteDisponible] = useState<boolean | null>(null);
+  const [bonsVendeurAttente, setBonsVendeurAttente] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let mounted = true;
     const charger = async () => {
+      if (role === 'VENDEUR') {
+        const bons = await bonVenteApi.mesBons().catch(() => []);
+        if (!mounted) return;
+        setBonsVendeurAttente((bons || []).filter((bon: any) => bon.statut === 'EN_ATTENTE').length);
+        setLoading(false);
+        return;
+      }
+
+      if (role === 'CAISSIER') {
+        const [caisse, tickets] = await Promise.allSettled([
+          caisseJourApi.aujourdhui(),
+          ticketApi.enAttente(),
+        ]);
+        if (!mounted) return;
+        if (caisse.status === 'fulfilled') {
+          const value = caisse.value;
+          setSoldeCaisseJour(value?.solde ?? 0);
+          setCaisseJourStatut(value?.statut === 'FERMEE' ? 'FERMEE' : value ? 'OUVERTE' : 'ABSENTE');
+        } else {
+          setCaisseJourStatut('ABSENTE');
+        }
+        if (tickets.status === 'fulfilled') setNbTicketsAttente((tickets.value || []).length);
+        setLoading(false);
+        return;
+      }
+
+      if (!isAdminRole) {
+        setLoading(false);
+        return;
+      }
+
       const res = await Promise.allSettled([
         caisseJourApi.aujourdhui(),
         caisseApi.soldeGlobal(),
@@ -109,7 +150,9 @@ export const Dashboard = () => {
       if (res[0].status === 'fulfilled') {
         const cj = res[0].value;
         setSoldeCaisseJour(cj?.solde ?? 0);
-        setCaisseJourFermee(cj?.statut === 'FERMEE');
+        setCaisseJourStatut(cj?.statut === 'FERMEE' ? 'FERMEE' : cj ? 'OUVERTE' : 'ABSENTE');
+      } else {
+        setCaisseJourStatut('ABSENTE');
       }
       if (res[1].status === 'fulfilled') {
         setSoldeGlobale(res[1].value?.total ?? 0);
@@ -149,15 +192,45 @@ export const Dashboard = () => {
       mounted = false;
       clearInterval(id);
     };
+  }, [isAdminRole, role]);
+
+  useEffect(() => {
+    const chargerEtatLocal = async () => {
+      const queued = await listQueuedSales().catch(() => []);
+      setOperationsHorsLigne(queued.length);
+      const printer = await import('../services/qzPrinter');
+      setImprimanteDisponible(
+        printer.isAndroidDevice() ? false : printer.isConnected() && Boolean(printer.getPrinterName()),
+      );
+    };
+    void chargerEtatLocal();
+    window.addEventListener(OFFLINE_QUEUE_EVENT, chargerEtatLocal);
+    return () => window.removeEventListener(OFFLINE_QUEUE_EVENT, chargerEtatLocal);
   }, []);
 
   const kpis: Kpi[] = useMemo(
-    () => [
+    () => {
+      if (role === 'VENDEUR') {
+        return [
+          { icon: ShoppingBag, label: 'Vente en cours', value: 'Ouvrir', sub: 'Scanner ou rechercher un produit', to: '/pos', color: 'text-primary' },
+          { icon: Receipt, label: 'Mes tickets', value: bonsVendeurAttente == null ? '…' : String(bonsVendeurAttente), sub: 'en attente de caisse', to: '/mes-tickets', color: 'text-amber-600' },
+          { icon: CloudOff, label: 'Hors ligne', value: String(operationsHorsLigne), sub: 'opération(s) à synchroniser', to: '/offline-queue', color: 'text-orange-600' },
+        ];
+      }
+      if (role === 'CAISSIER') {
+        return [
+          { icon: Wallet, label: 'Caisse du jour', value: soldeCaisseJour == null ? '…' : fmtFCFA(soldeCaisseJour), sub: caisseJourStatut === 'OUVERTE' ? 'Session ouverte' : 'À contrôler', to: '/caisse-jour', color: 'text-primary' },
+          { icon: Receipt, label: 'Tickets à encaisser', value: nbTicketsAttente == null ? '…' : String(nbTicketsAttente), sub: 'dans la file', to: '/file-caissier', color: 'text-amber-600' },
+          { icon: CloudOff, label: 'Hors ligne', value: String(operationsHorsLigne), sub: 'opération(s) à synchroniser', to: '/offline-queue', color: 'text-orange-600' },
+          { icon: Printer, label: 'Imprimante', value: imprimanteDisponible ? 'Prête' : 'À vérifier', sub: 'Epson TM-T20II · 58 mm', to: '/settings', color: imprimanteDisponible ? 'text-emerald-600' : 'text-red-600' },
+        ];
+      }
+      return [
       {
         icon: Wallet,
         label: 'Caisse du jour',
         value: soldeCaisseJour == null ? '…' : fmtFCFA(soldeCaisseJour),
-        sub: caisseJourFermee ? 'Caisse fermée' : 'Session ouverte',
+        sub: caisseJourStatut === 'OUVERTE' ? 'Session ouverte' : caisseJourStatut === 'FERMEE' ? 'Caisse fermée' : 'À ouvrir',
         to: '/caisse-jour',
         color: 'text-primary',
       },
@@ -185,12 +258,14 @@ export const Dashboard = () => {
         to: '/file-caissier',
         color: 'text-amber-600',
       },
-    ],
-    [soldeCaisseJour, caisseJourFermee, soldeGlobale, nbCommandesEnAttente, nbTicketsAttente],
+      ];
+    },
+    [role, bonsVendeurAttente, operationsHorsLigne, imprimanteDisponible, soldeCaisseJour, caisseJourStatut, soldeGlobale, nbCommandesEnAttente, nbTicketsAttente],
   );
 
   const actions: UrgentAction[] = useMemo(() => {
     const list: UrgentAction[] = [];
+    if (isAdminRole) {
     for (const e of echeancesUrgentes) {
       const d = daysUntil(e.dateEcheance);
       list.push({
@@ -225,18 +300,58 @@ export const Dashboard = () => {
         severity: 'jaune',
       });
     }
-    if (caisseJourFermee) {
+    }
+    if (role !== 'VENDEUR' && (nbTicketsAttente ?? 0) > 0) {
+      list.push({
+        id: 'tickets-attente',
+        icon: Receipt,
+        label: `${nbTicketsAttente} ticket(s) à encaisser`,
+        detail: 'La file caissier attend une action',
+        to: '/file-caissier',
+        severity: 'orange',
+      });
+    }
+    if (operationsHorsLigne > 0) {
+      list.push({
+        id: 'offline',
+        icon: CloudOff,
+        label: `${operationsHorsLigne} opération(s) non synchronisée(s)`,
+        detail: 'Contrôler la file locale de cet appareil',
+        to: '/offline-queue',
+        severity: 'rouge',
+      });
+    }
+    if (role !== 'VENDEUR' && imprimanteDisponible === false) {
+      list.push({
+        id: 'printer',
+        icon: Printer,
+        label: 'Imprimante de caisse indisponible',
+        detail: 'Vérifier QZ Tray et l’Epson TM-T20II',
+        to: '/settings',
+        severity: 'orange',
+      });
+    }
+    if (role !== 'VENDEUR' && caisseJourStatut === 'ABSENTE') {
+      list.push({
+        id: 'caisse-absente',
+        icon: PlayCircle,
+        label: 'Caisse du jour non ouverte',
+        detail: 'Ouvrir la session avant le premier encaissement',
+        to: '/caisse-jour',
+        severity: 'rouge',
+      });
+    } else if (role !== 'VENDEUR' && caisseJourStatut === 'FERMEE') {
       list.push({
         id: 'caisse-fermee',
         icon: Lock,
-        label: "Caisse du jour fermée",
-        detail: "Une nouvelle session s'ouvrira demain matin",
+        label: 'Caisse du jour fermée',
+        detail: 'La session ne peut plus recevoir d’encaissement',
         to: '/caisse-jour',
         severity: 'jaune',
       });
     }
     return list;
-  }, [echeancesUrgentes, commandesAnciennes, produitsRupture, caisseJourFermee]);
+  }, [isAdminRole, role, echeancesUrgentes, commandesAnciennes, produitsRupture, nbTicketsAttente, operationsHorsLigne, imprimanteDisponible, caisseJourStatut]);
 
   return (
     <motion.div
@@ -344,6 +459,7 @@ export const Dashboard = () => {
         )}
       </div>
 
+      {isAdminRole && <>
       {/* Encours clients */}
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm">
         <div className="flex items-center justify-between p-5 border-b border-slate-100">
@@ -440,6 +556,8 @@ export const Dashboard = () => {
           </ul>
         )}
       </div>
+
+      </>}
 
       {/* Note minuscule en bas */}
       <p className="text-center text-xs text-slate-400">

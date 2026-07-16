@@ -8,7 +8,10 @@
     "build": "vite build",
     "preview": "vite preview",
     "clean": "rm -rf dist",
-    "lint": "tsc --noEmit"
+    "lint": "tsc --noEmit",
+    "test": "tsx --test src/services/*.test.ts",
+    "test:offline": "tsx --test src/services/offlineSalesQueue.test.ts",
+    "test:printing": "tsx --test src/services/printerStatus.test.ts"
   },
   "dependencies": {
     "@capacitor/android": "7.6.4",

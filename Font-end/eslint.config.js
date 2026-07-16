@@ -5,7 +5,8 @@ import reactRefresh from 'eslint-plugin-react-refresh'
 import { defineConfig, globalIgnores } from 'eslint/config'
 
 export default defineConfig([
-  globalIgnores(['dist']),
+  // Ancien export catalogue conservé comme archive de migration, non exécuté.
+  globalIgnores(['dist', 'src/data/productsData.js']),
   {
     files: ['**/*.{js,jsx}'],
     extends: [

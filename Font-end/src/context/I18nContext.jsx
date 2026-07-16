@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import fr from '../i18n/fr';
 import en from '../i18n/en';
@@ -7,25 +8,20 @@ const translations = { fr, en };
 const I18nContext = createContext();
 
 export const I18nProvider = ({ children }) => {
-  const [lang, setLangState] = useState('en');
+  const [lang, setLangState] = useState(() => {
+    const savedLang = localStorage.getItem('appLang');
+    if (savedLang === 'fr' || savedLang === 'en') return savedLang;
+    const browserLang = navigator.language || navigator.userLanguage;
+    return browserLang.toLowerCase().startsWith('fr') ? 'fr' : 'en';
+  });
 
   useEffect(() => {
-    const savedLang = localStorage.getItem('appLang');
-    if (savedLang && (savedLang === 'fr' || savedLang === 'en')) {
-      setLangState(savedLang);
-      document.documentElement.lang = savedLang;
-    } else {
-      const browserLang = navigator.language || navigator.userLanguage;
-      const initialLang = browserLang.toLowerCase().startsWith('fr') ? 'fr' : 'en';
-      setLangState(initialLang);
-      document.documentElement.lang = initialLang;
-    }
-  }, []);
+    document.documentElement.lang = lang;
+  }, [lang]);
 
   const setLang = (newLang) => {
     setLangState(newLang);
     localStorage.setItem('appLang', newLang);
-    document.documentElement.lang = newLang;
   };
 
   const t = (key, variables = {}) => {

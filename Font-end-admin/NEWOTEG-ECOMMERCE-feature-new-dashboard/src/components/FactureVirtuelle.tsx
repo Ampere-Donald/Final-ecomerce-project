@@ -100,13 +100,9 @@ export const FactureVirtuelle: React.FC = () => {
   const handlePrint = async (fv: FV) => {
     setActionLoading(fv.id);
     try {
-      const [, fullFv] = await Promise.all([
-        factureVirtuelleApi.print(fv.id),
-        factureVirtuelleApi.getOne(fv.id),
-      ]);
+      const fullFv = await factureVirtuelleApi.getOne(fv.id);
       setReceiptData(fullFv);
       setShowReceipt(true);
-      charger();
     } catch (err: any) {
       setError(getApiErrorMessage(err, 'Erreur impression'));
     } finally {
@@ -279,6 +275,8 @@ export const FactureVirtuelle: React.FC = () => {
       {/* Impression facture virtuelle */}
       {showReceipt && receiptData && (
         <ReceiptGenerator
+          documentId={receiptData.id}
+          printCount={receiptData.printCount || 0}
           type="factureVirtuelle"
           lignes={(receiptData.lignes || []).map((l: any) => ({
             nomProduit: l.nomProduit,
@@ -291,6 +289,8 @@ export const FactureVirtuelle: React.FC = () => {
           numero={receiptData.numero}
           client={receiptData.client ? { nom: receiptData.client.nom } : undefined}
           dateVente={receiptData.dateCreation}
+          onPrintRecorded={({ printCount }) =>
+            setReceiptData((current: any) => current ? { ...current, printCount } : current)}
           onClose={() => { setShowReceipt(false); setReceiptData(null); }}
         />
       )}

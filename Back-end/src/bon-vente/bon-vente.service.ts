@@ -15,8 +15,8 @@ import { BonVenteEventsService } from './bon-vente.events.service';
 import { CreateBonDto } from './dto/create-bon.dto';
 import { EncaisserTicketDto } from 'src/ticket-vente/dto/encaisser-ticket.dto';
 import { validerLignePrix } from 'src/pricing/pricing.util';
+import { DocumentNumberService } from 'src/database/document-number.service';
 
-const TVA_TAUX = 0.1925;
 const TICKET_VALIDITY_MS = 15 * 60 * 1000;
 
 @Injectable()
@@ -26,6 +26,7 @@ export class BonVenteService {
     private readonly events: BonVenteEventsService,
     private readonly ticketService: TicketVenteService,
     private readonly notifications: NotificationService,
+    private readonly documentNumbers: DocumentNumberService,
   ) {}
 
   private toNumber(value: unknown): number {
@@ -40,6 +41,13 @@ export class BonVenteService {
    * Émet un événement SSE pour les caissiers connectés.
    */
   async create(dto: CreateBonDto, actor: NotificationActor) {
+    if (dto.idempotencyKey) {
+      const existing = await this.db.ticketVente.findUnique({
+        where: { idempotencyKey: dto.idempotencyKey },
+        include: { lignes: true },
+      });
+      if (existing) return existing;
+    }
     if (!dto.lignes?.length) {
       throw new BadRequestException('Le bon doit contenir au moins une ligne');
     }
@@ -122,6 +130,7 @@ export class BonVenteService {
       return tx.ticketVente.create({
         data: {
           numeroTicket,
+          idempotencyKey: dto.idempotencyKey,
           vendeurId: actor.id,
           clientId: dto.clientId ?? null,
           montantTotal,
@@ -197,48 +206,7 @@ export class BonVenteService {
 
     // Créer la Facture (hors transaction initiale — données d'audit)
     const totalTTC = this.toNumber(ticket.montantTotal);
-    const totalHT = totalTTC / (1 + TVA_TAUX);
-    const tva = totalTTC - totalHT;
-    const numeroFacture = await this.genererNumeroFacture('TICKET_CAISSE');
-
-    const facture = await this.db.facture.create({
-      data: {
-        numero: numeroFacture,
-        type: 'TICKET_CAISSE',
-        ticketId,
-        venteId: encaisse.venteId!,
-        clientId: encaisse.clientId ?? undefined,
-        vendeurId: ticket.vendeurId,
-        caissierId: actor.id,
-        totalHT,
-        tva,
-        totalTTC,
-        methodePaiement,
-        lignes: {
-          create: ticket.lignes.map((l) => {
-            const priceTTC = this.toNumber(l.prixUnitaire);
-            const priceHT = priceTTC / (1 + TVA_TAUX);
-            const stTTC = this.toNumber(l.sousTotal);
-            const stHT = stTTC / (1 + TVA_TAUX);
-            return {
-              nomProduit: l.nomProduit,
-              quantite: l.quantite,
-              prixUnitaireHT: priceHT,
-              prixUnitaireTTC: priceTTC,
-              sousTotalHT: stHT,
-              sousTotalTTC: stTTC,
-            };
-          }),
-        },
-      },
-      include: {
-        vendeur: { select: { id: true, nom: true, email: true, role: true } },
-        caissier: { select: { id: true, nom: true, email: true, role: true } },
-        client: true,
-        lignes: true,
-        vente: true,
-      },
-    });
+    const facture = encaisse.facture;
 
     // Mettre à jour la prime du vendeur pour le mois en cours
     const periode = this.getPeriode(new Date());
@@ -279,26 +247,8 @@ export class BonVenteService {
 
   // ── Helpers ──────────────────────────────────────────────────────────────
 
-  async generateNumeroTicket(tx: { ticketVente: { count: (...a: any[]) => Promise<number> } }): Promise<string> {
-    const now = new Date();
-    const datePart = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
-    const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
-    const countToday = await tx.ticketVente.count({
-      where: { createdAt: { gte: startOfDay, lt: endOfDay } },
-    });
-    return `T-${datePart}-${String(countToday + 1).padStart(4, '0')}`;
-  }
-
-  private async genererNumeroFacture(
-    type: 'FACTURE' | 'TICKET_CAISSE',
-  ): Promise<string> {
-    const year = new Date().getFullYear();
-    const prefix = type === 'TICKET_CAISSE' ? `TIC-${year}-` : `FAC-${year}-`;
-    const count = await this.db.facture.count({
-      where: { numero: { startsWith: prefix } },
-    });
-    return `${prefix}${String(count + 1).padStart(4, '0')}`;
+  generateNumeroTicket(tx: any): Promise<string> {
+    return this.documentNumbers.nextDaily('TICKET_QUEUE', 'T-', tx);
   }
 
   private getPeriode(date: Date): string {

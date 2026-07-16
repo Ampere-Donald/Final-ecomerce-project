@@ -16,6 +16,9 @@ const api = axios.create({
 
 // ── Auth interceptors ────────────────────────────────────────────────────
 api.interceptors.request.use((config) => {
+  config.headers['X-Request-Id'] = typeof crypto.randomUUID === 'function'
+    ? crypto.randomUUID()
+    : `web-${Date.now()}-${Math.random().toString(36).slice(2)}`;
   const token = localStorage.getItem('newoteg_admin_token');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
@@ -44,20 +47,21 @@ const DB_SCHEMA_ERROR_CODES = new Set(['P2021', 'P2022']);
 
 export const getApiErrorMessage = (err: any, fallback: string): string => {
   const data = err?.response?.data;
+  const reference = data?.requestId ? ` Référence : ${data.requestId}` : '';
 
   if (DB_SCHEMA_ERROR_CODES.has(data?.code)) {
     return "Base de données non synchronisée : les tables ou colonnes nécessaires n'existent pas encore. Appliquez la migration Prisma avant de tester ce module.";
   }
 
   if (Array.isArray(data?.message)) {
-    return data.message.join(' ');
+    return data.message.join(' ') + reference;
   }
 
   if (typeof data?.message === 'string' && data.message.trim()) {
-    return data.message;
+    return data.message + reference;
   }
 
-  return fallback;
+  return fallback + reference;
 };
 
 // ── Admin Auth API ───────────────────────────────────────────────────────
@@ -81,7 +85,17 @@ const toArray = (res: any): any[] => {
 
 // Produits
 export const produitApi = {
-  getAll: () => api.get('/produits?limit=20000').then(toArray),
+  list: (params?: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    categoryId?: string;
+    codeFamille?: string;
+    code?: string;
+    sort?: string;
+    inStock?: boolean;
+  }) => api.get('/produits', { params }).then(res => res.data),
+  getAll: () => api.get('/produits', { params: { limit: 500 } }).then(toArray),
   getOne: (id: string) => api.get(`/produits/${id}`).then(res => res.data),
   create: (data: any) => {
     if (data instanceof FormData) {
@@ -178,6 +192,8 @@ export const venteApi = {
   getOne: (id: string) => api.get(`/ventes/${id}`).then(res => res.data),
   create: (data: any) => api.post('/ventes', data).then(res => res.data),
   update: (id: string, data: any) => api.patch(`/ventes/${id}`, data).then(res => res.data),
+  cancel: (id: string, motif: string) => api.delete(`/ventes/${id}`, { data: { motif } }).then(res => res.data),
+  refund: (id: string, motif: string) => api.post(`/ventes/${id}/rembourser`, { motif }).then(res => res.data),
 };
 
 // Achats
@@ -410,6 +426,31 @@ export const factureApi = {
   getAll: (params?: any) => api.get('/factures', { params }).then(r => r.data),
   getOne: (id: string) => api.get(`/factures/${id}`).then(r => r.data),
   print: (id: string) => api.post(`/factures/${id}/print`).then(r => r.data),
+};
+
+export const diagnosticApi = {
+  record: (data: {
+    action: 'SYNC_FAILURE' | 'FRONTEND_ERROR';
+    code: string;
+    operationKind?: 'VENTE' | 'BON' | 'TICKET';
+    operationId?: string;
+    workstationId?: string;
+    state?: 'RETRY' | 'CONFLICT';
+  }) => api.post('/admin-auth/diagnostic-events', data).then(res => res.data),
+};
+
+export const documentPrintApi = {
+  record: (data: {
+    documentType: 'TICKET' | 'FACTURE' | 'PROFORMA' | 'FACTURE_VIRTUELLE';
+    documentId?: string;
+    documentNumber: string;
+    status: 'SUCCESS' | 'FAILED';
+    workstationId?: string;
+    printerName?: string;
+    errorCode?: string;
+  }) => api.post('/factures/print-events', data).then(r => r.data),
+  list: (params?: { documentType?: string; documentNumber?: string }) =>
+    api.get('/factures/print-events', { params }).then(r => r.data),
 };
 
 export const primeApi = {

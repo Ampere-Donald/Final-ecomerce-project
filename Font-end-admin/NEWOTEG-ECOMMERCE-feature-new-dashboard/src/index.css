@@ -1,17 +1,66 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
+  :root {
+    color-scheme: light;
+    --color-brand: 28 25 163;
+    --color-success: 4 120 87;
+    --color-warning: 180 83 9;
+    --color-danger: 185 28 28;
+    --radius-control: 0.75rem;
+    --radius-surface: 1rem;
+  }
+
+  html {
+    @apply bg-background-light;
+  }
+
   body {
-    @apply font-sans bg-background-light text-slate-900 antialiased;
+    @apply min-w-[320px] font-sans bg-background-light text-slate-900 antialiased;
+  }
+
+  button:focus-visible,
+  a:focus-visible,
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible {
+    @apply outline-none ring-2 ring-primary ring-offset-2 ring-offset-white;
+  }
+
+  :where(button, [role='button']) {
+    touch-action: manipulation;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      scroll-behavior: auto !important;
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
   }
 }
 
 @layer components {
   .glass {
     @apply bg-white/80 backdrop-blur-md border border-white/20 shadow-sm;
+  }
+
+  .surface {
+    @apply rounded-2xl border border-slate-200 bg-white shadow-sm;
+  }
+
+  .field {
+    @apply min-h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 placeholder:text-slate-400 focus:border-primary;
+  }
+
+  .mobile-safe-bottom {
+    padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+  }
+
+  .skeleton {
+    @apply animate-pulse rounded-lg bg-slate-200;
   }
 }

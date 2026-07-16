@@ -11,24 +11,31 @@ import {
   UseGuards,
   Request,
 } from '@nestjs/common';
-import { AdminRole } from '@prisma/client';
+import { Throttle } from '@nestjs/throttler';
 import { AdminAuthService } from './admin-auth.service';
 import { AdminLoginDto, AdminPinLoginDto } from './dto/admin-login.dto';
 import { CreateAdminDto } from './dto/create-admin.dto';
-import { UpdateAdminDto, ResetPasswordDto } from './dto/update-admin.dto';
+import { ChangePasswordDto, UpdateAdminDto, ResetPasswordDto, ChangeRoleDto } from './dto/update-admin.dto';
 import { AdminAuthGuard } from './admin-auth.guard';
 import { RolesGuard } from './roles.guard';
 import { Roles } from './roles.decorator';
+import { ActivityLogService } from './activity-log.service';
+import { DiagnosticEventDto } from './dto/diagnostic-event.dto';
 
 @Controller('admin-auth')
 export class AdminAuthController {
-  constructor(private readonly adminAuthService: AdminAuthService) {}
+  constructor(
+    private readonly adminAuthService: AdminAuthService,
+    private readonly activityLog: ActivityLogService,
+  ) {}
 
+  @Throttle({ default: { ttl: 60000, limit: 5 } })
   @Post('login')
   async login(@Body() dto: AdminLoginDto) {
     return this.adminAuthService.login(dto.username || dto.email || '', dto.motDePasse, dto.pin);
   }
 
+  @Throttle({ default: { ttl: 60000, limit: 5 } })
   @Post('login-pin')
   async loginPin(@Body() dto: AdminPinLoginDto) {
     return this.adminAuthService.loginWithPin(dto.username, dto.pin);
@@ -44,14 +51,33 @@ export class AdminAuthController {
   @Patch('change-password')
   async changePassword(
     @Request() req: any,
-    @Body() body: { oldPassword: string; newPassword: string },
+    @Body() body: ChangePasswordDto,
   ) {
     return this.adminAuthService.changePassword(req.user.id, body.oldPassword, body.newPassword);
   }
 
-  @Post('seed')
-  async seed(@Body() body: { email: string; motDePasse: string; nom: string; username?: string }) {
-    return this.adminAuthService.seedFirstAdmin(body.email, body.motDePasse, body.nom, body.username);
+  @UseGuards(AdminAuthGuard)
+  @Post('revoke-sessions')
+  revokeSessions(@Request() req: any) {
+    return this.adminAuthService.revokeSessions(req.user.id);
+  }
+
+  @UseGuards(AdminAuthGuard, RolesGuard)
+  @Roles('SUPER_ADMIN', 'ADMIN', 'CAISSIER', 'VENDEUR')
+  @Post('diagnostic-events')
+  async recordDiagnostic(
+    @Request() req: any,
+    @Body() dto: DiagnosticEventDto,
+  ) {
+    await this.activityLog.log(req.user.id, dto.action, {
+      code: dto.code,
+      operationKind: dto.operationKind,
+      operationId: dto.operationId,
+      workstationId: dto.workstationId,
+      state: dto.state,
+      correlationId: req.headers['x-request-id'],
+    }, req.ip, req.headers['user-agent']);
+    return { recorded: true };
   }
 
   // ── CRUD Comptes Admin (SUPER_ADMIN only) ──────────────────────────────
@@ -138,7 +164,7 @@ export class AdminAuthController {
   @Patch(':id/role')
   changerRole(
     @Param('id', ParseUUIDPipe) id: string,
-    @Body() body: { role: AdminRole },
+    @Body() body: ChangeRoleDto,
   ) {
     return this.adminAuthService.changerRole(id, body.role);
   }

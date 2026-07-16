@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'motion/react';
+import { Printer as PrinterIcon } from 'lucide-react';
 import { User, Bell, Shield, Wallet, Globe, Smartphone, CheckCircle2, AlertCircle, Eye, EyeOff, Sparkles, Loader2 } from 'lucide-react';
 import { useAdminAuth } from '../context/AdminAuthContext';
 import { adminAuthApi, equivalenceApi } from '../services/api';
+import { PrinterSettings } from './PrinterSettings';
 
-type Tab = 'profile' | 'security' | 'ia';
+type Tab = 'profile' | 'security' | 'printer' | 'ia';
 
 type IaStats = {
   configured: boolean;
@@ -99,8 +101,11 @@ export const Settings = () => {
 
   const tabs = [
     { key: 'profile' as Tab, label: 'Infos Profil', icon: User },
+    { key: 'printer' as Tab, label: 'Imprimante tickets', icon: PrinterIcon },
     { key: 'security' as Tab, label: 'Sécurité', icon: Shield },
-    { key: 'ia' as Tab, label: 'IA & Équivalences', icon: Sparkles },
+    ...(['SUPER_ADMIN', 'ADMIN'].includes(admin?.role || '')
+      ? [{ key: 'ia' as Tab, label: 'IA & Équivalences', icon: Sparkles }]
+      : []),
   ];
 
   const inputClass = 'w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all';
@@ -278,6 +283,8 @@ export const Settings = () => {
           )}
 
           {/* IA & Équivalences Tab */}
+          {activeTab === 'printer' && <PrinterSettings />}
+
           {activeTab === 'ia' && (
             <div className="bg-white rounded-2xl border border-slate-200 p-8 shadow-sm">
               <h3 className="font-bold text-lg mb-1 text-slate-900 flex items-center gap-2">

@@ -171,11 +171,11 @@ export const Analyses = () => {
 
   // Ventes filtrées
   const ventesPeriod = useMemo(
-    () => ventes.filter((v) => isInRange(v.dateVente, start, end)),
+    () => ventes.filter((v) => !v.annulee && isInRange(v.dateVente, start, end)),
     [ventes, start, end],
   );
   const ventesPrev = useMemo(
-    () => ventes.filter((v) => isInRange(v.dateVente, prevStart, prevEnd)),
+    () => ventes.filter((v) => !v.annulee && isInRange(v.dateVente, prevStart, prevEnd)),
     [ventes, prevStart, prevEnd],
   );
 

@@ -38,7 +38,7 @@ export interface TicketData {
   dateVente?: string;
 }
 
-const COLUMNS = 32; // largeur sûre (sans coupure). 48 coupait → imprimante < 48.
+const COLUMNS = 32; // Epson TM-T20II, papier 58 mm.
 
 // Séparateur de milliers = espace ASCII normale (imprimable).
 const fmt = (n: number) =>

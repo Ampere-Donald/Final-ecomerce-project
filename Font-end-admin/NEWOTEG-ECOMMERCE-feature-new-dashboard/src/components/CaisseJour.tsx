@@ -174,19 +174,8 @@ export const CaisseJour = () => {
     [encaissementsDuJour],
   );
 
-  const handlePrintFacture = async (f: FactureJour) => {
-    setPrintingFacture(f.id);
-    try {
-      await factureApi.print(f.id);
-      setFacturesJour((prev) =>
-        prev.map((x) => x.id === f.id ? { ...x, printCount: (x.printCount || 0) + 1 } : x),
-      );
-      setReceiptFacture(f);
-    } catch {
-      setReceiptFacture(f);
-    } finally {
-      setPrintingFacture(null);
-    }
+  const handlePrintFacture = (f: FactureJour) => {
+    setReceiptFacture(f);
   };
 
   const handleAddOperation = async () => {
@@ -859,6 +848,8 @@ export const CaisseJour = () => {
 
       {receiptFacture && (
         <ReceiptGenerator
+          documentId={receiptFacture.id}
+          printCount={receiptFacture.printCount || 0}
           type={receiptFacture.type === 'FACTURE' ? 'facture' : 'ticket'}
           numero={receiptFacture.numero}
           dateVente={receiptFacture.dateEmission}
@@ -871,6 +862,12 @@ export const CaisseJour = () => {
             prixUnitaire: l.quantite > 0 ? Math.round(Number(l.sousTotalTTC) / l.quantite) : 0,
             sousTotal: Number(l.sousTotalTTC),
           }))}
+          onPrintRecorded={({ printCount }) => {
+            setFacturesJour((prev) =>
+              prev.map((item) => item.id === receiptFacture.id ? { ...item, printCount } : item),
+            );
+            setReceiptFacture((current) => current ? { ...current, printCount } : current);
+          }}
           onClose={() => setReceiptFacture(null)}
         />
       )}

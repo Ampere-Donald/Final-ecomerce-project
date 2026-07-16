@@ -390,6 +390,8 @@ export const Proformas = () => {
 
       {printingProforma && (
         <ReceiptGenerator
+          documentId={printingProforma.id}
+          printCount={printingProforma.printCount || 0}
           type="proforma"
           numero={printingProforma.numero}
           dateVente={printingProforma.dateCreation}
@@ -407,6 +409,12 @@ export const Proformas = () => {
             prixUnitaire: Number(l.prixUnitaire),
             sousTotal: Number(l.sousTotal),
           }))}
+          onPrintRecorded={({ printCount }) => {
+            setProformas((prev: any[]) =>
+              prev.map((item: any) => item.id === printingProforma.id ? { ...item, printCount } : item),
+            );
+            setPrintingProforma((current: any) => current ? { ...current, printCount } : current);
+          }}
           onClose={() => setPrintingProforma(null)}
         />
       )}
