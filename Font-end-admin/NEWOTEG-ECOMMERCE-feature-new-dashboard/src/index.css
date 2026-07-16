@@ -21,7 +21,11 @@
     @apply min-w-[320px] font-sans bg-background-light text-slate-900 antialiased;
   }
 
-  :where(button, a, input, select, textarea):focus-visible {
+  button:focus-visible,
+  a:focus-visible,
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible {
     @apply outline-none ring-2 ring-primary ring-offset-2 ring-offset-white;
   }
 

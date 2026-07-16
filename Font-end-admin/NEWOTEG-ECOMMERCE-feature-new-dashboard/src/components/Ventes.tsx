@@ -882,13 +882,17 @@ export const Ventes = () => {
                     const img = resolveImgUrl(p.imageUrl) || '/logo.png';
                     return (
                       <div key={p.id}
-                        className={`relative bg-white border rounded-xl p-3 text-left transition-all duration-150 hover:shadow-md ${outOfStock ? 'opacity-50 border-slate-200' : 'border-slate-200 hover:border-primary/30 active:scale-[0.98] motion-reduce:transform-none'} ${inCart ? 'ring-2 ring-primary/30' : ''} ${lastAddedProductId === p.id ? 'bg-emerald-50 ring-4 ring-emerald-200' : ''}`}
+                        className={`relative rounded-xl border border-slate-200 p-3 text-left transition-all duration-150 hover:shadow-sm ${
+                          outOfStock
+                            ? 'opacity-50'
+                            : 'hover:border-slate-300 active:scale-[0.98] motion-reduce:transform-none'
+                        } ${lastAddedProductId === p.id ? 'bg-emerald-50' : 'bg-white'}`}
                       >
                         {/* View details button */}
                         <button
                           type="button"
                           onClick={() => openProduitDetail(p)}
-                          className="absolute top-2 left-2 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white/90 shadow-sm text-slate-500 transition-colors hover:bg-white hover:text-primary max-md:h-11 max-md:w-11"
+                          className="absolute top-2 left-2 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white/90 shadow-sm text-slate-500 transition-colors hover:bg-white hover:text-slate-800 max-md:h-11 max-md:w-11"
                           title="Voir les détails"
                           aria-label={`Voir les details de ${p.nomProduit}`}
                         >
@@ -916,7 +920,9 @@ export const Ventes = () => {
                             </span>
                           </div>
                           {inCart && (
-                            <span className="absolute top-2 right-2 w-5 h-5 bg-primary text-white rounded-full flex items-center justify-center text-[10px] font-bold">
+                            <span className={`absolute top-2 right-2 flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-[10px] font-bold text-white ${
+                              lastAddedProductId === p.id ? 'bg-emerald-600' : 'bg-slate-800'
+                            }`}>
                               {inCart.quantite}
                             </span>
                           )}

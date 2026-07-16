@@ -749,12 +749,12 @@ export const POSVendeur = () => {
     return (
       <button key={p.id} onClick={() => ajouterAuPanier(p)}
         aria-label={`Ajouter ${p.nomProduit} au panier${lignePanier ? `, quantite actuelle ${lignePanier.quantite}` : ''}`}
-        className={`group relative bg-white rounded-xl border p-3 text-left transition-all duration-150 active:scale-[0.98] motion-reduce:transform-none hover:border-primary/40 hover:shadow-md ${
-          lignePanier ? 'border-primary/40 ring-2 ring-primary/15' : 'border-slate-200'
-        } ${justAdded ? 'bg-emerald-50 ring-4 ring-emerald-200' : ''}`}>
+        className={`group relative rounded-xl border border-slate-200 p-3 text-left transition-all duration-150 hover:border-slate-300 hover:shadow-sm active:scale-[0.98] motion-reduce:transform-none ${
+          justAdded ? 'bg-emerald-50' : 'bg-white'
+        }`}>
         {lignePanier && (
           <span className={`absolute right-2 top-2 z-10 flex h-6 min-w-6 items-center justify-center rounded-full px-1.5 text-xs font-black text-white transition-transform ${
-            justAdded ? 'scale-110 bg-emerald-600' : 'bg-primary'
+            justAdded ? 'scale-110 bg-emerald-600' : 'bg-slate-800'
           }`}>
             {lignePanier.quantite}
           </span>
@@ -1078,8 +1078,8 @@ export const POSVendeur = () => {
         {panier.length > 0 && (
           <div className="mobile-safe-bottom lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-slate-200 shadow-[0_-4px_12px_rgba(0,0,0,0.08)] px-4 pt-3">
             <button onClick={() => setPanierMobileOpen(true)}
-              className={`w-full flex items-center justify-between gap-3 px-4 py-3 bg-primary text-white font-bold rounded-xl transition-shadow ${
-                lastAddedProductId ? 'ring-4 ring-emerald-300 shadow-lg' : ''
+              className={`w-full flex items-center justify-between gap-3 px-4 py-3 bg-primary text-white font-bold rounded-xl transition-all ${
+                lastAddedProductId ? 'scale-[1.01] shadow-lg' : ''
               }`}>
               <span className="flex items-center gap-2"><ShoppingCart size={18} />{totalUnits} unite{totalUnits > 1 ? 's' : ''}</span>
               <span>{fmtFCFA(total)}</span>
@@ -1212,8 +1212,8 @@ export const POSVendeur = () => {
       {activeTab === 'vente' && panier.length > 0 && (
         <div className="mobile-safe-bottom lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-slate-200 shadow-[0_-4px_12px_rgba(0,0,0,0.08)] px-4 pt-3">
           <button onClick={() => setPanierMobileOpen(true)}
-            className={`w-full flex items-center justify-between gap-3 px-4 py-3 bg-primary text-white font-bold rounded-xl transition-shadow ${
-              lastAddedProductId ? 'ring-4 ring-emerald-300 shadow-lg' : ''
+            className={`w-full flex items-center justify-between gap-3 px-4 py-3 bg-primary text-white font-bold rounded-xl transition-all ${
+              lastAddedProductId ? 'scale-[1.01] shadow-lg' : ''
             }`}>
             <span className="flex items-center gap-2"><ShoppingCart size={18} />{totalUnits} unite{totalUnits > 1 ? 's' : ''}</span>
             <span>{fmtFCFA(total)}</span>
