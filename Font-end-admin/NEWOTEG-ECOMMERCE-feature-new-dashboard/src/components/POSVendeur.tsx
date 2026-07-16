@@ -5,14 +5,13 @@ import {
   CheckCircle2, AlertCircle, Sparkles, X, Clock, Receipt,
   User as UserIcon, Phone, Printer, ScanBarcode, CameraOff,
 } from 'lucide-react';
-import { BrowserMultiFormatReader } from '@zxing/browser';
-import { NotFoundException } from '@zxing/library';
 import { useNavigate } from 'react-router-dom';
 import { bonVenteApi, clientApi, produitApi, ticketApi, equivalenceApi, proformaApi, factureVirtuelleApi, getApiErrorMessage } from '../services/api';
 import { useAdminAuth } from '../context/AdminAuthContext';
 import { can } from '../utils/permissions';
 import { ReceiptGenerator } from './ReceiptGenerator';
 import { bornesPrix, classerBande, exigeMotif, BANDE_STYLE } from '../utils/pricing';
+import { useBarcodeScanner } from '../hooks/useBarcodeScanner';
 
 interface Produit {
   id: string;
@@ -136,11 +135,6 @@ export const POSVendeur = () => {
 
   // ── Scan caméra code-barres ────────────────────────────────────────────
   const [scanOpen, setScanOpen]   = useState(false);
-  const [scanError, setScanError] = useState<string | null>(null);
-  const scanVideoRef  = useRef<HTMLVideoElement>(null);
-  const scanStreamRef = useRef<MediaStream | null>(null);
-  const scanReaderRef = useRef<BrowserMultiFormatReader | null>(null);
-  const scanActiveRef = useRef(false);
 
   // ── Barcode reader USB/Bluetooth (écoute globale clavier) ──────────────
   const barcodeBufferRef = useRef('');
@@ -191,7 +185,7 @@ export const POSVendeur = () => {
     ).slice(0, 60);
   }, [produits, search]);
 
-  const ajouterAuPanier = (p: Produit) => {
+  const ajouterAuPanier = useCallback((p: Produit) => {
     if (p.quantiteStock <= 0) return;
     setPanier(prev => {
       const ex = prev.find(l => l.produitId === p.id);
@@ -213,7 +207,7 @@ export const POSVendeur = () => {
         cmupActuel: p.cmupActuel,
       }];
     });
-  };
+  }, []);
 
   // ── Prix variable par bornes (le serveur reste l'autorité) ─────────────
   const refsLigne = (l: PanierLigne) => ({
@@ -433,18 +427,11 @@ export const POSVendeur = () => {
   };
 
   // ── Scan caméra ────────────────────────────────────────────────────────
-  const stopScan = useCallback(() => {
-    scanActiveRef.current = false;
-    scanStreamRef.current?.getTracks().forEach(t => t.stop());
-    scanStreamRef.current = null;
-    if (scanVideoRef.current) scanVideoRef.current.srcObject = null;
-  }, []);
-
   const handleBarcode = useCallback(async (raw: string) => {
-    stopScan();
     setScanOpen(false);
     try {
-      const p: any = await produitApi.findByRawScan(raw);
+      const code = raw.trim();
+      const p: any = await produitApi.findByRawScan(code);
       if (p.quantiteStock <= 0) {
         setError(`"${p.nomProduit}" est en rupture de stock.`);
         return;
@@ -453,50 +440,23 @@ export const POSVendeur = () => {
       setSuccess(`"${p.nomProduit}" ajouté au panier.`);
       setTimeout(() => setSuccess(null), 2500);
     } catch {
-      setError(`Produit introuvable pour le code-barres "${raw}".`);
+      setError(`Produit introuvable pour le code-barres "${raw.trim()}".`);
     }
-  }, [stopScan]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [ajouterAuPanier]);
 
-  const startScan = useCallback(async () => {
-    setScanError(null);
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: { ideal: 'environment' } },
-      });
-      scanStreamRef.current = stream;
-      if (scanVideoRef.current) {
-        scanVideoRef.current.srcObject = stream;
-        await scanVideoRef.current.play();
-      }
-      if (!scanReaderRef.current) scanReaderRef.current = new BrowserMultiFormatReader();
-      scanActiveRef.current = true;
-      scanReaderRef.current.decodeFromVideoDevice(
-        undefined,
-        scanVideoRef.current!,
-        (result, err) => {
-          if (!scanActiveRef.current) return;
-          if (result) handleBarcode(result.getText());
-          else if (err && !(err instanceof NotFoundException)) console.warn('[scan]', err);
-        },
-      );
-    } catch (e: any) {
-      const msg: string = e?.message ?? '';
-      if (msg.includes('denied') || msg.includes('NotAllowed') || msg.includes('Permission')) {
-        setScanError("Permission caméra refusée. Autorisez l'accès dans votre navigateur.");
-      } else if (msg.includes('NotFound')) {
-        setScanError('Aucune caméra détectée sur cet appareil.');
-      } else {
-        setScanError("Impossible d'ouvrir la caméra.");
-      }
-      setScanOpen(false);
-    }
-  }, [handleBarcode]);
+  const {
+    videoRef: scanVideoRef,
+    error: scanError,
+    clearError: clearScanError,
+    start: startScan,
+    stop: stopScan,
+  } = useBarcodeScanner({ onDetected: handleBarcode });
 
   useEffect(() => {
     if (scanOpen) startScan();
     else stopScan();
     return () => stopScan();
-  }, [scanOpen]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [scanOpen, startScan, stopScan]);
 
   // ── Barcode reader USB/Bluetooth — écoute globale clavier ─────────────
   useEffect(() => {
@@ -721,7 +681,7 @@ export const POSVendeur = () => {
             className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none" />
         </div>
         <button
-          onClick={() => { setScanError(null); setScanOpen(true); }}
+          onClick={() => { clearScanError(); setScanOpen(true); }}
           title="Scanner un code-barres"
           className="flex items-center gap-2 px-4 py-3 bg-white border border-slate-200 rounded-xl text-slate-600 hover:border-primary/40 hover:text-primary transition-colors shrink-0"
         >

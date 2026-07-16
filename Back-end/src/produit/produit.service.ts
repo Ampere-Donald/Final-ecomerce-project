@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException, Logger, InternalServerErrorException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, ConflictException, Logger, InternalServerErrorException } from '@nestjs/common';
 import { DatabaseService } from 'src/database/database.service';
 import { NotificationService, NotificationActor } from 'src/notification/notification.service';
 import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
@@ -82,19 +82,29 @@ export class ProduitService {
     const { categorieId, ...rest } = createProduitDto;
 
     const data: any = { ...rest };
+    if (data.code !== undefined) data.code = data.code.trim() || null;
+    if (data.codeFamille !== undefined) data.codeFamille = data.codeFamille.trim() || null;
     this.retirerPrixSiNonSuperAdmin(data, actor);
 
     if (data.finPromo) {
       data.finPromo = new Date(data.finPromo);
     }
 
-    const produit = await this.db.produit.create({
-      data: {
-        ...data,
-        categorie: { connect: { id: categorieId } },
-      },
-      include: { categorie: true },
-    });
+    let produit: any;
+    try {
+      produit = await this.db.produit.create({
+        data: {
+          ...data,
+          categorie: { connect: { id: categorieId } },
+        },
+        include: { categorie: true },
+      });
+    } catch (error: any) {
+      if (error?.code === 'P2002') {
+        throw new ConflictException(`Le code produit "${data.code}" est déjà utilisé`);
+      }
+      throw error;
+    }
 
     this.notifications
       .create('PRODUIT_CREE', `Produit "${produit.nomProduit}" ajouté au catalogue`, actor)
@@ -240,61 +250,35 @@ export class ProduitService {
   }
 
   async findByCode(codeFamille: string, code: string) {
-    const produit = await this.db.produit.findFirst({
-      where: { codeFamille, code },
+    const produit = await this.db.produit.findUnique({
+      where: { code },
       include: {
         categorie: true,
         attributs: { include: { valeurs: true } },
       },
     });
-    if (!produit) {
+    if (!produit || produit.codeFamille !== codeFamille) {
       throw new NotFoundException(`Produit introuvable pour le code famille "${codeFamille}" / code article "${code}"`);
     }
     return produit;
   }
 
   async findByRawScan(raw: string) {
-    const include = {
-      categorie: true,
-      attributs: { include: { valeurs: true } },
-    };
-
-    // Construire toutes les combinaisons possibles en une seule requête OR
-    const conditions: any[] = [
-      { code: raw },
-      { codeFamille: raw },
-    ];
-
-    // Séparateurs explicites
-    for (const sep of ['/', '-', '|']) {
-      const idx = raw.indexOf(sep);
-      if (idx > 0 && idx < raw.length - 1) {
-        conditions.push({ codeFamille: raw.slice(0, idx), code: raw.slice(idx + 1) });
-      }
+    const code = raw.trim();
+    if (!code || code.length > 50) {
+      throw new BadRequestException('Le code-barres doit contenir entre 1 et 50 caractères');
     }
 
-    // Découpage positionnel : 3 premiers = codeFamille, reste = code
-    if (raw.length > 3) {
-      const cf = raw.slice(0, 3);
-      const c  = raw.slice(3);
-      conditions.push({ codeFamille: cf, code: c });
-      conditions.push({ codeFamille: c, code: cf });
-    }
-
-    // Découpage positionnel : 3 derniers = code, reste = codeFamille
-    if (raw.length > 3 && raw.length !== 6) {
-      const cf = raw.slice(0, raw.length - 3);
-      const c  = raw.slice(-3);
-      conditions.push({ codeFamille: cf, code: c });
-      conditions.push({ codeFamille: c, code: cf });
-    }
-
-    const produit = await this.db.produit.findFirst({
-      where: { OR: conditions },
-      include,
+    // Le code-barres correspond exactement à Produit.code.
+    const produit = await this.db.produit.findUnique({
+      where: { code },
+      include: {
+        categorie: true,
+        attributs: { include: { valeurs: true } },
+      },
     });
 
-    if (!produit) throw new NotFoundException(`Produit introuvable pour le code-barres "${raw}"`);
+    if (!produit) throw new NotFoundException(`Produit introuvable pour le code-barres "${code}"`);
     return produit;
   }
 
@@ -307,6 +291,8 @@ export class ProduitService {
       ...rest,
       version: { increment: 1 },
     };
+    if (updateData.code !== undefined) updateData.code = updateData.code.trim() || null;
+    if (updateData.codeFamille !== undefined) updateData.codeFamille = updateData.codeFamille.trim() || null;
     this.retirerPrixSiNonSuperAdmin(updateData, actor);
     // Le stock ne se modifie JAMAIS par l'édition produit : seulement via
     // réapprovisionnement, vente, ou inventaire/ajustement tracé.
@@ -333,8 +319,10 @@ export class ProduitService {
 
       return produit;
     } catch (e: any) {
-      console.error('CRITICAL PRISMA ERROR:', e);
-      throw new BadRequestException('Prisma a planté: ' + e.message);
+      if (e?.code === 'P2002') {
+        throw new ConflictException(`Le code produit "${updateData.code}" est déjà utilisé`);
+      }
+      throw e;
     }
   }
 

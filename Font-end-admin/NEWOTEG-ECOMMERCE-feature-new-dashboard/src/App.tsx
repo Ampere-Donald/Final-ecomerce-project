@@ -27,6 +27,7 @@ import { AdminAccounts } from './components/AdminAccounts';
 import { NotificationsPage } from './components/NotificationsPage';
 import { StockAlerts } from './components/StockAlerts';
 import { POSVendeur } from './components/POSVendeur';
+import { ScanCode } from './components/ScanCode';
 import { MesTickets } from './components/MesTickets';
 import { FileCaissier } from './components/FileCaissier';
 import { CaisseJour } from './components/CaisseJour';
@@ -80,6 +81,7 @@ export default function App() {
 
             {/* Workflow vendeur ↔ caissier (Phase 3 L4) */}
             <Route path="pos" element={<RoleProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN', 'VENDEUR']}><POSVendeur /></RoleProtectedRoute>} />
+            <Route path="scan-code" element={<RoleProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'VENDEUR']}><ScanCode /></RoleProtectedRoute>} />
             <Route path="mes-tickets" element={<RoleProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN', 'VENDEUR']}><MesTickets /></RoleProtectedRoute>} />
             <Route path="file-caissier" element={<RoleProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN', 'CAISSIER']}><FileCaissier /></RoleProtectedRoute>} />
             <Route path="proformas" element={<RoleProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN', 'VENDEUR', 'CAISSIER']}><Proformas /></RoleProtectedRoute>} />
