@@ -13,7 +13,7 @@ import {
   Tag,
   X,
 } from 'lucide-react';
-import { produitApi } from '../services/api';
+import { getApiErrorMessage, produitApi } from '../services/api';
 import { useBarcodeScanner } from '../hooks/useBarcodeScanner';
 
 const fmt = (value: number) =>
@@ -57,11 +57,7 @@ export const ScanCode = () => {
       setProduit(data);
       navigator.vibrate?.(100);
     } catch (searchError: any) {
-      setError(
-        searchError?.response?.status === 404
-          ? `Aucun produit trouvé pour le code "${code}".`
-          : 'Erreur lors de la recherche du produit.',
-      );
+      setError(getApiErrorMessage(searchError, `Aucun produit trouvé pour le code "${code}".`));
     } finally {
       setLoading(false);
     }

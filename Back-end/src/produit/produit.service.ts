@@ -269,14 +269,14 @@ export class ProduitService {
   }
 
   async findByCode(codeFamille: string, code: string) {
-    const produit = await this.db.produit.findUnique({
-      where: { code },
+    const produit = await this.db.produit.findFirst({
+      where: { codeFamille: codeFamille.trim(), code: code.trim() },
       include: {
         categorie: true,
         attributs: { include: { valeurs: true } },
       },
     });
-    if (!produit || produit.codeFamille !== codeFamille) {
+    if (!produit) {
       throw new NotFoundException(`Produit introuvable pour le code famille "${codeFamille}" / code article "${code}"`);
     }
     return produit;
@@ -289,16 +289,25 @@ export class ProduitService {
     }
 
     // Le code-barres correspond exactement à Produit.code.
-    const produit = await this.db.produit.findUnique({
+    const produits = await this.db.produit.findMany({
       where: { code },
       include: {
         categorie: true,
         attributs: { include: { valeurs: true } },
       },
+      orderBy: { dateAjout: 'asc' },
+      take: 2,
     });
 
-    if (!produit) throw new NotFoundException(`Produit introuvable pour le code-barres "${code}"`);
-    return produit;
+    if (produits.length === 0) {
+      throw new NotFoundException(`Produit introuvable pour le code-barres "${code}"`);
+    }
+    if (produits.length > 1) {
+      throw new ConflictException(
+        `Le code-barres "${code}" correspond à plusieurs produits. Corrigez les doublons dans le catalogue.`,
+      );
+    }
+    return produits[0];
   }
 
   async update(id: string, updateProduitDto: UpdateProduitDto, actor?: NotificationActor) {

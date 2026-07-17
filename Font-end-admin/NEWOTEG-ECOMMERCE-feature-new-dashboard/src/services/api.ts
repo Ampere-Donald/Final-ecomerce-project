@@ -144,8 +144,16 @@ export const produitApi = {
   findByCode: (codeFamille: string, code: string) =>
     api.get(`/produits/scan/${encodeURIComponent(codeFamille)}/${encodeURIComponent(code)}`).then(res => res.data),
   traduire: (id: string) => api.post(`/produits/${id}/traduire`, {}).then(res => res.data),
-  findByRawScan: (raw: string) =>
-    api.get(`/produits/scan-code/${encodeURIComponent(raw.trim())}`).then(res => res.data),
+  findByRawScan: async (raw: string) => {
+    const code = encodeURIComponent(raw.trim());
+    try {
+      return await api.get(`/produits/scan-code/${code}`).then(res => res.data);
+    } catch (error: any) {
+      // Compatibilite avec le backend precedent, qui ne connaissait que ce nom.
+      if (error?.response?.status !== 404) throw error;
+      return api.get(`/produits/scan-raw/${code}`).then(res => res.data);
+    }
+  },
 };
 
 // Bons de commande fournisseur (bilingue, suggestion auto, conversion en achat)

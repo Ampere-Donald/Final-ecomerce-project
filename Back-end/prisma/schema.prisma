@@ -46,7 +46,7 @@ model Produit {
   dernierFournisseurId String?          @map("dernier_fournisseur_id")
   dernierAchatAt       DateTime?        @map("dernier_achat_at")
   codeFamille          String?          @map("code_famille") @db.VarChar(50)
-  code                 String?          @unique(map: "unique_produit_code") @map("code") @db.VarChar(50)
+  code                 String?          @map("code") @db.VarChar(50)
   poids                Float?           @map("poids")
   volume               Float?           @map("volume")
   attributs            Attribut[]
@@ -60,6 +60,8 @@ model Produit {
   categorie            Categorie        @relation(fields: [categorieId], references: [id])
 
   @@unique([marque, nomProduit], name: "unique_produit")
+  @@unique([codeFamille, code], name: "unique_code_produit")
+  @@index([code], name: "idx_produit_code")
   @@index([codeFamille], name: "idx_produit_code_famille")
   @@map("produit")
 }

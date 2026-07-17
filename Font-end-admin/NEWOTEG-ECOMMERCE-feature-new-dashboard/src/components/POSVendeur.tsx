@@ -600,10 +600,14 @@ export const POSVendeur = () => {
         return;
       }
       ajouterAuPanier(p as Produit);
-    } catch {
+    } catch (scanRequestError: any) {
       const code = raw.trim();
-      setError(`Produit introuvable pour le code-barres "${code}".`);
-      toast.error(`Produit introuvable pour le code-barres "${code}".`);
+      const message = getApiErrorMessage(
+        scanRequestError,
+        `Produit introuvable pour le code-barres "${code}".`,
+      );
+      setError(message);
+      toast.error(message);
     }
   }, [ajouterAuPanier, toast]);
 
