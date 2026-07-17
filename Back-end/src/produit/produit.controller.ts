@@ -257,11 +257,19 @@ export class ProduitController {
 
   @UseGuards(AdminAuthGuard, RolesGuard)
   @Roles('SUPER_ADMIN', 'ADMIN', 'MANAGER', 'VENDEUR')
-  @Get(['scan-code/:code', 'scan-raw/:code'])
-  async findByRawScan(
+  @Get('scan-code/:code')
+  async findByCameraCode(
     @Request() req: any,
     @Param('code') code: string,
   ) {
+    const produit = await this.produitService.findByCameraCode(code);
+    return peutVoirCouts(req.user) ? produit : masquerCouts(produit);
+  }
+
+  @UseGuards(AdminAuthGuard, RolesGuard)
+  @Roles('SUPER_ADMIN', 'ADMIN', 'MANAGER', 'VENDEUR')
+  @Get('scan-raw/:code')
+  async findByRawScan(@Request() req: any, @Param('code') code: string) {
     const produit = await this.produitService.findByRawScan(code);
     return peutVoirCouts(req.user) ? produit : masquerCouts(produit);
   }

@@ -282,7 +282,7 @@ export class ProduitService {
     return produit;
   }
 
-  async findByRawScan(raw: string) {
+  async findByCameraCode(raw: string) {
     const code = raw.trim();
     if (!code || code.length > 50) {
       throw new BadRequestException('Le code-barres doit contenir entre 1 et 50 caractères');
@@ -308,6 +308,57 @@ export class ProduitService {
       );
     }
     return produits[0];
+  }
+
+  /**
+   * Recherche historique utilisee par les douchettes USB/Bluetooth.
+   * On conserve ce flux independant de la camera pour ne pas modifier le
+   * comportement des lecteurs materiels deja installes en boutique.
+   */
+  async findByRawScan(raw: string) {
+    const value = raw.trim();
+    if (!value || value.length > 50) {
+      throw new BadRequestException('Le code-barres doit contenir entre 1 et 50 caractères');
+    }
+
+    const include = {
+      categorie: true,
+      attributs: { include: { valeurs: true } },
+    };
+
+    // Comportement principal historique : la valeur de la douchette est le code.
+    const exact = await this.db.produit.findFirst({
+      where: { code: value },
+      include,
+      orderBy: { dateAjout: 'asc' },
+    });
+    if (exact) return exact;
+
+    // Compatibilite avec les anciennes etiquettes famille/code encore en circulation.
+    const conditions: any[] = [{ codeFamille: value }];
+    for (const separator of ['/', '-', '|']) {
+      const index = value.indexOf(separator);
+      if (index > 0 && index < value.length - 1) {
+        conditions.push({
+          codeFamille: value.slice(0, index),
+          code: value.slice(index + 1),
+        });
+      }
+    }
+    if (value.length > 3) {
+      conditions.push({ codeFamille: value.slice(0, 3), code: value.slice(3) });
+      conditions.push({ codeFamille: value.slice(3), code: value.slice(0, 3) });
+    }
+
+    const legacyProduct = await this.db.produit.findFirst({
+      where: { OR: conditions },
+      include,
+      orderBy: { dateAjout: 'asc' },
+    });
+    if (!legacyProduct) {
+      throw new NotFoundException(`Produit introuvable pour le code-barres "${value}"`);
+    }
+    return legacyProduct;
   }
 
   async update(id: string, updateProduitDto: UpdateProduitDto, actor?: NotificationActor) {

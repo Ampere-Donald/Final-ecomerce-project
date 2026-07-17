@@ -589,8 +589,30 @@ export const POSVendeur = () => {
   };
 
   // ── Scan caméra ────────────────────────────────────────────────────────
-  const handleBarcode = useCallback(async (raw: string) => {
+  const handleCameraBarcode = useCallback(async (raw: string) => {
     setScanOpen(false);
+    try {
+      const code = raw.trim();
+      const p: any = await produitApi.findByCameraScan(code);
+      if (p.quantiteStock <= 0) {
+        setError(`"${p.nomProduit}" est en rupture de stock.`);
+        toast.error(`"${p.nomProduit}" est en rupture de stock.`);
+        return;
+      }
+      ajouterAuPanier(p as Produit);
+    } catch (scanRequestError: any) {
+      const code = raw.trim();
+      const message = getApiErrorMessage(
+        scanRequestError,
+        `Produit introuvable pour le code-barres "${code}".`,
+      );
+      setError(message);
+      toast.error(message);
+    }
+  }, [ajouterAuPanier, toast]);
+
+  // Douchette USB/Bluetooth : garder le flux historique, independant de la camera.
+  const handleHardwareBarcode = useCallback(async (raw: string) => {
     try {
       const code = raw.trim();
       const p: any = await produitApi.findByRawScan(code);
@@ -617,7 +639,7 @@ export const POSVendeur = () => {
     clearError: clearScanError,
     start: startScan,
     stop: stopScan,
-  } = useBarcodeScanner({ onDetected: handleBarcode });
+  } = useBarcodeScanner({ onDetected: handleCameraBarcode });
 
   useEffect(() => {
     if (scanOpen) startScan();
@@ -643,7 +665,7 @@ export const POSVendeur = () => {
         if (buf.length >= 4) {
           // Si le scan a eu lieu dans la barre de recherche, vider le champ
           if (isInSearch) { e.preventDefault(); setSearch(''); }
-          handleBarcode(buf);
+          handleHardwareBarcode(buf);
         }
         return;
       }
@@ -666,7 +688,7 @@ export const POSVendeur = () => {
         barcodeBufferRef.current = '';
         if (buf.length >= 4) {
           if (isInSearch) setSearch('');
-          handleBarcode(buf);
+          handleHardwareBarcode(buf);
         }
       }, 80);
     };
@@ -676,7 +698,7 @@ export const POSVendeur = () => {
       document.removeEventListener('keydown', onKeyDown);
       if (barcodeTimerRef.current) clearTimeout(barcodeTimerRef.current);
     };
-  }, [handleBarcode]);
+  }, [handleHardwareBarcode]);
 
   // ── Rendu carte produit (commun) ───────────────────────────────────────
   const renderProduit = (p: Produit) => {
