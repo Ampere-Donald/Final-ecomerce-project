@@ -10,7 +10,15 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
     if (url.pathname.startsWith('/api/') || url.pathname.startsWith('/uploads/')) {
-      const target = new URL(url.pathname + url.search, BACKEND);
+      // Compatibilite avec les anciens bundles/PWA : avant la reunification,
+      // le scan camera appelait /scan-code alors que le backend actuellement
+      // deploye expose /scan-raw. Les deux lecteurs utilisent desormais la
+      // meme recherche sans obliger les appareils a vider leur cache d'abord.
+      const backendPath = url.pathname.replace(
+        /^\/api\/produits\/scan-code\//,
+        '/api/produits/scan-raw/',
+      );
+      const target = new URL(backendPath + url.search, BACKEND);
       return fetch(new Request(target, request));
     }
     return env.ASSETS.fetch(request);
