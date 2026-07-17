@@ -282,38 +282,10 @@ export class ProduitService {
     return produit;
   }
 
-  async findByCameraCode(raw: string) {
-    const code = raw.trim();
-    if (!code || code.length > 50) {
-      throw new BadRequestException('Le code-barres doit contenir entre 1 et 50 caractères');
-    }
-
-    // Le code-barres correspond exactement à Produit.code.
-    const produits = await this.db.produit.findMany({
-      where: { code },
-      include: {
-        categorie: true,
-        attributs: { include: { valeurs: true } },
-      },
-      orderBy: { dateAjout: 'asc' },
-      take: 2,
-    });
-
-    if (produits.length === 0) {
-      throw new NotFoundException(`Produit introuvable pour le code-barres "${code}"`);
-    }
-    if (produits.length > 1) {
-      throw new ConflictException(
-        `Le code-barres "${code}" correspond à plusieurs produits. Corrigez les doublons dans le catalogue.`,
-      );
-    }
-    return produits[0];
-  }
-
   /**
-   * Recherche historique utilisee par les douchettes USB/Bluetooth.
-   * On conserve ce flux independant de la camera pour ne pas modifier le
-   * comportement des lecteurs materiels deja installes en boutique.
+   * Recherche commune aux douchettes USB/Bluetooth et a la camera.
+   * Les mecanismes de lecture restent independants, mais la valeur lue suit
+   * exactement le meme chemin de recherche dans la base.
    */
   async findByRawScan(raw: string) {
     const value = raw.trim();

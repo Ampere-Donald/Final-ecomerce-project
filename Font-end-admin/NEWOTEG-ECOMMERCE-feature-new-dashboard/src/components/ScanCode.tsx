@@ -52,7 +52,7 @@ export const ScanCode = () => {
     setError(null);
     setProduit(null);
     try {
-      const data = await produitApi.findByCameraScan(code) as ScannedProduct;
+      const data = await produitApi.findByRawScan(code) as ScannedProduct;
       setBarcodeInput(code);
       setProduit(data);
       navigator.vibrate?.(100);

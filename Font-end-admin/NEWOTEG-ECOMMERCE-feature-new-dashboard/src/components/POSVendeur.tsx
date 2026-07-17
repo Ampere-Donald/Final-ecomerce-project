@@ -593,7 +593,7 @@ export const POSVendeur = () => {
     setScanOpen(false);
     try {
       const code = raw.trim();
-      const p: any = await produitApi.findByCameraScan(code);
+      const p: any = await produitApi.findByRawScan(code);
       if (p.quantiteStock <= 0) {
         setError(`"${p.nomProduit}" est en rupture de stock.`);
         toast.error(`"${p.nomProduit}" est en rupture de stock.`);

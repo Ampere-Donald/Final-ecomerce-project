@@ -147,9 +147,6 @@ export const produitApi = {
   // Douchette USB/Bluetooth : conserver exactement l'ancienne route.
   findByRawScan: (raw: string) =>
     api.get(`/produits/scan-raw/${encodeURIComponent(raw.trim())}`).then(res => res.data),
-  // Camera de l'appareil : le code lu correspond uniquement a produit.code.
-  findByCameraScan: (raw: string) =>
-    api.get(`/produits/scan-code/${encodeURIComponent(raw.trim())}`).then(res => res.data),
 };
 
 // Bons de commande fournisseur (bilingue, suggestion auto, conversion en achat)
