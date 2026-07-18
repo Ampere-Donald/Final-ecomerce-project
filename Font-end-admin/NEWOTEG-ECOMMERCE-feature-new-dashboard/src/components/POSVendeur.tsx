@@ -12,6 +12,7 @@ import { can } from '../utils/permissions';
 import { ReceiptGenerator } from './ReceiptGenerator';
 import { useToast } from './ui/Toast';
 import { bornesPrix, classerBande, exigeMotif, BANDE_STYLE } from '../utils/pricing';
+import { useBarcodeScanner } from '../hooks/useBarcodeScanner';
 import { enqueueBon, enqueueTicket, newSaleId, OFFLINE_SYNC_COMPLETED_EVENT } from '../services/offlineSalesQueue';
 import {
   clearActiveCartDraft,
@@ -171,11 +172,6 @@ export const POSVendeur = () => {
 
   // ── Scan caméra code-barres ────────────────────────────────────────────
   const [scanOpen, setScanOpen]   = useState(false);
-  const [scanError, setScanError] = useState<string | null>(null);
-  const scanVideoRef  = useRef<HTMLVideoElement>(null);
-  const scanStreamRef = useRef<MediaStream | null>(null);
-  const scanReaderRef = useRef<any>(null);
-  const scanActiveRef = useRef(false);
 
   // ── Barcode reader USB/Bluetooth (écoute globale clavier) ──────────────
   const barcodeBufferRef = useRef('');
@@ -293,7 +289,7 @@ export const POSVendeur = () => {
     return filtered.slice(0, 60);
   }, [catalogView, productHistory.favoriteIds, productHistory.recentIds, produits]);
 
-  const ajouterAuPanier = (p: Produit): boolean => {
+  const ajouterAuPanier = useCallback((p: Produit): boolean => {
     if (p.quantiteStock <= 0) {
       toast.error(`"${p.nomProduit}" est en rupture de stock.`, 5000, 'pos-cart-feedback');
       return false;
@@ -330,7 +326,7 @@ export const POSVendeur = () => {
     feedbackTimerRef.current = setTimeout(() => setLastAddedProductId(null), 700);
     toast.success(`"${p.nomProduit}" ajoute au panier — quantite : ${nextQuantity}.`, 1800, 'pos-cart-feedback');
     return true;
-  };
+  }, [setPanier, toast]);
 
   // ── Prix variable par bornes (le serveur reste l'autorité) ─────────────
   const refsLigne = (l: PanierLigne) => ({
@@ -654,73 +650,63 @@ export const POSVendeur = () => {
   };
 
   // ── Scan caméra ────────────────────────────────────────────────────────
-  const stopScan = useCallback(() => {
-    scanActiveRef.current = false;
-    scanStreamRef.current?.getTracks().forEach(t => t.stop());
-    scanStreamRef.current = null;
-    if (scanVideoRef.current) scanVideoRef.current.srcObject = null;
-  }, []);
-
-  const handleBarcode = useCallback(async (raw: string) => {
-    stopScan();
+  const handleCameraBarcode = useCallback(async (raw: string) => {
     setScanOpen(false);
     try {
-      const p: any = await produitApi.findByRawScan(raw);
+      const code = raw.trim();
+      const p: any = await produitApi.findByRawScan(code);
       if (p.quantiteStock <= 0) {
         setError(`"${p.nomProduit}" est en rupture de stock.`);
         toast.error(`"${p.nomProduit}" est en rupture de stock.`);
         return;
       }
       ajouterAuPanier(p as Produit);
-    } catch {
-      setError(`Produit introuvable pour le code-barres "${raw}".`);
-      toast.error(`Produit introuvable pour le code-barres "${raw}".`);
-    }
-  }, [stopScan, toast]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const startScan = useCallback(async () => {
-    setScanError(null);
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: { ideal: 'environment' } },
-      });
-      scanStreamRef.current = stream;
-      if (scanVideoRef.current) {
-        scanVideoRef.current.srcObject = stream;
-        await scanVideoRef.current.play();
-      }
-      if (!scanReaderRef.current) {
-        const { BrowserMultiFormatReader } = await import('@zxing/browser');
-        scanReaderRef.current = new BrowserMultiFormatReader();
-      }
-      scanActiveRef.current = true;
-      scanReaderRef.current.decodeFromVideoDevice(
-        undefined,
-        scanVideoRef.current!,
-        (result, err) => {
-          if (!scanActiveRef.current) return;
-          if (result) handleBarcode(result.getText());
-          else if (err && err?.name !== 'NotFoundException') console.warn('[scan]', err);
-        },
+    } catch (scanRequestError: any) {
+      const code = raw.trim();
+      const message = getApiErrorMessage(
+        scanRequestError,
+        `Produit introuvable pour le code-barres "${code}".`,
       );
-    } catch (e: any) {
-      const msg: string = e?.message ?? '';
-      if (msg.includes('denied') || msg.includes('NotAllowed') || msg.includes('Permission')) {
-        setScanError("Permission caméra refusée. Autorisez l'accès dans votre navigateur.");
-      } else if (msg.includes('NotFound')) {
-        setScanError('Aucune caméra détectée sur cet appareil.');
-      } else {
-        setScanError("Impossible d'ouvrir la caméra.");
-      }
-      setScanOpen(false);
+      setError(message);
+      toast.error(message);
     }
-  }, [handleBarcode]);
+  }, [ajouterAuPanier, toast]);
+
+  // Douchette USB/Bluetooth : garder le flux historique, independant de la camera.
+  const handleHardwareBarcode = useCallback(async (raw: string) => {
+    try {
+      const code = raw.trim();
+      const p: any = await produitApi.findByRawScan(code);
+      if (p.quantiteStock <= 0) {
+        setError(`"${p.nomProduit}" est en rupture de stock.`);
+        toast.error(`"${p.nomProduit}" est en rupture de stock.`);
+        return;
+      }
+      ajouterAuPanier(p as Produit);
+    } catch (scanRequestError: any) {
+      const code = raw.trim();
+      const message = getApiErrorMessage(
+        scanRequestError,
+        `Produit introuvable pour le code-barres "${code}".`,
+      );
+      setError(message);
+      toast.error(message);
+    }
+  }, [ajouterAuPanier, toast]);
+
+  const {
+    videoRef: scanVideoRef,
+    error: scanError,
+    clearError: clearScanError,
+    start: startScan,
+    stop: stopScan,
+  } = useBarcodeScanner({ onDetected: handleCameraBarcode });
 
   useEffect(() => {
     if (scanOpen) startScan();
     else stopScan();
     return () => stopScan();
-  }, [scanOpen]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [scanOpen, startScan, stopScan]);
 
   useEffect(() => {
     if (!scanOpen) window.setTimeout(() => searchInputRef.current?.focus(), 0);
@@ -744,7 +730,7 @@ export const POSVendeur = () => {
         if (buf.length >= 4) {
           // Si le scan a eu lieu dans la barre de recherche, vider le champ
           if (isInSearch) { e.preventDefault(); setSearch(''); }
-          handleBarcode(buf);
+          handleHardwareBarcode(buf);
         }
         return;
       }
@@ -767,7 +753,7 @@ export const POSVendeur = () => {
         barcodeBufferRef.current = '';
         if (buf.length >= 4) {
           if (isInSearch) setSearch('');
-          handleBarcode(buf);
+          handleHardwareBarcode(buf);
         }
       }, 80);
     };
@@ -777,7 +763,7 @@ export const POSVendeur = () => {
       document.removeEventListener('keydown', onKeyDown);
       if (barcodeTimerRef.current) clearTimeout(barcodeTimerRef.current);
     };
-  }, [handleBarcode]);
+  }, [handleHardwareBarcode]);
 
   // ── Rendu carte produit (commun) ───────────────────────────────────────
   const renderProduit = (p: Produit) => {
@@ -994,7 +980,7 @@ export const POSVendeur = () => {
             className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none" />
         </div>
         <button
-          onClick={() => { setScanError(null); setScanOpen(true); }}
+          onClick={() => { clearScanError(); setScanOpen(true); }}
           title="Scanner un code-barres"
           className="flex items-center gap-2 px-4 py-3 bg-white border border-slate-200 rounded-xl text-slate-600 hover:border-primary/40 hover:text-primary transition-colors shrink-0"
         >

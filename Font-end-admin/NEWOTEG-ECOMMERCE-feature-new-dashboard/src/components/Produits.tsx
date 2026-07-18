@@ -39,6 +39,8 @@ const FORM_INITIAL = {
   nomProduit: '',
   designationEn: '',
   marque: '',
+  code: '',
+  codeFamille: '',
   categorieId: '',
   description: '',
   prixDetail: '',
@@ -241,6 +243,8 @@ export const Produits = () => {
       nomProduit: prod.nomProduit ?? '',
       designationEn: (prod as any).designationEn ?? '',
       marque: prod.marque ?? '',
+      code: prod.code ?? '',
+      codeFamille: prod.codeFamille ?? '',
       categorieId: prod.categorie?.id ?? '',
       description: prod.description ?? '',
       prixDetail: prod.prixDetail != null ? String(prod.prixDetail) : '',
@@ -301,6 +305,8 @@ export const Produits = () => {
       dataToSend.append('nomProduit', formData.nomProduit);
       if (formData.designationEn) dataToSend.append('designationEn', formData.designationEn);
       dataToSend.append('marque', formData.marque);
+      if (formData.code.trim()) dataToSend.append('code', formData.code.trim());
+      if (formData.codeFamille.trim()) dataToSend.append('codeFamille', formData.codeFamille.trim());
       dataToSend.append('categorieId', formData.categorieId);
       if (formData.description) dataToSend.append('description', formData.description);
       if (formData.prixDetail) dataToSend.append('prixDetail', formData.prixDetail);
@@ -773,6 +779,36 @@ export const Produits = () => {
                     className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary/20 outline-none transition-all"
                     placeholder="Ex: Transistor NPN 2N3904"
                   />
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">
+                      Code-barres / Code produit
+                    </label>
+                    <input
+                      type="text"
+                      maxLength={50}
+                      value={formData.code}
+                      onChange={(e) => setFormData((f) => ({ ...f, code: e.target.value }))}
+                      className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary/20 outline-none transition-all font-mono"
+                      placeholder="Ex : 101001"
+                    />
+                    <p className="text-xs text-slate-400 mt-1">Ce code doit être unique et sera lu directement par le scanner.</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">
+                      Code famille
+                    </label>
+                    <input
+                      type="text"
+                      maxLength={50}
+                      value={formData.codeFamille}
+                      onChange={(e) => setFormData((f) => ({ ...f, codeFamille: e.target.value }))}
+                      className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary/20 outline-none transition-all font-mono"
+                      placeholder="Ex : 101"
+                    />
+                  </div>
                 </div>
 
                 {/* Désignation anglaise (pour les bons de commande fournisseur) */}

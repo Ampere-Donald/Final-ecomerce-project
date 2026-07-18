@@ -40,4 +40,8 @@
     <!-- Permissions -->
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.CAMERA" />
+
+    <!-- La boutique reste utilisable sur les appareils sans caméra. -->
+    <uses-feature android:name="android.hardware.camera.any" android:required="false" />
 </manifest>

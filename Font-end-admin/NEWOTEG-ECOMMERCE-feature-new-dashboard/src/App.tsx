@@ -31,6 +31,7 @@ const AdminAccounts = lazy(() => import('./components/AdminAccounts').then((m) =
 const NotificationsPage = lazy(() => import('./components/NotificationsPage').then((m) => ({ default: m.NotificationsPage })));
 const StockAlerts = lazy(() => import('./components/StockAlerts').then((m) => ({ default: m.StockAlerts })));
 const POSVendeur = lazy(() => import('./components/POSVendeur').then((m) => ({ default: m.POSVendeur })));
+const ScanCode = lazy(() => import('./components/ScanCode').then((m) => ({ default: m.ScanCode })));
 const MesTickets = lazy(() => import('./components/MesTickets').then((m) => ({ default: m.MesTickets })));
 const FileCaissier = lazy(() => import('./components/FileCaissier').then((m) => ({ default: m.FileCaissier })));
 const CaisseJour = lazy(() => import('./components/CaisseJour').then((m) => ({ default: m.CaisseJour })));
@@ -92,6 +93,7 @@ export default function App() {
 
             {/* Workflow vendeur ↔ caissier (Phase 3 L4) */}
             <Route path="pos" element={<RoleProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN', 'VENDEUR']}><POSVendeur /></RoleProtectedRoute>} />
+            <Route path="scan-code" element={<RoleProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'VENDEUR']}><ScanCode /></RoleProtectedRoute>} />
             <Route path="mes-tickets" element={<RoleProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN', 'VENDEUR']}><MesTickets /></RoleProtectedRoute>} />
             <Route path="file-caissier" element={<RoleProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN', 'CAISSIER']}><FileCaissier /></RoleProtectedRoute>} />
             <Route path="proformas" element={<RoleProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN', 'VENDEUR', 'CAISSIER']}><Proformas /></RoleProtectedRoute>} />

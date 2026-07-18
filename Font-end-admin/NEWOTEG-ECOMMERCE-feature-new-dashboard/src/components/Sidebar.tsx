@@ -29,6 +29,7 @@ import {
   ClipboardList,
   Banknote,
   BookOpen,
+  ScanBarcode,
   CloudOff,
   History,
 } from 'lucide-react';
@@ -114,6 +115,7 @@ export const Sidebar = ({ open, onClose }: SidebarProps) => {
       label: 'Catalogue',
       items: [
         ...add(can.voirProduits(role), { label: 'Produits', icon: Package, path: '/produits' }),
+        ...add(can.accessScanCode(role), { label: 'Scanner un produit', icon: ScanBarcode, path: '/scan-code' }),
         ...add(can.modifierProduits(role), { label: 'Catégories', icon: Tags, path: '/categories' }),
         ...add(can.accessStock(role), { label: 'Mouvements stock', icon: Activity, path: '/stock' }),
         ...add(can.accessInventaire(role), { label: 'Inventaire', icon: ClipboardList, path: '/inventaire' }),

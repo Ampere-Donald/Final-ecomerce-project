@@ -257,12 +257,9 @@ export class ProduitController {
 
   @UseGuards(AdminAuthGuard, RolesGuard)
   @Roles('SUPER_ADMIN', 'ADMIN', 'MANAGER', 'VENDEUR')
-  @Get('scan-raw/:raw')
-  async findByRawScan(
-    @Request() req: any,
-    @Param('raw') raw: string,
-  ) {
-    const produit = await this.produitService.findByRawScan(raw);
+  @Get(['scan-raw/:code', 'scan-code/:code'])
+  async findByRawScan(@Request() req: any, @Param('code') code: string) {
+    const produit = await this.produitService.findByRawScan(code);
     return peutVoirCouts(req.user) ? produit : masquerCouts(produit);
   }
 

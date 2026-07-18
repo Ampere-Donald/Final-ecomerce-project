@@ -205,7 +205,7 @@ export const Ventes = () => {
 
 
   /* ═══ POS LOGIC ═══════════════════════════════════════════════ */
-  
+
   // Filter products without artificial limit - full catalog access
   // Pagination
   const totalPages = Math.ceil(totalProducts / PRODUCTS_PER_PAGE);

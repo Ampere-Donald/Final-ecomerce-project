@@ -53,7 +53,7 @@ export default defineConfig(({mode}) => {
                 /^\/assets\/(Analyses|POSVendeur|jspdf|html2canvas|jszip|qzPrinter|Paie|Achats|Produits)-/.test(url.pathname),
               handler: 'CacheFirst',
               options: {
-                cacheName: 'newoteg-on-demand-modules-v1',
+                cacheName: 'newoteg-on-demand-modules-v2',
                 expiration: {maxEntries: 30, maxAgeSeconds: 7 * 24 * 60 * 60},
                 cacheableResponse: {statuses: [200]},
               },

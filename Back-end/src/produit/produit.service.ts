@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException, Logger, InternalServerErrorException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, ConflictException, Logger, InternalServerErrorException } from '@nestjs/common';
 import { DatabaseService } from 'src/database/database.service';
 import { NotificationService, NotificationActor } from 'src/notification/notification.service';
 import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
@@ -82,19 +82,29 @@ export class ProduitService {
     const { categorieId, ...rest } = createProduitDto;
 
     const data: any = { ...rest };
+    if (data.code !== undefined) data.code = data.code.trim() || null;
+    if (data.codeFamille !== undefined) data.codeFamille = data.codeFamille.trim() || null;
     this.retirerPrixSiNonSuperAdmin(data, actor);
 
     if (data.finPromo) {
       data.finPromo = new Date(data.finPromo);
     }
 
-    const produit = await this.db.produit.create({
-      data: {
-        ...data,
-        categorie: { connect: { id: categorieId } },
-      },
-      include: { categorie: true },
-    });
+    let produit: any;
+    try {
+      produit = await this.db.produit.create({
+        data: {
+          ...data,
+          categorie: { connect: { id: categorieId } },
+        },
+        include: { categorie: true },
+      });
+    } catch (error: any) {
+      if (error?.code === 'P2002') {
+        throw new ConflictException(`Le code produit "${data.code}" est déjà utilisé`);
+      }
+      throw error;
+    }
 
     this.notifications
       .create('PRODUIT_CREE', `Produit "${produit.nomProduit}" ajouté au catalogue`, actor)
@@ -260,7 +270,7 @@ export class ProduitService {
 
   async findByCode(codeFamille: string, code: string) {
     const produit = await this.db.produit.findFirst({
-      where: { codeFamille, code },
+      where: { codeFamille: codeFamille.trim(), code: code.trim() },
       include: {
         categorie: true,
         attributs: { include: { valeurs: true } },
@@ -272,49 +282,55 @@ export class ProduitService {
     return produit;
   }
 
+  /**
+   * Recherche commune aux douchettes USB/Bluetooth et a la camera.
+   * Les mecanismes de lecture restent independants, mais la valeur lue suit
+   * exactement le meme chemin de recherche dans la base.
+   */
   async findByRawScan(raw: string) {
+    const value = raw.trim();
+    if (!value || value.length > 50) {
+      throw new BadRequestException('Le code-barres doit contenir entre 1 et 50 caractères');
+    }
+
     const include = {
       categorie: true,
       attributs: { include: { valeurs: true } },
     };
 
-    // Construire toutes les combinaisons possibles en une seule requête OR
-    const conditions: any[] = [
-      { code: raw },
-      { codeFamille: raw },
-    ];
+    // Comportement principal historique : la valeur de la douchette est le code.
+    const exact = await this.db.produit.findFirst({
+      where: { code: value },
+      include,
+      orderBy: { dateAjout: 'asc' },
+    });
+    if (exact) return exact;
 
-    // Séparateurs explicites
-    for (const sep of ['/', '-', '|']) {
-      const idx = raw.indexOf(sep);
-      if (idx > 0 && idx < raw.length - 1) {
-        conditions.push({ codeFamille: raw.slice(0, idx), code: raw.slice(idx + 1) });
+    // Compatibilite avec les anciennes etiquettes famille/code encore en circulation.
+    const conditions: any[] = [{ codeFamille: value }];
+    for (const separator of ['/', '-', '|']) {
+      const index = value.indexOf(separator);
+      if (index > 0 && index < value.length - 1) {
+        conditions.push({
+          codeFamille: value.slice(0, index),
+          code: value.slice(index + 1),
+        });
       }
     }
-
-    // Découpage positionnel : 3 premiers = codeFamille, reste = code
-    if (raw.length > 3) {
-      const cf = raw.slice(0, 3);
-      const c  = raw.slice(3);
-      conditions.push({ codeFamille: cf, code: c });
-      conditions.push({ codeFamille: c, code: cf });
+    if (value.length > 3) {
+      conditions.push({ codeFamille: value.slice(0, 3), code: value.slice(3) });
+      conditions.push({ codeFamille: value.slice(3), code: value.slice(0, 3) });
     }
 
-    // Découpage positionnel : 3 derniers = code, reste = codeFamille
-    if (raw.length > 3 && raw.length !== 6) {
-      const cf = raw.slice(0, raw.length - 3);
-      const c  = raw.slice(-3);
-      conditions.push({ codeFamille: cf, code: c });
-      conditions.push({ codeFamille: c, code: cf });
-    }
-
-    const produit = await this.db.produit.findFirst({
+    const legacyProduct = await this.db.produit.findFirst({
       where: { OR: conditions },
       include,
+      orderBy: { dateAjout: 'asc' },
     });
-
-    if (!produit) throw new NotFoundException(`Produit introuvable pour le code-barres "${raw}"`);
-    return produit;
+    if (!legacyProduct) {
+      throw new NotFoundException(`Produit introuvable pour le code-barres "${value}"`);
+    }
+    return legacyProduct;
   }
 
   async update(id: string, updateProduitDto: UpdateProduitDto, actor?: NotificationActor) {
@@ -326,6 +342,8 @@ export class ProduitService {
       ...rest,
       version: { increment: 1 },
     };
+    if (updateData.code !== undefined) updateData.code = updateData.code.trim() || null;
+    if (updateData.codeFamille !== undefined) updateData.codeFamille = updateData.codeFamille.trim() || null;
     this.retirerPrixSiNonSuperAdmin(updateData, actor);
     // Le stock ne se modifie JAMAIS par l'édition produit : seulement via
     // réapprovisionnement, vente, ou inventaire/ajustement tracé.
@@ -352,8 +370,10 @@ export class ProduitService {
 
       return produit;
     } catch (e: any) {
-      console.error('CRITICAL PRISMA ERROR:', e);
-      throw new BadRequestException('Prisma a planté: ' + e.message);
+      if (e?.code === 'P2002') {
+        throw new ConflictException(`Le code produit "${updateData.code}" est déjà utilisé`);
+      }
+      throw e;
     }
   }
 

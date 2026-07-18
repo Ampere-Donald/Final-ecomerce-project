@@ -144,8 +144,9 @@ export const produitApi = {
   findByCode: (codeFamille: string, code: string) =>
     api.get(`/produits/scan/${encodeURIComponent(codeFamille)}/${encodeURIComponent(code)}`).then(res => res.data),
   traduire: (id: string) => api.post(`/produits/${id}/traduire`, {}).then(res => res.data),
+  // Douchette USB/Bluetooth : conserver exactement l'ancienne route.
   findByRawScan: (raw: string) =>
-    api.get(`/produits/scan-raw/${encodeURIComponent(raw)}`).then(res => res.data),
+    api.get(`/produits/scan-raw/${encodeURIComponent(raw.trim())}`).then(res => res.data),
 };
 
 // Bons de commande fournisseur (bilingue, suggestion auto, conversion en achat)
