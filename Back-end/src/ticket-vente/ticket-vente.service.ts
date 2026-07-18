@@ -1,11 +1,12 @@
 import {
   BadRequestException,
+  ConflictException,
   ForbiddenException,
   Injectable,
   Logger,
   NotFoundException,
 } from '@nestjs/common';
-import { MethodePaiement } from '@prisma/client';
+import { MethodePaiement, TypeFacture } from '@prisma/client';
 import { DatabaseService } from 'src/database/database.service';
 import { NotificationService } from 'src/notification/notification.service';
 import { CaisseJourService } from 'src/caisse-jour/caisse-jour.service';
@@ -14,6 +15,20 @@ import { validerLignePrix } from 'src/pricing/pricing.util';
 import { DocumentNumberService } from 'src/database/document-number.service';
 
 const TICKET_VALIDITY_MS = 15 * 60 * 1000; // 15 minutes
+
+export async function claimTicketForCheckout(
+  tx: any,
+  ticketId: string,
+  data: { caissierId: string; clientId: string | null; methodePaiement: MethodePaiement },
+) {
+  const claimed = await tx.ticketVente.updateMany({
+    where: { id: ticketId, statut: 'EN_ATTENTE', expiresAt: { gt: new Date() } },
+    data: { statut: 'ENCAISSE', caissierId: data.caissierId, clientId: data.clientId, methodePaiement: data.methodePaiement, encaisseAt: new Date() },
+  });
+  if (claimed.count !== 1) {
+    throw new ConflictException('Ce ticket est déjà traité, expiré ou en cours d\'encaissement.');
+  }
+}
 
 @Injectable()
 export class TicketVenteService {
@@ -134,6 +149,7 @@ export class TicketVenteService {
         clientId: dto.clientId ?? null,
         nomClient: dto.nomClient ?? null,
         telephoneClient: dto.telephoneClient ?? null,
+        noteCaissier: dto.noteCaissier?.trim() || null,
         montantTotal,
         expiresAt,
         lignes: { create: lignesData },
@@ -216,7 +232,15 @@ export class TicketVenteService {
     ticketId: string,
     caissierId: string,
     methodePaiement: MethodePaiement,
-    options: { clientId?: string; montantPaye?: number } = {},
+    options: {
+      clientId?: string | null;
+      montantPaye?: number;
+      montantRecu?: number;
+      documentType?: TypeFacture;
+      referencePaiement?: string;
+      dateEcheance?: Date;
+      idempotencyKey?: string;
+    } = {},
   ) {
     const ticket = await this.findOne(ticketId);
     if (ticket.statut !== 'EN_ATTENTE') {
@@ -234,14 +258,34 @@ export class TicketVenteService {
     }
 
     const isCredit = methodePaiement === 'CREDIT';
-    const clientId = options.clientId ?? ticket.clientId ?? null;
+    const clientId = options.clientId !== undefined ? options.clientId : ticket.clientId ?? null;
     const montantTotal = this.toNumber(ticket.montantTotal);
+    const documentType = options.documentType ?? TypeFacture.TICKET_CAISSE;
 
     if (isCredit && !clientId) {
       throw new BadRequestException(
         'Une vente à crédit exige un client enregistré.',
       );
     }
+    if (isCredit && !options.dateEcheance) {
+      throw new BadRequestException(
+        'Une date d\'échéance est obligatoire pour une vente à crédit.',
+      );
+    }
+
+    const montantRecu = isCredit
+      ? this.toNumber(options.montantPaye ?? 0)
+      : methodePaiement === 'ESPECES'
+        ? this.toNumber(options.montantRecu ?? montantTotal)
+        : montantTotal;
+    if (methodePaiement === 'ESPECES' && montantRecu < montantTotal) {
+      throw new BadRequestException(
+        `Montant reçu insuffisant (minimum ${montantTotal} FCFA).`,
+      );
+    }
+    const monnaieRendue = methodePaiement === 'ESPECES'
+      ? Math.max(0, montantRecu - montantTotal)
+      : 0;
 
     // Montant effectivement encaissé (acompte pour le crédit, total sinon)
     let montantPaye = montantTotal;
@@ -269,13 +313,42 @@ export class TicketVenteService {
     }
 
     const result = await this.db.$transaction(async (tx: any) => {
+      if (isCredit && clientId) {
+        const [creditClient, openSales] = await Promise.all([
+          tx.client.findUnique({ where: { id: clientId }, select: { limiteCredit: true } }),
+          tx.vente.findMany({
+            where: { clientId, statutPaiement: { in: ['NON_PAYE', 'PARTIEL'] } },
+            select: { montantTotal: true, montantPaye: true },
+          }),
+        ]);
+        if (!creditClient) throw new BadRequestException('Client crédit introuvable.');
+        const encours = openSales.reduce(
+          (sum: number, sale: any) => sum + Math.max(0, this.toNumber(sale.montantTotal) - this.toNumber(sale.montantPaye)),
+          0,
+        );
+        const nouveauSolde = encours + (montantTotal - montantPaye);
+        const limite = this.toNumber(creditClient.limiteCredit);
+        if (nouveauSolde > limite) {
+          throw new BadRequestException(
+            `Limite de crédit dépassée (nouvel encours ${nouveauSolde} FCFA, limite ${limite} FCFA).`,
+          );
+        }
+      }
+
+      await claimTicketForCheckout(tx, ticketId, { caissierId, clientId, methodePaiement });
+
       // 1. Créer la vente + lignes
       const vente = await tx.vente.create({
         data: {
           clientId,
+          idempotencyKey: options.idempotencyKey,
           montantTotal: ticket.montantTotal,
           montantPaye,
+          montantRecu,
+          monnaieRendue,
           methodePaiement,
+          referencePaiement: options.referencePaiement?.trim() || null,
+          dateEcheance: isCredit ? options.dateEcheance : null,
           statutPaiement,
           lignesVente: {
             create: ticket.lignes.map((l) => ({
@@ -383,8 +456,16 @@ export class TicketVenteService {
       const totalHT = montantTotal / 1.1925;
       const facture = await tx.facture.create({
         data: {
-          numero: await this.documentNumbers.nextAnnual('TICKET_CAISSE', 'TIC-', tx),
-          type: 'TICKET_CAISSE',
+          numero: await this.documentNumbers.nextAnnual(
+            documentType,
+            documentType === TypeFacture.FACTURE
+              ? 'FAC-'
+              : documentType === TypeFacture.BON_VENTE
+                ? 'BON-'
+                : 'TIC-',
+            tx,
+          ),
+          type: documentType,
           ticketId,
           venteId: vente.id,
           clientId: clientId ?? undefined,

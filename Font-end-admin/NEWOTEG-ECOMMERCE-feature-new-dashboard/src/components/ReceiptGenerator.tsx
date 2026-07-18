@@ -20,7 +20,7 @@ interface LigneVente {
 }
 
 export interface ReceiptProps {
-  type: 'ticket' | 'facture' | 'proforma' | 'factureVirtuelle';
+  type: 'ticket' | 'facture' | 'bonVente' | 'proforma' | 'factureVirtuelle';
   lignes: LigneVente[];
   montantTotal: number;
   methodePaiement: string;
@@ -91,11 +91,12 @@ export const ReceiptGenerator: React.FC<ReceiptProps> = (props) => {
     onClose,
   } = props;
 
-  const [activeType, setActiveType] = React.useState<'ticket' | 'facture' | 'proforma' | 'factureVirtuelle'>(initialType === 'factureVirtuelle' ? 'facture' : initialType);
+  const [activeType, setActiveType] = React.useState<'ticket' | 'facture' | 'bonVente' | 'proforma'>(initialType === 'factureVirtuelle' ? 'facture' : initialType);
   const isVirtuelle = initialType === 'factureVirtuelle';
   const printRef = useRef<HTMLDivElement>(null);
   const autoPrintTriggeredRef = useRef(false);
   const [successfulPrints, setSuccessfulPrints] = React.useState(printCount);
+  const [printFailure, setPrintFailure] = React.useState<string | null>(null);
   const toast = useToast();
 
 
@@ -220,6 +221,8 @@ export const ReceiptGenerator: React.FC<ReceiptProps> = (props) => {
         ? 'FACTURE_VIRTUELLE'
         : initialType === 'proforma'
           ? 'PROFORMA'
+          : initialType === 'bonVente'
+            ? 'BON_VENTE'
           : initialType === 'ticket'
             ? 'TICKET'
             : 'FACTURE';
@@ -247,7 +250,10 @@ export const ReceiptGenerator: React.FC<ReceiptProps> = (props) => {
       const opened = openPrintWindow(false);
       await recordPrintAttempt(opened ? 'SUCCESS' : 'FAILED', 'NAVIGATEUR', opened ? undefined : 'POPUP_BLOCKED');
       if (opened) toast.info('Fenêtre d’impression ouverte. La vente reste enregistrée même si vous annulez l’impression.');
-      else toast.error('Le navigateur a bloqué la fenêtre d’impression. Autorisez les fenêtres pop-up puis réessayez.');
+      else {
+        setPrintFailure('Le navigateur a bloqué la fenêtre d’impression.');
+        toast.error('Le navigateur a bloqué la fenêtre d’impression. Autorisez les fenêtres pop-up puis réessayez.');
+      }
       return;
     }
 
@@ -264,6 +270,7 @@ export const ReceiptGenerator: React.FC<ReceiptProps> = (props) => {
         }),
       );
       await recordPrintAttempt('SUCCESS', printer);
+      setPrintFailure(null);
       toast.success(`Ticket envoyé à ${printer}.`);
     } catch (e) {
       // QZ Tray éteint / non autorisé → repli automatique sur l'impression navigateur.
@@ -274,8 +281,10 @@ export const ReceiptGenerator: React.FC<ReceiptProps> = (props) => {
       const fallbackStarted = printTicketBrowserFallback();
       if (fallbackStarted) {
         await recordPrintAttempt('SUCCESS', 'NAVIGATEUR');
+        setPrintFailure(null);
       } else {
         await recordPrintAttempt('FAILED', 'NAVIGATEUR', 'POPUP_BLOCKED');
+        setPrintFailure(`${printerError.message} L’impression de secours a aussi été bloquée.`);
         toast.error('Le navigateur a aussi bloqué l’impression de secours. La vente est conservée : utilisez « Imprimer » pour réessayer.');
       }
     }
@@ -325,7 +334,7 @@ export const ReceiptGenerator: React.FC<ReceiptProps> = (props) => {
       const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
       const W = pdf.internal.pageSize.getWidth();
       const margin = 14;
-      const label = activeType === 'proforma' ? 'FACTURE PROFORMA' : 'FACTURE';
+      const label = activeType === 'proforma' ? 'FACTURE PROFORMA' : activeType === 'bonVente' ? 'BON DE VENTE' : 'FACTURE';
 
       // ---- En-tête société ----
       pdf.setFont('helvetica', 'bold');
@@ -467,7 +476,7 @@ export const ReceiptGenerator: React.FC<ReceiptProps> = (props) => {
     autoPrintTriggeredRef.current = true;
     void handlePrint();
   }, [autoPrint]);
-  const documentLabel = activeType === 'proforma' ? 'FACTURE PROFORMA' : 'FACTURE';
+  const documentLabel = activeType === 'proforma' ? 'FACTURE PROFORMA' : activeType === 'bonVente' ? 'BON DE VENTE' : 'FACTURE';
   const printModeLabel = successfulPrints > 0 ? 'DUPLICATA' : 'ORIGINAL';
 
   // -----------------------------------------------------------------------
@@ -754,6 +763,7 @@ export const ReceiptGenerator: React.FC<ReceiptProps> = (props) => {
               >
                 Proforma
               </button>
+              <button onClick={() => setActiveType('bonVente')} className={`px-3 py-1.5 transition-colors ${activeType === 'bonVente' ? 'bg-indigo-600 text-white' : 'text-gray-300 hover:text-white'}`}>Bon</button>
             </div>
 
             <div className="flex items-center gap-2">
@@ -780,6 +790,8 @@ export const ReceiptGenerator: React.FC<ReceiptProps> = (props) => {
               </button>
             </div>
           </div>
+
+          {printFailure && <div role="alert" className="no-print border-x border-red-200 bg-red-50 p-4 text-sm text-red-800"><p className="font-bold">Impression non terminée</p><p className="mt-1">{printFailure} La vente et ce document restent enregistrés.</p><div className="mt-3 flex flex-wrap gap-2"><button onClick={handlePrint} className="min-h-11 rounded-lg bg-red-700 px-4 font-bold text-white">Réessayer</button><button onClick={handleExportPDF} className="min-h-11 rounded-lg bg-white px-4 font-bold text-slate-700 ring-1 ring-red-200">Ouvrir le document existant</button><button onClick={onClose} className="min-h-11 rounded-lg px-4 font-bold text-red-800">Continuer sans imprimer</button></div></div>}
 
           {/* Receipt area */}
           <div

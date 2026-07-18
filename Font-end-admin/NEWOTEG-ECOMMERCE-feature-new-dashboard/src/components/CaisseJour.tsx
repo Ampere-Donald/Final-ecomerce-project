@@ -46,7 +46,7 @@ interface CaisseJourData {
 interface FactureJour {
   id: string;
   numero: string;
-  type: 'FACTURE' | 'TICKET_CAISSE';
+  type: 'FACTURE' | 'TICKET_CAISSE' | 'BON_VENTE';
   dateEmission: string;
   totalTTC: number | string;
   methodePaiement: string;
@@ -850,7 +850,7 @@ export const CaisseJour = () => {
         <ReceiptGenerator
           documentId={receiptFacture.id}
           printCount={receiptFacture.printCount || 0}
-          type={receiptFacture.type === 'FACTURE' ? 'facture' : 'ticket'}
+          type={receiptFacture.type === 'FACTURE' ? 'facture' : receiptFacture.type === 'BON_VENTE' ? 'bonVente' : 'ticket'}
           numero={receiptFacture.numero}
           dateVente={receiptFacture.dateEmission}
           methodePaiement={receiptFacture.methodePaiement}

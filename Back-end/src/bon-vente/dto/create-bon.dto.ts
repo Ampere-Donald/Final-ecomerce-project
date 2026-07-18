@@ -43,6 +43,11 @@ export class CreateBonDto {
   @IsEnum(MethodePaiement)
   methodePaiement: MethodePaiement;
 
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  noteCaissier?: string;
+
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => LigneBonDto)

@@ -109,6 +109,7 @@ model Client {
   nom                String             @db.VarChar(100)
   prenom             String?            @db.VarChar(100)
   telephone          String?            @unique @db.VarChar(20)
+  telephoneNormalise String?            @map("telephone_normalise") @db.VarChar(20)
   email              String?            @unique @db.VarChar(100)
   adresse            String?
   version            Int                @default(1)
@@ -118,6 +119,7 @@ model Client {
   otpCode            String?            @map("otp_code")
   otpExpiresAt       DateTime?          @map("otp_expires_at")
   typeClient         TypeClient         @default(PARTICULIER) @map("type_client")
+  limiteCredit       Decimal            @default(50000) @map("limite_credit") @db.Decimal(12, 2)
   niu                String?            @db.VarChar(50)
   rccm               String?            @db.VarChar(50)
   googleId           String?            @unique @map("google_id")
@@ -127,8 +129,10 @@ model Client {
   proformas          Proforma[]
   favoris            Favori[]
   ventes             Vente[]
+  ticketsVente       TicketVente[]
   facturesVirtuelles FactureVirtuelle[]
 
+  @@index([telephoneNormalise])
   @@map("client")
 }
 
@@ -376,7 +380,11 @@ model Vente {
   dateVente          DateTime          @default(now()) @map("date_vente")
   montantTotal       Decimal           @map("montant_total") @db.Decimal(12, 2)
   montantPaye        Decimal           @default(0) @map("montant_paye") @db.Decimal(12, 2)
+  montantRecu        Decimal?          @map("montant_recu") @db.Decimal(12, 2)
+  monnaieRendue      Decimal?          @map("monnaie_rendue") @db.Decimal(12, 2)
   methodePaiement    MethodePaiement   @map("methode_paiement")
+  referencePaiement  String?           @map("reference_paiement") @db.VarChar(100)
+  dateEcheance       DateTime?         @map("date_echeance")
   statutPaiement     StatutPaiement    @default(PAYE) @map("statut_paiement")
   vendeurId          String?           @map("vendeur_id")
   idempotencyKey     String?           @unique @map("idempotency_key") @db.VarChar(64)
@@ -433,6 +441,7 @@ model TicketVente {
   clientId        String?          @map("client_id")
   nomClient       String?          @map("nom_client") @db.VarChar(150)
   telephoneClient String?          @map("telephone_client") @db.VarChar(30)
+  noteCaissier    String?          @map("note_caissier") @db.VarChar(500)
   montantTotal    Decimal          @map("montant_total") @db.Decimal(12, 2)
   methodePaiement MethodePaiement? @map("methode_paiement")
   statut          StatutTicket     @default(EN_ATTENTE)
@@ -444,6 +453,7 @@ model TicketVente {
   motifAnnulation String?          @map("motif_annulation") @db.VarChar(255)
   lignes          LigneTicket[]
   vente           Vente?           @relation(fields: [venteId], references: [id])
+  client          Client?           @relation(fields: [clientId], references: [id])
   facture         Facture?
   vendeur         AdminUser        @relation("TicketsVendeur", fields: [vendeurId], references: [id])
 
@@ -951,6 +961,7 @@ enum StatutProforma {
 enum TypeFacture {
   FACTURE
   TICKET_CAISSE
+  BON_VENTE
 }
 
 enum TypeAttribut {

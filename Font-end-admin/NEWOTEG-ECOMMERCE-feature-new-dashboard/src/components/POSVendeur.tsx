@@ -3,10 +3,8 @@ import { motion, AnimatePresence } from 'motion/react';
 import {
   Search, Plus, Minus, Trash2, Send, ShoppingCart,
   CheckCircle2, AlertCircle, Sparkles, X, Clock, Receipt,
-  User as UserIcon, Phone, Printer, ScanBarcode, CameraOff,
+  User as UserIcon, Phone, Printer, ScanBarcode, CameraOff, Star,
 } from 'lucide-react';
-import { BrowserMultiFormatReader } from '@zxing/browser';
-import { NotFoundException } from '@zxing/library';
 import { useNavigate } from 'react-router-dom';
 import { bonVenteApi, clientApi, produitApi, ticketApi, equivalenceApi, proformaApi, factureVirtuelleApi, getApiErrorMessage } from '../services/api';
 import { useAdminAuth } from '../context/AdminAuthContext';
@@ -18,8 +16,15 @@ import { enqueueBon, enqueueTicket, newSaleId, OFFLINE_SYNC_COMPLETED_EVENT } fr
 import {
   clearActiveCartDraft,
   getActiveCartDraft,
+  listSuspendedCarts,
+  removeSuspendedCart,
   saveActiveCartDraft,
+  saveSuspendedCart,
+  type SuspendedCart,
 } from '../services/cashierProductivity';
+import { formatFcfa } from '../features/pos-shared/formatters';
+import { useSellerProductHistory } from '../features/seller-pos/useSellerProductHistory';
+import { useSellerSaleFlow } from '../features/seller-pos/useSellerSaleFlow';
 
 interface Produit {
   id: string;
@@ -62,6 +67,7 @@ interface PosDraftContext {
   telephoneClient: string;
   selectedClientId: string;
   paymentMethod: string;
+  noteCaissier: string;
 }
 
 interface Bon {
@@ -73,9 +79,7 @@ interface Bon {
   lignes: Array<{ id: string; nomProduit: string; quantite: number; sousTotal: number | string }>;
 }
 
-const fmtFCFA = (n: number): string =>
-  new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 })
-    .format(n).replace(/ |\s/g, ' ') + ' FCFA';
+const fmtFCFA = formatFcfa;
 
 const resolveImgUrl = (raw?: string | null): string | null => {
   if (!raw) return null;
@@ -121,6 +125,7 @@ export const POSVendeur = () => {
   const toast = useToast();
   const isVendeur = admin?.role === 'VENDEUR';
   const cartDraftScope = `pos_${admin?.id || admin?.username || admin?.role || 'anonymous'}`;
+  const productHistory = useSellerProductHistory(cartDraftScope);
   const initialDraftRef = useRef(
     getActiveCartDraft<PanierLigne, PosDraftContext>(cartDraftScope),
   );
@@ -130,21 +135,19 @@ export const POSVendeur = () => {
   const [produits, setProduits] = useState<Produit[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const [panier, setPanierState] = useState<PanierLigne[]>(() => initialDraft?.items || []);
-  const panierRef = useRef(panier);
-  const setPanier = useCallback((nextValue: React.SetStateAction<PanierLigne[]>) => {
-    const next = typeof nextValue === 'function'
-      ? (nextValue as (previous: PanierLigne[]) => PanierLigne[])(panierRef.current)
-      : nextValue;
-    panierRef.current = next;
-    setPanierState(next);
-  }, []);
+  const [catalogView, setCatalogView] = useState<'all' | 'favorites' | 'recent'>('all');
+  const saleFlow = useSellerSaleFlow<PanierLigne>(initialDraft?.items || []);
+  const panier = saleFlow.items;
+  const panierRef = saleFlow.itemsRef;
+  const setPanier = saleFlow.setItems;
   const [panierMobileOpen, setPanierMobileOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [proformaToPrint, setProformaToPrint] = useState<any | null>(null);
   const [lastAddedProductId, setLastAddedProductId] = useState<string | null>(null);
+  const [shortcutHelpOpen, setShortcutHelpOpen] = useState(false);
+  const [reviewOpen, setReviewOpen] = useState(false);
   const feedbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // ── Admin : client texte libre ─────────────────────────────────────────
@@ -155,9 +158,11 @@ export const POSVendeur = () => {
   const [clients, setClients] = useState<Client[]>([]);
   const [selectedClientId, setSelectedClientId] = useState(initialDraft?.context.selectedClientId || '');
   const [paymentMethod, setPaymentMethod] = useState(initialDraft?.context.paymentMethod || 'ESPECES');
+  const [noteCaissier, setNoteCaissier] = useState(initialDraft?.context.noteCaissier || '');
+  const [suspendedCarts, setSuspendedCarts] = useState<SuspendedCart<PanierLigne, PosDraftContext>[]>(() => listSuspendedCarts(cartDraftScope));
   const [bonsEnAttente, setBonsEnAttente] = useState<Bon[]>([]);
   const [monScore, setMonScore] = useState(0);
-  const [activeTab, setActiveTab] = useState<'vente' | 'enAttente'>('vente');
+  const [activeTab, setActiveTab] = useState<'vente' | 'enAttente' | 'suspended'>('vente');
 
   // ── Recherche manuelle code famille / code ─────────────────────────────
   const [codeSearchFamille, setCodeSearchFamille] = useState('');
@@ -169,7 +174,7 @@ export const POSVendeur = () => {
   const [scanError, setScanError] = useState<string | null>(null);
   const scanVideoRef  = useRef<HTMLVideoElement>(null);
   const scanStreamRef = useRef<MediaStream | null>(null);
-  const scanReaderRef = useRef<BrowserMultiFormatReader | null>(null);
+  const scanReaderRef = useRef<any>(null);
   const scanActiveRef = useRef(false);
 
   // ── Barcode reader USB/Bluetooth (écoute globale clavier) ──────────────
@@ -251,8 +256,9 @@ export const POSVendeur = () => {
       telephoneClient,
       selectedClientId,
       paymentMethod,
+      noteCaissier,
     });
-  }, [cartDraftScope, nomClient, panier, paymentMethod, selectedClientId, telephoneClient]);
+  }, [cartDraftScope, nomClient, noteCaissier, panier, paymentMethod, selectedClientId, telephoneClient]);
 
   useEffect(() => () => {
     if (feedbackTimerRef.current) clearTimeout(feedbackTimerRef.current);
@@ -279,8 +285,13 @@ export const POSVendeur = () => {
 
   // ── Catalogue ──────────────────────────────────────────────────────────
   const produitsFiltres = useMemo(() => {
-    return produits.slice(0, 60);
-  }, [produits]);
+    const filtered = catalogView === 'favorites'
+      ? produits.filter(product => productHistory.favoriteIds.includes(product.id))
+      : catalogView === 'recent'
+        ? productHistory.recentIds.map(id => produits.find(product => product.id === id)).filter(Boolean) as Produit[]
+        : produits;
+    return filtered.slice(0, 60);
+  }, [catalogView, productHistory.favoriteIds, productHistory.recentIds, produits]);
 
   const ajouterAuPanier = (p: Produit): boolean => {
     if (p.quantiteStock <= 0) {
@@ -312,6 +323,7 @@ export const POSVendeur = () => {
       }];
 
     setPanier(next);
+    productHistory.markRecent(p.id);
     setError(null);
     setLastAddedProductId(p.id);
     if (feedbackTimerRef.current) clearTimeout(feedbackTimerRef.current);
@@ -394,8 +406,37 @@ export const POSVendeur = () => {
 
   const retirerLigne = (produitId: string) => setPanier(prev => prev.filter(l => l.produitId !== produitId));
 
-  const total = useMemo(() => panier.reduce((acc, l) => acc + l.prix * l.quantite, 0), [panier]);
-  const totalUnits = useMemo(() => panier.reduce((acc, l) => acc + l.quantite, 0), [panier]);
+  const total = saleFlow.total;
+  const totalUnits = saleFlow.totalUnits;
+
+  const suspendSale = () => {
+    if (!panier.length) return;
+    const next = saveSuspendedCart(cartDraftScope, panier, { nomClient, telephoneClient, selectedClientId, paymentMethod, noteCaissier });
+    setSuspendedCarts(next);
+    setPanier([]);
+    setNomClient('');
+    setTelephoneClient('');
+    setSelectedClientId('');
+    setPaymentMethod('ESPECES');
+    setNoteCaissier('');
+    clearActiveCartDraft(cartDraftScope);
+    saleFlow.setPhase('SUSPENDED');
+    setPanierMobileOpen(false);
+    toast.success('Vente mise en attente.');
+  };
+
+  const resumeSale = (sale: SuspendedCart<PanierLigne, PosDraftContext>) => {
+    if (panier.length && !window.confirm('Remplacer la vente actuelle par cette vente en attente ?')) return;
+    setPanier(sale.items);
+    setNomClient(sale.context.nomClient || '');
+    setTelephoneClient(sale.context.telephoneClient || '');
+    setSelectedClientId(sale.context.selectedClientId || '');
+    setPaymentMethod(sale.context.paymentMethod || 'ESPECES');
+    setNoteCaissier(sale.context.noteCaissier || '');
+    setSuspendedCarts(removeSuspendedCart(cartDraftScope, sale.id));
+    setActiveTab('vente');
+    toast.success('Vente reprise.');
+  };
 
   // ── Envoi ADMIN (ancien flux ticketApi) ───────────────────────────────
   const envoyerAdmin = async () => {
@@ -403,12 +444,14 @@ export const POSVendeur = () => {
     const invalide = ligneInvalide();
     if (invalide) { setError(invalide); return; }
     setSubmitting(true);
+    saleFlow.setPhase('SENDING');
     setError(null);
     setSuccess(null);
     const payload = {
       idempotencyKey: newSaleId(),
       nomClient: nomClient.trim() || undefined,
       telephoneClient: telephoneClient.trim() || undefined,
+      noteCaissier: noteCaissier.trim() || undefined,
       lignes: panier.map(l => ({
         produitId: l.produitId,
         quantite: l.quantite,
@@ -423,13 +466,16 @@ export const POSVendeur = () => {
         setPanier([]);
         setNomClient('');
         setTelephoneClient('');
+        setNoteCaissier('');
         return;
       }
       const ticket = await ticketApi.create(payload);
       setSuccess(`Ticket ${ticket.numeroTicket} envoyé au caissier.`);
       setPanier([]);
+      saleFlow.setPhase('SENT');
       setNomClient('');
       setTelephoneClient('');
+      setNoteCaissier('');
       setTimeout(() => navigate(can.accessCaisseJour(admin?.role) ? '/caisse-jour' : '/mes-tickets'), 1200);
     } catch (e: any) {
       if (!e?.response) {
@@ -439,6 +485,7 @@ export const POSVendeur = () => {
       } else {
         const msg = e?.response?.data?.message || e?.message || 'Erreur inconnue';
         setError(Array.isArray(msg) ? msg.join(', ') : String(msg));
+        saleFlow.setPhase('ERROR');
       }
     } finally {
       setSubmitting(false);
@@ -451,12 +498,14 @@ export const POSVendeur = () => {
     const invalide = ligneInvalide();
     if (invalide) { setError(invalide); return; }
     setSubmitting(true);
+    saleFlow.setPhase('SENDING');
     setError(null);
     setSuccess(null);
     const payload = {
       idempotencyKey: newSaleId(),
       clientId: selectedClientId || undefined,
       methodePaiement: paymentMethod,
+      noteCaissier: noteCaissier.trim() || undefined,
       lignes: panier.map(l => ({
         produitId: l.produitId,
         quantite: l.quantite,
@@ -471,13 +520,16 @@ export const POSVendeur = () => {
         setPanier([]);
         setSelectedClientId('');
         setPaymentMethod('ESPECES');
+        setNoteCaissier('');
         return;
       }
       await bonVenteApi.create(payload);
       setSuccess('Bon envoyé à la caissière.');
       setPanier([]);
+      saleFlow.setPhase('SENT');
       setSelectedClientId('');
       setPaymentMethod('ESPECES');
+      setNoteCaissier('');
       setPanierMobileOpen(false);
       await loadBons();
       setActiveTab('vente');
@@ -490,6 +542,7 @@ export const POSVendeur = () => {
       } else {
         const msg = e?.response?.data?.message || e?.message || 'Erreur inconnue';
         setError(Array.isArray(msg) ? msg.join(', ') : String(msg));
+        saleFlow.setPhase('ERROR');
       }
     } finally {
       setSubmitting(false);
@@ -534,13 +587,19 @@ export const POSVendeur = () => {
         searchInputRef.current?.focus();
         return;
       }
+      if (event.key === '?' && !editing) {
+        event.preventDefault();
+        setShortcutHelpOpen(true);
+        return;
+      }
       if (!['F2', 'F3', 'F4', 'F8'].includes(event.key)) return;
       event.preventDefault();
       if (event.key === 'F2') setPaymentMethod('ESPECES');
       if (event.key === 'F3') setPaymentMethod('MOBILE_MONEY');
       if (event.key === 'F4') setPaymentMethod('CARTE');
       if (event.key === 'F8' && panier.length > 0 && !submitting) {
-        void (isVendeur ? envoyerVendeur() : envoyerAdmin());
+        if (isVendeur) { setReviewOpen(true); saleFlow.setPhase('REVIEWING'); }
+        else void envoyerAdmin();
       }
     };
     document.addEventListener('keydown', handleExpressShortcut);
@@ -630,7 +689,10 @@ export const POSVendeur = () => {
         scanVideoRef.current.srcObject = stream;
         await scanVideoRef.current.play();
       }
-      if (!scanReaderRef.current) scanReaderRef.current = new BrowserMultiFormatReader();
+      if (!scanReaderRef.current) {
+        const { BrowserMultiFormatReader } = await import('@zxing/browser');
+        scanReaderRef.current = new BrowserMultiFormatReader();
+      }
       scanActiveRef.current = true;
       scanReaderRef.current.decodeFromVideoDevice(
         undefined,
@@ -638,7 +700,7 @@ export const POSVendeur = () => {
         (result, err) => {
           if (!scanActiveRef.current) return;
           if (result) handleBarcode(result.getText());
-          else if (err && !(err instanceof NotFoundException)) console.warn('[scan]', err);
+          else if (err && err?.name !== 'NotFoundException') console.warn('[scan]', err);
         },
       );
     } catch (e: any) {
@@ -659,6 +721,10 @@ export const POSVendeur = () => {
     else stopScan();
     return () => stopScan();
   }, [scanOpen]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (!scanOpen) window.setTimeout(() => searchInputRef.current?.focus(), 0);
+  }, [scanOpen]);
 
   // ── Barcode reader USB/Bluetooth — écoute globale clavier ─────────────
   useEffect(() => {
@@ -747,11 +813,14 @@ export const POSVendeur = () => {
       </div>
     );
     return (
-      <button key={p.id} onClick={() => ajouterAuPanier(p)}
+      <div key={p.id} onClick={() => ajouterAuPanier(p)} onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); ajouterAuPanier(p); } }} role="button" tabIndex={0}
         aria-label={`Ajouter ${p.nomProduit} au panier${lignePanier ? `, quantite actuelle ${lignePanier.quantite}` : ''}`}
         className={`group relative rounded-xl border border-slate-200 p-3 text-left transition-all duration-150 hover:border-slate-300 hover:shadow-sm active:scale-[0.98] motion-reduce:transform-none ${
           justAdded ? 'bg-emerald-50' : 'bg-white'
         }`}>
+        <button type="button" onClick={event => { event.stopPropagation(); productHistory.toggleFavorite(p.id); }} aria-label={productHistory.favoriteIds.includes(p.id) ? `Retirer ${p.nomProduit} des favoris` : `Ajouter ${p.nomProduit} aux favoris`} className="absolute left-2 top-2 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-white/95 text-slate-500 shadow-sm ring-1 ring-slate-200 hover:text-amber-500">
+          <Star size={16} className={productHistory.favoriteIds.includes(p.id) ? 'fill-amber-400 text-amber-500' : ''} />
+        </button>
         {lignePanier && (
           <span className={`absolute right-2 top-2 z-10 flex h-6 min-w-6 items-center justify-center rounded-full px-1.5 text-xs font-black text-white transition-transform ${
             justAdded ? 'scale-110 bg-emerald-600' : 'bg-slate-800'
@@ -760,7 +829,7 @@ export const POSVendeur = () => {
           </span>
         )}
         {contenu}
-      </button>
+      </div>
     );
   };
 
@@ -829,22 +898,22 @@ export const POSVendeur = () => {
         </div>
         <select value={selectedClientId} onChange={e => setSelectedClientId(e.target.value)}
           className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm outline-none focus:border-primary">
-          <option value="">Client comptoir</option>
+          <option value="">Aucun client suggéré</option>
           {clients.map(c => <option key={c.id} value={c.id}>{c.nom} {c.prenom || ''}</option>)}
         </select>
-        <div className="flex flex-wrap gap-1 text-[10px] font-bold text-slate-500" aria-label="Raccourcis vente">
-          <span className="rounded bg-slate-100 px-1.5 py-1">F2 Espèces</span>
-          <span className="rounded bg-slate-100 px-1.5 py-1">F3 Mobile</span>
-          <span className="rounded bg-slate-100 px-1.5 py-1">F4 Carte</span>
-          <span className="rounded bg-primary/10 px-1.5 py-1 text-primary">F8 Envoyer</span>
-        </div>
         <select value={paymentMethod} onChange={e => setPaymentMethod(e.target.value)}
           className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm outline-none focus:border-primary">
           {METHODES.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
         </select>
-        <button onClick={onEnvoyer ?? envoyerVendeur} disabled={!panier.length || submitting}
+        <textarea value={noteCaissier} onChange={e => setNoteCaissier(e.target.value)} maxLength={500} rows={2} placeholder="Note à la caissière (optionnel)"
+          className="w-full resize-none rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
+        <button onClick={onEnvoyer ?? (() => { setReviewOpen(true); saleFlow.setPhase('REVIEWING'); })} disabled={!panier.length || submitting} title="Contrôler puis envoyer à la caissière (F8)"
           className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-primary text-white font-bold rounded-xl shadow-md shadow-primary/20 hover:bg-opacity-90 disabled:opacity-50">
           <Send size={18} />{submitting ? 'Envoi…' : 'Envoyer à la caissière'}
+        </button>
+        <button onClick={suspendSale} disabled={!panier.length || submitting}
+          className="w-full rounded-xl bg-slate-100 px-4 py-3 text-sm font-bold text-slate-700 hover:bg-slate-200 disabled:opacity-50">
+          Mettre la vente en attente
         </button>
         <button onClick={creerProforma} disabled={!panier.length || submitting}
           className="w-full flex items-center justify-center gap-2 px-4 py-3 border border-slate-200 bg-white text-slate-700 font-bold rounded-xl hover:bg-slate-50 disabled:opacity-50">
@@ -854,12 +923,31 @@ export const POSVendeur = () => {
     </>
   );
 
+  const renderSaleReview = () => (
+    <AnimatePresence>
+      {reviewOpen && <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[60] flex items-center justify-center bg-black/45 p-4" onClick={() => !submitting && setReviewOpen(false)}><motion.div initial={{ scale: .97, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: .97, opacity: 0 }} role="dialog" aria-modal="true" aria-label="Contrôle de la vente" onClick={event => event.stopPropagation()} className="w-full max-w-lg overflow-hidden rounded-2xl bg-white shadow-2xl"><header className="flex items-center justify-between border-b border-slate-100 p-5"><div><p className="text-xs font-bold uppercase tracking-wider text-primary">Dernier contrôle</p><h3 className="mt-1 text-lg font-bold text-slate-900">Envoyer cette vente ?</h3></div><button onClick={() => setReviewOpen(false)} aria-label="Fermer" className="rounded-lg p-2 text-slate-400 hover:bg-slate-100"><X size={19} /></button></header><div className="max-h-[55vh] overflow-y-auto p-5"><ul className="divide-y divide-slate-100">{panier.map(line => <li key={line.produitId} className="flex justify-between gap-3 py-3 text-sm"><span className="text-slate-700">{line.quantite} × {line.nomProduit}</span><strong>{fmtFCFA(line.prix * line.quantite)}</strong></li>)}</ul>{noteCaissier && <div className="mt-4 rounded-xl bg-slate-50 p-3 text-sm text-slate-600"><strong className="text-slate-800">Note caisse :</strong> {noteCaissier}</div>}<div className="mt-4 flex items-center justify-between rounded-xl bg-slate-950 p-4 text-white"><span>{totalUnits} unité(s)</span><strong className="text-xl">{fmtFCFA(total)}</strong></div></div><footer className="grid grid-cols-2 gap-3 border-t border-slate-100 p-5"><button onClick={() => setReviewOpen(false)} disabled={submitting} className="min-h-12 rounded-xl bg-slate-100 font-bold text-slate-700">Modifier</button><button onClick={() => { void envoyerVendeur().then(() => setReviewOpen(false)); }} disabled={submitting} className="min-h-12 rounded-xl bg-primary font-bold text-white disabled:opacity-50">{submitting ? 'Envoi…' : 'Confirmer l’envoi'}</button></footer></motion.div></motion.div>}
+    </AnimatePresence>
+  );
+
+  const renderShortcutHelp = () => (
+    <AnimatePresence>
+      {shortcutHelpOpen && (
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 p-4" onClick={() => setShortcutHelpOpen(false)}>
+          <motion.div initial={{ y: 12, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 12, opacity: 0 }} onClick={event => event.stopPropagation()} role="dialog" aria-modal="true" aria-label="Aide des raccourcis" className="w-full max-w-sm rounded-2xl bg-white p-5 shadow-2xl">
+            <div className="flex items-center justify-between"><h3 className="font-bold text-slate-900">Raccourcis de vente</h3><button onClick={() => setShortcutHelpOpen(false)} aria-label="Fermer l'aide" className="rounded-lg p-2 text-slate-400 hover:bg-slate-100"><X size={18} /></button></div>
+            <dl className="mt-4 grid grid-cols-[auto_1fr] gap-x-4 gap-y-3 text-sm"><dt className="font-mono font-bold text-slate-900">/</dt><dd className="text-slate-600">Rechercher un article</dd><dt className="font-mono font-bold text-slate-900">F2</dt><dd className="text-slate-600">Espèces</dd><dt className="font-mono font-bold text-slate-900">F3</dt><dd className="text-slate-600">Mobile Money</dd><dt className="font-mono font-bold text-slate-900">F4</dt><dd className="text-slate-600">Carte</dd><dt className="font-mono font-bold text-slate-900">F8</dt><dd className="text-slate-600">Envoyer à la caisse</dd></dl>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+
   // ── Modal scan caméra ─────────────────────────────────────────────────
   const renderScanModal = () => (
     <AnimatePresence>
       {scanOpen && (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-          className="fixed inset-0 z-50 bg-black/80 flex flex-col items-center justify-center p-4 gap-4"
+          className="fixed inset-0 z-50 bg-black/80 flex flex-col items-center justify-center p-4 gap-4 md:right-[35%] md:bg-black/90"
           onClick={() => setScanOpen(false)}>
           <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }} exit={{ scale: 0.95 }}
             onClick={e => e.stopPropagation()}
@@ -914,6 +1002,9 @@ export const POSVendeur = () => {
           <span className="hidden sm:inline text-sm font-medium">Scanner</span>
         </button>
       </div>
+      <div className="flex gap-2 overflow-x-auto pb-1" aria-label="Vues du catalogue">
+        {([['all', 'Tous'], ['favorites', 'Favoris'], ['recent', 'Récents']] as const).map(([id, label]) => <button key={id} onClick={() => setCatalogView(id)} className={`min-h-10 rounded-full px-4 text-xs font-bold ${catalogView === id ? 'bg-slate-900 text-white' : 'bg-white text-slate-600 ring-1 ring-slate-200'}`}>{label}{id === 'favorites' && productHistory.favoriteIds.length > 0 ? ` (${productHistory.favoriteIds.length})` : ''}</button>)}
+      </div>
 
       {/* Recherche manuelle code famille / code */}
       <div className="flex flex-wrap gap-2 items-center bg-indigo-50 border border-indigo-200 rounded-xl px-3 py-2">
@@ -958,7 +1049,7 @@ export const POSVendeur = () => {
             )}
           </div>
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+          <div className="grid grid-cols-2 xl:grid-cols-3 gap-3">
             {produitsFiltres.map(renderProduit)}
           </div>
         )}
@@ -1033,7 +1124,7 @@ export const POSVendeur = () => {
   if (!isVendeur) {
     return (
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-        className={`space-y-6 ${panier.length > 0 ? 'pb-24 lg:pb-0' : ''}`}>
+        className={`space-y-6 ${panier.length > 0 ? 'pb-24 md:pb-0' : ''}`}>
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-2xl font-bold text-slate-900">Vente en cours</h2>
@@ -1041,14 +1132,14 @@ export const POSVendeur = () => {
           </div>
         </div>
 
-        {error && <div className="flex items-center gap-2 p-3 rounded-lg bg-red-50 text-red-700 border border-red-200"><AlertCircle size={16} /><span className="text-sm">{error}</span></div>}
-        {success && <div className="flex items-center gap-2 p-3 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200"><CheckCircle2 size={16} /><span className="text-sm">{success}</span></div>}
+        {error && <div role="alert" className="flex items-center gap-2 p-3 rounded-lg bg-red-50 text-red-700 border border-red-200"><AlertCircle size={16} /><span className="text-sm">{error}</span></div>}
+        {success && <div role="status" aria-live="polite" className="flex items-center gap-2 p-3 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200"><CheckCircle2 size={16} /><span className="text-sm">{success}</span></div>}
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2">{renderCatalogue()}</div>
+        <div className="grid grid-cols-1 md:grid-cols-[minmax(0,65%)_minmax(260px,35%)] gap-5">
+          <div>{renderCatalogue()}</div>
 
           {/* Panier desktop admin */}
-          <div className="hidden lg:block sticky top-4 self-start max-h-[calc(100vh-7rem)] space-y-4 overflow-y-auto pr-1">
+          <div className="hidden md:block sticky top-4 self-start max-h-[calc(100vh-7rem)] space-y-4 overflow-y-auto pr-1">
             <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
               {renderPanierAdmin()}
             </div>
@@ -1076,7 +1167,7 @@ export const POSVendeur = () => {
 
         {/* Barre mobile admin */}
         {panier.length > 0 && (
-          <div className="mobile-safe-bottom lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-slate-200 shadow-[0_-4px_12px_rgba(0,0,0,0.08)] px-4 pt-3">
+          <div className="mobile-safe-bottom md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-slate-200 shadow-[0_-4px_12px_rgba(0,0,0,0.08)] px-4 pt-3">
             <button onClick={() => setPanierMobileOpen(true)}
               className={`w-full flex items-center justify-between gap-3 px-4 py-3 bg-primary text-white font-bold rounded-xl transition-all ${
                 lastAddedProductId ? 'scale-[1.01] shadow-lg' : ''
@@ -1091,7 +1182,7 @@ export const POSVendeur = () => {
         <AnimatePresence>
           {panierMobileOpen && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              className="lg:hidden fixed inset-0 z-50 bg-black/50" onClick={() => setPanierMobileOpen(false)}>
+              className="md:hidden fixed inset-0 z-50 bg-black/50" onClick={() => setPanierMobileOpen(false)}>
               <motion.div initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }} transition={{ type: 'spring', damping: 25 }}
                 onClick={e => e.stopPropagation()}
                 className="absolute bottom-0 left-0 right-0 bg-white rounded-t-2xl max-h-[85vh] overflow-y-auto">
@@ -1123,6 +1214,7 @@ export const POSVendeur = () => {
 
         {renderEquivModal()}
         {renderScanModal()}
+        {renderShortcutHelp()}
       </motion.div>
     );
   }
@@ -1132,7 +1224,7 @@ export const POSVendeur = () => {
   // ══════════════════════════════════════════════════════════════════════
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-      className={`space-y-6 ${panier.length > 0 && activeTab === 'vente' ? 'pb-24 lg:pb-0' : ''}`}>
+      className={`space-y-6 ${panier.length > 0 && activeTab === 'vente' ? 'pb-24 md:pb-0' : ''}`}>
 
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
@@ -1144,8 +1236,9 @@ export const POSVendeur = () => {
         </div>
       </div>
 
-      {error && <div className="flex items-center gap-2 p-3 rounded-lg bg-red-50 text-red-700 border border-red-200"><AlertCircle size={16} /><span className="text-sm">{error}</span></div>}
-      {success && <div className="flex items-center gap-2 p-3 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200"><CheckCircle2 size={16} /><span className="text-sm">{success}</span></div>}
+      <span className="sr-only" role="status" aria-live="polite">{lastAddedProductId ? `Article ajouté. Panier : ${totalUnits} unité${totalUnits > 1 ? 's' : ''}.` : ''}</span>
+      {error && <div role="alert" className="flex items-center gap-2 p-3 rounded-lg bg-red-50 text-red-700 border border-red-200"><AlertCircle size={16} /><span className="text-sm">{error}</span></div>}
+      {success && <div role="status" aria-live="polite" className="flex items-center gap-2 p-3 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200"><CheckCircle2 size={16} /><span className="text-sm">{success}</span></div>}
 
       {/* Onglets */}
       <div className="flex gap-2 rounded-lg bg-slate-100 p-1">
@@ -1162,12 +1255,17 @@ export const POSVendeur = () => {
             </span>
           )}
         </button>
+        <button onClick={() => setActiveTab('suspended')}
+          className={`relative flex-1 rounded-md px-3 py-2 text-sm font-bold transition-colors ${activeTab === 'suspended' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>
+          En pause
+          {suspendedCarts.length > 0 && <span className="ml-1 rounded-full bg-slate-700 px-1.5 py-0.5 text-[9px] text-white">{suspendedCarts.length}</span>}
+        </button>
       </div>
 
       {activeTab === 'vente' ? (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2">{renderCatalogue()}</div>
-          <div className="hidden lg:block sticky top-4 self-start max-h-[calc(100vh-7rem)] overflow-y-auto pr-1">
+        <div className="grid grid-cols-1 md:grid-cols-[minmax(0,65%)_minmax(260px,35%)] gap-5">
+          <div>{renderCatalogue()}</div>
+          <div className="hidden md:block sticky top-4 self-start max-h-[calc(100vh-7rem)] overflow-y-auto pr-1">
             <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
               <h3 className="font-bold text-lg text-slate-900 mb-4 flex items-center gap-2">
                 <ShoppingCart size={20} className="text-primary" /> Panier ({totalUnits} unite{totalUnits > 1 ? 's' : ''})
@@ -1176,7 +1274,7 @@ export const POSVendeur = () => {
             </div>
           </div>
         </div>
-      ) : (
+      ) : activeTab === 'enAttente' ? (
         <div className="space-y-3">
           {bonsEnAttente.length === 0 ? (
             <div className="rounded-xl border border-slate-200 bg-white p-10 text-center text-slate-400">
@@ -1206,11 +1304,15 @@ export const POSVendeur = () => {
             </div>
           ))}
         </div>
+      ) : (
+        <div className="space-y-3">
+          {suspendedCarts.length === 0 ? <div className="rounded-xl border border-slate-200 bg-white p-10 text-center text-slate-400"><ShoppingCart size={36} className="mx-auto mb-3 opacity-30" /><p className="font-medium">Aucune vente en pause.</p></div> : suspendedCarts.map(sale => <article key={sale.id} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"><div className="flex items-start justify-between gap-3"><div><p className="font-bold text-slate-900">{sale.items.reduce((sum, item) => sum + item.quantite, 0)} unité(s)</p><p className="mt-1 text-xs text-slate-500">Mise en pause le {new Date(sale.createdAt).toLocaleString('fr-FR')}</p></div><strong className="text-primary">{fmtFCFA(sale.items.reduce((sum, item) => sum + item.prix * item.quantite, 0))}</strong></div><p className="mt-3 truncate text-sm text-slate-600">{sale.items.map(item => item.nomProduit).join(', ')}</p><div className="mt-4 flex gap-2"><button onClick={() => resumeSale(sale)} className="min-h-11 flex-1 rounded-xl bg-primary px-4 text-sm font-bold text-white">Reprendre</button><button onClick={() => setSuspendedCarts(removeSuspendedCart(cartDraftScope, sale.id))} className="min-h-11 rounded-xl bg-red-50 px-4 text-sm font-bold text-red-700">Supprimer</button></div></article>)}
+        </div>
       )}
 
       {/* Barre mobile vendeur */}
       {activeTab === 'vente' && panier.length > 0 && (
-        <div className="mobile-safe-bottom lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-slate-200 shadow-[0_-4px_12px_rgba(0,0,0,0.08)] px-4 pt-3">
+        <div className="mobile-safe-bottom md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-slate-200 shadow-[0_-4px_12px_rgba(0,0,0,0.08)] px-4 pt-3">
           <button onClick={() => setPanierMobileOpen(true)}
             className={`w-full flex items-center justify-between gap-3 px-4 py-3 bg-primary text-white font-bold rounded-xl transition-all ${
               lastAddedProductId ? 'scale-[1.01] shadow-lg' : ''
@@ -1225,7 +1327,7 @@ export const POSVendeur = () => {
       <AnimatePresence>
         {panierMobileOpen && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="lg:hidden fixed inset-0 z-50 bg-black/50" onClick={() => setPanierMobileOpen(false)}>
+            className="md:hidden fixed inset-0 z-50 bg-black/50" onClick={() => setPanierMobileOpen(false)}>
             <motion.div initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }} transition={{ type: 'spring', damping: 25 }}
               onClick={e => e.stopPropagation()}
               className="absolute bottom-0 left-0 right-0 bg-white rounded-t-2xl max-h-[85vh] overflow-y-auto">
@@ -1233,7 +1335,7 @@ export const POSVendeur = () => {
                 <h3 className="font-bold text-lg text-slate-900 flex items-center gap-2"><ShoppingCart size={20} className="text-primary" />Panier ({totalUnits} unite{totalUnits > 1 ? 's' : ''})</h3>
                 <button onClick={() => setPanierMobileOpen(false)} className="p-1 text-slate-400"><X size={20} /></button>
               </div>
-              <div className="p-5">{renderPanierVendeur(() => { setPanierMobileOpen(false); envoyerVendeur(); })}</div>
+              <div className="p-5">{renderPanierVendeur(() => { setPanierMobileOpen(false); setReviewOpen(true); saleFlow.setPhase('REVIEWING'); })}</div>
             </motion.div>
           </motion.div>
         )}
@@ -1267,6 +1369,8 @@ export const POSVendeur = () => {
 
       {renderEquivModal()}
       {renderScanModal()}
+      {renderShortcutHelp()}
+      {renderSaleReview()}
     </motion.div>
   );
 };

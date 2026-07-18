@@ -67,6 +67,11 @@ export class TicketVenteController {
     return this.service.encaisser(id, req.user.id, dto.methodePaiement, {
       clientId: dto.clientId,
       montantPaye: dto.montantPaye,
+      montantRecu: dto.montantRecu,
+      documentType: dto.documentType,
+      referencePaiement: dto.referencePaiement ?? dto.paymentReference,
+      dateEcheance: dto.dateEcheance ? new Date(dto.dateEcheance) : undefined,
+      idempotencyKey: dto.idempotencyKey,
     });
   }
 

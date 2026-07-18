@@ -2,7 +2,7 @@ import { IsIn, IsOptional, IsString, IsUUID, MaxLength } from 'class-validator';
 
 export class RecordPrintDto {
   @IsIn(['TICKET', 'FACTURE', 'PROFORMA', 'FACTURE_VIRTUELLE'])
-  documentType: 'TICKET' | 'FACTURE' | 'PROFORMA' | 'FACTURE_VIRTUELLE';
+  documentType: 'TICKET' | 'FACTURE' | 'BON_VENTE' | 'PROFORMA' | 'FACTURE_VIRTUELLE';
 
   @IsOptional()
   @IsUUID()

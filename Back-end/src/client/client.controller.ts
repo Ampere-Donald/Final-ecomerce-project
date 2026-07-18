@@ -7,6 +7,7 @@ import {
   Param,
   Delete,
   ParseUUIDPipe,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { ClientService } from './client.service';
@@ -33,6 +34,14 @@ export class ClientController {
     return this.clientService.findAll();
   }
 
+  @Roles('SUPER_ADMIN', 'ADMIN', 'CAISSIER')
+  @Get('search')
+  search(@Query('q') q = '', @Query('limit') rawLimit = '8') {
+    const parsed = Number.parseInt(rawLimit, 10);
+    const limit = Number.isFinite(parsed) ? Math.min(Math.max(parsed, 1), 20) : 8;
+    return this.clientService.search(q, limit);
+  }
+
   /** Registre des crédits (financier) — pas le vendeur. Doit précéder la route :id. */
   @Roles('SUPER_ADMIN', 'ADMIN', 'CAISSIER')
   @Get('credits')
@@ -51,6 +60,20 @@ export class ClientController {
   @Get(':id/encours')
   getEncours(@Param('id', ParseUUIDPipe) id: string) {
     return this.clientService.getEncours(id);
+  }
+
+  @Roles('SUPER_ADMIN', 'ADMIN', 'CAISSIER')
+  @Get(':id/credit-preview')
+  previewCredit(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Query('montant') rawMontant = '0',
+    @Query('acompte') rawAcompte = '0',
+  ) {
+    return this.clientService.previewCredit(
+      id,
+      Number(rawMontant) || 0,
+      Number(rawAcompte) || 0,
+    );
   }
 
   /** Détail crédit d'un client (financier) — pas le vendeur. */

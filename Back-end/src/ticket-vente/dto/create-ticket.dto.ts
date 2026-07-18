@@ -50,6 +50,11 @@ export class CreateTicketDto {
   @MaxLength(30)
   telephoneClient?: string;
 
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  noteCaissier?: string;
+
   @IsArray()
   @ArrayMinSize(1)
   @ValidateNested({ each: true })

@@ -12,17 +12,24 @@
 1. Ouvrir **Vente en cours**.
 2. Scanner le code-barres ou appuyer sur `/` pour rechercher.
 3. Ajuster la quantité avec les boutons + et −.
-4. Sélectionner le client et le paiement.
-5. Appuyer sur `F8` pour envoyer le bon.
-6. Suivre les bons dans **Mes tickets** ou **En attente**.
+4. Si nécessaire, suggérer un client et ajouter une note pour la caisse. Le caissier confirme l’identité de facturation.
+5. Utiliser **Favoris** ou **Récents** pour retrouver les articles fréquents.
+6. Choisir **Mettre la vente en attente** si le client doit patienter ; l’onglet **En pause** permet de la reprendre.
+7. Contrôler le récapitulatif puis confirmer l’envoi. `F8` ouvre aussi ce contrôle.
+8. Suivre les bons dans **Mes tickets** ou **En attente**.
 
 ## Caissier
 
 1. Ouvrir **File caissier**.
-2. Contrôler le client, les lignes, le total et le paiement.
-3. Encaisser une seule fois.
-4. Le ticket officiel Epson 58 mm s’imprime automatiquement.
-5. En cas d’échec d’impression, réessayer depuis le reçu existant : ne pas recréer la vente.
+2. Sélectionner le ticket puis contrôler les lignes et la note du vendeur.
+3. Rechercher le client par nom ou téléphone, ou utiliser la création rapide. Sans sélection, la vente reste « client comptoir ».
+4. Choisir **Ticket**, **Facture** ou **Bon de vente**, puis le paiement.
+5. Pour les espèces, saisir le montant reçu et vérifier la monnaie affichée.
+6. Pour le crédit, sélectionner obligatoirement un client et une échéance, puis vérifier l’encours et la limite.
+7. Encaisser une seule fois. L’application bloque également les doubles clics et les requêtes concurrentes.
+8. Imprimer le document créé. En cas d’échec, utiliser **Réessayer**, **Ouvrir le document existant** ou **Continuer sans imprimer** : ne pas recréer la vente.
+
+Sur tablette, la file et le détail restent côte à côte. Sur téléphone, le parcours est guidé et le total reste fixé en bas. Sur desktop, la file, la transaction et le résumé restent simultanément visibles.
 
 ## Vente directe / Caisse Express
 
@@ -31,6 +38,8 @@
 - `F3` : Mobile Money ;
 - `F4` : carte ;
 - `F8` : valider.
+
+Les raccourcis ne sont pas affichés en permanence. Appuyer sur `?` pour ouvrir l’aide et, côté caisse, les désactiver si nécessaire. Ils ne se déclenchent jamais pendant la saisie dans un champ.
 
 Après validation, le champ scanner reprend le focus pour la vente suivante.
 

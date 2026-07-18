@@ -232,11 +232,15 @@ export const cmupApi = {
 // Clients
 export const clientApi = {
   getAll: () => api.get('/clients').then(toArray),
+  search: (query: string, limit = 8) =>
+    api.get('/clients/search', { params: { q: query, limit } }).then(toArray),
   getOne: (id: string) => api.get(`/clients/${id}`).then(res => res.data),
   create: (data: any) => api.post('/clients', data).then(res => res.data),
   // Crédit clients
   getCredits: () => api.get('/clients/credits').then(toArray),
   getEncours: (id: string) => api.get(`/clients/${id}/encours`).then(res => res.data),
+  previewCredit: (id: string, montant: number, acompte = 0) =>
+    api.get(`/clients/${id}/credit-preview`, { params: { montant, acompte } }).then(res => res.data),
   getClientCredits: (id: string) => api.get(`/clients/${id}/credits`).then(res => res.data),
 };
 
@@ -302,6 +306,7 @@ export const ticketApi = {
     clientId?: string;
     nomClient?: string;
     telephoneClient?: string;
+    noteCaissier?: string;
     lignes: { produitId: string; quantite: number; prixUnitaire?: number; motifRemise?: string }[];
   }) => api.post('/tickets', data).then(res => res.data),
   enAttente: () => api.get('/tickets/en-attente').then(res => res.data),
@@ -417,8 +422,13 @@ export const bonVenteApi = {
   pending: () => api.get('/bons/pending').then(r => r.data),
   valider: (id: string, body: {
     methodePaiement: string;
-    clientId?: string;
+    clientId?: string | null;
     montantPaye?: number;
+    montantRecu?: number;
+    documentType?: 'TICKET_CAISSE' | 'FACTURE' | 'BON_VENTE';
+    referencePaiement?: string;
+    dateEcheance?: string;
+    idempotencyKey?: string;
   }) => api.post(`/bons/${id}/valider`, body).then(r => r.data),
 };
 
@@ -441,7 +451,7 @@ export const diagnosticApi = {
 
 export const documentPrintApi = {
   record: (data: {
-    documentType: 'TICKET' | 'FACTURE' | 'PROFORMA' | 'FACTURE_VIRTUELLE';
+    documentType: 'TICKET' | 'FACTURE' | 'BON_VENTE' | 'PROFORMA' | 'FACTURE_VIRTUELLE';
     documentId?: string;
     documentNumber: string;
     status: 'SUCCESS' | 'FAILED';

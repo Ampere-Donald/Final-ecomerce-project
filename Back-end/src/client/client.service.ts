@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { DatabaseService } from 'src/database/database.service';
 import { CreateClientDto } from './dto/create-client.dto';
 import { UpdateClientDto } from './dto/update-client.dto';
+import { normalizeCameroonPhone } from './client-phone.util';
 
 @Injectable()
 export class ClientService {
@@ -15,7 +16,10 @@ export class ClientService {
 
   async create(createClientDto: CreateClientDto) {
     return await this.db.client.create({
-      data: createClientDto,
+      data: {
+        ...createClientDto,
+        telephoneNormalise: normalizeCameroonPhone(createClientDto.telephone),
+      },
     });
   }
 
@@ -35,6 +39,32 @@ export class ClientService {
         _count: { select: { commandes: true, ventes: true } },
       },
       orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  async search(query: string, limit = 8) {
+    const q = query.trim();
+    if (!q) return [];
+    const phone = normalizeCameroonPhone(q);
+
+    return this.db.client.findMany({
+      where: {
+        OR: [
+          { nom: { contains: q, mode: 'insensitive' } },
+          { prenom: { contains: q, mode: 'insensitive' } },
+          ...(phone ? [{ telephoneNormalise: { contains: phone } }] : []),
+        ],
+      },
+      select: {
+        id: true,
+        nom: true,
+        prenom: true,
+        telephone: true,
+        typeClient: true,
+        limiteCredit: true,
+      },
+      orderBy: [{ nom: 'asc' }, { prenom: 'asc' }],
+      take: limit,
     });
   }
 
@@ -79,6 +109,9 @@ export class ClientService {
       where: { id },
       data: {
         ...updateClientDto,
+        ...(updateClientDto.telephone !== undefined
+          ? { telephoneNormalise: normalizeCameroonPhone(updateClientDto.telephone) }
+          : {}),
         version: { increment: 1 },
       },
     });
@@ -110,6 +143,27 @@ export class ClientService {
       if (!plusAncienne || v.dateVente < plusAncienne) plusAncienne = v.dateVente;
     }
     return { clientId: id, totalDu, nbVentes, plusAncienne };
+  }
+
+  async previewCredit(id: string, montant: number, acompte = 0) {
+    const client = await this.db.client.findUnique({
+      where: { id },
+      select: { id: true, limiteCredit: true },
+    });
+    if (!client) throw new NotFoundException(`Client avec l'id ${id} non trouvé`);
+    const encours = await this.getEncours(id);
+    const nouveauCredit = Math.max(0, this.toNumber(montant) - Math.max(0, this.toNumber(acompte)));
+    const limiteCredit = this.toNumber(client.limiteCredit);
+    const nouveauSoldeDu = encours.totalDu + nouveauCredit;
+    return {
+      clientId: id,
+      encoursActuel: encours.totalDu,
+      nouveauCredit,
+      nouveauSoldeDu,
+      limiteCredit,
+      autorise: nouveauSoldeDu <= limiteCredit,
+      disponible: Math.max(0, limiteCredit - encours.totalDu),
+    };
   }
 
   /** Liste des clients ayant un encours > 0 (triée par montant dû décroissant). */

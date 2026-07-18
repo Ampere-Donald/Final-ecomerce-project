@@ -46,7 +46,7 @@ export class FactureService {
   async incrementPrintCount(id: string) {
     const facture = await this.findOne(id);
     return this.recordPrint({
-      documentType: facture.type === 'FACTURE' ? 'FACTURE' : 'TICKET',
+      documentType: facture.type === 'FACTURE' ? 'FACTURE' : facture.type === 'BON_VENTE' ? 'BON_VENTE' : 'TICKET',
       documentId: facture.id,
       documentNumber: facture.numero,
       status: 'SUCCESS',
@@ -68,7 +68,7 @@ export class FactureService {
 
       if (dto.status === 'SUCCESS') {
         printCount += 1;
-        if (dto.documentId && ['TICKET', 'FACTURE'].includes(dto.documentType)) {
+        if (dto.documentId && ['TICKET', 'FACTURE', 'BON_VENTE'].includes(dto.documentType)) {
           const updated = await tx.facture.update({
             where: { id: dto.documentId },
             data: { printCount: { increment: 1 } },

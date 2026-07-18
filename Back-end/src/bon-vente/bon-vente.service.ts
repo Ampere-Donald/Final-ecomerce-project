@@ -135,6 +135,7 @@ export class BonVenteService {
           clientId: dto.clientId ?? null,
           montantTotal,
           methodePaiement: dto.methodePaiement,
+          noteCaissier: dto.noteCaissier?.trim() || null,
           expiresAt,
           lignes: { create: lignesData },
         },
@@ -162,8 +163,9 @@ export class BonVenteService {
   findPending() {
     return this.db.ticketVente.findMany({
       where: { statut: 'EN_ATTENTE', expiresAt: { gt: new Date() } },
-      include: { lignes: true },
+      include: { lignes: true, client: { select: { id: true, nom: true, prenom: true, telephone: true } } },
       orderBy: { createdAt: 'asc' },
+      take: 100,
     });
   }
 
@@ -201,6 +203,11 @@ export class BonVenteService {
       {
         clientId: dto?.clientId,
         montantPaye: dto?.montantPaye,
+        montantRecu: dto?.montantRecu,
+        documentType: dto?.documentType,
+        referencePaiement: dto?.referencePaiement ?? dto?.paymentReference,
+        idempotencyKey: dto?.idempotencyKey,
+        dateEcheance: dto?.dateEcheance ? new Date(dto.dateEcheance) : undefined,
       },
     );
 

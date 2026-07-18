@@ -18,7 +18,7 @@ const fmtFCFA = (n: number | string): string => {
 interface Facture {
   id: string;
   numero: string;
-  type: 'FACTURE' | 'TICKET_CAISSE';
+  type: 'FACTURE' | 'TICKET_CAISSE' | 'BON_VENTE';
   dateEmission: string;
   totalTTC: number | string;
   totalHT: number | string;
@@ -40,7 +40,7 @@ export const Invoices = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
-  const [filterType, setFilterType] = useState<'' | 'FACTURE' | 'TICKET_CAISSE'>('');
+  const [filterType, setFilterType] = useState<'' | 'FACTURE' | 'TICKET_CAISSE' | 'BON_VENTE'>('');
   const [printing, setPrinting] = useState<string | null>(null);
   const [receiptFacture, setReceiptFacture] = useState<Facture | null>(null);
 
@@ -127,12 +127,13 @@ export const Invoices = () => {
         <div className="relative">
           <select
             value={filterType}
-            onChange={(e) => setFilterType(e.target.value as '' | 'FACTURE' | 'TICKET_CAISSE')}
+            onChange={(e) => setFilterType(e.target.value as '' | 'FACTURE' | 'TICKET_CAISSE' | 'BON_VENTE')}
             className="appearance-none rounded-lg border border-slate-200 bg-white px-4 py-2 pr-8 text-sm text-slate-700 outline-none focus:border-primary"
           >
             <option value="">Tous les types</option>
             <option value="TICKET_CAISSE">Ticket caisse</option>
             <option value="FACTURE">Facture pro</option>
+            <option value="BON_VENTE">Bon de vente</option>
           </select>
           <ChevronDown size={14} className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
         </div>
@@ -183,7 +184,7 @@ export const Invoices = () => {
                           : 'bg-blue-100 text-blue-800'
                       }`}
                     >
-                      {f.type === 'TICKET_CAISSE' ? 'Ticket' : 'Facture pro'}
+                      {f.type === 'TICKET_CAISSE' ? 'Ticket' : f.type === 'BON_VENTE' ? 'Bon de vente' : 'Facture pro'}
                     </span>
                   </td>
                   <td className="px-4 py-3 text-slate-500">
@@ -218,7 +219,7 @@ export const Invoices = () => {
         <ReceiptGenerator
           documentId={receiptFacture.id}
           printCount={receiptFacture.printCount || 0}
-          type={receiptFacture.type === 'FACTURE' ? 'facture' : 'ticket'}
+          type={receiptFacture.type === 'FACTURE' ? 'facture' : receiptFacture.type === 'BON_VENTE' ? 'bonVente' : 'ticket'}
           numero={receiptFacture.numero}
           dateVente={receiptFacture.dateEmission}
           methodePaiement={receiptFacture.methodePaiement}
