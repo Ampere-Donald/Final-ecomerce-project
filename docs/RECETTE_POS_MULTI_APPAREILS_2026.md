@@ -65,3 +65,22 @@ Ces scénarios constituent la référence fonctionnelle du parcours validé.
 - Mobile : 360x800, 390x844, 430x932.
 - Tablette : 768x1024 et 1024x768.
 - Desktop : 1366x768, 1440x900 et 1920x1080.
+
+## Exécution de production du 18 juillet 2026
+
+Révision déployée : `85e34d08` sur `main`.
+
+- API Railway : santé `ok`, base `ok`, stockage `ok`.
+- Prisma : 40 migrations reconnues, schéma de production à jour.
+- Cloudflare Worker `newoteg-admin` : version `c025ea1a-6c24-469c-b85a-21053a6a0773` déployée.
+- Authentification : SUPER_ADMIN, ADMIN, VENDEUR et CAISSIER validés avec les comptes de recette.
+- Vendeur mobile 390x844 : catalogue chargé, retour d'ajout visible, total fixe et panier tactile validés.
+- Vendeur tablette 1024x768 : catalogue et panier visibles ensemble, aucun débordement horizontal.
+- Caissier mobile 390x844, tablette 768x1024 et desktop 1366x768 : aucun débordement horizontal.
+- Bon temporaire `T-20260718-0001` : création vendeur, apparition dans la file, sélection et note vendeur validées.
+- Espèces : 1 000 FCFA à payer et 2 000 FCFA reçus donnent 1 000 FCFA de monnaie.
+- Crédit : client enregistré et échéance exigés, encaissement correctement désactivé sans ces données.
+- Nettoyage : le bon temporaire a été annulé sans encaissement ; aucun stock ni solde de caisse modifié.
+- Console sur un nouvel onglet après déploiement : aucune erreur active.
+- Automatisation : 111 tests backend, 4 tests UI et 13 tests de services frontend réussis.
+- Impression et coupure réseau : scénarios de récupération couverts par les tests automatisés ; la validation physique Epson/QZ reste à effectuer sur le poste équipé.
