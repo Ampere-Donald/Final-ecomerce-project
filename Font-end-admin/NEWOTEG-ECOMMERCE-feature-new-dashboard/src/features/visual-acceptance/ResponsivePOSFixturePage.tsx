@@ -50,6 +50,7 @@ function CashierFixture({ initialStep }: { initialStep: CheckoutStep }) {
   const flow = useMemo(() => ({
     tickets: [ticket], selected, step, loading: false, submitting: false, error: null, caisse: { statut: 'OUVERTE', solde: 84_500 },
     method, documentType, customerQuery, customerResults: [], customer, cashReceived, reference, deposit, dueDate,
+    customerSearching: false, customerSearchAttempted: false, customerSearchError: null,
     result: step === 'SUCCESS' ? { facture: { id: 'f1', numero: 'FAC-2026-1048', dateEmission: new Date().toISOString(), lignes: [], client: customer } } : null,
     creditPreview: null, creatingCustomer: false, total: 12_500, change: method === 'ESPECES' ? Math.max(0, Number(cashReceived) - 12_500) : 0,
     canPay: method !== 'ESPECES' || Number(cashReceived) >= 12_500, queueTotal: 12_500,
@@ -57,6 +58,7 @@ function CashierFixture({ initialStep }: { initialStep: CheckoutStep }) {
     selectTicket: (next: CashierTicket) => { setSelected(next); setCustomerQuery(next.telephoneClient || ''); setStep('TICKET'); },
     closeTicket: () => { setSelected(null); setStep('QUEUE'); },
     checkout: async () => { setStep('SUCCESS'); },
+    searchCustomers: async () => [],
     createCustomer: async (name: string, phone: string) => { const created = { id: 'new', nom: name, telephone: phone }; setCustomer(created); return created; },
     setStep, setMethod, setDocumentType, setCustomerQuery, setCustomer, setCashReceived, setReference, setDeposit, setDueDate,
   }), [cashReceived, customer, customerQuery, deposit, documentType, dueDate, method, reference, selected, step]);

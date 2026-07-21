@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { bonVenteApi, caisseJourApi, clientApi } from '../../services/api';
+import { bonVenteApi, caisseJourApi, clientApi, getApiErrorMessage } from '../../services/api';
 import { subscribeAuthenticatedSse } from '../../services/authenticatedSse';
 import type { CashierClient, CashierTicket, CheckoutStep, DocumentType, PaymentMethod } from './types';
 
@@ -16,6 +16,9 @@ export function useCashierCheckoutFlow() {
   const [customerQuery, setCustomerQuery] = useState('');
   const [customerResults, setCustomerResults] = useState<CashierClient[]>([]);
   const [customer, setCustomer] = useState<CashierClient | null>(null);
+  const [customerSearching, setCustomerSearching] = useState(false);
+  const [customerSearchAttempted, setCustomerSearchAttempted] = useState(false);
+  const [customerSearchError, setCustomerSearchError] = useState<string | null>(null);
   const [cashReceived, setCashReceived] = useState('');
   const [reference, setReference] = useState('');
   const [deposit, setDeposit] = useState('');
@@ -46,16 +49,39 @@ export function useCashierCheckoutFlow() {
     return subscribeAuthenticatedSse('/bons/stream', () => void load());
   }, [load]);
 
+  const searchCustomers = useCallback(async (value = customerQuery) => {
+    const query = value.trim();
+    setCustomerSearchAttempted(true);
+    setCustomerSearchError(null);
+    if (query.length < 2) {
+      setCustomerResults([]);
+      setCustomerSearchError('Saisissez au moins 2 caractères ou chiffres.');
+      return [];
+    }
+    setCustomerSearching(true);
+    try {
+      const results = await clientApi.search(query, 8);
+      setCustomerResults(results);
+      return results;
+    } catch (cause) {
+      setCustomerResults([]);
+      setCustomerSearchError(getApiErrorMessage(cause, 'La recherche client a échoué. Réessayez.'));
+      return [];
+    } finally {
+      setCustomerSearching(false);
+    }
+  }, [customerQuery]);
+
   useEffect(() => {
     if (customer || customerQuery.trim().length < 2) {
-      setCustomerResults([]);
+      if (customerQuery.trim().length < 2) setCustomerResults([]);
       return;
     }
     const timeout = window.setTimeout(() => {
-      clientApi.search(customerQuery.trim(), 8).then(setCustomerResults).catch(() => setCustomerResults([]));
-    }, 250);
+      void searchCustomers();
+    }, 350);
     return () => window.clearTimeout(timeout);
-  }, [customerQuery, customer]);
+  }, [customerQuery, customer, searchCustomers]);
 
   useEffect(() => {
     if (method !== 'CREDIT' || !customer || !selected) {
@@ -76,6 +102,9 @@ export function useCashierCheckoutFlow() {
     setCustomerQuery('');
     setCustomerResults([]);
     setCustomer(null);
+    setCustomerSearching(false);
+    setCustomerSearchAttempted(false);
+    setCustomerSearchError(null);
     setCashReceived('');
     setReference('');
     setDeposit('');
@@ -121,6 +150,7 @@ export function useCashierCheckoutFlow() {
       setResult(response);
       setStep('SUCCESS');
       await load();
+      return response;
     } catch (cause: any) {
       setError(cause?.response?.data?.message || 'Le paiement n’a pas été enregistré. Vérifiez les informations.');
       if (cause?.response?.status === 409) {
@@ -128,6 +158,7 @@ export function useCashierCheckoutFlow() {
         setStep('QUEUE');
       }
       await load();
+      return null;
     } finally {
       setSubmitting(false);
     }
@@ -152,7 +183,8 @@ export function useCashierCheckoutFlow() {
   return {
     tickets, selected, step, loading, submitting, error, caisse, method, documentType,
     customerQuery, customerResults, customer, cashReceived, reference, deposit, dueDate,
-    result, creditPreview, creatingCustomer, total, change, canPay, queueTotal, load, selectTicket, closeTicket, checkout, createCustomer,
+    result, creditPreview, creatingCustomer, customerSearching, customerSearchAttempted, customerSearchError,
+    total, change, canPay, queueTotal, load, selectTicket, closeTicket, checkout, createCustomer, searchCustomers,
     setStep, setMethod, setDocumentType, setCustomerQuery, setCustomer, setCashReceived,
     setReference, setDeposit, setDueDate,
   };
