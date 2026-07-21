@@ -8,7 +8,7 @@ import {
   Check, Flashlight, Home,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { bonVenteApi, clientApi, produitApi, ticketApi, equivalenceApi, proformaApi, factureVirtuelleApi, getApiErrorMessage } from '../services/api';
+import { bonVenteApi, categorieApi, clientApi, produitApi, ticketApi, equivalenceApi, proformaApi, factureVirtuelleApi, getApiErrorMessage } from '../services/api';
 import { useAdminAuth } from '../context/AdminAuthContext';
 import { can } from '../utils/permissions';
 import { ReceiptGenerator } from './ReceiptGenerator';
@@ -28,6 +28,7 @@ import {
 import { formatFcfa } from '../features/pos-shared/formatters';
 import { useSellerProductHistory } from '../features/seller-pos/useSellerProductHistory';
 import { useSellerSaleFlow } from '../features/seller-pos/useSellerSaleFlow';
+import { VerticalCategoryNavigator, type SellerCategoryOption } from '../features/seller-pos/VerticalCategoryNavigator';
 import { useFlowShellFocus } from '../context/FlowShellContext';
 
 export interface Produit {
@@ -65,6 +66,12 @@ export interface PanierLigne {
   cmupActuel?: number;
   motifRemise?: string;
   imageUrl?: string | null;
+}
+
+interface StoreCategory {
+  id: string;
+  nom: string;
+  _count?: { produits?: number };
 }
 
 interface ScanHistoryItem {
@@ -160,7 +167,8 @@ export const POSVendeur = ({ preview }: { preview?: POSVendeurPreview } = {}) =>
   const [loading, setLoading] = useState(!preview);
   const [search, setSearch] = useState('');
   const [catalogView, setCatalogView] = useState<'all' | 'favorites' | 'recent'>('all');
-  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [selectedCategoryId, setSelectedCategoryId] = useState('all');
+  const [storeCategories, setStoreCategories] = useState<StoreCategory[]>([]);
   const saleFlow = useSellerSaleFlow<PanierLigne>(initialDraft?.items || []);
   const panier = saleFlow.items;
   const panierRef = saleFlow.itemsRef;
@@ -227,7 +235,7 @@ export const POSVendeur = ({ preview }: { preview?: POSVendeurPreview } = {}) =>
     } catch {}
   }, []);
 
-  const loadCatalog = useCallback(async (query: string) => {
+  const loadCatalog = useCallback(async (query: string, categoryId: string) => {
     const requestId = ++catalogRequestRef.current;
     setLoading(true);
     try {
@@ -235,6 +243,7 @@ export const POSVendeur = ({ preview }: { preview?: POSVendeurPreview } = {}) =>
         page: 1,
         limit: 60,
         search: query.trim() || undefined,
+        categoryId: categoryId === 'all' ? undefined : categoryId,
         inStock: true,
         sort: 'name_asc',
       });
@@ -252,6 +261,9 @@ export const POSVendeur = ({ preview }: { preview?: POSVendeurPreview } = {}) =>
   useEffect(() => {
     if (preview) return;
     let mounted = true;
+    categorieApi.getAll()
+      .then((data: StoreCategory[]) => { if (mounted) setStoreCategories(data || []); })
+      .catch(() => {});
     if (isVendeur) {
       clientApi.getAll().then((data: any[]) => { if (mounted) setClients(data || []); }).catch(() => {});
       loadBons();
@@ -261,9 +273,9 @@ export const POSVendeur = ({ preview }: { preview?: POSVendeurPreview } = {}) =>
 
   useEffect(() => {
     if (preview) return;
-    const timer = window.setTimeout(() => { void loadCatalog(search); }, 250);
+    const timer = window.setTimeout(() => { void loadCatalog(search, selectedCategoryId); }, 250);
     return () => window.clearTimeout(timer);
-  }, [loadCatalog, preview, search]);
+  }, [loadCatalog, preview, search, selectedCategoryId]);
 
   useEffect(() => {
     if (preview) return;
@@ -303,17 +315,43 @@ export const POSVendeur = ({ preview }: { preview?: POSVendeurPreview } = {}) =>
   useEffect(() => {
     if (preview) return;
     const handleSynchronizedSale = () => {
-      void loadCatalog(search);
+      void loadCatalog(search, selectedCategoryId);
       if (isVendeur) void loadBons();
     };
     window.addEventListener(OFFLINE_SYNC_COMPLETED_EVENT, handleSynchronizedSale);
     return () => window.removeEventListener(OFFLINE_SYNC_COMPLETED_EVENT, handleSynchronizedSale);
-  }, [isVendeur, loadBons, loadCatalog, preview, search]);
+  }, [isVendeur, loadBons, loadCatalog, preview, search, selectedCategoryId]);
 
   // ── Catalogue ──────────────────────────────────────────────────────────
-  const categoryOptions = useMemo(() => Array.from(new Set(
-    produits.map(product => product.categorie?.nom || product.categorieNom).filter(Boolean) as string[],
-  )).slice(0, 4), [produits]);
+  const categoryOptions = useMemo<SellerCategoryOption[]>(() => {
+    if (storeCategories.length > 0) {
+      return storeCategories.map(category => ({
+        id: category.id,
+        label: category.nom,
+        count: Number(category._count?.produits || 0),
+      }));
+    }
+
+    const categories = new Map<string, SellerCategoryOption>();
+    produits.forEach(product => {
+      const label = product.categorie?.nom || product.categorieNom;
+      if (!label) return;
+      const id = product.categorie?.id || `preview:${normalizeEligibilityText(label)}`;
+      const current = categories.get(id);
+      categories.set(id, { id, label, count: (current?.count || 0) + 1 });
+    });
+    return Array.from(categories.values()).sort((first, second) => first.label.localeCompare(second.label, 'fr'));
+  }, [produits, storeCategories]);
+
+  const selectCategory = useCallback((categoryId: string) => {
+    setSelectedCategoryId(categoryId);
+    setCatalogView('all');
+  }, []);
+
+  const selectCatalogView = useCallback((view: 'favorites' | 'recent') => {
+    setCatalogView(view);
+    setSelectedCategoryId('all');
+  }, []);
 
   const produitsFiltres = useMemo(() => {
     const filtered = catalogView === 'favorites'
@@ -321,11 +359,15 @@ export const POSVendeur = ({ preview }: { preview?: POSVendeurPreview } = {}) =>
       : catalogView === 'recent'
         ? productHistory.recentIds.map(id => produits.find(product => product.id === id)).filter(Boolean) as Produit[]
         : produits;
-    const categoryFiltered = selectedCategory === 'all'
+    const selectedCategory = categoryOptions.find(category => category.id === selectedCategoryId);
+    const categoryFiltered = selectedCategoryId === 'all'
       ? filtered
-      : filtered.filter(product => (product.categorie?.nom || product.categorieNom) === selectedCategory);
+      : filtered.filter(product => (
+        product.categorie?.id === selectedCategoryId ||
+        (product.categorie?.nom || product.categorieNom) === selectedCategory?.label
+      ));
     return categoryFiltered.slice(0, 60);
-  }, [catalogView, productHistory.favoriteIds, productHistory.recentIds, produits, selectedCategory]);
+  }, [catalogView, categoryOptions, productHistory.favoriteIds, productHistory.recentIds, produits, selectedCategoryId]);
 
   const ajouterAuPanier = useCallback((p: Produit): boolean => {
     if (p.quantiteStock <= 0) {
@@ -1072,12 +1114,17 @@ export const POSVendeur = ({ preview }: { preview?: POSVendeurPreview } = {}) =>
           <span className="hidden sm:inline text-sm font-medium">Scanner</span>
         </button>
       </div>
-      <div className="scrollbar-hidden flex gap-2 overflow-x-auto pb-1" aria-label="Catégories du catalogue">
-        <button onClick={() => { setSelectedCategory('all'); setCatalogView('all'); }} className={`min-h-10 shrink-0 rounded-lg px-4 text-xs font-bold ${selectedCategory === 'all' && catalogView === 'all' ? 'bg-primary text-white' : 'bg-white text-slate-600 ring-1 ring-slate-200'}`}>Tous</button>
-        {categoryOptions.map(category => <button key={category} onClick={() => { setSelectedCategory(category); setCatalogView('all'); }} className={`min-h-10 shrink-0 rounded-lg px-4 text-xs font-bold ${selectedCategory === category ? 'bg-primary text-white' : 'bg-white text-slate-600 ring-1 ring-slate-200'}`}>{category}</button>)}
-        <button onClick={() => { setCatalogView('favorites'); setSelectedCategory('all'); }} className={`hidden min-h-10 shrink-0 rounded-lg px-4 text-xs font-bold min-[1200px]:block ${catalogView === 'favorites' ? 'bg-slate-900 text-white' : 'bg-white text-slate-600 ring-1 ring-slate-200'}`}>Favoris{productHistory.favoriteIds.length > 0 ? ` (${productHistory.favoriteIds.length})` : ''}</button>
-        <button onClick={() => { setCatalogView('recent'); setSelectedCategory('all'); }} className={`hidden min-h-10 shrink-0 rounded-lg px-4 text-xs font-bold min-[1200px]:block ${catalogView === 'recent' ? 'bg-slate-900 text-white' : 'bg-white text-slate-600 ring-1 ring-slate-200'}`}>Récents</button>
-      </div>
+      <div className="space-y-3 md:grid md:grid-cols-[10rem_minmax(0,1fr)] md:items-start md:gap-3 md:space-y-0 min-[1400px]:grid-cols-[11rem_minmax(0,1fr)]">
+        <VerticalCategoryNavigator
+          categories={categoryOptions}
+          selectedCategoryId={selectedCategoryId}
+          selectedView={catalogView}
+          favoriteCount={productHistory.favoriteIds.length}
+          onSelectCategory={selectCategory}
+          onSelectView={selectCatalogView}
+        />
+
+        <div className="min-w-0 space-y-3">
 
       {/* Recherche manuelle code famille / code */}
       <div className="hidden flex-wrap items-center gap-2 rounded-xl border border-indigo-200 bg-indigo-50 px-3 py-2 min-[1200px]:flex">
@@ -1122,10 +1169,12 @@ export const POSVendeur = ({ preview }: { preview?: POSVendeurPreview } = {}) =>
             )}
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
+          <div className="grid grid-cols-[repeat(auto-fill,minmax(9.25rem,1fr))] gap-3">
             {produitsFiltres.map(renderProduit)}
           </div>
         )}
+        </div>
+      </div>
     </div>
   );
 

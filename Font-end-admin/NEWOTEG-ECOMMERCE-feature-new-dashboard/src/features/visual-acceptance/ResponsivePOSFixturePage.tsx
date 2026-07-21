@@ -11,6 +11,14 @@ const products: POSVendeurPreview['products'] = [
   { id: 'p4', nomProduit: 'LED Rouge 5mm', marque: 'Haute luminosité', prixDetail: 100, quantiteStock: 200, categorieNom: 'LED' },
   { id: 'p5', nomProduit: 'Diode 1N4007', marque: 'Redressement', prixDetail: 50, quantiteStock: 150, categorieNom: 'Diodes' },
   { id: 'p6', nomProduit: 'Régulateur 7805', marque: 'TO-220', prixDetail: 250, quantiteStock: 60, categorieNom: 'Circuits' },
+  { id: 'p7', nomProduit: 'Interrupteur à bascule', marque: 'ON/OFF', prixDetail: 350, quantiteStock: 75, categorieNom: 'Interrupteurs' },
+  { id: 'p8', nomProduit: 'Relais 12V', marque: '10A', prixDetail: 900, quantiteStock: 48, categorieNom: 'Relais' },
+  { id: 'p9', nomProduit: 'Fusible 5A', marque: 'Verre', prixDetail: 100, quantiteStock: 140, categorieNom: 'Fusibles' },
+  { id: 'p10', nomProduit: 'Connecteur USB-C', marque: 'Femelle', prixDetail: 500, quantiteStock: 90, categorieNom: 'Connecteurs' },
+  { id: 'p11', nomProduit: 'Capteur de température', marque: 'DHT22', prixDetail: 2_500, quantiteStock: 25, categorieNom: 'Capteurs' },
+  { id: 'p12', nomProduit: 'Module ESP32', marque: 'Wi-Fi', prixDetail: 6_500, quantiteStock: 32, categorieNom: 'Modules' },
+  { id: 'p13', nomProduit: 'Câble multibrin', marque: 'Rouge', prixDetail: 300, quantiteStock: 220, categorieNom: 'Câbles' },
+  { id: 'p14', nomProduit: 'Fer à souder 60W', marque: 'Réglable', prixDetail: 8_500, quantiteStock: 18, categorieNom: 'Outillage' },
 ];
 
 const sellerItems: POSVendeurPreview['items'] = [
