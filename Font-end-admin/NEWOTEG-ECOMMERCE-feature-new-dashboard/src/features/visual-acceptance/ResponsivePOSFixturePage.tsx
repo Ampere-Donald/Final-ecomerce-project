@@ -40,7 +40,7 @@ function CashierFixture({ initialStep }: { initialStep: CheckoutStep }) {
   const [step, setStep] = useState<CheckoutStep>(initialStep);
   const [method, setMethod] = useState<PaymentMethod>('ESPECES');
   const [documentType, setDocumentType] = useState<DocumentType>('FACTURE');
-  const [customer, setCustomer] = useState<CashierClient | null>(initialStep === 'PAYMENT' || initialStep === 'SUCCESS' ? { id: 'c1', nom: 'Martine', prenom: 'NDOUMBE', telephone: '+237 6 99 12 34 56' } : null);
+  const [customer, setCustomer] = useState<CashierClient | null>(['CUSTOMER', 'PAYMENT', 'SUCCESS'].includes(initialStep) ? { id: 'c1', nom: 'Martine', prenom: 'NDOUMBE', telephone: '+237 6 99 12 34 56' } : null);
   const [customerQuery, setCustomerQuery] = useState('');
   const [cashReceived, setCashReceived] = useState(initialStep === 'PAYMENT' || initialStep === 'SUCCESS' ? '15000' : '');
   const [reference, setReference] = useState('');
@@ -54,7 +54,7 @@ function CashierFixture({ initialStep }: { initialStep: CheckoutStep }) {
     creditPreview: null, creatingCustomer: false, total: 12_500, change: method === 'ESPECES' ? Math.max(0, Number(cashReceived) - 12_500) : 0,
     canPay: method !== 'ESPECES' || Number(cashReceived) >= 12_500, queueTotal: 12_500,
     load: async () => {},
-    selectTicket: (next: CashierTicket) => { setSelected(next); setStep('CUSTOMER'); },
+    selectTicket: (next: CashierTicket) => { setSelected(next); setCustomerQuery(next.telephoneClient || ''); setStep('TICKET'); },
     closeTicket: () => { setSelected(null); setStep('QUEUE'); },
     checkout: async () => { setStep('SUCCESS'); },
     createCustomer: async (name: string, phone: string) => { const created = { id: 'new', nom: name, telephone: phone }; setCustomer(created); return created; },
@@ -72,7 +72,7 @@ export function ResponsivePOSFixturePage() {
   }
   if (screen.startsWith('cashier-')) {
     const step = screen.replace('cashier-', '').toUpperCase() as CheckoutStep;
-    return <div className="min-h-screen bg-slate-50 p-0 md:p-3"><CashierFixture initialStep={step} /></div>;
+    return <div className="min-h-screen bg-slate-50"><CashierFixture initialStep={step} /></div>;
   }
 
   return <div className="min-h-screen bg-slate-50"><POSVendeur preview={{ sellerName: 'Donald', products, items: sellerItems, scannerOpen: screen === 'seller-scanner' }} /></div>;

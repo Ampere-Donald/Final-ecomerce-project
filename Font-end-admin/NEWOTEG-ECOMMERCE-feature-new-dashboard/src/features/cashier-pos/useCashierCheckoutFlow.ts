@@ -87,7 +87,8 @@ export function useCashierCheckoutFlow() {
     resetPayment();
     setSelected(ticket);
     setCustomer(ticket.client || null);
-    setStep('CUSTOMER');
+    setCustomerQuery(ticket.client ? '' : ticket.telephoneClient || '');
+    setStep('TICKET');
   }, [resetPayment]);
 
   const closeTicket = useCallback(() => {

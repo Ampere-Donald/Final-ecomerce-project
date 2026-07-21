@@ -14,7 +14,7 @@ const ticket = {
   lignes: [{ id: 'l1', nomProduit: 'Condensateur 100µF', quantite: 2, prixUnitaire: 6_250, sousTotal: 12_500 }],
 };
 
-function flowFor(step: 'CUSTOMER' | 'PAYMENT') {
+function flowFor(step: 'TICKET' | 'CUSTOMER' | 'PAYMENT') {
   return {
     tickets: [ticket], selected: ticket, step, loading: false, submitting: false, error: null, caisse: null,
     method: 'ESPECES', documentType: 'FACTURE', customerQuery: '', customerResults: [], customer: null,
@@ -27,6 +27,13 @@ function flowFor(step: 'CUSTOMER' | 'PAYMENT') {
 }
 
 describe('CashierCheckoutPanel', () => {
+  it('présente le ticket avant l’identification du client', () => {
+    const flow = flowFor('TICKET');
+    render(<CashierCheckoutPanel flow={flow} onNextTicket={vi.fn()} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Identifier' }));
+    expect(flow.setStep).toHaveBeenCalledWith('CUSTOMER');
+  });
+
   it('fait avancer l’étape client vers le paiement', () => {
     const flow = flowFor('CUSTOMER');
     render(<CashierCheckoutPanel flow={flow} onNextTicket={vi.fn()} />);

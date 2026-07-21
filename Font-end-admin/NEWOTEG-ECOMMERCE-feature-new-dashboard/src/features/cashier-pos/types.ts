@@ -3,7 +3,7 @@ import type { CommercialDocumentType, PosPaymentMethod } from '../pos-shared/typ
 
 export type PaymentMethod = PosPaymentMethod;
 export type DocumentType = CommercialDocumentType;
-export type CheckoutStep = 'QUEUE' | 'CUSTOMER' | 'PAYMENT' | 'SUCCESS';
+export type CheckoutStep = 'QUEUE' | 'TICKET' | 'CUSTOMER' | 'PAYMENT' | 'SUCCESS';
 
 export interface TicketLine {
   id: string;
@@ -17,6 +17,7 @@ export interface CashierTicket {
   id: string;
   numeroTicket: string;
   vendeurId: string;
+  vendeur?: { nom?: string | null; prenom?: string | null } | null;
   nomClient?: string | null;
   telephoneClient?: string | null;
   noteCaissier?: string | null;

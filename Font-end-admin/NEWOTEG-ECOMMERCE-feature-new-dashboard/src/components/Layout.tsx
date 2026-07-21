@@ -13,11 +13,12 @@ const LayoutFrame = () => {
   const { focused } = useFlowShell();
   const location = useLocation();
   const hasRoleMobileNav = hasMobileNavigation(admin?.role);
-  const isPosRoute = location.pathname === '/pos' || location.pathname === '/file-caissier';
+  const isCashierRoute = location.pathname === '/file-caissier';
+  const isPosRoute = location.pathname === '/pos' || isCashierRoute;
 
   return (
     <div className="flex h-screen overflow-hidden bg-background-light">
-      <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+      <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} compact={isCashierRoute} />
 
       {/* Overlay mobile pour fermer la sidebar */}
       {sidebarOpen && (
@@ -28,14 +29,14 @@ const LayoutFrame = () => {
       )}
 
       <main className="flex h-screen flex-1 flex-col min-w-0 overflow-hidden">
-        <div className={isPosRoute ? 'min-[1200px]:block hidden' : 'block'}>
+        <div className={isCashierRoute ? 'hidden' : isPosRoute ? 'min-[1200px]:block hidden' : 'block'}>
           <Header onMenuClick={() => setSidebarOpen(prev => !prev)} />
         </div>
-        <div className={isPosRoute ? 'min-[1200px]:block hidden' : 'block'}>
+        <div className={isCashierRoute ? 'hidden' : isPosRoute ? 'min-[1200px]:block hidden' : 'block'}>
           <OfflineSyncStatus />
         </div>
-        <div className={`min-h-0 flex-1 overflow-y-auto ${isPosRoute ? 'p-0 md:p-3 min-[1200px]:p-8' : 'px-3 py-4 sm:px-5 md:p-6 min-[1200px]:p-8'} ${hasRoleMobileNav && !focused ? 'pb-24 md:pb-6 min-[1200px]:pb-8' : ''}`}>
-          <div className={isPosRoute ? 'mx-auto max-w-[1680px]' : 'mx-auto max-w-7xl'}>
+        <div className={`min-h-0 flex-1 overflow-y-auto ${isCashierRoute ? 'p-0' : isPosRoute ? 'p-0 md:p-3 min-[1200px]:p-8' : 'px-3 py-4 sm:px-5 md:p-6 min-[1200px]:p-8'} ${hasRoleMobileNav && !focused ? 'pb-24 md:pb-6 min-[1200px]:pb-8' : ''}`}>
+          <div className={isCashierRoute ? 'w-full' : isPosRoute ? 'mx-auto max-w-[1680px]' : 'mx-auto max-w-7xl'}>
             <Outlet />
           </div>
         </div>

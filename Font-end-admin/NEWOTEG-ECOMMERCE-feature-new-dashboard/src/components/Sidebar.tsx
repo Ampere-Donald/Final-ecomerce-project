@@ -42,12 +42,13 @@ import { bonVenteApi } from '../services/api';
 interface SidebarProps {
   open: boolean;
   onClose: () => void;
+  compact?: boolean;
 }
 
 type Item = { label: string; icon: any; path: string };
 type Group = { label: string; items: Item[] };
 
-export const Sidebar = ({ open, onClose }: SidebarProps) => {
+export const Sidebar = ({ open, onClose, compact = false }: SidebarProps) => {
   const { admin, logout } = useAdminAuth();
   const role = admin?.role;
   const [pendingCount, setPendingCount] = useState(0);
@@ -165,6 +166,8 @@ export const Sidebar = ({ open, onClose }: SidebarProps) => {
   ];
 
   const visibleGroups = groups.filter((g) => g.items.length > 0);
+  const compactPaths = ['/file-caissier', '/caisse-jour', '/clients', '/print-audit', '/guide', '/settings'];
+  const compactItems = visibleGroups.flatMap(group => group.items).filter(item => compactPaths.includes(item.path));
 
   const renderNavItem = (item: Item) => (
     <NavLink
@@ -173,13 +176,13 @@ export const Sidebar = ({ open, onClose }: SidebarProps) => {
       end={item.path === '/'}
       onClick={onClose}
       className={({ isActive }) =>
-        `flex min-h-11 items-center gap-3 rounded-lg px-3 py-2 font-medium transition-colors md:min-h-14 md:flex-col md:justify-center md:gap-1 md:px-1 md:text-center md:text-[10px] min-[1200px]:min-h-11 min-[1200px]:flex-row min-[1200px]:justify-start min-[1200px]:gap-3 min-[1200px]:px-3 min-[1200px]:text-left min-[1200px]:text-base ${
-          isActive ? 'bg-primary/10 text-primary' : 'text-slate-600 hover:bg-slate-50 hover:text-primary'
+        `flex min-h-11 items-center gap-3 rounded-lg px-3 py-2 font-medium transition-colors md:min-h-14 md:flex-col md:justify-center md:gap-1 md:px-1 md:text-center md:text-[10px] ${compact ? 'min-[1200px]:mx-auto min-[1200px]:h-16 min-[1200px]:w-16 min-[1200px]:justify-center min-[1200px]:rounded-xl min-[1200px]:px-0' : 'min-[1200px]:min-h-11 min-[1200px]:flex-row min-[1200px]:justify-start min-[1200px]:gap-3 min-[1200px]:px-3 min-[1200px]:text-left min-[1200px]:text-base'} ${
+          isActive ? compact ? 'bg-primary text-white min-[1200px]:shadow-lg min-[1200px]:shadow-blue-950/30' : 'bg-primary/10 text-primary' : compact ? 'text-slate-600 hover:bg-slate-50 hover:text-primary min-[1200px]:text-white/80 min-[1200px]:hover:bg-white/10 min-[1200px]:hover:text-white' : 'text-slate-600 hover:bg-slate-50 hover:text-primary'
         }`
       }
     >
       <item.icon size={20} />
-      <span className="flex-1 md:flex-none min-[1200px]:flex-1">{item.label}</span>
+      <span className={`flex-1 md:flex-none ${compact ? 'min-[1200px]:sr-only' : 'min-[1200px]:flex-1'}`}>{item.label}</span>
       {item.path === '/pos' && pendingCount > 0 && (
         <span className="flex h-5 w-5 items-center justify-center rounded-full bg-amber-500 text-[10px] font-bold text-white">
           {pendingCount}
@@ -191,11 +194,11 @@ export const Sidebar = ({ open, onClose }: SidebarProps) => {
   return (
     <aside className={`
       fixed md:sticky top-0 left-0 z-40 h-screen
-      w-64 md:w-20 min-[1200px]:w-64 flex-shrink-0 border-r border-slate-200 bg-white flex flex-col
+      w-64 md:w-20 ${compact ? 'min-[1200px]:w-24 min-[1200px]:border-slate-900 min-[1200px]:bg-[#031d34]' : 'min-[1200px]:w-64'} flex-shrink-0 border-r border-slate-200 bg-white flex flex-col
       transition-transform duration-300 ease-in-out
       ${open ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
     `}>
-      <div className="flex items-center gap-3 border-b border-slate-100 p-6 md:justify-center md:p-3 min-[1200px]:justify-start min-[1200px]:p-6">
+      <div className={`flex items-center gap-3 border-b border-slate-100 p-6 md:justify-center md:p-3 ${compact ? 'min-[1200px]:justify-center min-[1200px]:border-white/10 min-[1200px]:p-3' : 'min-[1200px]:justify-start min-[1200px]:p-6'}`}>
         <button
           type="button"
           onClick={onClose}
@@ -207,14 +210,14 @@ export const Sidebar = ({ open, onClose }: SidebarProps) => {
         <div className="flex h-10 w-10 shrink-0 items-center justify-center">
           <img src="/logo.png" alt="Newoteg" className="w-full h-full object-contain drop-shadow-sm" />
         </div>
-        <div className="min-w-0 md:hidden min-[1200px]:block">
+        <div className={`min-w-0 md:hidden ${compact ? 'min-[1200px]:hidden' : 'min-[1200px]:block'}`}>
           <h1 className="text-xl font-bold tracking-tight text-primary leading-tight">{brand.companyName}</h1>
           <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400">{brand.branchName}</p>
         </div>
       </div>
 
-      <nav className="flex-1 space-y-6 overflow-y-auto p-4 md:px-2 md:py-4 min-[1200px]:p-4">
-        {visibleGroups.map((g) => (
+      <nav className={`flex-1 space-y-6 overflow-y-auto p-4 md:px-2 md:py-4 ${compact ? 'min-[1200px]:space-y-2 min-[1200px]:px-2 min-[1200px]:py-5' : 'min-[1200px]:p-4'}`}>
+        {compact ? <div className="space-y-2">{compactItems.map(renderNavItem)}</div> : visibleGroups.map((g) => (
           <div key={g.label}>
             <p className="mb-2 px-3 text-xs font-bold uppercase tracking-wider text-slate-400 md:hidden min-[1200px]:block">
               {g.label}
@@ -224,8 +227,8 @@ export const Sidebar = ({ open, onClose }: SidebarProps) => {
         ))}
       </nav>
 
-      <div className="border-t border-slate-100 p-4 md:p-2 min-[1200px]:p-4">
-        <div className="flex items-center gap-3 rounded-lg border border-slate-100 bg-slate-50 p-2 md:justify-center min-[1200px]:justify-start">
+      <div className={`border-t border-slate-100 p-4 md:p-2 ${compact ? 'min-[1200px]:border-white/10 min-[1200px]:p-2' : 'min-[1200px]:p-4'}`}>
+        <div className={`flex items-center gap-3 rounded-lg border border-slate-100 bg-slate-50 p-2 md:justify-center ${compact ? 'min-[1200px]:border-transparent min-[1200px]:bg-transparent min-[1200px]:justify-center' : 'min-[1200px]:justify-start'}`}>
           {admin?.photoUrl ? (
             <img
               src={admin.photoUrl}
@@ -237,7 +240,7 @@ export const Sidebar = ({ open, onClose }: SidebarProps) => {
               {initials}
             </div>
           )}
-          <div className="min-w-0 flex-1 md:hidden min-[1200px]:block">
+          <div className={`min-w-0 flex-1 md:hidden ${compact ? 'min-[1200px]:hidden' : 'min-[1200px]:block'}`}>
             <p className="text-sm font-semibold truncate">{adminName}</p>
             <p className="text-xs text-slate-500">{role || 'Utilisateur'}</p>
           </div>
@@ -248,7 +251,7 @@ export const Sidebar = ({ open, onClose }: SidebarProps) => {
             }}
             title="Se déconnecter"
             aria-label="Se déconnecter"
-            className="text-slate-400 transition-colors hover:text-red-500 md:hidden min-[1200px]:block"
+            className={`text-slate-400 transition-colors hover:text-red-500 md:hidden ${compact ? 'min-[1200px]:hidden' : 'min-[1200px]:block'}`}
           >
             <LogOut size={16} />
           </button>
