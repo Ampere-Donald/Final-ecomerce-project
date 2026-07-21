@@ -4,6 +4,7 @@ import { useAdminAuth } from '../context/AdminAuthContext';
 import { AlertTriangle, ArrowRight, Download, Eye, EyeOff, Hash, Lock, MoreVertical, ShieldCheck, User, X } from 'lucide-react';
 import { brand } from '../config/brand';
 import { useInstallPrompt } from '../hooks/useInstallPrompt';
+import { getRoleHomePath } from '../utils/roleRouting';
 
 type LoginMode = 'password' | 'pin';
 
@@ -32,8 +33,8 @@ export const AdminLogin: React.FC = () => {
     setError('');
     setLoading(true);
     try {
-      await login(username.trim(), password);
-      navigate('/');
+      const authenticatedAdmin = await login(username.trim(), password);
+      navigate(getRoleHomePath(authenticatedAdmin.role), { replace: true });
     } catch (err: any) {
       setError(err.response?.data?.message || 'Échec de la connexion');
     } finally {
@@ -46,8 +47,8 @@ export const AdminLogin: React.FC = () => {
     setError('');
     setLoading(true);
     try {
-      await loginPin(username.trim(), pin);
-      navigate('/');
+      const authenticatedAdmin = await loginPin(username.trim(), pin);
+      navigate(getRoleHomePath(authenticatedAdmin.role), { replace: true });
     } catch (err: any) {
       setError(err.response?.data?.message || 'PIN incorrect');
     } finally {

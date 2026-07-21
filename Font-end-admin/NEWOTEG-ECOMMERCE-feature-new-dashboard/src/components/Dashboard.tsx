@@ -12,6 +12,7 @@ import {
   CheckCircle2,
   XCircle,
   Lock,
+  Package,
   PackageX,
   BarChart3,
   HandCoins,
@@ -19,6 +20,7 @@ import {
   Printer,
   PlayCircle,
   ShoppingBag,
+  type LucideIcon,
 } from 'lucide-react';
 import {
   caisseApi,
@@ -75,10 +77,23 @@ interface UrgentAction {
 }
 
 const sevClasses: Record<UrgentAction['severity'], string> = {
-  rouge: 'bg-red-50 text-red-700 border-red-200',
-  orange: 'bg-orange-50 text-orange-700 border-orange-200',
-  jaune: 'bg-amber-50 text-amber-700 border-amber-200',
+  rouge: 'bg-red-50 text-red-700',
+  orange: 'bg-orange-50 text-orange-700',
+  jaune: 'bg-amber-50 text-amber-700',
 };
+
+const sevRailClasses: Record<UrgentAction['severity'], string> = {
+  rouge: 'bg-red-500',
+  orange: 'bg-orange-400',
+  jaune: 'bg-amber-400',
+};
+
+const ADMIN_QUICK_ACTIONS: Array<{ label: string; detail: string; icon: LucideIcon; to: string }> = [
+  { label: 'Nouvelle vente', detail: 'Ouvrir le comptoir', icon: ShoppingBag, to: '/pos' },
+  { label: 'Produits', detail: 'Stock et catalogue', icon: Package, to: '/produits' },
+  { label: 'Clients', detail: 'Fiches et crédits', icon: HandCoins, to: '/clients' },
+  { label: 'Encaissements', detail: 'Voir la file active', icon: Receipt, to: '/file-caissier' },
+];
 
 export const Dashboard = () => {
   const { admin } = useAdminAuth();
@@ -219,8 +234,14 @@ export const Dashboard = () => {
       }
       if (role === 'CAISSIER') {
         return [
-          { icon: Wallet, label: 'Caisse du jour', value: soldeCaisseJour == null ? '…' : fmtFCFA(soldeCaisseJour), sub: caisseJourStatut === 'OUVERTE' ? 'Session ouverte' : 'À contrôler', to: '/caisse-jour', color: 'text-primary' },
-          { icon: Receipt, label: 'Tickets à encaisser', value: nbTicketsAttente == null ? '…' : String(nbTicketsAttente), sub: 'dans la file', to: '/file-caissier', color: 'text-amber-600' },
+          {
+            icon: Wallet,
+            label: 'Ouverture et fermeture',
+            value: caisseJourStatut === 'OUVERTE' ? 'Ouverte' : caisseJourStatut === 'FERMEE' ? 'Fermée' : 'À ouvrir',
+            sub: soldeCaisseJour == null ? 'Session de caisse' : fmtFCFA(soldeCaisseJour),
+            to: '/caisse-jour',
+            color: caisseJourStatut === 'OUVERTE' ? 'text-emerald-600' : 'text-slate-600',
+          },
           { icon: CloudOff, label: 'Hors ligne', value: String(operationsHorsLigne), sub: 'opération(s) à synchroniser', to: '/offline-queue', color: 'text-orange-600' },
           { icon: Printer, label: 'Imprimante', value: imprimanteDisponible ? 'Prête' : 'À vérifier', sub: 'Epson TM-T20II · 58 mm', to: '/settings', color: imprimanteDisponible ? 'text-emerald-600' : 'text-red-600' },
         ];
@@ -353,49 +374,125 @@ export const Dashboard = () => {
     return list;
   }, [isAdminRole, role, echeancesUrgentes, commandesAnciennes, produitsRupture, nbTicketsAttente, operationsHorsLigne, imprimanteDisponible, caisseJourStatut]);
 
+  const quickActions = isAdminRole ? ADMIN_QUICK_ACTIONS : [];
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="space-y-6"
+      className="space-y-5 md:space-y-6"
     >
-      <div className="flex items-start justify-between flex-wrap gap-3">
+      <div className="flex items-start justify-between gap-3 border-b border-slate-200 pb-4 md:pb-5">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">
+          <div className="mb-1.5 flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.16em] text-slate-400">
+            <span className="size-2 rounded-full bg-emerald-500 shadow-[0_0_0_3px_rgba(16,185,129,0.12)]" />
+            Activité en direct
+            <span className="font-medium normal-case tracking-normal text-slate-300">·</span>
+            <span className="font-semibold normal-case tracking-normal text-slate-500">
+              {new Intl.DateTimeFormat('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' }).format(new Date())}
+            </span>
+          </div>
+          <h1 className="text-xl font-bold tracking-tight text-slate-950 sm:text-2xl">
             {new Date().getHours() < 12 ? 'Bonjour' : new Date().getHours() < 18 ? 'Bon après-midi' : 'Bonsoir'}{' '}
-            {admin?.nom || 'Administrateur'} 👋
+            {admin?.nom || 'Administrateur'}
           </h1>
-          <p className="text-sm text-slate-500 mt-1">
-            Voici l'état de votre activité maintenant.
+          <p className="mt-1 text-sm text-slate-500">
+            {isAdminRole
+              ? 'Les priorités de la boutique, sans détour.'
+              : role === 'CAISSIER'
+                ? 'Traitez les tickets en attente, puis gérez votre session de caisse.'
+                : "Voici l'état de votre activité maintenant."}
           </p>
         </div>
         {peutAnalyses && (
           <Link
             to="/analyses"
-            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-primary border border-primary/20 bg-primary/5 rounded-lg hover:bg-primary/10"
+            className="flex min-h-11 shrink-0 items-center gap-2 rounded-lg bg-slate-100 px-3 text-sm font-bold text-slate-700 transition-colors hover:bg-slate-200"
           >
             <BarChart3 size={16} />
-            Voir les analyses détaillées
+            <span className="hidden sm:inline">Voir les analyses détaillées</span>
+            <span className="sm:hidden">Analyses</span>
           </Link>
         )}
       </div>
 
+      {role === 'CAISSIER' && (
+        <section aria-labelledby="cashier-primary-action" className="grid gap-3 sm:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)]">
+          <Link
+            to="/file-caissier"
+            className="group flex min-h-24 items-center gap-4 rounded-xl bg-primary px-5 py-4 text-white shadow-[0_8px_24px_rgba(29,78,216,0.18)] transition-transform hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+          >
+            <span className="flex size-11 shrink-0 items-center justify-center rounded-lg bg-white/15">
+              <Receipt size={22} />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span id="cashier-primary-action" className="block text-base font-bold">Tickets à encaisser</span>
+              <span className="mt-0.5 block text-sm text-white/75">
+                {nbTicketsAttente == null ? 'Ouvrir la file active' : `${nbTicketsAttente} ticket${nbTicketsAttente > 1 ? 's' : ''} dans la file active`}
+              </span>
+            </span>
+            <ChevronRight size={20} className="shrink-0 text-white/70 transition-transform group-hover:translate-x-0.5" />
+          </Link>
+
+          <Link
+            to="/caisse-jour"
+            className="flex min-h-24 items-center gap-4 rounded-xl border border-slate-200 bg-white px-5 py-4 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+          >
+            <span className="flex size-11 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-700">
+              <Wallet size={21} />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-sm font-bold text-slate-900">Ouverture et fermeture de caisse</span>
+              <span className="mt-0.5 block text-xs text-slate-500">
+                {caisseJourStatut === 'OUVERTE' ? 'Session ouverte' : caisseJourStatut === 'FERMEE' ? 'Session fermée' : 'Session à ouvrir'}
+              </span>
+            </span>
+            <ChevronRight size={18} className="shrink-0 text-slate-300" />
+          </Link>
+        </section>
+      )}
+
+      {quickActions.length > 0 && (
+        <section aria-labelledby="admin-quick-actions">
+          <div className="mb-2 flex items-center justify-between">
+            <h2 id="admin-quick-actions" className="text-xs font-bold uppercase tracking-[0.14em] text-slate-400">
+              Accès rapides
+            </h2>
+            <span className="text-xs text-slate-400 lg:hidden">Balayer →</span>
+            <span className="hidden text-xs text-slate-400 lg:inline">Gérer</span>
+          </div>
+          <div className="scrollbar-hidden -mx-3 overflow-x-auto px-3 pb-1 lg:mx-0 lg:px-0">
+            <div className="flex min-w-max gap-2 lg:grid lg:min-w-0 lg:grid-cols-4">
+              {quickActions.map((action) => {
+                const Icon = action.icon;
+                return (
+                  <Link key={action.to} to={action.to} className="flex min-h-14 w-[160px] items-center gap-3 rounded-xl border border-slate-200 bg-white px-3.5 transition-colors hover:bg-slate-50 lg:w-auto">
+                    <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-700"><Icon size={17} /></span>
+                    <span className="min-w-0"><strong className="block text-sm text-slate-900">{action.label}</strong><span className="block truncate text-[11px] text-slate-400">{action.detail}</span></span>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* 4 KPIs */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className={`grid gap-3 ${isAdminRole ? 'grid-cols-2 sm:grid-cols-2 lg:grid-cols-4' : 'grid-cols-1 sm:grid-cols-3'}`}>
         {kpis.map((k) => {
           const Icon = k.icon;
           const card = (
-            <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm hover:shadow-md transition-all h-full">
-              <div className="flex items-center justify-between mb-3">
-                <div className={`p-2 rounded-lg bg-slate-50 ${k.color}`}>
-                  <Icon size={20} />
+            <div className="h-full min-h-[128px] rounded-xl border border-slate-200 bg-white p-3.5 shadow-[0_1px_2px_rgba(15,23,42,0.03)] transition-colors hover:bg-slate-50 sm:min-h-0 sm:p-5">
+              <div className="mb-3 flex items-center justify-between">
+                <div className={`rounded-lg bg-slate-100 p-2 ${k.color}`}>
+                  <Icon size={18} />
                 </div>
                 {k.to && <ChevronRight size={16} className="text-slate-300" />}
               </div>
-              <p className="text-xs uppercase tracking-wider font-bold text-slate-400">
+              <p className="text-[11px] font-bold leading-tight text-slate-500 sm:text-xs">
                 {k.label}
               </p>
-              <p className={`text-2xl font-bold mt-1 ${k.color}`}>{k.value}</p>
+              <p className={`mt-1 text-lg font-bold leading-tight sm:text-2xl ${k.color}`}>{k.value}</p>
               {k.sub && <p className="text-xs text-slate-400 mt-1">{k.sub}</p>}
             </div>
           );
@@ -410,11 +507,11 @@ export const Dashboard = () => {
       </div>
 
       {/* Actions urgentes */}
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm">
-        <div className="flex items-center justify-between p-5 border-b border-slate-100">
+      <section className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.03)]" aria-labelledby="urgent-actions-title">
+        <div className="flex items-center justify-between border-b border-slate-100 p-4 sm:p-5">
           <div className="flex items-center gap-2">
             <AlertTriangle size={18} className="text-orange-500" />
-            <h3 className="font-bold text-slate-900">Actions urgentes</h3>
+            <h2 id="urgent-actions-title" className="font-bold text-slate-900">Actions urgentes</h2>
           </div>
           {actions.length > 0 && (
             <span className="text-xs font-bold text-slate-400">
@@ -434,12 +531,13 @@ export const Dashboard = () => {
             {actions.map((a) => {
               const Icon = a.icon;
               return (
-                <li key={a.id}>
+                <li key={a.id} className="relative">
+                  <span className={`absolute inset-y-2 left-0 w-1 rounded-r-full ${sevRailClasses[a.severity]}`} />
                   <Link
                     to={a.to}
-                    className="flex items-center gap-3 p-4 hover:bg-slate-50 transition-colors"
+                    className="flex min-h-16 items-center gap-3 py-3.5 pl-5 pr-4 transition-colors hover:bg-slate-50"
                   >
-                    <div className={`p-2 rounded-lg border ${sevClasses[a.severity]}`}>
+                    <div className={`rounded-lg p-2 ${sevClasses[a.severity]}`}>
                       <Icon size={16} />
                     </div>
                     <div className="flex-1 min-w-0">
@@ -457,11 +555,11 @@ export const Dashboard = () => {
             })}
           </ul>
         )}
-      </div>
+      </section>
 
-      {isAdminRole && <>
+      {isAdminRole && <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
       {/* Encours clients */}
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm">
+      <section className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.03)]">
         <div className="flex items-center justify-between p-5 border-b border-slate-100">
           <div className="flex items-center gap-2">
             <HandCoins size={18} className="text-primary" />
@@ -500,10 +598,10 @@ export const Dashboard = () => {
             ))}
           </ul>
         )}
-      </div>
+      </section>
 
       {/* Échéances 7 jours */}
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm">
+      <section className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.03)]">
         <div className="flex items-center justify-between p-5 border-b border-slate-100">
           <div className="flex items-center gap-2">
             <AlarmClock size={18} className="text-primary" />
@@ -555,9 +653,9 @@ export const Dashboard = () => {
             })}
           </ul>
         )}
-      </div>
+      </section>
 
-      </>}
+      </div>}
 
       {/* Note minuscule en bas */}
       <p className="text-center text-xs text-slate-400">

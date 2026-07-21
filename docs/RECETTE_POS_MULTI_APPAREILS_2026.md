@@ -84,3 +84,16 @@ Révision déployée : `85e34d08` sur `main`.
 - Console sur un nouvel onglet après déploiement : aucune erreur active.
 - Automatisation : 111 tests backend, 4 tests UI et 13 tests de services frontend réussis.
 - Impression et coupure réseau : scénarios de récupération couverts par les tests automatisés ; la validation physique Epson/QZ reste à effectuer sur le poste équipé.
+
+## Régression navigation par rôle du 21 juillet 2026
+
+Ces contrôles font désormais partie de la recette obligatoire. Une page testée par URL directe ne suffit plus à valider le parcours utilisateur.
+
+- Connexion par mot de passe VENDEUR : redirection vers `/pos`.
+- Connexion par mot de passe ou PIN CAISSIER : redirection vers `/file-caissier`.
+- Connexion ADMIN ou SUPER_ADMIN : redirection vers `/`.
+- Menu CAISSIER : « Encaissement » précède « Ouverture / fermeture » et pointe vers `/file-caissier`.
+- Navigation mobile : raccourcis distincts pour ADMIN, CAISSIER et VENDEUR.
+- Dashboard CAISSIER : la file d'encaissement est l'action principale ; la gestion de session de caisse est secondaire.
+- `/caisse-jour` : le CAISSIER dispose d'un retour explicite vers les encaissements et ne voit plus de parcours concurrent intégré.
+- Validation avant fusion : TypeScript réussi, 17 tests UI réussis, 13 tests de services réussis et build PWA réussi.

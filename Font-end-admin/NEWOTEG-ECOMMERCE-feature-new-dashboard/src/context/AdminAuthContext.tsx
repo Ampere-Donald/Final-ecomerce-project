@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { adminAuthApi } from '../services/api';
 
-interface AdminUser {
+export interface AdminUser {
   id: string;
   nom: string;
   username: string;
@@ -13,8 +13,8 @@ interface AdminUser {
 interface AdminAuthContextType {
   admin: AdminUser | null;
   loading: boolean;
-  login: (username: string, password: string) => Promise<void>;
-  loginPin: (username: string, pin: string) => Promise<void>;
+  login: (username: string, password: string) => Promise<AdminUser>;
+  loginPin: (username: string, pin: string) => Promise<AdminUser>;
   logout: () => void;
   isAuthenticated: boolean;
 }
@@ -68,18 +68,22 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   const login = useCallback(async (username: string, password: string) => {
     const data = await adminAuthApi.login(username, password);
+    const authenticatedAdmin = data.admin as AdminUser;
     clearOfflineCache();
     localStorage.setItem(TOKEN_KEY, data.access_token);
-    localStorage.setItem(USER_KEY, JSON.stringify(data.admin));
-    setAdmin(data.admin);
+    localStorage.setItem(USER_KEY, JSON.stringify(authenticatedAdmin));
+    setAdmin(authenticatedAdmin);
+    return authenticatedAdmin;
   }, []);
 
   const loginPin = useCallback(async (username: string, pin: string) => {
     const data = await adminAuthApi.loginPin(username, pin);
+    const authenticatedAdmin = data.admin as AdminUser;
     clearOfflineCache();
     localStorage.setItem(TOKEN_KEY, data.access_token);
-    localStorage.setItem(USER_KEY, JSON.stringify(data.admin));
-    setAdmin(data.admin);
+    localStorage.setItem(USER_KEY, JSON.stringify(authenticatedAdmin));
+    setAdmin(authenticatedAdmin);
+    return authenticatedAdmin;
   }, []);
 
   const logout = useCallback(() => {
