@@ -14,6 +14,7 @@ import {
 import { useAdminAuth } from '../context/AdminAuthContext';
 
 interface AdminMobileNavProps {
+  hidden?: boolean;
   onMenuClick: () => void;
 }
 
@@ -60,11 +61,11 @@ const roleLabels: Record<string, string> = {
 
 export const hasMobileNavigation = (role?: string | null) => Boolean(role && itemsByRole[role]);
 
-export const AdminMobileNav = ({ onMenuClick }: AdminMobileNavProps) => {
+export const AdminMobileNav = ({ hidden = false, onMenuClick }: AdminMobileNavProps) => {
   const { admin } = useAdminAuth();
   const role = admin?.role || '';
   const items = itemsByRole[role];
-  if (!items) return null;
+  if (!items || hidden) return null;
 
   return (
     <nav

@@ -156,3 +156,5 @@ export function useCashierCheckoutFlow() {
     setReference, setDeposit, setDueDate,
   };
 }
+
+export type CashierCheckoutFlow = ReturnType<typeof useCashierCheckoutFlow>;

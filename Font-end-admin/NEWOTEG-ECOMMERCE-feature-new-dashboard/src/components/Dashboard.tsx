@@ -35,6 +35,7 @@ import {
 import { useAdminAuth } from '../context/AdminAuthContext';
 import { can } from '../utils/permissions';
 import { listQueuedSales, OFFLINE_QUEUE_EVENT } from '../services/offlineSalesQueue';
+import { SellerHome } from './SellerHome';
 
 const fmtFCFA = (n: number | string | null | undefined): string => {
   const v = typeof n === 'string' ? parseFloat(n) : n ?? 0;
@@ -115,6 +116,7 @@ export const Dashboard = () => {
   const [operationsHorsLigne, setOperationsHorsLigne] = useState(0);
   const [imprimanteDisponible, setImprimanteDisponible] = useState<boolean | null>(null);
   const [bonsVendeurAttente, setBonsVendeurAttente] = useState<number | null>(null);
+  const [bonsVendeur, setBonsVendeur] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -123,6 +125,7 @@ export const Dashboard = () => {
       if (role === 'VENDEUR') {
         const bons = await bonVenteApi.mesBons().catch(() => []);
         if (!mounted) return;
+        setBonsVendeur(bons || []);
         setBonsVendeurAttente((bons || []).filter((bon: any) => bon.statut === 'EN_ATTENTE').length);
         setLoading(false);
         return;
@@ -375,6 +378,18 @@ export const Dashboard = () => {
   }, [isAdminRole, role, echeancesUrgentes, commandesAnciennes, produitsRupture, nbTicketsAttente, operationsHorsLigne, imprimanteDisponible, caisseJourStatut]);
 
   const quickActions = isAdminRole ? ADMIN_QUICK_ACTIONS : [];
+
+  if (role === 'VENDEUR') {
+    return (
+      <SellerHome
+        name={admin?.nom || admin?.username || 'Vendeur'}
+        pendingCount={bonsVendeurAttente}
+        offlineCount={operationsHorsLigne}
+        loading={loading}
+        recentTickets={bonsVendeur}
+      />
+    );
+  }
 
   return (
     <motion.div

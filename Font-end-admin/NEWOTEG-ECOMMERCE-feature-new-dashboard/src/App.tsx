@@ -45,6 +45,9 @@ const Proformas = lazy(() => import('./components/Proformas').then((m) => ({ def
 const UserGuide = lazy(() => import('./components/UserGuide').then((m) => ({ default: m.UserGuide })));
 const OfflineQueuePage = lazy(() => import('./components/OfflineQueuePage').then((m) => ({ default: m.OfflineQueuePage })));
 const PrintAuditPage = lazy(() => import('./components/PrintAuditPage').then((m) => ({ default: m.PrintAuditPage })));
+const ResponsivePOSFixturePage = import.meta.env.DEV
+  ? lazy(() => import('./features/visual-acceptance/ResponsivePOSFixturePage').then((m) => ({ default: m.ResponsivePOSFixturePage })))
+  : null;
 
 const RouteFallback = () => (
   <div className="flex min-h-[40vh] items-center justify-center text-sm font-semibold text-slate-500">
@@ -61,6 +64,7 @@ export default function App() {
         <Suspense fallback={<RouteFallback />}>
         <Routes>
           <Route path="/login" element={<AdminLogin />} />
+          {ResponsivePOSFixturePage && <Route path="/__visual-pos" element={<ResponsivePOSFixturePage />} />}
           <Route path="/" element={<AdminProtectedRoute><Layout /></AdminProtectedRoute>}>
             <Route index element={<Dashboard />} />
             <Route path="analyses" element={<RoleProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN']}><Analyses /></RoleProtectedRoute>} />

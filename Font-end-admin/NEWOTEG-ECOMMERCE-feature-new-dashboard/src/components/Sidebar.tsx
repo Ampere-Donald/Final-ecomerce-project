@@ -173,13 +173,13 @@ export const Sidebar = ({ open, onClose }: SidebarProps) => {
       end={item.path === '/'}
       onClick={onClose}
       className={({ isActive }) =>
-        `flex min-h-11 items-center gap-3 px-3 py-2 rounded-lg transition-colors font-medium ${
+        `flex min-h-11 items-center gap-3 rounded-lg px-3 py-2 font-medium transition-colors md:min-h-14 md:flex-col md:justify-center md:gap-1 md:px-1 md:text-center md:text-[10px] min-[1200px]:min-h-11 min-[1200px]:flex-row min-[1200px]:justify-start min-[1200px]:gap-3 min-[1200px]:px-3 min-[1200px]:text-left min-[1200px]:text-base ${
           isActive ? 'bg-primary/10 text-primary' : 'text-slate-600 hover:bg-slate-50 hover:text-primary'
         }`
       }
     >
       <item.icon size={20} />
-      <span className="flex-1">{item.label}</span>
+      <span className="flex-1 md:flex-none min-[1200px]:flex-1">{item.label}</span>
       {item.path === '/pos' && pendingCount > 0 && (
         <span className="flex h-5 w-5 items-center justify-center rounded-full bg-amber-500 text-[10px] font-bold text-white">
           {pendingCount}
@@ -191,11 +191,11 @@ export const Sidebar = ({ open, onClose }: SidebarProps) => {
   return (
     <aside className={`
       fixed md:sticky top-0 left-0 z-40 h-screen
-      w-64 flex-shrink-0 border-r border-slate-200 bg-white flex flex-col
+      w-64 md:w-20 min-[1200px]:w-64 flex-shrink-0 border-r border-slate-200 bg-white flex flex-col
       transition-transform duration-300 ease-in-out
       ${open ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
     `}>
-      <div className="p-6 border-b border-slate-100 flex items-center gap-3">
+      <div className="flex items-center gap-3 border-b border-slate-100 p-6 md:justify-center md:p-3 min-[1200px]:justify-start min-[1200px]:p-6">
         <button
           type="button"
           onClick={onClose}
@@ -204,19 +204,19 @@ export const Sidebar = ({ open, onClose }: SidebarProps) => {
         >
           <X size={20} />
         </button>
-        <div className="w-10 h-10 flex items-center justify-center">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center">
           <img src="/logo.png" alt="Newoteg" className="w-full h-full object-contain drop-shadow-sm" />
         </div>
-        <div className="min-w-0">
+        <div className="min-w-0 md:hidden min-[1200px]:block">
           <h1 className="text-xl font-bold tracking-tight text-primary leading-tight">{brand.companyName}</h1>
           <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400">{brand.branchName}</p>
         </div>
       </div>
 
-      <nav className="flex-1 overflow-y-auto p-4 space-y-6">
+      <nav className="flex-1 space-y-6 overflow-y-auto p-4 md:px-2 md:py-4 min-[1200px]:p-4">
         {visibleGroups.map((g) => (
           <div key={g.label}>
-            <p className="px-3 text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">
+            <p className="mb-2 px-3 text-xs font-bold uppercase tracking-wider text-slate-400 md:hidden min-[1200px]:block">
               {g.label}
             </p>
             <div className="space-y-1">{g.items.map(renderNavItem)}</div>
@@ -224,8 +224,8 @@ export const Sidebar = ({ open, onClose }: SidebarProps) => {
         ))}
       </nav>
 
-      <div className="p-4 border-t border-slate-100">
-        <div className="flex items-center gap-3 bg-slate-50 p-2 rounded-xl border border-slate-100">
+      <div className="border-t border-slate-100 p-4 md:p-2 min-[1200px]:p-4">
+        <div className="flex items-center gap-3 rounded-lg border border-slate-100 bg-slate-50 p-2 md:justify-center min-[1200px]:justify-start">
           {admin?.photoUrl ? (
             <img
               src={admin.photoUrl}
@@ -237,7 +237,7 @@ export const Sidebar = ({ open, onClose }: SidebarProps) => {
               {initials}
             </div>
           )}
-          <div className="flex-1 min-w-0">
+          <div className="min-w-0 flex-1 md:hidden min-[1200px]:block">
             <p className="text-sm font-semibold truncate">{adminName}</p>
             <p className="text-xs text-slate-500">{role || 'Utilisateur'}</p>
           </div>
@@ -248,7 +248,7 @@ export const Sidebar = ({ open, onClose }: SidebarProps) => {
             }}
             title="Se déconnecter"
             aria-label="Se déconnecter"
-            className="text-slate-400 hover:text-red-500 transition-colors"
+            className="text-slate-400 transition-colors hover:text-red-500 md:hidden min-[1200px]:block"
           >
             <LogOut size={16} />
           </button>

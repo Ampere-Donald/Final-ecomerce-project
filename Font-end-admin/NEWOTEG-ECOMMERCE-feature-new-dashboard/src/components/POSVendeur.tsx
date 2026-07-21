@@ -1,9 +1,11 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   Search, Plus, Minus, Trash2, Send, ShoppingCart,
   CheckCircle2, AlertCircle, Sparkles, X, Clock, Receipt,
   User as UserIcon, Phone, Printer, ScanBarcode, CameraOff, Star,
+  Check, Flashlight, Home,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { bonVenteApi, clientApi, produitApi, ticketApi, equivalenceApi, proformaApi, factureVirtuelleApi, getApiErrorMessage } from '../services/api';
@@ -26,8 +28,9 @@ import {
 import { formatFcfa } from '../features/pos-shared/formatters';
 import { useSellerProductHistory } from '../features/seller-pos/useSellerProductHistory';
 import { useSellerSaleFlow } from '../features/seller-pos/useSellerSaleFlow';
+import { useFlowShellFocus } from '../context/FlowShellContext';
 
-interface Produit {
+export interface Produit {
   id: string;
   nomProduit: string;
   marque?: string;
@@ -49,7 +52,7 @@ interface Client {
   prenom?: string | null;
 }
 
-interface PanierLigne {
+export interface PanierLigne {
   produitId: string;
   nomProduit: string;
   prix: number;
@@ -61,6 +64,16 @@ interface PanierLigne {
   prixDetail?: number;
   cmupActuel?: number;
   motifRemise?: string;
+  imageUrl?: string | null;
+}
+
+interface ScanHistoryItem {
+  id: string;
+  name: string;
+  price: number;
+  quantity: number;
+  scannedAt: number;
+  imageUrl?: string | null;
 }
 
 interface PosDraftContext {
@@ -69,6 +82,13 @@ interface PosDraftContext {
   selectedClientId: string;
   paymentMethod: string;
   noteCaissier: string;
+}
+
+export interface POSVendeurPreview {
+  sellerName?: string;
+  products: Produit[];
+  items?: PanierLigne[];
+  scannerOpen?: boolean;
 }
 
 interface Bon {
@@ -120,23 +140,27 @@ const METHODES = [
   { value: 'CREDIT', label: 'Crédit client' },
 ];
 
-export const POSVendeur = () => {
+export const POSVendeur = ({ preview }: { preview?: POSVendeurPreview } = {}) => {
   const { admin } = useAdminAuth();
   const navigate = useNavigate();
   const toast = useToast();
-  const isVendeur = admin?.role === 'VENDEUR';
+  const isVendeur = preview ? true : admin?.role === 'VENDEUR';
+  const sellerName = preview?.sellerName || admin?.nom || 'Vendeur';
+  useFlowShellFocus(true);
   const cartDraftScope = `pos_${admin?.id || admin?.username || admin?.role || 'anonymous'}`;
   const productHistory = useSellerProductHistory(cartDraftScope);
-  const initialDraftRef = useRef(
-    getActiveCartDraft<PanierLigne, PosDraftContext>(cartDraftScope),
-  );
+  const initialDraftRef = useRef(preview ? {
+    items: preview.items || [],
+    context: { nomClient: '', telephoneClient: '', selectedClientId: '', paymentMethod: 'ESPECES', noteCaissier: '' },
+  } : getActiveCartDraft<PanierLigne, PosDraftContext>(cartDraftScope));
   const initialDraft = initialDraftRef.current;
 
   // ── Catalogue (commun) ─────────────────────────────────────────────────
-  const [produits, setProduits] = useState<Produit[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [produits, setProduits] = useState<Produit[]>(preview?.products || []);
+  const [loading, setLoading] = useState(!preview);
   const [search, setSearch] = useState('');
   const [catalogView, setCatalogView] = useState<'all' | 'favorites' | 'recent'>('all');
+  const [selectedCategory, setSelectedCategory] = useState('all');
   const saleFlow = useSellerSaleFlow<PanierLigne>(initialDraft?.items || []);
   const panier = saleFlow.items;
   const panierRef = saleFlow.itemsRef;
@@ -171,7 +195,10 @@ export const POSVendeur = () => {
   const [codeSearchLoading, setCodeSearchLoading] = useState(false);
 
   // ── Scan caméra code-barres ────────────────────────────────────────────
-  const [scanOpen, setScanOpen]   = useState(false);
+  const [scanOpen, setScanOpen]   = useState(Boolean(preview?.scannerOpen));
+  const [scanRestartKey, setScanRestartKey] = useState(0);
+  const [recentScans, setRecentScans] = useState<ScanHistoryItem[]>([]);
+  const [torchOn, setTorchOn] = useState(false);
 
   // ── Barcode reader USB/Bluetooth (écoute globale clavier) ──────────────
   const barcodeBufferRef = useRef('');
@@ -223,24 +250,27 @@ export const POSVendeur = () => {
   }, []);
 
   useEffect(() => {
+    if (preview) return;
     let mounted = true;
     if (isVendeur) {
       clientApi.getAll().then((data: any[]) => { if (mounted) setClients(data || []); }).catch(() => {});
       loadBons();
     }
     return () => { mounted = false; };
-  }, [isVendeur, loadBons]);
+  }, [isVendeur, loadBons, preview]);
 
   useEffect(() => {
+    if (preview) return;
     const timer = window.setTimeout(() => { void loadCatalog(search); }, 250);
     return () => window.clearTimeout(timer);
-  }, [loadCatalog, search]);
+  }, [loadCatalog, preview, search]);
 
   useEffect(() => {
+    if (preview) return;
     if (initialDraft?.items.length) {
       toast.info(`Vente en cours restauree : ${initialDraft.items.reduce((sum, item) => sum + item.quantite, 0)} unite(s).`);
     }
-  }, [initialDraft, toast]);
+  }, [initialDraft, preview, toast]);
 
   useEffect(() => {
     if (panier.length === 0) {
@@ -271,23 +301,31 @@ export const POSVendeur = () => {
   }, [panier.length]);
 
   useEffect(() => {
+    if (preview) return;
     const handleSynchronizedSale = () => {
       void loadCatalog(search);
       if (isVendeur) void loadBons();
     };
     window.addEventListener(OFFLINE_SYNC_COMPLETED_EVENT, handleSynchronizedSale);
     return () => window.removeEventListener(OFFLINE_SYNC_COMPLETED_EVENT, handleSynchronizedSale);
-  }, [isVendeur, loadBons, loadCatalog, search]);
+  }, [isVendeur, loadBons, loadCatalog, preview, search]);
 
   // ── Catalogue ──────────────────────────────────────────────────────────
+  const categoryOptions = useMemo(() => Array.from(new Set(
+    produits.map(product => product.categorie?.nom || product.categorieNom).filter(Boolean) as string[],
+  )).slice(0, 4), [produits]);
+
   const produitsFiltres = useMemo(() => {
     const filtered = catalogView === 'favorites'
       ? produits.filter(product => productHistory.favoriteIds.includes(product.id))
       : catalogView === 'recent'
         ? productHistory.recentIds.map(id => produits.find(product => product.id === id)).filter(Boolean) as Produit[]
         : produits;
-    return filtered.slice(0, 60);
-  }, [catalogView, productHistory.favoriteIds, productHistory.recentIds, produits]);
+    const categoryFiltered = selectedCategory === 'all'
+      ? filtered
+      : filtered.filter(product => (product.categorie?.nom || product.categorieNom) === selectedCategory);
+    return categoryFiltered.slice(0, 60);
+  }, [catalogView, productHistory.favoriteIds, productHistory.recentIds, produits, selectedCategory]);
 
   const ajouterAuPanier = useCallback((p: Produit): boolean => {
     if (p.quantiteStock <= 0) {
@@ -316,6 +354,7 @@ export const POSVendeur = () => {
         prixDemiGros: p.prixDemiGros,
         prixDetail: p.prixDetail,
         cmupActuel: p.cmupActuel,
+        imageUrl: p.imageUrl,
       }];
 
     setPanier(next);
@@ -650,8 +689,22 @@ export const POSVendeur = () => {
   };
 
   // ── Scan caméra ────────────────────────────────────────────────────────
+  const rememberScan = useCallback((product: Produit) => {
+    const quantity = panierRef.current.find(line => line.produitId === product.id)?.quantite || 1;
+    setRecentScans(previous => [
+      {
+        id: `${product.id}-${Date.now()}`,
+        name: product.nomProduit,
+        price: Number((product.prixPromo || null) ?? product.prixDetail ?? 0),
+        quantity,
+        scannedAt: Date.now(),
+        imageUrl: product.imageUrl,
+      },
+      ...previous,
+    ].slice(0, 4));
+  }, [panierRef]);
+
   const handleCameraBarcode = useCallback(async (raw: string) => {
-    setScanOpen(false);
     try {
       const code = raw.trim();
       const p: any = await produitApi.findByRawScan(code);
@@ -660,7 +713,7 @@ export const POSVendeur = () => {
         toast.error(`"${p.nomProduit}" est en rupture de stock.`);
         return;
       }
-      ajouterAuPanier(p as Produit);
+      if (ajouterAuPanier(p as Produit)) rememberScan(p as Produit);
     } catch (scanRequestError: any) {
       const code = raw.trim();
       const message = getApiErrorMessage(
@@ -669,8 +722,10 @@ export const POSVendeur = () => {
       );
       setError(message);
       toast.error(message);
+    } finally {
+      setScanRestartKey(key => key + 1);
     }
-  }, [ajouterAuPanier, toast]);
+  }, [ajouterAuPanier, rememberScan, toast]);
 
   // Douchette USB/Bluetooth : garder le flux historique, independant de la camera.
   const handleHardwareBarcode = useCallback(async (raw: string) => {
@@ -682,7 +737,7 @@ export const POSVendeur = () => {
         toast.error(`"${p.nomProduit}" est en rupture de stock.`);
         return;
       }
-      ajouterAuPanier(p as Produit);
+      if (ajouterAuPanier(p as Produit)) rememberScan(p as Produit);
     } catch (scanRequestError: any) {
       const code = raw.trim();
       const message = getApiErrorMessage(
@@ -692,7 +747,7 @@ export const POSVendeur = () => {
       setError(message);
       toast.error(message);
     }
-  }, [ajouterAuPanier, toast]);
+  }, [ajouterAuPanier, rememberScan, toast]);
 
   const {
     videoRef: scanVideoRef,
@@ -706,7 +761,21 @@ export const POSVendeur = () => {
     if (scanOpen) startScan();
     else stopScan();
     return () => stopScan();
-  }, [scanOpen, startScan, stopScan]);
+  }, [scanOpen, scanRestartKey, startScan, stopScan]);
+
+  const toggleTorch = useCallback(async () => {
+    const stream = scanVideoRef.current?.srcObject;
+    if (!(stream instanceof MediaStream)) return;
+    const track = stream.getVideoTracks()[0];
+    if (!track) return;
+    const next = !torchOn;
+    try {
+      await track.applyConstraints({ advanced: [{ torch: next } as MediaTrackConstraintSet] });
+      setTorchOn(next);
+    } catch {
+      toast.info("La lampe n'est pas disponible sur cet appareil.");
+    }
+  }, [toast, torchOn]);
 
   useEffect(() => {
     if (!scanOpen) window.setTimeout(() => searchInputRef.current?.focus(), 0);
@@ -775,8 +844,8 @@ export const POSVendeur = () => {
     const img = resolveImgUrl(p.imageUrl);
     const contenu = (
       <>
-        <div className="w-full aspect-square bg-slate-50 rounded-lg overflow-hidden mb-2 flex items-center justify-center">
-          {img ? <img src={img} alt={p.nomProduit} className="w-full h-full object-cover" />
+        <div className="mb-2 flex aspect-square w-full items-center justify-center overflow-hidden rounded-lg bg-slate-50">
+          {img ? <img src={img} alt={p.nomProduit} className="h-full w-full object-contain p-2" />
             : <ShoppingCart size={24} className="text-slate-300" />}
         </div>
         <p className="font-semibold text-sm text-slate-900 line-clamp-2">{p.nomProduit}</p>
@@ -801,17 +870,17 @@ export const POSVendeur = () => {
     return (
       <div key={p.id} onClick={() => ajouterAuPanier(p)} onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); ajouterAuPanier(p); } }} role="button" tabIndex={0}
         aria-label={`Ajouter ${p.nomProduit} au panier${lignePanier ? `, quantite actuelle ${lignePanier.quantite}` : ''}`}
-        className={`group relative rounded-xl border border-slate-200 p-3 text-left transition-all duration-150 hover:border-slate-300 hover:shadow-sm active:scale-[0.98] motion-reduce:transform-none ${
-          justAdded ? 'bg-emerald-50' : 'bg-white'
+        className={`group relative rounded-xl border p-3 text-left transition-all duration-150 hover:shadow-sm active:scale-[0.98] motion-reduce:transform-none ${
+          lignePanier ? 'border-emerald-300 bg-emerald-50/70 ring-1 ring-emerald-100' : 'border-slate-200 bg-white hover:border-slate-300'
+        } ${
+          justAdded ? 'scale-[1.01] shadow-[0_8px_20px_rgba(5,150,105,0.12)]' : ''
         }`}>
-        <button type="button" onClick={event => { event.stopPropagation(); productHistory.toggleFavorite(p.id); }} aria-label={productHistory.favoriteIds.includes(p.id) ? `Retirer ${p.nomProduit} des favoris` : `Ajouter ${p.nomProduit} aux favoris`} className="absolute left-2 top-2 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-white/95 text-slate-500 shadow-sm ring-1 ring-slate-200 hover:text-amber-500">
+        <button type="button" onClick={event => { event.stopPropagation(); productHistory.toggleFavorite(p.id); }} aria-label={productHistory.favoriteIds.includes(p.id) ? `Retirer ${p.nomProduit} des favoris` : `Ajouter ${p.nomProduit} aux favoris`} className="absolute left-2 top-2 z-10 hidden h-9 w-9 items-center justify-center rounded-full bg-white/95 text-slate-500 shadow-sm ring-1 ring-slate-200 hover:text-amber-500 min-[1200px]:flex">
           <Star size={16} className={productHistory.favoriteIds.includes(p.id) ? 'fill-amber-400 text-amber-500' : ''} />
         </button>
         {lignePanier && (
-          <span className={`absolute right-2 top-2 z-10 flex h-6 min-w-6 items-center justify-center rounded-full px-1.5 text-xs font-black text-white transition-transform ${
-            justAdded ? 'scale-110 bg-emerald-600' : 'bg-slate-800'
-          }`}>
-            {lignePanier.quantite}
+          <span className="absolute right-2 top-2 z-10 flex items-center gap-1 rounded-full bg-emerald-600 px-2 py-1 text-[11px] font-black text-white shadow-sm">
+            <Check size={12} strokeWidth={3} /> {lignePanier.quantite}
           </span>
         )}
         {contenu}
@@ -882,27 +951,31 @@ export const POSVendeur = () => {
           <span className="text-sm text-slate-500">Total</span>
           <span className="text-xl font-bold text-primary">{fmtFCFA(total)}</span>
         </div>
+        <div className="relative min-[1200px]:hidden">
+          <Phone size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+          <input inputMode="tel" value={telephoneClient} onChange={event => setTelephoneClient(event.target.value)} placeholder="Téléphone du client (facultatif)" className="min-h-11 w-full rounded-lg border border-slate-200 bg-white pl-9 pr-3 text-sm outline-none focus:border-primary" />
+        </div>
         <select value={selectedClientId} onChange={e => setSelectedClientId(e.target.value)}
-          className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm outline-none focus:border-primary">
+          className="hidden w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm outline-none focus:border-primary min-[1200px]:block">
           <option value="">Aucun client suggéré</option>
           {clients.map(c => <option key={c.id} value={c.id}>{c.nom} {c.prenom || ''}</option>)}
         </select>
         <select value={paymentMethod} onChange={e => setPaymentMethod(e.target.value)}
-          className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm outline-none focus:border-primary">
+          className="hidden w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm outline-none focus:border-primary min-[1200px]:block">
           {METHODES.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
         </select>
-        <textarea value={noteCaissier} onChange={e => setNoteCaissier(e.target.value)} maxLength={500} rows={2} placeholder="Note à la caissière (optionnel)"
+        <textarea value={noteCaissier} onChange={e => setNoteCaissier(e.target.value)} maxLength={500} rows={2} placeholder="Note au caissier (facultatif)"
           className="w-full resize-none rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
         <button onClick={onEnvoyer ?? (() => { setReviewOpen(true); saleFlow.setPhase('REVIEWING'); })} disabled={!panier.length || submitting} title="Contrôler puis envoyer à la caissière (F8)"
           className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-primary text-white font-bold rounded-xl shadow-md shadow-primary/20 hover:bg-opacity-90 disabled:opacity-50">
-          <Send size={18} />{submitting ? 'Envoi…' : 'Envoyer à la caissière'}
+          <Send size={18} />{submitting ? 'Envoi…' : 'Envoyer au caissier'}
         </button>
         <button onClick={suspendSale} disabled={!panier.length || submitting}
-          className="w-full rounded-xl bg-slate-100 px-4 py-3 text-sm font-bold text-slate-700 hover:bg-slate-200 disabled:opacity-50">
+          className="hidden w-full rounded-xl bg-slate-100 px-4 py-3 text-sm font-bold text-slate-700 hover:bg-slate-200 disabled:opacity-50 min-[1200px]:block">
           Mettre la vente en attente
         </button>
         <button onClick={creerProforma} disabled={!panier.length || submitting}
-          className="w-full flex items-center justify-center gap-2 px-4 py-3 border border-slate-200 bg-white text-slate-700 font-bold rounded-xl hover:bg-slate-50 disabled:opacity-50">
+          className="hidden w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 font-bold text-slate-700 hover:bg-slate-50 disabled:opacity-50 min-[1200px]:flex">
           <Printer size={18} />{submitting ? 'Creation...' : 'Creer proforma'}
         </button>
       </div>
@@ -929,44 +1002,55 @@ export const POSVendeur = () => {
   );
 
   // ── Modal scan caméra ─────────────────────────────────────────────────
-  const renderScanModal = () => (
-    <AnimatePresence>
-      {scanOpen && (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-          className="fixed inset-0 z-50 bg-black/80 flex flex-col items-center justify-center p-4 gap-4 md:right-[35%] md:bg-black/90"
-          onClick={() => setScanOpen(false)}>
-          <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }} exit={{ scale: 0.95 }}
-            onClick={e => e.stopPropagation()}
-            className="bg-black rounded-2xl overflow-hidden relative w-full max-w-sm shadow-2xl">
-            <video ref={scanVideoRef} className="w-full aspect-video object-cover" muted playsInline />
-            {/* Viseur */}
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-              <div className="w-52 h-28 border border-white/30 rounded-xl relative">
-                <span className="absolute -top-px -left-px w-5 h-5 border-t-4 border-l-4 border-primary rounded-tl-lg" />
-                <span className="absolute -top-px -right-px w-5 h-5 border-t-4 border-r-4 border-primary rounded-tr-lg" />
-                <span className="absolute -bottom-px -left-px w-5 h-5 border-b-4 border-l-4 border-primary rounded-bl-lg" />
-                <span className="absolute -bottom-px -right-px w-5 h-5 border-b-4 border-r-4 border-primary rounded-br-lg" />
-                <div className="absolute top-1/2 -translate-y-1/2 left-2 right-2 h-0.5 bg-primary/70 animate-pulse" />
+  const renderScanModal = () => {
+    if (typeof document === 'undefined') return null;
+    const lastScan = recentScans[0];
+    return createPortal(
+      <AnimatePresence>
+        {scanOpen && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[80] bg-black md:grid md:grid-cols-[minmax(0,65%)_minmax(260px,35%)]">
+            <section className="relative h-full min-h-0 overflow-hidden bg-black md:h-auto" aria-label="Scanner un article">
+              <video ref={scanVideoRef} className="absolute inset-0 h-full w-full object-cover" muted playsInline />
+              <div className="absolute inset-0 bg-gradient-to-b from-black/45 via-transparent to-black/65" />
+              <div className="absolute inset-x-0 top-0 z-10 flex items-center justify-between p-4 md:p-5">
+                <button onClick={() => { setTorchOn(false); setScanOpen(false); }} className="flex h-11 w-11 items-center justify-center rounded-full bg-black/45 text-white" aria-label="Fermer le scanner"><X size={22} /></button>
+                <button onClick={toggleTorch} className={`flex h-11 w-11 items-center justify-center rounded-full text-white ${torchOn ? 'bg-amber-500' : 'bg-black/45'}`} aria-label="Activer ou désactiver la lampe"><Flashlight size={20} /></button>
               </div>
-            </div>
-            {/* Fermer */}
-            <button onClick={() => setScanOpen(false)}
-              className="absolute top-3 right-3 p-2 bg-black/50 text-white rounded-xl hover:bg-black/70">
-              <CameraOff size={18} />
-            </button>
-            <p className="absolute bottom-3 left-0 right-0 text-center text-white/60 text-xs">
-              Placez le code-barres dans le cadre
-            </p>
+              <div className="pointer-events-none absolute inset-0 flex items-center justify-center px-8 pb-24 md:pb-36">
+                <div className="relative h-44 w-full max-w-md rounded-xl border border-white/25">
+                  <span className="absolute -left-px -top-px h-8 w-8 rounded-tl-lg border-l-4 border-t-4 border-white" />
+                  <span className="absolute -right-px -top-px h-8 w-8 rounded-tr-lg border-r-4 border-t-4 border-white" />
+                  <span className="absolute -bottom-px -left-px h-8 w-8 rounded-bl-lg border-b-4 border-l-4 border-white" />
+                  <span className="absolute -bottom-px -right-px h-8 w-8 rounded-br-lg border-b-4 border-r-4 border-white" />
+                  <div className="absolute inset-x-4 top-1/2 h-0.5 -translate-y-1/2 animate-pulse bg-primary" />
+                </div>
+              </div>
+              <p className="absolute inset-x-0 top-24 text-center text-sm font-semibold text-white">Placez le code-barres dans le cadre</p>
+              {lastScan && <div className="absolute bottom-28 left-1/2 z-10 -translate-x-1/2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-bold text-white shadow-lg md:bottom-40"><span className="inline-flex items-center gap-2"><CheckCircle2 size={17} />Article ajouté · quantité {lastScan.quantity}</span></div>}
+              {scanError && <p className="absolute inset-x-4 bottom-28 z-20 rounded-lg border border-red-400/30 bg-red-950/80 px-4 py-3 text-center text-sm text-red-100 md:bottom-40">{scanError}</p>}
+
+              <div className="absolute inset-x-0 bottom-0 rounded-t-2xl bg-white p-4 md:p-5">
+                <div className="md:hidden">
+                  {lastScan ? <div className="flex items-center gap-3"><div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-lg bg-slate-50">{resolveImgUrl(lastScan.imageUrl) ? <img src={resolveImgUrl(lastScan.imageUrl) || ''} alt="" className="h-full w-full object-contain p-1" /> : <ShoppingCart size={20} className="text-slate-300" />}</div><div className="min-w-0 flex-1"><p className="truncate text-sm font-semibold text-slate-800">{lastScan.name}</p><p className="font-bold text-primary">{fmtFCFA(lastScan.price)}</p></div><strong className="text-sm text-slate-700">Qté {lastScan.quantity}</strong></div> : <p className="py-2 text-center text-sm text-slate-400">Le dernier article scanné apparaîtra ici.</p>}
+                </div>
+                <div className="hidden md:block">
+                  <h3 className="text-sm font-bold text-slate-900">Derniers articles scannés</h3>
+                  <div className="mt-2 grid gap-1.5">
+                    {recentScans.length === 0 ? <p className="py-3 text-xs text-slate-400">Aucun article scanné.</p> : recentScans.slice(0, 3).map(item => <div key={item.id} className="flex items-center justify-between gap-3 rounded-lg px-2 py-2 text-xs odd:bg-slate-50"><span className="truncate font-semibold text-slate-700">{item.name}</span><span className="shrink-0 text-slate-500">×{item.quantity}</span></div>)}
+                  </div>
+                </div>
+              </div>
+            </section>
+            <aside className="hidden min-h-0 overflow-y-auto bg-white p-5 md:block">
+              <div className="mb-4 flex items-center justify-between"><h2 className="text-lg font-bold text-slate-900">Panier · {totalUnits} article{totalUnits > 1 ? 's' : ''}</h2><ShoppingCart size={20} className="text-primary" /></div>
+              {renderPanierVendeur(() => { setScanOpen(false); setReviewOpen(true); saleFlow.setPhase('REVIEWING'); })}
+            </aside>
           </motion.div>
-          {scanError && (
-            <p className="text-red-300 text-sm bg-red-900/50 px-4 py-2 rounded-xl border border-red-500/30">
-              {scanError}
-            </p>
-          )}
-        </motion.div>
-      )}
-    </AnimatePresence>
-  );
+        )}
+      </AnimatePresence>,
+      document.body,
+    );
+  };
 
   // ── Catalogue commun ───────────────────────────────────────────────────
   const renderCatalogue = () => (
@@ -988,12 +1072,15 @@ export const POSVendeur = () => {
           <span className="hidden sm:inline text-sm font-medium">Scanner</span>
         </button>
       </div>
-      <div className="flex gap-2 overflow-x-auto pb-1" aria-label="Vues du catalogue">
-        {([['all', 'Tous'], ['favorites', 'Favoris'], ['recent', 'Récents']] as const).map(([id, label]) => <button key={id} onClick={() => setCatalogView(id)} className={`min-h-10 rounded-full px-4 text-xs font-bold ${catalogView === id ? 'bg-slate-900 text-white' : 'bg-white text-slate-600 ring-1 ring-slate-200'}`}>{label}{id === 'favorites' && productHistory.favoriteIds.length > 0 ? ` (${productHistory.favoriteIds.length})` : ''}</button>)}
+      <div className="scrollbar-hidden flex gap-2 overflow-x-auto pb-1" aria-label="Catégories du catalogue">
+        <button onClick={() => { setSelectedCategory('all'); setCatalogView('all'); }} className={`min-h-10 shrink-0 rounded-lg px-4 text-xs font-bold ${selectedCategory === 'all' && catalogView === 'all' ? 'bg-primary text-white' : 'bg-white text-slate-600 ring-1 ring-slate-200'}`}>Tous</button>
+        {categoryOptions.map(category => <button key={category} onClick={() => { setSelectedCategory(category); setCatalogView('all'); }} className={`min-h-10 shrink-0 rounded-lg px-4 text-xs font-bold ${selectedCategory === category ? 'bg-primary text-white' : 'bg-white text-slate-600 ring-1 ring-slate-200'}`}>{category}</button>)}
+        <button onClick={() => { setCatalogView('favorites'); setSelectedCategory('all'); }} className={`hidden min-h-10 shrink-0 rounded-lg px-4 text-xs font-bold min-[1200px]:block ${catalogView === 'favorites' ? 'bg-slate-900 text-white' : 'bg-white text-slate-600 ring-1 ring-slate-200'}`}>Favoris{productHistory.favoriteIds.length > 0 ? ` (${productHistory.favoriteIds.length})` : ''}</button>
+        <button onClick={() => { setCatalogView('recent'); setSelectedCategory('all'); }} className={`hidden min-h-10 shrink-0 rounded-lg px-4 text-xs font-bold min-[1200px]:block ${catalogView === 'recent' ? 'bg-slate-900 text-white' : 'bg-white text-slate-600 ring-1 ring-slate-200'}`}>Récents</button>
       </div>
 
       {/* Recherche manuelle code famille / code */}
-      <div className="flex flex-wrap gap-2 items-center bg-indigo-50 border border-indigo-200 rounded-xl px-3 py-2">
+      <div className="hidden flex-wrap items-center gap-2 rounded-xl border border-indigo-200 bg-indigo-50 px-3 py-2 min-[1200px]:flex">
         <span className="text-xs font-semibold text-indigo-400 uppercase tracking-wide shrink-0">Code :</span>
         <input
           type="text"
@@ -1035,7 +1122,7 @@ export const POSVendeur = () => {
             )}
           </div>
         ) : (
-          <div className="grid grid-cols-2 xl:grid-cols-3 gap-3">
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
             {produitsFiltres.map(renderProduit)}
           </div>
         )}
@@ -1104,14 +1191,43 @@ export const POSVendeur = () => {
     </AnimatePresence>
   );
 
+  const renderPosHeader = (title: string, subtitle: string) => (
+    <header className="mb-3 flex min-h-16 items-center justify-between border-b border-slate-200 bg-white px-3 py-2 md:rounded-xl md:border min-[1200px]:hidden">
+      <div className="flex min-w-0 items-center gap-3">
+        <button
+          type="button"
+          onClick={() => navigate('/')}
+          aria-label="Retour à l’accueil"
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600"
+        >
+          <Home size={20} />
+        </button>
+        <img src="/logo.png" alt="Newoteg" className="h-10 w-10 shrink-0 object-contain" />
+        <div className="min-w-0">
+          <p className="truncate text-sm font-extrabold text-slate-950">{title}</p>
+          <p className="truncate text-xs text-slate-500">{subtitle}</p>
+        </div>
+      </div>
+      <button
+        type="button"
+        onClick={() => navigate('/mes-tickets')}
+        aria-label="Voir les tickets"
+        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600"
+      >
+        <Receipt size={20} />
+      </button>
+    </header>
+  );
+
   // ══════════════════════════════════════════════════════════════════════
   // RENDU ADMIN/SUPER_ADMIN — ancien design simple
   // ══════════════════════════════════════════════════════════════════════
   if (!isVendeur) {
     return (
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-        className={`space-y-6 ${panier.length > 0 ? 'pb-24 md:pb-0' : ''}`}>
-        <div className="flex items-center justify-between">
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+        className={`min-h-screen bg-white md:min-h-0 md:bg-transparent ${panier.length > 0 ? 'pb-24 md:pb-0' : ''}`}>
+        {renderPosHeader('Nouvelle vente', 'Sélectionnez ou scannez un article')}
+        <div className="mb-6 hidden items-center justify-between min-[1200px]:flex">
           <div>
             <h2 className="text-2xl font-bold text-slate-900">Vente en cours</h2>
             <p className="text-slate-500 text-sm">Sélectionnez les produits, puis envoyez le ticket au caissier.</p>
@@ -1121,12 +1237,12 @@ export const POSVendeur = () => {
         {error && <div role="alert" className="flex items-center gap-2 p-3 rounded-lg bg-red-50 text-red-700 border border-red-200"><AlertCircle size={16} /><span className="text-sm">{error}</span></div>}
         {success && <div role="status" aria-live="polite" className="flex items-center gap-2 p-3 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200"><CheckCircle2 size={16} /><span className="text-sm">{success}</span></div>}
 
-        <div className="grid grid-cols-1 md:grid-cols-[minmax(0,65%)_minmax(260px,35%)] gap-5">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-[minmax(0,65%)_minmax(240px,35%)] min-[1200px]:gap-5">
           <div>{renderCatalogue()}</div>
 
           {/* Panier desktop admin */}
-          <div className="hidden md:block sticky top-4 self-start max-h-[calc(100vh-7rem)] space-y-4 overflow-y-auto pr-1">
-            <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+          <div className="sticky top-3 hidden max-h-[calc(100vh-1.5rem)] self-start space-y-4 overflow-y-auto pr-1 md:block min-[1200px]:top-4 min-[1200px]:max-h-[calc(100vh-7rem)]">
+            <div className="border border-slate-200 bg-white p-4 md:rounded-xl min-[1200px]:p-5">
               {renderPanierAdmin()}
             </div>
             <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-3">
@@ -1153,7 +1269,7 @@ export const POSVendeur = () => {
 
         {/* Barre mobile admin */}
         {panier.length > 0 && (
-          <div className="mobile-safe-bottom md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-slate-200 shadow-[0_-4px_12px_rgba(0,0,0,0.08)] px-4 pt-3">
+          <div className="mobile-safe-bottom fixed inset-x-0 bottom-0 z-[60] border-t border-slate-200 bg-white px-3 pt-3 shadow-[0_-4px_12px_rgba(0,0,0,0.08)] md:hidden">
             <button onClick={() => setPanierMobileOpen(true)}
               className={`w-full flex items-center justify-between gap-3 px-4 py-3 bg-primary text-white font-bold rounded-xl transition-all ${
                 lastAddedProductId ? 'scale-[1.01] shadow-lg' : ''
@@ -1168,13 +1284,14 @@ export const POSVendeur = () => {
         <AnimatePresence>
           {panierMobileOpen && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              className="md:hidden fixed inset-0 z-50 bg-black/50" onClick={() => setPanierMobileOpen(false)}>
+              className="fixed inset-0 z-[70] bg-black/50 md:hidden" onClick={() => setPanierMobileOpen(false)}>
               <motion.div initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }} transition={{ type: 'spring', damping: 25 }}
                 onClick={e => e.stopPropagation()}
-                className="absolute bottom-0 left-0 right-0 bg-white rounded-t-2xl max-h-[85vh] overflow-y-auto">
+                className="absolute inset-x-0 bottom-0 max-h-[88vh] overflow-y-auto rounded-t-2xl bg-white">
+                <div className="mx-auto mt-2 h-1 w-12 rounded-full bg-slate-300" />
                 <div className="flex items-center justify-between p-5 border-b border-slate-100">
                   <h3 className="font-bold text-lg text-slate-900 flex items-center gap-2"><ShoppingCart size={20} className="text-primary" />Panier ({totalUnits} unite{totalUnits > 1 ? 's' : ''})</h3>
-                  <button onClick={() => setPanierMobileOpen(false)} className="p-1 text-slate-400"><X size={20} /></button>
+                  <button onClick={() => setPanierMobileOpen(false)} aria-label="Fermer le panier" className="flex h-11 w-11 items-center justify-center rounded-lg text-slate-500"><X size={20} /></button>
                 </div>
                 <div className="p-5 space-y-3">
                   {renderPanierAdmin()}
@@ -1209,13 +1326,15 @@ export const POSVendeur = () => {
   // RENDU VENDEUR — nouveau design avec tabs, score, dropdown, primes
   // ══════════════════════════════════════════════════════════════════════
   return (
-    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-      className={`space-y-6 ${panier.length > 0 && activeTab === 'vente' ? 'pb-24 md:pb-0' : ''}`}>
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+      className={`min-h-screen bg-white md:min-h-0 md:bg-transparent ${panier.length > 0 && activeTab === 'vente' ? 'pb-24 md:pb-0' : ''}`}>
 
-      <div className="flex items-center justify-between flex-wrap gap-3">
+      {renderPosHeader('Nouvelle vente', `${totalUnits} unité${totalUnits > 1 ? 's' : ''} dans le panier`)}
+
+      <div className="mb-6 hidden items-center justify-between gap-3 min-[1200px]:flex">
         <div>
           <h2 className="text-2xl font-bold text-slate-900">Vente en cours</h2>
-          <p className="text-slate-500 text-sm">Vendeur : {admin?.nom}</p>
+          <p className="text-slate-500 text-sm">Vendeur : {sellerName}</p>
         </div>
         <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-2 text-sm font-bold text-amber-800">
           Score ce mois : {monScore} ticket{monScore > 1 ? 's' : ''}
@@ -1227,7 +1346,7 @@ export const POSVendeur = () => {
       {success && <div role="status" aria-live="polite" className="flex items-center gap-2 p-3 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200"><CheckCircle2 size={16} /><span className="text-sm">{success}</span></div>}
 
       {/* Onglets */}
-      <div className="flex gap-2 rounded-lg bg-slate-100 p-1">
+      <div className="mb-6 hidden gap-2 rounded-lg bg-slate-100 p-1 min-[1200px]:flex">
         <button onClick={() => setActiveTab('vente')}
           className={`flex-1 rounded-md px-4 py-2 text-sm font-bold transition-colors ${activeTab === 'vente' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>
           Catalogue
@@ -1249,10 +1368,10 @@ export const POSVendeur = () => {
       </div>
 
       {activeTab === 'vente' ? (
-        <div className="grid grid-cols-1 md:grid-cols-[minmax(0,65%)_minmax(260px,35%)] gap-5">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-[minmax(0,65%)_minmax(240px,35%)] min-[1200px]:gap-5">
           <div>{renderCatalogue()}</div>
-          <div className="hidden md:block sticky top-4 self-start max-h-[calc(100vh-7rem)] overflow-y-auto pr-1">
-            <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+          <div className="sticky top-3 hidden max-h-[calc(100vh-1.5rem)] self-start overflow-y-auto pr-1 md:block min-[1200px]:top-4 min-[1200px]:max-h-[calc(100vh-7rem)]">
+            <div className="border border-slate-200 bg-white p-4 md:rounded-xl min-[1200px]:p-5">
               <h3 className="font-bold text-lg text-slate-900 mb-4 flex items-center gap-2">
                 <ShoppingCart size={20} className="text-primary" /> Panier ({totalUnits} unite{totalUnits > 1 ? 's' : ''})
               </h3>
@@ -1298,13 +1417,13 @@ export const POSVendeur = () => {
 
       {/* Barre mobile vendeur */}
       {activeTab === 'vente' && panier.length > 0 && (
-        <div className="mobile-safe-bottom md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-slate-200 shadow-[0_-4px_12px_rgba(0,0,0,0.08)] px-4 pt-3">
+        <div className="mobile-safe-bottom fixed inset-x-0 bottom-0 z-[60] border-t border-slate-200 bg-white px-3 pt-3 shadow-[0_-4px_12px_rgba(0,0,0,0.08)] md:hidden">
           <button onClick={() => setPanierMobileOpen(true)}
-            className={`w-full flex items-center justify-between gap-3 px-4 py-3 bg-primary text-white font-bold rounded-xl transition-all ${
+            className={`flex min-h-12 w-full items-center justify-between gap-3 rounded-xl bg-primary px-4 py-3 font-bold text-white transition-all ${
               lastAddedProductId ? 'scale-[1.01] shadow-lg' : ''
             }`}>
-            <span className="flex items-center gap-2"><ShoppingCart size={18} />{totalUnits} unite{totalUnits > 1 ? 's' : ''}</span>
-            <span>{fmtFCFA(total)}</span>
+            <span className="text-left"><span className="block text-xs font-medium text-white/75">{totalUnits} unité{totalUnits > 1 ? 's' : ''} · {fmtFCFA(total)}</span><span className="block">Voir le panier</span></span>
+            <ShoppingCart size={20} />
           </button>
         </div>
       )}
@@ -1313,13 +1432,14 @@ export const POSVendeur = () => {
       <AnimatePresence>
         {panierMobileOpen && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="md:hidden fixed inset-0 z-50 bg-black/50" onClick={() => setPanierMobileOpen(false)}>
+            className="fixed inset-0 z-[70] bg-black/50 md:hidden" onClick={() => setPanierMobileOpen(false)}>
             <motion.div initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }} transition={{ type: 'spring', damping: 25 }}
               onClick={e => e.stopPropagation()}
-              className="absolute bottom-0 left-0 right-0 bg-white rounded-t-2xl max-h-[85vh] overflow-y-auto">
+              className="absolute inset-x-0 bottom-0 max-h-[88vh] overflow-y-auto rounded-t-2xl bg-white">
+              <div className="mx-auto mt-2 h-1 w-12 rounded-full bg-slate-300" />
               <div className="flex items-center justify-between p-5 border-b border-slate-100">
                 <h3 className="font-bold text-lg text-slate-900 flex items-center gap-2"><ShoppingCart size={20} className="text-primary" />Panier ({totalUnits} unite{totalUnits > 1 ? 's' : ''})</h3>
-                <button onClick={() => setPanierMobileOpen(false)} className="p-1 text-slate-400"><X size={20} /></button>
+                <button onClick={() => setPanierMobileOpen(false)} aria-label="Fermer le panier" className="flex h-11 w-11 items-center justify-center rounded-lg text-slate-500"><X size={20} /></button>
               </div>
               <div className="p-5">{renderPanierVendeur(() => { setPanierMobileOpen(false); setReviewOpen(true); saleFlow.setPhase('REVIEWING'); })}</div>
             </motion.div>

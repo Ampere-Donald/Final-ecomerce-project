@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { CashierPOSPage } from './CashierPOSPage';
 
@@ -19,9 +19,11 @@ describe('CashierPOSPage', () => {
   beforeEach(() => selectTicket.mockClear());
   it('présente la file, le solde et le montant du bon', () => {
     render(<CashierPOSPage />);
-    expect(screen.getByText('File active')).toBeTruthy();
+    expect(screen.getAllByText('Tickets à encaisser').length).toBeGreaterThan(0);
     expect(screen.getByText('TIC-001')).toBeTruthy();
     expect(screen.getByText('Caisse ouverte')).toBeTruthy();
     expect(screen.getAllByText(/15.*000 FCFA/).length).toBeGreaterThan(0);
+    fireEvent.click(screen.getByText('TIC-001').closest('button')!);
+    expect(selectTicket).toHaveBeenCalledWith(expect.objectContaining({ id: 't1' }));
   });
 });
