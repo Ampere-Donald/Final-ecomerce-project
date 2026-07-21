@@ -1,7 +1,9 @@
 ﻿import React, { useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   Wallet,
+  ArrowLeft,
   ArrowUpRight,
   ArrowDownRight,
   Plus,
@@ -79,12 +81,16 @@ const fmtHeure = (d: string): string =>
   }).format(new Date(d)).replace(':', 'h');
 
 export const CaisseJour = () => {
+  const { admin } = useAdminAuth();
+  const isCashier = admin?.role === 'CAISSIER';
   const [cj, setCj] = useState<CaisseJourData | null>(null);
   const [operations, setOperations] = useState<Operation[]>([]);
   const [facturesJour, setFacturesJour] = useState<FactureJour[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'encaisser' | 'encaissements' | 'mouvements' | 'proformas' | 'factures'>('encaisser');
+  const [activeTab, setActiveTab] = useState<'encaisser' | 'encaissements' | 'mouvements' | 'proformas' | 'factures'>(
+    isCashier ? 'encaissements' : 'encaisser',
+  );
   const [searchFacture, setSearchFacture] = useState('');
   const [printingFacture, setPrintingFacture] = useState<string | null>(null);
   const [receiptFacture, setReceiptFacture] = useState<FactureJour | null>(null);
@@ -112,7 +118,6 @@ export const CaisseJour = () => {
   const [showFV, setShowFV] = useState(false);
   const [fvFactureId, setFvFactureId] = useState<string | null>(null);
 
-  const { admin } = useAdminAuth();
   const toast = useToast();
 
   const charger = async () => {
@@ -249,13 +254,38 @@ export const CaisseJour = () => {
 
   if (!cj) {
     return (
-      <div className="text-center text-slate-400 py-12">
-        Caisse du jour indisponible.
+      <div className="space-y-5 py-8">
+        {isCashier && (
+          <Link
+            to="/file-caissier"
+            className="inline-flex min-h-11 items-center gap-2 rounded-lg bg-primary px-4 text-sm font-bold text-white hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+          >
+            <ArrowLeft size={16} />
+            Retour aux encaissements
+          </Link>
+        )}
+        <div className="rounded-xl border border-slate-200 bg-white p-8 text-center text-slate-500">
+          Caisse du jour indisponible.
+        </div>
       </div>
     );
   }
 
   const ouverte = cj.statut === 'OUVERTE';
+  const tabs = isCashier
+    ? ([
+        ['encaissements', 'Encaissements du jour'],
+        ['mouvements', 'Mouvements'],
+        ['proformas', 'Proformas'],
+        ['factures', 'Factures'],
+      ] as const)
+    : ([
+        ['encaisser', 'À encaisser'],
+        ['encaissements', 'Encaissements'],
+        ['mouvements', 'Mouvements'],
+        ['proformas', 'Proformas'],
+        ['factures', 'Factures'],
+      ] as const);
 
   return (
     <motion.div
@@ -263,18 +293,34 @@ export const CaisseJour = () => {
       animate={{ opacity: 1, y: 0 }}
       className="space-y-6"
     >
-      <div className="flex items-center justify-between flex-wrap gap-3">
+      <div className="flex items-start justify-between flex-wrap gap-3">
         <div>
-          <h2 className="text-2xl font-bold text-slate-900">Caisse du jour</h2>
+          <h1 className="text-2xl font-bold text-slate-900">
+            {isCashier ? 'Ouverture et fermeture de caisse' : 'Caisse du jour'}
+          </h1>
           <p className="text-slate-500 text-sm">
             {fmtDateLong(cj.date)} — Ouverte à {fmtHeure(cj.ouvertureAt)}
             {cj.fermetureAt && ` — Fermée à ${fmtHeure(cj.fermetureAt)}`}
           </p>
+          {isCashier && (
+            <p className="mt-1 text-xs text-slate-400">
+              Cette page sert uniquement à gérer la session et ses mouvements.
+            </p>
+          )}
         </div>
         <div className="flex items-center gap-2">
+          {isCashier && (
+            <Link
+              to="/file-caissier"
+              className="inline-flex min-h-11 items-center gap-2 rounded-lg bg-primary px-4 text-sm font-bold text-white hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+            >
+              <ArrowLeft size={16} />
+              Retour aux encaissements
+            </Link>
+          )}
           <button
             onClick={charger}
-            className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-slate-600 hover:text-primary border border-slate-200 rounded-lg"
+            className="flex min-h-11 items-center gap-2 px-3 py-2 text-sm font-medium text-slate-600 hover:text-primary border border-slate-200 rounded-lg"
           >
             <RefreshCw size={14} />
             Rafraîchir
@@ -327,13 +373,7 @@ export const CaisseJour = () => {
       )}
 
       <div className="flex flex-wrap gap-2 rounded-xl border border-slate-200 bg-white p-2">
-        {([
-          ['encaisser', 'À encaisser'],
-          ['encaissements', 'Encaissements'],
-          ['mouvements', 'Mouvements'],
-          ['proformas', 'Proformas'],
-          ['factures', 'Factures'],
-        ] as const).map(([key, label]) => (
+        {tabs.map(([key, label]) => (
           <button
             key={key}
             onClick={() => setActiveTab(key)}
@@ -370,7 +410,7 @@ export const CaisseJour = () => {
         </div>
       </div>
 
-      {activeTab === 'encaisser' && (
+      {activeTab === 'encaisser' && !isCashier && (
         <FileCaissier />
       )}
 

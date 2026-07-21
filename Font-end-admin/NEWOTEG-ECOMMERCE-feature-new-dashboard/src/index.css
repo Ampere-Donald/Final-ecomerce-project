@@ -60,6 +60,15 @@
     padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
   }
 
+  .scrollbar-hidden {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .scrollbar-hidden::-webkit-scrollbar {
+    display: none;
+  }
+
   .skeleton {
     @apply animate-pulse rounded-lg bg-slate-200;
   }

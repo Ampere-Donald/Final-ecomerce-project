@@ -1308,15 +1308,27 @@ export const Produits = () => {
                     <div className="flex items-start justify-between gap-2">
                       <p className="font-bold text-slate-900 text-sm leading-tight">{prod.nomProduit}</p>
                       <div className="flex items-center gap-1 shrink-0">
-                        <button onClick={() => openEditModal(prod)} className="p-1.5 text-slate-400 hover:text-primary hover:bg-slate-100 rounded-lg">
+                        <button
+                          onClick={() => openEditModal(prod)}
+                          className="flex size-11 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-primary"
+                          aria-label={`Modifier ${prod.nomProduit}`}
+                        >
                           <Edit2 size={15} />
                         </button>
                         {canDelete && (deletingId === prod.id ? (
-                          <button onClick={() => handleDelete(prod.id)} className="flex items-center gap-1 px-2 py-1 text-[10px] font-bold text-white bg-red-500 rounded-lg animate-pulse">
+                          <button
+                            onClick={() => handleDelete(prod.id)}
+                            className="flex min-h-11 min-w-11 items-center justify-center gap-1 rounded-lg bg-red-500 px-2 text-[10px] font-bold text-white animate-pulse"
+                            aria-label={`Confirmer la suppression de ${prod.nomProduit}`}
+                          >
                             <AlertTriangle size={10} />OK
                           </button>
                         ) : (
-                          <button onClick={() => handleDelete(prod.id)} className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg">
+                          <button
+                            onClick={() => handleDelete(prod.id)}
+                            className="flex size-11 items-center justify-center rounded-lg text-slate-400 hover:bg-red-50 hover:text-red-500"
+                            aria-label={`Supprimer ${prod.nomProduit}`}
+                          >
                             <Trash2 size={15} />
                           </button>
                         ))}
@@ -1378,7 +1390,8 @@ export const Produits = () => {
                 <button 
                   onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                   disabled={currentPage === 1}
-                  className="p-1 rounded-md hover:bg-slate-200 disabled:opacity-50 disabled:cursor-not-allowed text-slate-600"
+                  className="flex size-11 items-center justify-center rounded-lg text-slate-600 hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-50"
+                  aria-label="Page précédente"
                 >
                   <ChevronLeft size={16} />
                 </button>
@@ -1392,7 +1405,8 @@ export const Produits = () => {
                        <button
                          key={pageNum}
                          onClick={() => setCurrentPage(pageNum)}
-                         className={`w-7 h-7 flex items-center justify-center rounded-lg text-xs font-bold transition-colors ${currentPage === pageNum ? 'bg-primary text-white shadow-sm' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+                         className={`flex size-11 items-center justify-center rounded-lg text-xs font-bold transition-colors ${currentPage === pageNum ? 'bg-primary text-white shadow-sm' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+                         aria-label={`Page ${pageNum}`}
                        >
                          {pageNum}
                        </button>
@@ -1402,7 +1416,8 @@ export const Produits = () => {
                 <button 
                   onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                   disabled={currentPage === totalPages}
-                  className="p-1 rounded-md hover:bg-slate-200 disabled:opacity-50 disabled:cursor-not-allowed text-slate-600"
+                  className="flex size-11 items-center justify-center rounded-lg text-slate-600 hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-50"
+                  aria-label="Page suivante"
                 >
                   <ChevronRight size={16} />
                 </button>

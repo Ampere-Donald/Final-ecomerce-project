@@ -32,6 +32,7 @@ import {
   ScanBarcode,
   CloudOff,
   History,
+  CreditCard,
 } from 'lucide-react';
 import { useAdminAuth } from '../context/AdminAuthContext';
 import { brand } from '../config/brand';
@@ -78,6 +79,16 @@ export const Sidebar = ({ open, onClose }: SidebarProps) => {
 
   const groups: Group[] = [
     {
+      label: 'Caisse',
+      items: [
+        ...add(role === 'CAISSIER' && can.accessFileCaissier(role), {
+          label: 'Encaissement',
+          icon: CreditCard,
+          path: '/file-caissier',
+        }),
+      ],
+    },
+    {
       label: 'Pilotage',
       items: [
         ...add(can.accessDashboard(role), { label: 'Tableau de bord', icon: LayoutDashboard, path: '/' }),
@@ -88,7 +99,11 @@ export const Sidebar = ({ open, onClose }: SidebarProps) => {
     {
       label: 'Finance',
       items: [
-        ...add(can.accessCaisseJour(role), { label: 'Caisse du jour', icon: Wallet, path: '/caisse-jour' }),
+        ...add(can.accessCaisseJour(role), {
+          label: role === 'CAISSIER' ? 'Ouverture / fermeture' : 'Caisse du jour',
+          icon: Wallet,
+          path: '/caisse-jour',
+        }),
         ...add(can.accessCaisseGlobale(role), { label: 'Caisse globale', icon: Landmark, path: '/caisse' }),
         ...add(can.accessCoffres(role), { label: 'Coffres', icon: PiggyBank, path: '/coffres' }),
         ...add(can.accessPaie(role), { label: 'Paie', icon: Banknote, path: '/paie' }),
@@ -100,6 +115,11 @@ export const Sidebar = ({ open, onClose }: SidebarProps) => {
     {
       label: 'Boutique',
       items: [
+        ...add(role !== 'CAISSIER' && can.accessFileCaissier(role), {
+          label: 'Encaissement',
+          icon: CreditCard,
+          path: '/file-caissier',
+        }),
         ...add(can.accessPOSVendeur(role), { label: 'Vente en cours', icon: ShoppingBag, path: '/pos' }),
         ...add(can.accessMesTickets(role), { label: 'Mes tickets', icon: Receipt, path: '/mes-tickets' }),
         ...add(can.voirPrimes(role), { label: 'Primes vendeurs', icon: Award, path: '/primes' }),
