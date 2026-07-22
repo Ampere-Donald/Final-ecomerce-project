@@ -31,7 +31,11 @@ export function CashierPOSView({ flow }: { flow: CashierCheckoutFlow }) {
       if (event.key === 'F2') flow.setMethod('ESPECES');
       if (event.key === 'F3') flow.setMethod('MOBILE_MONEY');
       if (event.key === 'F4') flow.setMethod('CARTE');
-      if (event.key === 'F8' && flow.canPay) void flow.checkout();
+      if (event.key === 'F8' && flow.canPay) {
+        const checkoutButton = document.querySelector<HTMLButtonElement>('[data-checkout-and-print]');
+        if (checkoutButton && !checkoutButton.disabled) checkoutButton.click();
+        else void flow.checkout();
+      }
     };
     document.addEventListener('keydown', onKeyDown);
     return () => document.removeEventListener('keydown', onKeyDown);
@@ -68,7 +72,7 @@ export function CashierPOSView({ flow }: { flow: CashierCheckoutFlow }) {
 
       <CashierDesktopWorkspace flow={flow} onHelp={() => setHelpOpen(true)} onNextTicket={nextTicket} />
 
-      {helpOpen && <div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/40 p-4" onClick={() => setHelpOpen(false)}><div role="dialog" aria-modal="true" aria-label="Aide caisse" className="w-full max-w-md rounded-xl bg-white p-5 shadow-2xl" onClick={event => event.stopPropagation()}><div className="flex items-center justify-between"><h2 className="font-bold text-slate-950">Aide du poste de caisse</h2><button type="button" onClick={() => setHelpOpen(false)} aria-label="Fermer l’aide" className="flex h-11 w-11 items-center justify-center rounded-lg text-slate-500"><X size={19} /></button></div><label className="mt-4 flex min-h-12 items-center justify-between rounded-lg bg-slate-50 px-3 text-sm font-semibold text-slate-700"><span>Activer les raccourcis clavier</span><input type="checkbox" checked={shortcutsEnabled} onChange={event => setShortcutsEnabled(event.target.checked)} className="h-5 w-5 accent-primary" /></label><dl className="mt-4 grid grid-cols-[auto_1fr] gap-x-4 gap-y-3 text-sm"><dt className="font-mono font-bold">F2</dt><dd>Espèces</dd><dt className="font-mono font-bold">F3</dt><dd>Mobile Money</dd><dt className="font-mono font-bold">F4</dt><dd>Carte</dd><dt className="font-mono font-bold">F8</dt><dd>Valider le paiement</dd></dl></div></div>}
+      {helpOpen && <div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/40 p-4" onClick={() => setHelpOpen(false)}><div role="dialog" aria-modal="true" aria-label="Aide caisse" className="w-full max-w-md rounded-xl bg-white p-5 shadow-2xl" onClick={event => event.stopPropagation()}><div className="flex items-center justify-between"><h2 className="font-bold text-slate-950">Aide du poste de caisse</h2><button type="button" onClick={() => setHelpOpen(false)} aria-label="Fermer l’aide" className="flex h-11 w-11 items-center justify-center rounded-lg text-slate-500"><X size={19} /></button></div><label className="mt-4 flex min-h-12 items-center justify-between rounded-lg bg-slate-50 px-3 text-sm font-semibold text-slate-700"><span>Activer les raccourcis clavier</span><input type="checkbox" checked={shortcutsEnabled} onChange={event => setShortcutsEnabled(event.target.checked)} className="h-5 w-5 accent-primary" /></label><dl className="mt-4 grid grid-cols-[auto_1fr] gap-x-4 gap-y-3 text-sm"><dt className="font-mono font-bold">F2</dt><dd>Espèces</dd><dt className="font-mono font-bold">F3</dt><dd>Mobile Money</dd><dt className="font-mono font-bold">F4</dt><dd>Carte</dd><dt className="font-mono font-bold">F8</dt><dd>Valider et imprimer</dd></dl></div></div>}
     </motion.main>
   );
 }

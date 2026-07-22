@@ -101,7 +101,7 @@ export const Sidebar = ({ open, onClose, compact = false }: SidebarProps) => {
       label: 'Finance',
       items: [
         ...add(can.accessCaisseJour(role), {
-          label: role === 'CAISSIER' ? 'Ouverture / fermeture' : 'Caisse du jour',
+          label: role === 'CAISSIER' ? 'Session de caisse' : 'Caisse du jour',
           icon: Wallet,
           path: '/caisse-jour',
         }),
@@ -173,6 +173,8 @@ export const Sidebar = ({ open, onClose, compact = false }: SidebarProps) => {
     <NavLink
       key={item.path}
       to={item.path}
+      title={compact ? item.label : undefined}
+      aria-label={compact ? item.label : undefined}
       end={item.path === '/'}
       onClick={onClose}
       className={({ isActive }) =>

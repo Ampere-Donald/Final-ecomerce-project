@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { bonVenteApi, caisseJourApi, clientApi, getApiErrorMessage } from '../../services/api';
 import { subscribeAuthenticatedSse } from '../../services/authenticatedSse';
-import type { CashierClient, CashierTicket, CheckoutStep, DocumentType, PaymentMethod } from './types';
+import type { CashierClient, CashierTicket, CheckoutStatus, CheckoutStep, DocumentType, PaymentMethod } from './types';
 
 export function useCashierCheckoutFlow() {
   const [tickets, setTickets] = useState<CashierTicket[]>([]);
@@ -9,6 +9,7 @@ export function useCashierCheckoutFlow() {
   const [step, setStep] = useState<CheckoutStep>('QUEUE');
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [checkoutStatus, setCheckoutStatus] = useState<CheckoutStatus>('IDLE');
   const [error, setError] = useState<string | null>(null);
   const [caisse, setCaisse] = useState<any>(null);
   const [method, setMethod] = useState<PaymentMethod>('ESPECES');
@@ -26,9 +27,10 @@ export function useCashierCheckoutFlow() {
   const [result, setResult] = useState<any>(null);
   const [creditPreview, setCreditPreview] = useState<any>(null);
   const [creatingCustomer, setCreatingCustomer] = useState(false);
+  const checkoutInFlight = useRef(false);
 
-  const load = useCallback(async () => {
-    setError(null);
+  const load = useCallback(async (preserveCurrentError = false) => {
+    if (!preserveCurrentError) setError(null);
     try {
       const [pending, day] = await Promise.all([
         bonVenteApi.pending(),
@@ -38,7 +40,7 @@ export function useCashierCheckoutFlow() {
       setCaisse(day);
       setSelected((current) => current ? (pending || []).find((item: CashierTicket) => item.id === current.id) || current : null);
     } catch (cause: any) {
-      setError(cause?.response?.data?.message || 'La file ne peut pas être chargée. Réessayez.');
+      if (!preserveCurrentError) setError(cause?.response?.data?.message || 'La file ne peut pas être chargée. Réessayez.');
     } finally {
       setLoading(false);
     }
@@ -110,9 +112,12 @@ export function useCashierCheckoutFlow() {
     setDeposit('');
     setDueDate('');
     setResult(null);
+    setError(null);
+    setCheckoutStatus('IDLE');
   }, []);
 
   const selectTicket = useCallback((ticket: CashierTicket) => {
+    if (checkoutInFlight.current) return;
     resetPayment();
     setSelected(ticket);
     setCustomer(ticket.client || null);
@@ -121,6 +126,7 @@ export function useCashierCheckoutFlow() {
   }, [resetPayment]);
 
   const closeTicket = useCallback(() => {
+    if (checkoutInFlight.current) return;
     setSelected(null);
     setStep('QUEUE');
     resetPayment();
@@ -128,13 +134,26 @@ export function useCashierCheckoutFlow() {
 
   const total = Number(selected?.montantTotal || 0);
   const change = method === 'ESPECES' ? Math.max(0, Number(cashReceived || 0) - total) : 0;
-  const canPay = Boolean(selected) && !submitting
+  const canPay = Boolean(selected) && !submitting && caisse?.statut !== 'FERMEE'
     && (method !== 'ESPECES' || Number(cashReceived) >= total)
     && (method !== 'CREDIT' || Boolean(customer && dueDate && creditPreview?.autorise));
 
+  const paymentBlockReason = useMemo(() => {
+    if (!selected) return 'Sélectionnez un ticket à encaisser.';
+    if (submitting) return 'Le paiement est en cours de validation.';
+    if (caisse?.statut === 'FERMEE') return 'La caisse est fermée. Ouvrez une session avant d’encaisser.';
+    if (method === 'ESPECES' && Number(cashReceived) < total) return 'Le montant reçu est inférieur au total à payer.';
+    if (method === 'CREDIT' && !customer) return 'Sélectionnez un client pour accorder un crédit.';
+    if (method === 'CREDIT' && !dueDate) return 'Choisissez une date d’échéance.';
+    if (method === 'CREDIT' && !creditPreview?.autorise) return 'Ce crédit ne peut pas être validé avec les conditions actuelles.';
+    return null;
+  }, [caisse?.statut, cashReceived, creditPreview?.autorise, customer, dueDate, method, selected, submitting, total]);
+
   const checkout = useCallback(async () => {
-    if (!selected || !canPay) return;
+    if (!selected || !canPay || checkoutInFlight.current) return null;
+    checkoutInFlight.current = true;
     setSubmitting(true);
+    setCheckoutStatus('VALIDATING');
     setError(null);
     try {
       const response = await bonVenteApi.valider(selected.id, {
@@ -148,18 +167,23 @@ export function useCashierCheckoutFlow() {
         idempotencyKey: `checkout-${selected.id}`,
       });
       setResult(response);
+      setCheckoutStatus('PAID');
       setStep('SUCCESS');
-      await load();
+      // La vente est déjà enregistrée. La confirmation et l'impression ne doivent
+      // pas attendre le prochain rafraîchissement de la file de tickets.
+      void load();
       return response;
     } catch (cause: any) {
-      setError(cause?.response?.data?.message || 'Le paiement n’a pas été enregistré. Vérifiez les informations.');
+      setCheckoutStatus('FAILED');
+      setError(getApiErrorMessage(cause, 'Le paiement n’a pas été enregistré. Vérifiez les informations puis réessayez.'));
       if (cause?.response?.status === 409) {
         setSelected(null);
         setStep('QUEUE');
       }
-      await load();
+      void load(true);
       return null;
     } finally {
+      checkoutInFlight.current = false;
       setSubmitting(false);
     }
   }, [canPay, cashReceived, customer, deposit, documentType, dueDate, load, method, reference, selected]);
@@ -181,10 +205,10 @@ export function useCashierCheckoutFlow() {
   const queueTotal = useMemo(() => tickets.reduce((sum, ticket) => sum + Number(ticket.montantTotal), 0), [tickets]);
 
   return {
-    tickets, selected, step, loading, submitting, error, caisse, method, documentType,
+    tickets, selected, step, loading, submitting, checkoutStatus, error, caisse, method, documentType,
     customerQuery, customerResults, customer, cashReceived, reference, deposit, dueDate,
     result, creditPreview, creatingCustomer, customerSearching, customerSearchAttempted, customerSearchError,
-    total, change, canPay, queueTotal, load, selectTicket, closeTicket, checkout, createCustomer, searchCustomers,
+    total, change, canPay, paymentBlockReason, queueTotal, load, selectTicket, closeTicket, checkout, createCustomer, searchCustomers,
     setStep, setMethod, setDocumentType, setCustomerQuery, setCustomer, setCashReceived,
     setReference, setDeposit, setDueDate,
   };

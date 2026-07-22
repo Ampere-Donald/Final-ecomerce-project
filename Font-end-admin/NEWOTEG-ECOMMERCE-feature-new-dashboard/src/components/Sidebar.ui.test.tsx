@@ -24,7 +24,7 @@ describe('Sidebar for a cashier', () => {
     );
 
     const checkoutLink = screen.getByRole('link', { name: 'Encaissement' });
-    const cashSessionLink = screen.getByRole('link', { name: 'Ouverture / fermeture' });
+    const cashSessionLink = screen.getByRole('link', { name: 'Session de caisse' });
 
     expect(checkoutLink.getAttribute('href')).toBe('/file-caissier');
     expect(cashSessionLink.getAttribute('href')).toBe('/caisse-jour');

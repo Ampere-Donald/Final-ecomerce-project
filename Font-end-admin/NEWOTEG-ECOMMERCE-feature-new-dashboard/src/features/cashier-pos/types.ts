@@ -4,6 +4,7 @@ import type { CommercialDocumentType, PosPaymentMethod } from '../pos-shared/typ
 export type PaymentMethod = PosPaymentMethod;
 export type DocumentType = CommercialDocumentType;
 export type CheckoutStep = 'QUEUE' | 'TICKET' | 'CUSTOMER' | 'PAYMENT' | 'SUCCESS';
+export type CheckoutStatus = 'IDLE' | 'VALIDATING' | 'PAID' | 'FAILED';
 
 export interface TicketLine {
   id: string;

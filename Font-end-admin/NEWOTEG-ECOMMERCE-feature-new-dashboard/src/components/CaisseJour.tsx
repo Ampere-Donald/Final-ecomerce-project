@@ -25,6 +25,7 @@ import { FactureVirtuelleModal } from './FactureVirtuelleModal';
 import { useToast } from './ui/Toast';
 import { Proformas } from './Proformas';
 import { Invoices } from './Invoices';
+import { CashierDesktopTopBar } from '../features/cashier-pos/CashierDesktopShell';
 
 interface Operation {
   id: string;
@@ -291,12 +292,14 @@ export const CaisseJour = () => {
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="space-y-6"
+      className={isCashier ? 'min-[1200px]:h-full min-[1200px]:overflow-hidden min-[1200px]:bg-slate-50' : 'space-y-6'}
     >
+      {isCashier && <div className="hidden min-[1200px]:block"><CashierDesktopTopBar caisseStatus={cj.statut} /></div>}
+      <div className={isCashier ? 'space-y-6 min-[1200px]:h-[calc(100%-4rem)] min-[1200px]:overflow-y-auto min-[1200px]:px-8 min-[1200px]:py-6 min-[1200px]:[&_.rounded-2xl]:rounded-md' : 'contents'}>
       <div className="flex items-start justify-between flex-wrap gap-3">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">
-            {isCashier ? 'Ouverture et fermeture de caisse' : 'Caisse du jour'}
+            {isCashier ? 'Session de caisse' : 'Caisse du jour'}
           </h1>
           <p className="text-slate-500 text-sm">
             {fmtDateLong(cj.date)} — Ouverte à {fmtHeure(cj.ouvertureAt)}
@@ -304,7 +307,7 @@ export const CaisseJour = () => {
           </p>
           {isCashier && (
             <p className="mt-1 text-xs text-slate-400">
-              Cette page sert uniquement à gérer la session et ses mouvements.
+              Suivez les encaissements et gérez l’ouverture, les mouvements et la fermeture de votre caisse.
             </p>
           )}
         </div>
@@ -312,7 +315,7 @@ export const CaisseJour = () => {
           {isCashier && (
             <Link
               to="/file-caissier"
-              className="inline-flex min-h-11 items-center gap-2 rounded-lg bg-primary px-4 text-sm font-bold text-white hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+              className="inline-flex min-h-11 items-center gap-2 rounded-lg bg-primary px-4 text-sm font-bold text-white hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 min-[1200px]:hidden"
             >
               <ArrowLeft size={16} />
               Retour aux encaissements
@@ -911,6 +914,7 @@ export const CaisseJour = () => {
           onClose={() => setReceiptFacture(null)}
         />
       )}
+      </div>
     </motion.div>
   );
 };
