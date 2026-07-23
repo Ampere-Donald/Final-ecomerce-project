@@ -35,6 +35,7 @@ export interface TicketData {
   methodePaiement: string;
   numero: string;
   client?: { nom: string; telephone?: string } | null;
+  vendeur?: string;
   dateVente?: string;
 }
 
@@ -58,7 +59,7 @@ function row(left: string, right: string, width = COLUMNS): string[] {
 }
 
 export function buildTicketEscPos(data: TicketData): Uint8Array {
-  const { lignes, montantTotal, methodePaiement, numero, client, dateVente } = data;
+  const { lignes, montantTotal, methodePaiement, numero, client, vendeur, dateVente } = data;
 
   const enc: any = new ReceiptPrinterEncoder({
     printerModel: 'epson-tm-t20ii',
@@ -91,6 +92,7 @@ export function buildTicketEscPos(data: TicketData): Uint8Array {
     enc.line('Client: ' + client.nom);
     if (client.telephone) enc.line('Tel: ' + client.telephone);
   }
+  if (vendeur) enc.line('Vendeur: ' + vendeur);
   enc.rule();
 
   // ── Lignes : nom (+ qté) à gauche, montant à droite, même ligne ──

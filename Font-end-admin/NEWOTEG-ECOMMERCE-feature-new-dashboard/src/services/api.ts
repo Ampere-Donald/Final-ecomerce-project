@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { createClientId } from '../utils/clientId';
 
 // En production, VITE_API_URL pointe vers le backend (ex: https://api.newoteg.com)
 // En dev local, le proxy Vite redirige /api vers localhost:3000
@@ -16,9 +17,7 @@ const api = axios.create({
 
 // ── Auth interceptors ────────────────────────────────────────────────────
 api.interceptors.request.use((config) => {
-  config.headers['X-Request-Id'] = typeof crypto.randomUUID === 'function'
-    ? crypto.randomUUID()
-    : `web-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  config.headers['X-Request-Id'] = createClientId('web');
   const token = localStorage.getItem('newoteg_admin_token');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
@@ -62,6 +61,17 @@ export const getApiErrorMessage = (err: any, fallback: string): string => {
   }
 
   return fallback + reference;
+};
+
+export const getLoginErrorMessage = (
+  err: any,
+  invalidCredentialsFallback: string,
+): string => {
+  if (!err?.response) {
+    return "Impossible de joindre le serveur. Vérifiez Internet puis ouvrez l'adresse sécurisée https://admin.newoteg.com.";
+  }
+
+  return getApiErrorMessage(err, invalidCredentialsFallback);
 };
 
 // ── Admin Auth API ───────────────────────────────────────────────────────

@@ -1,3 +1,5 @@
+import { createClientId } from '../utils/clientId';
+
 export type SuspendedCart<TItem, TContext> = {
   id: string;
   createdAt: string;
@@ -42,7 +44,7 @@ export function saveSuspendedCart<TItem, TContext>(
   context: TContext,
 ): SuspendedCart<TItem, TContext>[] {
   const entry: SuspendedCart<TItem, TContext> = {
-    id: typeof crypto.randomUUID === 'function' ? crypto.randomUUID() : `cart-${Date.now()}`,
+    id: createClientId('cart'),
     createdAt: new Date().toISOString(),
     items,
     context,

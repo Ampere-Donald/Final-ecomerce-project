@@ -9,6 +9,15 @@ const BACKEND = 'https://api.newoteg.com';
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
+
+    // Les anciens navigateurs Android n'activent pas toutes les API de
+    // sécurité sur une page HTTP. Forcer HTTPS avant de servir l'application
+    // évite une interface chargée mais incapable d'envoyer la connexion.
+    if (url.protocol === 'http:') {
+      url.protocol = 'https:';
+      return Response.redirect(url.toString(), 308);
+    }
+
     if (url.pathname.startsWith('/api/') || url.pathname.startsWith('/uploads/')) {
       // Compatibilite avec les anciens bundles/PWA : avant la reunification,
       // le scan camera appelait /scan-code alors que le backend actuellement

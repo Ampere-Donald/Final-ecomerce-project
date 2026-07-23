@@ -1,7 +1,7 @@
 import { ChevronRight, ListChecks, Loader2, ReceiptText } from 'lucide-react';
 import type { CashierCheckoutFlow } from './useCashierCheckoutFlow';
 import { CashierCountdown } from './CashierCountdown';
-import { money, type CashierTicket } from './types';
+import { cashierSellerName, money, type CashierTicket } from './types';
 
 interface QueueCardProps {
   ticket: CashierTicket;
@@ -11,7 +11,7 @@ interface QueueCardProps {
 
 function QueueCard({ ticket, active, onClick }: QueueCardProps) {
   const units = ticket.lignes.reduce((sum, line) => sum + line.quantite, 0);
-  const seller = (ticket as CashierTicket & { vendeur?: { nom?: string } }).vendeur?.nom || 'Vendeur';
+  const seller = cashierSellerName(ticket);
 
   return (
     <button

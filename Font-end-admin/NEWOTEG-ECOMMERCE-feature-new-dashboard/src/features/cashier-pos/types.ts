@@ -18,7 +18,11 @@ export interface CashierTicket {
   id: string;
   numeroTicket: string;
   vendeurId: string;
-  vendeur?: { nom?: string | null; prenom?: string | null } | null;
+  vendeur?: {
+    nom?: string | null;
+    prenom?: string | null;
+    username?: string | null;
+  } | null;
   nomClient?: string | null;
   telephoneClient?: string | null;
   noteCaissier?: string | null;
@@ -38,3 +42,12 @@ export interface CashierClient {
 }
 
 export const money = formatFcfa;
+
+export const cashierSellerName = (ticket: CashierTicket): string => {
+  const fullName = [ticket.vendeur?.prenom, ticket.vendeur?.nom]
+    .filter(Boolean)
+    .join(' ')
+    .trim();
+
+  return fullName || ticket.vendeur?.username || 'Vendeur non identifié';
+};

@@ -33,6 +33,7 @@ export interface ReceiptProps {
     nui?: string;
     rccm?: string;
   };
+  vendeur?: string;
   dateVente?: string;
   notes?: string;
   autoPrint?: boolean;
@@ -82,6 +83,7 @@ export const ReceiptGenerator: React.FC<ReceiptProps> = (props) => {
     methodePaiement,
     numero,
     client,
+    vendeur,
     dateVente,
     notes,
     autoPrint = false,
@@ -266,6 +268,7 @@ export const ReceiptGenerator: React.FC<ReceiptProps> = (props) => {
           methodePaiement,
           numero: displayNumero,
           client: client ? { nom: client.nom, telephone: client.telephone } : null,
+          vendeur,
           dateVente,
         }),
       );
@@ -358,6 +361,9 @@ export const ReceiptGenerator: React.FC<ReceiptProps> = (props) => {
       pdf.setTextColor(80);
       pdf.text(`N° ${displayNumero}`, W - margin, 27, { align: 'right' });
       pdf.text(`Date : ${fmtDate(dateVente)}`, W - margin, 33, { align: 'right' });
+      if (vendeur) {
+        pdf.text(`Vendeur : ${vendeur}`, W - margin, 39, { align: 'right' });
+      }
 
       // ---- Bloc client ----
       let cy = 52;
@@ -537,6 +543,7 @@ export const ReceiptGenerator: React.FC<ReceiptProps> = (props) => {
           {client.telephone && <p>Tél: {client.telephone}</p>}
         </div>
       )}
+      {vendeur && <p style={{ fontSize: 9, marginBottom: 4 }}>Vendeur: {vendeur}</p>}
 
       {/* ── Séparateur ── */}
       <div style={S.sep} />
@@ -617,6 +624,7 @@ export const ReceiptGenerator: React.FC<ReceiptProps> = (props) => {
           <p className="text-xs font-bold tracking-widest text-gray-500">{printModeLabel}</p>
           <p className="text-sm text-gray-600">N° {displayNumero}</p>
           <p className="text-sm text-gray-600">Date: {fmtDate(dateVente)}</p>
+          {vendeur && <p className="text-sm text-gray-600">Vendeur: {vendeur}</p>}
         </div>
       </div>
 

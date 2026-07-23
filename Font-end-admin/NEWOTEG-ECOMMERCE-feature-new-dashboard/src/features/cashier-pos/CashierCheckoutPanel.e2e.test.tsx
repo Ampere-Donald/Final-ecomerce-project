@@ -8,6 +8,7 @@ const ticket = {
   id: 't1',
   numeroTicket: '#1048',
   vendeurId: 'v1',
+  vendeur: { nom: 'Donald Test', username: 'donald_test' },
   montantTotal: 12_500,
   createdAt: new Date().toISOString(),
   expiresAt: new Date(Date.now() + 600_000).toISOString(),
@@ -30,6 +31,7 @@ describe('CashierCheckoutPanel', () => {
   it('présente le ticket avant l’identification du client', () => {
     const flow = flowFor('TICKET');
     render(<CashierCheckoutPanel flow={flow} onNextTicket={vi.fn()} />);
+    expect(screen.getByText(/Vendeur : Donald Test/)).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Identifier' }));
     expect(flow.setStep).toHaveBeenCalledWith('CUSTOMER');
   });

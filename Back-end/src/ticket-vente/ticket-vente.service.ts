@@ -15,6 +15,11 @@ import { validerLignePrix } from 'src/pricing/pricing.util';
 import { DocumentNumberService } from 'src/database/document-number.service';
 
 const TICKET_VALIDITY_MS = 15 * 60 * 1000; // 15 minutes
+const vendeurSelect = {
+  id: true,
+  nom: true,
+  username: true,
+} as const;
 
 export async function claimTicketForCheckout(
   tx: any,
@@ -60,7 +65,10 @@ export class TicketVenteService {
     if (dto.idempotencyKey) {
       const existing = await this.db.ticketVente.findUnique({
         where: { idempotencyKey: dto.idempotencyKey },
-        include: { lignes: true },
+        include: {
+          lignes: true,
+          vendeur: { select: vendeurSelect },
+        },
       });
       if (existing) return existing;
     }
@@ -154,7 +162,10 @@ export class TicketVenteService {
         expiresAt,
         lignes: { create: lignesData },
       },
-      include: { lignes: true },
+      include: {
+        lignes: true,
+        vendeur: { select: vendeurSelect },
+      },
     });
 
     this.notifications
@@ -181,7 +192,10 @@ export class TicketVenteService {
   async listEnAttente() {
     return this.db.ticketVente.findMany({
       where: { statut: 'EN_ATTENTE', expiresAt: { gt: new Date() } },
-      include: { lignes: true },
+      include: {
+        lignes: true,
+        vendeur: { select: vendeurSelect },
+      },
       orderBy: { createdAt: 'asc' },
     });
   }
@@ -192,7 +206,7 @@ export class TicketVenteService {
       where: vendeurId ? { vendeurId } : undefined,
       include: {
         lignes: true,
-        vendeur: { select: { id: true, nom: true, username: true } },
+        vendeur: { select: vendeurSelect },
       },
       orderBy: { createdAt: 'desc' },
       take: 100,
@@ -205,7 +219,10 @@ export class TicketVenteService {
     startOfDay.setHours(0, 0, 0, 0);
     return this.db.ticketVente.findMany({
       where: { createdAt: { gte: startOfDay } },
-      include: { lignes: true },
+      include: {
+        lignes: true,
+        vendeur: { select: vendeurSelect },
+      },
       orderBy: { createdAt: 'desc' },
     });
   }
@@ -213,7 +230,11 @@ export class TicketVenteService {
   async findOne(id: string) {
     const t = await this.db.ticketVente.findUnique({
       where: { id },
-      include: { lignes: true, vente: true },
+      include: {
+        lignes: true,
+        vente: true,
+        vendeur: { select: vendeurSelect },
+      },
     });
     if (!t) throw new NotFoundException(`Ticket ${id} introuvable.`);
     return t;
@@ -450,7 +471,11 @@ export class TicketVenteService {
           venteId: vente.id,
           encaisseAt: new Date(),
         },
-        include: { lignes: true, vente: true },
+        include: {
+          lignes: true,
+          vente: true,
+          vendeur: { select: vendeurSelect },
+        },
       });
 
       const totalHT = montantTotal / 1.1925;
@@ -490,7 +515,11 @@ export class TicketVenteService {
             }),
           },
         },
-        include: { lignes: true, client: true },
+        include: {
+          lignes: true,
+          client: true,
+          vendeur: { select: vendeurSelect },
+        },
       });
 
       return { ...updated, facture };

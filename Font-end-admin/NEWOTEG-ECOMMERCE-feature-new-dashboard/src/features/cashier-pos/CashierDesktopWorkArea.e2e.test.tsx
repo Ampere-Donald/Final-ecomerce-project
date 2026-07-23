@@ -3,20 +3,21 @@ import { describe, expect, it, vi } from 'vitest';
 import { CashierDesktopWorkArea } from './CashierDesktopWorkArea';
 
 vi.mock('../../components/ReceiptGenerator', () => ({
-  ReceiptGenerator: (props: { autoPrint?: boolean }) => <div data-testid="receipt-generator" data-auto-print={String(Boolean(props.autoPrint))}>Document prêt à imprimer</div>,
+  ReceiptGenerator: (props: { autoPrint?: boolean; vendeur?: string }) => <div data-testid="receipt-generator" data-auto-print={String(Boolean(props.autoPrint))} data-seller={props.vendeur}>Document prêt à imprimer</div>,
 }));
 
 const ticket = {
   id: 'ticket-1',
   numeroTicket: 'T-0001',
   vendeurId: 'vendeur-1',
+  vendeur: { nom: 'Donald Test', username: 'donald_test' },
   montantTotal: 7_500,
   createdAt: new Date().toISOString(),
   expiresAt: new Date(Date.now() + 600_000).toISOString(),
   lignes: [{ id: 'line-1', nomProduit: 'Produit test', quantite: 1, prixUnitaire: 7_500, sousTotal: 7_500 }],
 };
 
-function makeFlow(step: 'CUSTOMER' | 'PAYMENT') {
+function makeFlow(step: 'TICKET' | 'CUSTOMER' | 'PAYMENT') {
   return {
     tickets: [ticket], selected: ticket, step, loading: false, submitting: false, error: null,
     caisse: { statut: 'OUVERTE' }, method: 'ESPECES', documentType: 'TICKET_CAISSE',
@@ -33,6 +34,13 @@ function makeFlow(step: 'CUSTOMER' | 'PAYMENT') {
 }
 
 describe('CashierDesktopWorkArea', () => {
+  it('affiche le nom du vendeur dans le détail du ticket', () => {
+    const flow = makeFlow('TICKET');
+    render(<CashierDesktopWorkArea flow={flow} onNextTicket={vi.fn()} />);
+
+    expect(screen.getAllByText(/Donald Test/).length).toBeGreaterThan(0);
+  });
+
   it('déclenche réellement la recherche client avec le bouton Rechercher', () => {
     const flow = makeFlow('CUSTOMER');
     render(<CashierDesktopWorkArea flow={flow} onNextTicket={vi.fn()} />);
@@ -51,5 +59,6 @@ describe('CashierDesktopWorkArea', () => {
     await waitFor(() => expect(flow.checkout).toHaveBeenCalledOnce());
     const receipt = await screen.findByTestId('receipt-generator');
     expect(receipt.getAttribute('data-auto-print')).toBe('true');
+    expect(receipt.getAttribute('data-seller')).toBe('Donald Test');
   });
 });

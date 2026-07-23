@@ -5,6 +5,7 @@ import { AlertTriangle, ArrowRight, Download, Eye, EyeOff, Hash, Lock, MoreVerti
 import { brand } from '../config/brand';
 import { useInstallPrompt } from '../hooks/useInstallPrompt';
 import { getRoleHomePath } from '../utils/roleRouting';
+import { getLoginErrorMessage } from '../services/api';
 
 type LoginMode = 'password' | 'pin';
 
@@ -35,8 +36,8 @@ export const AdminLogin: React.FC = () => {
     try {
       const authenticatedAdmin = await login(username.trim(), password);
       navigate(getRoleHomePath(authenticatedAdmin.role), { replace: true });
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Échec de la connexion');
+    } catch (err: unknown) {
+      setError(getLoginErrorMessage(err, 'Nom d’utilisateur ou mot de passe incorrect'));
     } finally {
       setLoading(false);
     }
@@ -49,8 +50,8 @@ export const AdminLogin: React.FC = () => {
     try {
       const authenticatedAdmin = await loginPin(username.trim(), pin);
       navigate(getRoleHomePath(authenticatedAdmin.role), { replace: true });
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'PIN incorrect');
+    } catch (err: unknown) {
+      setError(getLoginErrorMessage(err, 'Nom d’utilisateur ou PIN incorrect'));
     } finally {
       setLoading(false);
     }

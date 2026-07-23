@@ -18,7 +18,7 @@ import { ReceiptGenerator } from '../../components/ReceiptGenerator';
 import { useToast } from '../../components/ui/Toast';
 import { CashierCountdown } from './CashierCountdown';
 import type { CashierCheckoutFlow } from './useCashierCheckoutFlow';
-import { money, type DocumentType, type PaymentMethod } from './types';
+import { cashierSellerName, money, type DocumentType, type PaymentMethod } from './types';
 
 const paymentMethods: { id: PaymentMethod; label: string; icon: typeof Banknote }[] = [
   { id: 'ESPECES', label: 'Espèces', icon: Banknote },
@@ -78,6 +78,7 @@ export function CashierCheckoutPanel({ flow, onNextTicket }: { flow: CashierChec
   const resultDocument = flow.result?.facture;
   const clientName = flow.customer ? `${flow.customer.nom} ${flow.customer.prenom || ''}`.trim() : 'Client comptoir';
   const clientPhone = flow.customer?.telephone || flow.selected.telephoneClient || '';
+  const seller = cashierSellerName(flow.selected);
 
   if (flow.step === 'SUCCESS') {
     const shareReceipt = () => {
@@ -93,6 +94,7 @@ export function CashierCheckoutPanel({ flow, onNextTicket }: { flow: CashierChec
         <p className="mt-2 text-3xl font-black text-primary">{money(flow.total)}</p>
         <div className="mx-auto mt-6 max-w-md border border-slate-200 p-4 text-left shadow-sm sm:rounded-xl">
           <div className="flex justify-between gap-3"><span className="text-sm text-slate-500">Document</span><strong>{resultDocument?.numero || flow.selected.numeroTicket}</strong></div>
+          <div className="mt-3 flex justify-between gap-3"><span className="text-sm text-slate-500">Vendeur</span><strong>{seller}</strong></div>
           <div className="mt-3 flex justify-between gap-3"><span className="text-sm text-slate-500">Client</span><strong>{clientName}</strong></div>
           {clientPhone && <div className="mt-3 flex justify-between gap-3"><span className="text-sm text-slate-500">Téléphone</span><strong>{clientPhone}</strong></div>}
           <div className="mt-3 flex justify-between gap-3"><span className="text-sm text-slate-500">Mode</span><strong>{paymentMethods.find(item => item.id === flow.method)?.label}</strong></div>
@@ -104,7 +106,7 @@ export function CashierCheckoutPanel({ flow, onNextTicket }: { flow: CashierChec
           <button type="button" onClick={shareReceipt} disabled={!clientPhone} className="flex min-h-12 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white font-bold text-slate-700 disabled:opacity-40"><MessageCircle size={18} />Envoyer au client</button>
         </div>
         <button type="button" onClick={onNextTicket} className="mx-auto mt-3 min-h-12 w-full max-w-md rounded-lg bg-primary px-5 font-extrabold text-white">Ticket suivant</button>
-        {printOpen && resultDocument && <ReceiptGenerator documentId={resultDocument.id} printCount={resultDocument.printCount || 0} type={flow.documentType === 'FACTURE' ? 'facture' : flow.documentType === 'BON_VENTE' ? 'bonVente' : 'ticket'} numero={resultDocument.numero} dateVente={resultDocument.dateEmission} methodePaiement={flow.method} montantTotal={flow.total} client={resultDocument.client ? { nom: `${resultDocument.client.nom} ${resultDocument.client.prenom || ''}`.trim(), telephone: resultDocument.client.telephone } : undefined} lignes={(resultDocument.lignes || []).map((line: any) => ({ nomProduit: line.nomProduit, quantite: line.quantite, prixUnitaire: Number(line.prixUnitaireTTC), sousTotal: Number(line.sousTotalTTC) }))} onClose={() => setPrintOpen(false)} />}
+        {printOpen && resultDocument && <ReceiptGenerator documentId={resultDocument.id} printCount={resultDocument.printCount || 0} type={flow.documentType === 'FACTURE' ? 'facture' : flow.documentType === 'BON_VENTE' ? 'bonVente' : 'ticket'} numero={resultDocument.numero} dateVente={resultDocument.dateEmission} methodePaiement={flow.method} montantTotal={flow.total} vendeur={seller} client={resultDocument.client ? { nom: `${resultDocument.client.nom} ${resultDocument.client.prenom || ''}`.trim(), telephone: resultDocument.client.telephone } : undefined} lignes={(resultDocument.lignes || []).map((line: any) => ({ nomProduit: line.nomProduit, quantite: line.quantite, prixUnitaire: Number(line.prixUnitaireTTC), sousTotal: Number(line.sousTotalTTC) }))} onClose={() => setPrintOpen(false)} />}
       </section>
     );
   }
@@ -121,7 +123,7 @@ export function CashierCheckoutPanel({ flow, onNextTicket }: { flow: CashierChec
       {flow.step === 'TICKET' ? (
         <div className="p-3 md:p-5">
           <div className="flex flex-wrap items-start justify-between gap-3 border-b border-slate-200 pb-4">
-            <div><h2 className="text-xl font-extrabold text-primary">Ticket {flow.selected.numeroTicket}</h2><p className="mt-1 text-sm text-slate-500">Vérifiez les articles avant de commencer l’encaissement.</p></div>
+            <div><h2 className="text-xl font-extrabold text-primary">Ticket {flow.selected.numeroTicket}</h2><p className="mt-1 text-sm font-semibold text-slate-700">Vendeur : {seller}</p><p className="mt-1 text-sm text-slate-500">Vérifiez les articles avant de commencer l’encaissement.</p></div>
             <span className="inline-flex items-center gap-2 text-sm font-bold text-emerald-700"><Check size={18} />Stock vérifié</span>
           </div>
           <div className="mt-4"><TicketLines flow={flow} /></div>

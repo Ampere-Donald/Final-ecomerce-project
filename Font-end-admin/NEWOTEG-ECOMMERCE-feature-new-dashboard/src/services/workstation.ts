@@ -1,12 +1,12 @@
+import { createClientId } from '../utils/clientId';
+
 const WORKSTATION_ID_KEY = 'newoteg_workstation_id';
 const WORKSTATION_NAME_KEY = 'newoteg_workstation_name';
 
 export function getWorkstationId(): string {
   let id = localStorage.getItem(WORKSTATION_ID_KEY);
   if (!id) {
-    id = typeof crypto.randomUUID === 'function'
-      ? crypto.randomUUID()
-      : `pos-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    id = createClientId('pos');
     localStorage.setItem(WORKSTATION_ID_KEY, id);
   }
   const name = localStorage.getItem(WORKSTATION_NAME_KEY)?.trim();

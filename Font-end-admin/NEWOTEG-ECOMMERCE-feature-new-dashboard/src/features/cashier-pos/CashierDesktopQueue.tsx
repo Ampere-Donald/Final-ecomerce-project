@@ -1,13 +1,8 @@
 import { Filter, ListChecks, Loader2, Search } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { CashierCountdown } from './CashierCountdown';
-import { money, type CashierTicket } from './types';
+import { cashierSellerName, money, type CashierTicket } from './types';
 import type { CashierCheckoutFlow } from './useCashierCheckoutFlow';
-
-const sellerName = (ticket: CashierTicket) => {
-  const value = [ticket.vendeur?.prenom, ticket.vendeur?.nom].filter(Boolean).join(' ').trim();
-  return value || ticket.vendeurId || 'Vendeur';
-};
 
 export function CashierDesktopQueue({ flow }: { flow: CashierCheckoutFlow }) {
   const [query, setQuery] = useState('');
@@ -18,7 +13,7 @@ export function CashierDesktopQueue({ flow }: { flow: CashierCheckoutFlow }) {
     return flow.tickets.filter(ticket => {
       const urgent = new Date(ticket.expiresAt).getTime() - Date.now() < 180_000;
       if (urgentOnly && !urgent) return false;
-      return !normalized || `${ticket.numeroTicket} ${sellerName(ticket)} ${ticket.nomClient || ''}`.toLowerCase().includes(normalized);
+      return !normalized || `${ticket.numeroTicket} ${cashierSellerName(ticket)} ${ticket.nomClient || ''}`.toLowerCase().includes(normalized);
     });
   }, [flow.tickets, query, urgentOnly]);
 
@@ -51,7 +46,7 @@ export function CashierDesktopQueue({ flow }: { flow: CashierCheckoutFlow }) {
               {active && <span className="absolute inset-y-0 left-0 w-1 bg-primary" />}
               <div className="grid grid-cols-[62px_minmax(0,1fr)_auto] items-start gap-3">
                 <CashierCountdown date={ticket.expiresAt} />
-                <div className="min-w-0"><p className={`font-bold ${active ? 'text-primary' : 'text-slate-950'}`}>Ticket {ticket.numeroTicket}</p><p className="mt-1 truncate text-sm text-slate-600">{sellerName(ticket)} · {Math.max(1, Math.round((Date.now() - new Date(ticket.createdAt).getTime()) / 60_000))} min</p><p className="mt-2 text-sm text-slate-600">{units} article{units > 1 ? 's' : ''}</p></div>
+                <div className="min-w-0"><p className={`font-bold ${active ? 'text-primary' : 'text-slate-950'}`}>Ticket {ticket.numeroTicket}</p><p className="mt-1 truncate text-sm text-slate-600">{cashierSellerName(ticket)} · {Math.max(1, Math.round((Date.now() - new Date(ticket.createdAt).getTime()) / 60_000))} min</p><p className="mt-2 text-sm text-slate-600">{units} article{units > 1 ? 's' : ''}</p></div>
                 <strong className="self-end whitespace-nowrap text-sm text-slate-800">{money(ticket.montantTotal)}</strong>
               </div>
             </button>

@@ -86,4 +86,21 @@ describe('AdminLogin role navigation', () => {
     expect(authMocks.loginPin).toHaveBeenCalledWith('caissier_test', '4827');
     expect(await screen.findByText('Destination caissier')).toBeTruthy();
   });
+
+  it('distinguishes a network failure from an incorrect PIN', async () => {
+    authMocks.loginPin.mockRejectedValue(new Error('Network unavailable'));
+    const user = userEvent.setup();
+    renderLoginRoutes();
+
+    await user.type(screen.getByPlaceholderText('ex. admin'), 'caissier_test');
+    await user.click(screen.getByRole('button', { name: 'PIN boutique' }));
+    await user.click(screen.getByRole('button', { name: '4' }));
+    await user.click(screen.getByRole('button', { name: '8' }));
+    await user.click(screen.getByRole('button', { name: '2' }));
+    await user.click(screen.getByRole('button', { name: '7' }));
+    await user.click(screen.getByRole('button', { name: 'Entrer avec le PIN' }));
+
+    expect(await screen.findByText(/Impossible de joindre le serveur/)).toBeTruthy();
+    expect(screen.queryByText('PIN incorrect')).toBeNull();
+  });
 });

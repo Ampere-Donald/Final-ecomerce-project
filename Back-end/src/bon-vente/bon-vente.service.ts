@@ -18,6 +18,11 @@ import { validerLignePrix } from 'src/pricing/pricing.util';
 import { DocumentNumberService } from 'src/database/document-number.service';
 
 const TICKET_VALIDITY_MS = 15 * 60 * 1000;
+const vendeurSelect = {
+  id: true,
+  nom: true,
+  username: true,
+} as const;
 
 @Injectable()
 export class BonVenteService {
@@ -44,7 +49,10 @@ export class BonVenteService {
     if (dto.idempotencyKey) {
       const existing = await this.db.ticketVente.findUnique({
         where: { idempotencyKey: dto.idempotencyKey },
-        include: { lignes: true },
+        include: {
+          lignes: true,
+          vendeur: { select: vendeurSelect },
+        },
       });
       if (existing) return existing;
     }
@@ -139,7 +147,10 @@ export class BonVenteService {
           expiresAt,
           lignes: { create: lignesData },
         },
-        include: { lignes: true },
+        include: {
+          lignes: true,
+          vendeur: { select: vendeurSelect },
+        },
       });
     }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
 
@@ -163,7 +174,13 @@ export class BonVenteService {
   findPending() {
     return this.db.ticketVente.findMany({
       where: { statut: 'EN_ATTENTE', expiresAt: { gt: new Date() } },
-      include: { lignes: true, client: { select: { id: true, nom: true, prenom: true, telephone: true } } },
+      include: {
+        lignes: true,
+        client: {
+          select: { id: true, nom: true, prenom: true, telephone: true },
+        },
+        vendeur: { select: vendeurSelect },
+      },
       orderBy: { createdAt: 'asc' },
       take: 100,
     });
@@ -173,7 +190,10 @@ export class BonVenteService {
   findMesBons(vendeurId: string) {
     return this.db.ticketVente.findMany({
       where: { vendeurId },
-      include: { lignes: true },
+      include: {
+        lignes: true,
+        vendeur: { select: vendeurSelect },
+      },
       orderBy: { createdAt: 'desc' },
       take: 50,
     });
