@@ -230,7 +230,7 @@ export const Sidebar = ({ open, onClose, compact = false }: SidebarProps) => {
       </nav>
 
       <div className={`border-t border-slate-100 p-4 md:p-2 ${compact ? 'min-[1200px]:border-white/10 min-[1200px]:p-2' : 'min-[1200px]:p-4'}`}>
-        <div className={`flex items-center gap-3 rounded-lg border border-slate-100 bg-slate-50 p-2 md:justify-center ${compact ? 'min-[1200px]:border-transparent min-[1200px]:bg-transparent min-[1200px]:justify-center' : 'min-[1200px]:justify-start'}`}>
+        <div className={`flex items-center gap-3 rounded-lg border border-slate-100 bg-slate-50 p-2 md:justify-center ${compact ? 'md:flex-col min-[1200px]:justify-center min-[1200px]:border-transparent min-[1200px]:bg-transparent' : 'min-[1200px]:justify-start'}`}>
           {admin?.photoUrl ? (
             <img
               src={admin.photoUrl}
@@ -253,9 +253,9 @@ export const Sidebar = ({ open, onClose, compact = false }: SidebarProps) => {
             }}
             title="Se déconnecter"
             aria-label="Se déconnecter"
-            className={`text-slate-400 transition-colors hover:text-red-500 md:hidden ${compact ? 'min-[1200px]:hidden' : 'min-[1200px]:block'}`}
+            className={`flex h-10 w-10 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-red-50 hover:text-red-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500/30 ${compact ? 'md:flex' : 'md:hidden min-[1200px]:flex'}`}
           >
-            <LogOut size={16} />
+            <LogOut size={18} />
           </button>
         </div>
       </div>

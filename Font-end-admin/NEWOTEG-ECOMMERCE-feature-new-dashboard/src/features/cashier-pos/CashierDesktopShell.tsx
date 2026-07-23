@@ -1,5 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react';
-import { CircleHelp, Printer, UserRound } from 'lucide-react';
+import { CircleHelp, LogOut, Printer, UserRound } from 'lucide-react';
+import { useAdminAuth } from '../../context/AdminAuthContext';
 import { caisseJourApi } from '../../services/api';
 
 type CashierStatus = 'OUVERTE' | 'FERMEE' | string | null | undefined;
@@ -11,6 +12,7 @@ export function CashierDesktopTopBar({
   caisseStatus: CashierStatus;
   onHelp?: () => void;
 }) {
+  const { admin, logout } = useAdminAuth();
   const [printer, setPrinter] = useState({ connected: false, name: 'Imprimante à vérifier' });
   const [fetchedCaisseStatus, setFetchedCaisseStatus] = useState<CashierStatus>(null);
   const resolvedCaisseStatus = caisseStatus ?? fetchedCaisseStatus;
@@ -51,14 +53,12 @@ export function CashierDesktopTopBar({
   }, []);
 
   const open = resolvedCaisseStatus === 'OUVERTE';
-  const name = (() => {
-    try {
-      const admin = JSON.parse(localStorage.getItem('newoteg_admin_user') || 'null');
-      return admin?.nom || admin?.username || 'Caissier';
-    } catch {
-      return 'Caissier';
+  const name = admin?.nom || admin?.username || 'Caissier';
+  const handleLogout = () => {
+    if (window.confirm('Voulez-vous vraiment vous déconnecter de la caisse ?')) {
+      logout();
     }
-  })();
+  };
 
   return (
     <header className="flex h-16 shrink-0 items-center border-b border-slate-200 bg-white px-7" data-cashier-topbar>
@@ -71,6 +71,14 @@ export function CashierDesktopTopBar({
       <div className="ml-auto flex items-center gap-3 text-slate-800">
         <UserRound size={23} />
         <span className="font-medium">{name}</span>
+        <button
+          type="button"
+          onClick={handleLogout}
+          className="ml-2 flex min-h-11 items-center gap-2 rounded-md border border-slate-200 px-3 text-sm font-semibold text-slate-700 transition-colors hover:border-red-200 hover:bg-red-50 hover:text-red-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500/30"
+        >
+          <LogOut size={18} />
+          <span>Se déconnecter</span>
+        </button>
         {onHelp && (
           <button type="button" onClick={onHelp} aria-label="Aide de la caisse" className="ml-6 flex h-11 w-11 items-center justify-center rounded-full text-slate-700 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
             <CircleHelp size={25} />
