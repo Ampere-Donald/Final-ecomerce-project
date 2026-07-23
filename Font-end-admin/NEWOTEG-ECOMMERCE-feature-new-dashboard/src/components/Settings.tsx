@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'motion/react';
 import { Printer as PrinterIcon } from 'lucide-react';
-import { User, Bell, Shield, Wallet, Globe, Smartphone, CheckCircle2, AlertCircle, Eye, EyeOff, Sparkles, Loader2 } from 'lucide-react';
+import { User, Bell, Shield, Wallet, Globe, Smartphone, CheckCircle2, AlertCircle, Eye, EyeOff, Sparkles, Loader2, LogOut } from 'lucide-react';
 import { useAdminAuth } from '../context/AdminAuthContext';
 import { adminAuthApi, equivalenceApi } from '../services/api';
 import { PrinterSettings } from './PrinterSettings';
@@ -23,7 +23,7 @@ type IaHealth = {
 };
 
 export const Settings = () => {
-  const { admin } = useAdminAuth();
+  const { admin, logout } = useAdminAuth();
   const [activeTab, setActiveTab] = useState<Tab>('profile');
 
   // Password change state
@@ -99,6 +99,12 @@ export const Settings = () => {
     }
   };
 
+  const handleLogout = () => {
+    if (window.confirm('Voulez-vous vraiment vous déconnecter ?')) {
+      logout();
+    }
+  };
+
   const tabs = [
     { key: 'profile' as Tab, label: 'Infos Profil', icon: User },
     { key: 'printer' as Tab, label: 'Imprimante tickets', icon: PrinterIcon },
@@ -145,56 +151,79 @@ export const Settings = () => {
         <div className="lg:col-span-3 space-y-6">
           {/* Profile Tab */}
           {activeTab === 'profile' && (
-            <div className="bg-white rounded-2xl border border-slate-200 p-8 shadow-sm">
-              <h3 className="font-bold text-lg mb-6 text-slate-900">Profil Administrateur</h3>
-              <div className="flex items-center gap-6 mb-8">
-                <div className="size-20 rounded-2xl bg-primary/10 flex items-center justify-center text-primary font-bold text-2xl border-2 border-primary/20">
-                  {initials}
+            <div className="space-y-6">
+              <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm sm:p-8">
+                <h3 className="font-bold text-lg mb-6 text-slate-900">Profil utilisateur</h3>
+                <div className="flex items-center gap-4 mb-8 sm:gap-6">
+                  <div className="size-16 shrink-0 rounded-2xl bg-primary/10 flex items-center justify-center text-primary font-bold text-xl border-2 border-primary/20 sm:size-20 sm:text-2xl">
+                    {initials}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="truncate font-bold text-slate-900 text-lg">{adminName}</p>
+                    <p className="text-sm text-slate-500">{admin?.role || 'Utilisateur'}</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="font-bold text-slate-900 text-lg">{adminName}</p>
-                  <p className="text-sm text-slate-500">{admin?.role || 'Administrateur'}</p>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-slate-600">Nom</label>
+                    <input
+                      type="text"
+                      value={admin?.nom || ''}
+                      readOnly
+                      className={`${inputClass} bg-slate-100 cursor-not-allowed`}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-slate-600">Email</label>
+                    <input
+                      type="email"
+                      value={admin?.email || ''}
+                      readOnly
+                      className={`${inputClass} bg-slate-100 cursor-not-allowed`}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-slate-600">Rôle</label>
+                    <input
+                      type="text"
+                      value={admin?.role || 'Utilisateur'}
+                      readOnly
+                      className={`${inputClass} bg-slate-100 cursor-not-allowed`}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-slate-600">ID</label>
+                    <input
+                      type="text"
+                      value={admin?.id || ''}
+                      readOnly
+                      className={`${inputClass} bg-slate-100 cursor-not-allowed text-xs`}
+                    />
+                  </div>
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-slate-600">Nom</label>
-                  <input
-                    type="text"
-                    value={admin?.nom || ''}
-                    readOnly
-                    className={`${inputClass} bg-slate-100 cursor-not-allowed`}
-                  />
+              <section className="rounded-2xl border border-red-100 bg-white p-5 shadow-sm sm:p-6" aria-labelledby="session-title">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <h3 id="session-title" className="font-bold text-slate-900">
+                      Session {admin?.role === 'VENDEUR' ? 'vendeur' : 'utilisateur'}
+                    </h3>
+                    <p className="mt-1 text-sm text-slate-500">
+                      Déconnectez-vous lorsque vous avez terminé ou avant de prêter cet appareil.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleLogout}
+                    className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl border border-red-200 bg-red-50 px-5 text-sm font-bold text-red-700 transition-colors hover:bg-red-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500/30 sm:w-auto"
+                  >
+                    <LogOut size={18} />
+                    Se déconnecter
+                  </button>
                 </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-slate-600">Email</label>
-                  <input
-                    type="email"
-                    value={admin?.email || ''}
-                    readOnly
-                    className={`${inputClass} bg-slate-100 cursor-not-allowed`}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-slate-600">Rôle</label>
-                  <input
-                    type="text"
-                    value={admin?.role || 'Administrateur'}
-                    readOnly
-                    className={`${inputClass} bg-slate-100 cursor-not-allowed`}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-slate-600">ID</label>
-                  <input
-                    type="text"
-                    value={admin?.id || ''}
-                    readOnly
-                    className={`${inputClass} bg-slate-100 cursor-not-allowed text-xs`}
-                  />
-                </div>
-              </div>
+              </section>
             </div>
           )}
 
