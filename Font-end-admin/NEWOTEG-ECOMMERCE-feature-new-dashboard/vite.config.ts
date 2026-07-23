@@ -12,7 +12,8 @@ export default defineConfig(({mode}) => {
       // Génère des bundles transpilés + polyfills pour les anciens
       // navigateurs Android (parc boutique jusqu'à Android 5/6, Chrome mis à jour via Play Store)
       legacy({
-        targets: ['defaults', 'chrome >= 64', 'android >= 5'],
+        targets: ['chrome >= 49', 'android >= 5'],
+        modernTargets: ['chrome >= 64', 'edge >= 79', 'firefox >= 67', 'safari >= 12'],
         modernPolyfills: true,
       }),
       // PWA installable (icône écran d'accueil, plein écran, cache de consultation

@@ -1,5 +1,12 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { adminAuthApi } from '../services/api';
+import {
+  clearAdminSession,
+  getAdminToken,
+  getStoredAdmin,
+  storeAdminSession,
+  updateStoredAdmin,
+} from '../services/adminSession';
 
 export interface AdminUser {
   id: string;
@@ -21,8 +28,6 @@ interface AdminAuthContextType {
 
 const AdminAuthContext = createContext<AdminAuthContextType | null>(null);
 
-const TOKEN_KEY = 'newoteg_admin_token';
-const USER_KEY = 'newoteg_admin_user';
 const OFFLINE_CACHE_NAME = 'newoteg-offline-data-v1';
 
 // Vide le cache PWA de consultation hors-ligne pour éviter qu'un utilisateur
@@ -37,18 +42,13 @@ const clearOfflineCache = () => {
 
 export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [admin, setAdmin] = useState<AdminUser | null>(() => {
-    try {
-      const saved = localStorage.getItem(USER_KEY);
-      return saved ? JSON.parse(saved) : null;
-    } catch {
-      return null;
-    }
+    return getStoredAdmin<AdminUser>();
   });
   const [loading, setLoading] = useState(true);
 
   // Validate stored token on mount
   useEffect(() => {
-    const token = localStorage.getItem(TOKEN_KEY);
+    const token = getAdminToken();
     if (!token) {
       setLoading(false);
       return;
@@ -56,11 +56,10 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     adminAuthApi.getMe()
       .then((data) => {
         setAdmin(data);
-        localStorage.setItem(USER_KEY, JSON.stringify(data));
+        updateStoredAdmin(data);
       })
       .catch(() => {
-        localStorage.removeItem(TOKEN_KEY);
-        localStorage.removeItem(USER_KEY);
+        clearAdminSession();
         setAdmin(null);
       })
       .finally(() => setLoading(false));
@@ -70,8 +69,7 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     const data = await adminAuthApi.login(username, password);
     const authenticatedAdmin = data.admin as AdminUser;
     clearOfflineCache();
-    localStorage.setItem(TOKEN_KEY, data.access_token);
-    localStorage.setItem(USER_KEY, JSON.stringify(authenticatedAdmin));
+    storeAdminSession(data.access_token, authenticatedAdmin);
     setAdmin(authenticatedAdmin);
     return authenticatedAdmin;
   }, []);
@@ -80,15 +78,13 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     const data = await adminAuthApi.loginPin(username, pin);
     const authenticatedAdmin = data.admin as AdminUser;
     clearOfflineCache();
-    localStorage.setItem(TOKEN_KEY, data.access_token);
-    localStorage.setItem(USER_KEY, JSON.stringify(authenticatedAdmin));
+    storeAdminSession(data.access_token, authenticatedAdmin);
     setAdmin(authenticatedAdmin);
     return authenticatedAdmin;
   }, []);
 
   const logout = useCallback(() => {
-    localStorage.removeItem(TOKEN_KEY);
-    localStorage.removeItem(USER_KEY);
+    clearAdminSession();
     clearOfflineCache();
     setAdmin(null);
   }, []);

@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { createClientId } from '../utils/clientId';
+import { clearAdminSession, getAdminToken } from './adminSession';
 
 // En production, VITE_API_URL pointe vers le backend (ex: https://api.newoteg.com)
 // En dev local, le proxy Vite redirige /api vers localhost:3000
@@ -18,7 +19,7 @@ const api = axios.create({
 // ── Auth interceptors ────────────────────────────────────────────────────
 api.interceptors.request.use((config) => {
   config.headers['X-Request-Id'] = createClientId('web');
-  const token = localStorage.getItem('newoteg_admin_token');
+  const token = getAdminToken();
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -29,8 +30,7 @@ api.interceptors.response.use(
   (res) => res,
   (err) => {
     if (err.response?.status === 401) {
-      localStorage.removeItem('newoteg_admin_token');
-      localStorage.removeItem('newoteg_admin_user');
+      clearAdminSession();
       if (typeof caches !== 'undefined') {
         caches.delete('newoteg-offline-data-v1').catch(() => {});
       }
@@ -68,18 +68,99 @@ export const getLoginErrorMessage = (
   invalidCredentialsFallback: string,
 ): string => {
   if (!err?.response) {
-    return "Impossible de joindre le serveur. Vérifiez Internet puis ouvrez l'adresse sécurisée https://admin.newoteg.com.";
+    if (err?.code === 'AUTH_TIMEOUT') {
+      return 'Le serveur met trop de temps à répondre. Vérifiez la connexion Internet puis réessayez. Code : AUTH_TIMEOUT.';
+    }
+    if (err?.code === 'AUTH_SEND_BLOCKED') {
+      return "Le navigateur de cet appareil bloque l'envoi de la connexion. Code : AUTH_SEND_BLOCKED.";
+    }
+    return "Impossible de joindre le serveur depuis cet appareil. Vérifiez Internet puis ouvrez https://admin.newoteg.com. Code : AUTH_NETWORK.";
   }
 
   return getApiErrorMessage(err, invalidCredentialsFallback);
 };
 
+type AuthTransportError = Error & {
+  code?: string;
+  response?: {
+    status: number;
+    data: any;
+  };
+};
+
+function createAuthTransportError(
+  message: string,
+  code: string,
+  status?: number,
+  data?: any,
+): AuthTransportError {
+  const error = new Error(message) as AuthTransportError;
+  error.code = code;
+  if (typeof status === 'number') {
+    error.response = { status, data };
+  }
+  return error;
+}
+
+// Le trajet de connexion reste volontairement indépendant d'Axios, des
+// intercepteurs et du stockage local. Cela permet aux anciennes tablettes
+// Android de recevoir la réponse du serveur avant toute initialisation locale.
+function postAuth<T>(path: string, body: Record<string, string>): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const request = new XMLHttpRequest();
+    request.open('POST', `${BASE_URL}${path}`, true);
+    request.timeout = 30000;
+    request.setRequestHeader('Accept', 'application/json');
+    request.setRequestHeader('Content-Type', 'application/json');
+
+    request.onload = () => {
+      let data: any = null;
+      try {
+        data = request.responseText ? JSON.parse(request.responseText) : null;
+      } catch {
+        data = { message: request.responseText };
+      }
+
+      if (request.status >= 200 && request.status < 300) {
+        resolve(data as T);
+        return;
+      }
+
+      reject(
+        createAuthTransportError(
+          `Connexion refusée (${request.status}).`,
+          'AUTH_HTTP',
+          request.status,
+          data,
+        ),
+      );
+    };
+    request.onerror = () =>
+      reject(createAuthTransportError('Connexion réseau interrompue.', 'AUTH_NETWORK'));
+    request.ontimeout = () =>
+      reject(createAuthTransportError('Délai de connexion dépassé.', 'AUTH_TIMEOUT'));
+    request.onabort = () =>
+      reject(createAuthTransportError('Connexion annulée.', 'AUTH_NETWORK'));
+
+    try {
+      request.send(JSON.stringify(body));
+    } catch {
+      reject(
+        createAuthTransportError(
+          "Le navigateur a bloqué l'envoi de la connexion.",
+          'AUTH_SEND_BLOCKED',
+        ),
+      );
+    }
+  });
+}
+
 // ── Admin Auth API ───────────────────────────────────────────────────────
 export const adminAuthApi = {
   login: (username: string, motDePasse: string) =>
-    api.post('/admin-auth/login', { username, motDePasse }).then(res => res.data),
+    postAuth<any>('/admin-auth/login', { username, motDePasse }),
   loginPin: (username: string, pin: string) =>
-    api.post('/admin-auth/login-pin', { username, pin }).then(res => res.data),
+    postAuth<any>('/admin-auth/login-pin', { username, pin }),
   getMe: () => api.get('/admin-auth/me').then(res => res.data),
   changePassword: (oldPassword: string, newPassword: string) =>
     api.patch('/admin-auth/change-password', { oldPassword, newPassword }).then(res => res.data),

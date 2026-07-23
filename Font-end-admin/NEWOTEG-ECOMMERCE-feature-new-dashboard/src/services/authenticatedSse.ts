@@ -1,3 +1,5 @@
+import { getAdminToken } from './adminSession';
+
 type SseErrorHandler = (error: unknown) => void;
 
 const rawUrl = import.meta.env.VITE_API_URL || '/api';
@@ -22,7 +24,7 @@ export function subscribeAuthenticatedSse<T>(
   const controller = new AbortController();
 
   void (async () => {
-    const token = localStorage.getItem('newoteg_admin_token');
+    const token = getAdminToken();
     if (!token) throw new Error('Session administrateur absente.');
 
     const response = await fetch(`${API_BASE_URL}${path}`, {
