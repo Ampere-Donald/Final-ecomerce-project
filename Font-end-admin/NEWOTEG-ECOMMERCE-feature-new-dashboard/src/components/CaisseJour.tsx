@@ -16,8 +16,10 @@ import {
   FileText,
   Printer,
   Search,
+  PiggyBank,
+  Landmark,
 } from 'lucide-react';
-import { caisseJourApi, factureApi, getApiErrorMessage } from '../services/api';
+import { caisseJourApi, coffreApi, factureApi, getApiErrorMessage } from '../services/api';
 import { useAdminAuth } from '../context/AdminAuthContext';
 import { FileCaissier } from './FileCaissier';
 import { ReceiptGenerator } from './ReceiptGenerator';
@@ -44,6 +46,18 @@ interface CaisseJourData {
   statut: 'OUVERTE' | 'FERMEE';
   soldeCloture?: string | number | null;
   solde: number;
+  destination?: {
+    type: 'COFFRE' | 'CAISSE_GLOBALE';
+    coffre?: { id: string; nom: string } | null;
+  } | null;
+}
+
+interface CoffreDestination {
+  id: string;
+  nom: string;
+  statut: 'ACTIF' | 'ATTEINT' | 'CLOTURE';
+  soldeActuel: number | string;
+  objectifMontant?: number | string | null;
 }
 
 interface FactureJour {
@@ -107,6 +121,8 @@ export const CaisseJour = () => {
   // Modal fermeture
   const [showFermer, setShowFermer] = useState(false);
   const [fermerNote, setFermerNote] = useState('');
+  const [fermerCoffreId, setFermerCoffreId] = useState('');
+  const [coffres, setCoffres] = useState<CoffreDestination[]>([]);
   const [fermerSubmitting, setFermerSubmitting] = useState(false);
   const [fermerError, setFermerError] = useState<string | null>(null);
 
@@ -130,8 +146,16 @@ export const CaisseJour = () => {
         const detail = await caisseJourApi.getOne(data.id);
         setOperations(detail.operations || []);
       }
-      const factures = await factureApi.getAll();
+      const [factures, coffreData] = await Promise.all([
+        factureApi.getAll(),
+        coffreApi.getAll().catch(() => []),
+      ]);
       setFacturesJour(Array.isArray(factures) ? factures : []);
+      setCoffres(
+        Array.isArray(coffreData)
+          ? coffreData.filter((coffre: CoffreDestination) => coffre.statut === 'ACTIF')
+          : [],
+      );
     } catch (e: any) {
       setError(getApiErrorMessage(e, 'Erreur de chargement.'));
     } finally {
@@ -221,9 +245,13 @@ export const CaisseJour = () => {
     setFermerError(null);
     setFermerSubmitting(true);
     try {
-      await caisseJourApi.fermer(cj.id, fermerNote.trim() || undefined);
+      await caisseJourApi.fermer(cj.id, {
+        note: fermerNote.trim() || undefined,
+        coffreId: fermerCoffreId || undefined,
+      });
       setShowFermer(false);
       setFermerNote('');
+      setFermerCoffreId('');
       await charger();
     } catch (e: any) {
       const msg = e?.response?.data?.message || e?.message;
@@ -369,7 +397,13 @@ export const CaisseJour = () => {
         <div className="flex items-center gap-2 p-4 rounded-xl bg-slate-100 text-slate-700">
           <Lock size={18} />
           <span>
-            Caisse fermée. Solde de clôture transféré vers la caisse globale :{' '}
+            Caisse fermée. Solde de clôture transféré vers{' '}
+            <strong>
+              {cj.destination?.type === 'COFFRE'
+                ? `le coffre ${cj.destination.coffre?.nom || ''}`
+                : 'la caisse globale'}
+            </strong>
+            {' : '}
             <strong>{fmtFCFA(cj.soldeCloture ?? cj.solde)}</strong>
           </span>
         </div>
@@ -757,10 +791,77 @@ export const CaisseJour = () => {
                 <div className="p-3 bg-amber-50 rounded-lg text-amber-900 text-sm">
                   <p>
                     Vous êtes sur le point de fermer la caisse. Le solde de{' '}
-                    <strong>{fmtFCFA(cj.solde)}</strong> sera transféré vers la
-                    caisse globale et la session sera clôturée.
+                    <strong>{fmtFCFA(cj.solde)}</strong> sera transféré vers{' '}
+                    <strong>
+                      {fermerCoffreId
+                        ? `le coffre ${coffres.find((coffre) => coffre.id === fermerCoffreId)?.nom || ''}`
+                        : 'la caisse globale'}
+                    </strong>
+                    {' '}et la session sera clôturée.
                   </p>
                 </div>
+                <fieldset>
+                  <legend className="text-sm font-semibold text-slate-700">
+                    Destination du solde
+                  </legend>
+                  <div className="mt-2 max-h-52 space-y-2 overflow-y-auto pr-1">
+                    <label
+                      className={`flex min-h-16 cursor-pointer items-center gap-3 rounded-xl border p-3 ${
+                        fermerCoffreId === ''
+                          ? 'border-primary bg-indigo-50/60'
+                          : 'border-slate-200 bg-white'
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="destination-caisse"
+                        value=""
+                        checked={fermerCoffreId === ''}
+                        onChange={() => setFermerCoffreId('')}
+                        className="h-4 w-4 accent-primary"
+                      />
+                      <Landmark size={20} className="text-slate-600" />
+                      <span>
+                        <strong className="block text-sm text-slate-900">Caisse globale</strong>
+                        <span className="text-xs text-slate-500">Destination habituelle</span>
+                      </span>
+                    </label>
+                    {coffres.map((coffre) => {
+                      const projected = Number(coffre.soldeActuel || 0) + Number(cj.solde || 0);
+                      return (
+                        <label
+                          key={coffre.id}
+                          className={`flex min-h-16 cursor-pointer items-center gap-3 rounded-xl border p-3 ${
+                            fermerCoffreId === coffre.id
+                              ? 'border-primary bg-indigo-50/60'
+                              : 'border-slate-200 bg-white'
+                          }`}
+                        >
+                          <input
+                            type="radio"
+                            name="destination-caisse"
+                            value={coffre.id}
+                            checked={fermerCoffreId === coffre.id}
+                            onChange={() => setFermerCoffreId(coffre.id)}
+                            className="h-4 w-4 accent-primary"
+                          />
+                          <PiggyBank size={20} className="text-primary" />
+                          <span className="min-w-0 flex-1">
+                            <strong className="block truncate text-sm text-slate-900">{coffre.nom}</strong>
+                            <span className="text-xs text-slate-500">
+                              Après transfert : {fmtFCFA(projected)}
+                            </span>
+                          </span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                  {coffres.length === 0 && (
+                    <p className="mt-2 text-xs text-slate-500">
+                      Aucun coffre actif. Le transfert restera disponible vers la caisse globale.
+                    </p>
+                  )}
+                </fieldset>
                 <div>
                   <label className="text-sm font-semibold text-slate-700">
                     Note (optionnel)
@@ -795,7 +896,7 @@ export const CaisseJour = () => {
                   className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-red-600 text-white font-bold rounded-lg hover:bg-red-700 disabled:opacity-50"
                 >
                   <CheckCircle2 size={16} />
-                  {fermerSubmitting ? 'Fermeture…' : 'Confirmer la fermeture'}
+                  {fermerSubmitting ? 'Fermeture…' : 'Fermer et transférer'}
                 </button>
               </div>
             </motion.div>

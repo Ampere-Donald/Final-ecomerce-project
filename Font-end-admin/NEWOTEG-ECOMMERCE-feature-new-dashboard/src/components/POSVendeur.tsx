@@ -29,6 +29,7 @@ import { formatFcfa } from '../features/pos-shared/formatters';
 import { useSellerProductHistory } from '../features/seller-pos/useSellerProductHistory';
 import { useSellerSaleFlow } from '../features/seller-pos/useSellerSaleFlow';
 import { VerticalCategoryNavigator, type SellerCategoryOption } from '../features/seller-pos/VerticalCategoryNavigator';
+import { CustomerRequestField } from '../features/seller-pos/CustomerRequestField';
 import { useFlowShellFocus } from '../context/FlowShellContext';
 
 export interface Produit {
@@ -244,7 +245,9 @@ export const POSVendeur = ({ preview }: { preview?: POSVendeurPreview } = {}) =>
         limit: 60,
         search: query.trim() || undefined,
         categoryId: categoryId === 'all' ? undefined : categoryId,
-        inStock: true,
+        // Une recherche doit aussi retourner les ruptures afin de permettre
+        // au vendeur de demander immédiatement un équivalent.
+        inStock: query.trim() ? undefined : true,
         sort: 'name_asc',
       });
       if (requestId === catalogRequestRef.current) {
@@ -368,6 +371,13 @@ export const POSVendeur = ({ preview }: { preview?: POSVendeurPreview } = {}) =>
       ));
     return categoryFiltered.slice(0, 60);
   }, [catalogView, categoryOptions, productHistory.favoriteIds, productHistory.recentIds, produits, selectedCategoryId]);
+
+  const selectedCategoryName = categoryOptions.find(
+    (category) => category.id === selectedCategoryId,
+  )?.label;
+  const equivalenceContextActive =
+    looksLikeElectronicComponentSearch(search) ||
+    normalizeEligibilityText(selectedCategoryName) === 'composants electroniques';
 
   const ajouterAuPanier = useCallback((p: Produit): boolean => {
     if (p.quantiteStock <= 0) {
@@ -687,7 +697,12 @@ export const POSVendeur = ({ preview }: { preview?: POSVendeurPreview } = {}) =>
   const lancerEquiv = async (opts: { query?: string; produitId?: string }) => {
     setEquivLoading(true); setEquivError(null); setEquivResults([]);
     try {
-      const res = await equivalenceApi.suggest({ query: opts.query?.trim() || undefined, produitId: opts.produitId || undefined, source: 'pos' });
+      const res = await equivalenceApi.suggest({
+        query: opts.query?.trim() || undefined,
+        produitId: opts.produitId || undefined,
+        source: 'pos',
+        vendeurId: admin?.id,
+      });
       setEquivResults(res?.suggestions || []);
       if (!(res?.suggestions || []).length) setEquivError(res?.message || 'Aucun équivalent trouvé.');
     } catch (e: any) { setEquivError(e?.response?.data?.message || 'Service IA indisponible.'); }
@@ -696,7 +711,11 @@ export const POSVendeur = ({ preview }: { preview?: POSVendeurPreview } = {}) =>
 
   const ouvrirEquiv = async (opts: { query?: string; produitId?: string }) => {
     setEquivOpen(true); setEquivQuery(opts.query ?? ''); setEquivProduitId(opts.produitId ?? null);
-    await lancerEquiv(opts);
+    if (opts.query?.trim() || opts.produitId) await lancerEquiv(opts);
+    else {
+      setEquivResults([]);
+      setEquivError(null);
+    }
   };
 
   const ajouterSuggestion = (s: any) => ajouterAuPanier({
@@ -1006,8 +1025,7 @@ export const POSVendeur = ({ preview }: { preview?: POSVendeurPreview } = {}) =>
           className="hidden w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm outline-none focus:border-primary min-[1200px]:block">
           {METHODES.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
         </select>
-        <textarea value={noteCaissier} onChange={e => setNoteCaissier(e.target.value)} maxLength={500} rows={2} placeholder="Note au caissier (facultatif)"
-          className="w-full resize-none rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
+        <CustomerRequestField value={noteCaissier} onChange={setNoteCaissier} />
         <button onClick={onEnvoyer ?? (() => { setReviewOpen(true); saleFlow.setPhase('REVIEWING'); })} disabled={!panier.length || submitting} title="Contrôler puis envoyer à la caissière (F8)"
           className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-primary text-white font-bold rounded-xl shadow-md shadow-primary/20 hover:bg-opacity-90 disabled:opacity-50">
           <Send size={18} />{submitting ? 'Envoi…' : 'Envoyer au caissier'}
@@ -1026,7 +1044,7 @@ export const POSVendeur = ({ preview }: { preview?: POSVendeurPreview } = {}) =>
 
   const renderSaleReview = () => (
     <AnimatePresence>
-      {reviewOpen && <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[60] flex items-center justify-center bg-black/45 p-4" onClick={() => !submitting && setReviewOpen(false)}><motion.div initial={{ scale: .97, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: .97, opacity: 0 }} role="dialog" aria-modal="true" aria-label="Contrôle de la vente" onClick={event => event.stopPropagation()} className="w-full max-w-lg overflow-hidden rounded-2xl bg-white shadow-2xl"><header className="flex items-center justify-between border-b border-slate-100 p-5"><div><p className="text-xs font-bold uppercase tracking-wider text-primary">Dernier contrôle</p><h3 className="mt-1 text-lg font-bold text-slate-900">Envoyer cette vente ?</h3></div><button onClick={() => setReviewOpen(false)} aria-label="Fermer" className="rounded-lg p-2 text-slate-400 hover:bg-slate-100"><X size={19} /></button></header><div className="max-h-[55vh] overflow-y-auto p-5"><ul className="divide-y divide-slate-100">{panier.map(line => <li key={line.produitId} className="flex justify-between gap-3 py-3 text-sm"><span className="text-slate-700">{line.quantite} × {line.nomProduit}</span><strong>{fmtFCFA(line.prix * line.quantite)}</strong></li>)}</ul>{noteCaissier && <div className="mt-4 rounded-xl bg-slate-50 p-3 text-sm text-slate-600"><strong className="text-slate-800">Note caisse :</strong> {noteCaissier}</div>}<div className="mt-4 flex items-center justify-between rounded-xl bg-slate-950 p-4 text-white"><span>{totalUnits} unité(s)</span><strong className="text-xl">{fmtFCFA(total)}</strong></div></div><footer className="grid grid-cols-2 gap-3 border-t border-slate-100 p-5"><button onClick={() => setReviewOpen(false)} disabled={submitting} className="min-h-12 rounded-xl bg-slate-100 font-bold text-slate-700">Modifier</button><button onClick={() => { void envoyerVendeur().then(() => setReviewOpen(false)); }} disabled={submitting} className="min-h-12 rounded-xl bg-primary font-bold text-white disabled:opacity-50">{submitting ? 'Envoi…' : 'Confirmer l’envoi'}</button></footer></motion.div></motion.div>}
+      {reviewOpen && <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[60] flex items-center justify-center bg-black/45 p-4" onClick={() => !submitting && setReviewOpen(false)}><motion.div initial={{ scale: .97, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: .97, opacity: 0 }} role="dialog" aria-modal="true" aria-label="Contrôle de la vente" onClick={event => event.stopPropagation()} className="w-full max-w-lg overflow-hidden rounded-2xl bg-white shadow-2xl"><header className="flex items-center justify-between border-b border-slate-100 p-5"><div><p className="text-xs font-bold uppercase tracking-wider text-primary">Dernier contrôle</p><h3 className="mt-1 text-lg font-bold text-slate-900">Envoyer cette vente ?</h3></div><button onClick={() => setReviewOpen(false)} aria-label="Fermer" className="rounded-lg p-2 text-slate-400 hover:bg-slate-100"><X size={19} /></button></header><div className="max-h-[55vh] overflow-y-auto p-5"><ul className="divide-y divide-slate-100">{panier.map(line => <li key={line.produitId} className="flex justify-between gap-3 py-3 text-sm"><span className="text-slate-700">{line.quantite} × {line.nomProduit}</span><strong>{fmtFCFA(line.prix * line.quantite)}</strong></li>)}</ul>{noteCaissier && <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-950"><strong>Demande du client :</strong> {noteCaissier}</div>}<div className="mt-4 flex items-center justify-between rounded-xl bg-slate-950 p-4 text-white"><span>{totalUnits} unité(s)</span><strong className="text-xl">{fmtFCFA(total)}</strong></div></div><footer className="grid grid-cols-2 gap-3 border-t border-slate-100 p-5"><button onClick={() => setReviewOpen(false)} disabled={submitting} className="min-h-12 rounded-xl bg-slate-100 font-bold text-slate-700">Modifier</button><button onClick={() => { void envoyerVendeur().then(() => setReviewOpen(false)); }} disabled={submitting} className="min-h-12 rounded-xl bg-primary font-bold text-white disabled:opacity-50">{submitting ? 'Envoi…' : 'Confirmer l’envoi'}</button></footer></motion.div></motion.div>}
     </AnimatePresence>
   );
 
@@ -1114,6 +1132,24 @@ export const POSVendeur = ({ preview }: { preview?: POSVendeurPreview } = {}) =>
           <span className="hidden sm:inline text-sm font-medium">Scanner</span>
         </button>
       </div>
+      {equivalenceContextActive && (
+        <button
+          type="button"
+          onClick={() => ouvrirEquiv({ query: search.trim() || undefined })}
+          className="flex min-h-11 w-full items-center justify-between gap-3 rounded-xl border border-indigo-200 bg-indigo-50 px-4 text-left text-sm text-indigo-950 transition-colors hover:bg-indigo-100"
+        >
+          <span className="flex min-w-0 items-center gap-3">
+            <Sparkles size={18} className="shrink-0 text-primary" />
+            <span>
+              <strong className="block">Demander un équivalent à Gemini</strong>
+              <span className="block text-xs text-slate-600">
+                Suggestions limitées aux composants réellement en stock.
+              </span>
+            </span>
+          </span>
+          <span className="shrink-0 text-xs font-bold text-primary">Ouvrir</span>
+        </button>
+      )}
       <div className="space-y-3 md:grid md:grid-cols-[10rem_minmax(0,1fr)] md:items-start md:gap-3 md:space-y-0 min-[1400px]:grid-cols-[11rem_minmax(0,1fr)]">
         <VerticalCategoryNavigator
           categories={categoryOptions}

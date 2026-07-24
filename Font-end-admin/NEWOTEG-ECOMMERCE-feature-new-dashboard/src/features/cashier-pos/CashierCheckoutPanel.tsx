@@ -19,6 +19,7 @@ import { useToast } from '../../components/ui/Toast';
 import { CashierCountdown } from './CashierCountdown';
 import type { CashierCheckoutFlow } from './useCashierCheckoutFlow';
 import { cashierSellerName, money, type DocumentType, type PaymentMethod } from './types';
+import { CustomerRequestNotice } from './CustomerRequestNotice';
 
 const paymentMethods: { id: PaymentMethod; label: string; icon: typeof Banknote }[] = [
   { id: 'ESPECES', label: 'Espèces', icon: Banknote },
@@ -51,7 +52,13 @@ function TicketLines({ flow }: { flow: CashierCheckoutFlow }) {
   return (
     <div className="border border-slate-200 bg-white p-4 md:rounded-xl">
       <h3 className="text-sm font-bold text-slate-950">Articles ({flow.selected.lignes.length})</h3>
-      {flow.selected.noteCaissier && <p className="mt-3 rounded-lg bg-amber-50 p-3 text-xs text-amber-900"><strong>Note du vendeur :</strong> {flow.selected.noteCaissier}</p>}
+      <div className="mt-3">
+        <CustomerRequestNotice
+          request={flow.selected.noteCaissier}
+          acknowledged={flow.requestAcknowledged}
+          onAcknowledgedChange={flow.setRequestAcknowledged}
+        />
+      </div>
       <div className="mt-2 divide-y divide-slate-100">
         {flow.selected.lignes.map(line => (
           <div key={line.id} className="flex items-center justify-between gap-3 py-3 text-sm">
@@ -119,6 +126,11 @@ export function CashierCheckoutPanel({ flow, onNextTicket }: { flow: CashierChec
         <CashierCountdown date={flow.selected.expiresAt} />
       </header>
       <Progress step={flow.step} />
+      {flow.step !== 'TICKET' && (
+        <div className="px-3 pt-3 md:px-5">
+          <CustomerRequestNotice request={flow.selected.noteCaissier} compact />
+        </div>
+      )}
 
       {flow.step === 'TICKET' ? (
         <div className="p-3 md:p-5">
@@ -127,7 +139,7 @@ export function CashierCheckoutPanel({ flow, onNextTicket }: { flow: CashierChec
             <span className="inline-flex items-center gap-2 text-sm font-bold text-emerald-700"><Check size={18} />Stock vérifié</span>
           </div>
           <div className="mt-4"><TicketLines flow={flow} /></div>
-          <button type="button" onClick={() => flow.setStep('CUSTOMER')} className="mt-4 hidden min-h-12 w-full rounded-lg bg-primary font-extrabold text-white md:block">Identifier le client</button>
+          <button type="button" onClick={() => flow.setStep('CUSTOMER')} disabled={!flow.canContinueTicket} className="mt-4 hidden min-h-12 w-full rounded-lg bg-primary font-extrabold text-white disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-600 md:block">Identifier le client</button>
         </div>
       ) : flow.step === 'CUSTOMER' ? (
         <div className="grid gap-4 p-3 md:p-5 min-[1200px]:grid-cols-[minmax(0,1fr)_minmax(260px,38%)]">
@@ -166,7 +178,7 @@ export function CashierCheckoutPanel({ flow, onNextTicket }: { flow: CashierChec
       )}
 
       <div className="mobile-safe-bottom fixed inset-x-0 bottom-0 z-[60] border-t border-slate-200 bg-white p-3 shadow-[0_-6px_24px_rgba(15,23,42,.1)] md:hidden">
-        <div className="flex items-center gap-3"><div className="min-w-0 flex-1"><p className="text-[11px] text-slate-500">Total à payer</p><p className="truncate text-lg font-black text-primary">{money(flow.total)}</p></div>{flow.step === 'TICKET' ? <button type="button" onClick={() => flow.setStep('CUSTOMER')} className="min-h-12 rounded-lg bg-primary px-5 font-extrabold text-white">Identifier</button> : flow.step === 'CUSTOMER' ? <button type="button" onClick={() => flow.setStep('PAYMENT')} className="min-h-12 rounded-lg bg-primary px-5 font-extrabold text-white">Continuer</button> : <button type="button" onClick={() => void flow.checkout()} disabled={!flow.canPay} className="flex min-h-12 items-center gap-2 rounded-lg bg-primary px-5 font-extrabold text-white disabled:opacity-40">{flow.submitting ? <Loader2 className="animate-spin" size={18} /> : <Check size={18} />}Encaisser</button>}</div>
+        <div className="flex items-center gap-3"><div className="min-w-0 flex-1"><p className="text-[11px] text-slate-500">Total à payer</p><p className="truncate text-lg font-black text-primary">{money(flow.total)}</p></div>{flow.step === 'TICKET' ? <button type="button" onClick={() => flow.setStep('CUSTOMER')} disabled={!flow.canContinueTicket} className="min-h-12 rounded-lg bg-primary px-5 font-extrabold text-white disabled:bg-slate-300 disabled:text-slate-600">Identifier</button> : flow.step === 'CUSTOMER' ? <button type="button" onClick={() => flow.setStep('PAYMENT')} className="min-h-12 rounded-lg bg-primary px-5 font-extrabold text-white">Continuer</button> : <button type="button" onClick={() => void flow.checkout()} disabled={!flow.canPay} className="flex min-h-12 items-center gap-2 rounded-lg bg-primary px-5 font-extrabold text-white disabled:opacity-40">{flow.submitting ? <Loader2 className="animate-spin" size={18} /> : <Check size={18} />}Encaisser</button>}</div>
       </div>
     </section>
   );

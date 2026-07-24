@@ -24,12 +24,13 @@ function makeFlow(step: 'TICKET' | 'CUSTOMER' | 'PAYMENT') {
     customerQuery: 'Martine', customerResults: [], customer: null, customerSearching: false,
     customerSearchAttempted: false, customerSearchError: null, cashReceived: '15000', reference: '',
     deposit: '', dueDate: '', creditPreview: null, creatingCustomer: false, total: 7_500,
-    change: 7_500, canPay: true, queueTotal: 7_500,
+    change: 7_500, canPay: true, canContinueTicket: true, requestAcknowledged: true, queueTotal: 7_500,
     result: step === 'PAYMENT' ? { facture: { id: 'facture-1', numero: 'T-0001', dateEmission: new Date().toISOString(), lignes: [] } } : null,
     load: vi.fn(), selectTicket: vi.fn(), closeTicket: vi.fn(), createCustomer: vi.fn(),
     searchCustomers: vi.fn().mockResolvedValue([]), checkout: vi.fn().mockResolvedValue(step === 'PAYMENT' ? { facture: { id: 'facture-1' } } : null),
     setStep: vi.fn(), setMethod: vi.fn(), setDocumentType: vi.fn(), setCustomerQuery: vi.fn(),
     setCustomer: vi.fn(), setCashReceived: vi.fn(), setReference: vi.fn(), setDeposit: vi.fn(), setDueDate: vi.fn(),
+    setRequestAcknowledged: vi.fn(),
   } as any;
 }
 

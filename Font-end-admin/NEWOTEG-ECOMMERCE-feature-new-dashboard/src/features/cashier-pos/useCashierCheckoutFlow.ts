@@ -27,6 +27,7 @@ export function useCashierCheckoutFlow() {
   const [result, setResult] = useState<any>(null);
   const [creditPreview, setCreditPreview] = useState<any>(null);
   const [creatingCustomer, setCreatingCustomer] = useState(false);
+  const [requestAcknowledged, setRequestAcknowledged] = useState(true);
   const checkoutInFlight = useRef(false);
 
   const load = useCallback(async (preserveCurrentError = false) => {
@@ -114,6 +115,7 @@ export function useCashierCheckoutFlow() {
     setResult(null);
     setError(null);
     setCheckoutStatus('IDLE');
+    setRequestAcknowledged(true);
   }, []);
 
   const selectTicket = useCallback((ticket: CashierTicket) => {
@@ -122,6 +124,7 @@ export function useCashierCheckoutFlow() {
     setSelected(ticket);
     setCustomer(ticket.client || null);
     setCustomerQuery(ticket.client ? '' : ticket.telephoneClient || '');
+    setRequestAcknowledged(!ticket.noteCaissier?.trim());
     setStep('TICKET');
   }, [resetPayment]);
 
@@ -134,7 +137,9 @@ export function useCashierCheckoutFlow() {
 
   const total = Number(selected?.montantTotal || 0);
   const change = method === 'ESPECES' ? Math.max(0, Number(cashReceived || 0) - total) : 0;
+  const canContinueTicket = !selected?.noteCaissier?.trim() || requestAcknowledged;
   const canPay = Boolean(selected) && !submitting && caisse?.statut !== 'FERMEE'
+    && canContinueTicket
     && (method !== 'ESPECES' || Number(cashReceived) >= total)
     && (method !== 'CREDIT' || Boolean(customer && dueDate && creditPreview?.autorise));
 
@@ -142,12 +147,13 @@ export function useCashierCheckoutFlow() {
     if (!selected) return 'Sélectionnez un ticket à encaisser.';
     if (submitting) return 'Le paiement est en cours de validation.';
     if (caisse?.statut === 'FERMEE') return 'La caisse est fermée. Ouvrez une session avant d’encaisser.';
+    if (!canContinueTicket) return 'Confirmez que la demande du client a été prise en compte.';
     if (method === 'ESPECES' && Number(cashReceived) < total) return 'Le montant reçu est inférieur au total à payer.';
     if (method === 'CREDIT' && !customer) return 'Sélectionnez un client pour accorder un crédit.';
     if (method === 'CREDIT' && !dueDate) return 'Choisissez une date d’échéance.';
     if (method === 'CREDIT' && !creditPreview?.autorise) return 'Ce crédit ne peut pas être validé avec les conditions actuelles.';
     return null;
-  }, [caisse?.statut, cashReceived, creditPreview?.autorise, customer, dueDate, method, selected, submitting, total]);
+  }, [caisse?.statut, canContinueTicket, cashReceived, creditPreview?.autorise, customer, dueDate, method, selected, submitting, total]);
 
   const checkout = useCallback(async () => {
     if (!selected || !canPay || checkoutInFlight.current) return null;
@@ -208,9 +214,9 @@ export function useCashierCheckoutFlow() {
     tickets, selected, step, loading, submitting, checkoutStatus, error, caisse, method, documentType,
     customerQuery, customerResults, customer, cashReceived, reference, deposit, dueDate,
     result, creditPreview, creatingCustomer, customerSearching, customerSearchAttempted, customerSearchError,
-    total, change, canPay, paymentBlockReason, queueTotal, load, selectTicket, closeTicket, checkout, createCustomer, searchCustomers,
+    total, change, canPay, canContinueTicket, requestAcknowledged, paymentBlockReason, queueTotal, load, selectTicket, closeTicket, checkout, createCustomer, searchCustomers,
     setStep, setMethod, setDocumentType, setCustomerQuery, setCustomer, setCashReceived,
-    setReference, setDeposit, setDueDate,
+    setReference, setDeposit, setDueDate, setRequestAcknowledged,
   };
 }
 

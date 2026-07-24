@@ -65,7 +65,7 @@ export class CaisseJourController {
     @Request() req: any,
     @Body() dto: FermerCaisseDto,
   ) {
-    return this.service.fermer(id, req.user.id, dto?.note);
+    return this.service.fermer(id, req.user.id, dto?.note, dto?.coffreId);
   }
 
   /**

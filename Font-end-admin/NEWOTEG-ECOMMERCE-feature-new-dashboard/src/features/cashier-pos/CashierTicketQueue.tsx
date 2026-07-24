@@ -2,6 +2,7 @@ import { ChevronRight, ListChecks, Loader2, ReceiptText } from 'lucide-react';
 import type { CashierCheckoutFlow } from './useCashierCheckoutFlow';
 import { CashierCountdown } from './CashierCountdown';
 import { cashierSellerName, money, type CashierTicket } from './types';
+import { CustomerRequestNotice } from './CustomerRequestNotice';
 
 interface QueueCardProps {
   ticket: CashierTicket;
@@ -33,6 +34,7 @@ function QueueCard({ ticket, active, onClick }: QueueCardProps) {
         <strong className="text-lg text-primary">{money(ticket.montantTotal)}</strong>
         <span className="inline-flex items-center gap-1 text-xs font-bold text-primary">Encaisser <ChevronRight size={16} /></span>
       </div>
+      <CustomerRequestNotice request={ticket.noteCaissier} compact />
     </button>
   );
 }

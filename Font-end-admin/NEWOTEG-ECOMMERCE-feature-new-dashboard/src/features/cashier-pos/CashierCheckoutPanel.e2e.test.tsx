@@ -20,10 +20,12 @@ function flowFor(step: 'TICKET' | 'CUSTOMER' | 'PAYMENT') {
     tickets: [ticket], selected: ticket, step, loading: false, submitting: false, error: null, caisse: null,
     method: 'ESPECES', documentType: 'FACTURE', customerQuery: '', customerResults: [], customer: null,
     cashReceived: '15000', reference: '', deposit: '', dueDate: '', result: null, creditPreview: null,
-    creatingCustomer: false, total: 12_500, change: 2_500, canPay: true, queueTotal: 12_500,
+    creatingCustomer: false, total: 12_500, change: 2_500, canPay: true, canContinueTicket: true,
+    requestAcknowledged: true, queueTotal: 12_500,
     load: vi.fn(), selectTicket: vi.fn(), closeTicket: vi.fn(), checkout: vi.fn(), createCustomer: vi.fn(),
     setStep: vi.fn(), setMethod: vi.fn(), setDocumentType: vi.fn(), setCustomerQuery: vi.fn(), setCustomer: vi.fn(),
     setCashReceived: vi.fn(), setReference: vi.fn(), setDeposit: vi.fn(), setDueDate: vi.fn(),
+    setRequestAcknowledged: vi.fn(),
   } as any;
 }
 

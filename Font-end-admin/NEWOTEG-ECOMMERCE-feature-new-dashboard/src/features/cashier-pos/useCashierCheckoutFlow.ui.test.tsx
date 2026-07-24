@@ -114,4 +114,29 @@ describe('useCashierCheckoutFlow', () => {
     expect(result.current.error).toBe('La caisse est fermée.');
     expect(result.current.submitting).toBe(false);
   });
+
+  it('bloque le paiement tant que la demande du client n’est pas confirmée', async () => {
+    const ticketWithRequest = {
+      ...ticket,
+      noteCaissier: 'Facture demandée · Emballage séparé',
+    };
+    mocks.pending.mockResolvedValue([ticketWithRequest]);
+    const { result } = renderHook(() => useCashierCheckoutFlow());
+
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    act(() => {
+      result.current.selectTicket(ticketWithRequest);
+      result.current.setCashReceived('15000');
+      result.current.setStep('PAYMENT');
+    });
+
+    expect(result.current.requestAcknowledged).toBe(false);
+    expect(result.current.canContinueTicket).toBe(false);
+    expect(result.current.canPay).toBe(false);
+    expect(result.current.paymentBlockReason).toMatch(/demande du client/i);
+
+    act(() => result.current.setRequestAcknowledged(true));
+
+    await waitFor(() => expect(result.current.canPay).toBe(true));
+  });
 });

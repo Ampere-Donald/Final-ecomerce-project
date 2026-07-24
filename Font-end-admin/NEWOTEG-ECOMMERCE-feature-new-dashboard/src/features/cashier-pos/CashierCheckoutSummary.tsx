@@ -1,6 +1,7 @@
 import { Check, Loader2 } from 'lucide-react';
 import type { CashierCheckoutFlow } from './useCashierCheckoutFlow';
 import { money } from './types';
+import { CustomerRequestNotice } from './CustomerRequestNotice';
 
 const documentLabels = {
   TICKET_CAISSE: 'Ticket',
@@ -28,6 +29,7 @@ export function CashierCheckoutSummary({ flow }: { flow: CashierCheckoutFlow }) 
         <div className="flex justify-between gap-3 py-3 text-sm"><span className="text-slate-500">Paiement</span><strong>{paymentLabels[flow.method]}</strong></div>
         {flow.customer && <div className="py-3 text-sm"><span className="block text-slate-500">Client</span><strong className="mt-1 block truncate">{flow.customer.nom} {flow.customer.prenom || ''}</strong></div>}
       </div>
+      <CustomerRequestNotice request={flow.selected.noteCaissier} compact />
       <div className="mt-4 border-t border-slate-200 pt-4">
         <div className="flex items-end justify-between gap-3"><span className="font-bold text-slate-700">Total</span><strong className="text-2xl text-primary">{money(flow.total)}</strong></div>
         {flow.method === 'ESPECES' && flow.change > 0 && <div className="mt-2 flex justify-between text-sm"><span className="text-slate-500">Monnaie</span><strong className="text-emerald-700">{money(flow.change)}</strong></div>}

@@ -33,6 +33,7 @@ const ticket: CashierTicket = {
   vendeurId: 'donald',
   nomClient: 'Martine NDOUMBE',
   telephoneClient: '+237 6 99 12 34 56',
+  noteCaissier: 'Facture demandée · Emballage séparé',
   montantTotal: 12_500,
   createdAt: new Date().toISOString(),
   expiresAt: new Date(Date.now() + 600_000).toISOString(),
@@ -54,6 +55,7 @@ function CashierFixture({ initialStep }: { initialStep: CheckoutStep }) {
   const [reference, setReference] = useState('');
   const [deposit, setDeposit] = useState('');
   const [dueDate, setDueDate] = useState('');
+  const [requestAcknowledged, setRequestAcknowledged] = useState(initialStep !== 'TICKET');
 
   const flow = useMemo(() => ({
     tickets: [ticket], selected, step, loading: false, submitting: false, error: null, caisse: { statut: 'OUVERTE', solde: 84_500 },
@@ -61,15 +63,16 @@ function CashierFixture({ initialStep }: { initialStep: CheckoutStep }) {
     customerSearching: false, customerSearchAttempted: false, customerSearchError: null,
     result: step === 'SUCCESS' ? { facture: { id: 'f1', numero: 'FAC-2026-1048', dateEmission: new Date().toISOString(), lignes: [], client: customer } } : null,
     creditPreview: null, creatingCustomer: false, total: 12_500, change: method === 'ESPECES' ? Math.max(0, Number(cashReceived) - 12_500) : 0,
-    canPay: method !== 'ESPECES' || Number(cashReceived) >= 12_500, queueTotal: 12_500,
+    canPay: method !== 'ESPECES' || Number(cashReceived) >= 12_500, canContinueTicket: requestAcknowledged, queueTotal: 12_500,
+    requestAcknowledged,
     load: async () => {},
     selectTicket: (next: CashierTicket) => { setSelected(next); setCustomerQuery(next.telephoneClient || ''); setStep('TICKET'); },
     closeTicket: () => { setSelected(null); setStep('QUEUE'); },
     checkout: async () => { setStep('SUCCESS'); },
     searchCustomers: async () => [],
     createCustomer: async (name: string, phone: string) => { const created = { id: 'new', nom: name, telephone: phone }; setCustomer(created); return created; },
-    setStep, setMethod, setDocumentType, setCustomerQuery, setCustomer, setCashReceived, setReference, setDeposit, setDueDate,
-  }), [cashReceived, customer, customerQuery, deposit, documentType, dueDate, method, reference, selected, step]);
+    setStep, setMethod, setDocumentType, setCustomerQuery, setCustomer, setCashReceived, setReference, setDeposit, setDueDate, setRequestAcknowledged,
+  }), [cashReceived, customer, customerQuery, deposit, documentType, dueDate, method, reference, requestAcknowledged, selected, step]);
 
   return <CashierPOSView flow={flow as any} />;
 }

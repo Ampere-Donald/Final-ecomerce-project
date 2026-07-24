@@ -382,8 +382,8 @@ export const caisseJourApi = {
   statsCaissier: (id: string, periode: string) =>
     api.get(`/caisse-jour/caissier/${id}`, { params: { periode } }).then(res => res.data),
   getOne: (id: string) => api.get(`/caisse-jour/${id}`).then(res => res.data),
-  fermer: (id: string, note?: string) =>
-    api.post(`/caisse-jour/${id}/fermer`, { note }).then(res => res.data),
+  fermer: (id: string, data?: { note?: string; coffreId?: string }) =>
+    api.post(`/caisse-jour/${id}/fermer`, data || {}).then(res => res.data),
   rouvrir: (id: string) =>
     api.post(`/caisse-jour/${id}/rouvrir`).then(res => res.data),
   addOperation: (

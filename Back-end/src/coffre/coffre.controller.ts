@@ -29,7 +29,7 @@ export class CoffreController {
     return this.coffreService.create(dto, actor);
   }
 
-  @Roles('SUPER_ADMIN', 'ADMIN')
+  @Roles('SUPER_ADMIN', 'ADMIN', 'CAISSIER')
   @Get()
   findAll() {
     return this.coffreService.findAll();

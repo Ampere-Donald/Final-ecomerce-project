@@ -14,6 +14,15 @@ vi.mock('./useCashierCheckoutFlow', () => ({
   }),
 }));
 vi.mock('../../components/ui/Toast', () => ({ useToast: () => ({ success: vi.fn() }) }));
+vi.mock('../../context/AdminAuthContext', () => ({
+  useAdminAuth: () => ({
+    admin: { id: 'cashier-1', nom: 'Caissier Test', role: 'CAISSIER' },
+    logout: vi.fn(),
+  }),
+}));
+vi.mock('../../services/api', () => ({
+  caisseJourApi: { aujourdhui: vi.fn().mockResolvedValue({ statut: 'OUVERTE' }) },
+}));
 
 describe('CashierPOSPage', () => {
   beforeEach(() => {

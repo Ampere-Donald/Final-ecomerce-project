@@ -81,7 +81,28 @@ export class CaisseJourService {
   async aujourdhui(caissierId?: string | null) {
     const cj = await this.getOrCreateToday(caissierId);
     const solde = await this.getSoldeJour(cj.id);
-    return { ...cj, solde };
+    const destination = cj.statut === 'FERMEE'
+      ? await this.getClosureDestination(cj.id)
+      : null;
+    return { ...cj, solde, destination };
+  }
+
+  private async getClosureDestination(caisseJourId: string, client: any = this.db) {
+    const operation = await client.caisse.findFirst({
+      where: {
+        transfertGroupId: caisseJourId,
+        annulee: false,
+      },
+      include: {
+        coffre: { select: { id: true, nom: true } },
+      },
+      orderBy: { dateOperation: 'desc' },
+    });
+
+    if (!operation) return null;
+    return operation.coffre
+      ? { type: 'COFFRE', coffre: operation.coffre }
+      : { type: 'CAISSE_GLOBALE', coffre: null };
   }
 
   /** Opérations détaillées d'une caisse du jour (ordre antéchronologique). */
@@ -260,11 +281,16 @@ export class CaisseJourService {
 
   /**
    * Ferme la caisse du jour et transfère son solde vers la caisse globale
-   * via une seule ligne d'opération récapitulative.
+   * ou vers un coffre actif choisi par le caissier.
    *
    * Atomique : tout est annulé en cas d'échec.
    */
-  async fermer(caisseJourId: string, ferméParId: string, note?: string) {
+  async fermer(
+    caisseJourId: string,
+    ferméParId: string,
+    note?: string,
+    coffreId?: string,
+  ) {
     const cj = await this.db.caisseJour.findUnique({
       where: { id: caisseJourId },
     });
@@ -277,6 +303,23 @@ export class CaisseJourService {
 
     const result = await this.db.$transaction(async (tx: any) => {
       const solde = await this.getSoldeJour(caisseJourId, tx);
+      const coffre = coffreId
+        ? await tx.coffre.findUnique({ where: { id: coffreId } })
+        : null;
+
+      if (coffreId && !coffre) {
+        throw new NotFoundException('Le coffre de destination est introuvable.');
+      }
+      if (coffre && coffre.statut !== 'ACTIF') {
+        throw new BadRequestException(
+          'Ce coffre ne peut plus recevoir de transfert.',
+        );
+      }
+      if (coffre && solde <= 0) {
+        throw new BadRequestException(
+          'Aucun solde positif ne peut être transféré vers ce coffre.',
+        );
+      }
 
       const updated = await tx.caisseJour.update({
         where: { id: caisseJourId },
@@ -287,29 +330,62 @@ export class CaisseJourService {
         },
       });
 
-      // Transfert récapitulatif vers la caisse globale (hors caisseJourId).
+      // Écriture récapitulative dans la destination (hors caisseJourId).
       if (solde !== 0) {
         const dateLabel = cj.date.toISOString().slice(0, 10);
         await tx.caisse.create({
           data: {
+            coffreId: coffre?.id ?? null,
             typeOperation: solde > 0 ? 'ENTREE' : 'SORTIE',
             montant: Math.abs(solde),
-            motif: note
-              ? `Clôture caisse du jour ${dateLabel} — ${note}`
-              : `Clôture caisse du jour ${dateLabel}`,
+            motif: [
+              `Clôture caisse du jour ${dateLabel}`,
+              coffre ? `vers coffre ${coffre.nom}` : 'vers caisse globale',
+              note?.trim(),
+            ].filter(Boolean).join(' — '),
+            transfertGroupId: caisseJourId,
             effectueePar: ferméParId,
-            // caisseJourId volontairement omis : c'est la caisse globale
+            // caisseJourId volontairement omis : cette écriture appartient
+            // à la destination et ne doit pas être recomptée dans la journée.
           },
         });
+
+        if (coffre?.objectifMontant) {
+          const operations = await tx.caisse.findMany({
+            where: { coffreId: coffre.id, annulee: false },
+            select: { typeOperation: true, montant: true },
+          });
+          const soldeCoffre = operations.reduce(
+            (total: number, operation: any) => {
+              const montant = this.toNumber(operation.montant);
+              return operation.typeOperation === 'ENTREE'
+                ? total + montant
+                : total - montant;
+            },
+            0,
+          );
+          if (soldeCoffre >= this.toNumber(coffre.objectifMontant)) {
+            await tx.coffre.update({
+              where: { id: coffre.id },
+              data: { statut: 'ATTEINT' },
+            });
+          }
+        }
       }
 
-      return { ...updated, solde };
+      return {
+        ...updated,
+        solde,
+        destination: coffre
+          ? { type: 'COFFRE', coffre: { id: coffre.id, nom: coffre.nom } }
+          : { type: 'CAISSE_GLOBALE', coffre: null },
+      };
     });
 
     this.notifications
       .create(
         'CAISSE_MAJ',
-        `Caisse du jour ${cj.date.toISOString().slice(0, 10)} fermée. Solde transféré : ${result.solde} FCFA.`,
+        `Caisse du jour ${cj.date.toISOString().slice(0, 10)} fermée. Solde transféré : ${result.solde} FCFA vers ${result.destination.coffre?.nom ?? 'la caisse globale'}.`,
       )
       .catch(() => {});
 
@@ -341,6 +417,22 @@ export class CaisseJourService {
           statut: 'OUVERTE',
           fermetureAt: null,
           soldeCloture: null,
+        },
+      });
+
+      // Annule l'écriture de transfert créée lors de la clôture pour éviter
+      // un double comptage si la caisse est ensuite refermée.
+      await tx.caisse.updateMany({
+        where: {
+          transfertGroupId: caisseJourId,
+          annulee: false,
+        },
+        data: {
+          annulee: true,
+          motifAnnulation: `Réouverture caisse du jour ${dateLabel}`,
+          annuleeById: rouvertParId,
+          annuleeAt: new Date(),
+          version: { increment: 1 },
         },
       });
 

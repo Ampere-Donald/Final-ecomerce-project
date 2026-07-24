@@ -23,6 +23,7 @@ import {
 import { ReceiptGenerator } from '../../components/ReceiptGenerator';
 import { cashierSellerName, money, type DocumentType, type PaymentMethod } from './types';
 import type { CashierCheckoutFlow } from './useCashierCheckoutFlow';
+import { CustomerRequestNotice } from './CustomerRequestNotice';
 
 const documents: { id: DocumentType; label: string }[] = [
   { id: 'TICKET_CAISSE', label: 'Ticket' },
@@ -47,8 +48,15 @@ function TicketStep({ flow }: { flow: CashierCheckoutFlow }) {
   return (
     <section className="min-h-0 overflow-y-auto px-8 py-6">
       <div className="flex items-start justify-between border-b border-slate-200 pb-5">
-        <div><h1 className="text-3xl font-bold tracking-tight text-primary">Ticket {ticket.numeroTicket}</h1><p className="mt-5 flex items-center gap-3 text-slate-700"><UserRound size={20} />Vendeur <strong>{seller}</strong></p>{ticket.noteCaissier && <p className="mt-3 flex items-center gap-3 text-sm text-slate-700"><ReceiptText size={18} />Note <span>{ticket.noteCaissier}</span></p>}</div>
+        <div><h1 className="text-3xl font-bold tracking-tight text-primary">Ticket {ticket.numeroTicket}</h1><p className="mt-5 flex items-center gap-3 text-slate-700"><UserRound size={20} />Vendeur <strong>{seller}</strong></p></div>
         <span className="flex items-center gap-2 text-sm font-semibold text-emerald-700"><CheckCircle2 size={20} />Stock vérifié</span>
+      </div>
+      <div className="mt-5 max-w-2xl">
+        <CustomerRequestNotice
+          request={ticket.noteCaissier}
+          acknowledged={flow.requestAcknowledged}
+          onAcknowledgedChange={flow.setRequestAcknowledged}
+        />
       </div>
       <table className="mt-5 w-full table-fixed text-left text-sm">
         <thead className="border-b border-slate-200 text-slate-700"><tr><th className="w-2/5 py-4 font-semibold">Produit</th><th className="py-4 text-center font-semibold">Qté</th><th className="py-4 text-right font-semibold">Prix unitaire</th><th className="py-4 text-right font-semibold">Total</th></tr></thead>
@@ -69,6 +77,7 @@ function CustomerStep({ flow }: { flow: CashierCheckoutFlow }) {
     <section className="min-h-0 overflow-y-auto px-8 py-6">
       <h1 className="text-3xl font-bold tracking-tight text-primary">Identifier le client</h1>
       <p className="mt-3 text-sm text-slate-600">Recherchez le numéro qui figurera sur la facture ou le bon de vente.</p>
+      <CustomerRequestNotice request={flow.selected?.noteCaissier} compact />
       <form className="relative mt-6 flex" onSubmit={event => { event.preventDefault(); void flow.searchCustomers(); }}>
         <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-700" size={22} />
         <input inputMode="search" value={flow.customerQuery} onChange={event => flow.setCustomerQuery(event.target.value)} placeholder="Nom ou téléphone du client" aria-describedby="customer-search-feedback" className="h-16 min-w-0 flex-1 rounded-l-md border border-slate-300 bg-white pl-12 pr-4 text-xl font-medium outline-none focus:border-primary" />
@@ -98,6 +107,7 @@ function PaymentStep({ flow }: { flow: CashierCheckoutFlow }) {
     <section className="min-h-0 overflow-y-auto px-8 py-5">
       <h1 className="text-3xl font-bold tracking-tight text-slate-950">Encaisser <span className="ml-3 text-4xl text-primary">{money(flow.total)}</span></h1>
       <p className="mt-3 flex items-center gap-3 text-lg text-slate-700"><UserRound size={21} />{clientName}<span>·</span><FileText size={20} />{documentLabel(flow.documentType)}<button type="button" onClick={() => flow.setStep('CUSTOMER')} className="ml-2 text-sm font-semibold text-primary">Modifier</button></p>
+      <CustomerRequestNotice request={flow.selected?.noteCaissier} compact />
       <h2 className="mt-7 font-bold text-slate-900">Méthode de paiement</h2>
       <div className="mt-3 grid grid-cols-5 border-b border-slate-200">{paymentMethods.map(item => { const Icon = item.icon; const active = flow.method === item.id; return <button key={item.id} type="button" onClick={() => flow.setMethod(item.id)} className={`flex min-h-20 flex-col items-center justify-center gap-2 border-b-4 text-sm font-medium ${active ? 'border-primary bg-indigo-50 text-slate-950' : 'border-transparent text-slate-600'}`}><Icon size={28} />{item.label}</button>; })}</div>
       {flow.method === 'ESPECES' ? <>
@@ -114,7 +124,7 @@ function SummaryPanel({ flow, onCheckoutAndPrint }: { flow: CashierCheckoutFlow;
   const ticket = flow.selected!;
   const clientName = flow.customer ? `${flow.customer.nom} ${flow.customer.prenom || ''}`.trim() : 'Client comptoir';
   const seller = cashierSellerName(ticket);
-  if (flow.step === 'TICKET') return <aside className="min-h-0 overflow-y-auto border-l border-slate-200 bg-white px-7 py-9 text-center"><h2 className="text-xl font-bold text-slate-950">À encaisser</h2><p className="mt-10 text-6xl font-bold tracking-wide text-primary">{Number(flow.total).toLocaleString('fr-FR')}</p><p className="mt-4 text-3xl">FCFA</p><div className="mt-10 border-t border-slate-200 pt-7 text-left"><p className="flex items-center gap-3 text-slate-700"><Package size={22} />{ticket.lignes.length} articles</p><p className="mt-6 flex items-center gap-3 text-slate-700"><UserRound size={22} />Vendeur {seller}</p></div><button type="button" onClick={() => flow.setStep('CUSTOMER')} className="mt-10 flex min-h-16 w-full items-center justify-center gap-3 rounded-md bg-primary px-5 text-lg font-bold text-white"><UserRound />Identifier le client</button><button type="button" onClick={flow.closeTicket} className="mt-5 text-sm font-medium text-primary">Mettre ce ticket en attente</button></aside>;
+  if (flow.step === 'TICKET') return <aside className="min-h-0 overflow-y-auto border-l border-slate-200 bg-white px-7 py-9 text-center"><h2 className="text-xl font-bold text-slate-950">À encaisser</h2><p className="mt-10 text-6xl font-bold tracking-wide text-primary">{Number(flow.total).toLocaleString('fr-FR')}</p><p className="mt-4 text-3xl">FCFA</p><div className="mt-10 border-t border-slate-200 pt-7 text-left"><p className="flex items-center gap-3 text-slate-700"><Package size={22} />{ticket.lignes.length} articles</p><p className="mt-6 flex items-center gap-3 text-slate-700"><UserRound size={22} />Vendeur {seller}</p><CustomerRequestNotice request={ticket.noteCaissier} compact /></div><button type="button" onClick={() => flow.setStep('CUSTOMER')} disabled={!flow.canContinueTicket} className="mt-10 flex min-h-16 w-full items-center justify-center gap-3 rounded-md bg-primary px-5 text-lg font-bold text-white disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-600"><UserRound />Identifier le client</button>{!flow.canContinueTicket && <p className="mt-3 text-xs font-medium text-amber-800">Confirmez d’abord la demande du client.</p>}<button type="button" onClick={flow.closeTicket} className="mt-5 text-sm font-medium text-primary">Mettre ce ticket en attente</button></aside>;
   if (flow.step === 'CUSTOMER') return <aside className="min-h-0 overflow-y-auto border-l border-slate-200 bg-white px-6 py-9 text-center"><h2 className="text-xl font-bold">Résumé</h2><p className="mt-10 text-6xl font-bold tracking-wide text-primary">{Number(flow.total).toLocaleString('fr-FR')}</p><p className="mt-4 text-3xl">FCFA</p><div className="mt-8 space-y-5 border-t border-slate-200 pt-7 text-left text-slate-700"><p className="flex gap-3"><Package size={21} />{ticket.lignes.length} articles</p><p className="flex gap-3"><UserRound size={21} /><span>{clientName}{flow.customer?.telephone && <small className="mt-1 block">{flow.customer.telephone}</small>}</span></p><p className="flex gap-3"><FileText size={21} />{documentLabel(flow.documentType)}</p></div><button type="button" onClick={() => flow.setStep('PAYMENT')} className="mt-9 min-h-16 w-full rounded-md bg-primary px-5 text-lg font-bold text-white">Continuer vers le paiement</button><button type="button" onClick={() => flow.setStep('TICKET')} className="mt-5 text-sm font-medium text-primary">Revenir au ticket</button></aside>;
   return (
     <aside className="min-h-0 overflow-y-auto border-l border-slate-200 bg-white px-6 py-7">
@@ -124,6 +134,7 @@ function SummaryPanel({ flow, onCheckoutAndPrint }: { flow: CashierCheckoutFlow;
         <p className="flex gap-3"><UserRound size={21} />{clientName}</p>
         <p className="flex gap-3"><FileText size={21} />{documentLabel(flow.documentType)}</p>
         <p className="flex gap-3"><Banknote size={21} />{paymentLabel(flow.method)}</p>
+        <CustomerRequestNotice request={ticket.noteCaissier} compact />
       </div>
       <div className="mt-8 flex items-center justify-between border-t border-slate-200 pt-7">
         <span className="text-lg">Total</span>
