@@ -18,6 +18,23 @@ function Test-IsAdministrator {
     return $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
 }
 
+function Get-CanonicalCertificateSha256 {
+    param([Parameter(Mandatory = $true)][string]$Path)
+
+    # Git/Windows may materialize the same PEM with LF or CRLF line endings.
+    # Hash a canonical UTF-8/LF representation so both copies remain valid.
+    $certificateText = [IO.File]::ReadAllText($Path)
+    $canonicalText = (($certificateText -replace "`r`n", "`n") -replace "`r", "`n")
+    if (-not $canonicalText.EndsWith("`n")) { $canonicalText += "`n" }
+    $bytes = [Text.UTF8Encoding]::new($false).GetBytes($canonicalText)
+    $sha256 = [Security.Cryptography.SHA256]::Create()
+    try {
+        return [BitConverter]::ToString($sha256.ComputeHash($bytes)).Replace('-', '')
+    } finally {
+        $sha256.Dispose()
+    }
+}
+
 function Write-Result {
     param(
         [string]$Status,
@@ -78,7 +95,7 @@ try {
     }
 
     $resolvedCertificate = (Resolve-Path -LiteralPath $CertificatePath).Path
-    $certificateHash = (Get-FileHash -LiteralPath $resolvedCertificate -Algorithm SHA256).Hash
+    $certificateHash = Get-CanonicalCertificateSha256 -Path $resolvedCertificate
     if ($certificateHash -ne $expectedCertificateSha256) {
         $code = Write-Result -Status 'INVALID_CERTIFICATE' -Code 20 -Message 'Le certificat QZ Newoteg ne correspond pas à la version officielle intégrée.'
         exit $code
@@ -136,7 +153,7 @@ try {
     [void](New-Item -ItemType Directory -Path $installDirectory -Force)
     $installedCertificate = Join-Path $installDirectory 'newoteg-qz-signing.crt'
     Copy-Item -LiteralPath $resolvedCertificate -Destination $installedCertificate -Force
-    if ((Get-FileHash -LiteralPath $installedCertificate -Algorithm SHA256).Hash -ne $expectedCertificateSha256) {
+    if ((Get-CanonicalCertificateSha256 -Path $installedCertificate) -ne $expectedCertificateSha256) {
         throw 'La copie locale du certificat QZ a échoué au contrôle d’intégrité.'
     }
 

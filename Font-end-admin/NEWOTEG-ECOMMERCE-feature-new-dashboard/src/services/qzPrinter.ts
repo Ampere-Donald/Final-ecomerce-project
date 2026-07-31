@@ -18,6 +18,7 @@ import { isUsablePrinterQueueName, type UsbDeviceInfo } from './printerSetup';
 
 const PRINTER_CACHE_KEY = 'newoteg_printer_name';
 const PRINTER_HOST_KEY = 'newoteg_printer_host';
+const QZ_TRUST_VERSION = '20260731';
 
 export const QZ_TRAY_DOWNLOAD_URL = 'https://qz.io/download/';
 
@@ -61,7 +62,7 @@ function configureSecurity() {
     resolve: (certificate: string) => void,
     reject: (error: Error) => void,
   ) => {
-    fetch('/qz/digital-certificate.txt', {
+    fetch(`/qz/digital-certificate.txt?v=${QZ_TRUST_VERSION}`, {
       cache: 'no-store',
       headers: { Accept: 'text/plain' },
     })
