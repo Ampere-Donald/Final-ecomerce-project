@@ -13,6 +13,7 @@ import {
   type PrinterReadiness,
   type PrinterStatusEvent,
 } from './printerStatus';
+import type { UsbDeviceInfo } from './printerSetup';
 
 const PRINTER_CACHE_KEY = 'newoteg_printer_name';
 const PRINTER_HOST_KEY = 'newoteg_printer_host';
@@ -152,6 +153,15 @@ export async function listPrinters(): Promise<string[]> {
   const result = await qz.printers.find();
   if (Array.isArray(result)) return result.filter((name): name is string => typeof name === 'string');
   return typeof result === 'string' && result ? [result] : [];
+}
+
+// La liste USB permet de distinguer une imprimante physiquement branchée d'une
+// file Windows réellement installée. Elle sert uniquement au diagnostic : les
+// tickets continuent de passer par le pilote Windows et non par un accès USB brut.
+export async function listUsbDevices(): Promise<UsbDeviceInfo[]> {
+  await connect();
+  const result = await qz.usb.listDevices(false);
+  return Array.isArray(result) ? result as UsbDeviceInfo[] : [];
 }
 
 // QZ 2.1+ traduit les statuts Winspool (papier, hors-ligne, file en pause).

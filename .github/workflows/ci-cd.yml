@@ -99,7 +99,7 @@ jobs:
         shell: pwsh
         run: |
           $failed = $false
-          foreach ($file in @('scripts/Install-NewotegPrintStation.ps1', 'scripts/Invoke-NewotegShopAcceptance.ps1')) {
+          foreach ($file in @('scripts/Install-NewotegPrintStation.ps1', 'scripts/Invoke-NewotegShopAcceptance.ps1', 'scripts/Build-NewotegPrinterSetup.ps1')) {
             $tokens = $null
             $errors = $null
             [void][System.Management.Automation.Language.Parser]::ParseFile((Resolve-Path $file), [ref]$tokens, [ref]$errors)
@@ -109,6 +109,12 @@ jobs:
             }
           }
           if ($failed) { exit 1 }
+      - name: Compiler l'assistant Epson Newoteg
+        shell: pwsh
+        run: |
+          $outputPath = Join-Path $env:RUNNER_TEMP 'Newoteg-Printer-Setup.exe'
+          .\scripts\Build-NewotegPrinterSetup.ps1 -OutputPath $outputPath
+          if ((Get-Item $outputPath).Length -lt 10000) { throw "L'assistant compilé est anormalement petit." }
       - name: Vérifier le rapport de recette à blanc
         shell: pwsh
         run: |

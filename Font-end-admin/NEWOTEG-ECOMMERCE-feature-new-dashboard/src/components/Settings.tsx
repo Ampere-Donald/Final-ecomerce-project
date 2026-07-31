@@ -24,7 +24,9 @@ type IaHealth = {
 
 export const Settings = () => {
   const { admin, logout } = useAdminAuth();
-  const [activeTab, setActiveTab] = useState<Tab>('profile');
+  const [activeTab, setActiveTab] = useState<Tab>(() => (
+    new URLSearchParams(window.location.search).has('printerSetup') ? 'printer' : 'profile'
+  ));
 
   // Password change state
   const [oldPassword, setOldPassword] = useState('');
@@ -124,7 +126,7 @@ export const Settings = () => {
     >
       <div>
         <h2 className="text-2xl font-bold text-slate-900">Paramètres du Compte</h2>
-        <p className="text-slate-500 text-sm">Gérez votre profil et votre sécurité</p>
+        <p className="text-slate-500 text-sm">Gérez votre profil, votre sécurité et le matériel de caisse</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">

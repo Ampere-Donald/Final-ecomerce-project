@@ -90,6 +90,7 @@ image-generator/.env
 *.iso
 *.dmg
 *.exe
+!Font-end-admin/NEWOTEG-ECOMMERCE-feature-new-dashboard/public/downloads/Newoteg-Printer-Setup.exe
 
 # ─── Python (si scripts) ─────────────────────────────────
 __pycache__/

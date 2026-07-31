@@ -1,14 +1,25 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   AlertTriangle,
   CheckCircle2,
   Download,
+  ExternalLink,
+  HardDriveDownload,
   Loader2,
   MonitorCog,
   Printer,
   RefreshCw,
   Smartphone,
+  Usb,
 } from 'lucide-react';
+import {
+  EPSON_SUPPORT_URL,
+  findSupportedEpsonUsbDevice,
+  isWindowsDevice,
+  NEWOTEG_PRINTER_SETUP_URL,
+  PRINTER_SETUP_RETURN_PARAM,
+  type SupportedEpsonDevice,
+} from '../services/printerSetup';
 import { buildTicketEscPos } from '../services/ticketEscpos';
 import {
   classifyPrinterError,
@@ -19,6 +30,7 @@ import {
   isAndroidDevice,
   isPhysicalPrinter,
   listPrinters,
+  listUsbDevices,
   printRaw,
   QZ_TRAY_DOWNLOAD_URL,
   setPrinterName,
@@ -43,8 +55,11 @@ function friendlyConnectionError(error: unknown): string {
 }
 
 export function PrinterSettings() {
+  const returnedFromSetup = new URLSearchParams(window.location.search)
+    .get(PRINTER_SETUP_RETURN_PARAM) === 'complete';
   const [state, setState] = useState<DetectionState>('checking');
   const [printers, setPrinters] = useState<string[]>([]);
+  const [usbPrinter, setUsbPrinter] = useState<SupportedEpsonDevice | null>(null);
   const [selected, setSelected] = useState(getPrinterName() || '');
   const [feedback, setFeedback] = useState<Feedback>(null);
   const [testing, setTesting] = useState(false);
@@ -52,6 +67,8 @@ export function PrinterSettings() {
   const [savingHost, setSavingHost] = useState(false);
   const [workstationName, setWorkstationNameValue] = useState(getWorkstationName());
   const [readiness, setReadiness] = useState<PrinterReadiness | null>(null);
+  const [installerStarted, setInstallerStarted] = useState(returnedFromSetup);
+  const pollingStartedAt = useRef(Date.now());
 
   const detect = useCallback(async () => {
     setFeedback(null);
@@ -65,6 +82,15 @@ export function PrinterSettings() {
     try {
       const detected = (await listPrinters()).filter(isPhysicalPrinter);
       setPrinters(detected);
+
+      try {
+        setUsbPrinter(findSupportedEpsonUsbDevice(await listUsbDevices()));
+      } catch {
+        // Une politique USB restrictive ne doit pas masquer les imprimantes
+        // déjà installées dans le spouleur Windows.
+        setUsbPrinter(null);
+      }
+
       if (detected.length === 0) {
         setState('no-printer');
         return;
@@ -79,6 +105,7 @@ export function PrinterSettings() {
       setState('ready');
     } catch (error) {
       setPrinters([]);
+      setUsbPrinter(null);
       setState('bridge-missing');
       setFeedback({ kind: 'error', text: friendlyConnectionError(error) });
     }
@@ -108,6 +135,29 @@ export function PrinterSettings() {
   useEffect(() => {
     void detect();
   }, [detect]);
+
+  useEffect(() => {
+    if (!installerStarted || state === 'ready') return undefined;
+    const remaining = 3 * 60 * 1000 - (Date.now() - pollingStartedAt.current);
+    if (remaining <= 0) return undefined;
+    const interval = window.setInterval(() => void detect(), 5000);
+    const timeout = window.setTimeout(() => window.clearInterval(interval), remaining);
+    return () => {
+      window.clearInterval(interval);
+      window.clearTimeout(timeout);
+    };
+  }, [detect, installerStarted, state]);
+
+  useEffect(() => {
+    if (!installerStarted || state !== 'ready') return;
+    setFeedback({
+      kind: 'success',
+      text: `Installation confirmée : ${selected} est maintenant disponible. Imprimez le ticket de test pour terminer.`,
+    });
+    const url = new URL(window.location.href);
+    url.searchParams.delete(PRINTER_SETUP_RETURN_PARAM);
+    window.history.replaceState({}, '', `${url.pathname}${url.search}${url.hash}`);
+  }, [installerStarted, selected, state]);
 
   const selectPrinter = async (name: string) => {
     setSelected(name);
@@ -149,8 +199,10 @@ export function PrinterSettings() {
   };
 
   const bridgeOk = state === 'ready' || state === 'no-printer';
+  const usbOk = Boolean(usbPrinter);
   const printerBlocked = readiness?.state === 'PAPER_OUT' || readiness?.state === 'QUEUE_BLOCKED';
-  const printerOk = state === 'ready' && readiness?.state === 'READY' && !printerBlocked;
+  const printerOk = state === 'ready' && !printerBlocked;
+  const canInstallHere = isWindowsDevice() && !getPrinterHost();
 
   return (
     <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
@@ -200,18 +252,23 @@ export function PrinterSettings() {
               Sur Android, indiquez l’adresse IP fixe du PC auquel l’Epson est branchée. Sur ce PC, laissez vide.
             </span>
           </label>
-          <button type="button" onClick={() => void saveHost()} disabled={savingHost}
-            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-primary px-4 text-sm font-bold text-white disabled:opacity-50 sm:col-span-2 sm:justify-self-end">
+          <button
+            type="button"
+            onClick={() => void saveHost()}
+            disabled={savingHost}
+            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-primary px-4 text-sm font-bold text-white disabled:opacity-50 sm:col-span-2 sm:justify-self-end"
+          >
             {savingHost ? <Loader2 size={16} className="animate-spin" /> : <MonitorCog size={16} />}
             Enregistrer et tester
           </button>
         </div>
 
-        <ol className="grid gap-3 sm:grid-cols-3" aria-label="État de la chaîne d’impression">
+        <ol className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4" aria-label="État de la chaîne d’impression">
           {[
-            { label: 'Application', detail: 'Newoteg ouvert', ok: true, icon: MonitorCog },
+            { label: 'Newoteg', detail: 'Application ouverte', ok: true, icon: MonitorCog },
             { label: 'Pont local', detail: bridgeOk ? 'QZ Tray actif' : 'À installer', ok: bridgeOk, icon: RefreshCw },
-            { label: 'Imprimante', detail: state === 'ready' ? readiness?.message || selected : 'Non détectée', ok: printerOk, icon: Printer },
+            { label: 'Connexion USB', detail: usbOk ? 'Epson TM-T20II branchée' : 'À vérifier', ok: usbOk, icon: Usb },
+            { label: 'Pilote Windows', detail: state === 'ready' ? readiness?.message || selected : 'À installer', ok: printerOk, icon: Printer },
           ].map((step) => (
             <li key={step.label} className={`rounded-xl border p-4 ${step.ok ? 'border-emerald-200 bg-emerald-50' : 'border-amber-200 bg-amber-50'}`}>
               <div className="flex items-center gap-2">
@@ -226,7 +283,7 @@ export function PrinterSettings() {
 
         {state === 'checking' && (
           <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600" role="status">
-            <Loader2 size={18} className="animate-spin" /> Recherche des imprimantes installées…
+            <Loader2 size={18} className="animate-spin" /> Recherche du câble USB et des imprimantes Windows…
           </div>
         )}
 
@@ -255,10 +312,61 @@ export function PrinterSettings() {
           </div>
         )}
 
-        {state === 'no-printer' && (
+        {state === 'no-printer' && usbPrinter && canInstallHere && (
+          <div className="overflow-hidden rounded-2xl border border-indigo-200 bg-indigo-50/70">
+            <div className="grid gap-6 p-5 sm:p-6 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
+              <div>
+                <div className="flex items-center gap-2 text-indigo-800">
+                  <Usb size={18} />
+                  <span className="text-xs font-extrabold uppercase tracking-[0.15em]">Connexion USB prête</span>
+                </div>
+                <h4 className="mt-2 text-xl font-bold text-slate-950">Epson TM-T20II reconnue, pilote absent</h4>
+                <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
+                  L’assistant Newoteg télécharge le pilote APD 5.13 depuis Epson, vérifie son intégrité, lance l’installation USB puis revient ici pour contrôler le résultat.
+                </p>
+              </div>
+              <a
+                href={NEWOTEG_PRINTER_SETUP_URL}
+                download="Newoteg-Printer-Setup.exe"
+                onClick={() => {
+                  pollingStartedAt.current = Date.now();
+                  setInstallerStarted(true);
+                }}
+                className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-primary px-5 text-sm font-bold text-white shadow-lg shadow-indigo-950/15 transition hover:-translate-y-0.5 hover:bg-indigo-800 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+              >
+                <HardDriveDownload size={18} /> Installer le pilote Epson
+              </a>
+            </div>
+            <div className="border-t border-indigo-200 bg-white/70 px-5 py-4 sm:px-6">
+              <ol className="grid gap-3 text-sm text-slate-700 sm:grid-cols-3">
+                <li><strong className="text-slate-950">1.</strong> Ouvrez le fichier téléchargé et acceptez l’autorisation Windows.</li>
+                <li><strong className="text-slate-950">2.</strong> Dans Epson, gardez TM-T20II et choisissez le port USB.</li>
+                <li><strong className="text-slate-950">3.</strong> Terminez : Newoteg vérifiera automatiquement l’imprimante.</li>
+              </ol>
+              <p className="mt-3 text-xs text-slate-500">
+                Une autorisation administrateur est obligatoire pour ajouter un pilote Windows. Newoteg ne demande et n’enregistre aucun mot de passe.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {state === 'no-printer' && (!usbPrinter || !canInstallHere) && (
           <div className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
             <AlertTriangle size={19} className="mt-0.5 shrink-0" />
-            <div><p className="font-bold">Aucune imprimante installée dans Windows</p><p className="mt-1">Branchez et allumez l’imprimante, installez son pilote constructeur, puis relancez la détection.</p></div>
+            <div>
+              <p className="font-bold">Aucune imprimante Epson installée dans Windows</p>
+              <p className="mt-1">
+                {canInstallHere
+                  ? 'Allumez l’Epson TM-T20II et rebranchez son câble USB directement sur ce PC. La proposition d’installation apparaîtra dès qu’elle sera reconnue.'
+                  : 'L’installation du pilote doit être lancée depuis le PC Windows auquel l’Epson est physiquement branchée.'}
+              </p>
+            </div>
+          </div>
+        )}
+
+        {installerStarted && state !== 'ready' && state !== 'bridge-missing' && (
+          <div className="flex items-center gap-3 rounded-xl border border-indigo-200 bg-indigo-50 p-4 text-sm text-indigo-800" role="status">
+            <Loader2 size={18} className="animate-spin" /> Vérification automatique de la nouvelle imprimante Windows…
           </div>
         )}
 
@@ -283,9 +391,14 @@ export function PrinterSettings() {
           </p>
         )}
 
-        <button type="button" onClick={detect} disabled={state === 'checking'} className="inline-flex items-center gap-2 text-sm font-bold text-primary hover:underline disabled:opacity-50">
-          <RefreshCw size={15} /> Relancer la détection
-        </button>
+        <div className="flex flex-wrap items-center gap-x-5 gap-y-3">
+          <button type="button" onClick={() => void detect()} disabled={state === 'checking'} className="inline-flex items-center gap-2 text-sm font-bold text-primary hover:underline disabled:opacity-50">
+            <RefreshCw size={15} /> Relancer la détection
+          </button>
+          <a href={EPSON_SUPPORT_URL} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-slate-800 hover:underline">
+            Page officielle Epson <ExternalLink size={13} />
+          </a>
+        </div>
       </div>
     </section>
   );
