@@ -60,11 +60,6 @@ function Write-Result {
     return $Code
 }
 
-function Quote-PowerShellArgument {
-    param([string]$Value)
-    return "'" + $Value.Replace("'", "''") + "'"
-}
-
 function Get-QzProcesses {
     return @(Get-CimInstance Win32_Process -Filter "Name = 'qz-tray.exe' OR Name = 'javaw.exe' OR Name = 'java.exe'" -ErrorAction SilentlyContinue | Where-Object {
         $_.Name -ieq 'qz-tray.exe' -or
@@ -121,35 +116,13 @@ try {
         exit $code
     }
 
-    if (-not (Test-IsAdministrator)) {
-        if ($NoElevation) {
-            $code = Write-Result -Status 'ADMIN_REQUIRED' -Code 5 -Message 'Les droits administrateur sont requis pour approuver Newoteg dans QZ Tray.'
-            exit $code
-        }
-
-        $elevatedResult = if ($ResultPath) { $ResultPath } else { Join-Path $env:TEMP ("newoteg-qz-trust-{0}.json" -f [Guid]::NewGuid().ToString('N')) }
-        $arguments = @(
-            '-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass',
-            '-File', (Quote-PowerShellArgument $PSCommandPath),
-            '-CertificatePath', (Quote-PowerShellArgument $resolvedCertificate),
-            '-NoElevation', '-Json',
-            '-ResultPath', (Quote-PowerShellArgument $elevatedResult)
-        ) -join ' '
-        try {
-            $process = Start-Process -FilePath 'powershell.exe' -ArgumentList $arguments -Verb RunAs -Wait -PassThru
-        } catch {
-            $code = Write-Result -Status 'ELEVATION_CANCELLED' -Code 5 -Message 'L’autorisation administrateur a été annulée ; QZ Tray n’a pas été configuré.'
-            exit $code
-        }
-        if (Test-Path -LiteralPath $elevatedResult) {
-            $payload = [IO.File]::ReadAllText($elevatedResult)
-            if (-not $ResultPath) { Remove-Item -LiteralPath $elevatedResult -Force }
-            if ($Json) { Write-Output $payload } else { Write-Host (($payload | ConvertFrom-Json).message) }
-        }
-        exit $process.ExitCode
+    $isAdministrator = Test-IsAdministrator
+    $trustScope = if ($isAdministrator) { 'machine' } else { 'user' }
+    $installDirectory = if ($isAdministrator) {
+        Join-Path $env:ProgramData 'Newoteg\PrinterSetup'
+    } else {
+        Join-Path $env:APPDATA 'Newoteg\PrinterSetup'
     }
-
-    $installDirectory = Join-Path $env:ProgramData 'Newoteg\PrinterSetup'
     [void](New-Item -ItemType Directory -Path $installDirectory -Force)
     $installedCertificate = Join-Path $installDirectory 'newoteg-qz-signing.crt'
     Copy-Item -LiteralPath $resolvedCertificate -Destination $installedCertificate -Force
@@ -157,40 +130,61 @@ try {
         throw 'La copie locale du certificat QZ a échoué au contrôle d’intégrité.'
     }
 
-    $propertiesPath = Join-Path $qzDirectory 'qz-tray.properties'
-    if (-not (Test-Path -LiteralPath $propertiesPath)) {
-        throw "Le fichier qz-tray.properties est absent de $qzDirectory."
-    }
-    $backupPath = "$propertiesPath.newoteg-backup"
-    if (-not (Test-Path -LiteralPath $backupPath)) {
-        Copy-Item -LiteralPath $propertiesPath -Destination $backupPath
-    }
-
-    $propertyValue = ($installedCertificate -replace '\\', '/')
-    $propertyLine = "authcert.override=$propertyValue"
-    $propertyLines = [Collections.Generic.List[string]]::new()
-    $propertyFound = $false
-    foreach ($line in [IO.File]::ReadAllLines($propertiesPath)) {
-        if ($line -match '^\s*(authcert\.override|trustedRootCert)\s*=') {
-            if (-not $propertyFound) { $propertyLines.Add($propertyLine) }
-            $propertyFound = $true
-        } else {
-            $propertyLines.Add($line)
+    $propertyValue = $installedCertificate.Replace('\', '/')
+    $propertiesPath = $null
+    $qzOptions = $null
+    if ($isAdministrator) {
+        $propertiesPath = Join-Path $qzDirectory 'qz-tray.properties'
+        if (-not (Test-Path -LiteralPath $propertiesPath)) {
+            throw "Le fichier qz-tray.properties est absent de $qzDirectory."
         }
+        $backupPath = "$propertiesPath.newoteg-backup"
+        if (-not (Test-Path -LiteralPath $backupPath)) {
+            Copy-Item -LiteralPath $propertiesPath -Destination $backupPath
+        }
+
+        $propertyLine = "authcert.override=$propertyValue"
+        $propertyLines = [Collections.Generic.List[string]]::new()
+        $propertyFound = $false
+        foreach ($line in [IO.File]::ReadAllLines($propertiesPath)) {
+            if ($line -match '^\s*(authcert\.override|trustedRootCert)\s*=') {
+                if (-not $propertyFound) { $propertyLines.Add($propertyLine) }
+                $propertyFound = $true
+            } else {
+                $propertyLines.Add($line)
+            }
+        }
+        if (-not $propertyFound) { $propertyLines.Add($propertyLine) }
+        [IO.File]::WriteAllLines($propertiesPath, $propertyLines, [Text.UTF8Encoding]::new($false))
+    } else {
+        # QZ Tray officially supports this Java option at user scope. It lets a
+        # cashier account trust Newoteg without editing Program Files or showing UAC.
+        $existingQzOptions = [Environment]::GetEnvironmentVariable('QZ_OPTS', 'User')
+        $qzOptionsWithoutTrust = (($existingQzOptions -replace '(?i)(^|\s)-DtrustedRootCert=(?:"[^"]*"|\S*)', ' ') -replace '\s+', ' ').Trim()
+        $trustOption = if ($propertyValue -match '\s') {
+            '-DtrustedRootCert="{0}"' -f $propertyValue
+        } else {
+            '-DtrustedRootCert={0}' -f $propertyValue
+        }
+        $qzOptions = (@($qzOptionsWithoutTrust, $trustOption) | Where-Object { -not [string]::IsNullOrWhiteSpace($_) }) -join ' '
+        [Environment]::SetEnvironmentVariable('QZ_OPTS', $qzOptions, 'User')
+        $env:QZ_OPTS = $qzOptions
     }
-    if (-not $propertyFound) { $propertyLines.Add($propertyLine) }
-    [IO.File]::WriteAllLines($propertiesPath, $propertyLines, [Text.UTF8Encoding]::new($false))
 
     foreach ($process in Get-QzProcesses) {
         Stop-Process -Id $process.ProcessId -Force -ErrorAction SilentlyContinue
     }
     Start-Sleep -Milliseconds 800
 
-    $qzConsole = Join-Path $qzDirectory 'qz-tray-console.exe'
-    if (-not (Test-Path -LiteralPath $qzConsole)) {
-        throw 'qz-tray-console.exe est introuvable.'
+    $javaExecutable = Join-Path $qzDirectory 'runtime\bin\java.exe'
+    $qzJar = Join-Path $qzDirectory 'qz-tray.jar'
+    if (-not (Test-Path -LiteralPath $javaExecutable) -or -not (Test-Path -LiteralPath $qzJar)) {
+        throw 'Le moteur Java intégré de QZ Tray est introuvable.'
     }
-    $allowProcess = Start-Process -FilePath $qzConsole -ArgumentList @('--allow', $installedCertificate) -Wait -PassThru -WindowStyle Hidden
+    # qz-tray-console.exe stays resident on some 2.2.x builds. Invoking the
+    # bundled JAR directly performs the same official --allow action and exits.
+    $allowArguments = '-jar "{0}" --allow "{1}"' -f $qzJar, $installedCertificate
+    $allowProcess = Start-Process -FilePath $javaExecutable -ArgumentList $allowArguments -Wait -PassThru -WindowStyle Hidden
     if ($allowProcess.ExitCode -ne 0) {
         $code = Write-Result -Status 'ALLOW_FAILED' -Code 22 -Message "QZ Tray n’a pas pu approuver le certificat Newoteg (code $($allowProcess.ExitCode))."
         exit $code
@@ -226,7 +220,9 @@ try {
     $code = Write-Result -Status 'TRUST_READY' -Code 0 -Message 'Newoteg est approuvé dans QZ Tray : les impressions signées ne demanderont plus de validation.' -Details @{
         qzDirectory = $qzDirectory
         certificatePath = $installedCertificate
-        propertiesPath = $propertiesPath
+        propertiesPath = [string]$propertiesPath
+        qzOptions = [string]$qzOptions
+        trustScope = $trustScope
         allowFile = [string]$allowMatch
         expiresAt = $certificate.NotAfter.ToUniversalTime().ToString('o')
     }

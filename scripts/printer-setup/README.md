@@ -12,7 +12,7 @@ Cet assistant est le bootstrapper téléchargé depuis **Paramètres > Imprimant
 - si le pilote et le port existent déjà, la vraie file Epson est créée ou réparée automatiquement sans réinstaller le pilote ;
 - après validation de la vraie file USB, la file exacte `EPSON Coupon Generator(TM-T20II)` est supprimée uniquement si elle utilise le pilote CGenerator ou le port `nul:` et ne contient aucune tâche ;
 - la vraie file Epson USB est fixée comme imprimante Windows par défaut et la gestion automatique de l’imprimante par défaut est désactivée pour le compte caissier ;
-- si QZ Tray est installé, le certificat public de signature Newoteg est contrôlé, copié dans `%ProgramData%\Newoteg\PrinterSetup`, déclaré via `authcert.override`, ajouté à `allowed.dat`, puis QZ Tray est redémarré ;
+- si QZ Tray est installé, le certificat public de signature Newoteg est contrôlé, ajouté à `allowed.dat`, puis QZ Tray est redémarré ; avec les droits administrateur il utilise `%ProgramData%` et `authcert.override`, sinon il s’installe uniquement dans le compte caissier via `%APPDATA%` et l’option officielle `QZ_OPTS`/`trustedRootCert`, sans UAC ;
 - le certificat public est épinglé par SHA-256 et empreinte X.509 ; aucune clé privée n’est présente dans l’assistant, le navigateur ou le dépôt ;
 - aucun mot de passe administrateur n'est lu ou enregistré ;
 - retour après succès : `https://admin.newoteg.com/settings?printerSetup=complete`.

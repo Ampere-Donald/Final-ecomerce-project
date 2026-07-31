@@ -195,8 +195,17 @@ Add-Check -Id 'qz-running' -Label 'QZ Tray actif' `
   -Evidence $(if ($qzProcesses.Count -gt 0) { "PID : $($qzProcesses.ProcessId -join ', ') ($($qzProcesses.Name -join ', '))." } else { 'Aucun processus QZ Tray/javaw actif.' })
 
 $newotegQzThumbprint = '8D566CDB6AAD1FBDFE9DE0FE85C3CC66D116E63B'
-$newotegQzCertificatePath = Join-Path $env:ProgramData 'Newoteg\PrinterSetup\newoteg-qz-signing.crt'
+$newotegQzCertificatePaths = @(
+  (Join-Path $env:ProgramData 'Newoteg\PrinterSetup\newoteg-qz-signing.crt'),
+  (Join-Path $env:APPDATA 'Newoteg\PrinterSetup\newoteg-qz-signing.crt')
+) | Where-Object { Test-Path -LiteralPath $_ }
+$newotegQzCertificatePath = $newotegQzCertificatePaths | Where-Object {
+  try {
+    (New-Object Security.Cryptography.X509Certificates.X509Certificate2($_)).Thumbprint -eq $newotegQzThumbprint
+  } catch { $false }
+} | Select-Object -First 1
 try {
+  if (-not $newotegQzCertificatePath) { throw 'Certificat Newoteg absent des emplacements machine et utilisateur.' }
   $newotegQzCertificate = New-Object Security.Cryptography.X509Certificates.X509Certificate2($newotegQzCertificatePath)
   $certificateReady = $newotegQzCertificate.Thumbprint -eq $newotegQzThumbprint -and $newotegQzCertificate.NotAfter -gt (Get-Date)
   Add-Check -Id 'qz-newoteg-certificate' -Label 'Certificat de signature Newoteg valide' `
@@ -208,11 +217,14 @@ try {
 
 $qzPropertiesPath = if ($qzExe) { Join-Path (Split-Path -Parent $qzExe) 'qz-tray.properties' } else { $null }
 $expectedOverride = ($newotegQzCertificatePath -replace '\\', '/')
-$overrideReady = $qzPropertiesPath -and (Test-Path -LiteralPath $qzPropertiesPath) -and
+$machineOverrideReady = $qzPropertiesPath -and (Test-Path -LiteralPath $qzPropertiesPath) -and
   ((Get-Content -Raw -LiteralPath $qzPropertiesPath) -match ('(?m)^authcert\.override=' + [Regex]::Escape($expectedOverride) + '\s*$'))
+$userQzOptions = [Environment]::GetEnvironmentVariable('QZ_OPTS', 'User')
+$userOverrideReady = $expectedOverride -and $userQzOptions -match ('(?i)-DtrustedRootCert=(?:"?' + [Regex]::Escape($expectedOverride) + '"?)')
+$overrideReady = $machineOverrideReady -or $userOverrideReady
 Add-Check -Id 'qz-newoteg-trust-root' -Label 'Newoteg déclaré comme autorité QZ' `
   -Status $(if ($overrideReady) { 'PASS' } else { 'FAIL' }) `
-  -Evidence $(if ($overrideReady) { "$qzPropertiesPath pointe vers $expectedOverride." } else { 'La propriété authcert.override Newoteg est absente ou incorrecte.' })
+  -Evidence $(if ($machineOverrideReady) { "$qzPropertiesPath pointe vers $expectedOverride." } elseif ($userOverrideReady) { "QZ_OPTS utilisateur pointe vers $expectedOverride." } else { 'La confiance Newoteg est absente de authcert.override et de QZ_OPTS.' })
 
 $qzAllowFiles = @(
   (Join-Path $env:ProgramData 'qz\allowed.dat'),
