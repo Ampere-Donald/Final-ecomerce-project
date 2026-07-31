@@ -13,7 +13,7 @@ import {
   type PrinterReadiness,
   type PrinterStatusEvent,
 } from './printerStatus';
-import type { UsbDeviceInfo } from './printerSetup';
+import { isUsablePrinterQueueName, type UsbDeviceInfo } from './printerSetup';
 
 const PRINTER_CACHE_KEY = 'newoteg_printer_name';
 const PRINTER_HOST_KEY = 'newoteg_printer_host';
@@ -196,7 +196,7 @@ export async function inspectPrinterStatus(
 }
 
 export function isPhysicalPrinter(name: string): boolean {
-  return !/pdf|xps|onenote|fax|document writer|print to file/i.test(name);
+  return isUsablePrinterQueueName(name);
 }
 
 export function isAndroidDevice(): boolean {

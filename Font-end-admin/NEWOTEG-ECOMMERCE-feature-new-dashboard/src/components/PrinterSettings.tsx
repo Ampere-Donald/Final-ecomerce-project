@@ -322,7 +322,7 @@ export function PrinterSettings() {
                 </div>
                 <h4 className="mt-2 text-xl font-bold text-slate-950">Epson TM-T20II reconnue, pilote absent</h4>
                 <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
-                  L’assistant Newoteg télécharge le pilote APD 5.13 depuis Epson, vérifie son intégrité, lance l’installation USB puis revient ici pour contrôler le résultat.
+                  L’assistant Newoteg répare d’abord automatiquement les files mal configurées. Si nécessaire, il télécharge ensuite le pilote APD 5.13 depuis Epson, l’installe et relie la vraie file TM-T20II au port USB.
                 </p>
               </div>
               <a

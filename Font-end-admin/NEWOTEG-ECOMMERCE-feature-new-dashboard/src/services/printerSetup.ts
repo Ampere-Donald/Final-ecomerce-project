@@ -47,3 +47,7 @@ export function findSupportedEpsonUsbDevice(
 export function isWindowsDevice(userAgent = typeof navigator === 'undefined' ? '' : navigator.userAgent): boolean {
   return /Windows/i.test(userAgent);
 }
+
+export function isUsablePrinterQueueName(name: string): boolean {
+  return !/pdf|xps|onenote|fax|document writer|print to file|coupon\s*generator|cgenerator/i.test(name);
+}

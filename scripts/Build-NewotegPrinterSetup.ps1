@@ -8,6 +8,7 @@ $repositoryRoot = Split-Path -Parent $PSScriptRoot
 $sourceDirectory = Join-Path $PSScriptRoot 'printer-setup'
 $sourcePath = Join-Path $sourceDirectory 'NewotegPrinterSetup.cs'
 $manifestPath = Join-Path $sourceDirectory 'NewotegPrinterSetup.manifest'
+$repairScriptPath = Join-Path $sourceDirectory 'Repair-NewotegEpsonPrinter.ps1'
 
 if ([string]::IsNullOrWhiteSpace($OutputPath)) {
     $OutputPath = Join-Path $repositoryRoot 'Font-end-admin\NEWOTEG-ECOMMERCE-feature-new-dashboard\public\downloads\Newoteg-Printer-Setup.exe'
@@ -31,6 +32,7 @@ $arguments = @(
     '/optimize+',
     "/out:$OutputPath",
     "/win32manifest:$manifestPath",
+    "/resource:$repairScriptPath,Newoteg.RepairPrinter.ps1",
     '/reference:System.dll',
     '/reference:System.Core.dll',
     '/reference:System.Drawing.dll',

@@ -16,6 +16,13 @@ function Test-IsAdministrator {
   return $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
 }
 
+function Get-QzRuntimeProcess {
+  @(Get-CimInstance Win32_Process -Filter "Name = 'qz-tray.exe' OR Name = 'javaw.exe'" -ErrorAction SilentlyContinue | Where-Object {
+    $_.Name -ieq 'qz-tray.exe' -or
+    ($_.Name -ieq 'javaw.exe' -and ($_.ExecutablePath -match 'QZ Tray' -or $_.CommandLine -match 'QZ Tray|qz-tray'))
+  })
+}
+
 if (-not (Test-IsAdministrator)) {
   throw 'Relancez PowerShell en tant qu’administrateur pour préparer le poste d’impression.'
 }
@@ -71,7 +78,7 @@ if ($QzServerHost) {
   }
 
   if ($PSCmdlet.ShouldProcess($QzServerHost, 'Régénérer le certificat QZ Tray pour le poste d’impression réseau')) {
-    Get-Process -Name 'qz-tray' -ErrorAction SilentlyContinue | Stop-Process -Force
+    Get-QzRuntimeProcess | ForEach-Object { Stop-Process -Id $_.ProcessId -Force }
     $certProcess = Start-Process -FilePath $qzConsole -ArgumentList @('certgen', '--host', $QzServerHost) -Wait -PassThru -WindowStyle Hidden
     if ($certProcess.ExitCode -ne 0) {
       throw "La génération du certificat QZ pour $QzServerHost a échoué (code $($certProcess.ExitCode))."
@@ -82,6 +89,17 @@ if ($QzServerHost) {
 $spooler = Get-Service -Name Spooler
 if ($spooler.Status -ne 'Running' -and $PSCmdlet.ShouldProcess('Spooler', 'Démarrer le service d’impression Windows')) {
   Start-Service -Name Spooler
+}
+
+$repairScript = Join-Path $PSScriptRoot 'printer-setup\Repair-NewotegEpsonPrinter.ps1'
+if ((Test-Path -LiteralPath $repairScript) -and $PSCmdlet.ShouldProcess('EPSON TM-T20II', 'Détecter et réparer la file Epson sur le port USB réel')) {
+  $quotedRepairScript = '"' + $repairScript + '"'
+  $repairProcess = Start-Process -FilePath "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" `
+    -ArgumentList @('-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-File', $quotedRepairScript, '-NoElevation', '-Json') `
+    -Wait -PassThru -WindowStyle Hidden
+  if ($repairProcess.ExitCode -ne 0) {
+    Write-Warning "La file Epson n’a pas encore pu être réparée (code $($repairProcess.ExitCode)). L’assistant officiel peut être nécessaire."
+  }
 }
 
 if ($AllowPrivateQzPort) {
@@ -98,14 +116,16 @@ if ($AllowPrivateQzPort) {
   }
 }
 
-if ($qzCandidates.Count -gt 0 -and -not (Get-Process -Name 'qz-tray' -ErrorAction SilentlyContinue)) {
+if ($qzCandidates.Count -gt 0 -and @(Get-QzRuntimeProcess).Count -eq 0) {
   if ($PSCmdlet.ShouldProcess($qzCandidates[0], 'Démarrer QZ Tray')) {
     Start-Process -FilePath $qzCandidates[0] -WindowStyle Hidden
   }
 }
 
 $epsonPrinters = @(Get-Printer -ErrorAction SilentlyContinue | Where-Object {
-  $_.Name -match 'EPSON|TM[- ]?T20' -or $_.DriverName -match 'EPSON|TM[- ]?T20'
+  $_.Name -notmatch 'Coupon\s*Generator|CGenerator' -and
+  $_.DriverName -match '^EPSON TM-T20II\s+Receipt\d*$' -and
+  $_.PortName -match '^(ESDPRT|USB)\d+$'
 })
 
 Write-Host ''
@@ -119,7 +139,7 @@ if ($AllowPrivateQzPort) {
   Write-Host '- Pare-feu : TCP 8181 autorisé uniquement sur le profil privé et le sous-réseau local.'
 }
 if ($epsonPrinters.Count -eq 0) {
-  Write-Warning 'Aucune Epson TM-T20II détectée. Branchez-la, vérifiez son alimentation et fournissez le pilote officiel .inf.'
+  Write-Warning 'Aucune vraie file Epson TM-T20II reliée à un port USB n’est disponible. Une file Coupon Generator/nul: ne compte pas comme imprimante.'
 } else {
   foreach ($printer in $epsonPrinters) {
     Write-Host "- Imprimante détectée : $($printer.Name) [$($printer.DriverName)]" -ForegroundColor Green

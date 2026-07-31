@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { findSupportedEpsonUsbDevice, isWindowsDevice } from './printerSetup';
+import { findSupportedEpsonUsbDevice, isUsablePrinterQueueName, isWindowsDevice } from './printerSetup';
 
 test('reconnaît exactement l’Epson TM-T20II de la boutique', () => {
   const result = findSupportedEpsonUsbDevice([
@@ -22,4 +22,10 @@ test('refuse un autre modèle Epson', () => {
 test('réserve l’assistant local aux ordinateurs Windows', () => {
   assert.equal(isWindowsDevice('Mozilla/5.0 (Windows NT 10.0; Win64; x64)'), true);
   assert.equal(isWindowsDevice('Mozilla/5.0 (Linux; Android 14)'), false);
+});
+
+test('exclut le Coupon Generator qui imprime volontairement vers nul:', () => {
+  assert.equal(isUsablePrinterQueueName('EPSON Coupon Generator(TM-T20II)'), false);
+  assert.equal(isUsablePrinterQueueName('EPSON CGenerator(TM-T20 Series)'), false);
+  assert.equal(isUsablePrinterQueueName('EPSON TM-T20II Receipt5'), true);
 });

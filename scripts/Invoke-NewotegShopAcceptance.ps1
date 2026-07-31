@@ -13,6 +13,13 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 $script:Checks = [System.Collections.Generic.List[object]]::new()
 
+function Get-QzRuntimeProcess {
+  @(Get-CimInstance Win32_Process -Filter "Name = 'qz-tray.exe' OR Name = 'javaw.exe'" -ErrorAction SilentlyContinue | Where-Object {
+    $_.Name -ieq 'qz-tray.exe' -or
+    ($_.Name -ieq 'javaw.exe' -and ($_.ExecutablePath -match 'QZ Tray' -or $_.CommandLine -match 'QZ Tray|qz-tray'))
+  })
+}
+
 function Add-Check {
   param(
     [Parameter(Mandatory = $true)][string]$Id,
@@ -105,13 +112,20 @@ try {
 
 try {
   $allPrinters = @(Get-Printer -Full -ErrorAction Stop)
-  $matches = if ($ExpectedPrinterName) {
-    @($allPrinters | Where-Object { $_.Name -eq $ExpectedPrinterName })
+  $matches = @(if ($ExpectedPrinterName) {
+    $allPrinters | Where-Object {
+      $_.Name -eq $ExpectedPrinterName -and
+      $_.Name -notmatch 'Coupon\s*Generator|CGenerator' -and
+      $_.DriverName -match '^EPSON TM-T20II\s+Receipt\d*$' -and
+      $_.PortName -match '^(ESDPRT|USB)\d+$'
+    }
   } else {
-    @($allPrinters | Where-Object {
-      $_.Name -match 'EPSON|TM[- ]?T20II' -or $_.DriverName -match 'EPSON|TM[- ]?T20II'
-    })
-  }
+    $allPrinters | Where-Object {
+      $_.Name -notmatch 'Coupon\s*Generator|CGenerator' -and
+      $_.DriverName -match '^EPSON TM-T20II\s+Receipt\d*$' -and
+      $_.PortName -match '^(ESDPRT|USB)\d+$'
+    }
+  })
 
   if ($matches.Count -eq 0) {
     $expectation = if ($ExpectedPrinterName) { "nom exact « $ExpectedPrinterName »" } else { 'EPSON/TM-T20II' }
@@ -122,7 +136,7 @@ try {
     Add-Check -Id 'epson-detected' -Label 'Epson TM-T20II détectée' -Status 'PASS' `
       -Evidence "Nom : $($printer.Name) ; pilote : $($printer.DriverName) ; port : $($printer.PortName)."
 
-    $driverLooksCorrect = $printer.DriverName -match 'EPSON|TM[- ]?T20'
+    $driverLooksCorrect = $printer.DriverName -match '^EPSON TM-T20II\s+Receipt\d*$' -and $printer.PortName -match '^(ESDPRT|USB)\d+$'
     Add-Check -Id 'epson-driver' -Label 'Pilote Epson dédié' `
       -Status $(if ($driverLooksCorrect) { 'PASS' } else { 'FAIL' }) `
       -Evidence "Pilote Windows : $($printer.DriverName)."
@@ -160,10 +174,10 @@ if ($qzExe) {
     -Evidence 'qz-tray.exe absent des dossiers Program Files.'
 }
 
-$qzProcesses = @(Get-Process -Name 'qz-tray' -ErrorAction SilentlyContinue)
+$qzProcesses = @(Get-QzRuntimeProcess)
 Add-Check -Id 'qz-running' -Label 'QZ Tray actif' `
   -Status $(if ($qzProcesses.Count -gt 0) { 'PASS' } else { 'FAIL' }) `
-  -Evidence $(if ($qzProcesses.Count -gt 0) { "PID : $($qzProcesses.Id -join ', ')." } else { 'Aucun processus qz-tray actif.' })
+  -Evidence $(if ($qzProcesses.Count -gt 0) { "PID : $($qzProcesses.ProcessId -join ', ') ($($qzProcesses.Name -join ', '))." } else { 'Aucun processus QZ Tray/javaw actif.' })
 
 try {
   $startupEntries = @(Get-CimInstance Win32_StartupCommand -ErrorAction Stop | Where-Object {

@@ -5,12 +5,14 @@ using System.IO;
 using System.IO.Compression;
 using System.Management;
 using System.Net;
+using System.Reflection;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.ServiceProcess;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.Text.RegularExpressions;
 
 namespace Newoteg.PrinterSetup
 {
@@ -185,8 +187,9 @@ namespace Newoteg.PrinterSetup
             Log("--- Démarrage de l'assistant " + DateTime.Now.ToString("s") + " ---");
             ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
 
-            SetStatus("Vérification de Windows…", "Démarrage du service d’impression et recherche de l’imprimante.", 3);
+            SetStatus("Vérification de Windows…", "Recherche du pilote, du port USB et d’une vraie file Epson.", 3);
             EnsureSpoolerIsRunning();
+            RunRepairScript();
 
             var installedPrinter = FindInstalledPrinter();
             if (!String.IsNullOrEmpty(installedPrinter))
@@ -228,12 +231,12 @@ namespace Newoteg.PrinterSetup
             process.WaitForExit();
             Log("Programme Epson terminé avec le code " + process.ExitCode + ".");
 
-            SetStatus("Vérification de l’installation…", "Newoteg attend la création de l’imprimante dans Windows.", 93);
+            SetStatus("Réparation automatique de la file…", "Association du pilote Epson au port USB réel ; les files Coupon Generator sont ignorées.", 93);
             installedPrinter = WaitForPrinter(TimeSpan.FromMinutes(3));
             if (String.IsNullOrEmpty(installedPrinter))
             {
                 throw new InvalidOperationException(
-                    "Aucune file Epson n’a été créée dans Windows. Relancez l’installation et vérifiez que TM-T20II et le port USB sont sélectionnés dans l’assistant Epson.");
+                    "Le pilote Epson est présent, mais Windows n’a pas pu créer une vraie file TM-T20II sur le port USB. Consultez le journal puis relancez l’assistant.");
             }
 
             Complete(installedPrinter);
@@ -277,20 +280,64 @@ namespace Newoteg.PrinterSetup
             return false;
         }
 
+        private int RunRepairScript()
+        {
+            var scriptPath = Path.Combine(cacheDirectory, "Repair-NewotegEpsonPrinter.ps1");
+            using (var resource = Assembly.GetExecutingAssembly().GetManifestResourceStream("Newoteg.RepairPrinter.ps1"))
+            {
+                if (resource == null) throw new InvalidDataException("Le module de réparation Epson est absent de l’assistant Newoteg.");
+                using (var output = new FileStream(scriptPath, FileMode.Create, FileAccess.Write, FileShare.None))
+                {
+                    resource.CopyTo(output);
+                }
+            }
+
+            var startInfo = new ProcessStartInfo
+            {
+                FileName = Path.Combine(Environment.SystemDirectory, "WindowsPowerShell", "v1.0", "powershell.exe"),
+                Arguments = "-NoProfile -NonInteractive -ExecutionPolicy Bypass -File \"" + scriptPath + "\" -NoElevation -Json",
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true
+            };
+            using (var process = Process.Start(startInfo))
+            {
+                if (process == null) throw new InvalidOperationException("Le module de réparation Epson n’a pas pu démarrer.");
+                var standardOutput = process.StandardOutput.ReadToEnd();
+                var standardError = process.StandardError.ReadToEnd();
+                if (!process.WaitForExit(90000))
+                {
+                    try { process.Kill(); } catch { }
+                    Log("Réparation Epson interrompue après 90 secondes.");
+                    return 21;
+                }
+                Log("Réparation Epson (code " + process.ExitCode + "): " + standardOutput.Trim());
+                if (!String.IsNullOrWhiteSpace(standardError)) Log("Réparation Epson stderr: " + standardError.Trim());
+                return process.ExitCode;
+            }
+        }
+
         private string FindInstalledPrinter()
         {
-            using (var searcher = new ManagementObjectSearcher("SELECT Name, DriverName FROM Win32_Printer"))
+            using (var searcher = new ManagementObjectSearcher("SELECT Name, DriverName, PortName FROM Win32_Printer"))
             {
                 foreach (ManagementObject printer in searcher.Get())
                 {
                     var name = Convert.ToString(printer["Name"]);
                     var driver = Convert.ToString(printer["DriverName"]);
+                    var port = Convert.ToString(printer["PortName"]);
                     var identity = (name + " " + driver).ToUpperInvariant();
-                    if (identity.Contains("EPSON") && (identity.Contains("TM-T20II") || identity.Contains("TM-T20")))
+                    var validDriver = Regex.IsMatch(driver, "^EPSON TM-T20II\\s+Receipt\\d*$", RegexOptions.IgnoreCase);
+                    var validPort = Regex.IsMatch(port, "^(ESDPRT|USB)\\d+$", RegexOptions.IgnoreCase);
+                    var invalidQueue = identity.Contains("COUPON GENERATOR") || identity.Contains("CGENERATOR") || String.Equals(port, "nul:", StringComparison.OrdinalIgnoreCase);
+                    if (validDriver && validPort && !invalidQueue)
                     {
-                        Log("File d'impression trouvée: " + name + " / " + driver);
+                        Log("Vraie file d'impression trouvée: " + name + " / " + driver + " / " + port);
                         return name;
                     }
+                    if (identity.Contains("EPSON") && (identity.Contains("TM-T20II") || identity.Contains("TM-T20")))
+                        Log("File Epson ignorée car non physique: " + name + " / " + driver + " / " + port);
                 }
             }
             return null;
@@ -299,11 +346,13 @@ namespace Newoteg.PrinterSetup
         private string WaitForPrinter(TimeSpan timeout)
         {
             var deadline = DateTime.UtcNow.Add(timeout);
+            var attempt = 0;
             while (DateTime.UtcNow < deadline)
             {
                 var printer = FindInstalledPrinter();
                 if (!String.IsNullOrEmpty(printer)) return printer;
-                Thread.Sleep(3000);
+                if (attempt++ % 3 == 0) RunRepairScript();
+                Thread.Sleep(4000);
             }
             return null;
         }
