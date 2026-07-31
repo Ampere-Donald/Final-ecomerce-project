@@ -35,7 +35,8 @@ function New-RepairResult {
         [string]$PrinterName = '',
         [string]$DriverName = '',
         [string]$PortName = '',
-        [int]$InvalidQueueCount = 0
+        [int]$InvalidQueueCount = 0,
+        [int]$RemovedInvalidQueueCount = 0
     )
 
     [pscustomobject]@{
@@ -46,6 +47,7 @@ function New-RepairResult {
         driverName = $DriverName
         portName = $PortName
         invalidQueueCount = $InvalidQueueCount
+        removedInvalidQueueCount = $RemovedInvalidQueueCount
         checkedAt = (Get-Date).ToString('o')
     }
 }
@@ -54,6 +56,49 @@ function Test-Administrator {
     $identity = [Security.Principal.WindowsIdentity]::GetCurrent()
     $principal = [Security.Principal.WindowsPrincipal]$identity
     $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
+}
+
+function Set-VerifiedDefaultPrinter {
+    param([Parameter(Mandatory)][string]$PrinterName)
+
+    $windowsKey = 'HKCU:\Software\Microsoft\Windows NT\CurrentVersion\Windows'
+    [void](New-ItemProperty -Path $windowsKey -Name 'LegacyDefaultPrinterMode' -PropertyType DWord -Value 1 -Force)
+    (New-Object -ComObject WScript.Network).SetDefaultPrinter($PrinterName)
+
+    $deadline = (Get-Date).AddSeconds(5)
+    do {
+        Start-Sleep -Milliseconds 250
+        $defaultPrinter = Get-CimInstance Win32_Printer -ErrorAction SilentlyContinue | Where-Object Default | Select-Object -First 1
+    } until (($defaultPrinter -and $defaultPrinter.Name -eq $PrinterName) -or (Get-Date) -ge $deadline)
+
+    if (-not $defaultPrinter -or $defaultPrinter.Name -ne $PrinterName) {
+        throw "Windows n'a pas conserve $PrinterName comme imprimante par defaut."
+    }
+}
+
+function Remove-InvalidEpsonQueues {
+    param([object[]]$Queues)
+
+    $removed = 0
+    foreach ($queue in @($Queues)) {
+        $isKnownDiscardQueue = $queue.PortName -ieq 'nul:' -and (
+            $queue.Name -match '^EPSON\s+Coupon\s+Generator\(TM-T20II\)$' -or
+            $queue.DriverName -match '^EPSON\s+CGenerator\(TM-T20\s+Series\)$'
+        )
+        if (-not $isKnownDiscardQueue) { continue }
+
+        $pendingJobs = @(Get-PrintJob -PrinterName $queue.Name -ErrorAction SilentlyContinue)
+        if ($pendingJobs.Count -gt 0) {
+            throw "La file factice $($queue.Name) contient encore $($pendingJobs.Count) tache(s); suppression differee."
+        }
+
+        Remove-Printer -Name $queue.Name -ErrorAction Stop
+        if (Get-Printer -Name $queue.Name -ErrorAction SilentlyContinue) {
+            throw "Windows n'a pas confirme la suppression de la file factice $($queue.Name)."
+        }
+        $removed++
+    }
+    return $removed
 }
 
 function Invoke-ElevatedRepair {
@@ -94,9 +139,10 @@ try {
 
     $printers = @(Get-Printer)
     $invalidQueues = @($printers | Where-Object {
-        $_.Name -match 'Coupon\s*Generator|CGenerator' -or
-        $_.DriverName -match 'Coupon\s*Generator|CGenerator' -or
-        $_.PortName -eq 'nul:'
+        $_.PortName -ieq 'nul:' -and (
+            $_.Name -match '^EPSON\s+Coupon\s+Generator\(TM-T20II\)$' -or
+            $_.DriverName -match '^EPSON\s+CGenerator\(TM-T20\s+Series\)$'
+        )
     })
     $validQueue = $printers | Where-Object {
         $_.Name -notmatch 'Coupon\s*Generator|CGenerator' -and
@@ -105,13 +151,18 @@ try {
     } | Select-Object -First 1
 
     if ($validQueue) {
+        Set-VerifiedDefaultPrinter -PrinterName $validQueue.Name
+        $removedInvalidQueueCount = Remove-InvalidEpsonQueues -Queues $invalidQueues
+        $changed = $removedInvalidQueueCount -gt 0
         Write-RepairResult (New-RepairResult `
-            -Status 'READY' `
-            -Message "La file $($validQueue.Name) est déjà correctement reliée à $($validQueue.PortName)." `
+            -Status $(if ($changed) { 'REPAIRED' } else { 'READY' }) `
+            -Message $(if ($changed) { "La vraie file $($validQueue.Name) est active et $removedInvalidQueueCount file factice nul: a ete supprimee." } else { "La file $($validQueue.Name) est déjà correctement reliée à $($validQueue.PortName)." }) `
+            -Changed $changed `
             -PrinterName $validQueue.Name `
             -DriverName $validQueue.DriverName `
             -PortName $validQueue.PortName `
-            -InvalidQueueCount $invalidQueues.Count) 0
+            -InvalidQueueCount $invalidQueues.Count `
+            -RemovedInvalidQueueCount $removedInvalidQueueCount) 0
     }
 
     $driver = Get-PrinterDriver | Where-Object {
@@ -155,16 +206,18 @@ try {
         throw 'Windows n’a pas confirmé la création de la file Epson sur le port USB.'
     }
 
-    try { (New-Object -ComObject WScript.Network).SetDefaultPrinter($queueName) } catch { }
+    Set-VerifiedDefaultPrinter -PrinterName $queueName
+    $removedInvalidQueueCount = Remove-InvalidEpsonQueues -Queues $invalidQueues
 
     Write-RepairResult (New-RepairResult `
         -Status 'REPAIRED' `
-        -Message "File $queueName créée et reliée automatiquement au port $($port.Name)." `
+        -Message "File $queueName créée sur $($port.Name); $removedInvalidQueueCount file(s) Epson factice(s) nul: supprimee(s)." `
         -Changed $true `
         -PrinterName $queueName `
         -DriverName $driver.Name `
         -PortName $port.Name `
-        -InvalidQueueCount $invalidQueues.Count) 0
+        -InvalidQueueCount $invalidQueues.Count `
+        -RemovedInvalidQueueCount $removedInvalidQueueCount) 0
 } catch {
     if (-not (Test-Administrator)) {
         if (-not $NoElevation) { Invoke-ElevatedRepair }

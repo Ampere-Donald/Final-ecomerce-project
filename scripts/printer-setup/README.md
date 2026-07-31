@@ -10,6 +10,8 @@ Cet assistant est le bootstrapper téléchargé depuis **Paramètres > Imprimant
 - cache et journal limités à `%ProgramData%\Newoteg\PrinterSetup` ;
 - les files `Coupon Generator`, `CGenerator` et les ports `nul:` sont toujours refusés ;
 - si le pilote et le port existent déjà, la vraie file Epson est créée ou réparée automatiquement sans réinstaller le pilote ;
+- après validation de la vraie file USB, la file exacte `EPSON Coupon Generator(TM-T20II)` est supprimée uniquement si elle utilise le pilote CGenerator ou le port `nul:` et ne contient aucune tâche ;
+- la vraie file Epson USB est fixée comme imprimante Windows par défaut et la gestion automatique de l’imprimante par défaut est désactivée pour le compte caissier ;
 - aucun mot de passe administrateur n'est lu ou enregistré ;
 - retour après succès : `https://admin.newoteg.com/settings?printerSetup=complete`.
 
@@ -25,7 +27,7 @@ Depuis la racine du dépôt, sur Windows :
 
 Le résultat est écrit dans `public/downloads/Newoteg-Printer-Setup.exe` et copié tel quel par Vite dans la version de production.
 
-Le module de réparation peut aussi être exécuté seul. Il demande l’élévation Windows si nécessaire, ne supprime aucune file existante et peut être relancé sans créer de doublon :
+Le module de réparation peut aussi être exécuté seul. Il demande l’élévation Windows si nécessaire, ne supprime aucune file réelle et peut être relancé sans créer de doublon. Sa seule suppression possible est la file Coupon Generator/CGenerator reliée à `nul:` décrite ci-dessus :
 
 ```powershell
 .\scripts\printer-setup\Repair-NewotegEpsonPrinter.ps1

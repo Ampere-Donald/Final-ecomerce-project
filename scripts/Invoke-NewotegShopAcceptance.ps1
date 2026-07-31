@@ -112,6 +112,16 @@ try {
 
 try {
   $allPrinters = @(Get-Printer -Full -ErrorAction Stop)
+  $discardQueues = @($allPrinters | Where-Object {
+    $_.PortName -ieq 'nul:' -and (
+      $_.Name -match '^EPSON\s+Coupon\s+Generator\(TM-T20II\)$' -or
+      $_.DriverName -match '^EPSON\s+CGenerator\(TM-T20\s+Series\)$'
+    )
+  })
+  Add-Check -Id 'epson-discard-queue' -Label 'Aucune fausse file Epson nul:' `
+    -Status $(if ($discardQueues.Count -eq 0) { 'PASS' } else { 'FAIL' }) `
+    -Evidence $(if ($discardQueues.Count -eq 0) { 'Aucune file Coupon Generator/CGenerator reliée à nul:.' } else { "Files dangereuses : $($discardQueues.Name -join ', ')." })
+
   $matches = @(if ($ExpectedPrinterName) {
     $allPrinters | Where-Object {
       $_.Name -eq $ExpectedPrinterName -and
@@ -135,6 +145,11 @@ try {
     $printer = $matches[0]
     Add-Check -Id 'epson-detected' -Label 'Epson TM-T20II détectée' -Status 'PASS' `
       -Evidence "Nom : $($printer.Name) ; pilote : $($printer.DriverName) ; port : $($printer.PortName)."
+
+    $defaultPrinter = Get-CimInstance Win32_Printer -ErrorAction SilentlyContinue | Where-Object Default | Select-Object -First 1
+    Add-Check -Id 'epson-default' -Label 'Epson USB définie par défaut' `
+      -Status $(if ($defaultPrinter -and $defaultPrinter.Name -eq $printer.Name) { 'PASS' } else { 'FAIL' }) `
+      -Evidence $(if ($defaultPrinter) { "Imprimante par défaut : $($defaultPrinter.Name)." } else { 'Aucune imprimante Windows par défaut détectée.' })
 
     $driverLooksCorrect = $printer.DriverName -match '^EPSON TM-T20II\s+Receipt\d*$' -and $printer.PortName -match '^(ESDPRT|USB)\d+$'
     Add-Check -Id 'epson-driver' -Label 'Pilote Epson dédié' `
