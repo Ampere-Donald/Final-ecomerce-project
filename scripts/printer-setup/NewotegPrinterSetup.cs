@@ -194,6 +194,7 @@ namespace Newoteg.PrinterSetup
             var installedPrinter = FindInstalledPrinter();
             if (!String.IsNullOrEmpty(installedPrinter))
             {
+                EnsureQzTrust();
                 Complete(installedPrinter);
                 return;
             }
@@ -239,6 +240,7 @@ namespace Newoteg.PrinterSetup
                     "Le pilote Epson est présent, mais Windows n’a pas pu créer une vraie file TM-T20II sur le port USB. Consultez le journal puis relancez l’assistant.");
             }
 
+            EnsureQzTrust();
             Complete(installedPrinter);
         }
 
@@ -315,6 +317,62 @@ namespace Newoteg.PrinterSetup
                 Log("Réparation Epson (code " + process.ExitCode + "): " + standardOutput.Trim());
                 if (!String.IsNullOrWhiteSpace(standardError)) Log("Réparation Epson stderr: " + standardError.Trim());
                 return process.ExitCode;
+            }
+        }
+
+        private void EnsureQzTrust()
+        {
+            SetStatus(
+                "Suppression des validations répétées…",
+                "Installation du certificat public Newoteg et approbation dans QZ Tray.",
+                97);
+
+            var scriptPath = Path.Combine(cacheDirectory, "Configure-NewotegQzTrust.ps1");
+            var certificatePath = Path.Combine(cacheDirectory, "newoteg-qz-signing.crt");
+            ExtractResource("Newoteg.ConfigureQzTrust.ps1", scriptPath, "Le module de configuration QZ est absent de l’assistant Newoteg.");
+            ExtractResource("Newoteg.QzSigningCertificate.pem", certificatePath, "Le certificat public QZ est absent de l’assistant Newoteg.");
+
+            var startInfo = new ProcessStartInfo
+            {
+                FileName = Path.Combine(Environment.SystemDirectory, "WindowsPowerShell", "v1.0", "powershell.exe"),
+                Arguments = "-NoProfile -NonInteractive -ExecutionPolicy Bypass -File \"" + scriptPath + "\" -CertificatePath \"" + certificatePath + "\" -NoElevation -Json",
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true
+            };
+            using (var process = Process.Start(startInfo))
+            {
+                if (process == null) throw new InvalidOperationException("Le module de configuration QZ n’a pas pu démarrer.");
+                var standardOutput = process.StandardOutput.ReadToEnd();
+                var standardError = process.StandardError.ReadToEnd();
+                if (!process.WaitForExit(90000))
+                {
+                    try { process.Kill(); } catch { }
+                    throw new InvalidOperationException("La configuration QZ Tray a dépassé 90 secondes.");
+                }
+                Log("Configuration QZ (code " + process.ExitCode + "): " + standardOutput.Trim());
+                if (!String.IsNullOrWhiteSpace(standardError)) Log("Configuration QZ stderr: " + standardError.Trim());
+                if (process.ExitCode == 10)
+                {
+                    throw new InvalidOperationException("QZ Tray doit être installé avant de terminer. Installez QZ Tray depuis les paramètres Newoteg, puis relancez cet assistant.");
+                }
+                if (process.ExitCode != 0)
+                {
+                    throw new InvalidOperationException("QZ Tray n’a pas pu approuver Newoteg automatiquement (code " + process.ExitCode + "). Consultez le journal puis relancez l’assistant.");
+                }
+            }
+        }
+
+        private static void ExtractResource(string resourceName, string destination, string missingMessage)
+        {
+            using (var resource = Assembly.GetExecutingAssembly().GetManifestResourceStream(resourceName))
+            {
+                if (resource == null) throw new InvalidDataException(missingMessage);
+                using (var output = new FileStream(destination, FileMode.Create, FileAccess.Write, FileShare.None))
+                {
+                    resource.CopyTo(output);
+                }
             }
         }
 
@@ -464,7 +522,7 @@ namespace Newoteg.PrinterSetup
         {
             SetStatus(
                 "Imprimante prête pour Newoteg.",
-                "Windows a créé « " + printerName + " ». Retour automatique aux paramètres d’impression…",
+                "Windows a créé « " + printerName + " » et QZ Tray a approuvé Newoteg. Les tickets partiront sans validation répétée.",
                 100);
             Log("Installation terminée: " + printerName);
             Thread.Sleep(1200);

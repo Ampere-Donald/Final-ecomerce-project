@@ -102,6 +102,24 @@ if ((Test-Path -LiteralPath $repairScript) -and $PSCmdlet.ShouldProcess('EPSON T
   }
 }
 
+$qzTrustReady = $false
+$qzTrustScript = Join-Path $PSScriptRoot 'printer-setup\Configure-NewotegQzTrust.ps1'
+$qzSigningCertificate = Join-Path (Split-Path -Parent $PSScriptRoot) 'Font-end-admin\NEWOTEG-ECOMMERCE-feature-new-dashboard\public\qz\digital-certificate.txt'
+if ($qzCandidates.Count -gt 0 -and
+    (Test-Path -LiteralPath $qzTrustScript) -and
+    (Test-Path -LiteralPath $qzSigningCertificate) -and
+    $PSCmdlet.ShouldProcess('QZ Tray', 'Approuver le certificat de signature Newoteg et supprimer les validations répétées')) {
+  $quotedTrustScript = '"' + $qzTrustScript + '"'
+  $quotedSigningCertificate = '"' + $qzSigningCertificate + '"'
+  $trustProcess = Start-Process -FilePath "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" `
+    -ArgumentList @('-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-File', $quotedTrustScript, '-CertificatePath', $quotedSigningCertificate, '-NoElevation', '-Json') `
+    -Wait -PassThru -WindowStyle Hidden
+  if ($trustProcess.ExitCode -ne 0) {
+    throw "L’approbation automatique de Newoteg dans QZ Tray a échoué (code $($trustProcess.ExitCode))."
+  }
+  $qzTrustReady = $true
+}
+
 if ($AllowPrivateQzPort) {
   $ruleName = 'Newoteg QZ Tray WSS 8181 (Private)'
   $existingRule = Get-NetFirewallRule -DisplayName $ruleName -ErrorAction SilentlyContinue
@@ -132,6 +150,7 @@ Write-Host ''
 Write-Host 'Diagnostic du poste Newoteg' -ForegroundColor Cyan
 Write-Host "- Spooler Windows : $((Get-Service -Name Spooler).Status)"
 Write-Host "- QZ Tray installé : $([bool]$qzCandidates.Count)"
+Write-Host "- Newoteg approuvé dans QZ : $qzTrustReady"
 if ($QzServerHost) {
   Write-Host "- Hôte du certificat QZ : $QzServerHost"
 }

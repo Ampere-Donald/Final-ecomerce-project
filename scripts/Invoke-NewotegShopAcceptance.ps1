@@ -194,6 +194,37 @@ Add-Check -Id 'qz-running' -Label 'QZ Tray actif' `
   -Status $(if ($qzProcesses.Count -gt 0) { 'PASS' } else { 'FAIL' }) `
   -Evidence $(if ($qzProcesses.Count -gt 0) { "PID : $($qzProcesses.ProcessId -join ', ') ($($qzProcesses.Name -join ', '))." } else { 'Aucun processus QZ Tray/javaw actif.' })
 
+$newotegQzThumbprint = '8D566CDB6AAD1FBDFE9DE0FE85C3CC66D116E63B'
+$newotegQzCertificatePath = Join-Path $env:ProgramData 'Newoteg\PrinterSetup\newoteg-qz-signing.crt'
+try {
+  $newotegQzCertificate = New-Object Security.Cryptography.X509Certificates.X509Certificate2($newotegQzCertificatePath)
+  $certificateReady = $newotegQzCertificate.Thumbprint -eq $newotegQzThumbprint -and $newotegQzCertificate.NotAfter -gt (Get-Date)
+  Add-Check -Id 'qz-newoteg-certificate' -Label 'Certificat de signature Newoteg valide' `
+    -Status $(if ($certificateReady) { 'PASS' } else { 'FAIL' }) `
+    -Evidence "Fichier : $newotegQzCertificatePath ; empreinte : $($newotegQzCertificate.Thumbprint) ; expiration : $($newotegQzCertificate.NotAfter.ToString('s'))."
+} catch {
+  Add-Check -Id 'qz-newoteg-certificate' -Label 'Certificat de signature Newoteg valide' -Status 'FAIL' -Evidence $_.Exception.Message
+}
+
+$qzPropertiesPath = if ($qzExe) { Join-Path (Split-Path -Parent $qzExe) 'qz-tray.properties' } else { $null }
+$expectedOverride = ($newotegQzCertificatePath -replace '\\', '/')
+$overrideReady = $qzPropertiesPath -and (Test-Path -LiteralPath $qzPropertiesPath) -and
+  ((Get-Content -Raw -LiteralPath $qzPropertiesPath) -match ('(?m)^authcert\.override=' + [Regex]::Escape($expectedOverride) + '\s*$'))
+Add-Check -Id 'qz-newoteg-trust-root' -Label 'Newoteg déclaré comme autorité QZ' `
+  -Status $(if ($overrideReady) { 'PASS' } else { 'FAIL' }) `
+  -Evidence $(if ($overrideReady) { "$qzPropertiesPath pointe vers $expectedOverride." } else { 'La propriété authcert.override Newoteg est absente ou incorrecte.' })
+
+$qzAllowFiles = @(
+  (Join-Path $env:ProgramData 'qz\allowed.dat'),
+  (Join-Path $env:APPDATA 'qz\allowed.dat')
+) | Where-Object { Test-Path -LiteralPath $_ }
+$qzAllowMatch = $qzAllowFiles | Where-Object {
+  (Get-Content -Raw -LiteralPath $_ -ErrorAction SilentlyContinue) -match $newotegQzThumbprint
+} | Select-Object -First 1
+Add-Check -Id 'qz-newoteg-allowed' -Label 'Newoteg préautorisé dans QZ' `
+  -Status $(if ($qzAllowMatch) { 'PASS' } else { 'FAIL' }) `
+  -Evidence $(if ($qzAllowMatch) { "Empreinte trouvée dans $qzAllowMatch." } else { 'Empreinte Newoteg absente des listes allowed.dat QZ.' })
+
 try {
   $startupEntries = @(Get-CimInstance Win32_StartupCommand -ErrorAction Stop | Where-Object {
     $_.Name -match 'QZ Tray' -or $_.Command -match 'qz-tray'

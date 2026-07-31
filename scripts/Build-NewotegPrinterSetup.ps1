@@ -9,6 +9,8 @@ $sourceDirectory = Join-Path $PSScriptRoot 'printer-setup'
 $sourcePath = Join-Path $sourceDirectory 'NewotegPrinterSetup.cs'
 $manifestPath = Join-Path $sourceDirectory 'NewotegPrinterSetup.manifest'
 $repairScriptPath = Join-Path $sourceDirectory 'Repair-NewotegEpsonPrinter.ps1'
+$qzTrustScriptPath = Join-Path $sourceDirectory 'Configure-NewotegQzTrust.ps1'
+$qzCertificatePath = Join-Path $repositoryRoot 'Font-end-admin\NEWOTEG-ECOMMERCE-feature-new-dashboard\public\qz\digital-certificate.txt'
 
 if ([string]::IsNullOrWhiteSpace($OutputPath)) {
     $OutputPath = Join-Path $repositoryRoot 'Font-end-admin\NEWOTEG-ECOMMERCE-feature-new-dashboard\public\downloads\Newoteg-Printer-Setup.exe'
@@ -33,6 +35,8 @@ $arguments = @(
     "/out:$OutputPath",
     "/win32manifest:$manifestPath",
     "/resource:$repairScriptPath,Newoteg.RepairPrinter.ps1",
+    "/resource:$qzTrustScriptPath,Newoteg.ConfigureQzTrust.ps1",
+    "/resource:$qzCertificatePath,Newoteg.QzSigningCertificate.pem",
     '/reference:System.dll',
     '/reference:System.Core.dll',
     '/reference:System.Drawing.dll',

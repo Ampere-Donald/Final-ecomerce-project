@@ -12,6 +12,8 @@ Cet assistant est le bootstrapper téléchargé depuis **Paramètres > Imprimant
 - si le pilote et le port existent déjà, la vraie file Epson est créée ou réparée automatiquement sans réinstaller le pilote ;
 - après validation de la vraie file USB, la file exacte `EPSON Coupon Generator(TM-T20II)` est supprimée uniquement si elle utilise le pilote CGenerator ou le port `nul:` et ne contient aucune tâche ;
 - la vraie file Epson USB est fixée comme imprimante Windows par défaut et la gestion automatique de l’imprimante par défaut est désactivée pour le compte caissier ;
+- si QZ Tray est installé, le certificat public de signature Newoteg est contrôlé, copié dans `%ProgramData%\Newoteg\PrinterSetup`, déclaré via `authcert.override`, ajouté à `allowed.dat`, puis QZ Tray est redémarré ;
+- le certificat public est épinglé par SHA-256 et empreinte X.509 ; aucune clé privée n’est présente dans l’assistant, le navigateur ou le dépôt ;
 - aucun mot de passe administrateur n'est lu ou enregistré ;
 - retour après succès : `https://admin.newoteg.com/settings?printerSetup=complete`.
 
@@ -32,3 +34,16 @@ Le module de réparation peut aussi être exécuté seul. Il demande l’éléva
 ```powershell
 .\scripts\printer-setup\Repair-NewotegEpsonPrinter.ps1
 ```
+
+Le module d’approbation QZ peut également être rejoué sur une caisse déjà installée :
+
+```powershell
+.\scripts\printer-setup\Configure-NewotegQzTrust.ps1 `
+  -CertificatePath .\Font-end-admin\NEWOTEG-ECOMMERCE-feature-new-dashboard\public\qz\digital-certificate.txt
+```
+
+## Signature QZ sans fenêtre répétée
+
+Le navigateur charge uniquement le certificat public. Pour chaque commande QZ, le Worker Cloudflare valide le jeton de session auprès de `/api/admin-auth/me`, accepte seulement un condensat QZ SHA-256 de 64 caractères, puis le signe en RSA/SHA-512. La clé privée existe uniquement dans le secret Cloudflare `QZ_PRIVATE_KEY_PEM`.
+
+En cas de rotation du certificat, il faut générer une nouvelle paire, remplacer le certificat public et ses deux empreintes épinglées dans `Configure-NewotegQzTrust.ps1`, reconstruire l’assistant, puis remplacer le secret Cloudflare. Ne jamais ajouter la clé privée au dépôt, aux assets Vite ou à l’exécutable.

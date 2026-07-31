@@ -8,6 +8,7 @@
 // -----------------------------------------------------------------------------
 
 import qz from 'qz-tray';
+import api from './api';
 import {
   evaluatePrinterStatus,
   type PrinterReadiness,
@@ -51,13 +52,41 @@ export function classifyPrinterError(error: unknown): { code: PrinterErrorCode; 
   return { code: 'PRINT_FAILED', message: raw || 'L’impression a échoué pour une raison inconnue.' };
 }
 
-// Déploiement mono-poste, non signé : on ne fournit ni certificat ni signature.
-// QZ Tray affiche alors UNE fenêtre « Autoriser ce site à imprimer ? » au premier
-// usage — cocher « Se souvenir » la supprime définitivement.
+// Chaque commande QZ est signée par Newoteg après validation de la session
+// caissier. Le certificat public associé est approuvé par l'assistant de caisse,
+// ce qui supprime les confirmations répétées sans désactiver la sécurité QZ.
 function configureSecurity() {
   if (securityConfigured) return;
-  qz.security.setCertificatePromise((resolve: (v?: unknown) => void) => resolve());
-  qz.security.setSignaturePromise(() => (resolve: (v?: unknown) => void) => resolve());
+  qz.security.setCertificatePromise((
+    resolve: (certificate: string) => void,
+    reject: (error: Error) => void,
+  ) => {
+    fetch('/qz/digital-certificate.txt', {
+      cache: 'no-store',
+      headers: { Accept: 'text/plain' },
+    })
+      .then((response) => {
+        if (!response.ok) throw new Error(`Certificat QZ indisponible (${response.status}).`);
+        return response.text();
+      })
+      .then(resolve)
+      .catch(reject);
+  });
+  qz.security.setSignatureAlgorithm('SHA512');
+  qz.security.setSignaturePromise((hash: string) => (
+    resolve: (signature: string) => void,
+    reject: (error: Error) => void,
+  ) => {
+    api.post('/qz/sign', { request: hash })
+      .then((response) => {
+        const signature = response.data?.signature;
+        if (typeof signature !== 'string' || !signature) {
+          throw new Error('Signature QZ absente de la reponse Newoteg.');
+        }
+        resolve(signature);
+      })
+      .catch(reject);
+  });
   securityConfigured = true;
 }
 
