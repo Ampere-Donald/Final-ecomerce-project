@@ -1,4 +1,4 @@
-export const NEWOTEG_PRINTER_SETUP_URL = '/downloads/Newoteg-Printer-Setup.exe?v=20260731';
+export const NEWOTEG_PRINTER_SETUP_URL = '/downloads/Newoteg-Printer-Setup.exe?v=20260801';
 export const EPSON_SUPPORT_URL = 'https://epson.com/Support/Point-of-Sale/Thermal-Printers/Epson-TM-T20II-Series/s/SPT_C31CD52062?review-filter=Windows';
 export const PRINTER_SETUP_RETURN_PARAM = 'printerSetup';
 

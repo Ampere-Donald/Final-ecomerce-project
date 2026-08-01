@@ -6,6 +6,7 @@
 // Let's Encrypt de Railway, rejeté avant Android 7.1.1). Résout aussi CORS.
 const BACKEND = 'https://api.newoteg.com';
 const ADMIN_ORIGIN = 'https://admin.newoteg.com';
+const PRINTER_SETUP_PATH = '/downloads/Newoteg-Printer-Setup.exe';
 const QZ_HASH_PATTERN = /^[a-f0-9]{64}$/i;
 const encoder = new TextEncoder();
 
@@ -132,6 +133,22 @@ async function handleQzSignature(request, env) {
   return jsonResponse({ signature: bytesToBase64(new Uint8Array(signature)) });
 }
 
+async function servePrinterSetup(request, env) {
+  const asset = await env.ASSETS.fetch(request);
+  if (!asset.ok) return asset;
+
+  const headers = new Headers(asset.headers);
+  headers.set('Content-Type', 'application/octet-stream');
+  headers.set('Content-Disposition', 'attachment; filename="Newoteg-Printer-Setup.exe"');
+  headers.set('Cache-Control', 'public, max-age=300');
+  headers.set('X-Content-Type-Options', 'nosniff');
+  return new Response(asset.body, {
+    status: asset.status,
+    statusText: asset.statusText,
+    headers,
+  });
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -146,6 +163,10 @@ export default {
 
     if (url.pathname === '/api/qz/sign') {
       return handleQzSignature(request, env);
+    }
+
+    if (url.pathname === PRINTER_SETUP_PATH) {
+      return servePrinterSetup(request, env);
     }
 
     if (url.pathname.startsWith('/api/') || url.pathname.startsWith('/uploads/')) {

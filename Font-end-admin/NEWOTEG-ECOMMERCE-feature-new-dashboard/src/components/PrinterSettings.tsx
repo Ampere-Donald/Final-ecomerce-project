@@ -281,6 +281,62 @@ export function PrinterSettings() {
           ))}
         </ol>
 
+        <div
+          className="overflow-hidden rounded-2xl border border-indigo-200 bg-indigo-50/70"
+          data-testid="printer-installation-tools"
+        >
+          <div className="grid gap-6 p-5 sm:p-6 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
+            <div>
+              <div className="flex items-center gap-2 text-indigo-800">
+                <HardDriveDownload size={18} />
+                <span className="text-xs font-extrabold uppercase tracking-[0.15em]">Installation sur le PC de caisse</span>
+              </div>
+              <h4 className="mt-2 text-xl font-bold text-slate-950">Newoteg Printer Setup</h4>
+              <p id="newoteg-printer-setup-help" className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
+                Téléchargez l’assistant depuis le PC Windows relié à l’Epson TM-T20II. Ce bouton reste disponible même si QZ Tray, le câble USB ou le pilote ne sont pas encore détectés.
+              </p>
+            </div>
+            <div className="flex flex-col gap-3 sm:flex-row lg:flex-col">
+              <a
+                href={NEWOTEG_PRINTER_SETUP_URL}
+                download="Newoteg-Printer-Setup.exe"
+                aria-describedby="newoteg-printer-setup-help"
+                onClick={() => {
+                  pollingStartedAt.current = Date.now();
+                  setInstallerStarted(true);
+                  setFeedback({
+                    kind: 'success',
+                    text: 'Téléchargement lancé. Ouvrez Newoteg-Printer-Setup.exe puis acceptez l’autorisation Windows.',
+                  });
+                }}
+                className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-primary px-5 text-sm font-bold text-white shadow-lg shadow-indigo-950/15 transition hover:-translate-y-0.5 hover:bg-indigo-800 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+              >
+                <HardDriveDownload size={18} /> Télécharger Newoteg Printer Setup
+              </a>
+              <a
+                href={QZ_TRAY_DOWNLOAD_URL}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-indigo-300 bg-white px-5 text-sm font-bold text-indigo-800 transition hover:border-indigo-400 hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+              >
+                <Download size={17} /> Télécharger QZ Tray
+              </a>
+            </div>
+          </div>
+          <div className="border-t border-indigo-200 bg-white/70 px-5 py-4 sm:px-6">
+            <ol className="grid gap-3 text-sm text-slate-700 sm:grid-cols-3">
+              <li><strong className="text-slate-950">1.</strong> Installez et ouvrez QZ Tray.</li>
+              <li><strong className="text-slate-950">2.</strong> Lancez Newoteg-Printer-Setup.exe en administrateur.</li>
+              <li><strong className="text-slate-950">3.</strong> Revenez ici puis cliquez sur « Relancer la détection ».</li>
+            </ol>
+            {!canInstallHere && (
+              <p className="mt-3 text-xs font-semibold text-amber-700">
+                Cet assistant est destiné au PC Windows auquel l’imprimante est branchée. Vous pouvez le télécharger maintenant puis le transférer sur ce PC.
+              </p>
+            )}
+          </div>
+        </div>
+
         {state === 'checking' && (
           <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600" role="status">
             <Loader2 size={18} className="animate-spin" /> Recherche du câble USB et des imprimantes Windows…
@@ -312,52 +368,16 @@ export function PrinterSettings() {
           </div>
         )}
 
-        {state === 'no-printer' && usbPrinter && canInstallHere && (
-          <div className="overflow-hidden rounded-2xl border border-indigo-200 bg-indigo-50/70">
-            <div className="grid gap-6 p-5 sm:p-6 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
-              <div>
-                <div className="flex items-center gap-2 text-indigo-800">
-                  <Usb size={18} />
-                  <span className="text-xs font-extrabold uppercase tracking-[0.15em]">Connexion USB prête</span>
-                </div>
-                <h4 className="mt-2 text-xl font-bold text-slate-950">Epson TM-T20II reconnue, pilote absent</h4>
-                <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
-                  L’assistant Newoteg répare d’abord automatiquement les files mal configurées. Si nécessaire, il télécharge ensuite le pilote APD 5.13 depuis Epson, l’installe et relie la vraie file TM-T20II au port USB.
-                </p>
-              </div>
-              <a
-                href={NEWOTEG_PRINTER_SETUP_URL}
-                download="Newoteg-Printer-Setup.exe"
-                onClick={() => {
-                  pollingStartedAt.current = Date.now();
-                  setInstallerStarted(true);
-                }}
-                className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-primary px-5 text-sm font-bold text-white shadow-lg shadow-indigo-950/15 transition hover:-translate-y-0.5 hover:bg-indigo-800 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
-              >
-                <HardDriveDownload size={18} /> Installer le pilote Epson
-              </a>
-            </div>
-            <div className="border-t border-indigo-200 bg-white/70 px-5 py-4 sm:px-6">
-              <ol className="grid gap-3 text-sm text-slate-700 sm:grid-cols-3">
-                <li><strong className="text-slate-950">1.</strong> Ouvrez le fichier téléchargé et acceptez l’autorisation Windows.</li>
-                <li><strong className="text-slate-950">2.</strong> Dans Epson, gardez TM-T20II et choisissez le port USB.</li>
-                <li><strong className="text-slate-950">3.</strong> Terminez : Newoteg vérifiera automatiquement l’imprimante.</li>
-              </ol>
-              <p className="mt-3 text-xs text-slate-500">
-                Une autorisation administrateur est obligatoire pour ajouter un pilote Windows. Newoteg ne demande et n’enregistre aucun mot de passe.
-              </p>
-            </div>
-          </div>
-        )}
-
-        {state === 'no-printer' && (!usbPrinter || !canInstallHere) && (
+        {state === 'no-printer' && (
           <div className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
             <AlertTriangle size={19} className="mt-0.5 shrink-0" />
             <div>
               <p className="font-bold">Aucune imprimante Epson installée dans Windows</p>
               <p className="mt-1">
-                {canInstallHere
-                  ? 'Allumez l’Epson TM-T20II et rebranchez son câble USB directement sur ce PC. La proposition d’installation apparaîtra dès qu’elle sera reconnue.'
+                {canInstallHere && usbPrinter
+                  ? 'L’Epson TM-T20II est reconnue en USB. Utilisez Newoteg Printer Setup ci-dessus pour installer ou réparer sa file Windows.'
+                  : canInstallHere
+                    ? 'Allumez l’Epson TM-T20II, rebranchez son câble USB directement sur ce PC, puis utilisez Newoteg Printer Setup ci-dessus.'
                   : 'L’installation du pilote doit être lancée depuis le PC Windows auquel l’Epson est physiquement branchée.'}
               </p>
             </div>
