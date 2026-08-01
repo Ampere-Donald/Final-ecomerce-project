@@ -125,7 +125,11 @@ try {
     }
     [void](New-Item -ItemType Directory -Path $installDirectory -Force)
     $installedCertificate = Join-Path $installDirectory 'newoteg-qz-signing.crt'
-    Copy-Item -LiteralPath $resolvedCertificate -Destination $installedCertificate -Force
+    $sourceCertificatePath = [IO.Path]::GetFullPath($resolvedCertificate)
+    $installedCertificatePath = [IO.Path]::GetFullPath($installedCertificate)
+    if (-not [String]::Equals($sourceCertificatePath, $installedCertificatePath, [StringComparison]::OrdinalIgnoreCase)) {
+        Copy-Item -LiteralPath $resolvedCertificate -Destination $installedCertificate -Force
+    }
     if ((Get-CanonicalCertificateSha256 -Path $installedCertificate) -ne $expectedCertificateSha256) {
         throw 'La copie locale du certificat QZ a échoué au contrôle d’intégrité.'
     }

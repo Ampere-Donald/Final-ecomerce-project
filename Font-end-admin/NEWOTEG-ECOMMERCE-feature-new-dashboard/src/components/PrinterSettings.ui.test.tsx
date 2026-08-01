@@ -32,7 +32,7 @@ describe('PrinterSettings', () => {
       name: 'Télécharger Newoteg Printer Setup',
     });
 
-    expect(link.getAttribute('href')).toBe('/downloads/Newoteg-Printer-Setup.exe?v=20260801');
+    expect(link.getAttribute('href')).toBe('/downloads/Newoteg-Printer-Setup.exe?v=20260801.2');
     expect(link.getAttribute('download')).toBe('Newoteg-Printer-Setup.exe');
   });
 });

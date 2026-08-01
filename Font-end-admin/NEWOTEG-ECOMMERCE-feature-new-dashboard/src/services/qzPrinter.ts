@@ -8,13 +8,13 @@
 // -----------------------------------------------------------------------------
 
 import qz from 'qz-tray';
-import api from './api';
 import {
   evaluatePrinterStatus,
   type PrinterReadiness,
   type PrinterStatusEvent,
 } from './printerStatus';
 import { isUsablePrinterQueueName, type UsbDeviceInfo } from './printerSetup';
+import { requestQzSignature } from './qzSigning';
 
 const PRINTER_CACHE_KEY = 'newoteg_printer_name';
 const PRINTER_HOST_KEY = 'newoteg_printer_host';
@@ -78,14 +78,8 @@ function configureSecurity() {
     resolve: (signature: string) => void,
     reject: (error: Error) => void,
   ) => {
-    api.post('/qz/sign', { request: hash })
-      .then((response) => {
-        const signature = response.data?.signature;
-        if (typeof signature !== 'string' || !signature) {
-          throw new Error('Signature QZ absente de la reponse Newoteg.');
-        }
-        resolve(signature);
-      })
+    requestQzSignature(hash)
+      .then(resolve)
       .catch(reject);
   });
   securityConfigured = true;
