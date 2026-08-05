@@ -28,6 +28,13 @@ export class TicketVenteController {
     return this.service.create(req.user.id, dto);
   }
 
+  /** Contrôle vendeur sans créer de ticket, juste avant la confirmation. */
+  @Post('verifier-stock')
+  @Roles('SUPER_ADMIN', 'ADMIN', 'VENDEUR')
+  checkStock(@Body() dto: CreateTicketDto) {
+    return this.service.checkStock(dto.lignes);
+  }
+
   /** File d'attente caissier. */
   @Get('en-attente')
   @Roles('SUPER_ADMIN', 'ADMIN', 'CAISSIER')

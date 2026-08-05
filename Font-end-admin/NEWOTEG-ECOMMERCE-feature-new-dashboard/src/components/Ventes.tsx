@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo, useCallback, useRef, type SetStateAction } from 'react';
 import {
   Search, Download, ShoppingCart, X, Eye, Package, Calendar, Plus, Minus, Trash2,
-  CreditCard, Banknote, Smartphone, Building2, UserPlus, CheckCircle2, AlertTriangle,
+  CreditCard, Banknote, Smartphone, UserPlus, CheckCircle2, AlertTriangle,
   Clock, Receipt, Filter, ChevronLeft, ChevronRight, ListFilter,
   Pause, Play,
 } from 'lucide-react';
@@ -44,9 +44,9 @@ const DIRECT_SALE_SCOPE = 'direct_sale';
 
 const PAYMENT_METHODS = [
   { value: 'ESPECES', label: 'Especes', icon: Banknote },
+  { value: 'MTN_MOBILE_MONEY', label: 'MTN MoMo', icon: Smartphone },
+  { value: 'ORANGE_MOBILE_MONEY', label: 'Orange Money', icon: Smartphone },
   { value: 'CARTE', label: 'Carte', icon: CreditCard },
-  { value: 'MOBILE_MONEY', label: 'Mobile Money', icon: Smartphone },
-  { value: 'VIREMENT', label: 'Virement', icon: Building2 },
 ] as const;
 
 const resolveImgUrl = (url?: string | null) => {
@@ -577,12 +577,13 @@ export const Ventes = () => {
         searchInputRef.current?.focus();
         return;
       }
-      if (!['F2', 'F3', 'F4', 'F8'].includes(event.key)) return;
+      if (!['F2', 'F3', 'F4', 'F5', 'F8'].includes(event.key)) return;
       event.preventDefault();
       if (cart.length > 0) saleInteractionsRef.current += 1;
       if (event.key === 'F2') setPaymentMethod('ESPECES');
-      if (event.key === 'F3') setPaymentMethod('MOBILE_MONEY');
-      if (event.key === 'F4') setPaymentMethod('CARTE');
+      if (event.key === 'F3') setPaymentMethod('MTN_MOBILE_MONEY');
+      if (event.key === 'F4') setPaymentMethod('ORANGE_MOBILE_MONEY');
+      if (event.key === 'F5') setPaymentMethod('CARTE');
       if (event.key === 'F8' && cart.length > 0 && !submitting) void handleSubmitSale();
     };
     document.addEventListener('keydown', handleExpressShortcut);
@@ -1132,8 +1133,9 @@ export const Ventes = () => {
                   <h3 className="font-bold text-sm text-slate-900">Mode de paiement</h3>
                   <div className="flex flex-wrap gap-1 text-[10px] font-bold text-slate-500" aria-label="Raccourcis caisse">
                     <span className="rounded bg-slate-100 px-1.5 py-1">F2 Espèces</span>
-                    <span className="rounded bg-slate-100 px-1.5 py-1">F3 Mobile</span>
-                    <span className="rounded bg-slate-100 px-1.5 py-1">F4 Carte</span>
+                    <span className="rounded bg-slate-100 px-1.5 py-1">F3 MTN</span>
+                    <span className="rounded bg-slate-100 px-1.5 py-1">F4 Orange</span>
+                    <span className="rounded bg-slate-100 px-1.5 py-1">F5 Carte</span>
                     <span className="rounded bg-primary/10 px-1.5 py-1 text-primary">F8 Valider</span>
                   </div>
                 </div>

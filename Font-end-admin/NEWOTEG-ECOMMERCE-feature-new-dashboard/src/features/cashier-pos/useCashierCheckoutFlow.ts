@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { bonVenteApi, caisseJourApi, clientApi, getApiErrorMessage } from '../../services/api';
 import { subscribeAuthenticatedSse } from '../../services/authenticatedSse';
 import type { CashierClient, CashierTicket, CheckoutStatus, CheckoutStep, DocumentType, PaymentMethod } from './types';
+import { paymentMethodNeedsReference } from '../pos-shared/paymentMethods';
 
 export function useCashierCheckoutFlow() {
   const [tickets, setTickets] = useState<CashierTicket[]>([]);
@@ -30,6 +31,20 @@ export function useCashierCheckoutFlow() {
   const [requestAcknowledged, setRequestAcknowledged] = useState(true);
   const checkoutInFlight = useRef(false);
 
+  const applyPendingTickets = useCallback((pending: CashierTicket[]) => {
+    setTickets(pending || []);
+    setSelected((current) => current ? (pending || []).find((item) => item.id === current.id) || current : null);
+  }, []);
+
+  const refreshPendingTickets = useCallback(async () => {
+    try {
+      applyPendingTickets(await bonVenteApi.pending());
+    } catch {
+      // La connexion SSE retentera automatiquement. Ne pas masquer l'écran
+      // courant pour un rafraîchissement silencieux de la file.
+    }
+  }, [applyPendingTickets]);
+
   const load = useCallback(async (preserveCurrentError = false) => {
     if (!preserveCurrentError) setError(null);
     try {
@@ -37,20 +52,27 @@ export function useCashierCheckoutFlow() {
         bonVenteApi.pending(),
         caisseJourApi.aujourdhui().catch(() => null),
       ]);
-      setTickets(pending || []);
+      applyPendingTickets(pending || []);
       setCaisse(day);
-      setSelected((current) => current ? (pending || []).find((item: CashierTicket) => item.id === current.id) || current : null);
     } catch (cause: any) {
       if (!preserveCurrentError) setError(cause?.response?.data?.message || 'La file ne peut pas être chargée. Réessayez.');
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [applyPendingTickets]);
 
   useEffect(() => {
     void load();
-    return subscribeAuthenticatedSse('/bons/stream', () => void load());
-  }, [load]);
+    let refreshTimer: number | undefined;
+    const unsubscribe = subscribeAuthenticatedSse('/bons/stream', () => {
+      if (refreshTimer) window.clearTimeout(refreshTimer);
+      refreshTimer = window.setTimeout(() => void refreshPendingTickets(), 180);
+    });
+    return () => {
+      if (refreshTimer) window.clearTimeout(refreshTimer);
+      unsubscribe();
+    };
+  }, [load, refreshPendingTickets]);
 
   const searchCustomers = useCallback(async (value = customerQuery) => {
     const query = value.trim();
@@ -168,7 +190,7 @@ export function useCashierCheckoutFlow() {
         clientId: customer?.id ?? null,
         montantRecu: method === 'ESPECES' ? Number(cashReceived) : undefined,
         montantPaye: method === 'CREDIT' ? Number(deposit || 0) : undefined,
-        referencePaiement: ['MOBILE_MONEY', 'CARTE', 'VIREMENT'].includes(method) ? reference.trim() || undefined : undefined,
+        referencePaiement: paymentMethodNeedsReference(method) ? reference.trim() || undefined : undefined,
         dateEcheance: method === 'CREDIT' ? new Date(`${dueDate}T23:59:59`).toISOString() : undefined,
         idempotencyKey: `checkout-${selected.id}`,
       });

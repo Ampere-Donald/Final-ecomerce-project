@@ -30,12 +30,20 @@ import { useSellerProductHistory } from '../features/seller-pos/useSellerProduct
 import { useSellerSaleFlow } from '../features/seller-pos/useSellerSaleFlow';
 import { VerticalCategoryNavigator, type SellerCategoryOption } from '../features/seller-pos/VerticalCategoryNavigator';
 import { CustomerRequestField } from '../features/seller-pos/CustomerRequestField';
+import {
+  isFuzzySellerProductMatch,
+  mergeSellerProductIndex,
+  rankSellerProducts,
+} from '../features/seller-pos/productSearch';
 import { useFlowShellFocus } from '../context/FlowShellContext';
 
 export interface Produit {
   id: string;
   nomProduit: string;
+  designationEn?: string | null;
   marque?: string;
+  codeFamille?: string | null;
+  code?: string | null;
   prixDetail?: number;
   prixGros?: number;
   quantiteGros?: number;
@@ -43,6 +51,8 @@ export interface Produit {
   prixPromo?: number;
   cmupActuel?: number;
   quantiteStock: number;
+  quantiteDisponibleVente?: number;
+  quantiteReservee?: number;
   imageUrl?: string | null;
   categorie?: { id?: string; nom?: string } | null;
   categorieNom?: string | null;
@@ -84,6 +94,15 @@ interface ScanHistoryItem {
   imageUrl?: string | null;
 }
 
+interface StockCheckLine {
+  produitId: string;
+  nomProduit: string;
+  quantiteDisponible: number;
+  quantiteDemandee: number;
+  quantiteReservee: number;
+  suffisant: boolean;
+}
+
 interface PosDraftContext {
   nomClient: string;
   telephoneClient: string;
@@ -110,11 +129,20 @@ interface Bon {
 
 const fmtFCFA = formatFcfa;
 
+const stockDisponibleVente = (produit: Pick<Produit, 'quantiteStock' | 'quantiteDisponibleVente'>) =>
+  Math.max(0, Number(produit.quantiteDisponibleVente ?? produit.quantiteStock ?? 0));
+
 const resolveImgUrl = (raw?: string | null): string | null => {
   if (!raw) return null;
   if (raw.startsWith('http://') || raw.startsWith('https://')) return raw;
   const base = (import.meta.env.VITE_API_URL || 'http://localhost:3000/api').replace('/api', '');
   return `${base}${raw.startsWith('/') ? '' : '/'}${raw}`;
+};
+
+const optimizedProductImageUrl = (raw?: string | null, size = 320): string | null => {
+  const resolved = resolveImgUrl(raw);
+  if (!resolved || !resolved.includes('res.cloudinary.com') || !resolved.includes('/image/upload/')) return resolved;
+  return resolved.replace('/image/upload/', `/image/upload/f_auto,q_auto:eco,c_limit,w_${size},h_${size}/`);
 };
 
 const normalizeEligibilityText = (value?: string | null): string =>
@@ -166,7 +194,11 @@ export const POSVendeur = ({ preview }: { preview?: POSVendeurPreview } = {}) =>
   // ── Catalogue (commun) ─────────────────────────────────────────────────
   const [produits, setProduits] = useState<Produit[]>(preview?.products || []);
   const [loading, setLoading] = useState(!preview);
+  const [searching, setSearching] = useState(false);
   const [search, setSearch] = useState('');
+  const [searchFocused, setSearchFocused] = useState(false);
+  const [activeSuggestionIndex, setActiveSuggestionIndex] = useState(0);
+  const [productIndex, setProductIndex] = useState<Produit[]>(preview?.products || []);
   const [catalogView, setCatalogView] = useState<'all' | 'favorites' | 'recent'>('all');
   const [selectedCategoryId, setSelectedCategoryId] = useState('all');
   const [storeCategories, setStoreCategories] = useState<StoreCategory[]>([]);
@@ -190,6 +222,8 @@ export const POSVendeur = ({ preview }: { preview?: POSVendeurPreview } = {}) =>
 
   // ── Vendeur : client dropdown + paiement + bons en attente ────────────
   const [clients, setClients] = useState<Client[]>([]);
+  const [clientsLoading, setClientsLoading] = useState(false);
+  const clientsLoadedRef = useRef(false);
   const [selectedClientId, setSelectedClientId] = useState(initialDraft?.context.selectedClientId || '');
   const [paymentMethod, setPaymentMethod] = useState(initialDraft?.context.paymentMethod || 'ESPECES');
   const [noteCaissier, setNoteCaissier] = useState(initialDraft?.context.noteCaissier || '');
@@ -215,6 +249,9 @@ export const POSVendeur = ({ preview }: { preview?: POSVendeurPreview } = {}) =>
   const barcodeTimerRef  = useRef<ReturnType<typeof setTimeout> | null>(null);
   const searchInputRef   = useRef<HTMLInputElement>(null);
   const catalogRequestRef = useRef(0);
+  const catalogAbortRef = useRef<AbortController | null>(null);
+  const catalogReadyRef = useRef(Boolean(preview));
+  const catalogCacheRef = useRef(new Map<string, Produit[]>());
 
   // ── Équivalents IA (commun) ─────────────────────────────────────────────
   const [equivOpen, setEquivOpen] = useState(false);
@@ -238,26 +275,47 @@ export const POSVendeur = ({ preview }: { preview?: POSVendeurPreview } = {}) =>
 
   const loadCatalog = useCallback(async (query: string, categoryId: string) => {
     const requestId = ++catalogRequestRef.current;
-    setLoading(true);
+    const normalizedQuery = query.trim();
+    const cacheKey = `${categoryId}|${normalizeEligibilityText(normalizedQuery)}`;
+    const cachedProducts = catalogCacheRef.current.get(cacheKey);
+    if (cachedProducts) setProduits(cachedProducts);
+    catalogAbortRef.current?.abort();
+    const controller = new AbortController();
+    catalogAbortRef.current = controller;
+    if (catalogReadyRef.current) setSearching(true);
+    else setLoading(true);
     try {
       const response = await produitApi.list({
         page: 1,
-        limit: 60,
-        search: query.trim() || undefined,
+        limit: normalizedQuery ? 30 : 60,
+        search: normalizedQuery || undefined,
         categoryId: categoryId === 'all' ? undefined : categoryId,
         // Une recherche doit aussi retourner les ruptures afin de permettre
         // au vendeur de demander immédiatement un équivalent.
-        inStock: query.trim() ? undefined : true,
+        inStock: normalizedQuery ? undefined : true,
         sort: 'name_asc',
-      });
+        salesSearch: true,
+      }, { signal: controller.signal });
       if (requestId === catalogRequestRef.current) {
-        setProduits(Array.isArray(response?.data) ? response.data : []);
+        const nextProducts = Array.isArray(response?.data) ? response.data : [];
+        setProduits(nextProducts);
+        catalogCacheRef.current.set(cacheKey, nextProducts);
+        if (catalogCacheRef.current.size > 50) {
+          const oldestKey = catalogCacheRef.current.keys().next().value;
+          if (oldestKey) catalogCacheRef.current.delete(oldestKey);
+        }
+        setProductIndex(current => mergeSellerProductIndex(current, nextProducts));
+        catalogReadyRef.current = true;
         setError(null);
       }
-    } catch {
+    } catch (catalogError: any) {
+      if (catalogError?.code === 'ERR_CANCELED' || catalogError?.name === 'CanceledError') return;
       if (requestId === catalogRequestRef.current) setError('Impossible de charger les produits.');
     } finally {
-      if (requestId === catalogRequestRef.current) setLoading(false);
+      if (requestId === catalogRequestRef.current) {
+        setLoading(false);
+        setSearching(false);
+      }
     }
   }, []);
 
@@ -268,7 +326,6 @@ export const POSVendeur = ({ preview }: { preview?: POSVendeurPreview } = {}) =>
       .then((data: StoreCategory[]) => { if (mounted) setStoreCategories(data || []); })
       .catch(() => {});
     if (isVendeur) {
-      clientApi.getAll().then((data: any[]) => { if (mounted) setClients(data || []); }).catch(() => {});
       loadBons();
     }
     return () => { mounted = false; };
@@ -276,8 +333,15 @@ export const POSVendeur = ({ preview }: { preview?: POSVendeurPreview } = {}) =>
 
   useEffect(() => {
     if (preview) return;
-    const timer = window.setTimeout(() => { void loadCatalog(search, selectedCategoryId); }, 250);
-    return () => window.clearTimeout(timer);
+    if (catalogReadyRef.current) setSearching(true);
+    const timer = window.setTimeout(
+      () => { void loadCatalog(search, selectedCategoryId); },
+      search.trim() ? 120 : 0,
+    );
+    return () => {
+      window.clearTimeout(timer);
+      catalogAbortRef.current?.abort();
+    };
   }, [loadCatalog, preview, search, selectedCategoryId]);
 
   useEffect(() => {
@@ -351,17 +415,38 @@ export const POSVendeur = ({ preview }: { preview?: POSVendeurPreview } = {}) =>
     setCatalogView('all');
   }, []);
 
+  const loadClientsOnDemand = useCallback(async () => {
+    if (preview || clientsLoadedRef.current || clientsLoading) return;
+    setClientsLoading(true);
+    try {
+      const data = await clientApi.getAll();
+      setClients(data || []);
+      clientsLoadedRef.current = true;
+    } catch {
+      toast.error('Impossible de charger les clients. Réessayez.');
+    } finally {
+      setClientsLoading(false);
+    }
+  }, [clientsLoading, preview, toast]);
+
+  useEffect(() => {
+    if (selectedClientId) void loadClientsOnDemand();
+  }, [loadClientsOnDemand, selectedClientId]);
+
   const selectCatalogView = useCallback((view: 'favorites' | 'recent') => {
     setCatalogView(view);
     setSelectedCategoryId('all');
   }, []);
 
   const produitsFiltres = useMemo(() => {
+    const responsiveProducts = search.trim()
+      ? rankSellerProducts(searching ? productIndex : produits, search, 30)
+      : produits;
     const filtered = catalogView === 'favorites'
-      ? produits.filter(product => productHistory.favoriteIds.includes(product.id))
+      ? responsiveProducts.filter(product => productHistory.favoriteIds.includes(product.id))
       : catalogView === 'recent'
-        ? productHistory.recentIds.map(id => produits.find(product => product.id === id)).filter(Boolean) as Produit[]
-        : produits;
+        ? productHistory.recentIds.map(id => productIndex.find(product => product.id === id)).filter(Boolean) as Produit[]
+        : responsiveProducts;
     const selectedCategory = categoryOptions.find(category => category.id === selectedCategoryId);
     const categoryFiltered = selectedCategoryId === 'all'
       ? filtered
@@ -370,7 +455,15 @@ export const POSVendeur = ({ preview }: { preview?: POSVendeurPreview } = {}) =>
         (product.categorie?.nom || product.categorieNom) === selectedCategory?.label
       ));
     return categoryFiltered.slice(0, 60);
-  }, [catalogView, categoryOptions, productHistory.favoriteIds, productHistory.recentIds, produits, selectedCategoryId]);
+  }, [catalogView, categoryOptions, productHistory.favoriteIds, productHistory.recentIds, productIndex, produits, search, searching, selectedCategoryId]);
+
+  const searchSuggestions = useMemo(() => {
+    if (search.trim().length < 2) return [];
+    const source = productIndex.length > 0 ? productIndex : produits;
+    return rankSellerProducts(source, search, 6);
+  }, [productIndex, produits, search]);
+  const suggestionsOpen = searchFocused && search.trim().length >= 2 && searchSuggestions.length > 0;
+  const activeSuggestion = searchSuggestions[activeSuggestionIndex] || searchSuggestions[0];
 
   const selectedCategoryName = categoryOptions.find(
     (category) => category.id === selectedCategoryId,
@@ -380,15 +473,16 @@ export const POSVendeur = ({ preview }: { preview?: POSVendeurPreview } = {}) =>
     normalizeEligibilityText(selectedCategoryName) === 'composants electroniques';
 
   const ajouterAuPanier = useCallback((p: Produit): boolean => {
-    if (p.quantiteStock <= 0) {
+    const stockDisponible = stockDisponibleVente(p);
+    if (stockDisponible <= 0) {
       toast.error(`"${p.nomProduit}" est en rupture de stock.`, 5000, 'pos-cart-feedback');
       return false;
     }
 
     const current = panierRef.current;
     const existing = current.find(l => l.produitId === p.id);
-    if (existing && existing.quantite >= p.quantiteStock) {
-      toast.warning(`Stock maximal atteint pour "${p.nomProduit}" : ${p.quantiteStock} unite(s).`, 4000, 'pos-cart-feedback');
+    if (existing && existing.quantite >= stockDisponible) {
+      toast.warning(`Stock disponible maximal atteint pour "${p.nomProduit}" : ${stockDisponible} unite(s).`, 4000, 'pos-cart-feedback');
       return false;
     }
 
@@ -401,7 +495,7 @@ export const POSVendeur = ({ preview }: { preview?: POSVendeurPreview } = {}) =>
         nomProduit: p.nomProduit,
         prix,
         quantite: 1,
-        stockDispo: p.quantiteStock,
+        stockDispo: stockDisponible,
         prixGros: p.prixGros,
         prixDemiGros: p.prixDemiGros,
         prixDetail: p.prixDetail,
@@ -418,6 +512,48 @@ export const POSVendeur = ({ preview }: { preview?: POSVendeurPreview } = {}) =>
     toast.success(`"${p.nomProduit}" ajoute au panier — quantite : ${nextQuantity}.`, 1800, 'pos-cart-feedback');
     return true;
   }, [setPanier, toast]);
+
+  const premierResultatDisponible = search.trim()
+    ? produitsFiltres.find(product => stockDisponibleVente(product) > 0)
+    : undefined;
+
+  const effacerRecherche = () => {
+    setSearch('');
+    setSearching(false);
+    setActiveSuggestionIndex(0);
+    const cachedProducts = catalogCacheRef.current.get(`${selectedCategoryId}|`);
+    if (cachedProducts) setProduits(cachedProducts);
+    window.setTimeout(() => searchInputRef.current?.focus(), 0);
+  };
+
+  const gererClavierRecherche = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'ArrowDown' && suggestionsOpen) {
+      event.preventDefault();
+      setActiveSuggestionIndex(current => (current + 1) % searchSuggestions.length);
+      return;
+    }
+    if (event.key === 'ArrowUp' && suggestionsOpen) {
+      event.preventDefault();
+      setActiveSuggestionIndex(current => (current - 1 + searchSuggestions.length) % searchSuggestions.length);
+      return;
+    }
+    if (event.key === 'Escape' && suggestionsOpen) {
+      event.preventDefault();
+      setSearchFocused(false);
+      return;
+    }
+    if (event.key === 'Escape' && search) {
+      event.preventDefault();
+      effacerRecherche();
+      return;
+    }
+    const selectedSuggestion = suggestionsOpen
+      ? activeSuggestion
+      : premierResultatDisponible;
+    if (event.key !== 'Enter' || event.nativeEvent.isComposing || !selectedSuggestion) return;
+    event.preventDefault();
+    if (ajouterAuPanier(selectedSuggestion)) effacerRecherche();
+  };
 
   // ── Prix variable par bornes (le serveur reste l'autorité) ─────────────
   const refsLigne = (l: PanierLigne) => ({
@@ -495,6 +631,77 @@ export const POSVendeur = ({ preview }: { preview?: POSVendeurPreview } = {}) =>
 
   const total = saleFlow.total;
   const totalUnits = saleFlow.totalUnits;
+  const lignesStockInsuffisant = panier.filter(ligne => ligne.quantite > ligne.stockDispo);
+  const stockBloque = lignesStockInsuffisant.length > 0;
+
+  const appliquerDisponibilites = (lignes: StockCheckLine[]) => {
+    const disponibilites = new Map(lignes.map(ligne => [ligne.produitId, ligne]));
+    setPanier(prev => prev.map(ligne => {
+      const disponibilite = disponibilites.get(ligne.produitId);
+      return disponibilite
+        ? { ...ligne, stockDispo: Math.max(0, disponibilite.quantiteDisponible) }
+        : ligne;
+    }));
+    setProduits(prev => prev.map(produit => {
+      const disponibilite = disponibilites.get(produit.id);
+      return disponibilite
+        ? { ...produit, quantiteDisponibleVente: Math.max(0, disponibilite.quantiteDisponible) }
+        : produit;
+    }));
+  };
+
+  const signalerStockInsuffisant = (lignes: StockCheckLine[]) => {
+    appliquerDisponibilites(lignes);
+    const ruptures = lignes.filter(ligne => !ligne.suffisant);
+    if (ruptures.length === 0) return false;
+    const detail = ruptures
+      .map(ligne => `${ligne.nomProduit} : ${ligne.quantiteDemandee} demandée(s), ${ligne.quantiteDisponible} disponible(s)`)
+      .join(' · ');
+    const message = `Stock à corriger avant l'envoi. ${detail}`;
+    setError(message);
+    setReviewOpen(false);
+    setPanierMobileOpen(true);
+    saleFlow.setPhase('ERROR');
+    toast.error(message, 7000, 'pos-stock-check');
+    return true;
+  };
+
+  const controlerStockAvantEnvoi = async () => {
+    const resultat = await ticketApi.verifierStock(
+      panier.map(ligne => ({ produitId: ligne.produitId, quantite: ligne.quantite })),
+    );
+    return !signalerStockInsuffisant(resultat?.lignes || []);
+  };
+
+  const traiterErreurStock = (exception: any) => {
+    const shortages = exception?.response?.data?.shortages;
+    if (!Array.isArray(shortages) || shortages.length === 0) return false;
+    signalerStockInsuffisant(shortages);
+    return true;
+  };
+
+  const ouvrirRevueVente = async () => {
+    if (!panier.length || submitting || stockBloque) return;
+    const invalide = ligneInvalide();
+    if (invalide) { setError(invalide); return; }
+    if (!navigator.onLine) {
+      setReviewOpen(true);
+      saleFlow.setPhase('REVIEWING');
+      return;
+    }
+    setSubmitting(true);
+    setError(null);
+    try {
+      if (await controlerStockAvantEnvoi()) {
+        setReviewOpen(true);
+        saleFlow.setPhase('REVIEWING');
+      }
+    } catch (exception) {
+      setError(getApiErrorMessage(exception, 'Impossible de vérifier le stock. Réessayez avant l\'envoi.'));
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   const suspendSale = () => {
     if (!panier.length) return;
@@ -527,7 +734,7 @@ export const POSVendeur = ({ preview }: { preview?: POSVendeurPreview } = {}) =>
 
   // ── Envoi ADMIN (ancien flux ticketApi) ───────────────────────────────
   const envoyerAdmin = async () => {
-    if (!panier.length) return;
+    if (!panier.length || stockBloque) return;
     const invalide = ligneInvalide();
     if (invalide) { setError(invalide); return; }
     setSubmitting(true);
@@ -556,6 +763,7 @@ export const POSVendeur = ({ preview }: { preview?: POSVendeurPreview } = {}) =>
         setNoteCaissier('');
         return;
       }
+      if (!(await controlerStockAvantEnvoi())) return;
       const ticket = await ticketApi.create(payload);
       setSuccess(`Ticket ${ticket.numeroTicket} envoyé au caissier.`);
       setPanier([]);
@@ -565,6 +773,7 @@ export const POSVendeur = ({ preview }: { preview?: POSVendeurPreview } = {}) =>
       setNoteCaissier('');
       setTimeout(() => navigate(can.accessCaisseJour(admin?.role) ? '/caisse-jour' : '/mes-tickets'), 1200);
     } catch (e: any) {
+      if (traiterErreurStock(e)) return;
       if (!e?.response) {
         await enqueueTicket(payload);
         setPanier([]);
@@ -581,7 +790,7 @@ export const POSVendeur = ({ preview }: { preview?: POSVendeurPreview } = {}) =>
 
   // ── Envoi VENDEUR (nouveau flux bonVenteApi) ───────────────────────────
   const envoyerVendeur = async () => {
-    if (!panier.length) return;
+    if (!panier.length || stockBloque) return;
     const invalide = ligneInvalide();
     if (invalide) { setError(invalide); return; }
     setSubmitting(true);
@@ -610,6 +819,7 @@ export const POSVendeur = ({ preview }: { preview?: POSVendeurPreview } = {}) =>
         setNoteCaissier('');
         return;
       }
+      if (!(await controlerStockAvantEnvoi())) return;
       await bonVenteApi.create(payload);
       setSuccess('Bon envoyé à la caissière.');
       setPanier([]);
@@ -622,6 +832,7 @@ export const POSVendeur = ({ preview }: { preview?: POSVendeurPreview } = {}) =>
       setActiveTab('vente');
       setTimeout(() => searchInputRef.current?.focus(), 0);
     } catch (e: any) {
+      if (traiterErreurStock(e)) return;
       if (!e?.response) {
         await enqueueBon(payload);
         setPanier([]);
@@ -685,7 +896,7 @@ export const POSVendeur = ({ preview }: { preview?: POSVendeurPreview } = {}) =>
       if (event.key === 'F3') setPaymentMethod('MOBILE_MONEY');
       if (event.key === 'F4') setPaymentMethod('CARTE');
       if (event.key === 'F8' && panier.length > 0 && !submitting) {
-        if (isVendeur) { setReviewOpen(true); saleFlow.setPhase('REVIEWING'); }
+        if (isVendeur) void ouvrirRevueVente();
         else void envoyerAdmin();
       }
     };
@@ -722,7 +933,9 @@ export const POSVendeur = ({ preview }: { preview?: POSVendeurPreview } = {}) =>
     id: s.produitId, nomProduit: s.nomProduit, marque: s.marque,
     prixDetail: s.prixDetail, prixDemiGros: s.prixDemiGros, prixGros: s.prixGros, quantiteGros: s.quantiteGros,
     prixPromo: s.prixPromo, cmupActuel: s.cmupActuel,
-    quantiteStock: s.quantiteStock, imageUrl: s.imageUrl,
+    quantiteStock: s.quantiteStock,
+    quantiteDisponibleVente: s.quantiteDisponibleVente,
+    imageUrl: s.imageUrl,
   });
 
   // ── Recherche manuelle par code famille / code ─────────────────────────
@@ -769,7 +982,7 @@ export const POSVendeur = ({ preview }: { preview?: POSVendeurPreview } = {}) =>
     try {
       const code = raw.trim();
       const p: any = await produitApi.findByRawScan(code);
-      if (p.quantiteStock <= 0) {
+      if (stockDisponibleVente(p) <= 0) {
         setError(`"${p.nomProduit}" est en rupture de stock.`);
         toast.error(`"${p.nomProduit}" est en rupture de stock.`);
         return;
@@ -793,7 +1006,7 @@ export const POSVendeur = ({ preview }: { preview?: POSVendeurPreview } = {}) =>
     try {
       const code = raw.trim();
       const p: any = await produitApi.findByRawScan(code);
-      if (p.quantiteStock <= 0) {
+      if (stockDisponibleVente(p) <= 0) {
         setError(`"${p.nomProduit}" est en rupture de stock.`);
         toast.error(`"${p.nomProduit}" est en rupture de stock.`);
         return;
@@ -898,22 +1111,23 @@ export const POSVendeur = ({ preview }: { preview?: POSVendeurPreview } = {}) =>
   // ── Rendu carte produit (commun) ───────────────────────────────────────
   const renderProduit = (p: Produit) => {
     const prix = Number((p.prixPromo || null) ?? p.prixDetail ?? 0);
-    const enRupture = p.quantiteStock <= 0;
+    const stockDisponible = stockDisponibleVente(p);
+    const enRupture = stockDisponible <= 0;
     const lignePanier = panier.find(l => l.produitId === p.id);
     const justAdded = lastAddedProductId === p.id;
     const equivalenceEligible = isEquivalenceEligibleProduct(p);
-    const img = resolveImgUrl(p.imageUrl);
+    const img = optimizedProductImageUrl(p.imageUrl);
     const contenu = (
       <>
         <div className="mb-2 flex aspect-square w-full items-center justify-center overflow-hidden rounded-lg bg-slate-50">
-          {img ? <img src={img} alt={p.nomProduit} className="h-full w-full object-contain p-2" />
+          {img ? <img src={img} alt={p.nomProduit} loading="lazy" decoding="async" width={320} height={320} className="h-full w-full object-contain p-2" />
             : <ShoppingCart size={24} className="text-slate-300" />}
         </div>
         <p className="font-semibold text-sm text-slate-900 line-clamp-2">{p.nomProduit}</p>
         <p className="text-xs text-slate-500 truncate">{p.marque || ''}</p>
         <p className="mt-1 text-sm font-bold text-primary">{fmtFCFA(prix)}</p>
         <p className={`text-xs mt-0.5 ${enRupture ? 'text-red-500' : 'text-slate-400'}`}>
-          {enRupture ? 'Rupture' : `Stock : ${p.quantiteStock}`}
+          {enRupture ? 'Rupture' : `Disponible : ${stockDisponible}`}
         </p>
       </>
     );
@@ -950,16 +1164,33 @@ export const POSVendeur = ({ preview }: { preview?: POSVendeurPreview } = {}) =>
   };
 
   // ── Panier ADMIN (ancien design) ───────────────────────────────────────
+  const renderAlerteStock = () => stockBloque ? (
+    <div role="alert" className="mb-3 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-800">
+      <div className="flex items-start gap-2">
+        <AlertCircle size={18} className="mt-0.5 shrink-0" />
+        <div>
+          <p className="font-bold">Stock modifié : corrigez le panier avant l'envoi.</p>
+          <ul className="mt-1 space-y-1 text-xs">
+            {lignesStockInsuffisant.map(ligne => (
+              <li key={ligne.produitId}>{ligne.nomProduit} : {ligne.quantite} demandée(s), {ligne.stockDispo} disponible(s)</li>
+            ))}
+          </ul>
+        </div>
+      </div>
+    </div>
+  ) : null;
+
   const renderPanierAdmin = (onEnvoyer?: () => void) => (
     <>
       <h3 className="font-bold text-lg text-slate-900 mb-4 flex items-center gap-2">
         <ShoppingCart size={20} className="text-primary" /> Panier ({totalUnits} unite{totalUnits > 1 ? 's' : ''})
       </h3>
+      {renderAlerteStock()}
       {panier.length === 0
         ? <p className="text-sm text-slate-400 text-center py-8">Aucun produit sélectionné.</p>
         : <ul className="space-y-3 max-h-64 overflow-y-auto">
           {panier.map(l => (
-            <li key={l.produitId} className={`flex items-center gap-2 rounded-lg pb-3 transition-colors border-b border-slate-100 last:border-0 ${
+            <li key={l.produitId} className={`flex items-center gap-2 rounded-lg pb-3 transition-colors border-b border-slate-100 last:border-0 ${l.quantite > l.stockDispo ? 'border-red-200 bg-red-50 px-2 pt-2' : ''} ${
               lastAddedProductId === l.produitId ? 'bg-emerald-50 px-2 pt-2' : ''
             }`}>
               <div className="flex-1 min-w-0">
@@ -987,11 +1218,12 @@ export const POSVendeur = ({ preview }: { preview?: POSVendeurPreview } = {}) =>
   // ── Panier VENDEUR (nouveau design) ────────────────────────────────────
   const renderPanierVendeur = (onEnvoyer?: () => void) => (
     <>
+      {renderAlerteStock()}
       {panier.length === 0
         ? <p className="text-sm text-slate-400 text-center py-8">Aucun produit sélectionné.</p>
         : <ul className="space-y-3 max-h-64 overflow-y-auto">
           {panier.map(l => (
-            <li key={l.produitId} className={`flex items-center gap-2 rounded-lg pb-3 transition-colors border-b border-slate-100 last:border-0 ${
+            <li key={l.produitId} className={`flex items-center gap-2 rounded-lg pb-3 transition-colors border-b border-slate-100 last:border-0 ${l.quantite > l.stockDispo ? 'border-red-200 bg-red-50 px-2 pt-2' : ''} ${
               lastAddedProductId === l.produitId ? 'bg-emerald-50 px-2 pt-2' : ''
             }`}>
               <div className="flex-1 min-w-0">
@@ -1016,9 +1248,9 @@ export const POSVendeur = ({ preview }: { preview?: POSVendeurPreview } = {}) =>
           <Phone size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
           <input inputMode="tel" value={telephoneClient} onChange={event => setTelephoneClient(event.target.value)} placeholder="Téléphone du client (facultatif)" className="min-h-11 w-full rounded-lg border border-slate-200 bg-white pl-9 pr-3 text-sm outline-none focus:border-primary" />
         </div>
-        <select value={selectedClientId} onChange={e => setSelectedClientId(e.target.value)}
+        <select value={selectedClientId} onFocus={() => void loadClientsOnDemand()} onChange={e => setSelectedClientId(e.target.value)}
           className="hidden w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm outline-none focus:border-primary min-[1200px]:block">
-          <option value="">Aucun client suggéré</option>
+          <option value="">{clientsLoading ? 'Chargement des clients…' : 'Aucun client suggéré'}</option>
           {clients.map(c => <option key={c.id} value={c.id}>{c.nom} {c.prenom || ''}</option>)}
         </select>
         <select value={paymentMethod} onChange={e => setPaymentMethod(e.target.value)}
@@ -1026,7 +1258,7 @@ export const POSVendeur = ({ preview }: { preview?: POSVendeurPreview } = {}) =>
           {METHODES.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
         </select>
         <CustomerRequestField value={noteCaissier} onChange={setNoteCaissier} />
-        <button onClick={onEnvoyer ?? (() => { setReviewOpen(true); saleFlow.setPhase('REVIEWING'); })} disabled={!panier.length || submitting} title="Contrôler puis envoyer à la caissière (F8)"
+        <button onClick={onEnvoyer ?? (() => { void ouvrirRevueVente(); })} disabled={!panier.length || submitting || stockBloque} title="Contrôler puis envoyer à la caissière (F8)"
           className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-primary text-white font-bold rounded-xl shadow-md shadow-primary/20 hover:bg-opacity-90 disabled:opacity-50">
           <Send size={18} />{submitting ? 'Envoi…' : 'Envoyer au caissier'}
         </button>
@@ -1044,7 +1276,7 @@ export const POSVendeur = ({ preview }: { preview?: POSVendeurPreview } = {}) =>
 
   const renderSaleReview = () => (
     <AnimatePresence>
-      {reviewOpen && <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[60] flex items-center justify-center bg-black/45 p-4" onClick={() => !submitting && setReviewOpen(false)}><motion.div initial={{ scale: .97, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: .97, opacity: 0 }} role="dialog" aria-modal="true" aria-label="Contrôle de la vente" onClick={event => event.stopPropagation()} className="w-full max-w-lg overflow-hidden rounded-2xl bg-white shadow-2xl"><header className="flex items-center justify-between border-b border-slate-100 p-5"><div><p className="text-xs font-bold uppercase tracking-wider text-primary">Dernier contrôle</p><h3 className="mt-1 text-lg font-bold text-slate-900">Envoyer cette vente ?</h3></div><button onClick={() => setReviewOpen(false)} aria-label="Fermer" className="rounded-lg p-2 text-slate-400 hover:bg-slate-100"><X size={19} /></button></header><div className="max-h-[55vh] overflow-y-auto p-5"><ul className="divide-y divide-slate-100">{panier.map(line => <li key={line.produitId} className="flex justify-between gap-3 py-3 text-sm"><span className="text-slate-700">{line.quantite} × {line.nomProduit}</span><strong>{fmtFCFA(line.prix * line.quantite)}</strong></li>)}</ul>{noteCaissier && <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-950"><strong>Demande du client :</strong> {noteCaissier}</div>}<div className="mt-4 flex items-center justify-between rounded-xl bg-slate-950 p-4 text-white"><span>{totalUnits} unité(s)</span><strong className="text-xl">{fmtFCFA(total)}</strong></div></div><footer className="grid grid-cols-2 gap-3 border-t border-slate-100 p-5"><button onClick={() => setReviewOpen(false)} disabled={submitting} className="min-h-12 rounded-xl bg-slate-100 font-bold text-slate-700">Modifier</button><button onClick={() => { void envoyerVendeur().then(() => setReviewOpen(false)); }} disabled={submitting} className="min-h-12 rounded-xl bg-primary font-bold text-white disabled:opacity-50">{submitting ? 'Envoi…' : 'Confirmer l’envoi'}</button></footer></motion.div></motion.div>}
+      {reviewOpen && <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[60] flex items-center justify-center bg-black/45 p-4" onClick={() => !submitting && setReviewOpen(false)}><motion.div initial={{ scale: .97, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: .97, opacity: 0 }} role="dialog" aria-modal="true" aria-label="Contrôle de la vente" onClick={event => event.stopPropagation()} className="w-full max-w-lg overflow-hidden rounded-2xl bg-white shadow-2xl"><header className="flex items-center justify-between border-b border-slate-100 p-5"><div><p className="text-xs font-bold uppercase tracking-wider text-primary">Dernier contrôle</p><h3 className="mt-1 text-lg font-bold text-slate-900">Envoyer cette vente ?</h3></div><button onClick={() => setReviewOpen(false)} aria-label="Fermer" className="rounded-lg p-2 text-slate-400 hover:bg-slate-100"><X size={19} /></button></header><div className="max-h-[55vh] overflow-y-auto p-5"><ul className="divide-y divide-slate-100">{panier.map(line => <li key={line.produitId} className="flex justify-between gap-3 py-3 text-sm"><span className="text-slate-700">{line.quantite} × {line.nomProduit}</span><strong>{fmtFCFA(line.prix * line.quantite)}</strong></li>)}</ul>{noteCaissier && <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-950"><strong>Demande du client :</strong> {noteCaissier}</div>}<div className="mt-4 flex items-center justify-between rounded-xl bg-slate-950 p-4 text-white"><span>{totalUnits} unité(s)</span><strong className="text-xl">{fmtFCFA(total)}</strong></div></div><footer className="grid grid-cols-2 gap-3 border-t border-slate-100 p-5"><button onClick={() => setReviewOpen(false)} disabled={submitting} className="min-h-12 rounded-xl bg-slate-100 font-bold text-slate-700">Modifier</button><button onClick={() => { void envoyerVendeur().then(() => setReviewOpen(false)); }} disabled={submitting || stockBloque} className="min-h-12 rounded-xl bg-primary font-bold text-white disabled:opacity-50">{submitting ? 'Envoi…' : 'Confirmer l’envoi'}</button></footer></motion.div></motion.div>}
     </AnimatePresence>
   );
 
@@ -1091,7 +1323,7 @@ export const POSVendeur = ({ preview }: { preview?: POSVendeurPreview } = {}) =>
 
               <div className="absolute inset-x-0 bottom-0 rounded-t-2xl bg-white p-4 md:p-5">
                 <div className="md:hidden">
-                  {lastScan ? <div className="flex items-center gap-3"><div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-lg bg-slate-50">{resolveImgUrl(lastScan.imageUrl) ? <img src={resolveImgUrl(lastScan.imageUrl) || ''} alt="" className="h-full w-full object-contain p-1" /> : <ShoppingCart size={20} className="text-slate-300" />}</div><div className="min-w-0 flex-1"><p className="truncate text-sm font-semibold text-slate-800">{lastScan.name}</p><p className="font-bold text-primary">{fmtFCFA(lastScan.price)}</p></div><strong className="text-sm text-slate-700">Qté {lastScan.quantity}</strong></div> : <p className="py-2 text-center text-sm text-slate-400">Le dernier article scanné apparaîtra ici.</p>}
+                  {lastScan ? <div className="flex items-center gap-3"><div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-lg bg-slate-50">{optimizedProductImageUrl(lastScan.imageUrl, 96) ? <img src={optimizedProductImageUrl(lastScan.imageUrl, 96) || ''} alt="" loading="lazy" decoding="async" width={96} height={96} className="h-full w-full object-contain p-1" /> : <ShoppingCart size={20} className="text-slate-300" />}</div><div className="min-w-0 flex-1"><p className="truncate text-sm font-semibold text-slate-800">{lastScan.name}</p><p className="font-bold text-primary">{fmtFCFA(lastScan.price)}</p></div><strong className="text-sm text-slate-700">Qté {lastScan.quantity}</strong></div> : <p className="py-2 text-center text-sm text-slate-400">Le dernier article scanné apparaîtra ici.</p>}
                 </div>
                 <div className="hidden md:block">
                   <h3 className="text-sm font-bold text-slate-900">Derniers articles scannés</h3>
@@ -1103,7 +1335,7 @@ export const POSVendeur = ({ preview }: { preview?: POSVendeurPreview } = {}) =>
             </section>
             <aside className="hidden min-h-0 overflow-y-auto bg-white p-5 md:block">
               <div className="mb-4 flex items-center justify-between"><h2 className="text-lg font-bold text-slate-900">Panier · {totalUnits} article{totalUnits > 1 ? 's' : ''}</h2><ShoppingCart size={20} className="text-primary" /></div>
-              {renderPanierVendeur(() => { setScanOpen(false); setReviewOpen(true); saleFlow.setPhase('REVIEWING'); })}
+              {renderPanierVendeur(() => { setScanOpen(false); void ouvrirRevueVente(); })}
             </aside>
           </motion.div>
         )}
@@ -1119,9 +1351,96 @@ export const POSVendeur = ({ preview }: { preview?: POSVendeurPreview } = {}) =>
       <div className="flex gap-2">
         <div className="relative flex-1">
           <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-          <input ref={searchInputRef} type="text" value={search} onChange={e => setSearch(e.target.value)}
-            placeholder="Rechercher un produit ou une marque…"
-            className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none" />
+          <input
+            ref={searchInputRef}
+            type="search"
+            value={search}
+            onChange={event => {
+              setSearch(event.target.value);
+              setActiveSuggestionIndex(0);
+              setSearchFocused(true);
+            }}
+            onFocus={() => setSearchFocused(true)}
+            onBlur={() => setSearchFocused(false)}
+            onKeyDown={gererClavierRecherche}
+            placeholder="Nom, marque, code-barres ou référence…"
+            autoComplete="off"
+            spellCheck={false}
+            role="combobox"
+            aria-autocomplete="list"
+            aria-expanded={suggestionsOpen}
+            aria-controls="seller-product-suggestions"
+            aria-activedescendant={suggestionsOpen && activeSuggestion ? `seller-product-suggestion-${activeSuggestion.id}` : undefined}
+            aria-describedby={search.trim() ? 'seller-search-status' : undefined}
+            className="w-full rounded-xl border border-slate-200 bg-white py-3 pl-10 pr-11 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+          />
+          {search && (
+            <button
+              type="button"
+              onClick={effacerRecherche}
+              aria-label="Effacer la recherche"
+              className="absolute right-2 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+            >
+              <X size={17} />
+            </button>
+          )}
+          {suggestionsOpen && (
+            <div
+              id="seller-product-suggestions"
+              role="listbox"
+              aria-label="Suggestions de produits"
+              className="absolute inset-x-0 top-[calc(100%+0.5rem)] z-50 max-h-[min(26rem,60vh)] overflow-y-auto rounded-xl border border-slate-200 bg-white p-1.5 shadow-xl shadow-slate-900/10"
+            >
+              <div className="px-2.5 pb-1.5 pt-1 text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+                Suggestions
+              </div>
+              {searchSuggestions.map((product, index) => {
+                const available = stockDisponibleVente(product);
+                const selected = product.id === activeSuggestion?.id;
+                const inCart = panier.find(line => line.produitId === product.id)?.quantite || 0;
+                const imageUrl = optimizedProductImageUrl(product.imageUrl, 96);
+                return (
+                  <button
+                    id={`seller-product-suggestion-${product.id}`}
+                    key={product.id}
+                    type="button"
+                    role="option"
+                    aria-selected={selected}
+                    onMouseDown={event => event.preventDefault()}
+                    onMouseEnter={() => setActiveSuggestionIndex(index)}
+                    onClick={() => {
+                      if (ajouterAuPanier(product)) effacerRecherche();
+                    }}
+                    className={`flex min-h-14 w-full items-center gap-3 rounded-lg px-2.5 py-2 text-left transition-colors ${selected ? 'bg-indigo-50' : 'hover:bg-slate-50'}`}
+                  >
+                    <span className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-slate-50">
+                      {imageUrl
+                        ? <img src={imageUrl} alt="" loading="lazy" decoding="async" width={96} height={96} className="h-full w-full object-contain p-1" />
+                        : <ShoppingCart size={17} className="text-slate-300" />}
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="flex items-center gap-2">
+                        <strong className="truncate text-sm text-slate-900">{product.nomProduit}</strong>
+                        {isFuzzySellerProductMatch(product, search) && (
+                          <span className="shrink-0 rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-700">Nom proche</span>
+                        )}
+                      </span>
+                      <span className="mt-0.5 block truncate text-xs text-slate-500">
+                        {[product.marque, product.codeFamille && product.code ? `${product.codeFamille}/${product.code}` : product.code].filter(Boolean).join(' · ') || 'Produit boutique'}
+                      </span>
+                    </span>
+                    <span className="shrink-0 text-right">
+                      <strong className="block text-sm text-primary">{fmtFCFA(Number((product.prixPromo || null) ?? product.prixDetail ?? 0))}</strong>
+                      <span className={`text-[11px] ${available > 0 ? 'text-slate-500' : 'font-semibold text-red-600'}`}>
+                        {available > 0 ? `Stock ${available}${inCart ? ` · panier ${inCart}` : ''}` : 'Rupture'}
+                      </span>
+                    </span>
+                  </button>
+                );
+              })}
+              <p className="px-2.5 py-1.5 text-[11px] text-slate-400">Touchez un produit ou utilisez ↑ ↓ puis Entrée.</p>
+            </div>
+          )}
         </div>
         <button
           onClick={() => { clearScanError(); setScanOpen(true); }}
@@ -1132,6 +1451,21 @@ export const POSVendeur = ({ preview }: { preview?: POSVendeurPreview } = {}) =>
           <span className="hidden sm:inline text-sm font-medium">Scanner</span>
         </button>
       </div>
+      {search.trim() && (
+        <div id="seller-search-status" role="status" aria-live="polite" className="flex min-h-6 items-center justify-between gap-3 px-1 text-xs text-slate-500">
+          <span className="inline-flex items-center gap-2">
+            {searching && <span className="h-3 w-3 animate-spin rounded-full border-2 border-slate-300 border-t-primary motion-reduce:animate-none" />}
+            {searching
+              ? 'Recherche en cours…'
+              : `${produitsFiltres.length} résultat${produitsFiltres.length > 1 ? 's' : ''}`}
+          </span>
+          {!searching && premierResultatDisponible && (
+            <span className="hidden truncate font-medium text-slate-600 lg:block">
+              Entrée ajoute : {premierResultatDisponible.nomProduit}
+            </span>
+          )}
+        </div>
+      )}
       {equivalenceContextActive && (
         <button
           type="button"
@@ -1193,7 +1527,17 @@ export const POSVendeur = ({ preview }: { preview?: POSVendeurPreview } = {}) =>
           Ajouter
         </button>
       </div>
-      {loading ? <div className="text-center text-slate-400 py-12">Chargement…</div>
+      {loading && produitsFiltres.length === 0 ? (
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(9.25rem,1fr))] gap-3" aria-label="Chargement du catalogue">
+          {Array.from({ length: 8 }, (_, index) => (
+            <div key={index} className="animate-pulse rounded-xl border border-slate-200 bg-white p-3 motion-reduce:animate-none">
+              <div className="aspect-square rounded-lg bg-slate-100" />
+              <div className="mt-3 h-3 rounded bg-slate-100" />
+              <div className="mt-2 h-3 w-2/3 rounded bg-slate-100" />
+            </div>
+          ))}
+        </div>
+      )
         : produitsFiltres.length === 0 ? (
           <div className="text-center py-12 space-y-3">
             <p className="text-slate-400">Aucun produit trouvé.</p>
@@ -1260,8 +1604,8 @@ export const POSVendeur = ({ preview }: { preview?: POSVendeurPreview } = {}) =>
                         </div>
                         <p className="text-xs text-slate-600 mt-1.5">{s.raison}</p>
                         <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-100">
-                          <span className="text-xs text-slate-500"><span className="font-bold text-primary">{fmtFCFA(prix)}</span> · Stock : {s.quantiteStock}</span>
-                          <button onClick={() => ajouterSuggestion(s)} disabled={s.quantiteStock <= 0}
+                          <span className="text-xs text-slate-500"><span className="font-bold text-primary">{fmtFCFA(prix)}</span> · Disponible : {stockDisponibleVente(s)}</span>
+                          <button onClick={() => ajouterSuggestion(s)} disabled={stockDisponibleVente(s) <= 0}
                             className="flex items-center gap-1.5 px-3 py-1.5 bg-primary text-white text-xs font-bold rounded-lg disabled:opacity-50">
                             <Plus size={13} /> Ajouter
                           </button>
@@ -1345,7 +1689,7 @@ export const POSVendeur = ({ preview }: { preview?: POSVendeurPreview } = {}) =>
                   className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none" />
               </div>
             </div>
-            <button onClick={envoyerAdmin} disabled={!panier.length || submitting}
+            <button onClick={envoyerAdmin} disabled={!panier.length || submitting || stockBloque}
               className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-primary text-white font-bold rounded-xl shadow-md shadow-primary/20 hover:bg-opacity-90 disabled:opacity-50">
               <Send size={18} />{submitting ? 'Envoi…' : 'Envoyer au caissier'}
             </button>
@@ -1390,7 +1734,7 @@ export const POSVendeur = ({ preview }: { preview?: POSVendeurPreview } = {}) =>
                     <input type="tel" value={telephoneClient} onChange={e => setTelephoneClient(e.target.value)} placeholder="Téléphone (optionnel)" maxLength={30}
                       className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none" />
                   </div>
-                  <button onClick={() => { setPanierMobileOpen(false); envoyerAdmin(); }} disabled={!panier.length || submitting}
+                  <button onClick={() => { setPanierMobileOpen(false); envoyerAdmin(); }} disabled={!panier.length || submitting || stockBloque}
                     className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-primary text-white font-bold rounded-xl disabled:opacity-50">
                     <Send size={18} />{submitting ? 'Envoi…' : 'Envoyer au caissier'}
                   </button>
@@ -1526,7 +1870,7 @@ export const POSVendeur = ({ preview }: { preview?: POSVendeurPreview } = {}) =>
                 <h3 className="font-bold text-lg text-slate-900 flex items-center gap-2"><ShoppingCart size={20} className="text-primary" />Panier ({totalUnits} unite{totalUnits > 1 ? 's' : ''})</h3>
                 <button onClick={() => setPanierMobileOpen(false)} aria-label="Fermer le panier" className="flex h-11 w-11 items-center justify-center rounded-lg text-slate-500"><X size={20} /></button>
               </div>
-              <div className="p-5">{renderPanierVendeur(() => { setPanierMobileOpen(false); setReviewOpen(true); saleFlow.setPhase('REVIEWING'); })}</div>
+              <div className="p-5">{renderPanierVendeur(() => { setPanierMobileOpen(false); void ouvrirRevueVente(); })}</div>
             </motion.div>
           </motion.div>
         )}

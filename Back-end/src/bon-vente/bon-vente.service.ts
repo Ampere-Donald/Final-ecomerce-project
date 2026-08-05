@@ -16,6 +16,10 @@ import { CreateBonDto } from './dto/create-bon.dto';
 import { EncaisserTicketDto } from 'src/ticket-vente/dto/encaisser-ticket.dto';
 import { validerLignePrix } from 'src/pricing/pricing.util';
 import { DocumentNumberService } from 'src/database/document-number.service';
+import {
+  assertTicketStockAvailable,
+  inspectTicketStock,
+} from 'src/ticket-vente/ticket-stock.util';
 
 const TICKET_VALIDITY_MS = 15 * 60 * 1000;
 const vendeurSelect = {
@@ -82,11 +86,6 @@ export class BonVenteService {
     const ventesAPerte: { nom: string; prix: number; cmup: number }[] = [];
     const lignesData = dto.lignes.map((l) => {
       const p = produitsById.get(l.produitId)!;
-      if (p.quantiteStock < l.quantite) {
-        throw new BadRequestException(
-          `Stock insuffisant pour ${p.nomProduit} (disponible : ${p.quantiteStock}).`,
-        );
-      }
       // prixPromo = 0 doit être ignoré (pas de promo), seule une valeur > 0 est valide
       const promoValide = p.prixPromo && this.toNumber(p.prixPromo) > 0 ? p.prixPromo : null;
       // Prix saisi par le vendeur, sinon prix promo/référence du produit
@@ -134,6 +133,8 @@ export class BonVenteService {
     const expiresAt = new Date(Date.now() + TICKET_VALIDITY_MS);
 
     const ticket = await this.db.$transaction(async (tx) => {
+      const availability = await inspectTicketStock(tx as any, dto.lignes, { lock: true });
+      assertTicketStockAvailable(availability);
       const numeroTicket = await this.generateNumeroTicket(tx);
       return tx.ticketVente.create({
         data: {

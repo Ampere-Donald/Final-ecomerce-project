@@ -1,10 +1,11 @@
 import React, { useCallback, useEffect, useState, useRef } from 'react';
-import { PlusCircle, Search, Edit2, Trash2, Tag, X, Upload, Image as ImageIcon, AlertTriangle, Zap, Star, FileSpreadsheet, CheckCircle2, XCircle, Loader2, ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
+import { PlusCircle, Search, Edit2, Trash2, Tag, X, Upload, Image as ImageIcon, AlertTriangle, Zap, Star, FileSpreadsheet, CheckCircle2, XCircle, Loader2, ChevronLeft, ChevronRight, Sparkles, Barcode } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { produitApi, categorieApi } from '../services/api';
 import { useAdminAuth } from '../context/AdminAuthContext';
 import { can } from '../utils/permissions';
 import Papa from 'papaparse';
+import { BarcodeLabelFormat, exportProductBarcodeLabels } from '../utils/exportBarcodeLabels';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface Categorie {
@@ -343,6 +344,9 @@ export const Produits = () => {
         // ─── Création (mise à jour optimiste) ────────────────────────────
         const newProduit = await produitApi.create(dataToSend);
         setProduits((prev) => [newProduit, ...prev]);
+        // La creation serveur attribue toujours un code. L'etiquette est donc
+        // disponible immediatement, sans ressaisie ni outil externe.
+        exportProductBarcodeLabels([newProduit], 1, 'roll80');
       }
 
       await loadProducts();
@@ -376,6 +380,14 @@ export const Produits = () => {
     }
   };
 
+  const imprimerEtiquettes = (selection: Produit[], format: BarcodeLabelFormat = 'roll80') => {
+    try {
+      exportProductBarcodeLabels(selection, 1, format);
+    } catch (error: any) {
+      alert(error?.message || "Impossible de generer les etiquettes.");
+    }
+  };
+
   // ─── JSX ──────────────────────────────────────────────────────────────────
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
@@ -388,6 +400,23 @@ export const Produits = () => {
           </p>
         </div>
         <div className="flex items-center gap-3">
+          <button
+            onClick={() => imprimerEtiquettes(produits, 'roll80')}
+            disabled={loading || produits.length === 0}
+            className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 font-semibold text-slate-700 shadow-sm transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+            title="Étiquettes thermiques 80 mm pour l'Epson TM-T20II"
+          >
+            <Barcode size={18} />
+            <span className="hidden lg:inline">Rouleau 80 mm</span>
+          </button>
+          <button
+            onClick={() => imprimerEtiquettes(produits, 'a4')}
+            disabled={loading || produits.length === 0}
+            className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+            title="Planche A4 de 21 étiquettes"
+          >
+            A4
+          </button>
           <button
             onClick={() => csvInputRef.current?.click()}
             disabled={isGlobalImporting}
@@ -792,7 +821,7 @@ export const Produits = () => {
                       value={formData.code}
                       onChange={(e) => setFormData((f) => ({ ...f, code: e.target.value }))}
                       className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary/20 outline-none transition-all font-mono"
-                      placeholder="Ex : 101001"
+                      placeholder="Laisser vide pour le generer"
                     />
                     <p className="text-xs text-slate-400 mt-1">Ce code doit être unique et sera lu directement par le scanner.</p>
                   </div>
@@ -806,7 +835,7 @@ export const Produits = () => {
                       value={formData.codeFamille}
                       onChange={(e) => setFormData((f) => ({ ...f, codeFamille: e.target.value }))}
                       className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary/20 outline-none transition-all font-mono"
-                      placeholder="Ex : 101"
+                      placeholder="Optionnel - 000 par defaut"
                     />
                   </div>
                 </div>
@@ -1256,6 +1285,9 @@ export const Produits = () => {
                       </td>
                       <td className="px-6 py-4 text-right">
                         <div className="flex items-center justify-end gap-2">
+                          <button onClick={() => imprimerEtiquettes([prod])} title="Imprimer l'etiquette" className="p-1.5 text-slate-400 hover:text-primary transition-colors hover:bg-slate-100 rounded-lg">
+                            <Barcode size={16} />
+                          </button>
                           <button onClick={() => openEditModal(prod)} title="Modifier" className="p-1.5 text-slate-400 hover:text-primary transition-colors hover:bg-slate-100 rounded-lg">
                             <Edit2 size={16} />
                           </button>
@@ -1308,6 +1340,13 @@ export const Produits = () => {
                     <div className="flex items-start justify-between gap-2">
                       <p className="font-bold text-slate-900 text-sm leading-tight">{prod.nomProduit}</p>
                       <div className="flex items-center gap-1 shrink-0">
+                        <button
+                          onClick={() => imprimerEtiquettes([prod])}
+                          className="flex size-11 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-primary"
+                          aria-label={`Imprimer l'etiquette de ${prod.nomProduit}`}
+                        >
+                          <Barcode size={15} />
+                        </button>
                         <button
                           onClick={() => openEditModal(prod)}
                           className="flex size-11 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-primary"

@@ -6,13 +6,19 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
-import { MethodePaiement, TypeFacture } from '@prisma/client';
+import { MethodePaiement, Prisma, TypeFacture } from '@prisma/client';
 import { DatabaseService } from 'src/database/database.service';
 import { NotificationService } from 'src/notification/notification.service';
 import { CaisseJourService } from 'src/caisse-jour/caisse-jour.service';
 import { CreateTicketDto } from './dto/create-ticket.dto';
 import { validerLignePrix } from 'src/pricing/pricing.util';
 import { DocumentNumberService } from 'src/database/document-number.service';
+import {
+  assertTicketStockAvailable,
+  inspectTicketStock,
+  lockTicketStock,
+  TicketStockRequest,
+} from './ticket-stock.util';
 
 const TICKET_VALIDITY_MS = 15 * 60 * 1000; // 15 minutes
 const vendeurSelect = {
@@ -53,8 +59,13 @@ export class TicketVenteService {
   }
 
   /** Génère un numéro lisible : T-YYYYMMDD-NNNN où NNNN est l'ordre du jour. */
-  private async generateNumeroTicket(): Promise<string> {
-    return this.documentNumbers.nextDaily('TICKET_QUEUE', 'T-');
+  private async generateNumeroTicket(tx?: any): Promise<string> {
+    return this.documentNumbers.nextDaily('TICKET_QUEUE', 'T-', tx);
+  }
+
+  async checkStock(lines: TicketStockRequest[]) {
+    const lignes = await inspectTicketStock(this.db as any, lines);
+    return { ok: lignes.every((line) => line.suffisant), lignes };
   }
 
   /**
@@ -97,11 +108,6 @@ export class TicketVenteService {
     const ventesAPerte: { nom: string; prix: number; cmup: number }[] = [];
     const lignesData = dto.lignes.map((l) => {
       const p = produitsById.get(l.produitId)!;
-      if (p.quantiteStock < l.quantite) {
-        throw new BadRequestException(
-          `Stock insuffisant pour ${p.nomProduit} (disponible : ${p.quantiteStock}).`,
-        );
-      }
       // prixPromo = 0 doit être ignoré (pas de promo), seule une valeur > 0 est valide
       const promoValide = p.prixPromo && this.toNumber(p.prixPromo) > 0 ? p.prixPromo : null;
       // Prix saisi (POS), sinon prix promo/référence du produit
@@ -146,27 +152,31 @@ export class TicketVenteService {
       };
     });
 
-    const numeroTicket = await this.generateNumeroTicket();
     const expiresAt = new Date(Date.now() + TICKET_VALIDITY_MS);
 
-    const ticket = await this.db.ticketVente.create({
-      data: {
-        numeroTicket,
-        idempotencyKey: dto.idempotencyKey,
-        vendeurId,
-        clientId: dto.clientId ?? null,
-        nomClient: dto.nomClient ?? null,
-        telephoneClient: dto.telephoneClient ?? null,
-        noteCaissier: dto.noteCaissier?.trim() || null,
-        montantTotal,
-        expiresAt,
-        lignes: { create: lignesData },
-      },
-      include: {
-        lignes: true,
-        vendeur: { select: vendeurSelect },
-      },
-    });
+    const ticket = await this.db.$transaction(async (tx) => {
+      const availability = await inspectTicketStock(tx as any, dto.lignes, { lock: true });
+      assertTicketStockAvailable(availability);
+      const numeroTicket = await this.generateNumeroTicket(tx);
+      return tx.ticketVente.create({
+        data: {
+          numeroTicket,
+          idempotencyKey: dto.idempotencyKey,
+          vendeurId,
+          clientId: dto.clientId ?? null,
+          nomClient: dto.nomClient ?? null,
+          telephoneClient: dto.telephoneClient ?? null,
+          noteCaissier: dto.noteCaissier?.trim() || null,
+          montantTotal,
+          expiresAt,
+          lignes: { create: lignesData },
+        },
+        include: {
+          lignes: true,
+          vendeur: { select: vendeurSelect },
+        },
+      });
+    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
 
     this.notifications
       .create(
@@ -180,7 +190,7 @@ export class TicketVenteService {
       this.notifications
         .create(
           'VENTE_MAJ',
-          `⚠️ Vente à perte : ${v.nom} vendu ${v.prix} FCFA (coût CMUP ${v.cmup} FCFA) — ticket ${numeroTicket} par ${acteur?.nom ?? 'inconnu'}.`,
+          `⚠️ Vente à perte : ${v.nom} vendu ${v.prix} FCFA (coût CMUP ${v.cmup} FCFA) — ticket ${ticket.numeroTicket} par ${acteur?.nom ?? 'inconnu'}.`,
         )
         .catch(() => {});
     }
@@ -334,6 +344,10 @@ export class TicketVenteService {
     }
 
     const result = await this.db.$transaction(async (tx: any) => {
+      // Un encaissement et un nouvel envoi vendeur ne peuvent plus promettre
+      // simultanément les dernières pièces du même produit.
+      await lockTicketStock(tx, ticket.lignes.map((line) => line.produitId));
+
       if (isCredit && clientId) {
         const [creditClient, openSales] = await Promise.all([
           tx.client.findUnique({ where: { id: clientId }, select: { limiteCredit: true } }),

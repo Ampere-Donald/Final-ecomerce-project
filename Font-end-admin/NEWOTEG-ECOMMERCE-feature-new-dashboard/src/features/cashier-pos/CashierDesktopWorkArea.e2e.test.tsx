@@ -51,6 +51,18 @@ describe('CashierDesktopWorkArea', () => {
     expect(flow.searchCustomers).toHaveBeenCalledOnce();
   });
 
+  it('sépare MTN MoMo et Orange Money sans proposer le virement', () => {
+    const flow = makeFlow('PAYMENT');
+    render(<CashierDesktopWorkArea flow={flow} onNextTicket={vi.fn()} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'MTN MoMo' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Orange Money' }));
+
+    expect(flow.setMethod).toHaveBeenNthCalledWith(1, 'MTN_MOBILE_MONEY');
+    expect(flow.setMethod).toHaveBeenNthCalledWith(2, 'ORANGE_MOBILE_MONEY');
+    expect(screen.queryByRole('button', { name: 'Virement' })).toBeNull();
+  });
+
   it('valide puis demande automatiquement l’impression du document', async () => {
     const flow = makeFlow('PAYMENT');
     render(<CashierDesktopWorkArea flow={flow} onNextTicket={vi.fn()} />);

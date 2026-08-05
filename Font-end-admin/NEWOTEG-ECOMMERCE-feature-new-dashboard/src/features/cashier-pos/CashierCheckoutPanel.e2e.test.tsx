@@ -51,8 +51,11 @@ describe('CashierCheckoutPanel', () => {
     render(<CashierCheckoutPanel flow={flow} onNextTicket={vi.fn()} />);
     expect(screen.getByText('Monnaie à rendre')).toBeTruthy();
     expect(screen.getAllByText(/500 FCFA/).some(element => element.textContent?.replace(/\s/g, '') === '2500FCFA')).toBe(true);
-    fireEvent.click(screen.getByRole('button', { name: 'Mobile Money' }));
-    expect(flow.setMethod).toHaveBeenCalledWith('MOBILE_MONEY');
+    fireEvent.click(screen.getByRole('button', { name: 'MTN MoMo' }));
+    expect(flow.setMethod).toHaveBeenCalledWith('MTN_MOBILE_MONEY');
+    fireEvent.click(screen.getByRole('button', { name: 'Orange Money' }));
+    expect(flow.setMethod).toHaveBeenCalledWith('ORANGE_MOBILE_MONEY');
+    expect(screen.queryByRole('button', { name: 'Virement' })).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Encaisser' }));
     expect(flow.checkout).toHaveBeenCalledOnce();
   });

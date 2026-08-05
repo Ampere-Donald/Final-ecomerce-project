@@ -1,33 +1,23 @@
-import { useState } from 'react';
+import { lazy, Suspense, useState } from 'react';
 import {
   ArrowLeft,
-  Banknote,
-  Building2,
   Check,
-  CreditCard,
-  HandCoins,
   Loader2,
   MessageCircle,
   Printer,
   Search,
-  Smartphone,
   UserPlus,
   UserRound,
 } from 'lucide-react';
-import { ReceiptGenerator } from '../../components/ReceiptGenerator';
 import { useToast } from '../../components/ui/Toast';
 import { CashierCountdown } from './CashierCountdown';
 import type { CashierCheckoutFlow } from './useCashierCheckoutFlow';
-import { cashierSellerName, money, type DocumentType, type PaymentMethod } from './types';
+import { cashierSellerName, money, type DocumentType } from './types';
 import { CustomerRequestNotice } from './CustomerRequestNotice';
+import { CashierPaymentMethodSelector } from './CashierPaymentMethodSelector';
+import { paymentMethodLabel, paymentMethodNeedsReference } from '../pos-shared/paymentMethods';
 
-const paymentMethods: { id: PaymentMethod; label: string; icon: typeof Banknote }[] = [
-  { id: 'ESPECES', label: 'Espèces', icon: Banknote },
-  { id: 'MOBILE_MONEY', label: 'Mobile Money', icon: Smartphone },
-  { id: 'CARTE', label: 'Carte', icon: CreditCard },
-  { id: 'VIREMENT', label: 'Virement', icon: Building2 },
-  { id: 'CREDIT', label: 'Crédit', icon: HandCoins },
-];
+const ReceiptGenerator = lazy(() => import('../../components/ReceiptGenerator').then(module => ({ default: module.ReceiptGenerator })));
 
 const documents: { id: DocumentType; label: string }[] = [
   { id: 'FACTURE', label: 'Facture' },
@@ -104,7 +94,7 @@ export function CashierCheckoutPanel({ flow, onNextTicket }: { flow: CashierChec
           <div className="mt-3 flex justify-between gap-3"><span className="text-sm text-slate-500">Vendeur</span><strong>{seller}</strong></div>
           <div className="mt-3 flex justify-between gap-3"><span className="text-sm text-slate-500">Client</span><strong>{clientName}</strong></div>
           {clientPhone && <div className="mt-3 flex justify-between gap-3"><span className="text-sm text-slate-500">Téléphone</span><strong>{clientPhone}</strong></div>}
-          <div className="mt-3 flex justify-between gap-3"><span className="text-sm text-slate-500">Mode</span><strong>{paymentMethods.find(item => item.id === flow.method)?.label}</strong></div>
+          <div className="mt-3 flex justify-between gap-3"><span className="text-sm text-slate-500">Mode</span><strong>{paymentMethodLabel(flow.method)}</strong></div>
           {flow.method === 'ESPECES' && <><div className="mt-3 flex justify-between gap-3"><span className="text-sm text-slate-500">Montant reçu</span><strong>{money(flow.cashReceived)}</strong></div><div className="mt-3 flex justify-between gap-3"><span className="text-sm text-slate-500">Monnaie</span><strong className="text-emerald-700">{money(flow.change)}</strong></div></>}
         </div>
         <p className="mt-4 text-sm font-semibold text-emerald-700">Vente enregistrée et stock mis à jour</p>
@@ -113,7 +103,7 @@ export function CashierCheckoutPanel({ flow, onNextTicket }: { flow: CashierChec
           <button type="button" onClick={shareReceipt} disabled={!clientPhone} className="flex min-h-12 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white font-bold text-slate-700 disabled:opacity-40"><MessageCircle size={18} />Envoyer au client</button>
         </div>
         <button type="button" onClick={onNextTicket} className="mx-auto mt-3 min-h-12 w-full max-w-md rounded-lg bg-primary px-5 font-extrabold text-white">Ticket suivant</button>
-        {printOpen && resultDocument && <ReceiptGenerator documentId={resultDocument.id} printCount={resultDocument.printCount || 0} type={flow.documentType === 'FACTURE' ? 'facture' : flow.documentType === 'BON_VENTE' ? 'bonVente' : 'ticket'} numero={resultDocument.numero} dateVente={resultDocument.dateEmission} methodePaiement={flow.method} montantTotal={flow.total} vendeur={seller} client={resultDocument.client ? { nom: `${resultDocument.client.nom} ${resultDocument.client.prenom || ''}`.trim(), telephone: resultDocument.client.telephone } : undefined} lignes={(resultDocument.lignes || []).map((line: any) => ({ nomProduit: line.nomProduit, quantite: line.quantite, prixUnitaire: Number(line.prixUnitaireTTC), sousTotal: Number(line.sousTotalTTC) }))} onClose={() => setPrintOpen(false)} />}
+        {printOpen && resultDocument && <Suspense fallback={<p role="status" className="mt-4 text-sm text-slate-500">Préparation du document…</p>}><ReceiptGenerator documentId={resultDocument.id} printCount={resultDocument.printCount || 0} type={flow.documentType === 'FACTURE' ? 'facture' : flow.documentType === 'BON_VENTE' ? 'bonVente' : 'ticket'} numero={resultDocument.numero} dateVente={resultDocument.dateEmission} methodePaiement={flow.method} montantTotal={flow.total} vendeur={seller} client={resultDocument.client ? { nom: `${resultDocument.client.nom} ${resultDocument.client.prenom || ''}`.trim(), telephone: resultDocument.client.telephone } : undefined} lignes={(resultDocument.lignes || []).map((line: any) => ({ nomProduit: line.nomProduit, quantite: line.quantite, prixUnitaire: Number(line.prixUnitaireTTC), sousTotal: Number(line.sousTotalTTC) }))} onClose={() => setPrintOpen(false)} /></Suspense>}
       </section>
     );
   }
@@ -168,9 +158,9 @@ export function CashierCheckoutPanel({ flow, onNextTicket }: { flow: CashierChec
           <div className="space-y-5">
             {flow.customer && <div className="border border-emerald-300 bg-emerald-50 p-3 sm:rounded-lg"><p className="flex items-center gap-2 text-xs font-bold text-emerald-700"><Check size={16} />Client vérifié</p><p className="mt-1 font-bold text-slate-900">{clientName} · {clientPhone}</p></div>}
             <div><h2 className="text-sm font-bold text-slate-900">Type de document</h2><div className="mt-2 grid grid-cols-3 gap-2">{documents.map(item => <button type="button" key={item.id} onClick={() => flow.setDocumentType(item.id)} className={`min-h-11 rounded-lg px-2 text-xs font-bold ${flow.documentType === item.id ? 'bg-primary text-white' : 'border border-slate-200 bg-white text-slate-600'}`}>{item.label}</button>)}</div></div>
-            <div><h2 className="text-sm font-bold text-slate-900">Mode de paiement</h2><div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3">{paymentMethods.map(item => { const Icon = item.icon; return <button type="button" key={item.id} onClick={() => flow.setMethod(item.id)} className={`flex min-h-14 items-center justify-center gap-2 rounded-lg px-2 text-xs font-bold ${flow.method === item.id ? 'border border-primary bg-indigo-50 text-primary' : 'border border-slate-200 bg-white text-slate-600'}`}><Icon size={18} />{item.label}</button>; })}</div></div>
+            <div><h2 className="text-sm font-bold text-slate-900">Mode de paiement</h2><CashierPaymentMethodSelector value={flow.method} onChange={flow.setMethod} /></div>
             {flow.method === 'ESPECES' && <label className="block text-sm font-bold text-slate-700">Montant reçu<input autoFocus inputMode="numeric" value={flow.cashReceived} onChange={event => flow.setCashReceived(event.target.value)} placeholder={String(flow.total)} className="mt-2 min-h-12 w-full rounded-lg border border-slate-300 px-3 text-lg font-bold outline-none focus:border-primary" />{flow.change > 0 && <span className="mt-3 flex justify-between text-base"><span>Monnaie à rendre</span><strong className="text-2xl text-emerald-700">{money(flow.change)}</strong></span>}</label>}
-            {['MOBILE_MONEY', 'CARTE', 'VIREMENT'].includes(flow.method) && <label className="block text-sm font-bold text-slate-700">Référence de paiement<input value={flow.reference} onChange={event => flow.setReference(event.target.value)} placeholder="Facultatif" className="mt-2 min-h-12 w-full rounded-lg border border-slate-300 px-3 outline-none focus:border-primary" /></label>}
+            {paymentMethodNeedsReference(flow.method) && <label className="block text-sm font-bold text-slate-700">Référence de paiement<input value={flow.reference} onChange={event => flow.setReference(event.target.value)} placeholder="Facultatif" className="mt-2 min-h-12 w-full rounded-lg border border-slate-300 px-3 outline-none focus:border-primary" /></label>}
             {flow.method === 'CREDIT' && <div className="grid gap-3 border border-amber-200 bg-amber-50 p-4 sm:rounded-lg"><p className="text-xs font-semibold text-amber-800">Un client enregistré et une échéance sont obligatoires.</p><label className="text-sm font-bold">Acompte<input inputMode="numeric" value={flow.deposit} onChange={event => flow.setDeposit(event.target.value)} className="mt-1 min-h-11 w-full rounded-lg border border-slate-200 px-3" /></label><label className="text-sm font-bold">Échéance<input type="date" min={new Date().toISOString().slice(0, 10)} value={flow.dueDate} onChange={event => flow.setDueDate(event.target.value)} className="mt-1 min-h-11 w-full rounded-lg border border-slate-200 px-3" /></label>{flow.creditPreview && <p className={`rounded-lg p-3 text-xs font-bold ${flow.creditPreview.autorise ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'}`}>{flow.creditPreview.autorise ? 'Crédit autorisé' : 'Limite de crédit dépassée'}</p>}</div>}
           </div>
           <TicketLines flow={flow} />

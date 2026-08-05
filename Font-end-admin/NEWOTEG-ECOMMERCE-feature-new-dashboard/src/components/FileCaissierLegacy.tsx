@@ -9,7 +9,6 @@ import {
   X,
   Banknote,
   Smartphone,
-  Building2,
   Wallet,
   HandCoins,
   Search,
@@ -19,7 +18,7 @@ import { bonVenteApi, caisseJourApi, clientApi } from '../services/api';
 import { subscribeAuthenticatedSse } from '../services/authenticatedSse';
 import { useToast, errorMessage } from './ui/Toast';
 
-type Methode = 'ESPECES' | 'CARTE' | 'VIREMENT' | 'MOBILE_MONEY' | 'CREDIT';
+type Methode = 'ESPECES' | 'CARTE' | 'MTN_MOBILE_MONEY' | 'ORANGE_MOBILE_MONEY' | 'CREDIT';
 
 interface LigneTicket {
   id: string;
@@ -50,9 +49,9 @@ const fmtFCFA = (n: number | string): string => {
 
 const methodes: { value: Methode; label: string; icon: any }[] = [
   { value: 'ESPECES', label: 'Espèces', icon: Banknote },
-  { value: 'MOBILE_MONEY', label: 'Mobile Money', icon: Smartphone },
+  { value: 'MTN_MOBILE_MONEY', label: 'MTN MoMo', icon: Smartphone },
+  { value: 'ORANGE_MOBILE_MONEY', label: 'Orange Money', icon: Smartphone },
   { value: 'CARTE', label: 'Carte bancaire', icon: CreditCard },
-  { value: 'VIREMENT', label: 'Virement', icon: Building2 },
   { value: 'CREDIT', label: 'Crédit (à payer)', icon: HandCoins },
 ];
 

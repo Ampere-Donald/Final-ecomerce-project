@@ -50,6 +50,12 @@ export class CloudinaryService implements OnModuleInit {
           public_id: options?.publicId,
           resource_type: 'image',
           overwrite: true,
+          // Les photos produit n'ont pas besoin de leur résolution appareil
+          // d'origine. Limiter et compresser dès l'import réduit durablement
+          // le temps de chargement du catalogue sur le réseau de la boutique.
+          transformation: [
+            { width: 1600, height: 1600, crop: 'limit', quality: 'auto:good' },
+          ],
         },
         (error, result: UploadApiResponse | undefined) => {
           if (error) return reject(error);

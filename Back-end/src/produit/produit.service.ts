@@ -9,8 +9,40 @@ import { Readable } from 'stream';
 import AdmZip from 'adm-zip';
 import { createReadStream, existsSync, promises as fsPromises } from 'fs';
 import { join, basename } from 'path';
+import { addSellableStock } from 'src/ticket-vente/ticket-stock.util';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const csvParser = require('csv-parser');
+
+const normalizeSalesSearch = (value?: string | null) =>
+  (value || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
+
+const salesSearchScore = (product: any, rawQuery: string) => {
+  const query = normalizeSalesSearch(rawQuery);
+  if (!query) return 1;
+  const name = normalizeSalesSearch(product.nomProduit);
+  const englishName = normalizeSalesSearch(product.designationEn);
+  const brand = normalizeSalesSearch(product.marque);
+  const code = normalizeSalesSearch(product.code);
+  const family = normalizeSalesSearch(product.codeFamille);
+  let score = 100;
+  if (code === query) score += 1_200;
+  else if (code.startsWith(query)) score += 850;
+  else if (code.includes(query)) score += 650;
+  if (`${family} ${code}`.trim() === query) score += 1_000;
+  if (name === query) score += 950;
+  else if (name.startsWith(query)) score += 720;
+  else if (name.includes(query)) score += 480;
+  if (englishName.startsWith(query)) score += 360;
+  if (brand === query) score += 260;
+  else if (brand.startsWith(query)) score += 180;
+  if (Number(product.quantiteDisponibleVente ?? product.quantiteStock ?? 0) > 0) score += 35;
+  return score;
+};
 
 @Injectable()
 export class ProduitService {
@@ -61,6 +93,67 @@ export class ProduitService {
     error: null as string | null
   };
 
+  private async findSalesSearchCandidateIds(
+    query: string,
+    categoryId: string | undefined,
+    inStock: boolean | undefined,
+    limit: number,
+  ): Promise<string[]> {
+    const normalizedQuery = normalizeSalesSearch(query);
+    const rows = await this.db.$queryRawUnsafe<Array<{ id: string }>>(
+      `
+        SELECT p.id
+        FROM produit p
+        LEFT JOIN categorie c ON c.id = p.id_categorie
+        WHERE ($2::text IS NULL OR p.id_categorie = $2::text)
+          AND ($3::boolean = FALSE OR p.quantite_stock > 0)
+          AND NOT EXISTS (
+            SELECT 1
+            FROM unnest(regexp_split_to_array(lower(trim($1::text)), '\\s+')) AS search_term(term)
+            WHERE length(search_term.term) >= 2
+              AND NOT (
+              lower(coalesce(p.nom_produit, '')) LIKE '%' || search_term.term || '%'
+              OR lower(coalesce(p.designation_en, '')) LIKE '%' || search_term.term || '%'
+              OR lower(coalesce(p.marque, '')) LIKE '%' || search_term.term || '%'
+              OR lower(coalesce(p.code_famille, '')) LIKE '%' || search_term.term || '%'
+              OR lower(coalesce(p.code, '')) LIKE '%' || search_term.term || '%'
+              OR lower(coalesce(c.nom, '')) LIKE '%' || search_term.term || '%'
+              OR (
+                length(search_term.term) >= 4
+                AND search_term.term !~ '[0-9]'
+                AND GREATEST(
+                  word_similarity(search_term.term, lower(coalesce(p.nom_produit, ''))),
+                  word_similarity(search_term.term, lower(coalesce(p.designation_en, ''))),
+                  word_similarity(search_term.term, lower(coalesce(p.marque, ''))),
+                  word_similarity(search_term.term, lower(coalesce(c.nom, '')))
+                ) >= 0.52
+              )
+            )
+          )
+        ORDER BY
+          CASE
+            WHEN lower(coalesce(p.code, '')) = lower($1::text) THEN 0
+            WHEN lower(coalesce(p.nom_produit, '')) = lower($1::text) THEN 1
+            WHEN lower(coalesce(p.nom_produit, '')) LIKE lower($1::text) || '%' THEN 2
+            ELSE 3
+          END,
+          GREATEST(
+            similarity(lower(coalesce(p.nom_produit, '')), lower($1::text)),
+            word_similarity(lower($1::text), lower(coalesce(p.nom_produit, ''))),
+            similarity(lower(coalesce(p.designation_en, '')), lower($1::text)),
+            similarity(lower(coalesce(p.marque, '')), lower($1::text))
+          ) DESC,
+          p.nom_produit ASC
+        LIMIT $4::integer
+      `,
+      normalizedQuery,
+      categoryId || null,
+      Boolean(inStock),
+      limit,
+    );
+    return rows.map(row => row.id);
+  }
+
   getImportStatus() {
     return this.importStatus;
   }
@@ -78,6 +171,40 @@ export class ProduitService {
     }
   }
 
+  /**
+   * Attribue un code interne compatible avec le catalogue historique.
+   *
+   * Les anciens articles utilisent `codeFamille + sequence` et les articles
+   * sans famille connue utilisent la famille de secours `000`. Le verrou
+   * transactionnel PostgreSQL garantit que deux creations simultanees ne
+   * recoivent jamais le meme couple famille/code.
+   */
+  private async genererCodeInterne(tx: any, familleDemandee?: string | null) {
+    const codeFamille = (familleDemandee || '000').trim() || '000';
+    await tx.$queryRawUnsafe(
+      'SELECT pg_advisory_xact_lock(hashtext($1))',
+      `newoteg:produit-code:${codeFamille}`,
+    );
+
+    const existants = await tx.produit.findMany({
+      where: {
+        codeFamille,
+        code: { startsWith: codeFamille },
+      },
+      select: { code: true },
+    });
+
+    let maximum = 0;
+    for (const produit of existants) {
+      const suffixe = String(produit.code || '').slice(codeFamille.length);
+      if (/^\d+$/.test(suffixe)) maximum = Math.max(maximum, Number(suffixe));
+    }
+
+    const largeur = codeFamille === '000' ? 4 : 3;
+    const code = `${codeFamille}${String(maximum + 1).padStart(largeur, '0')}`;
+    return { codeFamille, code };
+  }
+
   async create(createProduitDto: CreateProduitDto, actor?: NotificationActor) {
     const { categorieId, ...rest } = createProduitDto;
 
@@ -92,13 +219,30 @@ export class ProduitService {
 
     let produit: any;
     try {
-      produit = await this.db.produit.create({
-        data: {
-          ...data,
-          categorie: { connect: { id: categorieId } },
-        },
-        include: { categorie: true },
-      });
+      if (!data.code) {
+        produit = await this.db.$transaction(async (tx: any) => {
+          const identifiant = await this.genererCodeInterne(tx, data.codeFamille);
+          return tx.produit.create({
+            data: {
+              ...data,
+              ...identifiant,
+              categorie: { connect: { id: categorieId } },
+            },
+            include: { categorie: true },
+          });
+        });
+      } else {
+        // Un ancien code fourni sans famille conserve la convention historique :
+        // les trois premiers caracteres representent la famille.
+        if (!data.codeFamille) data.codeFamille = String(data.code).slice(0, 3) || '000';
+        produit = await this.db.produit.create({
+          data: {
+            ...data,
+            categorie: { connect: { id: categorieId } },
+          },
+          include: { categorie: true },
+        });
+      }
     } catch (error: any) {
       if (error?.code === 'P2002') {
         throw new ConflictException(`Le code produit "${data.code}" est déjà utilisé`);
@@ -155,6 +299,7 @@ export class ProduitService {
     maxPrice?: number;
     inStock?: boolean;
     sort?: string;
+    salesSearch?: boolean;
   } = {}) {
     const {
       page = 1,
@@ -167,6 +312,7 @@ export class ProduitService {
       maxPrice,
       inStock,
       sort,
+      salesSearch = false,
     } = params;
     const safePage = Number.isFinite(page) ? Math.max(1, Math.floor(page)) : 1;
     const safeLimit = Number.isFinite(limit) ? Math.min(500, Math.max(1, Math.floor(limit))) : 50;
@@ -174,12 +320,22 @@ export class ProduitService {
 
     const where: any = {};
 
-    if (search) {
-      where.OR = [
-        { nomProduit: { contains: search, mode: 'insensitive' } },
-        { description: { contains: search, mode: 'insensitive' } },
-        { marque: { contains: search, mode: 'insensitive' } },
+    const trimmedSearch = String(search || '').trim().slice(0, 120);
+    if (trimmedSearch) {
+      const searchableFields = (term: string) => [
+        { nomProduit: { contains: term, mode: 'insensitive' } },
+        { designationEn: { contains: term, mode: 'insensitive' } },
+        { marque: { contains: term, mode: 'insensitive' } },
+        { codeFamille: { contains: term, mode: 'insensitive' } },
+        { code: { contains: term, mode: 'insensitive' } },
+        { categorie: { nom: { contains: term, mode: 'insensitive' } } },
       ];
+      if (!salesSearch) {
+        where.OR = [
+          ...searchableFields(trimmedSearch),
+          { description: { contains: trimmedSearch, mode: 'insensitive' } },
+        ];
+      }
     }
 
     if (categoryId) {
@@ -197,6 +353,18 @@ export class ProduitService {
 
     if (inStock) {
       where.quantiteStock = { gt: 0 };
+    }
+
+    let salesCandidateOrder = new Map<string, number>();
+    if (salesSearch && trimmedSearch) {
+      const candidateIds = await this.findSalesSearchCandidateIds(
+        trimmedSearch,
+        categoryId,
+        inStock,
+        Math.min(safeLimit * 2, 80),
+      );
+      salesCandidateOrder = new Map(candidateIds.map((id, index) => [id, index]));
+      where.id = { in: candidateIds };
     }
 
     let orderBy: any = { dateAjout: 'desc' };
@@ -217,27 +385,61 @@ export class ProduitService {
       }
     }
 
-    const [data, total] = await Promise.all([
-      this.db.produit.findMany({
-        where,
-        skip,
-        take: safeLimit,
-        include: {
-          categorie: true,
-          attributs: true,
-        },
-        orderBy,
-      }),
-      this.db.produit.count({ where }),
-    ]);
+    const findArgs: any = {
+      where,
+      skip: salesSearch ? 0 : skip,
+      take: salesSearch && trimmedSearch ? Math.min(safeLimit * 2, 80) : safeLimit,
+      orderBy,
+    };
+    if (salesSearch) {
+      findArgs.select = {
+        id: true,
+        nomProduit: true,
+        designationEn: true,
+        marque: true,
+        prixDetail: true,
+        prixDemiGros: true,
+        prixGros: true,
+        quantiteGros: true,
+        prixPromo: true,
+        cmupActuel: true,
+        quantiteStock: true,
+        imageUrl: true,
+        codeFamille: true,
+        code: true,
+        categorie: { select: { id: true, nom: true } },
+      };
+    } else {
+      findArgs.include = { categorie: true, attributs: true };
+    }
+
+    const [data, total] = salesSearch
+      ? [await this.db.produit.findMany(findArgs), 0]
+      : await Promise.all([
+          this.db.produit.findMany(findArgs),
+          this.db.produit.count({ where }),
+        ]);
+
+    let dataAvecDisponibilite = await addSellableStock(this.db as any, data);
+    if (salesSearch && trimmedSearch) {
+      dataAvecDisponibilite = dataAvecDisponibilite
+        .sort((first, second) => (
+          (salesCandidateOrder.get(first.id) ?? Number.MAX_SAFE_INTEGER) -
+            (salesCandidateOrder.get(second.id) ?? Number.MAX_SAFE_INTEGER) ||
+          salesSearchScore(second, trimmedSearch) - salesSearchScore(first, trimmedSearch) ||
+          first.nomProduit.localeCompare(second.nomProduit, 'fr')
+        ))
+        .slice(0, safeLimit);
+    }
+    const responseTotal = salesSearch ? dataAvecDisponibilite.length : total;
 
     return {
-      data,
+      data: dataAvecDisponibilite,
       meta: {
-        total,
+        total: responseTotal,
         page: safePage,
         limit: safeLimit,
-        lastPage: Math.ceil(total / safeLimit),
+        lastPage: salesSearch ? 1 : Math.ceil(total / safeLimit),
       },
     };
   }
@@ -265,7 +467,7 @@ export class ProduitService {
     if (!produit) {
       throw new NotFoundException(`Produit avec l'id ${id} non trouvé`);
     }
-    return produit;
+    return (await addSellableStock(this.db as any, [produit]))[0];
   }
 
   async findByCode(codeFamille: string, code: string) {
@@ -279,7 +481,7 @@ export class ProduitService {
     if (!produit) {
       throw new NotFoundException(`Produit introuvable pour le code famille "${codeFamille}" / code article "${code}"`);
     }
-    return produit;
+    return (await addSellableStock(this.db as any, [produit]))[0];
   }
 
   /**
@@ -304,7 +506,7 @@ export class ProduitService {
       include,
       orderBy: { dateAjout: 'asc' },
     });
-    if (exact) return exact;
+    if (exact) return (await addSellableStock(this.db as any, [exact]))[0];
 
     // Compatibilite avec les anciennes etiquettes famille/code encore en circulation.
     const conditions: any[] = [{ codeFamille: value }];
@@ -330,7 +532,7 @@ export class ProduitService {
     if (!legacyProduct) {
       throw new NotFoundException(`Produit introuvable pour le code-barres "${value}"`);
     }
-    return legacyProduct;
+    return (await addSellableStock(this.db as any, [legacyProduct]))[0];
   }
 
   async update(id: string, updateProduitDto: UpdateProduitDto, actor?: NotificationActor) {

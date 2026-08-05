@@ -35,7 +35,7 @@ export const Orders = () => {
   // ── Pickup state ──
   const [pickupOrder, setPickupOrder] = useState<Commande | null>(null);
   const [pickupChecked, setPickupChecked] = useState<Record<string, boolean>>({});
-  const [pickupPayment, setPickupPayment] = useState<'PREPAYE' | 'ESPECES' | 'MOBILE_MONEY' | 'CARTE'>('PREPAYE');
+  const [pickupPayment, setPickupPayment] = useState<'PREPAYE' | 'ESPECES' | 'MTN_MOBILE_MONEY' | 'ORANGE_MOBILE_MONEY' | 'CARTE'>('PREPAYE');
   const [pickupSubmitting, setPickupSubmitting] = useState(false);
   const [pickupError, setPickupError] = useState('');
 
@@ -537,7 +537,8 @@ export const Orders = () => {
                     {[
                       { value: 'PREPAYE' as const, label: 'Deja paye', icon: CheckCircle2 },
                       { value: 'ESPECES' as const, label: 'Especes', icon: Banknote },
-                      { value: 'MOBILE_MONEY' as const, label: 'Mobile Money', icon: Smartphone },
+                      { value: 'MTN_MOBILE_MONEY' as const, label: 'MTN MoMo', icon: Smartphone },
+                      { value: 'ORANGE_MOBILE_MONEY' as const, label: 'Orange Money', icon: Smartphone },
                       { value: 'CARTE' as const, label: 'Carte', icon: CreditCard },
                     ].map(pm => {
                       const Icon = pm.icon;

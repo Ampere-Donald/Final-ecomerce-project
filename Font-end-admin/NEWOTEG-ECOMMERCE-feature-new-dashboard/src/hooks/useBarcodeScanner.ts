@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { BrowserMultiFormatReader, type IScannerControls } from '@zxing/browser';
-import { NotFoundException } from '@zxing/library';
+import type { BrowserMultiFormatReader, IScannerControls } from '@zxing/browser';
 
 type BarcodeDetectedHandler = (code: string) => void | Promise<void>;
 
@@ -32,6 +31,7 @@ export const useBarcodeScanner = ({ onDetected }: UseBarcodeScannerOptions) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const readerRef = useRef<BrowserMultiFormatReader | null>(null);
   const controlsRef = useRef<IScannerControls | null>(null);
+  const releaseStreamsRef = useRef<(() => void) | null>(null);
   const activeRef = useRef(false);
   const detectedRef = useRef(false);
   const [error, setError] = useState<string | null>(null);
@@ -41,11 +41,11 @@ export const useBarcodeScanner = ({ onDetected }: UseBarcodeScannerOptions) => {
     detectedRef.current = false;
     controlsRef.current?.stop();
     controlsRef.current = null;
-    BrowserMultiFormatReader.releaseAllStreams();
+    releaseStreamsRef.current?.();
 
     const video = videoRef.current;
     const stream = video?.srcObject;
-    if (stream instanceof MediaStream) {
+    if (typeof MediaStream !== 'undefined' && stream instanceof MediaStream) {
       stream.getTracks().forEach((track) => track.stop());
     }
     if (video) video.srcObject = null;
@@ -65,7 +65,11 @@ export const useBarcodeScanner = ({ onDetected }: UseBarcodeScannerOptions) => {
     }
 
     try {
-      if (!readerRef.current) readerRef.current = new BrowserMultiFormatReader();
+      // ZXing est volumineux : ne le télécharger qu'au moment où la caméra
+      // est réellement ouverte, pas lors de l'arrivée sur la page vendeur.
+      const { BrowserMultiFormatReader: Reader } = await import('@zxing/browser');
+      releaseStreamsRef.current = () => Reader.releaseAllStreams();
+      if (!readerRef.current) readerRef.current = new Reader();
       activeRef.current = true;
       detectedRef.current = false;
 
@@ -88,7 +92,7 @@ export const useBarcodeScanner = ({ onDetected }: UseBarcodeScannerOptions) => {
             activeRef.current = false;
             scannerControls.stop();
             void onDetected(code);
-          } else if (scanError && !(scanError instanceof NotFoundException)) {
+          } else if (scanError && (scanError as { name?: string }).name !== 'NotFoundException') {
             console.warn('[barcode-scanner]', scanError);
           }
         },

@@ -7,6 +7,7 @@ import { buildTicketEscPos } from '../services/ticketEscpos';
 import { documentPrintApi } from '../services/api';
 import { getWorkstationId } from '../services/workstation';
 import { useToast } from './ui/Toast';
+import { paymentMethodLabel } from '../features/pos-shared/paymentMethods';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -92,6 +93,7 @@ export const ReceiptGenerator: React.FC<ReceiptProps> = (props) => {
     onPrintRecorded,
     onClose,
   } = props;
+  const paymentDisplay = paymentMethodLabel(methodePaiement);
 
   const [activeType, setActiveType] = React.useState<'ticket' | 'facture' | 'bonVente' | 'proforma'>(initialType === 'factureVirtuelle' ? 'facture' : initialType);
   const isVirtuelle = initialType === 'factureVirtuelle';
@@ -265,7 +267,7 @@ export const ReceiptGenerator: React.FC<ReceiptProps> = (props) => {
         buildTicketEscPos({
           lignes,
           montantTotal,
-          methodePaiement,
+          methodePaiement: paymentDisplay,
           numero: displayNumero,
           client: client ? { nom: client.nom, telephone: client.telephone } : null,
           vendeur,
@@ -436,7 +438,7 @@ export const ReceiptGenerator: React.FC<ReceiptProps> = (props) => {
       pdf.setFont('helvetica', 'normal');
       pdf.setFontSize(9);
       pdf.setTextColor(80);
-      pdf.text(`Mode de paiement : ${methodePaiement}`, margin, finalY + 18);
+      pdf.text(`Mode de paiement : ${paymentDisplay}`, margin, finalY + 18);
 
       // ---- Notes proforma ----
       if (activeType === 'proforma') {
@@ -589,7 +591,7 @@ export const ReceiptGenerator: React.FC<ReceiptProps> = (props) => {
 
       {/* ── Paiement ── */}
       <div style={{ fontSize: 9, marginTop: 5, borderTop: '1px dashed #666', paddingTop: 3 }}>
-        <p>Paiement: {methodePaiement}</p>
+        <p>Paiement: {paymentDisplay}</p>
       </div>
 
       {/* ── Pied de ticket ── */}
@@ -683,7 +685,7 @@ export const ReceiptGenerator: React.FC<ReceiptProps> = (props) => {
 
         {/* Payment method */}
         <p className="text-sm text-gray-600 mb-3">
-          Mode de paiement : <span className="font-medium">{methodePaiement}</span>
+          Mode de paiement : <span className="font-medium">{paymentDisplay}</span>
         </p>
 
         {/* Notes proforma */}

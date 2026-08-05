@@ -140,6 +140,7 @@ export class ProduitController {
     @Query('maxPrice') maxPrice?: string,
     @Query('inStock') inStock?: string,
     @Query('sort') sort?: string,
+    @Query('salesSearch') salesSearch?: string,
   ) {
     const result = await this.produitService.findAll({
       page: page ? parseInt(page, 10) : 1,
@@ -152,6 +153,7 @@ export class ProduitController {
       maxPrice: maxPrice ? parseFloat(maxPrice) : undefined,
       inStock: inStock === 'true',
       sort,
+      salesSearch: salesSearch === 'true',
     });
     if (peutVoirCouts(req.user)) return result;
     return { ...result, data: (result.data || []).map(masquerCouts) };

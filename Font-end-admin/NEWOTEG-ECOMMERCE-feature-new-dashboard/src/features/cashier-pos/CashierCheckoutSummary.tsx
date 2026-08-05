@@ -2,19 +2,12 @@ import { Check, Loader2 } from 'lucide-react';
 import type { CashierCheckoutFlow } from './useCashierCheckoutFlow';
 import { money } from './types';
 import { CustomerRequestNotice } from './CustomerRequestNotice';
+import { paymentMethodLabel } from '../pos-shared/paymentMethods';
 
 const documentLabels = {
   TICKET_CAISSE: 'Ticket',
   FACTURE: 'Facture',
   BON_VENTE: 'Bon de vente',
-};
-
-const paymentLabels = {
-  ESPECES: 'Espèces',
-  MOBILE_MONEY: 'Mobile Money',
-  CARTE: 'Carte',
-  VIREMENT: 'Virement',
-  CREDIT: 'Crédit',
 };
 
 export function CashierCheckoutSummary({ flow }: { flow: CashierCheckoutFlow }) {
@@ -26,7 +19,7 @@ export function CashierCheckoutSummary({ flow }: { flow: CashierCheckoutFlow }) 
       <div className="mt-4 divide-y divide-slate-100">
         <div className="flex justify-between gap-3 py-3 text-sm"><span className="text-slate-500">Articles</span><strong>{flow.selected.lignes.length}</strong></div>
         <div className="flex justify-between gap-3 py-3 text-sm"><span className="text-slate-500">Document</span><strong>{documentLabels[flow.documentType]}</strong></div>
-        <div className="flex justify-between gap-3 py-3 text-sm"><span className="text-slate-500">Paiement</span><strong>{paymentLabels[flow.method]}</strong></div>
+        <div className="flex justify-between gap-3 py-3 text-sm"><span className="text-slate-500">Paiement</span><strong>{paymentMethodLabel(flow.method)}</strong></div>
         {flow.customer && <div className="py-3 text-sm"><span className="block text-slate-500">Client</span><strong className="mt-1 block truncate">{flow.customer.nom} {flow.customer.prenom || ''}</strong></div>}
       </div>
       <CustomerRequestNotice request={flow.selected.noteCaissier} compact />

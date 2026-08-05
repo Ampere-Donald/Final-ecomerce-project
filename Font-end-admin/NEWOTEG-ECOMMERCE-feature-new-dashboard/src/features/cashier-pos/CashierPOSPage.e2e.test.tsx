@@ -28,14 +28,27 @@ describe('CashierPOSPage', () => {
   beforeEach(() => {
     selectTicket.mockClear();
     localStorage.setItem('newoteg_pos_shortcuts_enabled', 'true');
+    Object.defineProperty(window, 'matchMedia', {
+      configurable: true,
+      value: vi.fn().mockImplementation((query: string) => ({
+        matches: query === '(min-width: 1200px)',
+        media: query,
+        onchange: null,
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+        addListener: vi.fn(),
+        removeListener: vi.fn(),
+        dispatchEvent: vi.fn(),
+      })),
+    });
   });
   it('présente la file, le solde et le montant du bon', () => {
     render(<CashierPOSPage />);
-    expect(screen.getAllByText('Tickets à encaisser').length).toBeGreaterThan(0);
-    expect(screen.getByText('TIC-001')).toBeTruthy();
+    expect(screen.getByText('File active')).toBeTruthy();
+    expect(screen.getByText('Ticket TIC-001')).toBeTruthy();
     expect(screen.getByText('Caisse ouverte')).toBeTruthy();
     expect(screen.getAllByText(/15.*000 FCFA/).length).toBeGreaterThan(0);
-    fireEvent.click(screen.getByText('TIC-001').closest('button')!);
+    fireEvent.click(screen.getByText('Ticket TIC-001').closest('button')!);
     expect(selectTicket).toHaveBeenCalledWith(expect.objectContaining({ id: 't1' }));
   });
 

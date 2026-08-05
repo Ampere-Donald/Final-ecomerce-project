@@ -1,29 +1,28 @@
-import { useState } from 'react';
+import { lazy, Suspense, useState } from 'react';
 import {
   AlertCircle,
   Banknote,
-  Building2,
   Check,
   CheckCircle2,
-  CreditCard,
   FileDown,
   FileText,
-  HandCoins,
   Loader2,
   MessageCircle,
   Package,
   Printer,
   ReceiptText,
   Search,
-  Smartphone,
   UserPlus,
   UserRound,
   WalletCards,
 } from 'lucide-react';
-import { ReceiptGenerator } from '../../components/ReceiptGenerator';
-import { cashierSellerName, money, type DocumentType, type PaymentMethod } from './types';
+import { cashierSellerName, money, type DocumentType } from './types';
 import type { CashierCheckoutFlow } from './useCashierCheckoutFlow';
 import { CustomerRequestNotice } from './CustomerRequestNotice';
+import { CashierPaymentMethodSelector } from './CashierPaymentMethodSelector';
+import { paymentMethodLabel } from '../pos-shared/paymentMethods';
+
+const ReceiptGenerator = lazy(() => import('../../components/ReceiptGenerator').then(module => ({ default: module.ReceiptGenerator })));
 
 const documents: { id: DocumentType; label: string }[] = [
   { id: 'TICKET_CAISSE', label: 'Ticket' },
@@ -31,16 +30,7 @@ const documents: { id: DocumentType; label: string }[] = [
   { id: 'BON_VENTE', label: 'Bon de vente' },
 ];
 
-const paymentMethods: { id: PaymentMethod; label: string; icon: typeof Banknote }[] = [
-  { id: 'ESPECES', label: 'Espèces', icon: Banknote },
-  { id: 'MOBILE_MONEY', label: 'Mobile Money', icon: Smartphone },
-  { id: 'CARTE', label: 'Carte', icon: CreditCard },
-  { id: 'VIREMENT', label: 'Virement', icon: Building2 },
-  { id: 'CREDIT', label: 'Crédit', icon: HandCoins },
-];
-
 const documentLabel = (type: DocumentType) => documents.find(item => item.id === type)?.label || 'Ticket';
-const paymentLabel = (method: PaymentMethod) => paymentMethods.find(item => item.id === method)?.label || method;
 
 function TicketStep({ flow }: { flow: CashierCheckoutFlow }) {
   const ticket = flow.selected!;
@@ -109,7 +99,7 @@ function PaymentStep({ flow }: { flow: CashierCheckoutFlow }) {
       <p className="mt-3 flex items-center gap-3 text-lg text-slate-700"><UserRound size={21} />{clientName}<span>·</span><FileText size={20} />{documentLabel(flow.documentType)}<button type="button" onClick={() => flow.setStep('CUSTOMER')} className="ml-2 text-sm font-semibold text-primary">Modifier</button></p>
       <CustomerRequestNotice request={flow.selected?.noteCaissier} compact />
       <h2 className="mt-7 font-bold text-slate-900">Méthode de paiement</h2>
-      <div className="mt-3 grid grid-cols-5 border-b border-slate-200">{paymentMethods.map(item => { const Icon = item.icon; const active = flow.method === item.id; return <button key={item.id} type="button" onClick={() => flow.setMethod(item.id)} className={`flex min-h-20 flex-col items-center justify-center gap-2 border-b-4 text-sm font-medium ${active ? 'border-primary bg-indigo-50 text-slate-950' : 'border-transparent text-slate-600'}`}><Icon size={28} />{item.label}</button>; })}</div>
+      <CashierPaymentMethodSelector value={flow.method} onChange={flow.setMethod} desktop />
       {flow.method === 'ESPECES' ? <>
         <label className="mt-6 block font-semibold text-slate-800">Montant reçu<input autoFocus inputMode="numeric" value={flow.cashReceived} onChange={event => flow.setCashReceived(event.target.value)} placeholder={String(flow.total)} className="mt-3 h-16 w-full rounded-md border border-slate-300 px-4 text-4xl font-medium tracking-wide outline-none focus:border-primary" /></label>
         <div className="mt-3 flex gap-2"><button type="button" onClick={() => flow.setCashReceived(String(flow.total))} className="h-12 rounded-md border border-slate-300 px-6 text-sm">Montant exact</button>{[15000, 20000].map(value => <button key={value} type="button" onClick={() => flow.setCashReceived(String(value))} className="h-12 min-w-28 rounded-md border border-slate-300 px-6 text-sm">{value.toLocaleString('fr-FR')}</button>)}</div>
@@ -133,7 +123,7 @@ function SummaryPanel({ flow, onCheckoutAndPrint }: { flow: CashierCheckoutFlow;
         <p className="flex gap-3"><ReceiptText size={21} />Ticket {ticket.numeroTicket}</p>
         <p className="flex gap-3"><UserRound size={21} />{clientName}</p>
         <p className="flex gap-3"><FileText size={21} />{documentLabel(flow.documentType)}</p>
-        <p className="flex gap-3"><Banknote size={21} />{paymentLabel(flow.method)}</p>
+        <p className="flex gap-3"><Banknote size={21} />{paymentMethodLabel(flow.method)}</p>
         <CustomerRequestNotice request={ticket.noteCaissier} compact />
       </div>
       <div className="mt-8 flex items-center justify-between border-t border-slate-200 pt-7">
@@ -170,7 +160,7 @@ function SuccessStep({ flow, onNextTicket, onPrint, onOpenDocument }: { flow: Ca
   const seller = cashierSellerName(flow.selected!);
   const share = () => { const phone = String(flow.customer?.telephone || flow.selected?.telephoneClient || '').replace(/\D/g, ''); const text = encodeURIComponent(`NEWOTEG — ${document?.numero || flow.selected?.numeroTicket}\nTotal : ${money(flow.total)}`); window.open(`https://wa.me/${phone}?text=${text}`, '_blank', 'noopener,noreferrer'); };
   return <>
-    <section className="min-h-0 overflow-y-auto px-8 py-6 text-center"><CheckCircle2 className="mx-auto text-emerald-600" size={48} /><h1 className="mt-3 text-4xl font-bold">Paiement validé</h1><p className="mt-3 text-5xl font-bold tracking-wide text-primary">{money(flow.total)}</p><div className="mx-auto mt-6 max-w-xl border border-slate-300 text-left"><dl className="grid grid-cols-2 divide-x divide-y divide-slate-200 text-sm"><dt className="p-3 text-slate-600">Ticket</dt><dd className="p-3 font-medium">{flow.selected?.numeroTicket}</dd><dt className="p-3 text-slate-600">Vendeur</dt><dd className="p-3 font-medium">{seller}</dd><dt className="p-3 text-slate-600">Client</dt><dd className="p-3 font-medium">{clientName}</dd><dt className="p-3 text-slate-600">Document</dt><dd className="p-3 font-medium">{documentLabel(flow.documentType)} {document?.numero || 'en préparation'}</dd><dt className="p-3 text-slate-600">Méthode de paiement</dt><dd className="p-3 font-medium">{paymentLabel(flow.method)}</dd>{flow.method === 'ESPECES' && <><dt className="p-3 text-slate-600">Monnaie rendue</dt><dd className="p-3 font-medium">{money(flow.change)}</dd></>}</dl></div><p className="mx-auto mt-4 max-w-xl bg-emerald-50 py-3 text-sm font-medium text-emerald-700"><Check size={18} className="mr-2 inline" />Vente enregistrée · stock mis à jour</p>{!documentReady && <p role="status" className="mx-auto mt-3 max-w-xl bg-amber-50 px-4 py-3 text-sm font-medium text-amber-800">Le paiement est conservé. Le document n’est pas encore disponible : retrouvez-le dans « Session de caisse ».</p>}<button type="button" onClick={onNextTicket} className="mx-auto mt-4 min-h-14 w-full max-w-xl rounded-md bg-primary text-lg font-bold text-white">Traiter le ticket suivant</button><div className="mx-auto mt-3 grid max-w-xl grid-cols-3 gap-3"><button type="button" disabled={!documentReady} onClick={onPrint} className="flex h-12 items-center justify-center gap-2 rounded-md border border-slate-300 disabled:cursor-not-allowed disabled:opacity-40"><Printer size={18} />Imprimer</button><button type="button" onClick={share} className="flex h-12 items-center justify-center gap-2 rounded-md border border-slate-300"><MessageCircle size={18} />WhatsApp</button><button type="button" disabled={!documentReady} onClick={onOpenDocument} className="flex h-12 items-center justify-center gap-2 rounded-md border border-slate-300 disabled:cursor-not-allowed disabled:opacity-40"><FileDown size={18} />PDF</button></div></section>
+    <section className="min-h-0 overflow-y-auto px-8 py-6 text-center"><CheckCircle2 className="mx-auto text-emerald-600" size={48} /><h1 className="mt-3 text-4xl font-bold">Paiement validé</h1><p className="mt-3 text-5xl font-bold tracking-wide text-primary">{money(flow.total)}</p><div className="mx-auto mt-6 max-w-xl border border-slate-300 text-left"><dl className="grid grid-cols-2 divide-x divide-y divide-slate-200 text-sm"><dt className="p-3 text-slate-600">Ticket</dt><dd className="p-3 font-medium">{flow.selected?.numeroTicket}</dd><dt className="p-3 text-slate-600">Vendeur</dt><dd className="p-3 font-medium">{seller}</dd><dt className="p-3 text-slate-600">Client</dt><dd className="p-3 font-medium">{clientName}</dd><dt className="p-3 text-slate-600">Document</dt><dd className="p-3 font-medium">{documentLabel(flow.documentType)} {document?.numero || 'en préparation'}</dd><dt className="p-3 text-slate-600">Méthode de paiement</dt><dd className="p-3 font-medium">{paymentMethodLabel(flow.method)}</dd>{flow.method === 'ESPECES' && <><dt className="p-3 text-slate-600">Monnaie rendue</dt><dd className="p-3 font-medium">{money(flow.change)}</dd></>}</dl></div><p className="mx-auto mt-4 max-w-xl bg-emerald-50 py-3 text-sm font-medium text-emerald-700"><Check size={18} className="mr-2 inline" />Vente enregistrée · stock mis à jour</p>{!documentReady && <p role="status" className="mx-auto mt-3 max-w-xl bg-amber-50 px-4 py-3 text-sm font-medium text-amber-800">Le paiement est conservé. Le document n’est pas encore disponible : retrouvez-le dans « Session de caisse ».</p>}<button type="button" onClick={onNextTicket} className="mx-auto mt-4 min-h-14 w-full max-w-xl rounded-md bg-primary text-lg font-bold text-white">Traiter le ticket suivant</button><div className="mx-auto mt-3 grid max-w-xl grid-cols-3 gap-3"><button type="button" disabled={!documentReady} onClick={onPrint} className="flex h-12 items-center justify-center gap-2 rounded-md border border-slate-300 disabled:cursor-not-allowed disabled:opacity-40"><Printer size={18} />Imprimer</button><button type="button" onClick={share} className="flex h-12 items-center justify-center gap-2 rounded-md border border-slate-300"><MessageCircle size={18} />WhatsApp</button><button type="button" disabled={!documentReady} onClick={onOpenDocument} className="flex h-12 items-center justify-center gap-2 rounded-md border border-slate-300 disabled:cursor-not-allowed disabled:opacity-40"><FileDown size={18} />PDF</button></div></section>
     <aside className="min-h-0 overflow-y-auto border-l border-slate-200 bg-white px-7 py-6"><h2 className="text-xl font-bold">Document prêt</h2><div className="mt-5 border border-slate-300 bg-white p-6 shadow-sm"><div className="flex items-center justify-between"><img src="/logo.png" alt="Newoteg" className="h-16 w-16 object-contain" /><strong className="text-xl">NEWOTEG</strong></div><div className="mt-5 flex justify-between"><strong>{documentLabel(flow.documentType).toUpperCase()}</strong><span>{document?.numero || flow.selected?.numeroTicket}</span></div><p className="mt-6 text-sm">Client</p><p className="mt-1 font-medium">{clientName}</p><p className="mt-3 text-sm text-slate-500">Vendeur</p><p className="mt-1 font-medium">{seller}</p><div className="mt-6 divide-y divide-slate-200 border-y border-slate-300">{flow.selected?.lignes.map(line => <div key={line.id} className="grid grid-cols-[1fr_auto] gap-3 py-3 text-xs"><span>{line.nomProduit} × {line.quantite}</span><span>{money(line.sousTotal)}</span></div>)}</div><div className="mt-4 flex justify-between text-xl"><strong>TOTAL</strong><strong>{money(flow.total)}</strong></div></div><p className="mt-5 flex items-center gap-3 text-sm text-slate-700"><CheckCircle2 className="text-emerald-600" />ORIGINAL · document généré</p><p className="mt-4 flex items-center gap-3 text-sm text-slate-700"><Printer />Imprimante prête</p></aside>
   </>;
 }
@@ -196,6 +186,6 @@ export function CashierDesktopWorkArea({ flow, onNextTicket }: { flow: CashierCh
     : flow.selected.lignes.map(line => ({ nomProduit: line.nomProduit, quantite: line.quantite, prixUnitaire: Number(line.prixUnitaire), sousTotal: Number(line.sousTotal) }));
   return <>
     {flow.step === 'SUCCESS' ? <SuccessStep flow={flow} onNextTicket={onNextTicket} onPrint={() => openReceipt(true)} onOpenDocument={() => openReceipt(false)} /> : <>{flow.step === 'TICKET' && <TicketStep flow={flow} />}{flow.step === 'CUSTOMER' && <CustomerStep flow={flow} />}{flow.step === 'PAYMENT' && <PaymentStep flow={flow} />}<SummaryPanel flow={flow} onCheckoutAndPrint={checkoutAndPrint} /></>}
-    {printOpen && document && <ReceiptGenerator autoPrint={autoPrintRequested} documentId={document.id} printCount={document.printCount || 0} type={flow.documentType === 'FACTURE' ? 'facture' : flow.documentType === 'BON_VENTE' ? 'bonVente' : 'ticket'} numero={document.numero} dateVente={document.dateEmission} methodePaiement={flow.method} montantTotal={flow.total} vendeur={cashierSellerName(flow.selected)} client={document.client ? { nom: `${document.client.nom} ${document.client.prenom || ''}`.trim(), telephone: document.client.telephone } : undefined} lignes={printableLines} onClose={() => setPrintOpen(false)} />}
+    {printOpen && document && <Suspense fallback={<p role="status" className="sr-only">Préparation du document…</p>}><ReceiptGenerator autoPrint={autoPrintRequested} documentId={document.id} printCount={document.printCount || 0} type={flow.documentType === 'FACTURE' ? 'facture' : flow.documentType === 'BON_VENTE' ? 'bonVente' : 'ticket'} numero={document.numero} dateVente={document.dateEmission} methodePaiement={flow.method} montantTotal={flow.total} vendeur={cashierSellerName(flow.selected)} client={document.client ? { nom: `${document.client.nom} ${document.client.prenom || ''}`.trim(), telephone: document.client.telephone } : undefined} lignes={printableLines} onClose={() => setPrintOpen(false)} /></Suspense>}
   </>;
 }

@@ -8,7 +8,6 @@ import {
   Banknote,
   Smartphone,
   CreditCard,
-  Building2,
   CheckCircle2,
   X,
 } from 'lucide-react';
@@ -29,12 +28,12 @@ const fmtFCFA = (n: number | string): string => {
 const fmtDate = (d?: string | null) =>
   d ? new Date(d).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' }) : '—';
 
-type Methode = 'ESPECES' | 'MOBILE_MONEY' | 'CARTE' | 'VIREMENT';
+type Methode = 'ESPECES' | 'MTN_MOBILE_MONEY' | 'ORANGE_MOBILE_MONEY' | 'CARTE';
 const METHODES: { value: Methode; label: string; icon: any }[] = [
   { value: 'ESPECES', label: 'Espèces', icon: Banknote },
-  { value: 'MOBILE_MONEY', label: 'Mobile Money', icon: Smartphone },
+  { value: 'MTN_MOBILE_MONEY', label: 'MTN MoMo', icon: Smartphone },
+  { value: 'ORANGE_MOBILE_MONEY', label: 'Orange Money', icon: Smartphone },
   { value: 'CARTE', label: 'Carte', icon: CreditCard },
-  { value: 'VIREMENT', label: 'Virement', icon: Building2 },
 ];
 
 const STATUT_CFG: Record<string, { label: string; bg: string; text: string }> = {

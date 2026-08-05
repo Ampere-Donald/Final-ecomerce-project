@@ -185,7 +185,8 @@ export const produitApi = {
     code?: string;
     sort?: string;
     inStock?: boolean;
-  }) => api.get('/produits', { params }).then(res => res.data),
+    salesSearch?: boolean;
+  }, config?: { signal?: AbortSignal }) => api.get('/produits', { params, signal: config?.signal }).then(res => res.data),
   getAll: () => api.get('/produits', { params: { limit: 500 } }).then(toArray),
   getOne: (id: string) => api.get(`/produits/${id}`).then(res => res.data),
   create: (data: any) => {
@@ -394,6 +395,8 @@ export const caisseJourApi = {
 
 // Tickets de vente (vendeur → caissier)
 export const ticketApi = {
+  verifierStock: (lignes: { produitId: string; quantite: number }[]) =>
+    api.post('/tickets/verifier-stock', { lignes }).then(res => res.data),
   create: (data: {
     clientId?: string;
     nomClient?: string;
@@ -407,7 +410,7 @@ export const ticketApi = {
   getOne: (id: string) => api.get(`/tickets/${id}`).then(res => res.data),
   encaisser: (
     id: string,
-    methodePaiement: 'ESPECES' | 'CARTE' | 'VIREMENT' | 'MOBILE_MONEY' | 'CREDIT',
+    methodePaiement: 'ESPECES' | 'CARTE' | 'VIREMENT' | 'MOBILE_MONEY' | 'MTN_MOBILE_MONEY' | 'ORANGE_MOBILE_MONEY' | 'CREDIT',
     opts?: { clientId?: string; montantPaye?: number },
   ) =>
     api
