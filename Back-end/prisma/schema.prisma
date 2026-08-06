@@ -728,6 +728,7 @@ model AdminUser {
   failedLoginAttempts          Int                @default(0) @map("failed_login_attempts")
   lockedUntil                  DateTime?          @map("locked_until")
   sessionVersion               Int                @default(0) @map("session_version")
+  mustChangeCredential         Boolean            @default(false) @map("must_change_credential")
   createdAt                    DateTime           @default(now()) @map("created_at")
   updatedAt                    DateTime?          @updatedAt @map("updated_at")
   createdById                  String?            @map("created_by")

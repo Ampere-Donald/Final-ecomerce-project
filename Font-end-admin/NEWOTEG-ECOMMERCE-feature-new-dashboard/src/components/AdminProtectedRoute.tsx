@@ -2,9 +2,10 @@ import React from 'react';
 import { useAdminAuth } from '../context/AdminAuthContext';
 import { AdminLogin } from './AdminLogin';
 import { Loader2 } from 'lucide-react';
+import { FirstLoginCredentialChange } from './FirstLoginCredentialChange';
 
 export const AdminProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { isAuthenticated, loading } = useAdminAuth();
+  const { admin, isAuthenticated, loading } = useAdminAuth();
 
   if (loading) {
     return (
@@ -16,6 +17,10 @@ export const AdminProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ c
 
   if (!isAuthenticated) {
     return <AdminLogin />;
+  }
+
+  if (admin?.mustChangeCredential) {
+    return <FirstLoginCredentialChange />;
   }
 
   return <>{children}</>;

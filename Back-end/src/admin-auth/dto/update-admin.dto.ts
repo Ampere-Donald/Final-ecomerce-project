@@ -42,6 +42,10 @@ export class UpdateAdminDto {
   @IsOptional()
   @IsBoolean()
   peutVendreSousDemiGros?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  mustChangeCredential?: boolean;
 }
 
 export class ResetPasswordDto {
@@ -63,4 +67,12 @@ export class ChangePasswordDto {
   @IsString()
   @MinLength(8)
   newPassword: string;
+}
+
+export class ChangePinDto {
+  @Matches(/^\d{4,6}$/, { message: 'Le PIN actuel doit contenir 4 a 6 chiffres' })
+  oldPin: string;
+
+  @Matches(/^\d{4,6}$/, { message: 'Le nouveau PIN doit contenir 4 a 6 chiffres' })
+  newPin: string;
 }

@@ -37,6 +37,7 @@ const SQL_STATEMENTS = [
   `ALTER TABLE "admin_user" ADD COLUMN IF NOT EXISTS "failed_login_attempts" INTEGER NOT NULL DEFAULT 0;`,
   `ALTER TABLE "admin_user" ADD COLUMN IF NOT EXISTS "locked_until" TIMESTAMP(3);`,
   `ALTER TABLE "admin_user" ADD COLUMN IF NOT EXISTS "session_version" INTEGER NOT NULL DEFAULT 0;`,
+  `ALTER TABLE "admin_user" ADD COLUMN IF NOT EXISTS "must_change_credential" BOOLEAN NOT NULL DEFAULT FALSE;`,
   `ALTER TABLE "admin_user" ALTER COLUMN "mot_de_passe" DROP NOT NULL;`,
   `WITH candidates AS (
     SELECT

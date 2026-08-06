@@ -1,4 +1,4 @@
-import { IsEmail, IsEnum, IsNotEmpty, IsOptional, IsString, Matches, MinLength } from 'class-validator';
+import { IsBoolean, IsEmail, IsEnum, IsNotEmpty, IsOptional, IsString, Matches, MinLength } from 'class-validator';
 import { AdminRole } from '@prisma/client';
 
 export class CreateAdminDto {
@@ -30,4 +30,8 @@ export class CreateAdminDto {
   @IsOptional()
   @IsString()
   photoUrl?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  mustChangeCredential?: boolean;
 }

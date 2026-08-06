@@ -15,6 +15,7 @@ export interface AdminUser {
   email?: string | null;
   role: string;
   photoUrl?: string | null;
+  mustChangeCredential?: boolean;
 }
 
 interface AdminAuthContextType {
@@ -22,6 +23,7 @@ interface AdminAuthContextType {
   loading: boolean;
   login: (username: string, password: string) => Promise<AdminUser>;
   loginPin: (username: string, pin: string) => Promise<AdminUser>;
+  refreshAdmin: () => Promise<AdminUser>;
   logout: () => void;
   isAuthenticated: boolean;
 }
@@ -83,6 +85,13 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     return authenticatedAdmin;
   }, []);
 
+  const refreshAdmin = useCallback(async () => {
+    const refreshedAdmin = await adminAuthApi.getMe() as AdminUser;
+    setAdmin(refreshedAdmin);
+    updateStoredAdmin(refreshedAdmin);
+    return refreshedAdmin;
+  }, []);
+
   const logout = useCallback(() => {
     clearAdminSession();
     clearOfflineCache();
@@ -90,7 +99,7 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   }, []);
 
   return (
-    <AdminAuthContext.Provider value={{ admin, loading, login, loginPin, logout, isAuthenticated: !!admin }}>
+    <AdminAuthContext.Provider value={{ admin, loading, login, loginPin, refreshAdmin, logout, isAuthenticated: !!admin }}>
       {children}
     </AdminAuthContext.Provider>
   );

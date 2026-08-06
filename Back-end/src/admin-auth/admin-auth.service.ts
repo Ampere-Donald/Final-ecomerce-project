@@ -113,14 +113,50 @@ export class AdminAuthService {
     if (!valid) throw new BadRequestException('Ancien mot de passe incorrect');
 
     const hashed = await bcrypt.hash(newPassword, 12);
-    await this.db.adminUser.update({
+    const updated = await this.db.adminUser.update({
       where: { id: adminId },
-      data: { motDePasse: hashed, sessionVersion: { increment: 1 } },
+      data: {
+        motDePasse: hashed,
+        mustChangeCredential: false,
+        sessionVersion: { increment: 1 },
+      },
     });
     await this.activityLog.log(admin.id, 'PASSWORD_CHANGED');
 
     this.logger.log(`Admin password changed: ${admin.username}`);
-    return { message: 'Mot de passe modifie avec succes' };
+    return {
+      message: 'Mot de passe modifie avec succes',
+      ...this.issueJwt(updated, '24h'),
+    };
+  }
+
+  async changePin(adminId: string, oldPin: string, newPin: string) {
+    const admin = await this.db.adminUser.findUnique({ where: { id: adminId } });
+    if (!admin) throw new UnauthorizedException();
+    if (!['CAISSIER', 'VENDEUR'].includes(admin.role)) {
+      throw new BadRequestException('Le PIN est reserve aux comptes vendeur et caissier');
+    }
+    if (!admin.pinCode) throw new BadRequestException('Ce compte ne possede pas de PIN');
+    if (oldPin === newPin) throw new BadRequestException('Choisissez un PIN different du PIN temporaire');
+
+    const valid = await bcrypt.compare(oldPin, admin.pinCode);
+    if (!valid) throw new BadRequestException('PIN actuel incorrect');
+
+    const updated = await this.db.adminUser.update({
+      where: { id: adminId },
+      data: {
+        pinCode: await bcrypt.hash(newPin, 10),
+        mustChangeCredential: false,
+        sessionVersion: { increment: 1 },
+      },
+    });
+    await this.activityLog.log(admin.id, 'PIN_CHANGED');
+
+    this.logger.log(`Admin PIN changed: ${admin.username}`);
+    return {
+      message: 'PIN modifie avec succes',
+      ...this.issueJwt(updated, '4h'),
+    };
   }
 
   async findAllAdmins() {
@@ -134,6 +170,7 @@ export class AdminAuthService {
         role: true,
         isActive: true,
         peutVendreSousDemiGros: true,
+        mustChangeCredential: true,
         lastLoginAt: true,
         createdAt: true,
         updatedAt: true,
@@ -167,6 +204,7 @@ export class AdminAuthService {
         nom: dto.nom,
         photoUrl: dto.photoUrl,
         role: dto.role,
+        mustChangeCredential: Boolean(dto.mustChangeCredential),
         createdById: actor.id,
       },
     });
@@ -195,9 +233,11 @@ export class AdminAuthService {
     }
     if (dto.motDePasse) {
       data.motDePasse = await bcrypt.hash(dto.motDePasse, 12);
+      if (dto.mustChangeCredential === undefined) data.mustChangeCredential = true;
     }
     if (dto.pin) {
       data.pinCode = await bcrypt.hash(dto.pin, 10);
+      if (dto.mustChangeCredential === undefined) data.mustChangeCredential = true;
       delete data.pin;
     }
     if (dto.motDePasse || dto.pin || dto.role || dto.isActive !== undefined) {
@@ -240,7 +280,11 @@ export class AdminAuthService {
     const hashed = await bcrypt.hash(newPassword, 12);
     await this.db.adminUser.update({
       where: { id },
-      data: { motDePasse: hashed, sessionVersion: { increment: 1 } },
+      data: {
+        motDePasse: hashed,
+        mustChangeCredential: true,
+        sessionVersion: { increment: 1 },
+      },
     });
 
     this.logger.log(`Password reset for ${admin.username} by ${actor.nom}`);
@@ -379,6 +423,7 @@ export class AdminAuthService {
       nom: admin.nom,
       type: 'admin',
       sessionVersion: admin.sessionVersion,
+      mustChangeCredential: admin.mustChangeCredential,
     };
     const accessToken = this.jwt.sign(payload, { expiresIn: expiresIn as any });
     return {
@@ -399,6 +444,7 @@ export class AdminAuthService {
       photoUrl: admin.photoUrl,
       isActive: admin.isActive,
       peutVendreSousDemiGros: admin.peutVendreSousDemiGros,
+      mustChangeCredential: admin.mustChangeCredential,
       lastLoginAt: admin.lastLoginAt,
     };
   }

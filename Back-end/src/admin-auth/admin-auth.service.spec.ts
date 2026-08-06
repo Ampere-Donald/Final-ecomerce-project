@@ -8,6 +8,7 @@ jest.mock('bcrypt', () => ({
 }));
 
 const compareMock = bcrypt.compare as jest.MockedFunction<typeof bcrypt.compare>;
+const hashMock = bcrypt.hash as jest.MockedFunction<typeof bcrypt.hash>;
 
 describe('AdminAuthService login security', () => {
   let db: any;
@@ -30,10 +31,12 @@ describe('AdminAuthService login security', () => {
       peutVendreSousDemiGros: false,
       photoUrl: null,
       lastLoginAt: null,
+      mustChangeCredential: true,
     };
     db = {
       adminUser: {
         findFirst: jest.fn().mockResolvedValue(admin),
+        findUnique: jest.fn().mockResolvedValue(admin),
         update: jest.fn().mockResolvedValue(admin),
       },
     };
@@ -109,5 +112,28 @@ describe('AdminAuthService login security', () => {
       where: { id: admin.id },
       data: { sessionVersion: { increment: 1 } },
     });
+  });
+
+  it('remplace le PIN temporaire et leve le blocage de premiere connexion', async () => {
+    compareMock.mockResolvedValue(true);
+    hashMock.mockResolvedValue('new-pin-hash' as never);
+    db.adminUser.update.mockResolvedValue({
+      ...admin,
+      pinCode: 'new-pin-hash',
+      mustChangeCredential: false,
+      sessionVersion: 1,
+    });
+
+    const result = await service.changePin(admin.id, '0000', '4827');
+
+    expect(db.adminUser.update).toHaveBeenCalledWith({
+      where: { id: admin.id },
+      data: {
+        pinCode: 'new-pin-hash',
+        mustChangeCredential: false,
+        sessionVersion: { increment: 1 },
+      },
+    });
+    expect(result).toMatchObject({ access_token: 'jwt', message: 'PIN modifie avec succes' });
   });
 });

@@ -15,7 +15,7 @@ import { Throttle } from '@nestjs/throttler';
 import { AdminAuthService } from './admin-auth.service';
 import { AdminLoginDto, AdminPinLoginDto } from './dto/admin-login.dto';
 import { CreateAdminDto } from './dto/create-admin.dto';
-import { ChangePasswordDto, UpdateAdminDto, ResetPasswordDto, ChangeRoleDto } from './dto/update-admin.dto';
+import { ChangePasswordDto, ChangePinDto, UpdateAdminDto, ResetPasswordDto, ChangeRoleDto } from './dto/update-admin.dto';
 import { AdminAuthGuard } from './admin-auth.guard';
 import { RolesGuard } from './roles.guard';
 import { Roles } from './roles.decorator';
@@ -54,6 +54,15 @@ export class AdminAuthController {
     @Body() body: ChangePasswordDto,
   ) {
     return this.adminAuthService.changePassword(req.user.id, body.oldPassword, body.newPassword);
+  }
+
+  @UseGuards(AdminAuthGuard)
+  @Patch('change-pin')
+  async changePin(
+    @Request() req: any,
+    @Body() body: ChangePinDto,
+  ) {
+    return this.adminAuthService.changePin(req.user.id, body.oldPin, body.newPin);
   }
 
   @UseGuards(AdminAuthGuard)

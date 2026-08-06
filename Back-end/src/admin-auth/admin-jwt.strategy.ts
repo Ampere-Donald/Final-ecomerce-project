@@ -32,6 +32,7 @@ export class AdminJwtStrategy extends PassportStrategy(Strategy, 'jwt-admin') {
       nom: admin.nom,
       role: admin.role,
       photoUrl: admin.photoUrl,
+      mustChangeCredential: admin.mustChangeCredential,
       type: 'admin',
     };
   }

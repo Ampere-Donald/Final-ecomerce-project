@@ -1,0 +1,2 @@
+ALTER TABLE "admin_user"
+ADD COLUMN IF NOT EXISTS "must_change_credential" BOOLEAN NOT NULL DEFAULT FALSE;

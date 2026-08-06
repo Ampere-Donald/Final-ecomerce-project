@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { createClientId } from '../utils/clientId';
-import { clearAdminSession, getAdminToken } from './adminSession';
+import { clearAdminSession, getAdminToken, storeAdminSession } from './adminSession';
 
 // En production, VITE_API_URL pointe vers le backend (ex: https://api.newoteg.com)
 // En dev local, le proxy Vite redirige /api vers localhost:3000
@@ -163,7 +163,19 @@ export const adminAuthApi = {
     postAuth<any>('/admin-auth/login-pin', { username, pin }),
   getMe: () => api.get('/admin-auth/me').then(res => res.data),
   changePassword: (oldPassword: string, newPassword: string) =>
-    api.patch('/admin-auth/change-password', { oldPassword, newPassword }).then(res => res.data),
+    api.patch('/admin-auth/change-password', { oldPassword, newPassword }).then(res => {
+      if (res.data?.access_token && res.data?.admin) {
+        storeAdminSession(res.data.access_token, res.data.admin);
+      }
+      return res.data;
+    }),
+  changePin: (oldPin: string, newPin: string) =>
+    api.patch('/admin-auth/change-pin', { oldPin, newPin }).then(res => {
+      if (res.data?.access_token && res.data?.admin) {
+        storeAdminSession(res.data.access_token, res.data.admin);
+      }
+      return res.data;
+    }),
 };
 
 // Normalise toute réponse en tableau (gère { data: [...] } et [...] )
