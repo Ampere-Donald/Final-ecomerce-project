@@ -278,17 +278,19 @@ export class ProduitController {
     return peutVoirCouts(req.user) ? produit : masquerCouts(produit);
   }
 
-  @UseGuards(AdminAuthGuard)
+  @UseGuards(AdminAuthGuard, RolesGuard)
+  @Roles('SUPER_ADMIN', 'ADMIN')
   @Post(':id/image')
   @UseInterceptors(FileInterceptor('file', memStore))
   async uploadImage(
     @Param('id', ParseUUIDPipe) id: string,
     @UploadedFile() file: Express.Multer.File,
+    @Query('preserveOldImage') preserveOldImage?: string,
   ) {
     const oldProduit = await this.produitService.findOne(id);
     const imageUrl = await this.cloudinary.uploadBuffer(file.buffer, { folder: 'produits' });
     const result = await this.produitService.uploadImage(id, imageUrl);
-    if (oldProduit.imageUrl && oldProduit.imageUrl !== imageUrl) {
+    if (preserveOldImage !== 'true' && oldProduit.imageUrl && oldProduit.imageUrl !== imageUrl) {
       this.cloudinary.deleteByUrl(oldProduit.imageUrl).catch(() => {});
     }
     return result;
