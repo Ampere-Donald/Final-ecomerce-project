@@ -198,6 +198,7 @@ export const produitApi = {
     sort?: string;
     inStock?: boolean;
     salesSearch?: boolean;
+    includeInactive?: boolean;
   }, config?: { signal?: AbortSignal }) => api.get('/produits', { params, signal: config?.signal }).then(res => res.data),
   getAll: () => api.get('/produits', { params: { limit: 500 } }).then(toArray),
   getOne: (id: string) => api.get(`/produits/${id}`).then(res => res.data),

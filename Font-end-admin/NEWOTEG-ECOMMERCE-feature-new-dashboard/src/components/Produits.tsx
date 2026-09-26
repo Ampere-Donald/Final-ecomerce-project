@@ -30,6 +30,7 @@ interface Produit {
   prixPromo?: number;
   finPromo?: string;
   isPopulaire?: boolean;
+  estActif?: boolean;
   categorie?: Categorie;
   codeFamille?: string | null;
   code?: string | null;
@@ -99,6 +100,7 @@ export const Produits = () => {
         categoryId: categoryFilter || undefined,
         codeFamille: codeFamilleFilter.trim() || undefined,
         code: codeFilter.trim() || undefined,
+        includeInactive: true,
         sort: sortOrder === 'az' ? 'name_asc' : sortOrder === 'za' ? 'name_desc' : undefined,
       });
       if (requestId === productRequestRef.current) {
@@ -1280,7 +1282,12 @@ export const Produits = () => {
                               <Star size={10} className="fill-blue-500" />POPULAIRE
                             </span>
                           )}
-                          {!hasActivePromo && !prod.isPopulaire && <span className="text-xs text-slate-300">—</span>}
+                          {prod.estActif === false && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-200 text-slate-700">
+                              BROUILLON · NON VISIBLE
+                            </span>
+                          )}
+                          {!hasActivePromo && !prod.isPopulaire && prod.estActif !== false && <span className="text-xs text-slate-300">—</span>}
                         </div>
                       </td>
                       <td className="px-6 py-4 text-right">
@@ -1399,6 +1406,11 @@ export const Produits = () => {
                       )}
                     </div>
                     <div className="flex flex-wrap gap-1 mt-1">
+                      {prod.estActif === false && (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-200 text-slate-700">
+                          BROUILLON · NON VISIBLE
+                        </span>
+                      )}
                       {hasActivePromo && (
                         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-700">
                           <Zap size={9} className="fill-amber-500" />PROMO
