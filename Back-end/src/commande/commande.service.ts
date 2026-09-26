@@ -92,6 +92,9 @@ export class CommandeService {
             `Produit "${ligne.nomProduit}" (${ligne.produitId}) introuvable.`,
           );
         }
+        if (!produit.estActif) {
+          throw new BadRequestException(`Le produit "${produit.nomProduit}" n'est pas disponible à la commande.`);
+        }
         if (produit.quantiteStock < ligne.quantite) {
           throw new BadRequestException(
             `Stock insuffisant pour "${produit.nomProduit}". Disponible: ${produit.quantiteStock}, Demandé: ${ligne.quantite}`,
@@ -127,7 +130,7 @@ export class CommandeService {
       // 3. Décrémenter le stock de façon atomique (interdit stock négatif)
       for (const ligne of lignes) {
         const updated = await tx.produit.updateMany({
-          where: { id: ligne.produitId, quantiteStock: { gte: ligne.quantite } },
+          where: { id: ligne.produitId, estActif: true, quantiteStock: { gte: ligne.quantite } },
           data: { quantiteStock: { decrement: ligne.quantite }, version: { increment: 1 } },
         });
         if (updated.count === 0) {
@@ -184,6 +187,9 @@ export class CommandeService {
             `Produit "${ligne.nomProduit}" (${ligne.produitId}) introuvable.`,
           );
         }
+        if (!produit.estActif) {
+          throw new BadRequestException(`Le produit "${produit.nomProduit}" n'est pas disponible à la commande.`);
+        }
         if (produit.quantiteStock < ligne.quantite) {
           throw new BadRequestException(
             `Stock insuffisant pour "${produit.nomProduit}". Disponible: ${produit.quantiteStock}, Demandé: ${ligne.quantite}`,
@@ -219,7 +225,7 @@ export class CommandeService {
       // 3. Décrémenter le stock de façon atomique (interdit stock négatif)
       for (const ligne of lignes) {
         const updated = await tx.produit.updateMany({
-          where: { id: ligne.produitId, quantiteStock: { gte: ligne.quantite } },
+          where: { id: ligne.produitId, estActif: true, quantiteStock: { gte: ligne.quantite } },
           data: { quantiteStock: { decrement: ligne.quantite }, version: { increment: 1 } },
         });
         if (updated.count === 0) {

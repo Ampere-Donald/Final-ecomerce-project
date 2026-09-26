@@ -12,6 +12,7 @@ import {
   UploadedFiles,
   Query,
   BadRequestException,
+  NotFoundException,
   UseGuards,
   Request,
 } from '@nestjs/common';
@@ -141,6 +142,7 @@ export class ProduitController {
     @Query('inStock') inStock?: string,
     @Query('sort') sort?: string,
     @Query('salesSearch') salesSearch?: string,
+    @Query('includeInactive') includeInactive?: string,
   ) {
     const result = await this.produitService.findAll({
       page: page ? parseInt(page, 10) : 1,
@@ -154,6 +156,7 @@ export class ProduitController {
       inStock: inStock === 'true',
       sort,
       salesSearch: salesSearch === 'true',
+      includeInactive: includeInactive === 'true' && !!req.user,
     });
     if (peutVoirCouts(req.user)) return result;
     return { ...result, data: (result.data || []).map(masquerCouts) };
@@ -269,6 +272,9 @@ export class ProduitController {
   @Get(':id')
   async findOne(@Request() req: any, @Param('id', ParseUUIDPipe) id: string) {
     const produit = await this.produitService.findOne(id);
+    if (!produit.estActif && !req.user) {
+      throw new NotFoundException(`Produit avec l'id ${id} non trouvé`);
+    }
     return peutVoirCouts(req.user) ? produit : masquerCouts(produit);
   }
 

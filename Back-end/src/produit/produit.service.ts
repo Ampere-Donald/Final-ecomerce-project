@@ -106,6 +106,7 @@ export class ProduitService {
         FROM produit p
         LEFT JOIN categorie c ON c.id = p.id_categorie
         WHERE ($2::text IS NULL OR p.id_categorie = $2::text)
+          AND p.est_actif = TRUE
           AND ($3::boolean = FALSE OR p.quantite_stock > 0)
           AND NOT EXISTS (
             SELECT 1
@@ -259,6 +260,7 @@ export class ProduitService {
 
   async getMetadata() {
     const agg = await this.db.produit.aggregate({
+      where: { estActif: true },
       _min: { prixDetail: true },
       _max: { prixDetail: true },
     });
@@ -271,6 +273,8 @@ export class ProduitService {
   async findFlash() {
     return await this.db.produit.findMany({
       where: {
+        estActif: true,
+        quantiteStock: { gt: 0 },
         prixPromo: { not: null },
         finPromo: { gt: new Date() },
       },
@@ -281,7 +285,7 @@ export class ProduitService {
 
   async findPopulaires() {
     return await this.db.produit.findMany({
-      where: { isPopulaire: true },
+      where: { isPopulaire: true, estActif: true, quantiteStock: { gt: 0 } },
       include: { categorie: true },
       orderBy: { dateAjout: 'desc' },
       take: 20,
@@ -300,6 +304,7 @@ export class ProduitService {
     inStock?: boolean;
     sort?: string;
     salesSearch?: boolean;
+    includeInactive?: boolean;
   } = {}) {
     const {
       page = 1,
@@ -313,12 +318,13 @@ export class ProduitService {
       inStock,
       sort,
       salesSearch = false,
+      includeInactive = false,
     } = params;
     const safePage = Number.isFinite(page) ? Math.max(1, Math.floor(page)) : 1;
     const safeLimit = Number.isFinite(limit) ? Math.min(500, Math.max(1, Math.floor(limit))) : 50;
     const skip = (safePage - 1) * safeLimit;
 
-    const where: any = {};
+    const where: any = includeInactive ? {} : { estActif: true };
 
     const trimmedSearch = String(search || '').trim().slice(0, 120);
     if (trimmedSearch) {
@@ -451,7 +457,8 @@ export class ProduitService {
              p.id_categorie AS "categorieId", c.nom AS "categorieNom"
       FROM produit p
       LEFT JOIN categorie c ON p.id_categorie = c.id
-      WHERE p.quantite_stock <= p.seuil_alerte
+      WHERE p.est_actif = TRUE
+        AND p.quantite_stock <= p.seuil_alerte
       ORDER BY p.quantite_stock ASC
     `;
   }
@@ -472,7 +479,7 @@ export class ProduitService {
 
   async findByCode(codeFamille: string, code: string) {
     const produit = await this.db.produit.findFirst({
-      where: { codeFamille: codeFamille.trim(), code: code.trim() },
+      where: { codeFamille: codeFamille.trim(), code: code.trim(), estActif: true },
       include: {
         categorie: true,
         attributs: { include: { valeurs: true } },
@@ -502,7 +509,7 @@ export class ProduitService {
 
     // Comportement principal historique : la valeur de la douchette est le code.
     const exact = await this.db.produit.findFirst({
-      where: { code: value },
+      where: { code: value, estActif: true },
       include,
       orderBy: { dateAjout: 'asc' },
     });
@@ -525,7 +532,7 @@ export class ProduitService {
     }
 
     const legacyProduct = await this.db.produit.findFirst({
-      where: { OR: conditions },
+      where: { estActif: true, OR: conditions },
       include,
       orderBy: { dateAjout: 'asc' },
     });

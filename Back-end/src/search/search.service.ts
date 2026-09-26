@@ -27,6 +27,7 @@ export class SearchService {
         }),
         this.db.produit.findMany({
           where: {
+            estActif: true,
             OR: [
               { nomProduit: contains },
               { marque: contains },

@@ -221,7 +221,7 @@ export class CommandeFournisseurService {
     else if (params.codeFamille) where.codeFamille = params.codeFamille;
 
     const produits = await this.db.produit.findMany({
-      where,
+      where: { ...where, estActif: true },
       select: {
         id: true,
         nomProduit: true,

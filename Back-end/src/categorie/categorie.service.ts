@@ -25,7 +25,7 @@ export class CategorieService {
     return await this.db.categorie.findMany({
       include: {
         _count: {
-          select: { produits: true },
+          select: { produits: { where: { estActif: true } } },
         },
       },
       orderBy: { nom: 'asc' },
@@ -35,7 +35,7 @@ export class CategorieService {
   async findOne(id: string) {
     const categorie = await this.db.categorie.findUnique({
       where: { id },
-      include: { produits: true },
+      include: { produits: { where: { estActif: true } } },
     });
     if (!categorie) {
       throw new NotFoundException(`Catégorie avec l'id ${id} non trouvée`);

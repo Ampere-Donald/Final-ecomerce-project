@@ -104,6 +104,11 @@ export class CreateProduitDto {
   isPopulaire?: boolean;
 
   @IsOptional()
+  @Transform(({ value }) => value === 'true' || value === true)
+  @IsBoolean()
+  estActif?: boolean;
+
+  @IsOptional()
   @IsNumber()
   @Min(0)
   @Type(() => Number)

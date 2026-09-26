@@ -171,6 +171,9 @@ const SQL_STATEMENTS = [
   `ALTER TABLE "produit" ADD COLUMN IF NOT EXISTS "prix_promo" DOUBLE PRECISION;`,
   `ALTER TABLE "produit" ADD COLUMN IF NOT EXISTS "image_url2" TEXT;`,
   `ALTER TABLE "produit" ADD COLUMN IF NOT EXISTS "image_url3" TEXT;`,
+  `ALTER TABLE "produit" ADD COLUMN IF NOT EXISTS "est_actif" BOOLEAN NOT NULL DEFAULT true;`,
+  `ALTER TABLE "produit" ADD COLUMN IF NOT EXISTS "desactive_le" TIMESTAMP(3);`,
+  `CREATE INDEX IF NOT EXISTS "idx_produit_est_actif" ON "produit" ("est_actif");`,
   `ALTER TABLE "produit" ADD COLUMN IF NOT EXISTS "seuil_alerte" INTEGER NOT NULL DEFAULT 5;`,
 
   // ── Prix variable par bornes selon le rôle ──

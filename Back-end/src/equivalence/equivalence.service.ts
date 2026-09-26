@@ -76,6 +76,7 @@ export class EquivalenceService {
 
     const produits = await this.db.produit.findMany({
       where: {
+        estActif: true,
         categorieId: cible.categorieId,
         categorie: {
           is: { nom: { equals: EQUIVALENCE_COMPONENT_CATEGORY, mode: 'insensitive' } },
@@ -103,6 +104,7 @@ export class EquivalenceService {
 
     const produits = await this.db.produit.findMany({
       where: {
+        estActif: true,
         quantiteStock: { gt: 0 },
         categorie: {
           is: { nom: { equals: EQUIVALENCE_COMPONENT_CATEGORY, mode: insensitive } },
