@@ -1,29 +1,27 @@
 /* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { refreshSavedProducts } from '../utils/refreshSavedProducts';
 
 // ── Favorites Context ─────────────────────────────────────────────────────────
 const FavoritesContext = createContext(null);
 
 const STORAGE_KEY = 'newoteg_favorites';
 
-const initFavorites = () => {
-    try {
-        const stored = localStorage.getItem(STORAGE_KEY);
-        if (stored) {
-            const parsed = JSON.parse(stored);
-            return Array.isArray(parsed) ? parsed : [];
-        }
-    } catch { /* stockage local invalide : favoris vides */ }
-    return [];
-};
-
 export function FavoritesProvider({ children }) {
-    const [favorites, setFavorites] = useState(initFavorites);
+    const [favorites, setFavorites] = useState([]);
+    const [cacheChecked, setCacheChecked] = useState(false);
+    useEffect(() => {
+        let active = true;
+        refreshSavedProducts(STORAGE_KEY).then(({ products, complete }) => {
+            if (active) { setFavorites(products); setCacheChecked(complete); }
+        });
+        return () => { active = false; };
+    }, []);
 
     // Sync to localStorage
     useEffect(() => {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(favorites));
-    }, [favorites]);
+        if (cacheChecked) localStorage.setItem(STORAGE_KEY, JSON.stringify(favorites));
+    }, [favorites, cacheChecked]);
 
     const toggleFavorite = useCallback((product) => {
         setFavorites(prev => {
@@ -38,6 +36,7 @@ export function FavoritesProvider({ children }) {
                 image: product.image,
                 retailPrice: product.retailPrice,
                 wholesalePrice: product.wholesalePrice,
+                stock: product.stock,
                 categoryName: product.categoryName,
             }];
         });

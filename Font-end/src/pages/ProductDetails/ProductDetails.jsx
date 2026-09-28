@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { ChevronRight, ShoppingCart, CheckCircle2, Truck, FileText, Package, Plus, Minus, ShieldCheck, Box, Heart } from 'lucide-react';
 import apiClient from '../../utils/apiClient';
-import { formatFCFA } from '../../utils/formatFCFA';
+import { canPurchase, hasRetailPrice, formatProductPrice, inquireAboutProduct } from '../../utils/productAvailability';
 import { mapProduct, resolveImageUrl, PLACEHOLDER_IMG } from '../../utils/mapProduct';
 import { useCart } from '../../context/CartContext';
 import { useFavorites } from '../../context/FavoritesContext';
@@ -118,6 +118,7 @@ const ProductDetails = () => {
     }
 
     const isOutOfStock = product.stock <= 0;
+    const displayPrice = formatProductPrice(product.retailPrice, t('product.priceOnRequest'));
     const increaseQuantity = () => setQuantity(q => q + 1);
     const decreaseQuantity = () => setQuantity(q => q > 1 ? q - 1 : 1);
 
@@ -139,10 +140,10 @@ const ProductDetails = () => {
         <div className="product-details-page">
             <Helmet>
                 <title>{t('productDetails.metaTitle', { model: product.model, category: product.categoryName })}</title>
-                <meta name="description" content={t('productDetails.metaDesc', { model: product.model, category: product.categoryName, price: formatFCFA(product.retailPrice) })} />
+                <meta name="description" content={t('productDetails.metaDesc', { model: product.model, category: product.categoryName, price: displayPrice })} />
                 <link rel="canonical" href={`https://newoteg.com/product/${product.id}`} />
                 <meta property="og:title" content={product.model} />
-                <meta property="og:description" content={t('productDetails.metaDesc', { model: product.model, category: product.categoryName, price: formatFCFA(product.retailPrice) })} />
+                <meta property="og:description" content={t('productDetails.metaDesc', { model: product.model, category: product.categoryName, price: displayPrice })} />
                 <meta property="og:url" content={`https://newoteg.com/product/${product.id}`} />
                 <meta property="og:type" content="product" />
                 <meta property="og:image" content={product.images?.[0] || product.image} />
@@ -154,14 +155,14 @@ const ProductDetails = () => {
                     "description": product.description || `${product.model} — ${product.categoryName}`,
                     "sku": `NTG-${product.code}-TR`,
                     "brand": { "@type": "Brand", "name": product.marque || product.brand || "NEWOTEG" },
-                    "offers": {
+                    "offers": hasRetailPrice(product) ? {
                         "@type": "Offer",
                         "url": `https://newoteg.com/product/${product.id}`,
                         "priceCurrency": "XAF",
                         "price": product.retailPrice,
                         "availability": product.stock > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
                         "seller": { "@type": "Organization", "name": "NEWOTEG SARL" }
-                    }
+                    } : undefined
                 })}</script>
             </Helmet>
             {/* ── Breadcrumb ──────────────────────────────── */}
@@ -238,7 +239,7 @@ const ProductDetails = () => {
                                 <div className="product-details__price-retail">
                                     <span className="product-details__price-label">{t('productDetails.retailPriceLabel')}</span>
                                     <div className="product-details__price-value">
-                                        <span className="amount">{formatFCFA(product.retailPrice)}</span>
+                                        <span className="amount">{displayPrice}</span>
                                         <span className="unit">{t('productDetails.perUnit')}</span>
                                     </div>
                                 </div>
@@ -246,7 +247,7 @@ const ProductDetails = () => {
                                 <div className="product-details__price-wholesale">
                                     <span className="product-details__price-label">{t('productDetails.wholesalePriceLabel')}</span>
                                     <div className="product-details__price-value product-details__price-value--primary">
-                                        <span className="amount">{formatFCFA(product.wholesalePrice)}</span>
+                                        <span className="amount">{formatProductPrice(product.wholesalePrice, t('product.priceOnRequest'))}</span>
                                         <span className="unit">{t('productDetails.perUnit')}</span>
                                     </div>
                                     <span className="product-details__price-min">{t('productDetails.minOrder')}</span>
@@ -261,13 +262,12 @@ const ProductDetails = () => {
                                     <button onClick={increaseQuantity} aria-label="Increase quantity"><Plus size={16} /></button>
                                 </div>
                                 <button
-                                    className={`product-details__add-btn ${isOutOfStock ? 'product-details__add-btn--disabled' : ''}`}
-                                    onClick={() => { if (!isOutOfStock) addToCart(product, quantity); }}
-                                    disabled={isOutOfStock}
+                                    className="product-details__add-btn"
+                                    onClick={() => { if (canPurchase(product)) addToCart(product, quantity); else inquireAboutProduct(product); }}
                                 >
                                     <ShoppingCart size={18} fill="currentColor" />
 
-                                    {isOutOfStock ? t('product.unavailable') : t('product.addToCart')}
+                                    {canPurchase(product) ? t('product.addToCart') : t('product.requestPrice')}
 
                                 </button>
                                 <button
@@ -404,7 +404,7 @@ const ProductDetails = () => {
                                                     <h3 className="product-card-light__name">{s.nomProduit}</h3>
                                                     <p className="product-card-light__desc">{s.raison}</p>
                                                     <div className="product-card-light__bottom">
-                                                        <span className="product-card-light__price">{formatFCFA(prix)}</span>
+                                                        <span className="product-card-light__price">{formatProductPrice(prix, t('product.priceOnRequest'))}</span>
                                                         <button
                                                             className="product-card-light__add"
                                                             onClick={(e) => { e.preventDefault(); addToCart(alt, 1); }}
@@ -437,7 +437,7 @@ const ProductDetails = () => {
                                             <h3 className="product-card-light__name">{p.model}</h3>
                                             <p className="product-card-light__desc">{p.categoryName}</p>
                                             <div className="product-card-light__bottom">
-                                                <span className="product-card-light__price">{formatFCFA(p.retailPrice)}</span>
+                                                <span className="product-card-light__price">{formatProductPrice(p.retailPrice, t('product.priceOnRequest'))}</span>
                                                 <button className="product-card-light__add" onClick={(e) => { e.preventDefault(); addToCart(p, 1); }}>+</button>
                                             </div>
                                         </div>

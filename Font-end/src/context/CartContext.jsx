@@ -1,5 +1,7 @@
 /* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useReducer, useEffect, useCallback, useState } from 'react';
+import { refreshSavedProducts } from '../utils/refreshSavedProducts';
+import { canPurchase, inquireAboutProduct } from '../utils/productAvailability';
 
 // ── Cart Context ─────────────────────────────────────────────────────────────
 const CartContext = createContext(null);
@@ -61,19 +63,16 @@ function cartReducer(state, action) {
 // ── Cart Provider ─────────────────────────────────────────────────────────────
 const STORAGE_KEY = 'newoteg_cart';
 
-const initCart = () => {
-    try {
-        const stored = localStorage.getItem(STORAGE_KEY);
-        if (stored) {
-            const parsed = JSON.parse(stored);
-            return Array.isArray(parsed) ? parsed : [];
-        }
-    } catch { /* stockage local invalide : panier vide */ }
-    return [];
-};
-
 export function CartProvider({ children }) {
-    const [cartItems, dispatch] = useReducer(cartReducer, [], initCart);
+    const [cartItems, dispatch] = useReducer(cartReducer, []);
+    const [cacheChecked, setCacheChecked] = useState(false);
+    useEffect(() => {
+        let active = true;
+        refreshSavedProducts(STORAGE_KEY, true).then(({ products, complete }) => {
+            if (active) { dispatch({ type: 'HYDRATE', payload: products }); setCacheChecked(complete); }
+        });
+        return () => { active = false; };
+    }, []);
     const [toasts, setToasts] = useState([]); // [{ id, message, type }]
     const [isCartOpen, setIsCartOpen] = useState(false);
 
@@ -82,8 +81,8 @@ export function CartProvider({ children }) {
 
     // Sync cart to localStorage whenever it changes
     useEffect(() => {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(cartItems));
-    }, [cartItems]);
+        if (cacheChecked) localStorage.setItem(STORAGE_KEY, JSON.stringify(cartItems));
+    }, [cartItems, cacheChecked]);
 
     // ── Toast helper (queue, max 3 visible) ───────────────────
     const showToast = useCallback((message, type = 'success') => {
@@ -98,6 +97,7 @@ export function CartProvider({ children }) {
 
     // ── Cart Actions ──────────────────────────────────────────
     const addToCart = useCallback((product, quantity = 1) => {
+        if (!canPurchase(product)) { inquireAboutProduct(product); return; }
         dispatch({ type: 'ADD_ITEM', payload: { product, quantity } });
         showToast(`"${product.model}" +${quantity}`, 'cart');
     }, [showToast]);

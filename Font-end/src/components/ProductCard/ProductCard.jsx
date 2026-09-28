@@ -5,6 +5,7 @@ import { useFavorites } from '../../context/FavoritesContext';
 import { useCart } from '../../context/CartContext';
 import { useI18n } from '../../context/I18nContext';
 import { formatFCFA } from '../../utils/formatFCFA';
+import { canPurchase, hasRetailPrice, formatProductPrice, inquireAboutProduct } from '../../utils/productAvailability';
 import PlaceholderImage from '../PlaceholderImage/PlaceholderImage';
 import './ProductCard.scss';
 
@@ -28,6 +29,7 @@ const ProductCard = ({ product, badge }) => {
     const handleAddToCart = (e) => {
         e.preventDefault();
         e.stopPropagation();
+        if (!canPurchase(product)) { inquireAboutProduct(product); return; }
         addToCart(product, 1);
         setJustAdded(true);
         setTimeout(() => setJustAdded(false), 800);
@@ -117,7 +119,7 @@ const ProductCard = ({ product, badge }) => {
                     <div className="product-card__bottom-row">
                         <Link to={`/product/${product.id}`} className="product-card__price-block">
                             <span className="product-card__price-primary">
-                                {formatFCFA(product.wholesalePrice || product.retailPrice)}
+                                {formatProductPrice(product.wholesalePrice || product.retailPrice, t('product.priceOnRequest'))}
                             </span>
                             {(product.wholesalePrice > 0 && product.wholesalePrice < product.retailPrice) && (
                                 <span className="product-card__price-secondary">
@@ -129,8 +131,8 @@ const ProductCard = ({ product, badge }) => {
                         <button
                             className={`product-card__action-btn ${isBackorder ? 'product-card__action-btn--preorder' : ''} ${justAdded ? 'product-card__action-btn--added' : ''}`}
                             onClick={handleAddToCart}
-                            aria-label={isBackorder ? t('product.preorderBtnTitle') : t('product.addToCart')}
-                            title={isBackorder ? t('product.preorderBtnTitle') : t('product.addToCart')}
+                            aria-label={!hasRetailPrice(product) ? t('product.requestPrice') : isBackorder ? t('product.preorderBtnTitle') : t('product.addToCart')}
+                            title={!hasRetailPrice(product) ? t('product.requestPrice') : isBackorder ? t('product.preorderBtnTitle') : t('product.addToCart')}
                         >
                             <ShoppingCart size={18} />
                         </button>
@@ -178,11 +180,11 @@ const ProductCard = ({ product, badge }) => {
                                 <div className="quick-view-modal__prices">
                                     <div className="quick-view-modal__price-row">
                                         <span>{t('product.retailPrice')}</span>
-                                        <strong>{formatFCFA(product.retailPrice)}</strong>
+                                        <strong>{formatProductPrice(product.retailPrice, t('product.priceOnRequest'))}</strong>
                                     </div>
                                     <div className="quick-view-modal__price-row quick-view-modal__price-row--wholesale">
                                         <span>{t('product.wholesalePrice')}</span>
-                                        <strong>{formatFCFA(product.wholesalePrice)}</strong>
+                                        <strong>{formatProductPrice(product.wholesalePrice, t('product.priceOnRequest'))}</strong>
                                     </div>
                                 </div>
 
@@ -193,7 +195,7 @@ const ProductCard = ({ product, badge }) => {
                                 <div className="quick-view-modal__actions">
                                     <button className="quick-view-modal__add-btn" onClick={handleAddToCart}>
                                         <ShoppingCart size={16} />
-                                        {t('product.addToCart')}
+                                        {canPurchase(product) ? t('product.addToCart') : t('product.requestPrice')}
                                     </button>
                                     <Link to={`/product/${product.id}`} className="quick-view-modal__detail-link">
                                         {t('product.viewFullDetails')}

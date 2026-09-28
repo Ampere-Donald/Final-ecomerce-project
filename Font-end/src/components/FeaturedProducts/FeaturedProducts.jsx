@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { Zap, ChevronLeft, ChevronRight } from 'lucide-react';
 import apiClient from '../../utils/apiClient';
 import { formatFCFA } from '../../utils/formatFCFA';
+import { formatProductPrice } from '../../utils/productAvailability';
 import { resolveImageUrl, PLACEHOLDER_IMG } from '../../utils/mapProduct';
 import PlaceholderImage from '../PlaceholderImage/PlaceholderImage';
 import { useCart } from '../../context/CartContext';
@@ -202,7 +203,7 @@ const PopularProductCard = ({ product, addToCart }) => {
             <div className="fp-card__body">
                 <h3 className="fp-card__name">{product.model}</h3>
                 <div className="fp-card__prices">
-                    <span className="fp-card__retail">{formatFCFA(product.retailPrice)}</span>
+                    <span className="fp-card__retail">{formatProductPrice(product.retailPrice, t('product.priceOnRequest'))}</span>
                     {product.wholesalePrice > 0 && product.wholesalePrice < product.retailPrice && (
                         <span className="fp-card__wholesale">{t('product.wholesalePrice')}: {formatFCFA(product.wholesalePrice)}</span>
                     )}

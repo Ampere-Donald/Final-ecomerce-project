@@ -4,7 +4,7 @@ import { Heart, ShoppingCart, Trash2 } from 'lucide-react';
 import { useFavorites } from '../../context/FavoritesContext';
 import { useCart } from '../../context/CartContext';
 import { useI18n } from '../../context/I18nContext';
-import { formatFCFA } from '../../utils/formatFCFA';
+import { canPurchase, formatProductPrice } from '../../utils/productAvailability';
 import Footer from '../../components/Footer/Footer';
 import './Favorites.scss';
 
@@ -58,13 +58,13 @@ const Favorites = () => {
                   <Link to={`/product/${product.id}`}>
                     <p className="favorites__name">{product.model}</p>
                   </Link>
-                  <p className="favorites__price">{formatFCFA(product.retailPrice)}</p>
+                  <p className="favorites__price">{formatProductPrice(product.retailPrice, t('product.priceOnRequest'))}</p>
                   <div className="favorites__actions">
                     <button
                       className="favorites__btn favorites__btn--primary"
                       onClick={() => addToCart(product, 1)}
                     >
-                      <ShoppingCart size={14} /> {t('favorites.addBtn')}
+                      <ShoppingCart size={14} /> {canPurchase(product) ? t('favorites.addBtn') : t('product.requestPrice')}
                     </button>
                     <button
                       className="favorites__btn favorites__btn--remove"

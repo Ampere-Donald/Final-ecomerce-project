@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { ShoppingCart, FileText } from 'lucide-react';
 import { useCart } from '../../context/CartContext';
 import { useI18n } from '../../context/I18nContext';
-import { formatFCFA } from '../../utils/formatFCFA';
+import { canPurchase, formatProductPrice, inquireAboutProduct } from '../../utils/productAvailability';
 import PlaceholderImage from '../PlaceholderImage/PlaceholderImage';
 import './ProductTable.scss';
 
@@ -31,6 +31,7 @@ const ProductTable = ({ products }) => {
                         const handleAddToCart = (e) => {
                             e.preventDefault();
                             e.stopPropagation();
+                            if (!canPurchase(product)) { inquireAboutProduct(product); return; }
                             addToCart(product, 1);
                         };
 
@@ -67,10 +68,10 @@ const ProductTable = ({ products }) => {
                                     )}
                                 </td>
                                 <td className="product-table__cell product-table__price product-table__price--retail">
-                                    {formatFCFA(product.retailPrice)}
+                                    {formatProductPrice(product.retailPrice, t('product.priceOnRequest'))}
                                 </td>
                                 <td className="product-table__cell product-table__price product-table__price--wholesale">
-                                    {formatFCFA(product.wholesalePrice)}
+                                    {formatProductPrice(product.wholesalePrice, t('product.priceOnRequest'))}
                                 </td>
                                 <td className="product-table__cell product-table__action">
                                     <div className="product-table__action-group">
@@ -89,8 +90,8 @@ const ProductTable = ({ products }) => {
                                         <button 
                                             className="btn-add-table" 
                                             onClick={handleAddToCart}
-                                            aria-label={t('productTable.addPreorderAria')}
-                                            title={isBackorder ? t('product.preorderBtnTitle') : t('product.addToCart')}
+                                            aria-label={canPurchase(product) ? t('product.addToCart') : t('product.requestPrice')}
+                                            title={canPurchase(product) ? t('product.addToCart') : t('product.requestPrice')}
                                         >
                                             <ShoppingCart size={18} />
                                         </button>
