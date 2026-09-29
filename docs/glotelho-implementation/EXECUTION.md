@@ -5,6 +5,7 @@ Dernière mise à jour : 29 septembre 2026. Exécution des lots L0–L8 autoris�
 ## Référence et décisions
 
 - Base active : branche locale `main`, commit `cf834346f64921c297822f438635e1244de39671`, dans le worktree isolé `codex/newoteg-evolution`.
+- Premier jalon enregistré localement : commit `79f606ec` (`Integrate E storefront with guarded guest checkout`). Il reste sur la branche isolée et n’a pas été poussé.
 - Le worktree principal et l’ancien worktree `codex/refonte-e` sont préservés. Le travail E est réintégré sur la base actuelle; les protections catalogue plus récentes restent prioritaires.
 - Aucun accès Railway, secret, service de paiement, notification réelle, appel d’IA distant ou déploiement de production n’est utilisé par cette phase.
 - Réception validée pour le pilote : retrait à Akwa possible après confirmation de disponibilité; livraison possible avec adresse saisie, mais frais et délai restent explicitement à confirmer par la boutique.
