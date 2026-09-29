@@ -1,3 +1,5 @@
+import { canBuy } from "./productData.js";
+
 // Stored stock is a last-known bound; the server must revalidate at checkout.
 export function quantityLimit(product) {
   return product.stock != null && Number.isFinite(Number(product.stock))
@@ -25,8 +27,37 @@ export function hydrateCart(value) {
     }));
 }
 
+export function canAddSelection(state, selection) {
+  const ids = new Set();
+  return (
+    Array.isArray(selection) &&
+    selection.length > 0 &&
+    selection.every(({ product, quantity }) => {
+      if (
+        !product?.id ||
+        ids.has(product.id) ||
+        !canBuy(product) ||
+        !Number.isSafeInteger(quantity) ||
+        quantity < 1
+      )
+        return false;
+      ids.add(product.id);
+      const existing =
+        state.find((item) => item.id === product.id)?.quantity || 0;
+      return existing + quantity <= quantityLimit(product);
+    })
+  );
+}
+
 export function cartReducer(state, action) {
   switch (action.type) {
+    case "ADD_SELECTION": {
+      if (!canAddSelection(state, action.payload)) return state;
+      return action.payload.reduce(
+        (items, payload) => cartReducer(items, { type: "ADD_ITEM", payload }),
+        state,
+      );
+    }
     case "HYDRATE":
       return hydrateCart(action.payload);
     case "ADD_ITEM": {

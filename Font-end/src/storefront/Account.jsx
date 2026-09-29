@@ -8,6 +8,7 @@ import {
   RefreshCw,
   LogOut,
   Check,
+  FileText,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { useI18n } from "../context/I18nContext";
@@ -17,6 +18,7 @@ import { Crumbs, Modal } from "./Elements";
 import { apiMessage, orderState, orderDate } from "./orderData";
 import useOrders from "./useOrders";
 import Footer from "./Footer";
+import Reorder from "./Reorder";
 
 export default function Account() {
   const { user, token, logout } = useAuth();
@@ -30,6 +32,7 @@ export default function Account() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+  const [reorderOrder, setReorderOrder] = useState(null);
   const lock = useRef(false);
   const tr = (fr, en) => (lang === "en" ? en : fr);
   const profile = pathname === "/profile";
@@ -74,6 +77,15 @@ export default function Account() {
         <Link to={`/commandes/${o.id}`}>
           {tr("Voir le suivi", "Track order")} <ArrowRight size={16} />
         </Link>
+        {o.lignes.length > 0 && (
+          <button
+            className="e-text-button"
+            disabled={busy}
+            onClick={() => setReorderOrder(o)}
+          >
+            {tr("Acheter à nouveau", "Buy again")}
+          </button>
+        )}
       </div>
     </article>
   );
@@ -155,6 +167,7 @@ export default function Account() {
             {tr("Commandes", "Orders")}
           </Link>
           <Link to="/favourites">{tr("Favoris", "Favourites")}</Link>
+          <Link to="/mes-devis">{tr("Devis", "Quotes")}</Link>
         </nav>
         {profile && (
           <>
@@ -188,6 +201,12 @@ export default function Account() {
             </section>
             <div className="e-account-shortcuts">
               {[
+                [
+                  FileText,
+                  "/mes-devis",
+                  tr("Mes demandes de devis", "My quote requests"),
+                  tr("Mes listes et propositions", "My lists and offers"),
+                ],
                 [
                   Package,
                   "/commandes",
@@ -381,6 +400,15 @@ export default function Account() {
                     )}
                 </div>
                 <div className="e-actions">
+                  {order.lignes.length > 0 && (
+                    <button
+                      className="e-btn e-secondary"
+                      disabled={busy}
+                      onClick={() => setReorderOrder(order)}
+                    >
+                      {tr("Acheter à nouveau", "Buy again")}
+                    </button>
+                  )}
                   {order.statut === "EN_ATTENTE" && (
                     <button
                       className="e-btn e-secondary"
@@ -511,6 +539,9 @@ export default function Account() {
           </>
         )}
       </div>
+      {reorderOrder && (
+        <Reorder order={reorderOrder} onClose={() => setReorderOrder(null)} />
+      )}
       <Modal
         open={Boolean(action)}
         onClose={() => {

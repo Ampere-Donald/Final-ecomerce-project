@@ -25,6 +25,7 @@ const Login = lazy(() => import("./storefront/Auth"));
 const Signup = lazy(() => import("./storefront/Auth"));
 const Profile = lazy(() => import("./storefront/Account"));
 const Favorites = lazy(() => import("./storefront/Favorites"));
+const Devis = lazy(() => import("./storefront/Devis"));
 const NotFound = lazy(() => import("./storefront/ShopInfo"));
 
 const PageFallback = () => (
@@ -80,6 +81,23 @@ function AppContent() {
               <Route path="/faq" element={<Editorial />} />
               <Route path="/livraison" element={<Editorial />} />
               <Route path="/checkout" element={<Checkout />} />
+              <Route path="/devis" element={<Devis />} />
+              <Route
+                path="/mes-devis"
+                element={
+                  <ProtectedRoute>
+                    <Devis />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/mes-devis/:id"
+                element={
+                  <ProtectedRoute>
+                    <Devis />
+                  </ProtectedRoute>
+                }
+              />
               <Route path="/about" element={<About />} />
               <Route path="/contact" element={<Contact />} />
               <Route path="/terms" element={<Terms />} />

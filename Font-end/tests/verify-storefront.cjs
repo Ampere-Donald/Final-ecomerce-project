@@ -102,7 +102,10 @@ const ok = (name) => {
           }));
           return send({
             requestProtocol: 1,
-            montantArticles: lignes.reduce((sum, line) => sum + line.sousTotal, 0),
+            montantArticles: lignes.reduce(
+              (sum, line) => sum + line.sousTotal,
+              0,
+            ),
             fraisLivraison: null,
             lignes,
           });
@@ -183,9 +186,17 @@ const ok = (name) => {
     );
     assert(page.url().includes("category=connectique"));
     ok("Filters and Escape");
+    const sortedResponse = page.waitForResponse((response) => {
+      const url = new URL(response.url());
+      return (
+        url.pathname.endsWith("/api/produits") &&
+        url.searchParams.get("sort") === "price_asc"
+      );
+    });
     await page
       .getByRole("combobox", { name: "Trier les produits" })
       .selectOption("price-asc");
+    await sortedResponse;
     await page.waitForFunction(() => !document.querySelector(".e-skeleton"));
     assert(requests.some((u) => u.includes("sort=price_asc")));
     await page.goBack();
@@ -235,7 +246,10 @@ const ok = (name) => {
       .getByRole("button", { name: "Enregistrer ma commande", exact: true })
       .click();
     await page.getByRole("heading", { name: "Commande enregistrée" }).waitFor();
-    assert.equal(await page.getByRole("link", { name: "Voir le suivi" }).count(), 0);
+    assert.equal(
+      await page.getByRole("link", { name: "Voir le suivi" }).count(),
+      0,
+    );
     await page.getByRole("link", { name: "Contacter la boutique" }).waitFor();
     assert.equal(await page.locator(".e-success-icon").count(), 1);
     assert(
@@ -256,19 +270,36 @@ const ok = (name) => {
     await goto("/panier");
     await page.getByRole("link", { name: "Choisir la réception" }).click();
     await page.getByRole("radio", { name: /Livraison/i }).check();
-    await page.getByLabel("Nom complet", { exact: true }).fill("Client Démonstration");
+    await page
+      .getByLabel("Nom complet", { exact: true })
+      .fill("Client Démonstration");
     await page.getByLabel("Téléphone", { exact: true }).fill("600000000");
     await page.getByLabel("Ville", { exact: true }).fill("Douala");
-    await page.getByLabel("Quartier, adresse et repère", { exact: true }).fill("Akwa, près du marché");
-    await page.getByText("La boutique vous confirmera la zone desservie, les frais et le délai.").waitFor();
-    await page.getByRole("button", { name: "Vérifier ma sélection", exact: true }).click();
-    await page.getByRole("heading", { name: "Une dernière vérification" }).waitFor();
+    await page
+      .getByLabel("Quartier, adresse et repère", { exact: true })
+      .fill("Akwa, près du marché");
+    await page
+      .getByText(
+        "La boutique vous confirmera la zone desservie, les frais et le délai.",
+      )
+      .waitFor();
+    await page
+      .getByRole("button", { name: "Vérifier ma sélection", exact: true })
+      .click();
+    await page
+      .getByRole("heading", { name: "Une dernière vérification" })
+      .waitFor();
     await page.getByText(/frais éventuels restent à confirmer/i).waitFor();
     await page.getByRole("checkbox").check();
-    await page.getByRole("button", { name: "Enregistrer ma commande", exact: true }).click();
+    await page
+      .getByRole("button", { name: "Enregistrer ma commande", exact: true })
+      .click();
     await page.getByRole("heading", { name: "Commande enregistrée" }).waitFor();
     assert.equal(checkoutPayloads[1].modeReception, "LIVRAISON");
-    assert.equal(checkoutPayloads[1].adresseLivraison, "Douala — Akwa, près du marché");
+    assert.equal(
+      checkoutPayloads[1].adresseLivraison,
+      "Douala — Akwa, près du marché",
+    );
     assert.equal(checkoutPayloads[1].fraisLivraison, undefined);
     ok("Delivery address is captured; unconfirmed fees are not fabricated");
     await goto("/checkout");

@@ -72,6 +72,7 @@ export default function Header() {
     ["/catalogue?search=outillage", "Outillage", "Tools"],
     ["/equivalences", "Équivalences", "Equivalents"],
     ["/guides", "Guides", "Guides"],
+    ["/devis", "Devis", "Quotes"],
   ];
   return (
     <>

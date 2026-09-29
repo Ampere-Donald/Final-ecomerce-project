@@ -46,6 +46,7 @@ import { ProformaModule } from './proforma/proforma.module';
 import { FactureVirtuelleModule } from './facture-virtuelle/facture-virtuelle.module';
 import { CommandeFournisseurModule } from './commande-fournisseur/commande-fournisseur.module';
 import { PaieModule } from './paie/paie.module';
+import { DevisModule } from './devis/devis.module';
 
 @Module({
   imports: [
@@ -98,6 +99,7 @@ import { PaieModule } from './paie/paie.module';
     FactureVirtuelleModule,
     PaieModule,
     CommandeFournisseurModule,
+    DevisModule,
   ],
   controllers: [AppController],
   providers: [

@@ -132,6 +132,7 @@ model Client {
   commandes          Commande[]
   factures           Facture[]
   proformas          Proforma[]
+  demandesDevis      DemandeDevis[]
   favoris            Favori[]
   ventes             Vente[]
   ticketsVente       TicketVente[]
@@ -344,6 +345,7 @@ model Proforma {
   lignes         ProformaLigne[]
   vendeur        AdminUser       @relation("ProformasVendeur", fields: [vendeurId], references: [id])
   client         Client?         @relation(fields: [clientId], references: [id])
+  demandeClient  DemandeDevis?
 
   @@index([statut, dateExpiration])
   @@index([vendeurId, dateCreation])
@@ -361,6 +363,72 @@ model ProformaLigne {
   proforma     Proforma @relation(fields: [proformaId], references: [id], onDelete: Cascade)
 
   @@map("proforma_ligne")
+}
+
+model DemandeDevis {
+  id              String             @id @default(uuid())
+  requestId       String             @unique @map("request_id") @db.Uuid
+  fingerprint     String             @db.VarChar(64)
+  clientId        String             @map("client_id")
+  nomClient       String             @map("nom_client") @db.VarChar(150)
+  telephone       String             @db.VarChar(30)
+  modeReception   ModeReception      @map("mode_reception")
+  destination     String?            @db.VarChar(500)
+  notes           String?            @db.VarChar(2000)
+  statut          StatutDemandeDevis  @default(RECUE)
+  responsableId   String?            @map("responsable_id")
+  proformaId      String?            @unique @map("proforma_id")
+  reponseClient   String?            @map("reponse_client") @db.VarChar(2000)
+  offre           Json?
+  version         Int                @default(1)
+  createdAt       DateTime           @default(now()) @map("created_at")
+  updatedAt       DateTime           @updatedAt @map("updated_at")
+  client          Client             @relation(fields: [clientId], references: [id])
+  responsable     AdminUser?         @relation("DemandesDevisResponsable", fields: [responsableId], references: [id], onDelete: SetNull)
+  proforma        Proforma?          @relation(fields: [proformaId], references: [id], onDelete: SetNull)
+  lignes          DemandeDevisLigne[]
+  historique      DemandeDevisEvent[]
+
+  @@index([clientId, createdAt])
+  @@index([statut, responsableId, createdAt])
+  @@map("demande_devis")
+}
+
+model DemandeDevisLigne {
+  id          String        @id @default(uuid())
+  demandeId   String        @map("demande_id")
+  reference   String        @db.VarChar(100)
+  quantite    Int
+  produitId   String?       @map("produit_id")
+  nomProduit  String?       @map("nom_produit") @db.VarChar(150)
+  ordre       Int
+  demande     DemandeDevis   @relation(fields: [demandeId], references: [id], onDelete: Cascade)
+
+  @@index([demandeId, ordre])
+  @@map("demande_devis_ligne")
+}
+
+model DemandeDevisEvent {
+  id          String        @id @default(uuid())
+  demandeId   String        @map("demande_id")
+  acteurId    String        @map("acteur_id")
+  acteurType  String        @map("acteur_type") @db.VarChar(10)
+  statut      StatutDemandeDevis
+  details     Json
+  createdAt   DateTime      @default(now()) @map("created_at")
+  demande     DemandeDevis   @relation(fields: [demandeId], references: [id], onDelete: Cascade)
+
+  @@index([demandeId, createdAt])
+  @@map("demande_devis_event")
+}
+
+enum StatutDemandeDevis {
+  RECUE
+  A_PRECISER
+  ENVOYEE
+  ACCEPTEE
+  REFUSEE
+  EXPIREE
 }
 
 model PrimeVendeur {
@@ -758,6 +826,7 @@ model AdminUser {
   primesValidees               PrimeVendeur[]     @relation("PrimesValidees")
   ticketsVendeur               TicketVente[]      @relation("TicketsVendeur")
   proformasVendeur             Proforma[]         @relation("ProformasVendeur")
+  demandesDevisResponsable     DemandeDevis[]      @relation("DemandesDevisResponsable")
   ventesEffectuees             Vente[]            @relation("VenteVendeur")
   facturesVirtuellesVendeur    FactureVirtuelle[] @relation("FacturesVirtuellesVendeur")
   facturesVirtuellesApprouveur FactureVirtuelle[] @relation("FacturesVirtuellesApprouveur")

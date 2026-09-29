@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { motion } from 'motion/react';
 import { AlertTriangle, FileText, Plus, Printer, RefreshCw, Send, Trash2, X } from 'lucide-react';
-import { produitApi, proformaApi, getApiErrorMessage } from '../services/api';
+import { produitApi, proformaApi, clientApi, getApiErrorMessage } from '../services/api';
 import { useAdminAuth } from '../context/AdminAuthContext';
 import { fmtDateCourt, fmtFCFA } from '../utils/format';
 import { ReceiptGenerator } from './ReceiptGenerator';
@@ -33,6 +33,9 @@ export const Proformas = () => {
   const [error, setError] = useState<string | null>(null);
   const [showCreate, setShowCreate] = useState(false);
   const [clientNom, setClientNom] = useState('');
+  const [clientId, setClientId] = useState('');
+  const [clients, setClients] = useState<any[]>([]);
+  const [clientError, setClientError] = useState('');
   const [clientNiu, setClientNiu] = useState('');
   const [clientRccm, setClientRccm] = useState('');
   const [notes, setNotes] = useState(NOTES_DEFAULT);
@@ -66,6 +69,14 @@ export const Proformas = () => {
   useEffect(() => {
     charger();
   }, [periode, statut]);
+
+  useEffect(() => {
+    if (!showCreate || !canManage) return;
+    let active = true;
+    setClientError('');
+    clientApi.getAll().then(data => { if (active) setClients(data); }).catch(e => { if (active) { setClients([]); setClientError(getApiErrorMessage(e, 'Les comptes clients sont indisponibles. Réouvrez le formulaire pour réessayer.')); } });
+    return () => { active = false; };
+  }, [showCreate, canManage]);
 
   const produitsFiltres = useMemo(() => {
     const q = searchProduit.trim().toLowerCase();
@@ -116,6 +127,7 @@ export const Proformas = () => {
     setLoading(true);
     try {
       const created = await proformaApi.create({
+        clientId: clientId || undefined,
         clientNom: clientNom.trim() || undefined,
         clientNiu: clientNiu.trim() || undefined,
         clientRccm: clientRccm.trim() || undefined,
@@ -124,6 +136,7 @@ export const Proformas = () => {
       });
       setShowCreate(false);
       setClientNom('');
+      setClientId('');
       setClientNiu('');
       setClientRccm('');
       setNotes(NOTES_DEFAULT);
@@ -281,6 +294,13 @@ export const Proformas = () => {
               </button>
             </div>
             <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+              <label className="text-sm md:col-span-3">Compte client associé (pour un devis en ligne)
+                <select value={clientId} onChange={e => { const id = e.target.value; setClientId(id); if (id) setClientNom(clients.find(c => c.id === id)?.nom || ''); }} className="mt-2 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm">
+                  <option value="">Sans compte associé · client comptoir</option>
+                  {clients.map(c => <option key={c.id} value={c.id}>{c.nom}{c.telephone ? ` · ${c.telephone}` : ''}</option>)}
+                </select>
+              </label>
+              {clientError && <p role="alert" className="text-sm text-amber-800 md:col-span-3">{clientError}</p>}
               <input value={clientNom} onChange={(e) => setClientNom(e.target.value)} placeholder="Client" className="rounded-lg border border-slate-200 px-3 py-2 text-sm" />
               <input value={clientNiu} onChange={(e) => setClientNiu(e.target.value)} placeholder="NIU client" className="rounded-lg border border-slate-200 px-3 py-2 text-sm" />
               <input value={clientRccm} onChange={(e) => setClientRccm(e.target.value)} placeholder="RCCM client" className="rounded-lg border border-slate-200 px-3 py-2 text-sm" />

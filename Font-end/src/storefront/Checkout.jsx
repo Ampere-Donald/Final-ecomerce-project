@@ -284,7 +284,7 @@ function CheckoutForm() {
                 <strong>{formatFCFA(pending.payload.montantTotal)}</strong> ·{" "}
                 {pending.payload.lignes.length} {tr("référence(s)", "item(s)")}
               </p>
-              {pending.path === "/commandes/checkout" && (
+              {pending.path === "/commandes/checkout" && pending.payload.email && (
                 <label className="e-field">
                   {tr(
                     "Mot de passe choisi pour cette commande",

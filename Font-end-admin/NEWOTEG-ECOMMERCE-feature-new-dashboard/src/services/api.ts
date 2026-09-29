@@ -591,6 +591,12 @@ export const proformaApi = {
   remove: (id: string) => api.delete(`/proformas/${id}`).then(r => r.data),
 };
 
+export const demandeDevisApi = {
+  getAll: () => api.get('/devis/admin').then(r => r.data),
+  respond: (id: string, body: { version: number; statut: 'A_PRECISER' | 'ENVOYEE' | 'REFUSEE'; message: string; proformaId?: string }) =>
+    api.patch(`/devis/admin/${id}/reponse`, body).then(r => r.data),
+};
+
 export const factureVirtuelleApi = {
   create: (data: any) => api.post('/facture-virtuelle', data).then(r => r.data),
   getAll: (params?: any) => api.get('/facture-virtuelle', { params }).then(r => r.data),

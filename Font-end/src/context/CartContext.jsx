@@ -8,7 +8,7 @@ import {
   useState,
 } from "react";
 
-import { cartReducer } from "../storefront/cartState";
+import { cartReducer, canAddSelection } from "../storefront/cartState";
 import { canBuy } from "../storefront/productData";
 import { refreshSavedProducts } from "../utils/refreshSavedProducts";
 import { inquireAboutProduct } from "../utils/productAvailability";
@@ -72,8 +72,7 @@ export function CartProvider({ children }) {
         inquireAboutProduct(product);
         return;
       }
-      if (!Number.isInteger(quantity) || quantity < 1)
-        return;
+      if (!Number.isInteger(quantity) || quantity < 1) return;
       dispatch({ type: "ADD_ITEM", payload: { product, quantity } });
       showToast(product.model, "cart");
     },
@@ -83,6 +82,20 @@ export function CartProvider({ children }) {
   const removeFromCart = useCallback((code) => {
     dispatch({ type: "REMOVE_ITEM", payload: code });
   }, []);
+
+  const addSelection = useCallback(
+    (selection) => {
+      if (!canAddSelection(cartItems, selection)) return false;
+      dispatch({ type: "ADD_SELECTION", payload: selection });
+      showToast(
+        selection[0].product.model +
+          (selection.length > 1 ? ` + ${selection.length - 1}` : ""),
+        "cart",
+      );
+      return true;
+    },
+    [cartItems, showToast],
+  );
 
   const updateQuantity = useCallback((code, quantity) => {
     dispatch({ type: "UPDATE_QUANTITY", payload: { code, quantity } });
@@ -104,6 +117,7 @@ export function CartProvider({ children }) {
     cartCount,
     cartTotal,
     addToCart,
+    addSelection,
     removeFromCart,
     updateQuantity,
     clearCart,

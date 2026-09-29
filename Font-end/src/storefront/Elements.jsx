@@ -60,6 +60,7 @@ export function Modal({ open, onClose, title, children }) {
   const ref = useRef();
   useEffect(() => {
     const dialog = ref.current;
+    const opener = document.activeElement;
     if (open && !dialog.open) dialog.showModal();
     else if (!open && dialog.open) dialog.close();
     if (!open) return;
@@ -67,10 +68,21 @@ export function Modal({ open, onClose, title, children }) {
     document.body.style.overflow = "hidden";
     return () => {
       document.body.style.overflow = previous;
+      if (dialog.open) dialog.close();
+      if (opener?.isConnected && typeof opener.focus === "function")
+        opener.focus();
     };
   }, [open]);
   return (
-    <dialog ref={ref} className="e-modal" onCancel={onClose} aria-label={title}>
+    <dialog
+      ref={ref}
+      className="e-modal"
+      onCancel={(event) => {
+        event.preventDefault();
+        onClose();
+      }}
+      aria-label={title}
+    >
       <div className="e-modal-head">
         <h2>{title}</h2>
         <button

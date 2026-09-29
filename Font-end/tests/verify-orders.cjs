@@ -157,6 +157,15 @@ const ok = (label) => {
         return send({ access_token: "QA-ONLY", user });
       if (p.startsWith("/api/auth/")) return send({ message: "OK" });
       if (p === "/api/categories") return send([]);
+      if (p === `/api/produits/${item.id}`)
+        return send({
+          id: item.id,
+          estActif: true,
+          nomProduit: item.model,
+          prixDetail: item.retailPrice,
+          quantiteStock: item.stock,
+          imageUrl: item.image,
+        });
       if (p === "/api/produits")
         return send({ data: [], meta: { total: 0, lastPage: 1 } });
       return send({ message: "Unexpected fixture route" }, 404);
@@ -196,9 +205,7 @@ const ok = (label) => {
           .fill("Adresse fictive QA");
       }
       if (!auth) {
-        await page
-          .getByRole("checkbox", { name: /créer un compte/i })
-          .check();
+        await page.getByRole("checkbox", { name: /créer un compte/i }).check();
         await page
           .getByLabel("Adresse e-mail", { exact: true })
           .fill(user.email);
