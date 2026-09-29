@@ -22,6 +22,8 @@ const ALL_STATUSES: StatutCommande[] = ['EN_ATTENTE', 'CONFIRMEE', 'EN_LIVRAISON
 
 // Admin can only set these statuses.
 const ADMIN_STATUSES: StatutCommande[] = ['EN_ATTENTE', 'EN_LIVRAISON'];
+// Preserve terminal statuses instead of displaying the select's first option.
+const isStatusLocked = (status: StatutCommande) => ['CONFIRMEE', 'ANNULEE', 'LIVREE'].includes(status);
 
 export const Orders = () => {
   const [orders, setOrders] = useState<Commande[]>([]);
@@ -247,13 +249,13 @@ export const Orders = () => {
                         <select
                           value={order.statut}
                           onChange={e => handleStatusChange(order.id, e.target.value as StatutCommande)}
-                          disabled={updatingId === order.id || order.statut === 'CONFIRMEE' || order.statut === 'ANNULEE'}
-                          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border-0 cursor-pointer ${st.bg} ${st.text} outline-none ${order.statut === 'CONFIRMEE' || order.statut === 'ANNULEE' ? 'opacity-80 cursor-not-allowed' : ''}`}
+                          disabled={updatingId === order.id || isStatusLocked(order.statut)}
+                          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border-0 cursor-pointer ${st.bg} ${st.text} outline-none ${isStatusLocked(order.statut) ? 'opacity-80 cursor-not-allowed' : ''}`}
                         >
-                          {['CONFIRMEE', 'ANNULEE'].includes(order.statut) && (
+                          {isStatusLocked(order.statut) && (
                             <option value={order.statut}>{STATUS_CONFIG[order.statut].label}</option>
                           )}
-                          {!['CONFIRMEE', 'ANNULEE'].includes(order.statut) && ADMIN_STATUSES.map(s => (
+                          {!isStatusLocked(order.statut) && ADMIN_STATUSES.map(s => (
                             <option key={s} value={s}>{STATUS_CONFIG[s].label}</option>
                           ))}
                         </select>
@@ -310,13 +312,13 @@ export const Orders = () => {
                       <select
                         value={order.statut}
                         onChange={e => handleStatusChange(order.id, e.target.value as StatutCommande)}
-                        disabled={updatingId === order.id || order.statut === 'CONFIRMEE' || order.statut === 'ANNULEE'}
+                        disabled={updatingId === order.id || isStatusLocked(order.statut)}
                         className={`px-2 py-0.5 rounded-full text-xs font-medium border-0 cursor-pointer ${st.bg} ${st.text} outline-none`}
                       >
-                        {['CONFIRMEE', 'ANNULEE'].includes(order.statut) && (
+                        {isStatusLocked(order.statut) && (
                           <option value={order.statut}>{STATUS_CONFIG[order.statut].label}</option>
                         )}
-                        {!['CONFIRMEE', 'ANNULEE'].includes(order.statut) && ADMIN_STATUSES.map(s => (
+                        {!isStatusLocked(order.statut) && ADMIN_STATUSES.map(s => (
                           <option key={s} value={s}>{STATUS_CONFIG[s].label}</option>
                         ))}
                       </select>

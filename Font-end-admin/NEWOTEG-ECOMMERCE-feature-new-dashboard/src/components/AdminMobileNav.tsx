@@ -12,6 +12,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { useAdminAuth } from '../context/AdminAuthContext';
+import { administrationNavigation, isAdministrationRole } from '../config/adminNavigation';
 
 interface AdminMobileNavProps {
   hidden?: boolean;
@@ -26,18 +27,8 @@ interface MobileNavItem {
 }
 
 const itemsByRole: Record<string, MobileNavItem[]> = {
-  SUPER_ADMIN: [
-    { label: 'Accueil', path: '/', icon: LayoutDashboard, end: true },
-    { label: 'Ventes', path: '/ventes', icon: ReceiptText },
-    { label: 'Produits', path: '/produits', icon: Package },
-    { label: 'Clients', path: '/clients', icon: Users },
-  ],
-  ADMIN: [
-    { label: 'Accueil', path: '/', icon: LayoutDashboard, end: true },
-    { label: 'Ventes', path: '/ventes', icon: ReceiptText },
-    { label: 'Produits', path: '/produits', icon: Package },
-    { label: 'Clients', path: '/clients', icon: Users },
-  ],
+  SUPER_ADMIN: administrationNavigation.SUPER_ADMIN.map((item) => ({ ...item, label: item.shortLabel || item.label })),
+  ADMIN: administrationNavigation.ADMIN.map((item) => ({ ...item, label: item.shortLabel || item.label })),
   CAISSIER: [
     { label: 'Accueil', path: '/', icon: LayoutDashboard, end: true },
     { label: 'Encaisser', path: '/file-caissier', icon: CircleDollarSign },
@@ -53,8 +44,8 @@ const itemsByRole: Record<string, MobileNavItem[]> = {
 };
 
 const roleLabels: Record<string, string> = {
-  SUPER_ADMIN: 'Admin',
-  ADMIN: 'Admin',
+  SUPER_ADMIN: 'Superadministrateur',
+  ADMIN: 'Administrateur',
   CAISSIER: 'Caissier',
   VENDEUR: 'Vendeur',
 };
@@ -93,15 +84,17 @@ export const AdminMobileNav = ({ hidden = false, onMenuClick }: AdminMobileNavPr
             )}
           </NavLink>
         ))}
-        <button
-          type="button"
-          onClick={onMenuClick}
-          className="flex min-h-14 touch-manipulation flex-col items-center justify-center gap-1 rounded-lg text-[10px] font-semibold text-slate-500 transition-colors active:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
-          aria-label="Ouvrir toutes les rubriques"
-        >
-          <Menu size={19} />
-          <span>Plus</span>
-        </button>
+        {!isAdministrationRole(role) && (
+          <button
+            type="button"
+            onClick={onMenuClick}
+            className="flex min-h-14 touch-manipulation flex-col items-center justify-center gap-1 rounded-lg text-[10px] font-semibold text-slate-500 transition-colors active:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+            aria-label="Ouvrir toutes les rubriques"
+          >
+            <Menu size={19} />
+            <span>Plus</span>
+          </button>
+        )}
       </div>
     </nav>
   );

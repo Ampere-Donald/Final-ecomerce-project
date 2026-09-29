@@ -1,0 +1,20 @@
+# Allow only the files needed by the preproduction image.
+**
+!package.json
+!package-lock.json
+!prisma.config.ts
+!tsconfig.json
+!tsconfig.build.json
+!nest-cli.json
+!src/
+!src/**
+!prisma/
+!prisma/schema.prisma
+!prisma/migrations/
+!prisma/migrations/**
+!scripts/
+!scripts/start-preproduction.cjs
+!scripts/verify-release-schema.cjs
+!Dockerfile.preproduction
+!Dockerfile.preproduction.dockerignore
+**/*.spec.ts

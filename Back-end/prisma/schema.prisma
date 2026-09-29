@@ -627,6 +627,7 @@ model Role {
 }
 
 model Commande {
+  requests         CommandeRequest[]
   id               String          @id @default(uuid())
   numeroSuivi      String          @unique @map("numero_suivi") @db.VarChar(30)
   nomClient        String          @map("nom_client") @db.VarChar(150)
@@ -645,6 +646,17 @@ model Commande {
   lignes           LigneCommande[]
 
   @@map("commande")
+}
+
+model CommandeRequest {
+  requestId   String    @id @map("request_id") @db.Uuid
+  fingerprint String    @db.VarChar(64)
+  commandeId  String?   @map("commande_id")
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  commande    Commande? @relation(fields: [commandeId], references: [id], onDelete: SetNull)
+
+  @@index([commandeId])
+  @@map("commande_request")
 }
 
 model Favori {

@@ -49,7 +49,9 @@ export class GeminiClient {
         configured: true,
         model,
         ok,
-        message: ok ? 'Gemini Flash operationnel.' : 'Reponse Gemini inattendue.',
+        message: ok
+          ? 'Gemini Flash operationnel.'
+          : 'Reponse Gemini inattendue.',
       };
     } catch (error: any) {
       const response = error?.getResponse?.();
@@ -64,7 +66,7 @@ export class GeminiClient {
   async generateJson(
     prompt: string,
     schema: unknown,
-    timeoutMs = 12000,
+    timeoutMs = 30000,
   ): Promise<any> {
     const key = this.config.get<string>('GEMINI_API_KEY');
     if (!key) {
@@ -94,46 +96,57 @@ export class GeminiClient {
         signal: controller.signal,
       });
     } catch {
+      clearTimeout(timer);
       throw new ServiceUnavailableException(
         'Service IA momentanement injoignable. Reessayez dans un instant.',
       );
+    }
+
+    // Keep the deadline active while reading the response body as well.
+    try {
+      if (res.status === 429) {
+        throw new ServiceUnavailableException(
+          'Quota IA atteint. Reessayez dans une minute.',
+        );
+      }
+      if ([400, 401, 403].includes(res.status)) {
+        this.logger.warn(`Gemini HTTP ${res.status}`);
+        throw new ServiceUnavailableException(
+          'Cle GEMINI_API_KEY invalide ou non autorisee.',
+        );
+      }
+      if (res.status === 404) {
+        this.logger.warn(`Gemini HTTP ${res.status}`);
+        throw new ServiceUnavailableException(
+          `Modele Gemini indisponible: ${model}.`,
+        );
+      }
+      if (!res.ok) {
+        this.logger.warn(`Gemini HTTP ${res.status}`);
+        throw new ServiceUnavailableException(
+          'Le service IA a renvoye une erreur. Reessayez plus tard.',
+        );
+      }
+
+      let data: any;
+      try {
+        data = await res.json();
+      } catch {
+        throw new ServiceUnavailableException(
+          'Reponse IA interrompue ou illisible.',
+        );
+      }
+      const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (!text) {
+        throw new ServiceUnavailableException('Reponse IA vide.');
+      }
+      try {
+        return JSON.parse(text);
+      } catch {
+        throw new ServiceUnavailableException('Reponse IA illisible.');
+      }
     } finally {
       clearTimeout(timer);
-    }
-
-    if (res.status === 429) {
-      throw new ServiceUnavailableException(
-        'Quota IA atteint. Reessayez dans une minute.',
-      );
-    }
-    if ([400, 401, 403].includes(res.status)) {
-      this.logger.warn(`Gemini HTTP ${res.status}`);
-      throw new ServiceUnavailableException(
-        'Cle GEMINI_API_KEY invalide ou non autorisee.',
-      );
-    }
-    if (res.status === 404) {
-      this.logger.warn(`Gemini HTTP ${res.status}`);
-      throw new ServiceUnavailableException(
-        `Modele Gemini indisponible: ${model}.`,
-      );
-    }
-    if (!res.ok) {
-      this.logger.warn(`Gemini HTTP ${res.status}`);
-      throw new ServiceUnavailableException(
-        'Le service IA a renvoye une erreur. Reessayez plus tard.',
-      );
-    }
-
-    const data: any = await res.json();
-    const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-    if (!text) {
-      throw new ServiceUnavailableException('Reponse IA vide.');
-    }
-    try {
-      return JSON.parse(text);
-    } catch {
-      throw new ServiceUnavailableException('Reponse IA illisible.');
     }
   }
 }

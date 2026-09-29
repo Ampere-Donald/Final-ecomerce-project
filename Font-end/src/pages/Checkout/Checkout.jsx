@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
-import { Trash2, Plus, Minus, CheckCircle2, Circle, Lock, ShieldCheck, ShoppingCart, UserPlus, PackageCheck } from 'lucide-react';
+import { Trash2, Plus, Minus, CheckCircle2, Circle, Lock, ShieldCheck, ShoppingCart, UserPlus } from 'lucide-react';
 import { formatFCFA } from '../../utils/formatFCFA';
 import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
@@ -9,6 +9,8 @@ import { Link } from 'react-router-dom';
 import axios from 'axios';
 import Footer from '../../components/Footer/Footer';
 import './Checkout.scss';
+import Confirmation from '../../storefront/Confirmation';
+import Cart from '../../storefront/Cart';
 
 const _rawApi = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 const API = _rawApi.endsWith('/api') ? _rawApi : `${_rawApi}/api`;
@@ -140,49 +142,8 @@ const Checkout = () => {
         }
     };
 
-    // ── Success Modal ───────────────────────────────────────
-    if (orderSuccess) {
-        return (
-            <div className="checkout-page">
-                <Helmet>
-                    <title>{t('checkout.successMetaTitle')}</title>
-                </Helmet>
-                <div className="checkout__success-overlay">
-                    <div className="checkout__success-modal">
-                        <div className="checkout__success-icon">
-                            <PackageCheck size={48} strokeWidth={1.5} />
-                        </div>
-                        <h2>{t('checkout.successTitle')}</h2>
-                        <p className="checkout__success-subtitle">
-                            {t('checkout.successSubtitle')}
-                        </p>
-                        <div className="checkout__success-info">
-                            <div className="checkout__success-row">
-                                <span>{t('checkout.trackingSub')}</span>
-                                <strong>{orderSuccess.numeroSuivi}</strong>
-                            </div>
-                            <div className="checkout__success-row">
-                                <span>{t('checkout.totalAmount')}</span>
-                                <strong>{formatFCFA(orderSuccess.total)}</strong>
-                            </div>
-                        </div>
-                        <p className="checkout__success-note">
-                            {t('checkout.successNote')}
-                        </p>
-                        <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
-                            <Link to="/profile" className="checkout__place-order-btn" style={{ textDecoration: 'none', display: 'inline-flex', justifyContent: 'center', background: 'transparent', border: '2px solid currentColor', color: 'inherit' }}>
-                                {t('checkout.viewHistory')}
-                            </Link>
-                            <Link to="/catalogue" className="checkout__place-order-btn" style={{ textDecoration: 'none', display: 'inline-flex', justifyContent: 'center' }}>
-                                {t('checkout.continueShopping')}
-                            </Link>
-                        </div>
-                    </div>
-                </div>
-                <Footer />
-            </div>
-        );
-    }
+    if (orderSuccess) return <Confirmation number={orderSuccess.numeroSuivi} />;
+    if (!cart.length) return <Cart />;
 
     return (
         <div className="checkout-page">

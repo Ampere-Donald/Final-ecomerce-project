@@ -78,6 +78,7 @@ _analysis/
 image-generator/node_modules/
 image-generator/.env
 *.webp
+!Font-end/public/design-e/*.webp
 
 # ─── Fichiers volumineux à ne PAS committer par accident ─
 *.xlsx

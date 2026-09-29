@@ -5,9 +5,9 @@
 @layer base {
   :root {
     color-scheme: light;
-    --color-brand: 28 25 163;
-    --color-success: 4 120 87;
-    --color-warning: 180 83 9;
+    --color-brand: 45 50 201;
+    --color-success: 21 152 108;
+    --color-warning: 230 154 38;
     --color-danger: 185 28 28;
     --radius-control: 0.75rem;
     --radius-surface: 1rem;

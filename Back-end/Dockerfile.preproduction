@@ -1,0 +1,32 @@
+ARG NODE_IMAGE=node:22-alpine
+FROM ${NODE_IMAGE} AS base
+WORKDIR /app
+RUN apk add --no-cache openssl
+
+FROM base AS builder
+COPY package.json package-lock.json ./
+COPY prisma ./prisma
+COPY prisma.config.ts ./
+RUN npm ci --no-audit --no-fund
+COPY tsconfig.json tsconfig.build.json nest-cli.json ./
+COPY src ./src
+# The build script generates the Prisma client before compiling Nest.
+RUN npm run build
+
+FROM base AS production-dependencies
+COPY package.json package-lock.json ./
+RUN npm ci --omit=dev --no-audit --no-fund
+
+FROM base AS production
+ENV NODE_ENV=production
+COPY --from=production-dependencies --chown=node:node /app/node_modules ./node_modules
+COPY --from=builder --chown=node:node /app/node_modules/.prisma ./node_modules/.prisma
+COPY --from=builder --chown=node:node /app/dist ./dist
+COPY --chown=node:node package.json package-lock.json prisma.config.ts ./
+COPY --chown=node:node prisma ./prisma
+COPY --chown=node:node scripts/start-preproduction.cjs scripts/verify-release-schema.cjs ./scripts/
+RUN mkdir -p /app/uploads && chown node:node /app/uploads
+USER node
+EXPOSE 3000
+HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 CMD node -e "fetch('http://127.0.0.1:'+ (process.env.PORT || 3000) + '/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+CMD ["node", "scripts/start-preproduction.cjs"]

@@ -12,6 +12,8 @@ import {
   Request,
   ForbiddenException,
 } from '@nestjs/common';
+import { QuoteCommandeDto } from './dto/quote-commande.dto';
+import { OptionalClientAuthGuard } from '../auth/optional-client-auth.guard';
 import { CommandeService } from './commande.service';
 import { CreateCommandeDto } from './dto/create-commande.dto';
 import { UpdateCommandeDto } from './dto/update-commande.dto';
@@ -26,15 +28,27 @@ export class CommandeController {
   constructor(private readonly commandeService: CommandeService) {}
 
   /** Standard order creation (public) */
+  @UseGuards(OptionalClientAuthGuard)
   @Post()
-  create(@Body() createCommandeDto: CreateCommandeDto) {
-    return this.commandeService.create(createCommandeDto);
+  create(@Body() createCommandeDto: CreateCommandeDto, @Request() req: any) {
+    return this.commandeService.create({
+      ...createCommandeDto,
+      clientId: req.user?.id,
+    });
   }
 
   /** Checkout with inline account creation (public) */
+  @Post('quote')
+  quote(@Body() dto: QuoteCommandeDto) {
+    return this.commandeService.quote(dto);
+  }
+
   @Post('checkout')
   checkout(@Body() dto: CreateCommandeDto) {
-    return this.commandeService.createWithAccount(dto);
+    return this.commandeService.createWithAccount({
+      ...dto,
+      clientId: undefined,
+    });
   }
 
   /** Admin: list all orders */
@@ -107,7 +121,12 @@ export class CommandeController {
     @Request() req: any,
     @Body() updateCommandeDto: UpdateCommandeDto,
   ) {
-    if (updateCommandeDto.statut && !['EN_ATTENTE', 'CONFIRMEE', 'EN_LIVRAISON', 'LIVREE'].includes(updateCommandeDto.statut)) {
+    if (
+      updateCommandeDto.statut &&
+      !['EN_ATTENTE', 'CONFIRMEE', 'EN_LIVRAISON', 'LIVREE'].includes(
+        updateCommandeDto.statut,
+      )
+    ) {
       throw new ForbiddenException(
         'L\'administrateur ne peut définir que les statuts "En attente", "Confirmée", "En livraison" ou "Livrée". L\'annulation est réservée au client.',
       );
@@ -121,7 +140,7 @@ export class CommandeController {
   @Patch(':id/cancel')
   async cancel(@Request() req: any, @Param('id', ParseUUIDPipe) id: string) {
     const order = await this.commandeService.findOne(id);
-    if (order.clientId && order.clientId !== req.user.id) {
+    if (!order.clientId || order.clientId !== req.user.id) {
       throw new ForbiddenException('Cette commande ne vous appartient pas.');
     }
     return this.commandeService.cancel(id);

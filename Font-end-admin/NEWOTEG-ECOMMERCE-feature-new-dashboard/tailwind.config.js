@@ -4,15 +4,17 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        sans: ['IBM Plex Sans', 'Aptos', 'Segoe UI', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        display: ['Space Grotesk', 'Aptos Display', 'Segoe UI', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        mono: ['IBM Plex Mono', 'Cascadia Mono', 'Consolas', 'ui-monospace', 'monospace'],
       },
       colors: {
-        primary: '#1c19a3',
+        primary: '#2D32C9',
         'primary-foreground': '#ffffff',
-        'background-light': '#f6f6f8',
-        'background-dark': '#121220',
-        success: '#047857',
-        warning: '#b45309',
+        'background-light': '#F5F7FB',
+        'background-dark': '#0B1636',
+        success: '#15986C',
+        warning: '#E69A26',
         danger: '#b91c1c',
       },
     },

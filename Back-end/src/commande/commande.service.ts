@@ -5,12 +5,18 @@ import {
   ConflictException,
 } from '@nestjs/common';
 import { DatabaseService } from 'src/database/database.service';
-import { NotificationService, NotificationActor } from 'src/notification/notification.service';
+import {
+  NotificationService,
+  NotificationActor,
+} from 'src/notification/notification.service';
 import { AuthService } from 'src/auth/auth.service';
 import { CreateCommandeDto } from './dto/create-commande.dto';
 import { UpdateCommandeDto } from './dto/update-commande.dto';
 import { ProcessPickupDto } from './dto/process-pickup.dto';
+import { quoteCatalogue, assertQuoteAccepted } from './catalogue-quote';
+import { QuoteCommandeDto } from './dto/quote-commande.dto';
 import * as bcrypt from 'bcrypt';
+import { previousOrder, completeOrderRequest } from './order-request';
 
 @Injectable()
 export class CommandeService {
@@ -35,133 +41,184 @@ export class CommandeService {
    * Checkout flow: optionally creates a client account, then creates the order.
    * Returns { commande, access_token?, user? }
    */
+  async quote(dto: QuoteCommandeDto) {
+    return quoteCatalogue(this.db, dto.lignes);
+  }
+
   async createWithAccount(dto: CreateCommandeDto) {
     const { lignes, email, motDePasse, ...commandeData } = dto;
 
     if (!lignes || lignes.length === 0) {
-      throw new BadRequestException('La commande doit contenir au moins un article.');
+      throw new BadRequestException(
+        'La commande doit contenir au moins un article.',
+      );
     }
 
     // If email + password provided → inline account creation
     let clientId = commandeData.clientId;
     let access_token: string | undefined;
     let user: any;
-
-    if (email && motDePasse) {
-      // Check if account already exists
-      const existing = await this.db.client.findFirst({ where: { email } });
-      if (existing) {
-        throw new ConflictException(
-          'Un compte existe déjà avec cet email. Veuillez vous connecter d\'abord.',
-        );
-      }
-
-      const hashedPassword = await bcrypt.hash(motDePasse, 12);
-
-      const client = await this.db.client.create({
-        data: {
-          nom: commandeData.nomClient,
-          email,
-          telephone: commandeData.telephone || null,
-          motDePasse: hashedPassword,
-          emailVerifie: true,
-          typeClient: 'PARTICULIER',
-        },
-      });
-
-      clientId = client.id;
-      access_token = this.authService.signToken(client as any);
-      user = {
-        id: client.id,
-        nom: client.nom,
-        email: client.email,
-        telephone: client.telephone,
-        typeClient: client.typeClient,
-      };
-    }
+    let replayed = false;
 
     // Now create the order (inside a transaction for stock management)
-    const result = await this.db.$transaction(async (tx: any) => {
-      // 1. Verify product existence and stock for each line
-      for (const ligne of lignes) {
-        const produit = await tx.produit.findUnique({
-          where: { id: ligne.produitId },
-        });
-        if (!produit) {
-          throw new NotFoundException(
-            `Produit "${ligne.nomProduit}" (${ligne.produitId}) introuvable.`,
-          );
+    const result = await this.db
+      .$transaction(async (tx: any) => {
+        const previous = await previousOrder(tx, dto, 'checkout');
+        if (previous) {
+          replayed = true;
+          if (email && motDePasse && previous.clientId) {
+            const client = await tx.client.findUnique({
+              where: { id: previous.clientId },
+            });
+            if (
+              !client?.motDePasse ||
+              !(await bcrypt.compare(motDePasse, client.motDePasse))
+            ) {
+              throw new ConflictException({
+                code: 'REQUEST_AUTH_CHANGED',
+                message:
+                  'Votre accès a changé. Connectez-vous pour retrouver votre commande.',
+              });
+            }
+            access_token = this.authService.signToken(client);
+            user = {
+              id: client.id,
+              nom: client.nom,
+              email: client.email,
+              telephone: client.telephone,
+              typeClient: client.typeClient,
+            };
+          }
+          return previous;
         }
-        if (!produit.estActif) {
-          throw new BadRequestException(`Le produit "${produit.nomProduit}" n'est pas disponible à la commande.`);
-        }
-        if (!(Number(produit.prixDetail) > 0)) {
-          throw new BadRequestException(`Prix sur demande pour "${produit.nomProduit}". Contactez la boutique avant de commander.`);
-        }
-        if (produit.quantiteStock < ligne.quantite) {
-          throw new BadRequestException(
-            `Stock insuffisant pour "${produit.nomProduit}". Disponible: ${produit.quantiteStock}, Demandé: ${ligne.quantite}`,
-          );
-        }
-      }
+        const quote = await quoteCatalogue(tx, dto.lignes);
+        assertQuoteAccepted(dto, quote);
+        const lignes = quote.lignes;
+        if (email && motDePasse) {
+          // Check if account already exists
+          const existing = await tx.client.findFirst({
+            where: {
+              OR: [
+                { email },
+                ...(commandeData.telephone
+                  ? [{ telephone: commandeData.telephone }]
+                  : []),
+              ],
+            },
+          });
+          if (existing) {
+            throw new ConflictException(
+              "Un compte existe déjà avec cet email ou ce téléphone. Veuillez vous connecter d'abord.",
+            );
+          }
 
-      // 2. Create the order with nested line items
-      const commande = await tx.commande.create({
-        data: {
-          numeroSuivi: this.generateNumeroSuivi(),
-          nomClient: commandeData.nomClient,
-          telephone: commandeData.telephone,
-          adresseLivraison: commandeData.adresseLivraison,
-          montantTotal: commandeData.montantTotal,
-          modeReception: commandeData.modeReception,
-          clientId: clientId || undefined,
-          lignes: {
-            create: lignes.map((ligne) => ({
-              produitId: ligne.produitId,
-              nomProduit: ligne.nomProduit,
-              quantite: ligne.quantite,
-              prixUnitaire: ligne.prixUnitaire,
-              sousTotal: ligne.quantite * ligne.prixUnitaire,
-            })),
+          const hashedPassword = await bcrypt.hash(motDePasse, 12);
+
+          const client = await tx.client.create({
+            data: {
+              nom: commandeData.nomClient,
+              email,
+              telephone: commandeData.telephone || null,
+              motDePasse: hashedPassword,
+              emailVerifie: true,
+              typeClient: 'PARTICULIER',
+            },
+          });
+
+          clientId = client.id;
+          access_token = this.authService.signToken(client as any);
+          user = {
+            id: client.id,
+            nom: client.nom,
+            email: client.email,
+            telephone: client.telephone,
+            typeClient: client.typeClient,
+          };
+        }
+
+        // Create using the catalogue values verified inside this transaction.
+        const commande = await tx.commande.create({
+          data: {
+            numeroSuivi: this.generateNumeroSuivi(),
+            nomClient: commandeData.nomClient,
+            telephone: commandeData.telephone,
+            adresseLivraison: commandeData.adresseLivraison,
+            montantTotal: quote.montantArticles,
+            modeReception: commandeData.modeReception,
+            clientId: clientId || undefined,
+            lignes: {
+              create: lignes.map((ligne) => ({
+                produitId: ligne.produitId,
+                nomProduit: ligne.nomProduit,
+                quantite: ligne.quantite,
+                prixUnitaire: ligne.prixUnitaire,
+                sousTotal: ligne.sousTotal,
+              })),
+            },
           },
-        },
-        include: {
-          lignes: { include: { produit: true } },
-        },
+          include: {
+            lignes: { include: { produit: true } },
+          },
+        });
+
+        // 3. Décrémenter le stock de façon atomique (interdit stock négatif)
+        for (const ligne of lignes) {
+          const updated = await tx.produit.updateMany({
+            where: {
+              id: ligne.produitId,
+              estActif: true,
+              quantiteStock: { gte: ligne.quantite },
+            },
+            data: {
+              quantiteStock: { decrement: ligne.quantite },
+              version: { increment: 1 },
+            },
+          });
+          if (updated.count === 0) {
+            const p = await tx.produit.findUnique({
+              where: { id: ligne.produitId },
+              select: { nomProduit: true, quantiteStock: true },
+            });
+            throw new BadRequestException(
+              `Stock insuffisant pour "${p?.nomProduit ?? ligne.nomProduit}". Disponible: ${p?.quantiteStock ?? 0}, Demandé: ${ligne.quantite}`,
+            );
+          }
+
+          await tx.mouvementStock.create({
+            data: {
+              produitId: ligne.produitId,
+              typeMouvement: 'SORTIE',
+              quantite: ligne.quantite,
+              motif: `Commande e-commerce #${commande.numeroSuivi}`,
+            },
+          });
+        }
+
+        await completeOrderRequest(tx, dto.requestId, commande.id);
+        return commande;
+      })
+      .catch((error) => {
+        const fields = Array.isArray(error?.meta?.target)
+          ? error.meta.target
+          : [];
+        if (
+          error?.code === 'P2002' &&
+          fields.some((field: string) => ['email', 'telephone'].includes(field))
+        ) {
+          throw new ConflictException(
+            "Un compte existe déjà avec cet email ou ce téléphone. Veuillez vous connecter d'abord.",
+          );
+        }
+        throw error;
       });
 
-      // 3. Décrémenter le stock de façon atomique (interdit stock négatif)
-      for (const ligne of lignes) {
-        const updated = await tx.produit.updateMany({
-          where: { id: ligne.produitId, estActif: true, prixDetail: { gt: 0 }, quantiteStock: { gte: ligne.quantite } },
-          data: { quantiteStock: { decrement: ligne.quantite }, version: { increment: 1 } },
-        });
-        if (updated.count === 0) {
-          const p = await tx.produit.findUnique({ where: { id: ligne.produitId }, select: { nomProduit: true, quantiteStock: true } });
-          throw new BadRequestException(
-            `Stock insuffisant pour "${p?.nomProduit ?? ligne.nomProduit}". Disponible: ${p?.quantiteStock ?? 0}, Demandé: ${ligne.quantite}`,
-          );
-        }
-
-        await tx.mouvementStock.create({
-          data: {
-            produitId: ligne.produitId,
-            typeMouvement: 'SORTIE',
-            quantite: ligne.quantite,
-            motif: `Commande e-commerce #${commande.numeroSuivi}`,
-          },
-        });
-      }
-
-      return commande;
-    });
-
-    this.notifications
-      .create(
-        'COMMANDE_CREEE',
-        `Nouvelle commande ${result.numeroSuivi} de ${result.nomClient} (${result.montantTotal} FCFA)`,
-      )
-      .catch(() => {});
+    if (!replayed)
+      this.notifications
+        .create(
+          'COMMANDE_CREEE',
+          `Nouvelle commande ${result.numeroSuivi} de ${result.nomClient} (${result.montantTotal} FCFA)`,
+        )
+        .catch(() => {});
 
     return {
       commande: result,
@@ -176,41 +233,30 @@ export class CommandeService {
     const { lignes, email, motDePasse, ...commandeData } = dto;
 
     if (!lignes || lignes.length === 0) {
-      throw new BadRequestException('La commande doit contenir au moins un article.');
+      throw new BadRequestException(
+        'La commande doit contenir au moins un article.',
+      );
     }
 
+    let replayed = false;
     const result = await this.db.$transaction(async (tx: any) => {
-      // 1. Verify product existence and stock for each line
-      for (const ligne of lignes) {
-        const produit = await tx.produit.findUnique({
-          where: { id: ligne.produitId },
-        });
-        if (!produit) {
-          throw new NotFoundException(
-            `Produit "${ligne.nomProduit}" (${ligne.produitId}) introuvable.`,
-          );
-        }
-        if (!produit.estActif) {
-          throw new BadRequestException(`Le produit "${produit.nomProduit}" n'est pas disponible à la commande.`);
-        }
-        if (!(Number(produit.prixDetail) > 0)) {
-          throw new BadRequestException(`Prix sur demande pour "${produit.nomProduit}". Contactez la boutique avant de commander.`);
-        }
-        if (produit.quantiteStock < ligne.quantite) {
-          throw new BadRequestException(
-            `Stock insuffisant pour "${produit.nomProduit}". Disponible: ${produit.quantiteStock}, Demandé: ${ligne.quantite}`,
-          );
-        }
+      const previous = await previousOrder(tx, dto, 'standard');
+      if (previous) {
+        replayed = true;
+        return previous;
       }
+      const quote = await quoteCatalogue(tx, dto.lignes);
+      assertQuoteAccepted(dto, quote);
+      const lignes = quote.lignes;
 
-      // 2. Create the order with nested line items
+      // Create using the catalogue values verified inside this transaction.
       const commande = await tx.commande.create({
         data: {
           numeroSuivi: this.generateNumeroSuivi(),
           nomClient: commandeData.nomClient,
           telephone: commandeData.telephone,
           adresseLivraison: commandeData.adresseLivraison,
-          montantTotal: commandeData.montantTotal,
+          montantTotal: quote.montantArticles,
           modeReception: commandeData.modeReception,
           clientId: commandeData.clientId || undefined,
           lignes: {
@@ -219,7 +265,7 @@ export class CommandeService {
               nomProduit: ligne.nomProduit,
               quantite: ligne.quantite,
               prixUnitaire: ligne.prixUnitaire,
-              sousTotal: ligne.quantite * ligne.prixUnitaire,
+              sousTotal: ligne.sousTotal,
             })),
           },
         },
@@ -231,11 +277,21 @@ export class CommandeService {
       // 3. Décrémenter le stock de façon atomique (interdit stock négatif)
       for (const ligne of lignes) {
         const updated = await tx.produit.updateMany({
-          where: { id: ligne.produitId, estActif: true, prixDetail: { gt: 0 }, quantiteStock: { gte: ligne.quantite } },
-          data: { quantiteStock: { decrement: ligne.quantite }, version: { increment: 1 } },
+          where: {
+            id: ligne.produitId,
+            estActif: true,
+            quantiteStock: { gte: ligne.quantite },
+          },
+          data: {
+            quantiteStock: { decrement: ligne.quantite },
+            version: { increment: 1 },
+          },
         });
         if (updated.count === 0) {
-          const p = await tx.produit.findUnique({ where: { id: ligne.produitId }, select: { nomProduit: true, quantiteStock: true } });
+          const p = await tx.produit.findUnique({
+            where: { id: ligne.produitId },
+            select: { nomProduit: true, quantiteStock: true },
+          });
           throw new BadRequestException(
             `Stock insuffisant pour "${p?.nomProduit ?? ligne.nomProduit}". Disponible: ${p?.quantiteStock ?? 0}, Demandé: ${ligne.quantite}`,
           );
@@ -251,15 +307,17 @@ export class CommandeService {
         });
       }
 
+      await completeOrderRequest(tx, dto.requestId, commande.id);
       return commande;
     });
 
-    this.notifications
-      .create(
-        'COMMANDE_CREEE',
-        `Nouvelle commande ${result.numeroSuivi} de ${result.nomClient} (${result.montantTotal} FCFA)`,
-      )
-      .catch(() => {});
+    if (!replayed)
+      this.notifications
+        .create(
+          'COMMANDE_CREEE',
+          `Nouvelle commande ${result.numeroSuivi} de ${result.nomClient} (${result.montantTotal} FCFA)`,
+        )
+        .catch(() => {});
 
     return result;
   }
@@ -319,7 +377,11 @@ export class CommandeService {
     });
     if (dto.statut) {
       this.notifications
-        .create('COMMANDE_STATUT', `Commande ${commande.numeroSuivi} → ${dto.statut}`, actor)
+        .create(
+          'COMMANDE_STATUT',
+          `Commande ${commande.numeroSuivi} → ${dto.statut}`,
+          actor,
+        )
         .catch(() => {});
     }
     return commande;
@@ -353,7 +415,10 @@ export class CommandeService {
     return { deleted: true, id };
   }
 
-  async cleanupHistory(filters: { before?: string; statut?: string }, actor?: NotificationActor) {
+  async cleanupHistory(
+    filters: { before?: string; statut?: string },
+    actor?: NotificationActor,
+  ) {
     const before = filters.before ? new Date(filters.before) : new Date();
     if (Number.isNaN(before.getTime())) {
       throw new BadRequestException('Date limite invalide.');
@@ -368,8 +433,13 @@ export class CommandeService {
           : { in: allowedStatuses },
     };
 
-    if (typeof where.statut === 'string' && !allowedStatuses.includes(where.statut)) {
-      throw new BadRequestException('Le nettoyage est limite aux commandes annulees ou livrees.');
+    if (
+      typeof where.statut === 'string' &&
+      !allowedStatuses.includes(where.statut)
+    ) {
+      throw new BadRequestException(
+        'Le nettoyage est limite aux commandes annulees ou livrees.',
+      );
     }
 
     const commandes = await this.db.commande.findMany({
@@ -414,9 +484,18 @@ export class CommandeService {
     }
 
     const updated = await this.db.$transaction(async (tx: any) => {
-      const result = await tx.commande.update({
+      const changed = await tx.commande.updateMany({
+        where: { id, statut: { in: ['EN_ATTENTE', 'CONFIRMEE'] } },
+        data: {
+          statut: 'ANNULEE',
+          dateAnnulation: new Date(),
+          version: { increment: 1 },
+        },
+      });
+      if (changed.count !== 1)
+        throw new ConflictException('Le statut a changé. Actualisez le suivi.');
+      const result = await tx.commande.findUnique({
         where: { id },
-        data: { statut: 'ANNULEE', dateAnnulation: new Date(), version: { increment: 1 } },
         include: { lignes: { include: { produit: true } } },
       });
 
@@ -424,7 +503,10 @@ export class CommandeService {
       for (const ligne of result.lignes) {
         await tx.produit.update({
           where: { id: ligne.produitId },
-          data: { quantiteStock: { increment: ligne.quantite }, version: { increment: 1 } },
+          data: {
+            quantiteStock: { increment: ligne.quantite },
+            version: { increment: 1 },
+          },
         });
         await tx.mouvementStock.create({
           data: {
@@ -460,13 +542,17 @@ export class CommandeService {
     }
     if (commande.statut !== 'EN_LIVRAISON') {
       throw new BadRequestException(
-        'La confirmation de réception n\'est possible que lorsque la commande est en livraison.',
+        "La confirmation de réception n'est possible que lorsque la commande est en livraison.",
       );
     }
 
     const updated = await this.db.commande.update({
       where: { id },
-      data: { statut: 'LIVREE', dateLivraison: new Date(), version: { increment: 1 } },
+      data: {
+        statut: 'LIVREE',
+        dateLivraison: new Date(),
+        version: { increment: 1 },
+      },
       include: { lignes: { include: { produit: true } } },
     });
 
@@ -485,12 +571,16 @@ export class CommandeService {
    * Sets status to LIVREE and optionally creates a Caisse entry if paid on site.
    * Stock was already decremented at order creation.
    */
-  async processPickup(id: string, dto: ProcessPickupDto, actor?: NotificationActor) {
+  async processPickup(
+    id: string,
+    dto: ProcessPickupDto,
+    actor?: NotificationActor,
+  ) {
     const commande = await this.findOne(id);
 
     if (commande.modeReception !== 'RETRAIT_MAGASIN') {
       throw new BadRequestException(
-        'Cette commande n\'est pas en mode retrait magasin.',
+        "Cette commande n'est pas en mode retrait magasin.",
       );
     }
 

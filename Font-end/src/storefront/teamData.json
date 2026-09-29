@@ -1,0 +1,67 @@
+[
+  {
+    "image": "/images/img-equipe/1.webp",
+    "name": "Jude FOGUENG",
+    "role": "about.roleFounder"
+  },
+  {
+    "image": "/images/img-equipe/4.webp",
+    "name": "Kamla PHILEMON JOSUÉ",
+    "role": "about.roleManager"
+  },
+  {
+    "image": "/images/img-equipe/3.webp",
+    "name": "Noubissi Kely Rachel",
+    "role": "about.roleInformatique"
+  },
+  {
+    "image": "/images/img-equipe/zasou.webp",
+    "name": "Zasou",
+    "role": "about.roleExpertTech"
+  },
+  {
+    "image": "/images/img-equipe/christian.webp",
+    "name": "Christian",
+    "role": "about.rolePartner"
+  },
+  {
+    "image": "/images/img-equipe/tagne.webp",
+    "name": "Navou Momo",
+    "role": "about.roleFullStack"
+  },
+  {
+    "image": "/images/img-equipe/13.webp",
+    "name": "Donald FOGUENG",
+    "role": "about.roleFullStack"
+  },
+  {
+    "image": "/images/img-equipe/6.webp",
+    "name": "Betuel Lavoisier FOGUENG",
+    "role": "about.roleInventories"
+  },
+  {
+    "image": "/images/img-equipe/5.webp",
+    "name": "Duclair KENMOE",
+    "role": "about.roleHR"
+  },
+  {
+    "image": "/images/img-equipe/17.webp",
+    "name": "Darielle",
+    "role": "about.roleMarketing"
+  },
+  {
+    "image": "/images/img-equipe/15.webp",
+    "name": "Amélie Aimée NKUIDJEU",
+    "role": "about.roleSales"
+  },
+  {
+    "image": "/images/img-equipe/12.webp",
+    "name": "Doris Gaye MOGUEM",
+    "role": "about.roleSales"
+  },
+  {
+    "image": "/images/img-equipe/14.webp",
+    "name": "Edwige DOMBOU JAALA",
+    "role": "about.roleCashier"
+  }
+]

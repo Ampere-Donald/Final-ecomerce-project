@@ -1,0 +1,605 @@
+.e-info-page {
+  padding-bottom: 72px;
+}
+.e-about-opening {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 64px;
+  align-items: center;
+  margin: 32px 0 64px;
+}
+.e-about-opening h1 {
+  max-width: 540px;
+  font-size: 44px;
+}
+.e-about-opening p {
+  max-width: 58ch;
+  color: var(--e-muted);
+}
+.e-about-opening .e-info-intro {
+  font-size: 21px;
+  color: var(--e-ink);
+  margin: 24px 0 16px;
+}
+.e-about-opening .e-btn {
+  margin-top: 16px;
+}
+.e-about-opening figure {
+  margin: 0;
+}
+.e-about-photo {
+  display: block;
+  padding: 0;
+  border: 0;
+  background: #edf2ef;
+  width: 100%;
+  border-radius: 4px 36px 4px 4px;
+  overflow: hidden;
+  cursor: zoom-in;
+}
+.e-about-photo img {
+  width: 100%;
+  height: 380px;
+  object-fit: cover;
+  display: block;
+}
+.e-about-opening figcaption {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-top: 14px;
+  font-size: 13px;
+  color: var(--e-muted);
+}
+.e-about-story {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 240px;
+  gap: 64px;
+  padding: 40px 48px;
+  background: #eef5f1;
+  margin: 0 0 64px;
+  border-radius: 6px;
+  align-items: center;
+}
+.e-story-year {
+  font:
+    700 40px/1.2 Bahnschrift,
+    "Segoe UI",
+    sans-serif;
+  color: #866012;
+}
+.e-about-story h2 {
+  margin: 12px 0 20px;
+}
+.e-about-story p {
+  max-width: 70ch;
+  color: var(--e-muted);
+}
+.e-founder {
+  margin: 0;
+}
+.e-founder img {
+  width: 160px;
+  height: 180px;
+  object-fit: cover;
+  border-radius: 4px;
+}
+.e-founder strong,
+.e-founder span {
+  display: block;
+  margin-top: 8px;
+}
+.e-founder span {
+  color: var(--e-muted);
+  font-size: 13px;
+}
+.e-about-services {
+  margin-bottom: 56px;
+}
+.e-about-services > div {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 40px;
+}
+.e-about-services article {
+  border-top: 2px solid var(--e-line);
+  padding-top: 8px;
+}
+.e-about-services article:nth-child(2) {
+  border-color: var(--e-gold);
+}
+.e-about-services article:nth-child(3) {
+  border-color: #76ae9b;
+}
+.e-about-services h3 {
+  font-size: 20px;
+}
+.e-about-services h3 a {
+  color: var(--e-ink);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.e-about-services h3 svg {
+  flex-shrink: 0;
+}
+.e-about-services p {
+  color: var(--e-muted);
+  font-size: 15px;
+}
+.e-info-details {
+  border-top: 1px solid var(--e-line);
+  border-bottom: 1px solid var(--e-line);
+  margin-top: -1px;
+}
+.e-info-details > summary {
+  padding: 24px 0;
+  cursor: pointer;
+  font-size: 20px;
+  font-weight: 600;
+}
+.e-team-list {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 28px;
+  padding: 8px 0 36px;
+}
+.e-team-list article {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-width: 0;
+}
+.e-team-list img {
+  width: 72px;
+  height: 84px;
+  object-fit: cover;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+.e-team-list .e-placeholder {
+  width: 72px;
+  height: 84px;
+  flex-shrink: 0;
+}
+.e-team-list .e-placeholder span {
+  display: none;
+}
+.e-team-list h3 {
+  margin: 0;
+  font-size: 16px;
+  overflow-wrap: anywhere;
+}
+.e-team-list p {
+  font-size: 13px;
+  color: var(--e-muted);
+  margin: 6px 0 0;
+}
+.e-shop-media {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 40px;
+  padding-bottom: 32px;
+}
+.e-shop-media button {
+  background: white;
+  color: var(--e-blue);
+  cursor: pointer;
+  border: 0;
+  padding: 0;
+  text-align: left;
+}
+.e-shop-media > button img {
+  width: 100%;
+  height: 280px;
+  object-fit: cover;
+  border-radius: 4px;
+}
+.e-shop-media > button span {
+  display: block;
+  margin-top: 10px;
+}
+.e-shop-media > div button {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+}
+.e-media-view {
+  display: block;
+  max-width: 100%;
+  max-height: 65vh;
+  margin: auto;
+  object-fit: contain;
+}
+.e-shop-visit {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 32px;
+  margin-top: 56px;
+  padding-top: 32px;
+}
+.e-shop-visit p {
+  color: var(--e-muted);
+  max-width: 70ch;
+}
+.e-shop-visit .e-btn {
+  flex-shrink: 0;
+}
+.e-contact-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 420px) minmax(0, 1fr);
+  gap: 100px;
+  margin: 40px 0 64px;
+}
+.e-contact-direct h2,
+.e-contact-compose h2 {
+  font-size: 24px;
+  margin: 0 0 24px;
+}
+.e-contact-whatsapp,
+.e-contact-call {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px;
+  border-radius: 6px;
+  margin-bottom: 12px;
+}
+.e-contact-direct .e-contact-whatsapp {
+  background: var(--e-green);
+  color: white;
+}
+.e-contact-direct .e-contact-call {
+  background: #ecf2fa;
+  color: var(--e-blue);
+}
+.e-contact-whatsapp > span,
+.e-contact-call > span {
+  flex: 1;
+}
+.e-contact-whatsapp strong,
+.e-contact-call strong,
+.e-contact-whatsapp small,
+.e-contact-call small {
+  display: block;
+}
+.e-contact-whatsapp small,
+.e-contact-call small {
+  margin-top: 5px;
+}
+.e-second-phone {
+  font-size: 14px;
+  color: var(--e-muted);
+}
+.e-contact-email {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin: 28px 0;
+  overflow-wrap: anywhere;
+}
+.e-contact-address,
+.e-contact-hours {
+  border-top: 1px solid var(--e-line);
+  padding: 20px 0;
+}
+.e-contact-address h3,
+.e-contact-hours h3 {
+  margin: 0 0 14px;
+  font-size: 18px;
+}
+.e-contact-address p,
+.e-contact-hours p {
+  font-size: 14px;
+  color: var(--e-muted);
+}
+.e-contact-address a {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  min-height: 44px;
+}
+.e-contact-compose {
+  padding: 32px;
+  background: #f5f8f7;
+  border-top: 3px solid #aecabe;
+  align-self: start;
+}
+.e-contact-compose > p {
+  color: var(--e-muted);
+  margin-bottom: 24px;
+}
+.e-contact-compose textarea {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 160px;
+  resize: vertical;
+  background: white;
+  color: var(--e-ink);
+  border: 1px solid #b9c8cf;
+  border-radius: 5px;
+  padding: 14px;
+  font:
+    400 16px/1.5 "Segoe UI",
+    sans-serif;
+}
+.e-contact-compose textarea:focus-visible {
+  outline: 3px solid var(--e-blue);
+  outline-offset: 3px;
+}
+.e-contact-privacy {
+  font-size: 12px;
+  margin: 16px 0 0;
+}
+.e-contact-draft {
+  border-top: 1px solid var(--e-line);
+  margin-top: 32px;
+  padding-top: 20px;
+  scroll-margin-top: 180px;
+}
+.e-contact-draft pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font:
+    14px/1.6 "Segoe UI",
+    sans-serif;
+  background: white;
+  padding: 16px;
+  border: 1px solid var(--e-line);
+}
+.e-contact-draft p {
+  font-size: 13px;
+}
+.e-contact-help {
+  border-top: 1px solid var(--e-line);
+  padding-top: 24px;
+}
+.e-contact-help > div {
+  display: flex;
+  gap: 32px;
+  flex-wrap: wrap;
+}
+.e-contact-help a {
+  padding: 8px 0;
+}
+.e-legal-layout {
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
+  gap: 80px;
+  margin-top: 40px;
+  align-items: start;
+}
+.e-legal-toc {
+  position: sticky;
+  top: 180px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  background: #f1f6f4;
+  padding: 24px;
+  border-radius: 5px;
+}
+.e-legal-toc strong {
+  margin-bottom: 12px;
+}
+.e-legal-toc a {
+  font-size: 13px;
+  padding: 8px 0;
+  line-height: 1.5;
+}
+.e-legal-toc > a:last-child {
+  border-top: 1px solid #cbd9d0;
+  margin-top: 16px;
+  padding-top: 16px;
+}
+.e-legal-text {
+  max-width: 72ch;
+  min-width: 0;
+}
+.e-legal-text > section {
+  scroll-margin-top: 185px;
+  padding: 0 0 28px;
+  margin-bottom: 28px;
+  border-bottom: 1px solid var(--e-line);
+}
+.e-legal-text h2 {
+  font-size: 24px;
+  margin: 0 0 18px;
+}
+.e-legal-text p,
+.e-legal-text li {
+  font-size: 16px;
+  line-height: 1.85;
+  color: #445561;
+  overflow-wrap: anywhere;
+}
+.e-legal-text ul {
+  padding-left: 22px;
+}
+.e-legal-text li {
+  margin: 10px 0;
+}
+.e-legal-contact {
+  background: #f1f6f4;
+  padding: 28px;
+}
+.e-legal-contact a {
+  display: block;
+  padding: 8px 0;
+  overflow-wrap: anywhere;
+}
+.e-missing-page {
+  display: grid;
+  grid-template-columns: 1fr 1.5fr;
+  gap: 80px;
+  align-items: center;
+  min-height: 65vh;
+  padding-top: 64px;
+  padding-bottom: 80px;
+}
+.e-missing-code {
+  font:
+    700 clamp(90px, 14vw, 200px)/1 Bahnschrift,
+    "Segoe UI",
+    sans-serif;
+  color: #aac7bc;
+  border-bottom: 5px solid var(--e-gold);
+  padding-bottom: 24px;
+  text-align: center;
+}
+.e-missing-page section {
+  max-width: 620px;
+}
+.e-missing-page p {
+  color: var(--e-muted);
+  max-width: 64ch;
+  margin: 24px 0;
+}
+.e-missing-search {
+  display: flex;
+  gap: 8px;
+}
+.e-missing-search .e-btn {
+  flex-shrink: 0;
+}
+.e-missing-page .e-missing-equivalence {
+  font-size: 14px;
+  margin-top: 36px;
+}
+@media (max-width: 1099px) {
+  .e-about-opening {
+    gap: 32px;
+  }
+  .e-about-opening h1 {
+    font-size: 36px;
+  }
+  .e-contact-layout {
+    grid-template-columns: 1fr 1.2fr;
+    gap: 32px;
+  }
+  .e-contact-compose {
+    padding: 24px;
+  }
+  .e-contact-compose .e-field-grid {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+  .e-legal-layout {
+    grid-template-columns: 240px minmax(0, 1fr);
+    gap: 32px;
+  }
+  .e-legal-toc {
+    top: 125px;
+  }
+  .e-legal-text > section {
+    scroll-margin-top: 140px;
+  }
+  .e-team-list {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+@media (max-width: 767px) {
+  .e-about-opening,
+  .e-about-story,
+  .e-contact-layout,
+  .e-legal-layout,
+  .e-missing-page {
+    grid-template-columns: 1fr;
+    gap: 28px;
+  }
+  .e-about-opening {
+    margin: 24px 0 40px;
+  }
+  .e-about-opening h1 {
+    font-size: 32px;
+  }
+  .e-about-opening .e-info-intro {
+    font-size: 18px;
+  }
+  .e-about-photo img {
+    height: 260px;
+  }
+  .e-about-story {
+    padding: 24px;
+    margin-bottom: 40px;
+  }
+  .e-founder {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+  .e-founder img {
+    width: 100px;
+    height: 120px;
+  }
+  .e-about-services > div {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  .e-about-services h2 {
+    margin-bottom: 24px;
+  }
+  .e-team-list {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+  .e-shop-media {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  .e-shop-visit {
+    flex-direction: column;
+    align-items: start;
+    gap: 16px;
+    margin-top: 32px;
+    padding-top: 8px;
+  }
+  .e-contact-layout {
+    margin: 32px 0 40px;
+    gap: 40px;
+  }
+  .e-contact-compose {
+    padding: 24px 16px;
+    margin: 0 -4px;
+  }
+  .e-contact-help > div {
+    flex-direction: column;
+    gap: 8px;
+  }
+  .e-legal-layout {
+    margin-top: 24px;
+    gap: 40px;
+  }
+  .e-legal-toc {
+    position: static;
+    padding: 20px;
+  }
+  .e-legal-toc a {
+    min-height: 40px;
+  }
+  .e-legal-text h2 {
+    font-size: 22px;
+  }
+  .e-legal-text p,
+  .e-legal-text li {
+    font-size: 15px;
+  }
+  .e-missing-page {
+    padding-top: 36px;
+    padding-bottom: 48px;
+    min-height: 0;
+  }
+  .e-missing-code {
+    font-size: 88px;
+    text-align: left;
+    width: max-content;
+    padding-bottom: 12px;
+  }
+  .e-missing-page h1 {
+    font-size: 30px;
+  }
+}

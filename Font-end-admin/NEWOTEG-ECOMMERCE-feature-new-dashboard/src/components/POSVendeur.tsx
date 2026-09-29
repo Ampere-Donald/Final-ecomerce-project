@@ -1588,11 +1588,16 @@ export const POSVendeur = ({ preview }: { preview?: POSVendeurPreview } = {}) =>
               </div>
             </div>
             <div className="p-5 overflow-y-auto flex-1 space-y-3">
+              {equivResults.length > 0 && (
+                <div role="note" className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs leading-relaxed text-amber-900">
+                  <AlertCircle size={16} className="mt-0.5 shrink-0" />
+                  <span>Suggestions de catalogue ou d’IA, sans validation technique. Vérifier les paramètres et confirmer avec le client avant de sélectionner une référence.</span>
+                </div>
+              )}
               {equivLoading ? <div className="text-center text-slate-400 py-8">Recherche…</div>
                 : equivError ? <div className="flex items-center gap-2 p-3 rounded-lg bg-amber-50 text-amber-700 border border-amber-200 text-sm"><AlertCircle size={16} />{equivError}</div>
                   : equivResults.map(s => {
                     const prix = Number((s.prixPromo || null) ?? s.prixDetail ?? 0);
-                    const compatCfg: Record<string, string> = { haute: 'bg-emerald-100 text-emerald-700', moyenne: 'bg-amber-100 text-amber-700', faible: 'bg-red-100 text-red-700' };
                     return (
                       <div key={s.produitId} className="rounded-xl border border-slate-200 p-3">
                         <div className="flex items-start justify-between gap-2">
@@ -1600,14 +1605,14 @@ export const POSVendeur = ({ preview }: { preview?: POSVendeurPreview } = {}) =>
                             <p className="font-semibold text-sm text-slate-900">{s.nomProduit}</p>
                             {s.marque && <p className="text-xs text-slate-500">{s.marque}</p>}
                           </div>
-                          <span className={`shrink-0 px-2 py-0.5 rounded-full text-[10px] font-bold ${compatCfg[s.compatibilite] || compatCfg.moyenne}`}>{s.compatibilite}</span>
+                          <span className="shrink-0 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-700">À vérifier</span>
                         </div>
                         <p className="text-xs text-slate-600 mt-1.5">{s.raison}</p>
                         <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-100">
                           <span className="text-xs text-slate-500"><span className="font-bold text-primary">{fmtFCFA(prix)}</span> · Disponible : {stockDisponibleVente(s)}</span>
                           <button onClick={() => ajouterSuggestion(s)} disabled={stockDisponibleVente(s) <= 0}
                             className="flex items-center gap-1.5 px-3 py-1.5 bg-primary text-white text-xs font-bold rounded-lg disabled:opacity-50">
-                            <Plus size={13} /> Ajouter
+                            <Plus size={13} /> Sélectionner
                           </button>
                         </div>
                       </div>

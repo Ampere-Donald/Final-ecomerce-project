@@ -7,6 +7,8 @@ import { AdminMobileNav, hasMobileNavigation } from './AdminMobileNav';
 import { useAdminAuth } from '../context/AdminAuthContext';
 import { FlowShellProvider, useFlowShell } from '../context/FlowShellContext';
 import { CashierDesktopTopBar } from '../features/cashier-pos/CashierDesktopShell';
+import { AdminOperationsProvider } from '../context/AdminOperationsContext';
+import { ShopHealthBar } from './ShopHealthBar';
 
 const CASHIER_WORKSPACE_PATHS = ['/file-caissier', '/caisse-jour', '/clients', '/print-audit', '/guide', '/settings'];
 
@@ -38,6 +40,7 @@ const LayoutFrame = () => {
       <main className="flex h-screen flex-1 flex-col min-w-0 overflow-hidden">
         <div className={isCashierWorkspace ? 'hidden' : isPosRoute ? 'min-[1200px]:block hidden' : 'block'}>
           <Header onMenuClick={() => setSidebarOpen(prev => !prev)} />
+          <ShopHealthBar />
         </div>
         <div className={isCashierWorkspace ? 'hidden' : isPosRoute ? 'min-[1200px]:block hidden' : 'block'}>
           <OfflineSyncStatus />
@@ -56,6 +59,8 @@ const LayoutFrame = () => {
 
 export const Layout = () => (
   <FlowShellProvider>
-    <LayoutFrame />
+    <AdminOperationsProvider>
+      <LayoutFrame />
+    </AdminOperationsProvider>
   </FlowShellProvider>
 );

@@ -38,6 +38,8 @@ import { useAdminAuth } from '../context/AdminAuthContext';
 import { brand } from '../config/brand';
 import { can } from '../utils/permissions';
 import { bonVenteApi } from '../services/api';
+import { AdministrationSidebar } from './AdministrationSidebar';
+import { isAdministrationRole } from '../config/adminNavigation';
 
 interface SidebarProps {
   open: boolean;
@@ -74,6 +76,10 @@ export const Sidebar = ({ open, onClose, compact = false }: SidebarProps) => {
     .join('')
     .toUpperCase()
     .slice(0, 2);
+
+  if (isAdministrationRole(role) && !compact) {
+    return <AdministrationSidebar open={open} onClose={onClose} />;
+  }
 
   // Helper: ajoute un item si la permission est vraie
   const add = (cond: boolean, item: Item): Item[] => (cond ? [item] : []);

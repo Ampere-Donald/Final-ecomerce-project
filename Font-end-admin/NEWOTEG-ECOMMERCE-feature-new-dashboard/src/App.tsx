@@ -9,7 +9,7 @@ import { ToastProvider } from './components/ui/Toast';
 import { FVAlertPopup } from './components/FVAlertPopup';
 import { AppErrorBoundary } from './components/AppErrorBoundary';
 
-const Dashboard = lazy(() => import('./components/Dashboard').then((m) => ({ default: m.Dashboard })));
+const Dashboard = lazy(() => import('./components/RoleDashboard').then((m) => ({ default: m.RoleDashboard })));
 const Orders = lazy(() => import('./components/Orders').then((m) => ({ default: m.Orders })));
 const Settings = lazy(() => import('./components/Settings').then((m) => ({ default: m.Settings })));
 const Produits = lazy(() => import('./components/Produits').then((m) => ({ default: m.Produits })));
@@ -45,6 +45,12 @@ const Proformas = lazy(() => import('./components/Proformas').then((m) => ({ def
 const UserGuide = lazy(() => import('./components/UserGuide').then((m) => ({ default: m.UserGuide })));
 const OfflineQueuePage = lazy(() => import('./components/OfflineQueuePage').then((m) => ({ default: m.OfflineQueuePage })));
 const PrintAuditPage = lazy(() => import('./components/PrintAuditPage').then((m) => ({ default: m.PrintAuditPage })));
+const ApprovalCenter = lazy(() => import('./components/ApprovalCenter').then((m) => ({ default: m.ApprovalCenter })));
+const StockPurchasingWorkspace = lazy(() => import('./components/AdministrationWorkspaces').then((m) => ({ default: m.StockPurchasingWorkspace })));
+const FinanceWorkspace = lazy(() => import('./components/AdministrationWorkspaces').then((m) => ({ default: m.FinanceWorkspace })));
+const SalesOrdersWorkspace = lazy(() => import('./components/AdministrationWorkspaces').then((m) => ({ default: m.SalesOrdersWorkspace })));
+const CashWorkspace = lazy(() => import('./components/AdministrationWorkspaces').then((m) => ({ default: m.CashWorkspace })));
+const TeamAccessWorkspace = lazy(() => import('./components/AdministrationWorkspaces').then((m) => ({ default: m.TeamAccessWorkspace })));
 const ResponsivePOSFixturePage = import.meta.env.DEV
   ? lazy(() => import('./features/visual-acceptance/ResponsivePOSFixturePage').then((m) => ({ default: m.ResponsivePOSFixturePage })))
   : null;
@@ -67,6 +73,13 @@ export default function App() {
           {ResponsivePOSFixturePage && <Route path="/__visual-pos" element={<ResponsivePOSFixturePage />} />}
           <Route path="/" element={<AdminProtectedRoute><Layout /></AdminProtectedRoute>}>
             <Route index element={<Dashboard />} />
+            {/* Parcours d'administration simplifiés — les routes historiques ci-dessous restent compatibles. */}
+            <Route path="a-valider" element={<RoleProtectedRoute allowedRoles={['SUPER_ADMIN']}><ApprovalCenter /></RoleProtectedRoute>} />
+            <Route path="finance" element={<RoleProtectedRoute allowedRoles={['SUPER_ADMIN']}><FinanceWorkspace /></RoleProtectedRoute>} />
+            <Route path="stock-achats" element={<RoleProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN']}><StockPurchasingWorkspace /></RoleProtectedRoute>} />
+            <Route path="equipe-acces" element={<RoleProtectedRoute allowedRoles={['SUPER_ADMIN']}><TeamAccessWorkspace /></RoleProtectedRoute>} />
+            <Route path="ventes-commandes" element={<RoleProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN']}><SalesOrdersWorkspace /></RoleProtectedRoute>} />
+            <Route path="caisse-admin" element={<RoleProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN']}><CashWorkspace /></RoleProtectedRoute>} />
             <Route path="analyses" element={<RoleProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN']}><Analyses /></RoleProtectedRoute>} />
             <Route path="orders" element={<Orders />} />
 
