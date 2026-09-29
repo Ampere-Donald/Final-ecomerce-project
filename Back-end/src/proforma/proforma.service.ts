@@ -1,17 +1,22 @@
 import {
   BadRequestException,
+  ConflictException,
   ForbiddenException,
   Injectable,
   NotFoundException,
-} from '@nestjs/common';
-import { Cron } from '@nestjs/schedule';
-import { Prisma, MethodePaiement } from '@prisma/client';
-import { BonVenteEventsService } from 'src/bon-vente/bon-vente.events.service';
-import { BonVenteService } from 'src/bon-vente/bon-vente.service';
-import { DatabaseService } from 'src/database/database.service';
-import { CreateProformaDto, LigneProformaDto } from './dto/create-proforma.dto';
-import { UpdateProformaDto } from './dto/update-proforma.dto';
-import { DocumentNumberService } from 'src/database/document-number.service';
+} from "@nestjs/common";
+import { Cron } from "@nestjs/schedule";
+import { Prisma, MethodePaiement } from "@prisma/client";
+import { BonVenteEventsService } from "src/bon-vente/bon-vente.events.service";
+import { BonVenteService } from "src/bon-vente/bon-vente.service";
+import { DatabaseService } from "src/database/database.service";
+import { CreateProformaDto, LigneProformaDto } from "./dto/create-proforma.dto";
+import { UpdateProformaDto } from "./dto/update-proforma.dto";
+import { DocumentNumberService } from "src/database/document-number.service";
+import {
+  assertTicketStockAvailable,
+  inspectTicketStock,
+} from "src/ticket-vente/ticket-stock.util";
 
 const PROFORMA_VALIDITY_DAYS = 30;
 const TICKET_VALIDITY_MS = 15 * 60 * 1000;
@@ -28,17 +33,17 @@ export class ProformaService {
   ) {}
 
   private toNumber(value: unknown): number {
-    if (value === null || value === undefined || value === '') return 0;
+    if (value === null || value === undefined || value === "") return 0;
     const parsed = Number(value);
     return Number.isFinite(parsed) ? parsed : 0;
   }
 
   private canManageAll(role: string) {
-    return ['SUPER_ADMIN', 'ADMIN'].includes(role);
+    return ["SUPER_ADMIN", "ADMIN"].includes(role);
   }
 
   private canReadAll(role: string) {
-    return ['SUPER_ADMIN', 'ADMIN', 'CAISSIER'].includes(role);
+    return ["SUPER_ADMIN", "ADMIN", "CAISSIER"].includes(role);
   }
 
   private include() {
@@ -50,7 +55,7 @@ export class ProformaService {
   }
 
   private async generateNumero(): Promise<string> {
-    return this.documentNumbers.nextAnnual('PROFORMA', 'FP-');
+    return this.documentNumbers.nextAnnual("PROFORMA", "FP-");
   }
 
   private dateExpiration() {
@@ -59,34 +64,70 @@ export class ProformaService {
     return d;
   }
 
-  private async buildLignes(lignes: LigneProformaDto[]) {
-    const produitIds = lignes.map((l) => l.produitId);
-    const produits = await this.db.produit.findMany({
-      where: { id: { in: produitIds } },
-      select: { id: true, nomProduit: true, prixDetail: true, prixGros: true, quantiteGros: true },
+  private async buildLignes(lignes: LigneProformaDto[], db: any = this.db) {
+    if (!Array.isArray(lignes) || !lignes.length || lignes.length > 100) {
+      throw new BadRequestException(
+        "La proforma doit contenir de 1 à 100 références.",
+      );
+    }
+    const produitIds = lignes.map((line) => line.produitId);
+    if (
+      produitIds.some((id) => !id) ||
+      new Set(produitIds).size !== produitIds.length
+    ) {
+      throw new BadRequestException(
+        "Chaque ligne doit désigner une référence distincte du catalogue.",
+      );
+    }
+    const produits = await db.produit.findMany({
+      where: { id: { in: produitIds }, estActif: true },
+      select: { id: true, nomProduit: true },
     });
     if (produits.length !== produitIds.length) {
-      throw new NotFoundException('Au moins un produit est introuvable.');
+      throw new NotFoundException(
+        "Au moins un produit est introuvable ou a quitté le catalogue.",
+      );
     }
 
-    const produitsById = new Map(produits.map((p) => [p.id, p]));
-    let montantTotal = 0;
-    const lignesData = lignes.map((l) => {
-      const produit = produitsById.get(l.produitId)!;
-      // Le prix est toujours celui envoyé par le frontend (choix explicite du vendeur)
-      const prixUnitaire = this.toNumber(l.prixUnitaire);
-      const sousTotal = prixUnitaire * l.quantite;
-      montantTotal += sousTotal;
+    const produitsById = new Map<string, { id: string; nomProduit: string }>(
+      produits.map((product) => [product.id, product]),
+    );
+    let totalCents = 0;
+    const lignesData = lignes.map((line) => {
+      const produit = produitsById.get(line.produitId)!;
+      // Le prix reste le montant explicitement autorisé pour cette proforma.
+      const price = Number(line.prixUnitaire);
+      const cents = Math.round(price * 100);
+      const sousTotalCents = cents * line.quantite;
+      if (
+        !Number.isSafeInteger(line.quantite) ||
+        line.quantite < 1 ||
+        !Number.isFinite(price) ||
+        price < 0 ||
+        !Number.isSafeInteger(cents) ||
+        cents > 9999999999 ||
+        !Number.isSafeInteger(sousTotalCents) ||
+        sousTotalCents > 999999999999
+      ) {
+        throw new BadRequestException(
+          "Vérifiez les quantités et les montants de la proforma.",
+        );
+      }
+      totalCents += sousTotalCents;
+      if (!Number.isSafeInteger(totalCents) || totalCents > 999999999999) {
+        throw new BadRequestException(
+          "Le total de la proforma dépasse le montant accepté.",
+        );
+      }
       return {
         produitId: produit.id,
         nomProduit: produit.nomProduit,
-        quantite: l.quantite,
-        prixUnitaire,
-        sousTotal,
+        quantite: line.quantite,
+        prixUnitaire: cents / 100,
+        sousTotal: sousTotalCents / 100,
       };
     });
-
-    return { lignesData, montantTotal };
+    return { lignesData, montantTotal: totalCents / 100 };
   }
 
   async create(vendeurId: string, dto: CreateProformaDto) {
@@ -113,7 +154,7 @@ export class ProformaService {
     if (!this.canReadAll(actor.role)) where.vendeurId = actor.id;
     if (filters.statut) where.statut = filters.statut;
     if (filters.periode) {
-      const [year, month] = filters.periode.split('-').map(Number);
+      const [year, month] = filters.periode.split("-").map(Number);
       if (year && month) {
         where.dateCreation = {
           gte: new Date(year, month - 1, 1),
@@ -124,7 +165,7 @@ export class ProformaService {
     return this.db.proforma.findMany({
       where,
       include: this.include(),
-      orderBy: { dateCreation: 'desc' },
+      orderBy: { dateCreation: "desc" },
     });
   }
 
@@ -133,132 +174,201 @@ export class ProformaService {
       where: { id },
       include: this.include(),
     });
-    if (!proforma) throw new NotFoundException('Proforma introuvable.');
+    if (!proforma) throw new NotFoundException("Proforma introuvable.");
     if (!this.canReadAll(actor.role) && proforma.vendeurId !== actor.id) {
-      throw new ForbiddenException('Acces refuse a cette proforma.');
+      throw new ForbiddenException("Acces refuse a cette proforma.");
     }
     return proforma;
   }
 
-  async update(id: string, actor: Actor, dto: UpdateProformaDto) {
-    const current = await this.findOne(id, actor);
-    if (current.statut !== 'EN_COURS') {
-      throw new BadRequestException('Seule une proforma en cours est modifiable.');
-    }
-
-    const data: any = {
-      clientId: dto.clientId ?? current.clientId,
-      clientNom: dto.clientNom !== undefined ? dto.clientNom?.trim() || null : current.clientNom,
-      clientNiu: dto.clientNiu !== undefined ? dto.clientNiu?.trim() || null : current.clientNiu,
-      clientRccm: dto.clientRccm !== undefined ? dto.clientRccm?.trim() || null : current.clientRccm,
-      notes: dto.notes !== undefined ? dto.notes?.trim() || null : current.notes,
-    };
-
-    if (dto.lignes) {
-      const { lignesData, montantTotal } = await this.buildLignes(dto.lignes);
-      data.montantTotal = montantTotal;
-      return this.db.$transaction(async (tx: any) => {
-        await tx.proformaLigne.deleteMany({ where: { proformaId: id } });
-        return tx.proforma.update({
-          where: { id },
-          data: { ...data, lignes: { create: lignesData } },
-          include: this.include(),
-        });
-      });
-    }
-
-    return this.db.proforma.update({
+  private async mutableProforma(tx: any, id: string, actor: Actor) {
+    const current = await tx.proforma.findUnique({
       where: { id },
-      data,
       include: this.include(),
     });
-  }
-
-  async transformer(id: string, actor: Actor, methodePaiement: MethodePaiement) {
-    const proforma = await this.findOne(id, actor);
-    if (proforma.statut === 'TRANSFORMEE') {
-      throw new BadRequestException('Cette proforma a deja ete transformee.');
+    if (!current) throw new NotFoundException("Proforma introuvable.");
+    if (
+      !this.canManageAll(actor.role) &&
+      (actor.role !== "VENDEUR" || current.vendeurId !== actor.id)
+    ) {
+      throw new ForbiddenException("Accès refusé à cette proforma.");
     }
-    if (proforma.dateExpiration < new Date()) {
-      throw new BadRequestException('Cette proforma a expire.');
-    }
-
-    const produitIds = proforma.lignes
-      .map((l) => l.produitId)
-      .filter((value): value is string => Boolean(value));
-    const produits = await this.db.produit.findMany({
-      where: { id: { in: produitIds } },
-      select: { id: true, quantiteStock: true, nomProduit: true },
-    });
-    const produitsById = new Map(produits.map((p) => [p.id, p]));
-
-    const ruptures: string[] = [];
-    for (const ligne of proforma.lignes) {
-      if (!ligne.produitId) {
-        throw new BadRequestException(`Produit non lié pour "${ligne.nomProduit}".`);
-      }
-      const produit = produitsById.get(ligne.produitId);
-      if (!produit || produit.quantiteStock < ligne.quantite) {
-        ruptures.push(
-          `${ligne.nomProduit} (demandé : ${ligne.quantite}, disponible : ${produit?.quantiteStock ?? 0})`,
-        );
-      }
-    }
-    if (ruptures.length > 0) {
-      throw new BadRequestException(
-        `Stock insuffisant pour : ${ruptures.join(' | ')}`,
+    if (current.statut !== "EN_COURS") {
+      throw new ConflictException(
+        "Cette proforma n’est plus en cours. Actualisez-la.",
       );
     }
+    if (current.dateExpiration.getTime() <= Date.now()) {
+      throw new ConflictException("Cette proforma a expiré.");
+    }
+    return current;
+  }
 
-    const result = await this.db.$transaction(async (tx: any) => {
-      const ticket = await tx.ticketVente.create({
-        data: {
-          numeroTicket: await this.bonVente.generateNumeroTicket(tx),
-          vendeurId: proforma.vendeurId,
-          clientId: proforma.clientId,
-          nomClient: proforma.clientNom,
-          montantTotal: proforma.montantTotal,
-          methodePaiement,
-          expiresAt: new Date(Date.now() + TICKET_VALIDITY_MS),
-          lignes: {
-            create: proforma.lignes.map((l) => ({
-              produitId: l.produitId!,
-              nomProduit: l.nomProduit,
-              quantite: l.quantite,
-              prixUnitaire: l.prixUnitaire,
-              sousTotal: l.sousTotal,
-            })),
-          },
+  private concurrentMutation(error: any): never {
+    if (error?.code === "P2034") {
+      throw new ConflictException(
+        "Cette proforma a changé pendant l’opération. Actualisez-la avant de réessayer.",
+      );
+    }
+    throw error;
+  }
+
+  async update(id: string, actor: Actor, dto: UpdateProformaDto) {
+    try {
+      return await this.db.$transaction(
+        async (tx: any) => {
+          const current = await this.mutableProforma(tx, id, actor);
+          const { lignesData, montantTotal } = await this.buildLignes(
+            dto.lignes ?? current.lignes,
+            tx,
+          );
+          const data = {
+            clientId: dto.clientId ?? current.clientId,
+            clientNom:
+              dto.clientNom !== undefined
+                ? dto.clientNom?.trim() || null
+                : current.clientNom,
+            clientNiu:
+              dto.clientNiu !== undefined
+                ? dto.clientNiu?.trim() || null
+                : current.clientNiu,
+            clientRccm:
+              dto.clientRccm !== undefined
+                ? dto.clientRccm?.trim() || null
+                : current.clientRccm,
+            notes:
+              dto.notes !== undefined
+                ? dto.notes?.trim() || null
+                : current.notes,
+            ...(dto.lignes ? { montantTotal } : {}),
+          };
+          // The row claim shares the transaction with replacement of all lines.
+          const changed = await tx.proforma.updateMany({
+            where: {
+              id,
+              statut: "EN_COURS",
+              dateExpiration: { gt: new Date() },
+            },
+            data,
+          });
+          if (changed.count !== 1)
+            throw new ConflictException(
+              "Cette proforma a changé. Actualisez-la.",
+            );
+          if (dto.lignes) {
+            await tx.proformaLigne.deleteMany({ where: { proformaId: id } });
+            await tx.proformaLigne.createMany({
+              data: lignesData.map((line) => ({ ...line, proformaId: id })),
+            });
+          }
+          return tx.proforma.findUniqueOrThrow({
+            where: { id },
+            include: this.include(),
+          });
         },
-        include: { lignes: true },
-      });
+        { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+      );
+    } catch (error) {
+      this.concurrentMutation(error);
+    }
+  }
 
-      const updated = await tx.proforma.update({
-        where: { id },
-        data: { statut: 'TRANSFORMEE' },
-        include: this.include(),
-      });
-
-      return { proforma: updated, ticket };
-    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
-
+  async transformer(
+    id: string,
+    actor: Actor,
+    methodePaiement: MethodePaiement,
+  ) {
+    let result: any;
+    try {
+      result = await this.db.$transaction(
+        async (tx: any) => {
+          const proforma = await this.mutableProforma(tx, id, actor);
+          const { lignesData, montantTotal } = await this.buildLignes(
+            proforma.lignes,
+            tx,
+          );
+          if (
+            Math.round(Number(proforma.montantTotal) * 100) !==
+              Math.round(montantTotal * 100) ||
+            proforma.lignes.some(
+              (line, index) =>
+                Math.round(Number(line.sousTotal) * 100) !==
+                Math.round(lignesData[index].sousTotal * 100),
+            )
+          ) {
+            throw new BadRequestException(
+              "Le total de la proforma ne correspond pas à ses lignes.",
+            );
+          }
+          // Claim the proforma before taking stock locks, matching quote acceptance.
+          // A failed stock check rolls this claim back with the rest of the transaction.
+          const changed = await tx.proforma.updateMany({
+            where: {
+              id,
+              statut: "EN_COURS",
+              dateExpiration: { gt: new Date() },
+            },
+            data: { statut: "TRANSFORMEE" },
+          });
+          if (changed.count !== 1)
+            throw new ConflictException(
+              "Cette proforma a changé. Actualisez-la.",
+            );
+          const availability = await inspectTicketStock(tx, lignesData, {
+            lock: true,
+          });
+          assertTicketStockAvailable(availability);
+          if (proforma.dateExpiration.getTime() <= Date.now())
+            throw new ConflictException("Cette proforma a expiré.");
+          const ticket = await tx.ticketVente.create({
+            data: {
+              numeroTicket: await this.bonVente.generateNumeroTicket(tx),
+              vendeurId: proforma.vendeurId,
+              clientId: proforma.clientId,
+              nomClient: proforma.clientNom,
+              montantTotal: proforma.montantTotal,
+              methodePaiement,
+              expiresAt: new Date(Date.now() + TICKET_VALIDITY_MS),
+              lignes: {
+                create: proforma.lignes.map((line) => ({
+                  produitId: line.produitId,
+                  nomProduit: line.nomProduit,
+                  quantite: line.quantite,
+                  prixUnitaire: line.prixUnitaire,
+                  sousTotal: line.sousTotal,
+                })),
+              },
+            },
+            include: { lignes: true },
+          });
+          const updated = await tx.proforma.findUniqueOrThrow({
+            where: { id },
+            include: this.include(),
+          });
+          return { proforma: updated, ticket };
+        },
+        { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+      );
+    } catch (error) {
+      this.concurrentMutation(error);
+    }
     this.events.emit(result.ticket);
     return result;
   }
 
   async remove(id: string) {
     const proforma = await this.db.proforma.findUnique({ where: { id } });
-    if (!proforma) throw new NotFoundException('Proforma introuvable.');
+    if (!proforma) throw new NotFoundException("Proforma introuvable.");
     await this.db.proforma.delete({ where: { id } });
     return { deleted: true };
   }
 
-  @Cron('0 2 * * *', { timeZone: 'Africa/Douala' })
+  @Cron("0 2 * * *", { timeZone: "Africa/Douala" })
   async deleteExpired() {
     return this.db.proforma.deleteMany({
       where: {
         dateExpiration: { lt: new Date() },
-        statut: { not: 'TRANSFORMEE' },
+        statut: { not: "TRANSFORMEE" },
       },
     });
   }

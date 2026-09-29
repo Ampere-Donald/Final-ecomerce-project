@@ -593,7 +593,7 @@ export const proformaApi = {
 
 export const demandeDevisApi = {
   getAll: () => api.get('/devis/admin').then(r => r.data),
-  respond: (id: string, body: { version: number; statut: 'A_PRECISER' | 'ENVOYEE' | 'REFUSEE'; message: string; proformaId?: string }) =>
+  respond: (id: string, body: { version: number; statut: 'A_PRECISER' | 'ENVOYEE' | 'REFUSEE'; message: string; proformaId?: string; motifRemise?: string }) =>
     api.patch(`/devis/admin/${id}/reponse`, body).then(r => r.data),
 };
 

@@ -41,7 +41,7 @@ export async function lockTicketStock(client: TicketStockClient, productIds: str
   const uniqueIds = [...new Set(productIds)].sort();
   for (const productId of uniqueIds) {
     await client.$queryRawUnsafe(
-      'SELECT pg_advisory_xact_lock(hashtext($1))',
+      'SELECT pg_advisory_xact_lock(hashtext($1))::text',
       `newoteg:ticket-stock:${productId}`,
     );
   }

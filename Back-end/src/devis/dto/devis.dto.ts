@@ -1,9 +1,11 @@
-import { Type, Transform } from 'class-transformer';
+import { Type, Transform } from "class-transformer";
 import {
   ArrayMaxSize,
   ArrayMinSize,
   IsArray,
   IsEnum,
+  Equals,
+  IsBoolean,
   IsIn,
   IsInt,
   IsOptional,
@@ -16,14 +18,14 @@ import {
   MinLength,
   ValidateIf,
   ValidateNested,
-} from 'class-validator';
-import { ModeReception } from '@prisma/client';
+} from "class-validator";
+import { ModeReception } from "@prisma/client";
 
 export class ReferenceDevisDto {
   @IsString()
   @MinLength(1)
   @MaxLength(100)
-  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
+  @Transform(({ value }) => (typeof value === "string" ? value.trim() : value))
   reference: string;
 
   @IsInt()
@@ -72,20 +74,25 @@ export class CreateDemandeDevisDto extends ResolveDevisDto {
 }
 
 export class RepondreDevisDto {
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  motifRemise?: string;
+
   @IsInt()
   @Min(1)
   version: number;
 
-  @IsIn(['A_PRECISER', 'ENVOYEE', 'REFUSEE'])
-  statut: 'A_PRECISER' | 'ENVOYEE' | 'REFUSEE';
+  @IsIn(["A_PRECISER", "ENVOYEE", "REFUSEE"])
+  statut: "A_PRECISER" | "ENVOYEE" | "REFUSEE";
 
   @IsString()
   @MinLength(1)
   @MaxLength(2000)
-  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
+  @Transform(({ value }) => (typeof value === "string" ? value.trim() : value))
   message: string;
 
-  @ValidateIf((value: RepondreDevisDto) => value.statut === 'ENVOYEE')
+  @ValidateIf((value: RepondreDevisDto) => value.statut === "ENVOYEE")
   @IsUUID()
   proformaId?: string;
 }
@@ -94,4 +101,17 @@ export class ClarifierDevisDto extends CreateDemandeDevisDto {
   @IsInt()
   @Min(1)
   version: number;
+}
+
+export class AccepterDevisDto {
+  @IsUUID("4")
+  requestId: string;
+
+  @IsInt()
+  @Min(1)
+  version: number;
+
+  @IsBoolean()
+  @Equals(true)
+  conditionsAcceptees: boolean;
 }

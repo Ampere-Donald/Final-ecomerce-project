@@ -183,7 +183,7 @@ export class ProduitService {
   private async genererCodeInterne(tx: any, familleDemandee?: string | null) {
     const codeFamille = (familleDemandee || '000').trim() || '000';
     await tx.$queryRawUnsafe(
-      'SELECT pg_advisory_xact_lock(hashtext($1))',
+      'SELECT pg_advisory_xact_lock(hashtext($1))::text',
       `newoteg:produit-code:${codeFamille}`,
     );
 

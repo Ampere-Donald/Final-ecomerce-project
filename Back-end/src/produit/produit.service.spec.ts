@@ -121,7 +121,7 @@ describe('ProduitService creation avec code automatique', () => {
 
     expect(result).toBe(created);
     expect(tx.$queryRawUnsafe).toHaveBeenCalledWith(
-      'SELECT pg_advisory_xact_lock(hashtext($1))',
+      'SELECT pg_advisory_xact_lock(hashtext($1))::text',
       'newoteg:produit-code:000',
     );
     expect(tx.produit.create).toHaveBeenCalledWith(expect.objectContaining({

@@ -3,11 +3,11 @@ import { Link, useLocation, useParams } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useI18n } from "../context/I18nContext";
 import apiClient from "../utils/apiClient";
-import { formatFCFA } from "../utils/formatFCFA";
 import { apiMessage, orderDate } from "./orderData";
 import { devisStatus, requestViewValid } from "./devisData";
 import { Crumbs } from "./Elements";
 import DevisBuilder from "./DevisBuilder";
+import DevisAccept from "./DevisAccept";
 import Footer from "./Footer";
 
 export default function Devis() {
@@ -213,46 +213,13 @@ export default function Devis() {
                 )}
               </>
             )}
-            {data.offre && (
-              <section className="e-devis-offer">
-                <div className="e-section-head">
-                  <h2>
-                    {tr("Proposition", "Offer")} {data.offre.numero}
-                  </h2>
-                </div>
-                <p>
-                  {tr("Valable jusqu’au", "Valid until")}{" "}
-                  {orderDate(data.offre.dateExpiration, lang)}
-                </p>
-                {data.offre.lignes?.map((line) => (
-                  <div className="e-review-line" key={line.produitId}>
-                    <div>
-                      <strong>{line.nomProduit}</strong>
-                      <small>
-                        {line.quantite} × {formatFCFA(line.prixUnitaire)}
-                      </small>
-                    </div>
-                    <strong>{formatFCFA(line.sousTotal)}</strong>
-                  </div>
-                ))}
-                <div className="e-order-amount">
-                  <span>{tr("Montant des articles", "Item amount")}</span>
-                  <strong>{formatFCFA(data.offre.montantArticles)}</strong>
-                </div>
-                <p>
-                  {tr(
-                    "Stock non réservé. Disponibilité à revérifier avec la boutique. Frais et délai de livraison à confirmer.",
-                    "Stock is not reserved. Check availability with the shop. Delivery fee and timing to confirm.",
-                  )}
-                </p>
-                <Link className="e-btn e-secondary" to="/contact">
-                  {tr(
-                    "Contacter la boutique pour cette proposition",
-                    "Contact the shop about this offer",
-                  )}
-                </Link>
-              </section>
-            )}
+            <DevisAccept
+              key={`${user?.id}:${data.id}:${data.version}`}
+              request={data}
+              onUpdated={(updated) =>
+                setState({ key, data: updated, error: null })
+              }
+            />
           </>
         ) : data.length ? (
           data.map((row) => (

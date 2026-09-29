@@ -378,6 +378,11 @@ model DemandeDevis {
   statut          StatutDemandeDevis  @default(RECUE)
   responsableId   String?            @map("responsable_id")
   proformaId      String?            @unique @map("proforma_id")
+  commandeId      String?            @unique @map("commande_id")
+  numeroCommande  String?            @map("numero_commande") @db.VarChar(30)
+  acceptedVersion Int?               @map("accepted_version")
+  acceptedAt      DateTime?          @map("accepted_at")
+  acceptRequestId String?            @unique @map("accept_request_id") @db.Uuid
   reponseClient   String?            @map("reponse_client") @db.VarChar(2000)
   offre           Json?
   version         Int                @default(1)
@@ -386,6 +391,7 @@ model DemandeDevis {
   client          Client             @relation(fields: [clientId], references: [id])
   responsable     AdminUser?         @relation("DemandesDevisResponsable", fields: [responsableId], references: [id], onDelete: SetNull)
   proforma        Proforma?          @relation(fields: [proformaId], references: [id], onDelete: SetNull)
+  commande        Commande?          @relation(fields: [commandeId], references: [id], onDelete: SetNull)
   lignes          DemandeDevisLigne[]
   historique      DemandeDevisEvent[]
 
@@ -695,6 +701,7 @@ model Role {
 }
 
 model Commande {
+  demandeDevis     DemandeDevis?
   requests         CommandeRequest[]
   id               String          @id @default(uuid())
   numeroSuivi      String          @unique @map("numero_suivi") @db.VarChar(30)

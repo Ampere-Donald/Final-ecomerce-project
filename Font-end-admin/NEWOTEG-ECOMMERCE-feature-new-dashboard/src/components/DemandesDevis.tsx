@@ -63,6 +63,7 @@ export const DemandesDevis = () => {
     statut: "A_PRECISER" as "A_PRECISER" | "ENVOYEE" | "REFUSEE",
     message: "",
     proformaId: "",
+    motifRemise: "",
   });
   const lock = useRef(false);
   const loadSequence = useRef(0);
@@ -145,12 +146,24 @@ export const DemandesDevis = () => {
         version: selected.version,
         statut: form.statut,
         message: form.message.trim(),
-        ...(form.statut === "ENVOYEE" ? { proformaId: form.proformaId } : {}),
+        ...(form.statut === "ENVOYEE"
+          ? {
+              proformaId: form.proformaId,
+              ...(form.motifRemise.trim()
+                ? { motifRemise: form.motifRemise.trim() }
+                : {}),
+            }
+          : {}),
       });
       setNotice(
         "La réponse est disponible dans le compte du client. Aucun paiement ni stock réservé.",
       );
-      setForm({ statut: "A_PRECISER", message: "", proformaId: "" });
+      setForm({
+        statut: "A_PRECISER",
+        message: "",
+        proformaId: "",
+        motifRemise: "",
+      });
     } catch (e) {
       setError(
         getApiErrorMessage(
@@ -248,6 +261,7 @@ export const DemandesDevis = () => {
                         statut: "A_PRECISER",
                         message: "",
                         proformaId: "",
+                        motifRemise: "",
                       });
                       setError("");
                       setNotice("");
@@ -341,6 +355,7 @@ export const DemandesDevis = () => {
                             ...form,
                             statut: e.target.value as typeof form.statut,
                             proformaId: "",
+                            motifRemise: "",
                           })
                         }
                       >
@@ -396,6 +411,22 @@ export const DemandesDevis = () => {
                           sont proposées. Vérifiez les lignes et tarifs avant
                           l’envoi.
                         </p>
+                        <label className="block text-sm font-semibold">
+                          Motif de remise (interne)
+                          <textarea
+                            rows={2}
+                            maxLength={500}
+                            className={inputClass + " mt-2"}
+                            value={form.motifRemise}
+                            onChange={(e) =>
+                              setForm({ ...form, motifRemise: e.target.value })
+                            }
+                          />
+                          <span className="block mt-1 text-xs font-normal text-slate-600">
+                            Requis si une ligne est sous le prix détail. Les
+                            limites de votre rôle restent appliquées.
+                          </span>
+                        </label>
                         <Link
                           className="text-sm font-semibold text-blue-700"
                           to="/proformas"
