@@ -160,6 +160,16 @@ export const DemandesDevis = () => {
       lock.current = false;
     }
   }
+  async function prepare() {
+    if (lock.current || !selected || selected.responsable?.id !== admin?.id) return;
+    lock.current = true; setBusy(true); setError(""); setNotice("");
+    try {
+      const result = await demandeDevisApi.prepare(selected.id, selected.version);
+      setForm(previous => ({ ...previous, proformaId: result.proforma.id }));
+      setNotice((result.reprise ? "Proforma retrouvée" : "Proforma préparée") + " : " + result.proforma.numero + ". Vérifiez-la avant de rendre l’offre disponible au client.");
+    } catch (e) { setError(getApiErrorMessage(e, "Résultat incertain. Actualisez puis reprenez avec le même bouton pour retrouver la préparation.")); }
+    finally { await load(); setBusy(false); lock.current = false; }
+  }
   async function respond(event: React.FormEvent) {
     event.preventDefault();
     if (lock.current || !selected || !writable) return;
@@ -485,6 +495,12 @@ export const DemandesDevis = () => {
                             limites de votre rôle restent appliquées.
                           </span>
                         </label>
+                        {["RECUE", "A_PRECISER"].includes(selected.statut) && selected.responsable?.id === admin?.id && (
+                          <div className="space-y-2">
+                            <button type="button" onClick={() => void prepare()} disabled={busy} className="rounded-lg border border-blue-300 px-3 py-2 text-sm font-semibold text-blue-700 disabled:opacity-50">Préparer ou reprendre depuis la demande</button>
+                            <p className="text-xs text-slate-600">Reprend les références choisies et leurs prix catalogue. Les références inconnues doivent être clarifiées. Aucune offre envoyée ni stock réservé.</p>
+                          </div>
+                        )}
                         <Link
                           className="text-sm font-semibold text-blue-700"
                           to="/proformas"
@@ -514,7 +530,7 @@ export const DemandesDevis = () => {
                 <ol className="mt-4 space-y-4">
                   {selected.historique?.map((event, i) => (
                     <li key={i} className="text-sm">
-                      <strong>{event.details?.action === "AFFECTATION" ? "Affectation modifiée" : labels[event.statut] || event.statut}</strong> ·{" "}
+                      <strong>{event.details?.action === "AFFECTATION" ? "Affectation modifiée" : event.details?.action === "PROFORMA_PREPAREE" ? "Proforma préparée" : labels[event.statut] || event.statut}</strong> ·{" "}
                       {fmtDateCourt(event.createdAt)}
                       {event.details?.message && (
                         <p className="mt-1 whitespace-pre-wrap break-words text-slate-600">

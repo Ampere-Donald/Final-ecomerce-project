@@ -7,6 +7,7 @@ const mock = vi.hoisted(() => ({
   quotes: vi.fn(),
   respond: vi.fn(),
   assign: vi.fn(),
+  prepare: vi.fn(),
   responsables: vi.fn(),
   admin: { id: "seller", role: "VENDEUR" },
 }));
@@ -14,7 +15,7 @@ vi.mock("../context/AdminAuthContext", () => ({
   useAdminAuth: () => ({ admin: mock.admin }),
 }));
 vi.mock("../services/api", () => ({
-  demandeDevisApi: { getAll: mock.getAll, respond: mock.respond, assign: mock.assign, getResponsables: mock.responsables },
+  demandeDevisApi: { prepare: mock.prepare, getAll: mock.getAll, respond: mock.respond, assign: mock.assign, getResponsables: mock.responsables },
   proformaApi: { getAll: mock.quotes },
   getApiErrorMessage: (_: unknown, fallback: string) => fallback,
 }));
@@ -170,4 +171,19 @@ it("keeps a closed request read-only, and does not load the quote queue for a ca
   await screen.findByRole("alert");
   expect(mock.getAll).not.toHaveBeenCalled();
   expect(mock.quotes).not.toHaveBeenCalled();
+});
+
+it("recovers preparation after a lost reply without publishing an offer", async () => {
+ mock.getAll.mockResolvedValue([{ ...request, responsable: { id: "seller", nom: "Vendeur" } }]);
+ mock.prepare.mockRejectedValueOnce(new Error("lost")).mockResolvedValueOnce({proforma:quote,reprise:true});
+ show();fireEvent.click(await screen.findByRole("button",{name:/Client Test/}));
+ fireEvent.change(screen.getByLabelText("Type de réponse"),{target:{value:"ENVOYEE"}});
+ fireEvent.click(screen.getByRole("button",{name:"Préparer ou reprendre depuis la demande"}));
+ await screen.findByRole("alert");await waitFor(()=>expect(mock.getAll).toHaveBeenCalledTimes(2));
+ await waitFor(()=>expect((screen.getByRole("button",{name:"Préparer ou reprendre depuis la demande"}) as HTMLButtonElement).disabled).toBe(false));
+ fireEvent.click(screen.getByRole("button",{name:"Préparer ou reprendre depuis la demande"}));
+ await screen.findByText(/Proforma retrouvée/);
+ expect(mock.prepare.mock.calls).toEqual([["d",4],["d",4]]);
+ expect((screen.getByLabelText("Proforma de ce client") as HTMLSelectElement).value).toBe("p");
+ expect(mock.respond).not.toHaveBeenCalled();
 });

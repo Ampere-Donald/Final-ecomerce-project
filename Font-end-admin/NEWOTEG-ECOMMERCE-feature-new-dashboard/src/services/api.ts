@@ -592,6 +592,7 @@ export const proformaApi = {
 };
 
 export const demandeDevisApi = {
+  prepare: (id: string, version: number) => api.post(`/devis/admin/${id}/preparation`, { version }).then(r => r.data),
   getAll: () => api.get('/devis/admin').then(r => r.data),
   getResponsables: () => api.get('/devis/admin/responsables').then(r => r.data),
   assign: (id: string, body: { version: number; responsableId: string | null }) =>

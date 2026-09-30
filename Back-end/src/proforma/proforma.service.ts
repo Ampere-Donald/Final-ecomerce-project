@@ -4,19 +4,19 @@ import {
   ForbiddenException,
   Injectable,
   NotFoundException,
-} from "@nestjs/common";
-import { Cron } from "@nestjs/schedule";
-import { Prisma, MethodePaiement } from "@prisma/client";
-import { BonVenteEventsService } from "src/bon-vente/bon-vente.events.service";
-import { BonVenteService } from "src/bon-vente/bon-vente.service";
-import { DatabaseService } from "src/database/database.service";
-import { CreateProformaDto, LigneProformaDto } from "./dto/create-proforma.dto";
-import { UpdateProformaDto } from "./dto/update-proforma.dto";
-import { DocumentNumberService } from "src/database/document-number.service";
+} from '@nestjs/common';
+import { Cron } from '@nestjs/schedule';
+import { Prisma, MethodePaiement } from '@prisma/client';
+import { BonVenteEventsService } from 'src/bon-vente/bon-vente.events.service';
+import { BonVenteService } from 'src/bon-vente/bon-vente.service';
+import { DatabaseService } from 'src/database/database.service';
+import { CreateProformaDto, LigneProformaDto } from './dto/create-proforma.dto';
+import { UpdateProformaDto } from './dto/update-proforma.dto';
+import { DocumentNumberService } from 'src/database/document-number.service';
 import {
   assertTicketStockAvailable,
   inspectTicketStock,
-} from "src/ticket-vente/ticket-stock.util";
+} from 'src/ticket-vente/ticket-stock.util';
 
 const PROFORMA_VALIDITY_DAYS = 30;
 const TICKET_VALIDITY_MS = 15 * 60 * 1000;
@@ -33,17 +33,17 @@ export class ProformaService {
   ) {}
 
   private toNumber(value: unknown): number {
-    if (value === null || value === undefined || value === "") return 0;
+    if (value === null || value === undefined || value === '') return 0;
     const parsed = Number(value);
     return Number.isFinite(parsed) ? parsed : 0;
   }
 
   private canManageAll(role: string) {
-    return ["SUPER_ADMIN", "ADMIN"].includes(role);
+    return ['SUPER_ADMIN', 'ADMIN'].includes(role);
   }
 
   private canReadAll(role: string) {
-    return ["SUPER_ADMIN", "ADMIN", "CAISSIER"].includes(role);
+    return ['SUPER_ADMIN', 'ADMIN', 'CAISSIER'].includes(role);
   }
 
   private include() {
@@ -54,8 +54,8 @@ export class ProformaService {
     };
   }
 
-  private async generateNumero(): Promise<string> {
-    return this.documentNumbers.nextAnnual("PROFORMA", "FP-");
+  private async generateNumero(tx?: any): Promise<string> {
+    return this.documentNumbers.nextAnnual('PROFORMA', 'FP-', tx);
   }
 
   private dateExpiration() {
@@ -67,7 +67,7 @@ export class ProformaService {
   private async buildLignes(lignes: LigneProformaDto[], db: any = this.db) {
     if (!Array.isArray(lignes) || !lignes.length || lignes.length > 100) {
       throw new BadRequestException(
-        "La proforma doit contenir de 1 à 100 références.",
+        'La proforma doit contenir de 1 à 100 références.',
       );
     }
     const produitIds = lignes.map((line) => line.produitId);
@@ -76,7 +76,7 @@ export class ProformaService {
       new Set(produitIds).size !== produitIds.length
     ) {
       throw new BadRequestException(
-        "Chaque ligne doit désigner une référence distincte du catalogue.",
+        'Chaque ligne doit désigner une référence distincte du catalogue.',
       );
     }
     const produits = await db.produit.findMany({
@@ -85,7 +85,7 @@ export class ProformaService {
     });
     if (produits.length !== produitIds.length) {
       throw new NotFoundException(
-        "Au moins un produit est introuvable ou a quitté le catalogue.",
+        'Au moins un produit est introuvable ou a quitté le catalogue.',
       );
     }
 
@@ -110,13 +110,13 @@ export class ProformaService {
         sousTotalCents > 999999999999
       ) {
         throw new BadRequestException(
-          "Vérifiez les quantités et les montants de la proforma.",
+          'Vérifiez les quantités et les montants de la proforma.',
         );
       }
       totalCents += sousTotalCents;
       if (!Number.isSafeInteger(totalCents) || totalCents > 999999999999) {
         throw new BadRequestException(
-          "Le total de la proforma dépasse le montant accepté.",
+          'Le total de la proforma dépasse le montant accepté.',
         );
       }
       return {
@@ -130,11 +130,11 @@ export class ProformaService {
     return { lignesData, montantTotal: totalCents / 100 };
   }
 
-  async create(vendeurId: string, dto: CreateProformaDto) {
-    const { lignesData, montantTotal } = await this.buildLignes(dto.lignes);
-    return this.db.proforma.create({
+  async create(vendeurId: string, dto: CreateProformaDto, tx: any = this.db) {
+    const { lignesData, montantTotal } = await this.buildLignes(dto.lignes, tx);
+    return tx.proforma.create({
       data: {
-        numero: await this.generateNumero(),
+        numero: await this.generateNumero(tx),
         vendeurId,
         clientId: dto.clientId ?? null,
         clientNom: dto.clientNom?.trim() || null,
@@ -154,7 +154,7 @@ export class ProformaService {
     if (!this.canReadAll(actor.role)) where.vendeurId = actor.id;
     if (filters.statut) where.statut = filters.statut;
     if (filters.periode) {
-      const [year, month] = filters.periode.split("-").map(Number);
+      const [year, month] = filters.periode.split('-').map(Number);
       if (year && month) {
         where.dateCreation = {
           gte: new Date(year, month - 1, 1),
@@ -165,7 +165,7 @@ export class ProformaService {
     return this.db.proforma.findMany({
       where,
       include: this.include(),
-      orderBy: { dateCreation: "desc" },
+      orderBy: { dateCreation: 'desc' },
     });
   }
 
@@ -174,9 +174,9 @@ export class ProformaService {
       where: { id },
       include: this.include(),
     });
-    if (!proforma) throw new NotFoundException("Proforma introuvable.");
+    if (!proforma) throw new NotFoundException('Proforma introuvable.');
     if (!this.canReadAll(actor.role) && proforma.vendeurId !== actor.id) {
-      throw new ForbiddenException("Acces refuse a cette proforma.");
+      throw new ForbiddenException('Acces refuse a cette proforma.');
     }
     return proforma;
   }
@@ -186,28 +186,28 @@ export class ProformaService {
       where: { id },
       include: this.include(),
     });
-    if (!current) throw new NotFoundException("Proforma introuvable.");
+    if (!current) throw new NotFoundException('Proforma introuvable.');
     if (
       !this.canManageAll(actor.role) &&
-      (actor.role !== "VENDEUR" || current.vendeurId !== actor.id)
+      (actor.role !== 'VENDEUR' || current.vendeurId !== actor.id)
     ) {
-      throw new ForbiddenException("Accès refusé à cette proforma.");
+      throw new ForbiddenException('Accès refusé à cette proforma.');
     }
-    if (current.statut !== "EN_COURS") {
+    if (current.statut !== 'EN_COURS') {
       throw new ConflictException(
-        "Cette proforma n’est plus en cours. Actualisez-la.",
+        'Cette proforma n’est plus en cours. Actualisez-la.',
       );
     }
     if (current.dateExpiration.getTime() <= Date.now()) {
-      throw new ConflictException("Cette proforma a expiré.");
+      throw new ConflictException('Cette proforma a expiré.');
     }
     return current;
   }
 
   private concurrentMutation(error: any): never {
-    if (error?.code === "P2034") {
+    if (error?.code === 'P2034') {
       throw new ConflictException(
-        "Cette proforma a changé pendant l’opération. Actualisez-la avant de réessayer.",
+        'Cette proforma a changé pendant l’opération. Actualisez-la avant de réessayer.',
       );
     }
     throw error;
@@ -246,14 +246,14 @@ export class ProformaService {
           const changed = await tx.proforma.updateMany({
             where: {
               id,
-              statut: "EN_COURS",
+              statut: 'EN_COURS',
               dateExpiration: { gt: new Date() },
             },
             data,
           });
           if (changed.count !== 1)
             throw new ConflictException(
-              "Cette proforma a changé. Actualisez-la.",
+              'Cette proforma a changé. Actualisez-la.',
             );
           if (dto.lignes) {
             await tx.proformaLigne.deleteMany({ where: { proformaId: id } });
@@ -297,7 +297,7 @@ export class ProformaService {
             )
           ) {
             throw new BadRequestException(
-              "Le total de la proforma ne correspond pas à ses lignes.",
+              'Le total de la proforma ne correspond pas à ses lignes.',
             );
           }
           // Claim the proforma before taking stock locks, matching quote acceptance.
@@ -305,21 +305,21 @@ export class ProformaService {
           const changed = await tx.proforma.updateMany({
             where: {
               id,
-              statut: "EN_COURS",
+              statut: 'EN_COURS',
               dateExpiration: { gt: new Date() },
             },
-            data: { statut: "TRANSFORMEE" },
+            data: { statut: 'TRANSFORMEE' },
           });
           if (changed.count !== 1)
             throw new ConflictException(
-              "Cette proforma a changé. Actualisez-la.",
+              'Cette proforma a changé. Actualisez-la.',
             );
           const availability = await inspectTicketStock(tx, lignesData, {
             lock: true,
           });
           assertTicketStockAvailable(availability);
           if (proforma.dateExpiration.getTime() <= Date.now())
-            throw new ConflictException("Cette proforma a expiré.");
+            throw new ConflictException('Cette proforma a expiré.');
           const ticket = await tx.ticketVente.create({
             data: {
               numeroTicket: await this.bonVente.generateNumeroTicket(tx),
@@ -358,17 +358,17 @@ export class ProformaService {
 
   async remove(id: string) {
     const proforma = await this.db.proforma.findUnique({ where: { id } });
-    if (!proforma) throw new NotFoundException("Proforma introuvable.");
+    if (!proforma) throw new NotFoundException('Proforma introuvable.');
     await this.db.proforma.delete({ where: { id } });
     return { deleted: true };
   }
 
-  @Cron("0 2 * * *", { timeZone: "Africa/Douala" })
+  @Cron('0 2 * * *', { timeZone: 'Africa/Douala' })
   async deleteExpired() {
     return this.db.proforma.deleteMany({
       where: {
         dateExpiration: { lt: new Date() },
-        statut: { not: "TRANSFORMEE" },
+        statut: { not: 'TRANSFORMEE' },
       },
     });
   }
