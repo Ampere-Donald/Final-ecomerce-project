@@ -9,7 +9,7 @@ import { plainToInstance } from "class-transformer";
 import { validate } from "class-validator";
 import { DevisService } from "./devis.service";
 import { DevisController } from "./devis.controller";
-import { CreateDemandeDevisDto, ResolveDevisDto } from "./dto/devis.dto";
+import { AffecterDevisDto, CreateDemandeDevisDto, ResolveDevisDto } from "./dto/devis.dto";
 import { JwtAuthGuard } from "../auth/jwt-auth.guard";
 import { AdminAuthGuard } from "../admin-auth/admin-auth.guard";
 import { RolesGuard } from "../admin-auth/roles.guard";
@@ -81,6 +81,7 @@ function harness() {
           isActive: true,
           peutVendreSousDemiGros: false,
         }),
+      findMany: jest.fn().mockResolvedValue([]),
     },
   };
   const db = {
@@ -255,6 +256,84 @@ describe("Customer quote requests", () => {
     expect(tx.demandeDevis.updateMany).not.toHaveBeenCalled();
   });
 
+  it("lists only active eligible assignees and validates explicit assignment input", async () => {
+    const { db, service } = harness();
+    await service.findResponsables();
+    expect(db.adminUser.findMany.mock.calls[0][0].where).toEqual({
+      isActive: true,
+      role: { in: ["SUPER_ADMIN", "ADMIN", "VENDEUR"] },
+    });
+    expect(db.adminUser.findMany.mock.calls[0][0].select).toEqual({
+      id: true, nom: true, role: true,
+    });
+    expect((await validate(plainToInstance(AffecterDevisDto, { version: 1, responsableId: null }))).length).toBe(0);
+    expect((await validate(plainToInstance(AffecterDevisDto, { version: 1 }))).length).toBeGreaterThan(0);
+    expect((await validate(plainToInstance(AffecterDevisDto, { version: 1, responsableId: "wrong" }))).length).toBeGreaterThan(0);
+  });
+
+  it("claims a free request once and records the assignment without exposing it to the customer", async () => {
+    const { tx, service } = harness();
+    tx.demandeDevis.findUnique.mockResolvedValue(row());
+    await service.assign({ id: "seller", role: "VENDEUR" }, "request", {
+      version: 1, responsableId: "seller",
+    });
+    expect(tx.demandeDevis.updateMany.mock.calls[0][0].where).toEqual({
+      id: "request", version: 1, responsableId: null, statut: "RECUE",
+    });
+    expect(tx.demandeDevis.updateMany.mock.calls[0][0].data).toEqual({
+      responsableId: "seller", version: { increment: 1 },
+    });
+    expect(tx.demandeDevisEvent.create.mock.calls[0][0].data.details).toMatchObject({
+      action: "AFFECTATION", ancienResponsableId: null, nouveauResponsableId: "seller",
+    });
+    expect(tx.produit.updateMany).not.toHaveBeenCalled();
+  });
+
+  it("refuses seller takeover, inactive targets, stale changes and closed requests", async () => {
+    const { tx, service } = harness();
+    tx.demandeDevis.findUnique.mockResolvedValue(row({ responsableId: "other" }));
+    await expect(service.assign({ id: "seller", role: "VENDEUR" }, "request", { version: 1, responsableId: "seller" })).rejects.toBeInstanceOf(ForbiddenException);
+    tx.demandeDevis.findUnique.mockResolvedValue(row());
+    await expect(service.assign({ id: "seller", role: "VENDEUR" }, "request", { version: 1, responsableId: "other" })).rejects.toBeInstanceOf(ForbiddenException);
+    tx.adminUser.findUnique.mockResolvedValue({ role: "CAISSIER", isActive: true });
+    await expect(service.assign({ id: "boss", role: "ADMIN" }, "request", { version: 1, responsableId: "other" })).rejects.toBeInstanceOf(BadRequestException);
+    tx.demandeDevis.findUnique.mockResolvedValue(row({ version: 2 }));
+    await expect(service.assign({ id: "boss", role: "ADMIN" }, "request", { version: 1, responsableId: null })).rejects.toBeInstanceOf(ConflictException);
+    tx.demandeDevis.findUnique.mockResolvedValue(row({ statut: "ACCEPTEE" }));
+    await expect(service.assign({ id: "boss", role: "ADMIN" }, "request", { version: 1, responsableId: null })).rejects.toBeInstanceOf(ConflictException);
+    expect(tx.demandeDevis.updateMany).not.toHaveBeenCalled();
+  });
+
+  it("allows an administrator to reassign or release, but keeps the version check atomic", async () => {
+    const { tx, service } = harness();
+    tx.demandeDevis.findUnique.mockResolvedValue(row({ responsableId: "seller" }));
+    tx.adminUser.findUnique.mockResolvedValue({ role: "VENDEUR", isActive: true });
+    await service.assign({ id: "boss", role: "ADMIN" }, "request", { version: 1, responsableId: "other" });
+    expect(tx.demandeDevisEvent.create.mock.calls[0][0].data.details.nouveauResponsableId).toBe("other");
+    tx.demandeDevis.updateMany.mockResolvedValue({ count: 0 });
+    await expect(service.assign({ id: "boss", role: "ADMIN" }, "request", { version: 1, responsableId: null })).rejects.toBeInstanceOf(ConflictException);
+  });
+
+  it("preserves the authorized version of a sent offer while reassigning its owner", async () => {
+    const { tx, service } = harness();
+    tx.demandeDevis.findUnique.mockResolvedValue(row({ statut: "ENVOYEE", responsableId: "seller", version: 3 }));
+    tx.adminUser.findUnique.mockResolvedValue({ role: "VENDEUR", isActive: true });
+    await service.assign({ id: "boss", role: "ADMIN" }, "request", { version: 3, responsableId: "other" });
+    expect(tx.demandeDevis.updateMany.mock.calls[0][0]).toEqual({
+      where: { id: "request", version: 3, responsableId: "seller", statut: "ENVOYEE" },
+      data: { responsableId: "other" },
+    });
+    expect(tx.demandeDevisEvent.create.mock.calls[0][0].data.details.action).toBe("AFFECTATION");
+  });
+
+  it("requires an explicit responsible person before a reply", async () => {
+    const { tx, service } = harness();
+    tx.demandeDevis.findUnique.mockResolvedValue(row());
+    await expect(service.respond({ id: "seller", role: "VENDEUR" }, "request", reply)).rejects.toBeInstanceOf(ForbiddenException);
+    await expect(service.respond({ id: "boss", role: "ADMIN" }, "request", reply)).rejects.toBeInstanceOf(ConflictException);
+    expect(tx.demandeDevis.updateMany).not.toHaveBeenCalled();
+  });
+
   it("requires optimistic version acceptance before altering a response", async () => {
     const { tx, service } = harness();
     tx.demandeDevis.findUnique.mockResolvedValue(row({ version: 2 }));
@@ -273,7 +352,7 @@ describe("Customer quote requests", () => {
     "rejects an unrelated, transformed, expired or inconsistent proforma: %j",
     async (values) => {
       const { tx, service } = harness();
-      tx.demandeDevis.findUnique.mockResolvedValue(row());
+      tx.demandeDevis.findUnique.mockResolvedValue(row({ responsableId: "seller" }));
       tx.proforma.findUnique.mockResolvedValue(quote(values));
       await expect(
         service.respond({ id: "seller", role: "VENDEUR" }, "request", reply),
@@ -284,7 +363,7 @@ describe("Customer quote requests", () => {
 
   it("sends only the audited commercial snapshot, preserves a low-stock warning, and never reserves inventory", async () => {
     const { tx, service, proformas } = harness();
-    tx.demandeDevis.findUnique.mockResolvedValue(row());
+    tx.demandeDevis.findUnique.mockResolvedValue(row({ responsableId: "seller" }));
     tx.proforma.findUnique.mockResolvedValue(quote());
     await service.respond({ id: "seller", role: "VENDEUR" }, "request", reply);
     expect(proformas.findOne).toHaveBeenCalledWith("proforma", {
@@ -292,7 +371,7 @@ describe("Customer quote requests", () => {
       role: "VENDEUR",
     });
     const update = tx.demandeDevis.updateMany.mock.calls[0][0] as any;
-    expect(update.where).toEqual({ id: "request", version: 1 });
+    expect(update.where).toEqual({ id: "request", version: 1, responsableId: "seller" });
     expect(update.data.offre.montantArticles).toBe(10000);
     expect(update.data.offre.lignes[0].quantiteDisponible).toBe(1);
     expect(update.data.offre.reservationStock).toBe(false);
@@ -309,7 +388,7 @@ describe("Customer quote requests", () => {
         Reflect.getMetadata(GUARDS_METADATA, DevisController.prototype[name]),
       ).toEqual([JwtAuthGuard]);
     }
-    for (const name of ["adminList", "respond"]) {
+    for (const name of ["adminList", "respond", "affecter"]) {
       expect(
         Reflect.getMetadata(GUARDS_METADATA, DevisController.prototype[name]),
       ).toEqual([AdminAuthGuard, RolesGuard]);
@@ -317,6 +396,8 @@ describe("Customer quote requests", () => {
         Reflect.getMetadata(ROLES_KEY, DevisController.prototype[name]),
       ).toEqual(["SUPER_ADMIN", "ADMIN", "VENDEUR"]);
     }
+    expect(Reflect.getMetadata(GUARDS_METADATA, DevisController.prototype.responsables)).toEqual([AdminAuthGuard, RolesGuard]);
+    expect(Reflect.getMetadata(ROLES_KEY, DevisController.prototype.responsables)).toEqual(["SUPER_ADMIN", "ADMIN"]);
   });
 
   it("clarifies only an owned request awaiting details, atomically replacing the list with an audit and without reserving stock", async () => {

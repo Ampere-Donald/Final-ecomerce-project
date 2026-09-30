@@ -16,6 +16,7 @@ import {
   RepondreDevisDto,
   ResolveDevisDto,
   ClarifierDevisDto,
+  AffecterDevisDto,
 } from "./dto/devis.dto";
 
 type Actor = { id: string; role: string };
@@ -320,6 +321,101 @@ export class DevisService {
     }));
   }
 
+  async findResponsables() {
+    return this.db.adminUser.findMany({
+      where: {
+        isActive: true,
+        role: { in: ["SUPER_ADMIN", "ADMIN", "VENDEUR"] },
+      },
+      select: { id: true, nom: true, role: true },
+      orderBy: [{ nom: "asc" }, { id: "asc" }],
+    });
+  }
+
+  async assign(actor: Actor, id: string, dto: AffecterDevisDto) {
+    try {
+      return await this.db.$transaction(
+        async (tx) => {
+          const current = await tx.demandeDevis.findUnique({ where: { id } });
+          if (!current)
+            throw new NotFoundException("Demande de devis introuvable.");
+          if (current.version !== dto.version)
+            throw new ConflictException("La demande a changé. Actualisez-la.");
+          if (["ACCEPTEE", "REFUSEE"].includes(current.statut))
+            throw new ConflictException("Cette demande est terminée.");
+          if (actor.role === "VENDEUR") {
+            if (dto.responsableId !== actor.id || current.responsableId)
+              throw new ForbiddenException(
+                "Seule une demande libre peut être prise par ce vendeur.",
+              );
+          } else if (!["SUPER_ADMIN", "ADMIN"].includes(actor.role)) {
+            throw new ForbiddenException("Accès refusé.");
+          }
+          if (dto.responsableId) {
+            const responsible = await tx.adminUser.findUnique({
+              where: { id: dto.responsableId },
+              select: { id: true, isActive: true, role: true },
+            });
+            if (
+              !responsible?.isActive ||
+              !["SUPER_ADMIN", "ADMIN", "VENDEUR"].includes(responsible.role)
+            )
+              throw new BadRequestException(
+                "Choisissez un responsable actif autorisé à traiter les devis.",
+              );
+          }
+          if (current.responsableId === dto.responsableId)
+            throw new ConflictException("Cette affectation est déjà enregistrée.");
+          const updated = await tx.demandeDevis.updateMany({
+            where: {
+              id,
+              version: dto.version,
+              responsableId: current.responsableId,
+              statut: current.statut,
+            },
+            data: {
+              responsableId: dto.responsableId,
+              // A sent offer is authorized for its exact commercial version.
+              // Reassignment must not invalidate that authorization.
+              ...(current.statut === "ENVOYEE"
+                ? {}
+                : { version: { increment: 1 } }),
+            },
+          });
+          if (updated.count !== 1)
+            throw new ConflictException("La demande a changé. Actualisez-la.");
+          await tx.demandeDevisEvent.create({
+            data: {
+              demandeId: id,
+              acteurId: actor.id,
+              acteurType: "ADMIN",
+              statut: current.statut,
+              details: {
+                action: "AFFECTATION",
+                ancienResponsableId: current.responsableId,
+                nouveauResponsableId: dto.responsableId,
+                versionPrecedente: dto.version,
+              },
+            },
+          });
+          return tx.demandeDevis.findUniqueOrThrow({
+            where: { id },
+            select: {
+              id: true,
+              version: true,
+              responsable: { select: { id: true, nom: true } },
+            },
+          });
+        },
+        { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+      );
+    } catch (error: any) {
+      if (error.code === "P2034")
+        throw new ConflictException("La demande a changé. Actualisez-la.");
+      throw error;
+    }
+  }
+
   async clarify(clientId: string, id: string, dto: ClarifierDevisDto) {
     this.validateLines(dto);
     const input = {
@@ -468,17 +564,17 @@ export class DevisService {
           const current = await tx.demandeDevis.findUnique({ where: { id } });
           if (!current)
             throw new NotFoundException("Demande de devis introuvable.");
-          if (
-            actor.role === "VENDEUR" &&
-            current.responsableId &&
-            current.responsableId !== actor.id
-          )
+          if (actor.role === "VENDEUR" && current.responsableId !== actor.id)
             throw new ForbiddenException(
-              "Cette demande est affectée à un autre vendeur.",
+              "Prenez d’abord cette demande avant d’y répondre.",
             );
           if (current.version !== dto.version)
             throw new ConflictException(
               "Cette demande a été modifiée. Actualisez-la.",
+            );
+          if (!current.responsableId)
+            throw new ConflictException(
+              "Affectez la demande avant de répondre au client.",
             );
           if (["ACCEPTEE", "REFUSEE"].includes(current.statut))
             throw new ConflictException("Cette demande est terminée.");
@@ -570,11 +666,10 @@ export class DevisService {
             };
           }
           const changed = await tx.demandeDevis.updateMany({
-            where: { id, version: dto.version },
+            where: { id, version: dto.version, responsableId: current.responsableId },
             data: {
               statut: dto.statut,
               reponseClient: dto.message.trim(),
-              responsableId: current.responsableId || actor.id,
               proformaId: dto.statut === "ENVOYEE" ? dto.proformaId : null,
               offre: offre || Prisma.DbNull,
               version: { increment: 1 },

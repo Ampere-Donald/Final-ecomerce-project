@@ -26,7 +26,7 @@ type RequestRow = {
   historique: {
     statut: string;
     createdAt: string;
-    details?: { message?: string };
+    details?: { action?: string; message?: string };
   }[];
 };
 type Proforma = {
@@ -38,6 +38,7 @@ type Proforma = {
   dateExpiration: string;
   montantTotal: string | number;
 };
+type Responsible = { id: string; nom: string; role: string };
 const labels: Record<string, string> = {
   RECUE: "Reçue",
   A_PRECISER: "À préciser",
@@ -53,6 +54,8 @@ export const DemandesDevis = () => {
   const { admin } = useAdminAuth();
   const [rows, setRows] = useState<RequestRow[]>([]);
   const [proformas, setProformas] = useState<Proforma[]>([]);
+  const [responsables, setResponsables] = useState<Responsible[]>([]);
+  const [assigneeId, setAssigneeId] = useState("");
   const [selectedId, setSelectedId] = useState("");
   const [filter, setFilter] = useState("active");
   const [loading, setLoading] = useState(true);
@@ -72,29 +75,34 @@ export const DemandesDevis = () => {
   const allowed = ["SUPER_ADMIN", "ADMIN", "VENDEUR"].includes(
     admin?.role || "",
   );
+  const canManage = ["SUPER_ADMIN", "ADMIN"].includes(admin?.role || "");
   const load = useCallback(async () => {
     if (!allowed) return;
     const sequence = ++loadSequence.current;
     setLoading(true);
     try {
-      const [requests, quotes] = await Promise.all([
+      const [requests, quotes, assignees] = await Promise.all([
         demandeDevisApi.getAll(),
         proformaApi.getAll({ statut: "EN_COURS" }),
+        canManage ? demandeDevisApi.getResponsables() : Promise.resolve([]),
       ]);
       if (sequence !== loadSequence.current) return;
       if (
         !Array.isArray(requests) ||
         requests.some((r) => !r?.id || !Array.isArray(r.lignes)) ||
-        !Array.isArray(quotes)
+        !Array.isArray(quotes) ||
+        !Array.isArray(assignees)
       )
         throw new Error("Invalid quote queue");
       setRows(requests);
       setProformas(quotes);
+      setResponsables(assignees);
       setLoadedActor(actorKey);
     } catch (e) {
       if (sequence === loadSequence.current) {
         setRows([]);
         setProformas([]);
+        setResponsables([]);
         setError(
           getApiErrorMessage(e, "Impossible de lire les demandes. Réessayez."),
         );
@@ -102,7 +110,7 @@ export const DemandesDevis = () => {
     } finally {
       if (sequence === loadSequence.current) setLoading(false);
     }
-  }, [allowed, actorKey]);
+  }, [allowed, actorKey, canManage]);
   useEffect(() => {
     void load();
     return () => {
@@ -111,6 +119,9 @@ export const DemandesDevis = () => {
   }, [load]);
   const current = loadedActor === actorKey;
   const selected = current ? rows.find((r) => r.id === selectedId) : undefined;
+  useEffect(() => {
+    setAssigneeId(selected?.responsable?.id || "");
+  }, [selected?.id, selected?.version, selected?.responsable?.id]);
   const eligible = selected
     ? proformas.filter(
         (p) =>
@@ -123,10 +134,32 @@ export const DemandesDevis = () => {
   const writable = Boolean(
     selected &&
     !["ACCEPTEE", "REFUSEE"].includes(selected.statut) &&
+    selected.responsable &&
     (admin?.role !== "VENDEUR" ||
-      !selected.responsable ||
       selected.responsable.id === admin.id),
   );
+  async function assign(targetId: string | null) {
+    if (lock.current || !selected || ["ACCEPTEE", "REFUSEE"].includes(selected.statut)) return;
+    if (!canManage && (admin?.role !== "VENDEUR" || targetId !== admin.id || selected.responsable)) return;
+    if (canManage && targetId && !responsables.some((r) => r.id === targetId)) return;
+    lock.current = true;
+    setBusy(true);
+    setError("");
+    setNotice("");
+    try {
+      await demandeDevisApi.assign(selected.id, {
+        version: selected.version,
+        responsableId: targetId,
+      });
+      setNotice("Affectation enregistrée dans l’historique de la demande.");
+    } catch (e) {
+      setError(getApiErrorMessage(e, "L’affectation n’a pas pu être confirmée. Vérifiez la demande actualisée."));
+    } finally {
+      await load();
+      setBusy(false);
+      lock.current = false;
+    }
+  }
   async function respond(event: React.FormEvent) {
     event.preventDefault();
     if (lock.current || !selected || !writable) return;
@@ -329,6 +362,31 @@ export const DemandesDevis = () => {
                   </li>
                 ))}
               </ul>
+              {!["ACCEPTEE", "REFUSEE"].includes(selected.statut) && (
+                <section className="border-l-4 border-blue-600 bg-blue-50 p-4" aria-label="Responsable de la demande">
+                  <h3 className="text-sm font-bold">Responsable du traitement</h3>
+                  <p className="mt-1 text-sm text-slate-700">{selected.responsable?.nom || "Demande non affectée"}</p>
+                  {canManage ? (
+                    <div className="mt-3 flex flex-wrap items-end gap-3">
+                      <label className="min-w-[220px] flex-1 text-sm font-semibold">
+                        Attribuer à
+                        <select className={inputClass + " mt-1"} value={assigneeId} disabled={busy} onChange={(e) => setAssigneeId(e.target.value)}>
+                          <option value="">Aucun responsable</option>
+                          {responsables.map((r) => <option key={r.id} value={r.id}>{r.nom} · {r.role}</option>)}
+                        </select>
+                      </label>
+                      <button type="button" className="rounded-lg border border-blue-700 px-4 py-2 text-sm font-semibold text-blue-800 disabled:opacity-50" disabled={busy || assigneeId === (selected.responsable?.id || "")} onClick={() => void assign(assigneeId || null)}>
+                        Enregistrer l’affectation
+                      </button>
+                    </div>
+                  ) : !selected.responsable ? (
+                    <button type="button" className="mt-3 rounded-lg border border-blue-700 px-4 py-2 text-sm font-semibold text-blue-800 disabled:opacity-50" disabled={busy} onClick={() => void assign(admin?.id || null)}>
+                      Prendre cette demande
+                    </button>
+                  ) : null}
+                  {!selected.responsable && <p className="mt-2 text-xs text-slate-600">Une affectation est nécessaire avant toute réponse au client.</p>}
+                </section>
+              )}
               {selected.reponseClient && (
                 <div className="border-l-4 border-emerald-600 bg-emerald-50 p-4">
                   <strong className="text-sm">
@@ -456,7 +514,7 @@ export const DemandesDevis = () => {
                 <ol className="mt-4 space-y-4">
                   {selected.historique?.map((event, i) => (
                     <li key={i} className="text-sm">
-                      <strong>{labels[event.statut] || event.statut}</strong> ·{" "}
+                      <strong>{event.details?.action === "AFFECTATION" ? "Affectation modifiée" : labels[event.statut] || event.statut}</strong> ·{" "}
                       {fmtDateCourt(event.createdAt)}
                       {event.details?.message && (
                         <p className="mt-1 whitespace-pre-wrap break-words text-slate-600">

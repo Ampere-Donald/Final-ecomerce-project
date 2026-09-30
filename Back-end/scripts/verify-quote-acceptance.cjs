@@ -116,6 +116,12 @@ async function fixture(count = 1) {
       quantite: 2,
     })),
   });
+  // Seed an already assigned request at version 1 for the acceptance-specific recipes.
+  // The explicit claim and reassignment contract is exercised separately below.
+  await db.demandeDevis.update({
+    where: { id: request.id },
+    data: { responsableId: seller.id },
+  });
   await devis.respond({ id: seller.id, role: "VENDEUR" }, request.id, {
     version: 1,
     statut: "ENVOYEE",
@@ -256,6 +262,35 @@ async function assertClean(f) {
     ok(
       `Concurrent acceptances (${sameKey ? "same" : "different"} UUID), one order/stock movement/audit/notification; deletion tombstone prevents recreation`,
     );
+  }
+  {
+    const f = await fixture();
+    const nextSeller = await db.adminUser.create({
+      data: {
+        nom: "Second vendeur fictif",
+        username: "qr-" + randomUUID(),
+        role: "VENDEUR",
+      },
+    });
+    await devis.assign(
+      { id: f.seller.id, role: "ADMIN" },
+      f.request.id,
+      { version: 2, responsableId: nextSeller.id },
+    );
+    const after = await db.demandeDevis.findUniqueOrThrow({
+      where: { id: f.request.id },
+    });
+    assert.equal(after.version, 2);
+    assert.equal(after.responsableId, nextSeller.id);
+    assert.equal(
+      await db.demandeDevisEvent.count({
+        where: { demandeId: f.request.id, details: { path: ["action"], equals: "AFFECTATION" } },
+      }),
+      1,
+    );
+    const accepted = await acceptance.accept(f.client.id, f.request.id, attempt());
+    assert.equal(accepted.commande.montantTotal, 3000);
+    ok("Reassignment of a sent offer preserves its authorized version and client acceptance");
   }
   {
     const f = await fixture(2);
@@ -445,6 +480,10 @@ async function assertClean(f) {
           produitId: p.id,
           quantite: 2,
         })),
+    });
+    await db.demandeDevis.update({
+      where: { id: secondRequest.id },
+      data: { responsableId: f.seller.id },
     });
     await devis.respond(
       { id: f.seller.id, role: "VENDEUR" },

@@ -22,6 +22,7 @@ import {
   ResolveDevisDto,
   ClarifierDevisDto,
   AccepterDevisDto,
+  AffecterDevisDto,
 } from "./dto/devis.dto";
 
 @Controller("devis")
@@ -83,6 +84,24 @@ export class DevisController {
   @Roles("SUPER_ADMIN", "ADMIN", "VENDEUR")
   adminList(@Request() req: any) {
     return this.service.findForAdmin(req.user);
+  }
+
+  @Get("admin/responsables")
+  @UseGuards(AdminAuthGuard, RolesGuard)
+  @Roles("SUPER_ADMIN", "ADMIN")
+  responsables() {
+    return this.service.findResponsables();
+  }
+
+  @Patch("admin/:id/affectation")
+  @UseGuards(AdminAuthGuard, RolesGuard)
+  @Roles("SUPER_ADMIN", "ADMIN", "VENDEUR")
+  affecter(
+    @Request() req: any,
+    @Param("id", ParseUUIDPipe) id: string,
+    @Body() dto: AffecterDevisDto,
+  ) {
+    return this.service.assign(req.user, id, dto);
   }
 
   @Patch("admin/:id/reponse")

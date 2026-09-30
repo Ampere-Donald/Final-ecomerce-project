@@ -1,6 +1,6 @@
 # Contrat réalisé — demandes de devis
 
-30 septembre 2026. Lot L5 en cours : demandes, réponses et acceptation privée raccordées. Les migrations sont préparées et vérifiées uniquement sur une base PostgreSQL locale isolée ; elles ne sont pas appliquées à Railway. Le document client et la préparation guidée restent à faire.
+30 septembre 2026. Lot L5 en cours : demandes, réponses, acceptation privée, document imprimable et affectation explicite raccordés. Les migrations sont préparées et vérifiées uniquement sur une base PostgreSQL locale isolée ; elles ne sont pas appliquées à Railway. La préparation guidée reste à faire.
 
 ## Routes disponibles dans le code
 
@@ -12,6 +12,8 @@
 | `GET /devis/mine/:id` | Compte client | Une demande de ce propriétaire, sinon réponse introuvable. |
 | `PATCH /devis/mine/:id/precision` | Compte client | Modifie sa demande seulement si elle attend des précisions, avec version et identité de tentative. Rejouer la même précision ne remplace pas les lignes une seconde fois. |
 | `GET /devis/admin` | Super admin, admin, vendeur | Les admins voient la file; un vendeur voit ses demandes et celles non affectées. |
+| `GET /devis/admin/responsables` | Super admin, admin | Liste minimale des comptes actifs autorisés à traiter une demande. |
+| `PATCH /devis/admin/:id/affectation` | Super admin, admin, vendeur | Version courante requise ; vendeur : prise d’une demande libre pour lui-même ; administrateur : affectation, réaffectation ou libération. |
 | `PATCH /devis/admin/:id/reponse` | Super admin, admin, vendeur | Réponse à préciser, refus ou offre envoyée. Le prix proposé est contrôlé selon le rôle, avec motif interne si remise. |
 | `POST /devis/mine/:id/accepter` | Compte client propriétaire | Confirme la version affichée et les conditions de réception. Une transaction sérialisable crée au plus une commande, aux prix de l’offre, après contrôle du stock réellement disponible. |
 
@@ -31,7 +33,7 @@
 - `/devis` : une référence par ligne, quantité séparée par point-virgule ou tabulation; 1 pièce si la quantité est omise. Toute ligne invalide bloque l’import complet. Recherche explicite, choix des candidats sans sélection automatique et lignes inconnues laissées à préciser.
 - Le brouillon est conservé dans l’onglet pendant la connexion. Après association à un compte, il ne s’affiche pas dans un autre compte. La tentative d’envoi, enregistrée avant la requête, garde le même UUID et payload après réponse perdue/rechargement. Une tentative illisible bloque un nouvel envoi au lieu de risquer un doublon.
 - `/mes-devis` et `/mes-devis/:id` : consultation privée, réponse boutique, liste, réception et proposition. Le client peut préciser une demande au statut `A_PRECISER`; le résultat actualise la même demande.
-- Administration `/demandes-devis` : file, filtres, détail, historique et réponse. Le vendeur voit seulement les demandes accessibles selon son affectation; la première réponse affecte une demande libre à son auteur. Le formulaire propose seulement les proformas en cours et non expirées du même client et, pour un vendeur, ses propres proformas.
+- Administration `/demandes-devis` : file, filtres, détail, historique, affectation et réponse. Le vendeur voit seulement les demandes accessibles selon son affectation et doit prendre explicitement une demande libre avant de répondre. Le formulaire propose seulement les proformas en cours et non expirées du même client et, pour un vendeur, ses propres proformas.
 - Le formulaire existant de proforma permet désormais de choisir le compte client associé. Un nom identique ne suffit pas à relier une proposition à la demande d’un client.
 - Aucun e-mail ou WhatsApp n’est envoyé automatiquement par ces écrans. « Réponse disponible » signifie disponible dans le compte client.
 
@@ -61,6 +63,6 @@
 
 ## Travail restant pour L5 et la préproduction
 
-1. Document client imprimable limité à l'offre, affectation/réaffectation explicite et préparation guidée de proforma depuis la liste, avec reprise d'une création interrompue.
+1. Préparation guidée de proforma depuis la liste, avec reprise d'une création interrompue.
 2. Valider avec NEWOTEG les seuils professionnels, les références pilotes et les données commerciales réelles ; la règle de retrait Akwa et les frais/délais de livraison à confirmer sont conservés jusque-là.
 3. Tester les migrations et la restauration sur l'environnement isolé de préproduction, puis réaliser la recette équipe complète avant toute mise en ligne.

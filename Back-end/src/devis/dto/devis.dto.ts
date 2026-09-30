@@ -97,6 +97,16 @@ export class RepondreDevisDto {
   proformaId?: string;
 }
 
+export class AffecterDevisDto {
+  @IsInt()
+  @Min(1)
+  version: number;
+
+  @IsUUID()
+  @ValidateIf((value: AffecterDevisDto) => value.responsableId !== null)
+  responsableId: string | null;
+}
+
 export class ClarifierDevisDto extends CreateDemandeDevisDto {
   @IsInt()
   @Min(1)

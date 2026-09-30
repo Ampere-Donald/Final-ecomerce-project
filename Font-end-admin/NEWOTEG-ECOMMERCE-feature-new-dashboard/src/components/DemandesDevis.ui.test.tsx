@@ -6,13 +6,15 @@ const mock = vi.hoisted(() => ({
   getAll: vi.fn(),
   quotes: vi.fn(),
   respond: vi.fn(),
+  assign: vi.fn(),
+  responsables: vi.fn(),
   admin: { id: "seller", role: "VENDEUR" },
 }));
 vi.mock("../context/AdminAuthContext", () => ({
   useAdminAuth: () => ({ admin: mock.admin }),
 }));
 vi.mock("../services/api", () => ({
-  demandeDevisApi: { getAll: mock.getAll, respond: mock.respond },
+  demandeDevisApi: { getAll: mock.getAll, respond: mock.respond, assign: mock.assign, getResponsables: mock.responsables },
   proformaApi: { getAll: mock.quotes },
   getApiErrorMessage: (_: unknown, fallback: string) => fallback,
 }));
@@ -42,6 +44,10 @@ beforeEach(() => {
   vi.clearAllMocks();
   mock.admin = { id: "seller", role: "VENDEUR" };
   mock.getAll.mockResolvedValue([request]);
+  mock.responsables.mockResolvedValue([
+    { id: "seller", nom: "Vendeur", role: "VENDEUR" },
+    { id: "other", nom: "Autre vendeur", role: "VENDEUR" },
+  ]);
   mock.quotes.mockResolvedValue([
     quote,
     { ...quote, id: "wrong", clientId: "other", numero: "WRONG-OWNER" },
@@ -62,6 +68,7 @@ const show = () =>
   );
 
 it("transmits only the chosen valid quote of the customer, with the displayed version and one response while pending", async () => {
+  mock.getAll.mockResolvedValue([{ ...request, responsable: { id: "seller", nom: "Vendeur" } }]);
   let finish!: (value: unknown) => void;
   mock.respond.mockReturnValue(
     new Promise((resolve) => {
@@ -104,6 +111,7 @@ it("transmits only the chosen valid quote of the customer, with the displayed ve
   await waitFor(() => expect(mock.getAll).toHaveBeenCalledTimes(2));
 });
 it("allows a clarification without a proforma and re-reads the queue when a response was lost", async () => {
+  mock.getAll.mockResolvedValue([{ ...request, responsable: { id: "seller", nom: "Vendeur" } }]);
   mock.respond.mockRejectedValue(new Error("Connection lost"));
   show();
   fireEvent.click(await screen.findByRole("button", { name: /Client Test/ }));
@@ -120,6 +128,31 @@ it("allows a clarification without a proforma and re-reads the queue when a resp
     statut: "A_PRECISER",
     message: "Précisez le suffixe.",
   });
+});
+it("requires a seller to claim a free request before responding, using its current version", async () => {
+  mock.assign.mockResolvedValue({});
+  show();
+  fireEvent.click(await screen.findByRole("button", { name: /Client Test/ }));
+  expect(screen.queryByLabelText("Type de réponse")).toBeNull();
+  expect(screen.getByRole("button", { name: "Prendre cette demande" })).toBeTruthy();
+  mock.getAll.mockResolvedValue([{ ...request, version: 5, responsable: { id: "seller", nom: "Vendeur" } }]);
+  fireEvent.click(screen.getByRole("button", { name: "Prendre cette demande" }));
+  await waitFor(() => expect(mock.assign).toHaveBeenCalledWith("d", { version: 4, responsableId: "seller" }));
+  await screen.findByLabelText("Type de réponse");
+  expect(mock.responsables).not.toHaveBeenCalled();
+});
+it("lets an administrator reassign an open request and reloads after an uncertain result", async () => {
+  mock.admin = { id: "boss", role: "ADMIN" };
+  mock.getAll.mockResolvedValue([{ ...request, responsable: { id: "seller", nom: "Vendeur" } }]);
+  mock.assign.mockRejectedValue(new Error("Connection lost"));
+  show();
+  fireEvent.click(await screen.findByRole("button", { name: /Client Test/ }));
+  fireEvent.change(screen.getByLabelText("Attribuer à"), { target: { value: "other" } });
+  fireEvent.click(screen.getByRole("button", { name: "Enregistrer l’affectation" }));
+  await screen.findByRole("alert");
+  await waitFor(() => expect(mock.getAll).toHaveBeenCalledTimes(2));
+  expect(mock.assign).toHaveBeenCalledWith("d", { version: 4, responsableId: "other" });
+  expect(mock.responsables).toHaveBeenCalled();
 });
 it("keeps a closed request read-only, and does not load the quote queue for a cashier", async () => {
   mock.getAll.mockResolvedValue([{ ...request, statut: "ACCEPTEE" }]);
