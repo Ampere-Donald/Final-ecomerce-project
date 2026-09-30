@@ -63,6 +63,13 @@
 
 ## Travail restant pour L5 et la préproduction
 
-1. Préparation guidée de proforma depuis la liste, avec reprise d'une création interrompue.
+1. Étendre si nécessaire la préparation aux listes mixtes : les références inconnues et les doublons sont actuellement bloqués et doivent être clarifiés, sans équivalence présumée.
 2. Valider avec NEWOTEG les seuils professionnels, les références pilotes et les données commerciales réelles ; la règle de retrait Akwa et les frais/délais de livraison à confirmer sont conservés jusque-là.
 3. Tester les migrations et la restauration sur l'environnement isolé de préproduction, puis réaliser la recette équipe complète avant toute mise en ligne.
+
+## Préparation et reprise de proforma — 30 septembre 2026
+
+- POST `/devis/admin/:id/preparation` exige la version courante et le responsable connecté. Une demande reçue ou à préciser peut préparer une proforma depuis les références déjà choisies, les quantités demandées et les prix détail actifs lus sur le serveur. Références inconnues, répétées, inactives ou prix absent bloquent la préparation.
+- Le compte client est issu de la demande. La proforma et son reçu d’historique sont créés dans une transaction sérialisable avec verrou de demande ; une reprise de la même version retrouve la même proforma. Une préparation supprimée, expirée ou appartenant à un autre responsable bloque la recréation silencieuse.
+- Le bouton administration prépare ou reprend, puis sélectionne la proforma retrouvée ; une réponse perdue relit la file et permet de reprendre. La boutique vérifie toujours la proforma avant publication. Aucun envoi client, réservation de stock ou paiement à ce stade.
+- Preuves : 55 tests backend ciblés, six tests UI de la file, typage et builds backend/administration réussis. Recette PostgreSQL locale réelle : concurrence, reprise avec un seul devis et un seul reçu, absence de stock réservé, suppression puis rejeu bloqué. Aucun accès Railway ni migration supplémentaire.
