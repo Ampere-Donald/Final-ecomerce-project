@@ -8,6 +8,7 @@ import { devisStatus, requestViewValid } from "./devisData";
 import { Crumbs } from "./Elements";
 import DevisBuilder from "./DevisBuilder";
 import DevisAccept from "./DevisAccept";
+import { offerIsValid } from "./devisAcceptance";
 import Footer from "./Footer";
 
 export default function Devis() {
@@ -220,6 +221,13 @@ export default function Devis() {
                 setState({ key, data: updated, error: null })
               }
             />
+            {offerIsValid(data) && (
+              <p className="e-devis-print-link">
+                <Link to={`/mes-devis/${encodeURIComponent(data.id)}/imprimer`}>
+                  {tr("Voir la proposition imprimable", "View printable offer")}
+                </Link>
+              </p>
+            )}
           </>
         ) : data.length ? (
           data.map((row) => (

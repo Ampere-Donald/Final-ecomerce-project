@@ -20,7 +20,7 @@ Dernière mise à jour : 29 septembre 2026. Exécution des lots L0–L8 autoris�
 | L2 — Fiche et réception | En cours | Checkout E permet retrait Akwa ou demande de livraison; frais et délai annoncés à confirmer, sans frais nuls inventés. Les textes opérationnels des pages héritées, zones et tarifs restent à valider. |
 | L3 — Recherche et équivalences | En cours | Site et outil de vente marquent les pistes IA comme non validées techniquement; aucun ajout automatique. Références étalons, technicien NEWOTEG et budget d’essai distant restent attendus. |
 | L4 — Projets et sélections | À faire | Sélections existantes à auditer; projet pilote et images marketing à faire valider. |
-| L5 — Devis et achats récurrents | En cours | Réachat et parcours complet de demande, réponse et acceptation en commande intégrés. Concurrence et rollback vérifiés sur PostgreSQL local isolé. Document client, affectation explicite et préparation guidée restent ouverts ; migrations non appliquées à Railway. |
+| L5 — Devis et achats récurrents | En cours | Réachat et parcours complet de demande, réponse et acceptation en commande intégrés. Concurrence et rollback vérifiés sur PostgreSQL local isolé. Proposition client imprimable intégrée ; affectation explicite et préparation guidée restent ouvertes ; migrations non appliquées à Railway. |
 | L6 — Commande invitée | En cours | Achat invité et demande de livraison testés sur API simulée; compte facultatif. Reprise après réponse perdue/rechargement corrigée pour l’invité sans mot de passe, même requestId et payload. La confirmation affiche le contact boutique pour l’invité. Suivi privé et rattachement restent ouverts. |
 | L7 — Avis et mesure | À faire | Preuve de réception, modération et instrumentation à concevoir sans PII. |
 | L8 — Recette et préproduction | À faire | Dépend des lots précédents, de l’environnement isolé et de la procédure de restauration. |
@@ -64,3 +64,9 @@ Dernière mise à jour : 29 septembre 2026. Exécution des lots L0–L8 autoris�
 - Serveur : prix négociés autorisés selon le rôle et motif de remise ; instantané matériel comparé à la proforma ; stock disponible tenant compte des tickets caisse ; création atomique d’une seule commande en attente et des sorties de stock. Aucun encaissement.
 - Preuves : build backend, 88 tests ciblés, 26 tests Node storefront, builds storefront/admin, typage admin et trois tests UI ciblés ; recettes navigateur avec API simulée et PostgreSQL local réel pour les courses de commande, caisse, édition proforma et stock.
 - Base de test : `127.0.0.1:55439/newoteg_quote_acceptance_test`, indépendante de Railway. Les migrations restent non appliquées à la base distante et aucune ouverture publique n’est autorisée à ce stade.
+
+## Proposition client imprimable — 30 septembre 2026
+
+- La demande privée donne accès à une proposition commerciale imprimable depuis `/mes-devis/:id/imprimer`. La page relit l’offre pour le compte authentifié et ne rend le document que si l’instantané est complet et cohérent.
+- Le document ne contient que les lignes et prix communiqués au client, la validité et la réception. Pour la livraison, les frais et le délai restent « à confirmer ». Une offre expirée ou déjà acceptée porte un état visible ; l’impression ne déclenche ni commande ni paiement. Le document précise qu’il ne vaut ni facture ni preuve de paiement.
+- Recette locale : build et ESLint storefront réussis ; navigateur avec toutes les API simulées, client autorisé, offre expirée, refus 404 pour un autre client, absence de mutation, rendu mobile/desktop et PDF A4 sur une page. Aucun accès Railway.

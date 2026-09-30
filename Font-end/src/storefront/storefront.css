@@ -183,6 +183,136 @@
   border: 1px solid var(--e-line);
   border-top: 4px solid var(--e-blue);
 }
+.e-devis-print-link {
+  margin: 16px 0 0;
+}
+.e-print-page {
+  background: #f2f4f3;
+  min-height: 80vh;
+  padding: 32px 20px 72px;
+  color: var(--e-ink);
+}
+.e-print-toolbar {
+  max-width: 850px;
+  margin: 0 auto 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+.e-print-toolbar a { color: var(--e-blue); font-weight: 700; }
+.e-print-sheet {
+  box-sizing: border-box;
+  width: min(100%, 850px);
+  margin: 0 auto;
+  padding: 54px 60px 44px;
+  background: #fff;
+  box-shadow: 0 14px 42px #182b3a12;
+  overflow-wrap: anywhere;
+}
+.e-print-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 28px;
+  padding-bottom: 24px;
+  border-bottom: 3px solid var(--e-blue);
+}
+.e-print-head > div, .e-print-intro > div {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.e-print-brand {
+  color: var(--e-blue);
+  font-size: 29px;
+  letter-spacing: -.04em;
+  line-height: 1;
+}
+.e-print-head small, .e-print-head span, .e-print-intro span { color: var(--e-muted); }
+.e-print-head-right { text-align: right; }
+.e-print-head-right > span, .e-print-kicker {
+  color: #865e1e !important;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .11em;
+}
+.e-print-head-right > strong { font-size: 20px; }
+.e-print-intro {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 28px;
+  margin: 27px 0 38px;
+}
+.e-print-intro strong { font-size: 15px; }
+.e-print-status { color: #875c20 !important; font-size: 12px; }
+.e-print-status--active { color: var(--e-green) !important; }
+.e-print-sheet h1 { margin: 0 0 4px; font-size: 25px; }
+.e-print-subtitle { margin: 0 0 22px; color: var(--e-muted); }
+.e-print-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.e-print-table th {
+  padding: 12px 10px;
+  color: var(--e-muted);
+  text-align: right;
+  border-bottom: 1px solid var(--e-line);
+  font-weight: 700;
+}
+.e-print-table th:first-child, .e-print-table td:first-child { text-align: left; }
+.e-print-table td { padding: 15px 10px; text-align: right; border-bottom: 1px solid var(--e-line); }
+.e-print-table td:first-child { font-weight: 700; }
+.e-print-total {
+  display: flex;
+  justify-content: flex-end;
+  gap: 34px;
+  align-items: baseline;
+  margin: 18px 0 34px;
+}
+.e-print-total strong { color: var(--e-blue); font-size: 22px; }
+.e-print-reception {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 19px 22px;
+  background: #f2f7f3;
+  border-left: 3px solid var(--e-green);
+}
+.e-print-reception p { margin: 4px 0 0; color: var(--e-muted); }
+.e-print-foot { margin-top: 35px; color: var(--e-muted); font-size: 12px; line-height: 1.5; }
+.e-print-foot p { margin: 6px 0; }
+.e-print-foot .e-print-expired { color: #875c20; font-weight: 700; }
+@media (max-width: 600px) {
+  .e-print-page { padding: 16px 12px 56px; }
+  .e-print-toolbar { align-items: flex-start; flex-direction: column; }
+  .e-print-sheet { padding: 30px 20px; }
+  .e-print-head { flex-direction: column; gap: 15px; }
+  .e-print-head-right { text-align: left; }
+  .e-print-intro { grid-template-columns: 1fr; gap: 20px; }
+  .e-print-table-wrap { overflow-x: auto; }
+  .e-print-table { min-width: 480px; }
+}
+@media print {
+  @page { size: A4; margin: 16mm; }
+  .app > :not(.app__content) { display: none !important; }
+  .app, .app .app__content, .page-enter, .e-print-page {
+    display: block !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    min-height: 0 !important;
+    background: #fff !important;
+  }
+  .e-print-toolbar { display: none !important; }
+  .e-print-sheet {
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    color: #182b3a !important;
+    print-color-adjust: exact;
+  }
+  .e-print-head, .e-print-intro, .e-print-reception, .e-print-total, .e-print-foot { break-inside: avoid; }
+  .e-print-table tr { break-inside: avoid; }
+}
 @media (max-width: 850px) {
   .e-devis-workspace {
     grid-template-columns: 1fr;

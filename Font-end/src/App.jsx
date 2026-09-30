@@ -26,6 +26,7 @@ const Signup = lazy(() => import("./storefront/Auth"));
 const Profile = lazy(() => import("./storefront/Account"));
 const Favorites = lazy(() => import("./storefront/Favorites"));
 const Devis = lazy(() => import("./storefront/Devis"));
+const DevisPrint = lazy(() => import("./storefront/DevisPrint"));
 const NotFound = lazy(() => import("./storefront/ShopInfo"));
 
 const PageFallback = () => (
@@ -95,6 +96,14 @@ function AppContent() {
                 element={
                   <ProtectedRoute>
                     <Devis />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/mes-devis/:id/imprimer"
+                element={
+                  <ProtectedRoute>
+                    <DevisPrint />
                   </ProtectedRoute>
                 }
               />
