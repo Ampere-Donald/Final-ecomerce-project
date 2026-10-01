@@ -1,6 +1,6 @@
 # Suivi d’exécution — NEWOTEG / X-Electronic
 
-Dernière mise à jour : 29 septembre 2026. Exécution des lots L0–L8 autorisée par l’utilisateur; L9 reste soumis à une autorisation distincte.
+Dernière mise à jour : 1er octobre 2026. Exécution des lots L0–L8 autorisée par l’utilisateur; L9 reste soumis à une autorisation distincte.
 
 ## Référence et décisions
 
@@ -17,7 +17,7 @@ Dernière mise à jour : 29 septembre 2026. Exécution des lots L0–L8 autoris�
 |---|---|---|
 | L0 — État de référence | Validé | Base identifiée; quatre conflits résolus; build backend, cinq suites backend ciblées (26 tests), build storefront, typage admin et 26 suites UI admin (65 tests) passent. Régression storefront simulée : 24 contrôles, dont achat invité, deux modes de réception et cinq largeurs. |
 | L1 — Données et règles | En cours | Schéma et parcours audités sans lire Railway; retrait Akwa + livraison à confirmer validés par l’utilisateur. Seuils pro et cas/validateur équivalences en attente. |
-| L2 — Fiche et réception | En cours | Checkout E permet retrait Akwa ou demande de livraison; frais et délai annoncés à confirmer, sans frais nuls inventés. Les textes opérationnels des pages héritées, zones et tarifs restent à valider. |
+| L2 — Fiche et réception | En cours | Choix facultatif de réception dans le header, fiche et panier, conservé vers le checkout ; conseil WhatsApp contextualisé et éditable sur fiche. Frais et délai à confirmer. Grille réelle, coordonnées publiques et enrichissement technique restent à valider. |
 | L3 — Recherche et équivalences | En cours | Site et outil de vente marquent les pistes IA comme non validées techniquement; aucun ajout automatique. Références étalons, technicien NEWOTEG et budget d’essai distant restent attendus. |
 | L4 — Projets et sélections | À faire | Sélections existantes à auditer; projet pilote et images marketing à faire valider. |
 | L5 — Devis et achats récurrents | En cours | Réachat, demande, réponse, acceptation en commande, proposition client imprimable et affectation explicite intégrés. Concurrence et rollback de l’acceptation vérifiés sur PostgreSQL local isolé. Préparation depuis les références choisies et reprise durable intégrées ; migrations non appliquées à Railway. |
@@ -84,3 +84,11 @@ Dernière mise à jour : 29 septembre 2026. Exécution des lots L0–L8 autoris�
 - Le compte client est issu de la demande. La proforma et son reçu d’historique sont créés dans une transaction sérialisable avec verrou de demande ; une reprise de la même version retrouve la même proforma. Une préparation supprimée, expirée ou appartenant à un autre responsable bloque la recréation silencieuse.
 - Le bouton administration prépare ou reprend, puis sélectionne la proforma retrouvée ; une réponse perdue relit la file et permet de reprendre. La boutique vérifie toujours la proforma avant publication. Aucun envoi client, réservation de stock ou paiement à ce stade.
 - Preuves : 55 tests backend ciblés, six tests UI de la file, typage et builds backend/administration réussis. Recette PostgreSQL locale réelle : concurrence, reprise avec un seul devis et un seul reçu, absence de stock réservé, suppression puis rejeu bloqué. Aucun accès Railway ni migration supplémentaire.
+
+## Réception facultative et conseil sur une pièce — 1er octobre 2026
+
+- Le header E conserve son logo, sa recherche et sa navigation ; sa destination ouvre un choix facultatif de retrait à Akwa ou demande de livraison. La ville est mémorisée sur l’appareil, sans adresse ni téléphone. Une ville n’implique ni couverture, ni tarif validé : frais et délai restent à confirmer. Stockage corrompu : retour au retrait ; stockage refusé : message indiquant que le choix vaut pour cette visite.
+- Fiche et panier affichent la préférence, les modalités et l’accès à la modification. Le checkout reprend cette préférence. Un changement explicite depuis le header préserve les coordonnées saisies, annule le récapitulatif accepté et exige une nouvelle vérification. Une réponse de devis retardée ne peut pas rouvrir un récapitulatif après changement de réception. La reprise d’une commande déjà tentée conserve son payload enregistré.
+- « Conseil sur cette pièce » ouvre un message modifiable avec nom, référence exacte, quantité choisie et URL de la fiche sans paramètres de suivi. Le lien vers le numéro WhatsApp déjà utilisé dans Contact ne s’ouvre que par une action du client ; celui-ci envoie le message lui-même. Aucune commande ou communication externe déclenchée par la recette.
+- Contrôles : 31 tests Node storefront, lint et build Vite ; recette navigateur locale avec API entièrement interceptée, FR/EN, quantité et suffixe, message vide/caractères spéciaux, focus après Échap, conservation fiche/panier/checkout, changement après consentement et pendant réponse retardée, refus et corruption de stockage ; six largeurs 360/390/768/1100/1240/1440 px sans débordement horizontal. Captures inspectées. Régression générale : 24 contrôles réussis. Le navigateur intégré a échoué à se connecter ; la recette utilise Edge headless local, pas un téléphone physique.
+- Le pilote n’offre pas encore de calcul de tarifs par poids/zone. La validation des horaires et coordonnées, l’enrichissement des fiches et le comparateur restent ouverts dans L1/L2/L3. L4, L6–L8 restent à poursuivre ; aucune publication ni migration Railway.

@@ -18,6 +18,10 @@ import {
 } from "./orderAttempt";
 import Cart from "./Cart";
 import Footer from "./Footer";
+import useReception, {
+  setReception,
+  getReceptionSnapshot,
+} from "./useReception";
 
 export default function Checkout() {
   const { loading } = useAuth();
@@ -34,16 +38,18 @@ function CheckoutForm() {
   const { user, token, isAuthenticated, loginFromToken } = useAuth();
   const { lang } = useI18n();
   const tr = (fr, en) => (lang === "en" ? en : fr);
-  const [form, setForm] = useState({
+  const reception = useReception();
+  const [appliedReception, setAppliedReception] = useState(reception);
+  const [form, setForm] = useState(() => ({
     nom: user?.nom || "",
     telephone: user?.telephone || "",
-    mode: "RETRAIT_MAGASIN",
-    ville: "",
+    mode: reception.mode,
+    ville: reception.ville,
     adresse: "",
     email: "",
     password: "",
     createAccount: false,
-  });
+  }));
   const [quote, setQuote] = useState(null);
   const [accepted, setAccepted] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -53,6 +59,17 @@ function CheckoutForm() {
   const [success, setSuccess] = useState(null);
   const lock = useRef(false);
   const heading = useRef();
+  // Apply an explicit header change without erasing contact details or reusing consent.
+  if (appliedReception !== reception) {
+    setAppliedReception(reception);
+    setForm((previous) => ({
+      ...previous,
+      mode: reception.mode,
+      ville: reception.ville,
+    }));
+    setAccepted(false);
+    setQuote(null);
+  }
   const change = (e) => setForm({ ...form, [e.target.name]: e.target.value });
   const delivery = form.mode === "LIVRAISON";
   const quoteMatches = quote && validQuote(quote, cartItems);
@@ -75,6 +92,8 @@ function CheckoutForm() {
     lock.current = true;
     setBusy(true);
     setError("");
+    setReception({ mode: form.mode, ville: form.ville });
+    const receptionAtReview = getReceptionSnapshot();
     try {
       const { data } = await apiClient.post(
         "/commandes/quote",
@@ -86,6 +105,16 @@ function CheckoutForm() {
         },
         { timeout: 20000 },
       );
+      if (getReceptionSnapshot() !== receptionAtReview) {
+        setQuote(null);
+        setError(
+          tr(
+            "Votre réception a changé pendant la vérification. Vérifiez vos coordonnées puis recommencez.",
+            "Your reception choice changed during verification. Check your details and try again.",
+          ),
+        );
+        return;
+      }
       if (!validQuote(data, cartItems) || data.requestProtocol !== 1)
         throw new Error("Invalid quote or unsupported order recovery");
       setQuote(data);
@@ -284,30 +313,31 @@ function CheckoutForm() {
                 <strong>{formatFCFA(pending.payload.montantTotal)}</strong> ·{" "}
                 {pending.payload.lignes.length} {tr("référence(s)", "item(s)")}
               </p>
-              {pending.path === "/commandes/checkout" && pending.payload.email && (
-                <label className="e-field">
-                  {tr(
-                    "Mot de passe choisi pour cette commande",
-                    "Password chosen for this order",
-                  )}
-                  <input
-                    type="password"
-                    autoComplete="current-password"
-                    required
-                    minLength={8}
-                    value={form.password}
-                    onChange={(e) =>
-                      setForm({ ...form, password: e.target.value })
-                    }
-                  />
-                  <small>
+              {pending.path === "/commandes/checkout" &&
+                pending.payload.email && (
+                  <label className="e-field">
                     {tr(
-                      "Votre mot de passe n’est pas enregistré dans cette tentative.",
-                      "Your password is not stored in this attempt.",
+                      "Mot de passe choisi pour cette commande",
+                      "Password chosen for this order",
                     )}
-                  </small>
-                </label>
-              )}
+                    <input
+                      type="password"
+                      autoComplete="current-password"
+                      required
+                      minLength={8}
+                      value={form.password}
+                      onChange={(e) =>
+                        setForm({ ...form, password: e.target.value })
+                      }
+                    />
+                    <small>
+                      {tr(
+                        "Votre mot de passe n’est pas enregistré dans cette tentative.",
+                        "Your password is not stored in this attempt.",
+                      )}
+                    </small>
+                  </label>
+                )}
               <button className="e-btn" disabled={busy}>
                 {busy
                   ? tr("Vérification…", "Checking…")
@@ -481,7 +511,12 @@ function CheckoutForm() {
                 </fieldset>
                 {!isAuthenticated && (
                   <fieldset disabled={busy || uncertain}>
-                    <legend>{tr("Compte client (facultatif)", "Customer account (optional)")}</legend>
+                    <legend>
+                      {tr(
+                        "Compte client (facultatif)",
+                        "Customer account (optional)",
+                      )}
+                    </legend>
                     <p>
                       {tr("Déjà client ?", "Already a customer?")}{" "}
                       <Link to="/login?returnTo=%2Fcheckout">

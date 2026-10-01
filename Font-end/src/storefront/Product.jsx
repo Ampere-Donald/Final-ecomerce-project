@@ -2,14 +2,7 @@ import EquivalenceEntry from "./EquivalenceEntry";
 import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
-import {
-  ShoppingCart,
-  ZoomIn,
-  MapPin,
-  Truck,
-  MessageCircle,
-  FileText,
-} from "lucide-react";
+import { ShoppingCart, ZoomIn, FileText } from "lucide-react";
 import { useI18n } from "../context/I18nContext";
 import { useCart } from "../context/CartContext";
 import { resolveImageUrl } from "../utils/mapProduct";
@@ -27,6 +20,8 @@ import {
   Stock,
 } from "./Elements";
 import Footer from "./Footer";
+import ProductAdvice from "./ProductAdvice";
+import { ReceptionSummary } from "./ReceptionChoice";
 
 function Detail({ product }) {
   const [quantity, setQuantity] = useState(1),
@@ -210,39 +205,8 @@ function Detail({ product }) {
               </div>
               {purchase}
             </div>
-            <div className="e-receiving">
-              <div>
-                <MapPin />
-                <strong>
-                  <Copy fr="Retrait à Akwa" en="Pickup in Akwa" />
-                </strong>
-                <small>
-                  <Copy
-                    fr="Disponibilité confirmée avant votre déplacement."
-                    en="Confirm availability before travelling."
-                  />
-                </small>
-              </div>
-              <div>
-                <Truck />
-                <strong>
-                  <Copy fr="Livraison" en="Delivery" />
-                </strong>
-                <small>
-                  <Copy
-                    fr="Frais et délai selon votre destination."
-                    en="Cost and time depend on destination."
-                  />
-                </small>
-              </div>
-            </div>
-            <Link className="e-btn e-secondary e-help-product" to="/contact">
-              <MessageCircle size={20} />
-              <Copy
-                fr="Un doute sur cette référence ?"
-                en="Unsure about this reference?"
-              />
-            </Link>
+            <ReceptionSummary />
+            <ProductAdvice product={product} quantity={quantity} />
             {product.urlDatasheet && (
               <a
                 className="e-datasheet"

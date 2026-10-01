@@ -16,14 +16,9 @@ import { renderBoldText } from "../utils/renderBoldText";
 import { Crumbs, Modal, Photo } from "./Elements";
 import Footer from "./Footer";
 import team from "./teamData.json";
+import { shopContact as shop } from "./shopContact";
 import "./shop-info.css";
 
-const shop = {
-  email: "contact@newoteg.com",
-  phone: "+237699966160",
-  whatsapp: "https://wa.me/237699966160",
-  maps: "https://maps.google.com/?q=Camp+Yabassi+Akwa+Douala+Cameroun",
-};
 const videos = [
   "20260325_133312",
   "20260325_133448",

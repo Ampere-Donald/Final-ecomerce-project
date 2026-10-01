@@ -5,6 +5,7 @@ import { useI18n } from "../context/I18nContext";
 import { formatFCFA } from "../utils/formatFCFA";
 import { Copy, Crumbs, Photo, Price } from "./Elements";
 import Footer from "./Footer";
+import { ReceptionSummary } from "./ReceptionChoice";
 export default function Cart() {
   const { cartItems, cartTotal, removeFromCart, updateQuantity } = useCart();
   const { lang } = useI18n();
@@ -106,14 +107,7 @@ export default function Cart() {
                 </span>
                 <strong>{formatFCFA(cartTotal)}</strong>
               </div>
-              <div>
-                <span>
-                  <Copy fr="Livraison" en="Delivery" />
-                </span>
-                <span>
-                  <Copy fr="À confirmer" en="To confirm" />
-                </span>
-              </div>
+              <ReceptionSummary />
               <div className="e-total">
                 <span>
                   <Copy fr="Sous-total" en="Subtotal" />

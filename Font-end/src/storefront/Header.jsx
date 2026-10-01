@@ -8,13 +8,13 @@ import {
   User,
   MessageCircle,
   Grid2X2,
-  MapPin,
   Globe,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { useCart } from "../context/CartContext";
 import { useI18n } from "../context/I18nContext";
 import { Modal, Copy } from "./Elements";
+import ReceptionChoice from "./ReceptionChoice";
 
 function SearchForm({ initial }) {
   const [value, setValue] = useState(initial);
@@ -136,7 +136,7 @@ export default function Header() {
         <nav
           className="e-nav"
           aria-label={
-            lang === "fr" ? "Familles de produits" : "Product families"
+            lang === "fr" ? "Catalogue et réception" : "Catalogue and reception"
           }
         >
           <div className="e-wrap">
@@ -146,10 +146,7 @@ export default function Header() {
                 <Copy fr={fr} en={en} />
               </Link>
             ))}
-            <span>
-              <MapPin size={18} />
-              Akwa, Douala
-            </span>
+            <ReceptionChoice compact />
           </div>
         </nav>
       </header>
