@@ -47,6 +47,7 @@ import { FactureVirtuelleModule } from './facture-virtuelle/facture-virtuelle.mo
 import { CommandeFournisseurModule } from './commande-fournisseur/commande-fournisseur.module';
 import { PaieModule } from './paie/paie.module';
 import { DevisModule } from './devis/devis.module';
+import { ProjetModule } from './projet/projet.module';
 
 @Module({
   imports: [
@@ -100,6 +101,7 @@ import { DevisModule } from './devis/devis.module';
     PaieModule,
     CommandeFournisseurModule,
     DevisModule,
+    ProjetModule,
   ],
   controllers: [AppController],
   providers: [

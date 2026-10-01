@@ -52,6 +52,7 @@ model Produit {
   poids                Float?           @map("poids")
   volume               Float?           @map("volume")
   attributs            Attribut[]
+  projetsLignes        ProjetLigne[]
   favoris              Favori[]
   lignesAchat          LigneAchat[]
   ligneBons            LigneBon[]
@@ -435,6 +436,91 @@ enum StatutDemandeDevis {
   ACCEPTEE
   REFUSEE
   EXPIREE
+}
+
+model Projet {
+  id                   String          @id @default(uuid())
+  slug                 String          @unique @db.VarChar(100)
+  titre                String          @db.VarChar(150)
+  titreEn              String?         @map("titre_en") @db.VarChar(150)
+  resume               String          @db.VarChar(500)
+  resumeEn             String?         @map("resume_en") @db.VarChar(500)
+  objectif             String          @db.VarChar(3000)
+  prerequis            String          @db.VarChar(3000)
+  contraintes          String          @db.VarChar(3000)
+  niveau               NiveauProjet    @default(DEBUTANT)
+  imageUrl             String?         @map("image_url") @db.VarChar(2048)
+  documents            Json
+  statut               StatutProjet    @default(BROUILLON)
+  ordre                Int             @default(0)
+  debutPublication     DateTime?       @map("debut_publication")
+  finPublication       DateTime?       @map("fin_publication")
+  version              Int             @default(1)
+  validationVersion    Int?            @map("validation_version")
+  valideParId          String?         @map("valide_par_id")
+  valideAt             DateTime?       @map("valide_at")
+  noteValidation       String?         @map("note_validation") @db.VarChar(3000)
+  createdAt            DateTime        @default(now()) @map("created_at")
+  updatedAt            DateTime        @updatedAt @map("updated_at")
+  lignes               ProjetLigne[]
+  historique           ProjetEvent[]
+
+  @@index([statut, ordre, debutPublication, finPublication])
+  @@map("projet")
+}
+
+model ProjetLigne {
+  id                   String    @id @default(uuid())
+  projetId             String    @map("projet_id")
+  produitId            String?   @map("produit_id")
+  produitIdSource      String?   @map("produit_id_source")
+  reference            String?   @db.VarChar(100)
+  nomProduit           String    @map("nom_produit") @db.VarChar(150)
+  role                 String    @db.VarChar(150)
+  quantite             Int
+  necessaire           Boolean   @default(true)
+  ordre                Int
+  empreinteTechnique   String?   @map("empreinte_technique") @db.VarChar(64)
+  projet               Projet    @relation(fields: [projetId], references: [id], onDelete: Cascade)
+  produit              Produit?  @relation(fields: [produitId], references: [id], onDelete: SetNull)
+
+  @@unique([projetId, ordre])
+  @@index([produitId])
+  @@map("projet_ligne")
+}
+
+model ProjetEvent {
+  id                   String       @id @default(uuid())
+  projetId             String       @map("projet_id")
+  requestId            String       @unique @map("request_id") @db.Uuid
+  acteurId             String       @map("acteur_id")
+  action               ActionProjet
+  versionAppliquee     Int          @map("version_appliquee")
+  empreinte            String       @db.VarChar(64)
+  details              Json
+  createdAt            DateTime     @default(now()) @map("created_at")
+  projet               Projet       @relation(fields: [projetId], references: [id], onDelete: Restrict)
+
+  @@index([projetId, createdAt])
+  @@map("projet_event")
+}
+
+enum StatutProjet {
+  BROUILLON
+  PUBLIE
+}
+
+enum NiveauProjet {
+  DEBUTANT
+  INTERMEDIAIRE
+  AVANCE
+}
+
+enum ActionProjet {
+  CREATION
+  MODIFICATION
+  PUBLICATION
+  RETRAIT
 }
 
 model PrimeVendeur {
