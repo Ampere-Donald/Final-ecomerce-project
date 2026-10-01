@@ -6,6 +6,7 @@ import { useCart } from "../context/CartContext";
 import { useFavorites } from "../context/FavoritesContext";
 import { formatFCFA } from "../utils/formatFCFA";
 import { stockState, canBuy } from "./productData";
+import ComparisonAction from "./ComparisonAction";
 
 export function Copy({ fr, en }) {
   const { lang } = useI18n();
@@ -199,6 +200,7 @@ export function Card({ product }) {
             />
           </p>
         )}
+        <ComparisonAction product={product} />
       </div>
     </article>
   );

@@ -9,6 +9,7 @@ import useResource from "./useResource";
 import { adaptProduct, resultPage } from "./productData";
 import { Copy, Card, Crumbs, State, Modal } from "./Elements";
 import Footer from "./Footer";
+import { ComparisonLink } from "./ComparisonAction";
 
 export default function Catalogue() {
   const [params, setParams] = useSearchParams();
@@ -189,6 +190,15 @@ export default function Catalogue() {
               ))}
             </select>
           </label>
+        </div>
+        <div className="e-catalogue-comparison">
+          <ComparisonLink />
+          <span>
+            <Copy
+              fr="Choisissez jusqu’à trois articles d’une même famille."
+              en="Choose up to three products from one category."
+            />
+          </span>
         </div>
         <div className="e-chips">
           {[

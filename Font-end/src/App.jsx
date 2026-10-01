@@ -12,6 +12,7 @@ import BottomNav from "./storefront/BottomNav";
 
 const Home = lazy(() => import("./storefront/Home"));
 const Catalogue = lazy(() => import("./storefront/Catalogue"));
+const Comparison = lazy(() => import("./storefront/Comparison"));
 const ProductDetails = lazy(() => import("./storefront/Product"));
 const Cart = lazy(() => import("./storefront/Cart"));
 const Equivalences = lazy(() => import("./storefront/Equivalences"));
@@ -75,6 +76,7 @@ function AppContent() {
             <Routes location={location}>
               <Route path="/" element={<Home />} />
               <Route path="/catalogue" element={<Catalogue />} />
+              <Route path="/comparer" element={<Comparison />} />
               <Route path="/product/:id" element={<ProductDetails />} />
               <Route path="/panier" element={<Cart />} />
               <Route path="/equivalences" element={<Equivalences />} />

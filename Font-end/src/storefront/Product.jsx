@@ -22,6 +22,7 @@ import {
 import Footer from "./Footer";
 import ProductAdvice from "./ProductAdvice";
 import { ReceptionSummary } from "./ReceptionChoice";
+import ComparisonAction, { ComparisonLink } from "./ComparisonAction";
 
 function Detail({ product }) {
   const [quantity, setQuantity] = useState(1),
@@ -207,6 +208,10 @@ function Detail({ product }) {
             </div>
             <ReceptionSummary />
             <ProductAdvice product={product} quantity={quantity} />
+            <div className="e-product-comparison">
+              <ComparisonAction product={product} />
+              <ComparisonLink />
+            </div>
             {product.urlDatasheet && (
               <a
                 className="e-datasheet"
