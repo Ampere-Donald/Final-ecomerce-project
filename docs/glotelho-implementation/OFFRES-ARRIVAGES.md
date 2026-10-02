@@ -31,6 +31,6 @@ Le script peut garder une seule offre fictive pour la prévisualisation après s
 
 ## Points ouverts
 
-Le tri, les filtres de prix et les bornes du catalogue utilisent encore le prix détail plutôt que le prix public promotionnel. Ce défaut doit être corrigé avec pagination et comptage cohérents avant de clôturer le lot commercial.
+Le défaut de tri, filtres et bornes du catalogue fondés sur le prix détail a été corrigé et vérifié le 3 octobre : prix public, disponibilité vendable, comptage et pagination cohérents. Contrat et preuves : `CATALOGUE-PRIX.md`.
 
 Le projet pilote réel, la qualité des fiches, les offres commerciales relues par NEWOTEG et la recette transversale restent ouverts. Aucun accès Railway, migration distante, paiement, message ou déploiement n'a été réalisé. L4 et l'objectif A–Z restent actifs ; L9 exige une autorisation distincte.

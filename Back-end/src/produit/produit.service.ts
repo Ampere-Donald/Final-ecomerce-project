@@ -11,6 +11,7 @@ import { createReadStream, existsSync, promises as fsPromises } from 'fs';
 import { join, basename } from 'path';
 import { addSellableStock } from 'src/ticket-vente/ticket-stock.util';
 import { cataloguePricing, validateCataloguePromotion } from '../pricing/catalogue-price';
+import { publicCatalogue, publicPriceMetadata } from './public-catalogue';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const csvParser = require('csv-parser');
 
@@ -261,15 +262,7 @@ export class ProduitService {
   }
 
   async getMetadata() {
-    const agg = await this.db.produit.aggregate({
-      where: { estActif: true },
-      _min: { prixDetail: true },
-      _max: { prixDetail: true },
-    });
-    return {
-      minPrice: agg._min.prixDetail ?? 0,
-      maxPrice: agg._max.prixDetail ?? 1000000,
-    };
+    return publicPriceMetadata(this.db, new Date());
   }
 
   async findFlash() {
@@ -321,6 +314,7 @@ export class ProduitService {
   }
 
   async findAll(params: {
+    publicPricingAt?: Date;
     page?: number;
     limit?: number;
     search?: string;
@@ -334,6 +328,14 @@ export class ProduitService {
     salesSearch?: boolean;
     includeInactive?: boolean;
   } = {}) {
+    if (params.publicPricingAt) {
+      const search = String(params.search || '').trim().slice(0, 120);
+      const candidateLimit = Number.isFinite(params.limit) ? Math.min(80, Math.max(1, Math.floor(params.limit!)) * 2) : 80;
+      const candidates = params.salesSearch && search
+        ? await this.findSalesSearchCandidateIds(search, params.categoryId, params.inStock, candidateLimit)
+        : undefined;
+      return publicCatalogue(this.db, params, params.publicPricingAt, candidates);
+    }
     const {
       page = 1,
       limit = 50,

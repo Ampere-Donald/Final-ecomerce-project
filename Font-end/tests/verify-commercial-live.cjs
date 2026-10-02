@@ -21,6 +21,11 @@ const ok = name => { checks.push(name); console.log('PASS ' + name); };
     if (route !== 'populaires') assert.ok(list.some(row => row.id === p.id));
   }
   ok('Live HTTP offers and arrivals use dated fixture, public price and no internal costs');
+  const catalogueParams = new URLSearchParams({ categoryId: p.categorieId, maxPrice: '2800', sort: 'price_asc', limit: '1' });
+  const filteredResponse = await fetch(api + '/api/produits?' + catalogueParams); assert.equal(filteredResponse.status, 200);
+  const filtered = await filteredResponse.json(); assert.equal(filtered.meta.total, 1); assert.equal(filtered.data[0].id, p.id); assert.equal(filtered.data[0].prixPublic, 2800);
+  const invalidRange = await fetch(api + '/api/produits?minPrice=3000&maxPrice=2000'); assert.equal(invalidRange.status, 400);
+  ok('Live HTTP catalogue filters the displayed promotion and rejects inverted bounds');
   const browser = await chromium.launch({ headless: true, executablePath: 'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe' });
   try {
     const ctx = await browser.newContext({ viewport: { width: 1440, height: 1050 } });
@@ -45,6 +50,28 @@ const ok = name => { checks.push(name); console.log('PASS ' + name); };
       await page.screenshot({ path: path.join(output, 'live-offers-' + width + '.png'), fullPage: true });
     }
     ok('Actual API offer page renders on mobile and desktop');
+    for (const width of [390, 1440]) {
+      await page.setViewportSize({ width, height: 1050 });
+      await page.goto(base + '/catalogue?category=' + encodeURIComponent(p.categorieId));
+      const catalogueCard = page.locator('.e-catalog-grid .e-card').filter({ hasText: fixture.productCode });
+      await expect(catalogueCard).toHaveCount(1);
+      await page.getByLabel('Trier les produits', { exact: true }).selectOption('price-asc');
+      await page.getByRole('button', { name: 'Filtres', exact: true }).click();
+      await page.getByLabel('Prix max. (FCFA)', { exact: true }).fill('2800');
+      await page.getByRole('button', { name: 'Voir les résultats', exact: true }).click();
+      await expect(catalogueCard).toHaveCount(1); await expect(catalogueCard.locator('.e-price')).toContainText(/2\s*800\s+FCFA/);
+      await expect(page.locator('.e-page-lead')).toContainText('1 référence(s)');
+      await page.screenshot({ path: path.join(output, 'live-catalogue-price-' + width + '.png'), fullPage: true });
+      await page.reload(); await expect(catalogueCard).toHaveCount(1);
+      await page.getByRole('button', { name: 'Filtres', exact: true }).click();
+      await page.getByLabel('Prix max. (FCFA)', { exact: true }).fill('2799');
+      await page.getByRole('button', { name: 'Voir les résultats', exact: true }).click();
+      await expect(page.getByRole('heading', { name: 'Aucun résultat pour cette recherche', exact: true })).toBeVisible();
+      await expect(page.locator('.e-page-lead')).toContainText('0 référence(s)');
+      assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
+    }
+    ok('Actual mobile/desktop filter controls include offered price, persist after reload and show coherent empty counts');
+    await page.goto(base + '/offres');
     await card.locator('h3').getByRole('link', { name: p.nomProduit, exact: true }).click();
     await expect(page.getByRole('heading', { name: p.nomProduit, exact: true })).toBeVisible();
     await expect(page.locator('.e-offer-details')).toContainText('Offre jusqu’au');

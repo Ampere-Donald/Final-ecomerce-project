@@ -149,22 +149,23 @@ export class ProduitController {
     @Query('salesSearch') salesSearch?: string,
     @Query('includeInactive') includeInactive?: string,
   ) {
+    const now = new Date();
     const result = await this.produitService.findAll({
+      publicPricingAt: req.user ? undefined : now,
       page: page ? parseInt(page, 10) : 1,
       limit: limit ? parseInt(limit, 10) : 50,
       search,
       categoryId,
       codeFamille,
       code,
-      minPrice: minPrice ? parseFloat(minPrice) : undefined,
-      maxPrice: maxPrice ? parseFloat(maxPrice) : undefined,
+      minPrice: minPrice ? Number(minPrice) : undefined,
+      maxPrice: maxPrice ? Number(maxPrice) : undefined,
       inStock: inStock === 'true',
       sort,
       salesSearch: salesSearch === 'true',
       includeInactive: includeInactive === 'true' && !!req.user,
     });
     if (peutVoirCouts(req.user)) return result;
-    const now = new Date();
     return { ...result, data: (result.data || []).map(p => masquerCouts(p, now, !req.user)) };
   }
 
