@@ -5,8 +5,12 @@ const {
 const fs = require("node:fs");
 const path = require("node:path");
 const assert = require("node:assert/strict");
-const base = "http://127.0.0.1:5186";
-const out = path.resolve(__dirname, "../../docs/refonte-e/captures");
+const base = process.env.NEWOTEG_STOREFRONT_TEST_URL || "http://127.0.0.1:5186";
+if (!["http://127.0.0.1:5186", "http://127.0.0.1:5187"].includes(base))
+  throw Error("This recipe only accepts the local storefront test ports.");
+const out =
+  process.env.NEWOTEG_STOREFRONT_TEST_OUTPUT ||
+  path.resolve(__dirname, "../../docs/refonte-e/captures");
 fs.mkdirSync(out, { recursive: true });
 const products = [
   {

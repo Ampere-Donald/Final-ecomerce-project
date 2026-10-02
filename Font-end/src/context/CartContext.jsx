@@ -113,6 +113,7 @@ export function CartProvider({ children }) {
   );
 
   const value = {
+    cartVerified: cacheChecked,
     cartItems,
     cartCount,
     cartTotal,

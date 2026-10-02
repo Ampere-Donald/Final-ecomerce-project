@@ -40,6 +40,9 @@ export default function Footer() {
           <Link to="/devis">
             <Copy fr="Demander un devis" en="Request a quote" />
           </Link>
+          <Link to="/projets">
+            <Copy fr="Projets et matériel" en="Projects and material" />
+          </Link>
           <Link to="/about">
             <Copy fr="À propos" en="About" />
           </Link>

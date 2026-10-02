@@ -49,7 +49,7 @@ La recette utilise des données fictives et ne télécharge pas la documentation
 
 ## Suite de L4
 
-Construire les pages projet accessibles depuis l’accueil. Le client choisira ses lignes et quantités ; prix, stock et approbation seront revérifiés avant un ajout atomique au panier. Préserver la direction E et utiliser les visuels NEWOTEG validés. NEWOTEG doit encore choisir et faire relire un projet pilote réel, ses accessoires, documentation et contraintes. Les arrivages et offres réelles restent également à intégrer.
+Les pages projet et l’ajout atomique au panier sont livrés dans la branche locale ; leur recette est décrite ci-dessous. NEWOTEG doit encore choisir et faire relire un projet pilote réel, ses accessoires, documentation et contraintes. Les arrivages et offres réelles restent également à intégrer.
 
 ## Éditeur administration — 2 octobre 2026
 
@@ -69,3 +69,24 @@ Preuves de ce jalon :
 - Les autres modules du shell admin sont simulés dans cette recette ; projets, recherche catalogue et identité admin utilisent l’API réelle. Le compte fictif est désactivé à la fin et le projet fictif reste en brouillon. Aucun secret de test n’est écrit dans les captures ou résultats.
 
 Relancer depuis le dossier administration avec une variable explicite `NEWOTEG_PROJECT_TEST_DATABASE_URL=postgresql://quote_test@127.0.0.1:55439/newoteg_quote_acceptance_test`, puis `node tests/verify-project-editor-local.cjs`. Le script refuse toute autre base avant chargement de Prisma. Il attend le backend à `127.0.0.1:3000` et l’administration à `localhost:5174`.
+
+## Pages clients et sélection — 2 octobre 2026
+
+L’accueil et le footer ouvrent `/projets`. Une liste publiée donne accès à son objectif, niveau, prérequis, contraintes, documents et matériel. Les libellés sont FR/EN ; les titres/résumés anglais apparaissent lorsqu’ils ont été renseignés dans l’administration. Les autres contenus techniques restent ceux validés par la boutique. Un lien documentaire n’est ouvert qu’à l’initiative du client ; les URL à protocole dangereux ou contenant des identifiants ne sont pas rendues comme liens.
+
+Les pièces nécessaires sont présélectionnées à la quantité conseillée ; les accessoires facultatifs ne le sont pas. Le client peut changer la quantité ou décocher une ligne. Une sélection qui ne couvre pas les besoins conseillés porte l’avertissement « ne constitue pas un kit complet » et exige une acceptation explicite. Une pièce facultative en rupture n’empêche pas l’achat des autres pièces tant qu’elle reste décochée. Les références exactes et suffixes sont préservés, y compris dans le panier relu après rechargement.
+
+« Vérifier et ajouter au panier » relit le détail public courant. Une référence manquante, un prix/stock inconnu, une approbation technique périmée, un changement de prix/stock/version ou une quantité dépassant le stock disponible après prise en compte du panier bloque l’ajout. Les quantités choisies ne sont pas réduites silencieusement. Après changement, le client doit relire puis confirmer à nouveau. Une ligne sélectionnée retirée reste affichée jusqu’à ce qu’il la décoche ; une nouvelle ligne n’est jamais sélectionnée automatiquement. Le panier doit avoir fini sa propre relecture avant ajout. Le groupe est accepté en une seule action atomique du panier local, sans réservation serveur. Le serveur calcule de nouveau le devis au checkout.
+
+Pendant vérification, les contrôles de sélection sont verrouillés. Le double clic ne produit qu’une requête ; quitter la page annule la requête et interdit toute modification tardive du panier, même entre le changement d’adresse et la fermeture du composant. Un projet retiré et une panne restent distincts, avec actualisation/réessai possible. Une réponse publique malformée affiche une erreur sans ajouter de produit.
+
+Preuves :
+
+- `tests/projects.test.mjs` : neuf tests des contrats, prix/stock inconnus, quantités, panier existant, sélection partielle, changement, disparition de ligne, références, URL et ajout atomique. Suite Node storefront totale : 44 tests. Lint et build Vite réussis.
+- `tests/verify-projects.cjs` : 16 contrôles sur APIs entièrement simulées : accueil/bibliothèque/détail, ajout groupé, sélection partielle, prix/stock modifiés, panier préexistant et relecture retardée, disparition et apparition de lignes, rupture facultative, réponse malformée, retrait/panne/réessai, état vide, anglais et livraison prudente, double clic et départ avant réponse. Six largeurs sans débordement ; captures 390/1440 px inspectées ; aucune mutation API et tout trafic extérieur bloqué.
+- `tests/verify-projects-live.cjs` : quatre contrôles avec les véritables APIs locales, choix recommandés et références, rendu mobile/desktop, relecture avant ajout puis rechargement catalogue avec conservation des références. Aucune mutation API, commande ou paiement. Captures et résultats dans `output/implementation-work/captures/projects` du workspace principal.
+- Régression storefront générale : 24 contrôles. Le script peut utiliser `NEWOTEG_STOREFRONT_TEST_URL=http://127.0.0.1:5187` et un dossier de captures distinct via `NEWOTEG_STOREFRONT_TEST_OUTPUT`, sans écraser les preuves antérieures. Ces vérifications utilisent Edge headless indépendant, pas le navigateur intégré ni un téléphone physique.
+
+Prévisualisation fictive : depuis `Back-end`, fournir la variable explicite de base de recette ci-dessus puis lancer `node scripts/seed-project-preview.cjs` après avoir initialisé les produits fictifs du comparateur. Le script refuse une autre base, n’utilise pas `.env`, n’altère pas le stock/prix des produits existants et désactive son administrateur fictif. La liste de démonstration reste publiée uniquement dans la base de test, pour permettre une inspection à `http://127.0.0.1:5187/projets/demonstration-liste-materiel`. Son texte dit explicitement qu’aucun montage réel ni compatibilité électronique n’est validé. Les deux recettes clientes se lancent depuis `Font-end` avec `node tests/verify-projects.cjs` et `node tests/verify-projects-live.cjs`.
+
+Ce jalon ne ferme pas L4 : pilote réel, documentation technique relue et animation commerciale réelle restent ouverts. Aucun accès Railway ou déploiement.

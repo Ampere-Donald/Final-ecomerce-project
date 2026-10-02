@@ -1,4 +1,5 @@
 import EquivalenceEntry from "./EquivalenceEntry";
+import { ProjectTeaser } from "./Projects";
 import { createElement } from "react";
 import { useState } from "react";
 import { Link } from "react-router-dom";
@@ -195,6 +196,7 @@ export default function Home() {
             )}
           </State>
         </section>
+        <ProjectTeaser />
         <section className="e-advice-ribbon">
           <MessageCircle size={30} />
           <div>

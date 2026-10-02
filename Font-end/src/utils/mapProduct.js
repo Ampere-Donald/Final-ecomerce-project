@@ -44,6 +44,7 @@ export function mapProduct(p) {
         id: p.id,
         model: p.nomProduit,
         code: getProductCode(p.id),
+        reference: typeof p.code === 'string' && p.code ? p.code : null,
         brand: p.marque,
         description: p.description,
         categoryName: p.categorie?.nom || 'DIVERS',
