@@ -7,6 +7,8 @@ import { useFavorites } from "../context/FavoritesContext";
 import { formatFCFA } from "../utils/formatFCFA";
 import { stockState, canBuy } from "./productData";
 import ComparisonAction from "./ComparisonAction";
+import OfferDetails from './OfferDetails';
+import './commercial.css';
 
 export function Copy({ fr, en }) {
   const { lang } = useI18n();
@@ -192,6 +194,7 @@ export function Card({ product }) {
             </Link>
           )}
         </div>
+        <OfferDetails product={product} />
         {product.wholesalePrice > 0 && (
           <p className="e-volume">
             <Copy

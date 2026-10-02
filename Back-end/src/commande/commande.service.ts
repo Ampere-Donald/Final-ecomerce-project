@@ -91,7 +91,7 @@ export class CommandeService {
           }
           return previous;
         }
-        const quote = await quoteCatalogue(tx, dto.lignes);
+        const quote = await quoteCatalogue(tx, dto.lignes, { lock: true });
         assertQuoteAccepted(dto, quote);
         const lignes = quote.lignes;
         if (email && motDePasse) {
@@ -245,7 +245,7 @@ export class CommandeService {
         replayed = true;
         return previous;
       }
-      const quote = await quoteCatalogue(tx, dto.lignes);
+      const quote = await quoteCatalogue(tx, dto.lignes, { lock: true });
       assertQuoteAccepted(dto, quote);
       const lignes = quote.lignes;
 

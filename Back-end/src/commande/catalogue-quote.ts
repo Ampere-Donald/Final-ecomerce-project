@@ -3,17 +3,22 @@ import {
   ConflictException,
   NotFoundException,
 } from '@nestjs/common';
+import { cataloguePricing } from '../pricing/catalogue-price';
+import {
+  inspectTicketStock,
+  lockTicketStock,
+} from '../ticket-vente/ticket-stock.util';
 
 export async function quoteCatalogue(
   db: any,
   requested: { produitId: string; quantite: number }[],
+  options: { lock?: boolean } = {},
 ) {
   if (!Array.isArray(requested) || !requested.length || requested.length > 100)
     throw new BadRequestException(
       'Le panier doit contenir entre 1 et 100 références.',
     );
   const seen = new Set();
-  const lignes: any[] = [];
   for (const line of requested) {
     if (
       !line?.produitId ||
@@ -25,6 +30,21 @@ export async function quoteCatalogue(
         'Référence dupliquée ou quantité invalide.',
       );
     seen.add(line.produitId);
+  }
+  if (options.lock) {
+    // The same transaction locks as the shop queue, then product rows so
+    // price edits cannot slip between accepted quote and stock decrement.
+    const ids = [...seen] as string[];
+    await lockTicketStock(db, ids);
+    for (const id of ids.sort())
+      await db.$queryRawUnsafe(
+        'SELECT id FROM produit WHERE id = $1 FOR UPDATE',
+        id,
+      );
+  }
+  const now = new Date();
+  const lignes: any[] = [];
+  for (const line of requested) {
     const product = await db.produit.findUnique({
       where: { id: line.produitId },
     });
@@ -40,8 +60,8 @@ export async function quoteCatalogue(
         code: 'STOCK_CHANGED',
         message: `Stock insuffisant pour « ${product.nomProduit} ». Disponible : ${product.quantiteStock}.`,
       });
-    const price = Number(product.prixDetail);
-    if (!Number.isFinite(price) || price <= 0)
+    const price = cataloguePricing(product, now).prixPublic;
+    if (price == null)
       throw new ConflictException({
         code: 'PRICE_UNAVAILABLE',
         message: `Le prix de « ${product.nomProduit} » doit être confirmé par la boutique.`,
@@ -58,6 +78,13 @@ export async function quoteCatalogue(
       sousTotal: subtotal / 100,
     });
   }
+  const available = await inspectTicketStock(db, requested);
+  const shortage = available.find((line) => !line.suffisant);
+  if (shortage)
+    throw new ConflictException({
+      code: 'STOCK_CHANGED',
+      message: `Stock insuffisant pour « ${shortage.nomProduit} ». Disponible : ${shortage.quantiteDisponible}.`,
+    });
   const montantArticles =
     lignes.reduce((sum, line) => sum + Math.round(line.sousTotal * 100), 0) /
     100;

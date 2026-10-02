@@ -6,6 +6,7 @@ import { useAdminAuth } from '../context/AdminAuthContext';
 import { can } from '../utils/permissions';
 import Papa from 'papaparse';
 import { BarcodeLabelFormat, exportProductBarcodeLabels } from '../utils/exportBarcodeLabels';
+import { localPromotionDate, promotionDatePayload } from '../utils/promotionForm';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface Categorie {
@@ -258,7 +259,7 @@ export const Produits = () => {
       seuilAlerte: (prod as any).seuilAlerte != null ? String((prod as any).seuilAlerte) : '5',
       urlDatasheet: prod.urlDatasheet ?? '',
       prixPromo: prod.prixPromo != null ? String(prod.prixPromo) : '',
-      finPromo: prod.finPromo ? prod.finPromo.slice(0, 16) : '', // format datetime-local
+      finPromo: localPromotionDate(prod.finPromo),
       isPopulaire: prod.isPopulaire ?? false,
     });
     setImageSlots([
@@ -322,7 +323,7 @@ export const Produits = () => {
       // ── Nouveaux champs promo / populaire ──
       // Toujours envoyer pour permettre de retirer une promo (le backend gère les chaînes vides → null)
       dataToSend.append('prixPromo', formData.prixPromo);
-      dataToSend.append('finPromo', formData.finPromo ? new Date(formData.finPromo).toISOString() : '');
+      dataToSend.append('finPromo', promotionDatePayload(formData.finPromo, editingProduit?.finPromo));
       dataToSend.append('isPopulaire', String(formData.isPopulaire));
 
       const existing = imageSlots.filter(s => s.isExisting && s.dbUrl).map(s => s.dbUrl);
@@ -1066,7 +1067,7 @@ export const Produits = () => {
                       </label>
                       <input
                         type="datetime-local"
-                        min={new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16)}
+                        disabled={!canEditPrices}
                         value={formData.finPromo}
                         onChange={(e) => setFormData((f) => ({ ...f, finPromo: e.target.value }))}
                         className="w-full px-4 py-2 bg-amber-50 border border-amber-200 rounded-lg focus:ring-2 focus:ring-amber-300/30 outline-none transition-all"
@@ -1075,6 +1076,11 @@ export const Produits = () => {
                   </div>
 
                   {/* Toggle Populaire */}
+                  <p className="text-xs text-slate-500 mt-3">
+                    Offre du site au prix détail par unité : prix positif inférieur au prix catalogue, avec date de fin.
+                    Une offre expirée reste enregistrée mais ne s’applique plus. Pas de cumul automatique avec les tarifs de gros ou un devis négocié.
+                    Seul le super administrateur peut modifier le prix et la validité.
+                  </p>
                   <label className="flex items-center gap-3 mt-4 cursor-pointer select-none group">
                     <div className="relative">
                       <input

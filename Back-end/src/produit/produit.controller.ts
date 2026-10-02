@@ -27,6 +27,7 @@ import { AdminAuthGuard } from '../admin-auth/admin-auth.guard';
 import { OptionalAdminAuthGuard } from '../admin-auth/optional-admin-auth.guard';
 import { RolesGuard } from '../admin-auth/roles.guard';
 import { Roles } from '../admin-auth/roles.decorator';
+import { cataloguePricing } from '../pricing/catalogue-price';
 
 /** Champs de coût/fournisseur jamais exposés au public ni au personnel non-admin. */
 const CHAMPS_COUTS = [
@@ -38,11 +39,15 @@ const CHAMPS_COUTS = [
 ];
 const peutVoirCouts = (user: any): boolean =>
   !!user && user.role === 'SUPER_ADMIN';
-const masquerCouts = (p: any): any => {
+const masquerCouts = (p: any, now = new Date(), publicView = true): any => {
   if (!p || typeof p !== 'object') return p;
   const copie: any = { ...p };
   for (const f of CHAMPS_COUTS) delete copie[f];
-  return copie;
+  if (publicView) {
+    if (copie.quantiteDisponibleVente !== undefined) copie.quantiteStock = copie.quantiteDisponibleVente;
+    delete copie.quantiteReservee;
+  }
+  return { ...copie, ...cataloguePricing(copie, now) };
 };
 
 const imageFileFilter = (_req: any, file: Express.Multer.File, cb: any) => {
@@ -159,7 +164,8 @@ export class ProduitController {
       includeInactive: includeInactive === 'true' && !!req.user,
     });
     if (peutVoirCouts(req.user)) return result;
-    return { ...result, data: (result.data || []).map(masquerCouts) };
+    const now = new Date();
+    return { ...result, data: (result.data || []).map(p => masquerCouts(p, now, !req.user)) };
   }
 
   @Get('metadata')
@@ -168,13 +174,22 @@ export class ProduitController {
   }
 
   @Get('flash')
-  findFlash() {
-    return this.produitService.findFlash();
+  async findFlash() {
+    const rows = await this.produitService.findFlash();
+    const now = new Date();
+    return rows.map(p => masquerCouts(p, now)).filter(p => p.offre);
   }
 
   @Get('populaires')
-  findPopulaires() {
-    return this.produitService.findPopulaires();
+  async findPopulaires() {
+    const now = new Date();
+    return (await this.produitService.findPopulaires()).map(p => masquerCouts(p, now));
+  }
+
+  @Get('arrivages')
+  async findArrivages() {
+    const now = new Date();
+    return (await this.produitService.findArrivages()).map(p => masquerCouts(p, now));
   }
 
   @Get('import/status')
@@ -257,7 +272,7 @@ export class ProduitController {
     @Param('code') code: string,
   ) {
     const produit = await this.produitService.findByCode(codeFamille, code);
-    return peutVoirCouts(req.user) ? produit : masquerCouts(produit);
+    return peutVoirCouts(req.user) ? produit : masquerCouts(produit, new Date(), false);
   }
 
   @UseGuards(AdminAuthGuard, RolesGuard)
@@ -265,7 +280,7 @@ export class ProduitController {
   @Get(['scan-raw/:code', 'scan-code/:code'])
   async findByRawScan(@Request() req: any, @Param('code') code: string) {
     const produit = await this.produitService.findByRawScan(code);
-    return peutVoirCouts(req.user) ? produit : masquerCouts(produit);
+    return peutVoirCouts(req.user) ? produit : masquerCouts(produit, new Date(), false);
   }
 
   @UseGuards(OptionalAdminAuthGuard)
@@ -275,7 +290,7 @@ export class ProduitController {
     if (!produit.estActif && !req.user) {
       throw new NotFoundException(`Produit avec l'id ${id} non trouvé`);
     }
-    return peutVoirCouts(req.user) ? produit : masquerCouts(produit);
+    return peutVoirCouts(req.user) ? produit : masquerCouts(produit, new Date(), !req.user);
   }
 
   @UseGuards(AdminAuthGuard, RolesGuard)
@@ -351,11 +366,16 @@ export class ProduitController {
     if (updateProduitDto.prixDetail != null) updateProduitDto.prixDetail = parseFloat(String(updateProduitDto.prixDetail));
     if (updateProduitDto.quantiteStock != null) updateProduitDto.quantiteStock = parseInt(String(updateProduitDto.quantiteStock), 10);
     if (updateProduitDto.seuilAlerte != null) updateProduitDto.seuilAlerte = parseInt(String(updateProduitDto.seuilAlerte), 10);
-    const prixPromoStr = String(updateProduitDto.prixPromo ?? '');
-    (updateProduitDto as any).prixPromo = prixPromoStr !== '' ? parseFloat(prixPromoStr) : null;
-    if (typeof (updateProduitDto as any).prixPromo === 'number' && isNaN((updateProduitDto as any).prixPromo)) (updateProduitDto as any).prixPromo = null;
-    const finPromoStr = String(updateProduitDto.finPromo ?? '');
-    (updateProduitDto as any).finPromo = finPromoStr !== '' ? finPromoStr : null;
+    if (updateProduitDto.prixPromo !== undefined) {
+      const prixPromoStr = String(updateProduitDto.prixPromo ?? '');
+      const value = prixPromoStr !== '' ? Number(prixPromoStr) : null;
+      if (value !== null && !Number.isFinite(value)) throw new BadRequestException('Prix promotionnel invalide.');
+      (updateProduitDto as any).prixPromo = value;
+    }
+    if (updateProduitDto.finPromo !== undefined) {
+      const finPromoStr = String(updateProduitDto.finPromo ?? '');
+      (updateProduitDto as any).finPromo = finPromoStr !== '' ? finPromoStr : null;
+    }
     if (updateProduitDto.isPopulaire !== undefined) updateProduitDto.isPopulaire = String(updateProduitDto.isPopulaire) === 'true';
 
     const actor = { id: req.user.id, nom: req.user.nom, role: req.user.role };

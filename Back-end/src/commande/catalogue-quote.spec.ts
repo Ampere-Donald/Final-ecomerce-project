@@ -11,9 +11,69 @@ const product = {
   quantiteStock: 3,
 };
 const database = (value: any = product) => ({
-  produit: { findUnique: jest.fn().mockResolvedValue(value) },
+  produit: {
+    findUnique: jest.fn().mockResolvedValue(value),
+    findMany: jest.fn().mockResolvedValue(value ? [value] : []),
+  },
+  ligneTicket: { groupBy: jest.fn().mockResolvedValue([]) },
+  $queryRawUnsafe: jest.fn().mockResolvedValue([]),
 });
 describe('Catalogue order quote', () => {
+  it('excludes active shop reservations and locks stock and price before order reads', async () => {
+    const db = database();
+    db.ligneTicket.groupBy.mockResolvedValue([
+      { produitId: 'p1', _sum: { quantite: 2 } },
+    ]);
+    await expect(
+      quoteCatalogue(db, [{ produitId: 'p1', quantite: 2 }], { lock: true }),
+    ).rejects.toMatchObject({
+      response: expect.objectContaining({ code: 'STOCK_CHANGED' }),
+    });
+    expect(db.$queryRawUnsafe.mock.calls).toEqual([
+      [
+        'SELECT pg_advisory_xact_lock(hashtext($1))::text',
+        'newoteg:ticket-stock:p1',
+      ],
+      ['SELECT id FROM produit WHERE id = $1 FOR UPDATE', 'p1'],
+    ]);
+    expect(db.$queryRawUnsafe.mock.invocationCallOrder.at(-1)).toBeLessThan(
+      db.produit.findUnique.mock.invocationCallOrder[0],
+    );
+    expect(db.ligneTicket.groupBy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          ticket: { statut: 'EN_ATTENTE', expiresAt: { gt: expect.any(Date) } },
+        }),
+      }),
+    );
+    await expect(
+      quoteCatalogue(db, [{ produitId: 'p1', quantite: 1 }]),
+    ).resolves.toMatchObject({ montantArticles: 3500 });
+  });
+  it('uses the same live promotional price as the public catalogue and requires renewed acceptance after expiration', async () => {
+    const p = { ...product, prixPromo: 3000, finPromo: '2099-01-01T00:00:00Z' };
+    const requested = [{ produitId: 'p1', quantite: 2 }];
+    const current = await quoteCatalogue(database(p), requested);
+    expect(current.lignes[0].prixUnitaire).toBe(3000);
+    expect(current.montantArticles).toBe(6000);
+    const expired = await quoteCatalogue(
+      database({ ...p, finPromo: '2000-01-01T00:00:00Z' }),
+      requested,
+    );
+    expect(expired.montantArticles).toBe(7000);
+    expect(() =>
+      assertQuoteAccepted(
+        { montantTotal: current.montantArticles, lignes: current.lignes },
+        expired,
+      ),
+    ).toThrow(ConflictException);
+    expect(() =>
+      assertQuoteAccepted(
+        { montantTotal: current.montantArticles, lignes: current.lignes },
+        current,
+      ),
+    ).not.toThrow();
+  });
   it('uses catalogue prices and names without inventing delivery fees', async () => {
     const quote = await quoteCatalogue(database(), [
       { produitId: 'p1', quantite: 2 },

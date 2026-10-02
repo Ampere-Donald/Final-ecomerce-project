@@ -10,6 +10,7 @@ import AdmZip from 'adm-zip';
 import { createReadStream, existsSync, promises as fsPromises } from 'fs';
 import { join, basename } from 'path';
 import { addSellableStock } from 'src/ticket-vente/ticket-stock.util';
+import { cataloguePricing, validateCataloguePromotion } from '../pricing/catalogue-price';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const csvParser = require('csv-parser');
 
@@ -167,7 +168,7 @@ export class ProduitService {
    */
   private retirerPrixSiNonSuperAdmin(data: any, actor?: NotificationActor) {
     if (!actor || actor.role === 'SUPER_ADMIN') return;
-    for (const f of ['prixDetail', 'prixGros', 'prixDemiGros', 'prixPromo']) {
+    for (const f of ['prixDetail', 'prixGros', 'prixDemiGros', 'prixPromo', 'finPromo']) {
       delete data[f];
     }
   }
@@ -217,6 +218,7 @@ export class ProduitService {
     if (data.finPromo) {
       data.finPromo = new Date(data.finPromo);
     }
+    validateCataloguePromotion(data);
 
     let produit: any;
     try {
@@ -271,25 +273,51 @@ export class ProduitService {
   }
 
   async findFlash() {
-    return await this.db.produit.findMany({
+    const now = new Date();
+    const products = await this.db.produit.findMany({
       where: {
         estActif: true,
         quantiteStock: { gt: 0 },
-        prixPromo: { not: null },
-        finPromo: { gt: new Date() },
+        prixPromo: { gt: 0 },
+        prixDetail: { gt: 0 },
+        finPromo: { gt: now },
       },
       include: { categorie: true },
       orderBy: { dateAjout: 'desc' },
+      take: 100,
     });
+    return (await addSellableStock(this.db as any, products)).filter(p => p.quantiteDisponibleVente > 0 && cataloguePricing(p, now).offre).slice(0, 20);
   }
 
   async findPopulaires() {
-    return await this.db.produit.findMany({
+    const products = await this.db.produit.findMany({
       where: { isPopulaire: true, estActif: true, quantiteStock: { gt: 0 } },
       include: { categorie: true },
       orderBy: { dateAjout: 'desc' },
       take: 20,
     });
+    return (await addSellableStock(this.db as any, products)).filter(p => p.quantiteDisponibleVente > 0);
+  }
+
+  async findArrivages() {
+    const now = new Date();
+    const since = new Date(now.getTime() - 30 * 86400000);
+    // A catalogue import is not an arrival: require a validated purchase.
+    const lines = await this.db.ligneAchat.findMany({
+      where: {
+        quantite: { gt: 0 },
+        achat: { statutAchat: 'VALIDE', validatedAt: { gte: since, lte: now } },
+        produit: { estActif: true, quantiteStock: { gt: 0 } },
+      },
+      select: { achat: { select: { validatedAt: true } }, produit: { include: { categorie: true } } },
+      orderBy: { achat: { validatedAt: 'desc' } },
+      take: 100,
+    });
+    const unique = new Map<string, any>();
+    for (const line of lines)
+      if (!unique.has(line.produit.id)) unique.set(line.produit.id, { ...line.produit, arrivageAt: line.achat.validatedAt });
+    return (await addSellableStock(this.db as any, [...unique.values()]))
+      .filter(p => p.quantiteDisponibleVente > 0).slice(0, 20);
   }
 
   async findAll(params: {
@@ -543,7 +571,7 @@ export class ProduitService {
   }
 
   async update(id: string, updateProduitDto: UpdateProduitDto, actor?: NotificationActor) {
-    await this.findOne(id);
+    const existing = await this.findOne(id);
 
     const { categorieId, ...rest } = updateProduitDto;
 
@@ -561,6 +589,8 @@ export class ProduitService {
     if (updateData.finPromo) {
       updateData.finPromo = new Date(updateData.finPromo);
     }
+    if (['prixDetail', 'prixPromo', 'finPromo'].some(key => updateData[key] !== undefined))
+      validateCataloguePromotion({ ...existing, ...updateData });
 
     if (categorieId) {
       updateData.categorie = { connect: { id: categorieId } };
@@ -568,7 +598,7 @@ export class ProduitService {
 
     try {
       const produit = await this.db.produit.update({
-        where: { id },
+        where: { id, version: existing.version },
         data: updateData,
         include: { categorie: true },
       });
@@ -579,6 +609,7 @@ export class ProduitService {
 
       return produit;
     } catch (e: any) {
+      if (e?.code === 'P2025') throw new ConflictException('Le produit a changé pendant la modification. Relisez ses prix et sa validité avant de réessayer.');
       if (e?.code === 'P2002') {
         throw new ConflictException(`Le code produit "${updateData.code}" est déjà utilisé`);
       }

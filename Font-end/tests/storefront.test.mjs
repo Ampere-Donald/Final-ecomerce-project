@@ -19,6 +19,8 @@ test("Missing stock is distinct from zero, and unavailable prices cannot be purc
   assert.equal(canBuy({ stock: 10, retailPrice: 2500 }), true);
 });
 test("API adaptation preserves identifiers and nullable volume conditions", () => {
+  assert.equal(adaptProduct({ id: 'test', prixDetail: 3500, prixPublic: 3000 }, () => '').retailPrice, 3000);
+  assert.equal(adaptProduct({ id: 'test', prixDetail: 3500, prixPublic: null }, () => '').retailPrice, null);
   const p = adaptProduct(
     {
       id: "full-uuid",

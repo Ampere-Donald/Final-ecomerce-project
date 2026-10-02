@@ -28,6 +28,7 @@ const Profile = lazy(() => import("./storefront/Account"));
 const Favorites = lazy(() => import("./storefront/Favorites"));
 const Devis = lazy(() => import("./storefront/Devis"));
 const Projects = lazy(() => import("./storefront/Projects"));
+const Commercial = lazy(() => import("./storefront/Commercial"));
 const DevisPrint = lazy(() => import("./storefront/DevisPrint"));
 const NotFound = lazy(() => import("./storefront/ShopInfo"));
 
@@ -79,6 +80,8 @@ function AppContent() {
               <Route path="/catalogue" element={<Catalogue />} />
               <Route path="/comparer" element={<Comparison />} />
               <Route path="/projets" element={<Projects />} />
+              <Route path="/offres" element={<Commercial />} />
+              <Route path="/arrivages" element={<Commercial />} />
               <Route path="/projets/:slug" element={<Projects />} />
               <Route path="/product/:id" element={<ProductDetails />} />
               <Route path="/panier" element={<Cart />} />

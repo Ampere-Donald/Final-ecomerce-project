@@ -157,6 +157,18 @@ export class TicketVenteService {
     const ticket = await this.db.$transaction(async (tx) => {
       const availability = await inspectTicketStock(tx as any, dto.lignes, { lock: true });
       assertTicketStockAvailable(availability);
+      // A Serializable transaction may have taken its snapshot before waiting
+      // for the stock lock. Claim each product row without consuming stock:
+      // a concurrent committed sale then causes a serialization failure rather
+      // than a reservation based on an obsolete physical quantity.
+      for (const line of [...availability].sort((a, b) => a.produitId.localeCompare(b.produitId))) {
+        const claimed = await tx.produit.updateMany({
+          where: { id: line.produitId, estActif: true, quantiteStock: { gte: line.quantiteDemandee + line.quantiteReservee } },
+          data: { version: { increment: 1 } },
+        });
+        if (claimed.count !== 1)
+          throw new ConflictException({ code: 'STOCK_CHANGED', message: 'Le stock a changé. Revérifiez le panier avant de créer le ticket.' });
+      }
       const numeroTicket = await this.generateNumeroTicket(tx);
       return tx.ticketVente.create({
         data: {
@@ -176,7 +188,11 @@ export class TicketVenteService {
           vendeur: { select: vendeurSelect },
         },
       });
-    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
+    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable }).catch((error) => {
+      if (error?.code === 'P2034')
+        throw new ConflictException({ code: 'STOCK_CHANGED', message: 'Le stock a changé. Revérifiez le panier avant de créer le ticket.' });
+      throw error;
+    });
 
     this.notifications
       .create(

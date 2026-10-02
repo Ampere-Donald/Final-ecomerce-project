@@ -27,8 +27,11 @@ const dto: any = {
 };
 function fixture() {
   const tx = {
+    $queryRawUnsafe: jest.fn().mockResolvedValue([]),
+    ligneTicket: { groupBy: jest.fn().mockResolvedValue([]) },
     produit: {
       findUnique: jest.fn().mockResolvedValue(product),
+      findMany: jest.fn().mockResolvedValue([product]),
       updateMany: jest.fn().mockResolvedValue({ count: 1 }),
       update: jest.fn(),
     },
@@ -101,19 +104,19 @@ describe('Checkout transaction and ownership', () => {
   it('derives ownership from JWT and discards public claimed ownership', async () => {
     const service = {
       create: jest.fn(),
-      createWithAccount: jest.fn(),
+      createWithAccount: jest.fn().mockResolvedValue({ commande: { id: 'qa-order', lignes: [] } }),
       findOne: jest.fn().mockResolvedValue({ clientId: null }),
       cancel: jest.fn(),
     };
     const controller = new CommandeController(service as any);
-    controller.create(
+    await controller.create(
       { ...dto, clientId: 'victim' },
       { user: { id: 'real-user' } },
     );
     expect(service.create).toHaveBeenCalledWith(
       expect.objectContaining({ clientId: 'real-user' }),
     );
-    controller.checkout({ ...dto, clientId: 'victim' });
+    await controller.checkout({ ...dto, clientId: 'victim' });
     expect(service.createWithAccount).toHaveBeenCalledWith(
       expect.objectContaining({ clientId: undefined }),
     );

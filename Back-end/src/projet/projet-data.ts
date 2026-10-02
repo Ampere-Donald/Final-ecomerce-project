@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto';
 import { BadRequestException } from '@nestjs/common';
+import { cataloguePricing } from '../pricing/catalogue-price';
 
 export const projectProductSelect = {
   id: true,
@@ -13,6 +14,8 @@ export const projectProductSelect = {
   categorie: { select: { id: true, nom: true } },
   estActif: true,
   prixDetail: true,
+  prixPromo: true,
+  finPromo: true,
   quantiteStock: true,
   seuilAlerte: true,
   imageUrl: true,
@@ -78,6 +81,7 @@ export function projectUrl(value: string, image = false) {
   }
 }
 export function publicProject(row: any) {
+  const now = new Date();
   const validation =
     row.validationVersion === row.version && Boolean(row.valideAt);
   const lignes = row.lignes.map((line: any) => {
@@ -94,6 +98,7 @@ export function publicProject(row: any) {
             nomAttribut: a.nomAttribut,
             valeurs: (a.valeurs || []).map((v: any) => ({ valeur: v.valeur })),
           })),
+          ...cataloguePricing(raw, now),
         }
       : null;
     const validationActuelle =
@@ -103,7 +108,7 @@ export function publicProject(row: any) {
         line.empreinteTechnique &&
         technicalFingerprint(produit) === line.empreinteTechnique,
       );
-    const prix = produit?.prixDetail;
+    const prix = produit?.prixPublic;
     const montant = prix * line.quantite;
     const prixConnu =
       typeof prix === 'number' &&

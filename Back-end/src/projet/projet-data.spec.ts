@@ -52,6 +52,13 @@ export const project = (changes: any = {}) => {
   };
 };
 describe('project public contracts', () => {
+  it('estimates with the current public offer without changing technical approval', () => {
+    const row = project();
+    Object.assign(row.lignes[0].produit, { prixPromo: 2500, finPromo: '2099-01-01T00:00:00Z' });
+    const result = publicProject(row);
+    expect(result.validationActuelle).toBe(true); expect(result.lignes[0].montant).toBe(5000);
+    expect(result.lignes[0].produit.prixPublic).toBe(2500);
+  });
   it('does not expose internal costs, validation notes, receipts or nested management fields', () => {
     const result = publicProject(project());
     expect(JSON.stringify(result)).not.toContain('PRIVATE_');

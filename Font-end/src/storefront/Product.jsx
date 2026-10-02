@@ -23,6 +23,7 @@ import Footer from "./Footer";
 import ProductAdvice from "./ProductAdvice";
 import { ReceptionSummary } from "./ReceptionChoice";
 import ComparisonAction, { ComparisonLink } from "./ComparisonAction";
+import OfferDetails from './OfferDetails';
 
 function Detail({ product }) {
   const [quantity, setQuantity] = useState(1),
@@ -164,6 +165,7 @@ function Detail({ product }) {
                 <Copy fr="Prix unitaire" en="Unit price" />
               </span>
             </div>
+            <OfferDetails product={product} />
             {product.wholesalePrice > 0 && (
               <p className="e-note e-volume-note">
                 <Copy fr="Tarif gros" en="Wholesale price" /> :{" "}
@@ -173,8 +175,8 @@ function Detail({ product }) {
                   : null}
                 .{" "}
                 <Copy
-                  fr="Faites confirmer les conditions auprès de la boutique avant l’achat. Le panier utilise le prix détail."
-                  en="Confirm volume terms with the shop before purchasing. The cart uses the retail price."
+                  fr="Faites confirmer les conditions auprès de la boutique avant l’achat. Le panier utilise le prix unitaire affiché."
+                  en="Confirm volume terms with the shop before purchasing. The cart uses the displayed unit price."
                 />
               </p>
             )}

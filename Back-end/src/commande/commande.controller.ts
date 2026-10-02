@@ -22,6 +22,7 @@ import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { AdminAuthGuard } from '../admin-auth/admin-auth.guard';
 import { RolesGuard } from '../admin-auth/roles.guard';
 import { Roles } from '../admin-auth/roles.decorator';
+import { customerOrder } from './customer-order';
 
 @Controller('commandes')
 export class CommandeController {
@@ -30,11 +31,16 @@ export class CommandeController {
   /** Standard order creation (public) */
   @UseGuards(OptionalClientAuthGuard)
   @Post()
-  create(@Body() createCommandeDto: CreateCommandeDto, @Request() req: any) {
-    return this.commandeService.create({
-      ...createCommandeDto,
-      clientId: req.user?.id,
-    });
+  async create(
+    @Body() createCommandeDto: CreateCommandeDto,
+    @Request() req: any,
+  ) {
+    return customerOrder(
+      await this.commandeService.create({
+        ...createCommandeDto,
+        clientId: req.user?.id,
+      }),
+    );
   }
 
   /** Checkout with inline account creation (public) */
@@ -44,11 +50,17 @@ export class CommandeController {
   }
 
   @Post('checkout')
-  checkout(@Body() dto: CreateCommandeDto) {
-    return this.commandeService.createWithAccount({
+  async checkout(@Body() dto: CreateCommandeDto) {
+    const result = await this.commandeService.createWithAccount({
       ...dto,
       clientId: undefined,
     });
+    return {
+      commande: customerOrder(result.commande),
+      ...(result.access_token
+        ? { access_token: result.access_token, user: result.user }
+        : {}),
+    };
   }
 
   /** Admin: list all orders */
@@ -62,8 +74,10 @@ export class CommandeController {
   /** Authenticated user's orders */
   @UseGuards(JwtAuthGuard)
   @Get('my-orders')
-  myOrders(@Request() req: any) {
-    return this.commandeService.findByClient(req.user.id);
+  async myOrders(@Request() req: any) {
+    return (await this.commandeService.findByClient(req.user.id)).map(
+      customerOrder,
+    );
   }
 
   /** Admin: process in-store pickup */
@@ -143,7 +157,7 @@ export class CommandeController {
     if (!order.clientId || order.clientId !== req.user.id) {
       throw new ForbiddenException('Cette commande ne vous appartient pas.');
     }
-    return this.commandeService.cancel(id);
+    return customerOrder(await this.commandeService.cancel(id));
   }
 
   /**
@@ -156,6 +170,8 @@ export class CommandeController {
     @Request() req: any,
     @Param('id', ParseUUIDPipe) id: string,
   ) {
-    return this.commandeService.confirmReception(id, req.user.id);
+    return customerOrder(
+      await this.commandeService.confirmReception(id, req.user.id),
+    );
   }
 }

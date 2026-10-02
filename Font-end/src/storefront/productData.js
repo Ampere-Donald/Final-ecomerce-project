@@ -1,4 +1,7 @@
+import { readOffer } from "./offerData.js";
+
 const positive = (value) =>
+  ["number", "string"].includes(typeof value) &&
   value !== null &&
   value !== undefined &&
   value !== "" &&
@@ -39,7 +42,10 @@ export function adaptProduct(raw, resolveImage) {
     description: raw.description,
     categoryName: raw.categorie?.nom || "",
     categoryId: raw.categorieId || raw.categorie?.id || "",
-    retailPrice: positive(raw.prixDetail),
+    retailPrice: positive(
+      raw.prixPublic === undefined ? raw.prixDetail : raw.prixPublic,
+    ),
+    offer: readOffer(raw),
     wholesalePrice: positive(raw.prixGros),
     wholesaleMinimum: positive(raw.quantiteGros ?? raw.categorie?.quantiteGros),
     stock:

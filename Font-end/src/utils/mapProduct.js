@@ -50,7 +50,7 @@ export function mapProduct(p) {
         categoryName: p.categorie?.nom || 'DIVERS',
         categoryId: p.categorie?.id || '',
         categorySlug: p.categorie?.id || 'divers',
-        retailPrice: parseFloat(p.prixDetail) || 0,
+        retailPrice: parseFloat(p.prixPublic === undefined ? p.prixDetail : p.prixPublic) || 0,
         wholesalePrice: parseFloat(p.prixGros) || 0,
         stock: p.quantiteStock ?? 0,
         oldPrice: null,
