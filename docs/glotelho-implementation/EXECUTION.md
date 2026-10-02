@@ -1,6 +1,6 @@
 # Suivi d’exécution — NEWOTEG / X-Electronic
 
-Dernière mise à jour : 1er octobre 2026. Exécution des lots L0–L8 autorisée par l’utilisateur; L9 reste soumis à une autorisation distincte.
+Dernière mise à jour : 2 octobre 2026. Exécution des lots L0–L8 autorisée par l’utilisateur; L9 reste soumis à une autorisation distincte.
 
 ## Référence et décisions
 
@@ -19,7 +19,7 @@ Dernière mise à jour : 1er octobre 2026. Exécution des lots L0–L8 autorisé
 | L1 — Données et règles | En cours | Schéma et parcours audités sans lire Railway; retrait Akwa + livraison à confirmer validés par l’utilisateur. Seuils pro et cas/validateur équivalences en attente. |
 | L2 — Fiche et réception | En cours | Choix facultatif de réception dans le header, fiche et panier, conservé vers le checkout ; conseil WhatsApp contextualisé et éditable sur fiche. Frais et délai à confirmer. Grille réelle, coordonnées publiques et enrichissement technique restent à valider. |
 | L3 — Recherche et équivalences | En cours | Comparateur de 2–3 références d’une même famille intégré et vérifié sur API simulée et backend local réel. Pistes IA toujours non validées techniquement, aucun ajout automatique. Références étalons, technicien NEWOTEG et budget d’essai distant restent attendus. |
-| L4 — Projets et sélections | En cours | Structure serveur et API brouillon/publication/retrait vérifiées sur PostgreSQL local. Éditeur, pages clients, ajout panier, projet pilote réel et animation commerciale restent à réaliser. |
+| L4 — Projets et sélections | En cours | Structure serveur et éditeur administration brouillon/publication/retrait vérifiés sur PostgreSQL local. Pages clients, ajout panier, projet pilote réel et animation commerciale restent à réaliser. |
 | L5 — Devis et achats récurrents | En cours | Réachat, demande, réponse, acceptation en commande, proposition client imprimable et affectation explicite intégrés. Concurrence et rollback de l’acceptation vérifiés sur PostgreSQL local isolé. Préparation depuis les références choisies et reprise durable intégrées ; migrations non appliquées à Railway. |
 | L6 — Commande invitée | En cours | Achat invité et demande de livraison testés sur API simulée; compte facultatif. Reprise après réponse perdue/rechargement corrigée pour l’invité sans mot de passe, même requestId et payload. La confirmation affiche le contact boutique pour l’invité. Suivi privé et rattachement restent ouverts. |
 | L7 — Avis et mesure | À faire | Preuve de réception, modération et instrumentation à concevoir sans PII. |
@@ -111,3 +111,11 @@ Dernière mise à jour : 1er octobre 2026. Exécution des lots L0–L8 autorisé
 - Migration additive générée hors ligne et SQL appliqué uniquement à la base PostgreSQL de recette locale `127.0.0.1:55439/newoteg_quote_acceptance_test`. Aucune migration Railway, commande client, sortie de stock, notification externe ou IA déclenchée par ce lot.
 - Build backend et 7 suites ciblées réussis : 129 tests. Recette PostgreSQL réelle dédiée : 15 scénarios réussis, dont concurrence, rollback, calendrier, suppression de produit, prix/stock et confidentialité. Refus d’une autre base vérifié. Contrôle HTTP local : liste/détail publics 200, accès administration/création non authentifiés 401, storefront 200. Backend local relancé sur la version compilée après arrêt du watcher pendant les builds.
 - L4 reste en cours : éditeur administration, pages projet, sélection et ajout groupé au panier, pilote réel relu par NEWOTEG, arrivages et offres vérifiables restent à livrer. Contrat et preuves : `PROJETS.md`. Le plan complet L0–L8 reste actif ; aucune autorisation de publication L9 n’est déduite de cette livraison.
+
+## Préparation des projets dans l’administration — 2 octobre 2026
+
+- Éditeur `/projets`, accès ADMIN/SUPER_ADMIN et lien secondaire « Projets boutique », sans changer les cinq destinations principales. Liste de matériel ordonnée, sélection exacte ou référence à rechercher, remplacement explicite conservant les quantités, contenu FR/EN, documentation, visuel et calendrier. Publication avec relecture technique actuelle de toutes les pièces ; retrait avec motif et historique.
+- Tentative conservée avant envoi, brouillons séparés par compte, reprise du même payload/requestId après coupure ou rechargement, refus du stockage illisible, conflit de version sans écrasement des modifications. Labels et aides associés pour l’accessibilité. Pas de publication, envoi ou sélection automatique.
+- Typage et build administration réussis ; 13 tests UI ciblés. Recette réelle Nest/PostgreSQL : six contrôles réussis, incluant réponse perdue après création puis reprise avec un seul projet/reçu, publication puis retrait, confidentialité publique et absence de commande/stock/traﬁc extérieur. Six largeurs vérifiées, captures mobile et desktop inspectées. La recette réelle a révélé l’absence de valeurs d’attributs dans la recherche catalogue ; la sélection l’accepte comme résumé et la publication utilise le détail technique complet.
+- Compte et pièces fictifs uniquement dans la base de recette dédiée. Compte désactivé après recette, projet retiré en brouillon. Services locaux relancés après arrêt constaté ; la récupération PostgreSQL a été attendue jusqu’au signal réel « accepting connections ». Aucun accès Railway, migration distante ou déploiement.
+- Suite : pages clients des projets, sélection des lignes et ajout atomique au panier, puis pilote réel et arrivages/offres vérifiables. L4 et le plan A–Z restent en cours.

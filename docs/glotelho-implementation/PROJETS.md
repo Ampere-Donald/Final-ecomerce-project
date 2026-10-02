@@ -1,6 +1,6 @@
 # Projets — listes de matériel et publication vérifiée
 
-État au 1er octobre 2026 : fondation serveur intégrée dans le worktree `codex/newoteg-evolution`. L4 reste en cours. L’éditeur administration, les pages clients et l’ajout groupé au panier restent à réaliser. Aucun projet réel n’est validé par cette recette ; aucune migration Railway ni publication du site.
+État au 2 octobre 2026 : fondation serveur et éditeur administration intégrés dans le worktree `codex/newoteg-evolution`. L4 reste en cours : pages clients et ajout groupé au panier à réaliser. Aucun projet réel n’est validé par cette recette ; aucune migration Railway ni publication du site.
 
 ## Comportement livré
 
@@ -22,7 +22,7 @@ Préfixe `/api` de l’application.
 | --- | --- |
 | GET `/projets?page=1&limit=12` | Public ; liste `data` et pagination `meta`, maximum 24 projets par page |
 | GET `/projets/public/:slug` | Public ; projet visible, sinon 404 |
-| GET `/projets/admin` | ADMIN/SUPER_ADMIN actifs ; liste bornée à 100, accès secondaire administration à réaliser |
+| GET `/projets/admin` | ADMIN/SUPER_ADMIN actifs ; liste bornée à 100, accès secondaire « Projets boutique » dans l’administration |
 | GET `/projets/admin/:id` | Même accès ; contenu, empreintes actuelles et 50 événements récents |
 | POST `/projets/admin` | Créer un brouillon ; `CreateProjetDto` et `requestId` UUID |
 | PATCH `/projets/admin/:id` | Remplacer le contenu complet ; même slug, version courante et nouvel identifiant de tentative |
@@ -49,4 +49,23 @@ La recette utilise des données fictives et ne télécharge pas la documentation
 
 ## Suite de L4
 
-Construire l’éditeur avec sélection des produits, ordre, dates, validation technique et reprise après erreur, puis les pages projet accessibles depuis l’accueil. Le client choisira ses lignes et quantités ; prix, stock et approbation seront revérifiés avant un ajout atomique au panier. Préserver la direction E et utiliser les visuels NEWOTEG validés. NEWOTEG doit encore choisir et faire relire un projet pilote réel, ses accessoires, documentation et contraintes. Les arrivages et offres réelles restent également à intégrer.
+Construire les pages projet accessibles depuis l’accueil. Le client choisira ses lignes et quantités ; prix, stock et approbation seront revérifiés avant un ajout atomique au panier. Préserver la direction E et utiliser les visuels NEWOTEG validés. NEWOTEG doit encore choisir et faire relire un projet pilote réel, ses accessoires, documentation et contraintes. Les arrivages et offres réelles restent également à intégrer.
+
+## Éditeur administration — 2 octobre 2026
+
+`/projets`, réservé aux administrateurs, se trouve dans le lien secondaire « Projets boutique ». Les cinq destinations principales sont conservées. La bibliothèque de brouillons/publications accompagne une feuille de préparation : contenu FR/EN, référence exacte, rôle, quantité, nécessaire/facultatif, ordre des pièces, documents, visuel marketing, calendrier et ordre d’affichage.
+
+Une référence inconnue reste editable en brouillon. « Choisir une pièce pour la ligne » remplace explicitement sa référence, en conservant rôle, quantité et caractère facultatif. Aucun équivalent automatique. La recherche sert à identifier les pièces ; l’API de liste n’inclut pas les valeurs techniques complètes. Elles sont relues via le détail du projet pour la vérification avant publication, avec les empreintes serveur actuelles.
+
+Le brouillon est conservé par compte. Chaque tentative est persistée avant envoi et verrouille l’édition jusqu’au résultat. Réponse perdue : rechargement puis reprise du même contenu et du même `requestId`. Stockage illisible/refusé ou autre tentative en attente : nouvel envoi bloqué. Un conflit de version conserve les modifications, annule la relecture technique et demande une relecture explicite de la version boutique. Changer de projet ou quitter avec des modifications nécessite une confirmation.
+
+La publication exige la relecture de chaque pièce, du matériel et des documents, ainsi qu’une note privée. Le retrait demande un motif. Dates programmées et états sont affichés ; l’historique est consultable. Les notes, vérifications et l’historique restent dans l’administration. Les champs ont des labels associés et des aides distinctes pour les lecteurs d’écran.
+
+Preuves de ce jalon :
+
+- Typage administration et build Vite/PWA réussis. Treize tests UI ciblés : rôle, suffixe et coûts privés, remplacement, quantité/version, publication, pièce manquante, reprise après rechargement, conflit, stockage refusé/corrompu, autre onglet, retrait, dates effacées et réponse ancienne ignorée.
+- `tests/verify-project-editor-local.cjs` : six contrôles avec Nest et PostgreSQL réels sur la base dédiée. Connexion d’un administrateur fictif, création avec réponse perdue après commit, reprise sans doublon ni deuxième reçu, publication après vérification, confidentialité de la réponse publique, retrait conservant trois événements, absence de commande/mouvement de stock et de trafic extérieur.
+- Rendu à 360/390/768/1100/1240/1440 px sans débordement horizontal ; captures 390/1440 px et relecture desktop inspectées. Edge headless indépendant après échec de connexion du navigateur intégré, pas un téléphone physique.
+- Les autres modules du shell admin sont simulés dans cette recette ; projets, recherche catalogue et identité admin utilisent l’API réelle. Le compte fictif est désactivé à la fin et le projet fictif reste en brouillon. Aucun secret de test n’est écrit dans les captures ou résultats.
+
+Relancer depuis le dossier administration avec une variable explicite `NEWOTEG_PROJECT_TEST_DATABASE_URL=postgresql://quote_test@127.0.0.1:55439/newoteg_quote_acceptance_test`, puis `node tests/verify-project-editor-local.cjs`. Le script refuse toute autre base avant chargement de Prisma. Il attend le backend à `127.0.0.1:3000` et l’administration à `localhost:5174`.

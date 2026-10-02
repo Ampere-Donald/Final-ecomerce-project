@@ -12,6 +12,7 @@ import { AppErrorBoundary } from './components/AppErrorBoundary';
 const Dashboard = lazy(() => import('./components/RoleDashboard').then((m) => ({ default: m.RoleDashboard })));
 const Orders = lazy(() => import('./components/Orders').then((m) => ({ default: m.Orders })));
 const DemandesDevis = lazy(() => import('./components/DemandesDevis').then((m) => ({ default: m.DemandesDevis })));
+const Projets = lazy(() => import('./components/Projets').then((m) => ({ default: m.Projets })));
 const Settings = lazy(() => import('./components/Settings').then((m) => ({ default: m.Settings })));
 const Produits = lazy(() => import('./components/Produits').then((m) => ({ default: m.Produits })));
 const Categories = lazy(() => import('./components/Categories').then((m) => ({ default: m.Categories })));
@@ -84,6 +85,7 @@ export default function App() {
             <Route path="analyses" element={<RoleProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN']}><Analyses /></RoleProtectedRoute>} />
             <Route path="orders" element={<Orders />} />
             <Route path="demandes-devis" element={<RoleProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN', 'VENDEUR']}><DemandesDevis /></RoleProtectedRoute>} />
+            <Route path="projets" element={<RoleProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN']}><Projets /></RoleProtectedRoute>} />
 
             {/* Nouveaux écrans connectés au backend */}
             <Route path="produits" element={<Produits />} />

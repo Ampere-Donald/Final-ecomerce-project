@@ -1,4 +1,4 @@
-import { LogOut, Store, X, BookOpen } from 'lucide-react';
+import { LogOut, Store, X, BookOpen, ClipboardList } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import { useAdminAuth } from '../context/AdminAuthContext';
 import {
@@ -76,6 +76,9 @@ export const AdministrationSidebar = ({ open, onClose }: AdministrationSidebarPr
       </nav>
 
       <div className="space-y-3 border-t border-white/10 p-3 md:px-2 min-[1200px]:p-3">
+        <NavLink to="/projets" onClick={onClose} title="Projets boutique" className="flex min-h-12 items-center justify-center gap-2 rounded-xl px-3 text-sm font-semibold text-slate-200 hover:bg-white/10">
+          <ClipboardList size={19} /><span className="md:hidden min-[1200px]:inline">Projets boutique</span>
+        </NavLink>
         <NavLink to="/demandes-devis" onClick={onClose} title="Devis en ligne" className="flex min-h-12 items-center justify-center gap-2 rounded-xl px-3 text-sm font-semibold text-slate-200 hover:bg-white/10">
           <BookOpen size={19} /><span className="md:hidden min-[1200px]:inline">Devis en ligne</span>
         </NavLink>
