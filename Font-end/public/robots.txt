@@ -6,5 +6,6 @@ Disallow: /profile
 Disallow: /favourites
 Disallow: /login
 Disallow: /signup
+Disallow: /suivi-invite
 
 Sitemap: https://newoteg.com/sitemap.xml

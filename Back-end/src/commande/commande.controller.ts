@@ -35,12 +35,14 @@ export class CommandeController {
     @Body() createCommandeDto: CreateCommandeDto,
     @Request() req: any,
   ) {
-    return customerOrder(
-      await this.commandeService.create({
-        ...createCommandeDto,
-        clientId: req.user?.id,
-      }),
-    );
+    const result = await this.commandeService.create({
+      ...createCommandeDto,
+      clientId: req.user?.id,
+    });
+    return {
+      ...customerOrder(result),
+      ...(result?.guestAccess ? { guestAccess: result.guestAccess } : {}),
+    };
   }
 
   /** Checkout with inline account creation (public) */
@@ -57,6 +59,9 @@ export class CommandeController {
     });
     return {
       commande: customerOrder(result.commande),
+      ...(result.commande?.guestAccess
+        ? { guestAccess: result.commande.guestAccess }
+        : {}),
       ...(result.access_token
         ? { access_token: result.access_token, user: result.user }
         : {}),

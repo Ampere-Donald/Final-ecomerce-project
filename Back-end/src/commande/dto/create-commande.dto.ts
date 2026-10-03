@@ -9,6 +9,7 @@ import {
   IsOptional,
   ValidateNested,
   MinLength,
+  MaxLength,
   Matches,
 } from 'class-validator';
 import { Type } from 'class-transformer';
@@ -35,6 +36,17 @@ export class CreateCommandeDto {
   @IsOptional()
   @IsUUID('4')
   requestId?: string;
+
+  /** Optional read-only capability, generated using client CSPRNG before retry persistence. */
+  @IsOptional()
+  @IsString()
+  @Matches(/^[A-Za-z0-9_-]{43}$/)
+  guestAccessKey?: string;
+
+  @IsOptional()
+  @IsEmail({}, { message: 'Email de suivi invalide' })
+  @MaxLength(254)
+  guestEmail?: string;
 
   @IsString()
   @MinLength(2)

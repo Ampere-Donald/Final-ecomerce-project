@@ -6,7 +6,7 @@ import {
   useSearchParams,
 } from "react-router-dom";
 import { Eye, EyeOff, ArrowRight } from "lucide-react";
-import { GoogleLogin } from "@react-oauth/google";
+import { GoogleLogin, GoogleOAuthProvider } from "@react-oauth/google";
 import { useAuth } from "../context/AuthContext";
 import { useI18n } from "../context/I18nContext";
 import apiClient from "../utils/apiClient";
@@ -14,6 +14,16 @@ import { apiMessage, safeReturnTo } from "./orderData";
 import Footer from "./Footer";
 
 export default function Auth() {
+  const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+  return clientId ? (
+    <GoogleOAuthProvider clientId={clientId}>
+      <AuthForm />
+    </GoogleOAuthProvider>
+  ) : (
+    <AuthForm />
+  );
+}
+function AuthForm() {
   const { pathname } = useLocation();
   const [params] = useSearchParams();
   const returnTo = safeReturnTo(params.get("returnTo"));

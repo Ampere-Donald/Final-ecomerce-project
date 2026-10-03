@@ -10,7 +10,7 @@ Le rapport proposait de rendre l’achat plus certain : référence et caractér
 | --- | --- | --- | --- |
 | Choisir la réception et éviter des frais inconnus affichés comme gratuits | Choix facultatif dans le header, fiche et panier ; préférence conservée au checkout ; changement impose une nouvelle vérification | Comprendre comment récupérer sa commande, sans ressaisir sa ville | Livraison : frais et délai à confirmer ; grille réelle de zones/poids non intégrée |
 | Conseil WhatsApp lié à la pièce | Message éditable avec nom, référence exacte, quantité et lien ; ouverture par action du client | Poser une question précise avec moins d’aller-retour | Coordonnées et horaires commerciaux à valider ; aucun message automatique envoyé |
-| Achat sans connexion obligatoire | Checkout invité, téléphone, compte facultatif, reprise de la même tentative après coupure | Acheter sans créer d’abord un compte et éviter les doublons | Suivi privé des invités et rattachement au compte restent ouverts |
+| Achat sans connexion obligatoire | Checkout invité, email de suivi facultatif, reprise après coupure, suivi privé et récupération email intégrés localement | Acheter puis retrouver le statut sans compte imposé et éviter les doublons | Envoi email réel et fournisseur SMS à configurer ; actions invitées et rattachement au compte restent ouverts |
 | Sélections, arrivages et offres sur l’accueil | Pages projets et administration livrées ; offres, arrivages, tri et filtres au prix public testés sur backend/PostgreSQL locaux réels | Trouver du matériel utile et des prix commerciaux lisibles | Projet et offres réels à relire par NEWOTEG ; animation commerciale et recette globale |
 | Fiches plus utiles techniquement | Comparateur lit les caractéristiques sources, références, prix et stock, et signale les données absentes | Choisir sur des critères explicites | Enrichissement du catalogue réel, datasheets et résumé par famille restent partiels |
 | Boutique et retrait plus visibles | Retrait Akwa et conditions présentés près de l’achat | Savoir où et selon quelles conditions retirer | Photos, horaires, coordonnées et exploitation du statut prêt au retrait à confirmer |
@@ -29,6 +29,8 @@ Ces recommandations complétaient l’observation de Glotelho. Elles ne sont pas
 | Trouver un équivalent | Moteur existant conservé, explications et limites affichées ; aucune substitution automatique | Cas techniques réels et validation NEWOTEG encore attendus ; ne pas annoncer des équivalences garanties |
 
 ## Travail actuel et preuves
+
+Suivi privé invité et récupération email intégrés le 3 octobre. NEWOTEG retient le SMS, puis demande aussi l’email faute de fournisseur SMS. Treize contrôles PostgreSQL/HTTP/navigateur passent, dont deux coupures avec réponses perdues. Email réel désactivé jusqu’à configuration/vérification. L6 reste ouvert pour les actions sensibles et le rattachement. Contrat : `SUIVI-INVITE.md`.
 
 Les offres utilisent un prix public calculé par le serveur, avec date de fin. Le prix catalogue courant n’est pas présenté comme un ancien prix de vente. Les arrivages reposent sur les achats validés et le stock vendable restant ; une simple date de création de fiche ne suffit pas. Le lot est intégré localement ; ce n’est pas une preuve de mise en production.
 

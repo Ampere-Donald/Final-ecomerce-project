@@ -2,7 +2,17 @@ import { Link } from "react-router-dom";
 import { Check } from "lucide-react";
 import { Copy } from "./Elements";
 import Footer from "./Footer";
-export default function Confirmation({ number, orderId, canTrack = false }) {
+import { privateTrackingLink } from "./guestAccess";
+import { useState } from "react";
+export default function Confirmation({
+  number,
+  orderId,
+  canTrack = false,
+  guestKey,
+  guestAccess,
+}) {
+  const [copied, setCopied] = useState(false);
+  const guestLink = guestKey ? privateTrackingLink(guestKey) : "";
   return (
     <>
       <div className="e-wrap e-confirmation-page">
@@ -55,7 +65,14 @@ export default function Confirmation({ number, orderId, canTrack = false }) {
               />
             </div>
             <div className="e-actions">
-              {canTrack ? (
+              {guestKey ? (
+                <Link className="e-btn" to={`/suivi-invite#acces=${guestKey}`}>
+                  <Copy
+                    fr="Voir mon suivi privé"
+                    en="View my private tracking"
+                  />
+                </Link>
+              ) : canTrack ? (
                 <Link
                   className="e-btn"
                   to={orderId ? `/commandes/${orderId}` : "/commandes"}
@@ -71,6 +88,51 @@ export default function Confirmation({ number, orderId, canTrack = false }) {
                 <Copy fr="Retour au catalogue" en="Back to catalogue" />
               </Link>
             </div>
+            {guestKey && (
+              <div className="e-private-link">
+                <p>
+                  <Copy
+                    fr="Gardez ce lien privé : toute personne qui le possède peut consulter vos articles et le suivi. Il ne permet aucun paiement."
+                    en="Keep this link private: anyone with it can see your items and tracking. It cannot make a payment."
+                  />
+                </p>
+                <label className="e-field">
+                  <Copy fr="Votre lien de suivi" en="Your tracking link" />
+                  <input
+                    readOnly
+                    value={guestLink}
+                    onFocus={(event) => event.target.select()}
+                  />
+                </label>
+                <button
+                  className="e-text-button"
+                  onClick={async () => {
+                    try {
+                      await navigator.clipboard.writeText(guestLink);
+                      setCopied(true);
+                    } catch {
+                      setCopied(false);
+                    }
+                  }}
+                >
+                  <Copy
+                    fr={copied ? "Lien copié" : "Copier le lien"}
+                    en={copied ? "Link copied" : "Copy link"}
+                  />
+                </button>
+                {guestAccess?.expiresAt && (
+                  <small>
+                    <Copy
+                      fr="Accès valable jusqu’au "
+                      en="Access valid until "
+                    />
+                    {new Date(guestAccess.expiresAt).toLocaleDateString(
+                      "fr-FR",
+                    )}
+                  </small>
+                )}
+              </div>
+            )}
           </section>
           <section className="e-next-steps">
             <h2>

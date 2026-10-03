@@ -27,6 +27,27 @@ export class MailService {
     }
   }
 
+  guestRecoveryAvailable(): boolean {
+    return process.env.GUEST_EMAIL_ENABLED === 'true' && !!this.transporter;
+  }
+
+  /** Private recovery: opt-in, no code, recipient or transport error in logs. */
+  async sendGuestAccessCode(to: string, code: string): Promise<boolean> {
+    if (!this.guestRecoveryAvailable() || !/^\d{8}$/.test(code)) return false;
+    try {
+      await this.transporter!.sendMail({
+        from: process.env.SMTP_FROM || '"NEWOTEG SARL" <noreply@newoteg.com>',
+        to,
+        subject: 'NEWOTEG — Retrouver le suivi de votre commande',
+        text: `Votre code de suivi privé est ${code}. Il expire dans 10 minutes et ne peut être utilisé qu’une fois. Ne le partagez pas. Si vous n’avez pas demandé ce code, ignorez ce message. Ce code permet uniquement de consulter le suivi ; il ne valide aucun paiement.`,
+      });
+      return true;
+    } catch {
+      this.logger.warn('Guest recovery email could not be delivered.');
+      return false;
+    }
+  }
+
   /**
    * Generic email sender. NEVER throws — logs on failure so callers
    * (e.g. the échéance alert engine) are not broken by SMTP issues.
@@ -53,7 +74,9 @@ export class MailService {
       }
     }
 
-    this.logger.warn(`[DEV MODE] Email "${subject}" for ${to} not sent (no SMTP).`);
+    this.logger.warn(
+      `[DEV MODE] Email "${subject}" for ${to} not sent (no SMTP).`,
+    );
     return false;
   }
 
@@ -61,7 +84,11 @@ export class MailService {
    * Send OTP email. NEVER throws — logs on failure so signup is not broken.
    * Returns true if sent successfully, false if fallback to console.
    */
-  async sendOtpEmail(to: string, otp: string, userName: string): Promise<boolean> {
+  async sendOtpEmail(
+    to: string,
+    otp: string,
+    userName: string,
+  ): Promise<boolean> {
     const subject = 'NEWOTEG SARL — Code de vérification';
     const html = `
       <div style="font-family: 'Inter', Arial, sans-serif; max-width: 480px; margin: 0 auto; padding: 32px; background: #f8f9fa; border-radius: 12px;">
@@ -95,11 +122,15 @@ export class MailService {
         this.logger.error(
           `Failed to send OTP email to ${to}: ${error.message}`,
         );
-        this.logger.warn(`OTP delivery failed for ${to}; the code was not logged.`);
+        this.logger.warn(
+          `OTP delivery failed for ${to}; the code was not logged.`,
+        );
         return false;
       }
     } else {
-      this.logger.warn(`OTP for ${to} was not sent because SMTP is not configured; the code was not logged.`);
+      this.logger.warn(
+        `OTP for ${to} was not sent because SMTP is not configured; the code was not logged.`,
+      );
       return false;
     }
   }

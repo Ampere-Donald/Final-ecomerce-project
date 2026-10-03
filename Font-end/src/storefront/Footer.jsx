@@ -43,8 +43,12 @@ export default function Footer() {
           <Link to="/projets">
             <Copy fr="Projets et matériel" en="Projects and material" />
           </Link>
-          <Link to="/arrivages"><Copy fr="Arrivages" en="Arrivals" /></Link>
-          <Link to="/offres"><Copy fr="Offres" en="Offers" /></Link>
+          <Link to="/arrivages">
+            <Copy fr="Arrivages" en="Arrivals" />
+          </Link>
+          <Link to="/offres">
+            <Copy fr="Offres" en="Offers" />
+          </Link>
           <Link to="/about">
             <Copy fr="À propos" en="About" />
           </Link>
@@ -52,6 +56,9 @@ export default function Footer() {
             <Copy fr="Livraison" en="Delivery" />
           </Link>
           <Link to="/faq">FAQ</Link>
+          <Link to="/suivi-invite">
+            <Copy fr="Suivi sans compte" en="Guest order tracking" />
+          </Link>
           <Link to="/terms">
             <Copy fr="Conditions" en="Terms" />
           </Link>

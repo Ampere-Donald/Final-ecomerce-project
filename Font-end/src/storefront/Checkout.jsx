@@ -9,6 +9,7 @@ import { formatFCFA } from "../utils/formatFCFA";
 import { Copy, Crumbs } from "./Elements";
 import { apiMessage, validQuote } from "./orderData";
 import Confirmation from "./Confirmation";
+import { newGuestKey, rememberGuestKey } from "./guestAccess";
 import {
   readAttempt,
   saveAttempt,
@@ -47,6 +48,7 @@ function CheckoutForm() {
     ville: reception.ville,
     adresse: "",
     email: "",
+    guestEmail: "",
     password: "",
     createAccount: false,
   }));
@@ -162,12 +164,17 @@ function CheckoutForm() {
       if (!order.id || !order.numeroSuivi) throw new Error("Uncertain order");
       if (data.access_token && data.user)
         loginFromToken(data.access_token, data.user);
+      const guestAccess = data.guestAccess;
+      const guestKey = guestAccess && payload.guestAccessKey;
+      if (guestKey) rememberGuestKey(guestKey);
       forgetAttempt();
       setPending(null);
       setUncertain(false);
       setSuccess({
         order,
         canTrack: Boolean(isAuthenticated || (data.access_token && data.user)),
+        guestKey,
+        guestAccess,
       });
       // A customer may have edited the cart while checking a lost response.
       if (sameCart(cartItems, payload.lignes)) clearCart();
@@ -184,9 +191,12 @@ function CheckoutForm() {
         !e.response ||
         e.response.status >= 500 ||
         [401, 403].includes(e.response.status) ||
-        ["REQUEST_CONFLICT", "ORDER_REMOVED", "REQUEST_AUTH_CHANGED"].includes(
-          data?.code,
-        );
+        [
+          "REQUEST_CONFLICT",
+          "ORDER_REMOVED",
+          "REQUEST_AUTH_CHANGED",
+          "GUEST_ACCESS_UNAVAILABLE",
+        ].includes(data?.code);
       if (mustKeep) {
         setUncertain(true);
         setError(
@@ -229,7 +239,6 @@ function CheckoutForm() {
     event.preventDefault();
     if (lock.current || !accepted || !reviewing || uncertain) return;
     const payload = {
-      requestId: newRequestId(),
       nomClient: form.nom.trim(),
       telephone: form.telephone.trim(),
       modeReception: form.mode,
@@ -251,6 +260,11 @@ function CheckoutForm() {
     };
     let attempt;
     try {
+      payload.requestId = newRequestId();
+      if (!isAuthenticated && !form.createAccount) {
+        payload.guestAccessKey = newGuestKey();
+        if (form.guestEmail.trim()) payload.guestEmail = form.guestEmail.trim();
+      }
       attempt = saveAttempt(
         payload,
         isAuthenticated ? "/commandes" : "/commandes/checkout",
@@ -260,8 +274,8 @@ function CheckoutForm() {
     } catch {
       setError(
         tr(
-          "Le navigateur ne peut pas conserver votre tentative. Autorisez le stockage de session avant de commander.",
-          "Your browser cannot save this attempt. Allow session storage before ordering.",
+          "Le navigateur ne peut pas préparer et conserver votre tentative. Utilisez un navigateur compatible et autorisez le stockage de session avant de commander.",
+          "Your browser cannot prepare and save this attempt. Use a compatible browser and allow session storage before ordering.",
         ),
       );
       return;
@@ -274,6 +288,8 @@ function CheckoutForm() {
         number={success.order.numeroSuivi}
         orderId={success.order.id}
         canTrack={success.canTrack}
+        guestKey={success.guestKey}
+        guestAccess={success.guestAccess}
       />
     );
   if (uncertain && pending)
@@ -487,6 +503,29 @@ function CheckoutForm() {
                       autoComplete: "tel",
                     })}
                   </div>
+                  {!isAuthenticated && !form.createAccount && (
+                    <>
+                      {input(
+                        "guestEmail",
+                        tr(
+                          "Email de suivi (facultatif)",
+                          "Tracking email (optional)",
+                        ),
+                        {
+                          type: "email",
+                          required: false,
+                          maxLength: 254,
+                          autoComplete: "email",
+                        },
+                      )}
+                      <p className="e-field-help">
+                        {tr(
+                          "Pour retrouver votre suivi si vous perdez le lien privé. Vérifiez votre adresse : elle recevra le code de récupération. Aucun compte n’est créé.",
+                          "Recover tracking if you lose the private link. Check your address: it will receive recovery codes. No account is created.",
+                        )}
+                      </p>
+                    </>
+                  )}
                   {delivery && (
                     <>
                       {input("ville", tr("Ville", "City"), {

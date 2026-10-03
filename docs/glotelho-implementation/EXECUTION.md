@@ -2,6 +2,15 @@
 
 Dernière mise à jour : 3 octobre 2026. Exécution des lots L0–L8 autorisée par l’utilisateur; L9 reste soumis à une autorisation distincte.
 
+## Suivi invité et récupération email — 3 octobre 2026
+
+- Décision utilisateur : SMS retenu ; ajout demandé de l’email ; absence de fournisseur SMS et de service email confirmée. Email de suivi facultatif au checkout, distinct de la création de compte. Confirmation E conservée, lien privé et consultation `/suivi-invite`, expiration trente jours et révocation ADMIN/SUPER_ADMIN.
+- Création et accès dans la transaction de commande, clé CSPRNG conservée avant envoi/reprise. Aucun contact/adresse/coût dans la consultation. Clés hachées en base ; rejeu expiré/révoqué/renouvelé ou après rattachement refusé.
+- Code email à usage unique : dix minutes, cinq échecs, soixante secondes entre demandes et trois par commande/heure. Récupération renouvelle la clé ; réponse perdue retrouvée sans deuxième consommation. Envoi réel désactivé tant que SMTP et activation ne sont pas configurés ; SMS indisponible.
+- Migration additive uniquement sur PostgreSQL dédié. Treize contrôles PostgreSQL/HTTP/navigateur passent, dont deux coupures, confidentialité, concurrence et révocation. Captures 390/1440 px inspectées, clés masquées, fixtures retirées. Neuf suites backend/63 tests et 52 tests Node storefront ; builds et lints ciblés réussis.
+- Fragment retiré avant React, Google OAuth limité à l’authentification, no-store/no-referrer/noindex page/API/Worker. Worker non déployé. Contrat : `SUIVI-INVITE.md`.
+- L6 reste ouvert : actions sensibles et rattachement avec preuve renforcée, interface administrative, fournisseur SMS et activation email. L7/L8 et l’objectif A–Z restent actifs. Aucun Railway ou déploiement.
+
 ## Référence et décisions
 
 - Base active : branche locale `main`, commit `cf834346f64921c297822f438635e1244de39671`, dans le worktree isolé `codex/newoteg-evolution`.

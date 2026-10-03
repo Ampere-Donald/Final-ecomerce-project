@@ -1,7 +1,6 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { HelmetProvider } from "react-helmet-async";
-import { GoogleOAuthProvider } from "@react-oauth/google";
 import "./styles/main.scss";
 import App from "./App.jsx";
 import "./storefront/storefront.css";
@@ -9,23 +8,22 @@ import { CartProvider } from "./context/CartContext.jsx";
 import { FavoritesProvider } from "./context/FavoritesContext.jsx";
 import { AuthProvider } from "./context/AuthContext.jsx";
 import { I18nProvider } from "./context/I18nContext.jsx";
+import { captureGuestFragment } from "./storefront/guestAccess";
 
-const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || "";
+captureGuestFragment();
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
     <HelmetProvider>
-      <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
-        <I18nProvider>
-          <AuthProvider>
-            <CartProvider>
-              <FavoritesProvider>
-                <App />
-              </FavoritesProvider>
-            </CartProvider>
-          </AuthProvider>
-        </I18nProvider>
-      </GoogleOAuthProvider>
+      <I18nProvider>
+        <AuthProvider>
+          <CartProvider>
+            <FavoritesProvider>
+              <App />
+            </FavoritesProvider>
+          </CartProvider>
+        </AuthProvider>
+      </I18nProvider>
     </HelmetProvider>
   </StrictMode>,
 );

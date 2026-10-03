@@ -17,6 +17,7 @@ import { quoteCatalogue, assertQuoteAccepted } from './catalogue-quote';
 import { QuoteCommandeDto } from './dto/quote-commande.dto';
 import * as bcrypt from 'bcrypt';
 import { previousOrder, completeOrderRequest } from './order-request';
+import { attachGuestAccess, validateGuestAccessRequest } from './guest-access';
 
 @Injectable()
 export class CommandeService {
@@ -46,6 +47,7 @@ export class CommandeService {
   }
 
   async createWithAccount(dto: CreateCommandeDto) {
+    validateGuestAccessRequest(dto);
     const { lignes, email, motDePasse, ...commandeData } = dto;
 
     if (!lignes || lignes.length === 0) {
@@ -89,7 +91,7 @@ export class CommandeService {
               typeClient: client.typeClient,
             };
           }
-          return previous;
+          return attachGuestAccess(tx, dto, previous, true);
         }
         const quote = await quoteCatalogue(tx, dto.lignes, { lock: true });
         assertQuoteAccepted(dto, quote);
@@ -126,7 +128,7 @@ export class CommandeService {
           });
 
           clientId = client.id;
-          access_token = this.authService.signToken(client as any);
+          access_token = this.authService.signToken(client);
           user = {
             id: client.id,
             nom: client.nom,
@@ -195,7 +197,7 @@ export class CommandeService {
         }
 
         await completeOrderRequest(tx, dto.requestId, commande.id);
-        return commande;
+        return attachGuestAccess(tx, dto, commande, false);
       })
       .catch((error) => {
         const fields = Array.isArray(error?.meta?.target)
@@ -230,7 +232,10 @@ export class CommandeService {
    * Standard order creation (for authenticated users or legacy calls).
    */
   async create(dto: CreateCommandeDto) {
+    validateGuestAccessRequest(dto);
     const { lignes, email, motDePasse, ...commandeData } = dto;
+    void email;
+    void motDePasse;
 
     if (!lignes || lignes.length === 0) {
       throw new BadRequestException(
@@ -243,7 +248,7 @@ export class CommandeService {
       const previous = await previousOrder(tx, dto, 'standard');
       if (previous) {
         replayed = true;
-        return previous;
+        return attachGuestAccess(tx, dto, previous, true);
       }
       const quote = await quoteCatalogue(tx, dto.lignes, { lock: true });
       assertQuoteAccepted(dto, quote);
@@ -308,7 +313,7 @@ export class CommandeService {
       }
 
       await completeOrderRequest(tx, dto.requestId, commande.id);
-      return commande;
+      return attachGuestAccess(tx, dto, commande, false);
     });
 
     if (!replayed)

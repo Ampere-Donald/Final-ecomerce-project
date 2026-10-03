@@ -3724,3 +3724,9 @@ body {
     gap: 0;
   }
 }
+/* Guest tracking keeps the validated confirmation composition. */
+.e-guest-tracking { padding-bottom: 56px; }
+.e-private-link { margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--e-border, #dfe5e8); }
+.e-private-link small, .e-private-link .e-text-button { display: block; margin-top: 12px; }
+.e-guest-tracking .e-next-steps .e-actions { align-items: flex-start; flex-direction: column; }
+.e-private-link input, .e-guest-tracking input { min-width: 0; max-width: 100%; }

@@ -29,6 +29,7 @@ const Favorites = lazy(() => import("./storefront/Favorites"));
 const Devis = lazy(() => import("./storefront/Devis"));
 const Projects = lazy(() => import("./storefront/Projects"));
 const Commercial = lazy(() => import("./storefront/Commercial"));
+const GuestTracking = lazy(() => import("./storefront/GuestTracking"));
 const DevisPrint = lazy(() => import("./storefront/DevisPrint"));
 const NotFound = lazy(() => import("./storefront/ShopInfo"));
 
@@ -90,6 +91,7 @@ function AppContent() {
               <Route path="/faq" element={<Editorial />} />
               <Route path="/livraison" element={<Editorial />} />
               <Route path="/checkout" element={<Checkout />} />
+              <Route path="/suivi-invite" element={<GuestTracking />} />
               <Route path="/devis" element={<Devis />} />
               <Route
                 path="/mes-devis"

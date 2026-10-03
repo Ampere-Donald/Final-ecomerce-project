@@ -15,6 +15,12 @@ export async function previousOrder(
     .update(
       JSON.stringify({
         kind,
+        ...(dto.guestAccessKey !== undefined
+          ? {
+              guestAccessKey: dto.guestAccessKey,
+              guestEmail: dto.guestEmail?.trim().toLowerCase() || null,
+            }
+          : {}),
         clientId: dto.clientId ?? null,
         nom: dto.nomClient,
         telephone: dto.telephone,

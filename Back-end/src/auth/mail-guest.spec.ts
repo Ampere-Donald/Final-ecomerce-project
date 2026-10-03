@@ -1,0 +1,45 @@
+import { MailService } from './mail.service';
+describe('Private guest email transport', () => {
+  const old = process.env.GUEST_EMAIL_ENABLED;
+  afterEach(() => {
+    if (old === undefined) delete process.env.GUEST_EMAIL_ENABLED;
+    else process.env.GUEST_EMAIL_ENABLED = old;
+  });
+  it('requires explicit activation and an SMTP transport, without logging codes', async () => {
+    const service = new MailService();
+    (service as any).transporter = null;
+    process.env.GUEST_EMAIL_ENABLED = 'true';
+    expect(service.guestRecoveryAvailable()).toBe(false);
+    expect(
+      await service.sendGuestAccessCode('qa@example.invalid', '12345678'),
+    ).toBe(false);
+    const sendMail = jest.fn().mockResolvedValue({});
+    (service as any).transporter = { sendMail };
+    process.env.GUEST_EMAIL_ENABLED = 'false';
+    expect(
+      await service.sendGuestAccessCode('qa@example.invalid', '12345678'),
+    ).toBe(false);
+    expect(sendMail).not.toHaveBeenCalled();
+    process.env.GUEST_EMAIL_ENABLED = 'true';
+    expect(
+      await service.sendGuestAccessCode('qa@example.invalid', '12345678'),
+    ).toBe(true);
+    expect(sendMail.mock.calls[0][0].text).toContain('12345678');
+    expect(sendMail.mock.calls[0][0].html).toBeUndefined();
+  });
+  it('reports delivery failure without exposing the transport error or code in logs', async () => {
+    const service = new MailService();
+    process.env.GUEST_EMAIL_ENABLED = 'true';
+    (service as any).transporter = {
+      sendMail: jest.fn().mockRejectedValue(new Error('SECRET CODE 12345678')),
+    };
+    const warn = jest
+      .spyOn((service as any).logger, 'warn')
+      .mockImplementation(() => {});
+    expect(
+      await service.sendGuestAccessCode('qa@example.invalid', '12345678'),
+    ).toBe(false);
+    expect(JSON.stringify(warn.mock.calls)).not.toContain('SECRET');
+    expect(JSON.stringify(warn.mock.calls)).not.toContain('12345678');
+  });
+});
