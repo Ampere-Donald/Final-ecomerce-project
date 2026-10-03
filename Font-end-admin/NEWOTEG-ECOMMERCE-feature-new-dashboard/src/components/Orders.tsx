@@ -1,8 +1,10 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Search, Filter, Download, ExternalLink, Calendar, X, Truck, MapPin, Phone, User, Package, ShoppingBag, CheckCircle2, Banknote, Smartphone, CreditCard, Building2 } from 'lucide-react';
 import { Commande, StatutCommande, ModeReception } from '../types';
 import { commandeApi } from '../services/api';
+import { useAdminAuth } from '../context/AdminAuthContext';
+import { GuestOrderAccess } from './GuestOrderAccess';
 
 // ── Status helpers ────────────────────────────────────────
 const STATUS_CONFIG: Record<StatutCommande, { label: string; bg: string; text: string; dot: string }> = {
@@ -26,10 +28,41 @@ const ADMIN_STATUSES: StatutCommande[] = ['EN_ATTENTE', 'EN_LIVRAISON'];
 const isStatusLocked = (status: StatutCommande) => ['CONFIRMEE', 'ANNULEE', 'LIVREE'].includes(status);
 
 export const Orders = () => {
+  const { admin } = useAdminAuth();
   const [orders, setOrders] = useState<Commande[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedOrder, setSelectedOrder] = useState<Commande | null>(null);
+  const detailsDialog = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!selectedOrder) return;
+    const dialog = detailsDialog.current;
+    if (!dialog) return;
+    const previousFocus = document.activeElement as HTMLElement | null;
+    const blocked: { element: HTMLElement; inert: boolean }[] = [];
+    let branch: HTMLElement = dialog;
+    while (branch.parentElement) {
+      for (const sibling of Array.from(branch.parentElement.children)) {
+        if (sibling !== branch && sibling instanceof HTMLElement) {
+          blocked.push({ element: sibling, inert: sibling.inert }); sibling.inert = true;
+        }
+      }
+      branch = branch.parentElement;
+      if (branch === document.body) break;
+    }
+    dialog.querySelector<HTMLButtonElement>('button')?.focus();
+    const keydown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') { event.preventDefault(); setSelectedOrder(null); }
+      if (event.key !== 'Tab') return;
+      const controls = Array.from(dialog.querySelectorAll<HTMLElement>('button, input, textarea, select, a[href], [tabindex="0"]')).filter(element => !(element as HTMLButtonElement).disabled && element.getClientRects().length);
+      const first = controls[0], last = controls[controls.length - 1];
+      if (!first) { event.preventDefault(); dialog.focus(); }
+      else if (event.shiftKey && (document.activeElement === first || !dialog.contains(document.activeElement))) { event.preventDefault(); last.focus(); }
+      else if (!event.shiftKey && (document.activeElement === last || !dialog.contains(document.activeElement))) { event.preventDefault(); first.focus(); }
+    };
+    document.addEventListener('keydown', keydown);
+    return () => { document.removeEventListener('keydown', keydown); blocked.forEach(({ element, inert }) => { element.inert = inert; }); if (previousFocus?.isConnected) previousFocus.focus(); };
+  }, [selectedOrder?.id]);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
@@ -362,13 +395,18 @@ export const Orders = () => {
               exit={{ scale: 0.95, opacity: 0 }}
               onClick={e => e.stopPropagation()}
               className="bg-white rounded-2xl max-w-2xl w-full max-h-[85vh] overflow-y-auto shadow-2xl"
+              ref={detailsDialog}
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="order-details-title"
+              tabIndex={-1}
             >
               <div className="p-6 border-b border-slate-100 flex items-center justify-between sticky top-0 bg-white z-10 rounded-t-2xl">
                 <div>
-                  <h3 className="text-lg font-bold text-slate-900">Détails de la commande</h3>
+                  <h3 id="order-details-title" className="text-lg font-bold text-slate-900">Détails de la commande</h3>
                   <p className="text-sm text-primary font-mono">{selectedOrder.numeroSuivi}</p>
                 </div>
-                <button onClick={() => setSelectedOrder(null)} className="p-2 hover:bg-slate-100 rounded-lg transition-colors">
+                <button aria-label="Fermer les détails de la commande" onClick={() => setSelectedOrder(null)} className="p-2 hover:bg-slate-100 rounded-lg transition-colors">
                   <X size={20} />
                 </button>
               </div>
@@ -411,6 +449,8 @@ export const Orders = () => {
                   </div>
                 </div>
 
+                {['ADMIN', 'SUPER_ADMIN'].includes(admin?.role || '') && <GuestOrderAccess key={selectedOrder.id} orderId={selectedOrder.id} />}
+
                 {/* Order date */}
                 <div className="flex items-center gap-2 text-sm text-slate-500">
                   <Calendar size={14} />
@@ -420,7 +460,7 @@ export const Orders = () => {
                 {/* Line items table */}
                 <div>
                   <p className="text-xs text-slate-400 font-bold uppercase mb-3">Articles commandés</p>
-                  <div className="border border-slate-200 rounded-xl overflow-hidden">
+                  <div className="border border-slate-200 rounded-xl overflow-x-auto">
                     <table className="w-full text-left border-collapse">
                       <thead>
                         <tr className="bg-slate-50 text-slate-500 text-xs font-bold uppercase">

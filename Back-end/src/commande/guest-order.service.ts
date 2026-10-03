@@ -1,4 +1,9 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
 import { guestTokenHash } from './guest-access';
 import { customerOrder } from './customer-order';
@@ -70,15 +75,85 @@ export class GuestOrderService {
     };
   }
 
-  async revoke(commandeId: string, actorId: string, reason?: string) {
-    await this.db.commandeGuestAccess.updateMany({
-      where: { commandeId, revokedAt: null },
-      data: {
-        revokedAt: new Date(),
-        revokedBy: actorId,
-        reason: reason?.trim() || 'Révocation boutique',
-        version: { increment: 1 },
+  /** Administrative summary deliberately excludes keys, digests, codes and email. */
+  async adminStatus(commandeId: string) {
+    const order = await this.db.commande.findUnique({
+      where: { id: commandeId },
+      select: {
+        clientId: true,
+        guestAccess: {
+          select: {
+            issuedAt: true,
+            expiresAt: true,
+            revokedAt: true,
+            reason: true,
+            version: true,
+          },
+        },
       },
+    });
+    if (!order) throw new NotFoundException('Commande introuvable.');
+    const grant = order.guestAccess;
+    const state = order.clientId
+      ? grant
+        ? 'LINKED'
+        : 'ACCOUNT'
+      : !grant
+        ? 'NO_ACCESS'
+        : grant.revokedAt
+          ? 'REVOKED'
+          : grant.expiresAt <= new Date()
+            ? 'EXPIRED'
+            : 'ACTIVE';
+    return {
+      state,
+      grant,
+      canRevoke: !!grant && !order.clientId && !grant.revokedAt,
+      channels: this.channels(),
+    };
+  }
+
+  async revoke(
+    commandeId: string,
+    actorId: string,
+    reason?: string,
+    expectedVersion?: number,
+  ) {
+    await this.db.$transaction(async (tx) => {
+      // Same lock order as linking/actions: a stale screen cannot revoke a rotated access.
+      await tx.$queryRaw`SELECT id FROM commande WHERE id = ${commandeId} FOR UPDATE`;
+      await tx.$queryRaw`SELECT commande_id FROM commande_guest_access WHERE commande_id = ${commandeId} FOR UPDATE`;
+      const grant = await tx.commandeGuestAccess.findUnique({
+        where: { commandeId },
+        include: { commande: { select: { clientId: true } } },
+      });
+      if (!grant)
+        throw new NotFoundException(
+          'Cette commande ne possède pas d’accès invité.',
+        );
+      // Exact retries retain the first actor, date and reason; never revoke account access.
+      if (grant.revokedAt) return;
+      if (
+        grant.commande.clientId ||
+        (expectedVersion !== undefined && grant.version !== expectedVersion)
+      )
+        throw new ConflictException(
+          'L’accès a changé. Actualisez son état avant de révoquer.',
+        );
+      const now = new Date();
+      await tx.commandeGuestAccess.update({
+        where: { commandeId },
+        data: {
+          revokedAt: now,
+          revokedBy: actorId,
+          reason: reason?.trim() || 'Révocation boutique',
+          version: { increment: 1 },
+        },
+      });
+      await tx.commandeGuestChallenge.updateMany({
+        where: { commandeId, consumedAt: null },
+        data: { consumedAt: now },
+      });
     });
     return { revoked: true };
   }

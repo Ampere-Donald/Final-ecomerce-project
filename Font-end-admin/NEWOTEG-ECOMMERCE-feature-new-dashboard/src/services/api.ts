@@ -447,6 +447,10 @@ export const echeanceApi = {
 
 // Commandes (e-commerce orders)
 export const commandeApi = {
+  getGuestAccess: (id: string, signal?: AbortSignal): Promise<import('../types').GuestOrderAccessStatus> =>
+    api.get(`/commandes/guest/admin/${id}`, { signal }).then(res => res.data),
+  revokeGuestAccess: (id: string, data: { reason: string; expectedVersion: number }) =>
+    api.post(`/commandes/guest/admin/${id}/revoke`, data).then(res => res.data),
   getAll: () => api.get('/commandes').then(toArray),
   getOne: (id: string) => api.get(`/commandes/${id}`).then(res => res.data),
   update: (id: string, data: any) => api.patch(`/commandes/${id}`, data).then(res => res.data),

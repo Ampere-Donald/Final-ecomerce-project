@@ -61,3 +61,10 @@ export interface Commande {
   dateAnnulation?: string;
   lignes: LigneCommande[];
 }
+
+export interface GuestOrderAccessStatus {
+  state: 'ACTIVE' | 'EXPIRED' | 'REVOKED' | 'LINKED' | 'ACCOUNT' | 'NO_ACCESS';
+  grant: null | { issuedAt: string; expiresAt: string; revokedAt: string | null; reason: string | null; version: number };
+  canRevoke: boolean;
+  channels: { email: boolean; sms: boolean };
+}

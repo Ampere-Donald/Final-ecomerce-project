@@ -13,11 +13,13 @@ import {
 import { Throttle } from '@nestjs/throttler';
 import {
   IsEmail,
+  IsInt,
   IsOptional,
   IsString,
   IsUUID,
   Matches,
   MaxLength,
+  Min,
 } from 'class-validator';
 import { AdminAuthGuard } from '../admin-auth/admin-auth.guard';
 import { RolesGuard } from '../admin-auth/roles.guard';
@@ -30,6 +32,11 @@ export class GuestAccessDto {
   accessToken: string;
 }
 export class RevokeGuestAccessDto {
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  expectedVersion?: number;
+
   @IsOptional()
   @IsString()
   @MaxLength(200)
@@ -93,15 +100,28 @@ export class GuestOrderController {
     return this.guests.read(dto.accessToken);
   }
 
+  @Get('admin/:id')
+  @UseGuards(AdminAuthGuard, RolesGuard)
+  @Roles('SUPER_ADMIN', 'ADMIN')
+  @Header('Cache-Control', 'private, no-store')
+  @Header('Referrer-Policy', 'no-referrer')
+  @Header('X-Robots-Tag', 'noindex, nofollow')
+  adminStatus(@Param('id', ParseUUIDPipe) id: string) {
+    return this.guests.adminStatus(id);
+  }
+
   @Post('admin/:id/revoke')
   @HttpCode(200)
   @UseGuards(AdminAuthGuard, RolesGuard)
   @Roles('SUPER_ADMIN', 'ADMIN')
+  @Header('Cache-Control', 'private, no-store')
+  @Header('Referrer-Policy', 'no-referrer')
+  @Header('X-Robots-Tag', 'noindex, nofollow')
   revoke(
     @Param('id', ParseUUIDPipe) id: string,
     @Request() req: any,
     @Body() dto: RevokeGuestAccessDto,
   ) {
-    return this.guests.revoke(id, req.user.id, dto.reason);
+    return this.guests.revoke(id, req.user.id, dto.reason, dto.expectedVersion);
   }
 }
