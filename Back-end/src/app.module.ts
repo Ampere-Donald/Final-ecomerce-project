@@ -48,6 +48,7 @@ import { CommandeFournisseurModule } from './commande-fournisseur/commande-fourn
 import { PaieModule } from './paie/paie.module';
 import { DevisModule } from './devis/devis.module';
 import { ProjetModule } from './projet/projet.module';
+import { AvisModule } from './avis/avis.module';
 
 @Module({
   imports: [
@@ -102,6 +103,7 @@ import { ProjetModule } from './projet/projet.module';
     CommandeFournisseurModule,
     DevisModule,
     ProjetModule,
+    AvisModule,
   ],
   controllers: [AppController],
   providers: [

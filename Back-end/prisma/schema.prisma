@@ -877,6 +877,7 @@ model Favori {
 }
 
 model LigneCommande {
+  avis         AvisProduit?
   id           String   @id @default(uuid())
   commandeId   String   @map("id_commande")
   produitId    String   @map("id_produit")
@@ -889,6 +890,61 @@ model LigneCommande {
   produit      Produit  @relation(fields: [produitId], references: [id])
 
   @@map("ligne_commande")
+}
+
+enum StatutAvis {
+  EN_ATTENTE
+  PUBLIE
+  REFUSE
+}
+
+// Purchase proof remains private. Public responses use an explicit projection.
+model AvisProduit {
+  id String @id @default(uuid()) @db.Uuid
+  ligneCommandeId String @unique @map("ligne_commande_id")
+  requestId String @unique @map("request_id") @db.Uuid
+  fingerprint String @db.VarChar(64)
+  note Int
+  texte String @db.VarChar(2000)
+  pseudonyme String @db.VarChar(40)
+  projetRealise String? @map("projet_realise") @db.VarChar(300)
+  statut StatutAvis @default(EN_ATTENTE)
+  version Int @default(1)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  reponseBoutique String? @map("reponse_boutique") @db.VarChar(1000)
+  ligne LigneCommande @relation(fields: [ligneCommandeId], references: [id], onDelete: Restrict)
+  historique AvisModeration[]
+  signalements AvisSignalement[]
+
+  @@index([statut, createdAt, id])
+  @@map("avis_produit")
+}
+
+model AvisModeration {
+  requestId String @id @map("request_id") @db.Uuid
+  avisId String @map("avis_id") @db.Uuid
+  fingerprint String @db.VarChar(64)
+  acteurId String @map("acteur_id")
+  action String @db.VarChar(12)
+  motif String? @db.VarChar(30)
+  resultat Json
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  avis AvisProduit @relation(fields: [avisId], references: [id], onDelete: Restrict)
+
+  @@index([avisId, createdAt])
+  @@map("avis_moderation")
+}
+
+model AvisSignalement {
+  id String @id @default(uuid()) @db.Uuid
+  avisId String @map("avis_id") @db.Uuid
+  clientId String @map("client_id")
+  motif String @db.VarChar(30)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  avis AvisProduit @relation(fields: [avisId], references: [id], onDelete: Restrict)
+
+  @@unique([avisId, clientId])
+  @@map("avis_signalement")
 }
 
 model Notification {

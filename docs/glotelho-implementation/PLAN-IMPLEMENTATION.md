@@ -110,7 +110,7 @@ Après commande, proposer facultativement un compte et rattacher uniquement les 
 
 ### L7 — Avis et indicateurs
 
-Avis lié à une ligne de commande réellement reçue, une contribution par achat selon la règle validée. Projet réalisé et photo facultatifs ; contrôle des fichiers, suppression des métadonnées inutiles, modération et possibilité de signalement. Rattacher aussi les avis invités à une preuve privée. Aucun faux avis, note vide affichée comme mauvaise note, ou suppression d’un avis uniquement parce qu’il est négatif.
+Règle validée le 3 octobre 2026 : un avis par ligne de commande reçue, publication après modération et conservation des avis négatifs conformes. Projet réalisé et photo facultatifs ; contrôle des fichiers, suppression des métadonnées inutiles, modération et possibilité de signalement. Rattacher aussi les avis invités à une preuve privée. Aucun faux avis, note vide affichée comme mauvaise note, ou suppression d’un avis uniquement parce qu’il est négatif.
 
 Prévoir administration et réponse de la boutique. Les invitations par e-mail/SMS/WhatsApp ne partent qu’avec canal configuré et modalités approuvées ; le module ne suppose pas une campagne de messages automatiques.
 
