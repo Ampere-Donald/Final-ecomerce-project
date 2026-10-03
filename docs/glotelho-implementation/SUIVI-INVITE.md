@@ -4,7 +4,7 @@ NEWOTEG retient le SMS, sans fournisseur disponible actuellement, et demande aus
 
 L’utilisateur confirme aussi l’absence de service email. Aucun fournisseur SMS/email ni expéditeur réel n’est donc disponible à ce stade ; les envois restent désactivés, sans empêcher le suivi par lien privé.
 
-Ce lot livre le suivi privé des **nouvelles commandes invitées**, la révocation administrative et la récupération email. L6 reste ouvert : annulation/réception par un invité, rattachement facultatif avec preuve renforcée et interface administrative. Les anciennes commandes sans clé ne deviennent pas accessibles sur la seule base d’un téléphone ou d’un numéro.
+Ce lot livre le suivi privé des **nouvelles commandes invitées**, la révocation administrative, la récupération email et le rattachement facultatif à un compte avec preuve email. L6 reste ouvert : annulation/réception directement par un invité et interface administrative. Les anciennes commandes sans clé ne deviennent pas accessibles sur la seule base d’un téléphone ou d’un numéro.
 
 ## Parcours et protection
 
@@ -21,7 +21,7 @@ Clé reçue seulement dans les corps POST ; fragment du lien retiré avant monta
 
 `POST /api/commandes/guest/access` : lecture privée. `GET .../guest/channels` : disponibilité uniquement. `POST .../guest/recovery` : demande de code, même message et identifiant factice pour des informations inconnues, sans envoi. Cela évite une révélation explicite dans le contenu, sans garantir des temps de réponse identiques. `POST .../guest/recover` : code et nouvelle clé ; verrou de l’accès, compteur d’échecs réellement committé, renouvellement atomique. Email non délivré, code expiré, révocation ou rattachement empêchent la récupération.
 
-`POST .../guest/admin/:id/revoke` : ADMIN/SUPER_ADMIN, acteur/date/motif ; idempotent, bloque aussi la récupération email. Aucun droit invité d’annulation, réception ou rattachement : ces droits sont explicitement faux dans la réponse.
+`POST .../guest/admin/:id/revoke` : ADMIN/SUPER_ADMIN, acteur/date/motif ; idempotent, bloque aussi la récupération email. Le lien seul ne donne aucun droit d’annulation, réception ou rattachement : ces droits restent explicitement faux. La disponibilité d’un parcours de rattachement avec preuve distincte est annoncée séparément (`linking.available`).
 
 `Cache-Control: private, no-store`, `Referrer-Policy: no-referrer`, `X-Robots-Tag: noindex, nofollow` pour le suivi. Métadonnées de page ; Worker applique aussi ces en-têtes au document avant JavaScript et aux erreurs API privées. Worker testé localement, non déployé ; contrôle réel d’hébergement restant en L8. Aucune collecte analytique de code, clé, email ou référence de commande.
 
@@ -38,3 +38,18 @@ Builds backend/storefront et lints ciblés réussis. Neuf suites backend, 63 tes
 Preuves : `C:/Users/pc/Documents/Newoteg/output/implementation-work/captures/guest-access/result.json` et captures `tracking-390.png`, `tracking-1440.png`, `email-recovered-390.png`, clés masquées. Commandes/challenges fictifs supprimés, produit de recette désactivé.
 
 Aucun fournisseur email/SMS réel, paiement, Railway ou déploiement. Pilote réel, téléphone physique, activation du canal et derniers parcours L6 restent ouverts.
+
+## Rattachement au compte avec consentement email — 3 octobre 2026
+
+- Depuis le suivi privé, le rattachement reste facultatif. Connexion au compte cible, demande explicite de code puis confirmation ; aucun compte créé implicitement. L’email de consentement nomme la commande et le compte destinataire, indique l’accès futur aux coordonnées et la désactivation du lien invité. Un téléphone identique ou un compte marqué vérifié ne remplace jamais ce consentement.
+- `POST .../guest/link/request` exige un JWT client valide et le lien privé actif. Le serveur choisit **l’email enregistré au checkout** et **le compte authentifié**, jamais un email/clientId fourni dans le corps. Pas de service ou pas d’email enregistré : indisponibilité annoncée, contact boutique.
+- Code dédié à `LINK`, distinct de `RECOVER`, lié au compte cible et aux versions de la commande et de l’accès. Même budget global : trois envois/heure, délai de soixante secondes ; une nouvelle demande remplace les codes en attente. Dix minutes et cinq échecs ; les tentatives erronées sont committées. Livraison email échouée, accès révoqué/expiré, code remplacé, compte différent et modifications de version bloquent l’action.
+- `POST .../guest/link` vérifie les preuves puis rattache uniquement une commande encore invitée. Verrous commande puis accès, changement conditionnel de propriétaire, révocation du lien et consommation du code dans la même transaction. Aucun mouvement de stock ni paiement. Les routes de compte existantes retrouvent ensuite la commande ; l’ancien suivi invité, la récupération et le rejeu d’ancien checkout invité restent bloqués.
+- Une clé d’action de 256 bits séparée est sauvegardée **avant confirmation**, avec identifiant du challenge, clé de lecture et compte cible. Aucun OTP ni mot de passe stocké. Refus/écriture de stockage non conservée empêche la confirmation. Réponse perdue : le même compte et les mêmes clés retrouvent un reçu minimal immuable (id, référence, rattachement effectué) pendant trente jours, sans réutiliser le code ni exposer les données courantes. Deux confirmations concurrentes identiques n’effectuent qu’un rattachement. La fermeture de l’accès efface aussi la tentative sur l’appareil.
+- Interface E conservée, confirmation dans le dialogue existant ; retour de connexion sans secret dans l’URL. Après résultat confirmé, redirection vers le suivi dans le compte. Sans fournisseur disponible, les envois réels restent désactivés.
+
+Migration additive `20261003100000_guest_order_link` : sept colonnes sur les challenges, anciens codes conservés comme `RECOVER`. SQL appliqué uniquement sur la base PostgreSQL locale dédiée ; aucune migration Railway ni résolution de divergence historique.
+
+Builds backend/storefront et lints ciblés réussis. Treize suites backend (78 tests), 53 tests Node storefront. Neuf scénarios dédiés PostgreSQL/HTTP/navigateur réussis dans `Back-end/scripts/verify-guest-link-local.cjs` : vrais JWT, contrôleurs et validation Nest ; codes/email capturés, pas de transport réel. Refus d’une autre base avant connexion. Recette précédente du suivi/récupération repassée avec ses treize contrôles. Captures de consentement et du suivi compte à 390/1440 px inspectées ; réponse de confirmation perdue, rechargement puis consultation du reçu, une seule confirmation avec OTP.
+
+Preuves : `C:/Users/pc/Documents/Newoteg/output/implementation-work/captures/guest-link/result.json`, `consent-390.png`, `consent-1440.png`, `linked-390.png`, `linked-1440.png`. Données/clients fictifs de cette recette supprimés, produit désactivé. Téléphone physique, délivrabilité réelle, nettoyage des anciens challenges et interface d’administration restent à vérifier/compléter avant activation et préproduction.

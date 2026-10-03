@@ -1,5 +1,6 @@
 const STORAGE = "newoteg_guest_tracking_v1";
 const RECOVERY = "newoteg_guest_recovery_v1";
+const LINK_ATTEMPT = "newoteg_guest_link_v1";
 let current = "";
 export function newGuestKey() {
   const bytes = crypto.getRandomValues(new Uint8Array(32));
@@ -39,6 +40,7 @@ export function captureGuestFragment() {
     window.location.pathname,
   );
   clearGuestRecovery();
+  clearGuestLink();
   if (/^[A-Za-z0-9_-]{43}$/.test(key || "")) rememberGuestKey(key);
   else forgetGuestKey();
 }
@@ -53,6 +55,7 @@ export function forgetGuestKey() {
     /* No persistence in this browser. */
   }
   clearGuestRecovery();
+  clearGuestLink();
 }
 
 export function saveGuestRecovery(challengeId, key) {
@@ -62,9 +65,59 @@ export function saveGuestRecovery(challengeId, key) {
 export function readGuestRecovery() {
   try {
     const value = JSON.parse(sessionStorage.getItem(RECOVERY));
-    return /^[A-Za-z0-9_-]{43}$/.test(value?.key || "") && /^[0-9a-f-]{36}$/i.test(value?.challengeId || "") ? value : null;
-  } catch { return null; }
+    return /^[A-Za-z0-9_-]{43}$/.test(value?.key || "") &&
+      /^[0-9a-f-]{36}$/i.test(value?.challengeId || "")
+      ? value
+      : null;
+  } catch {
+    return null;
+  }
 }
 export function clearGuestRecovery() {
-  try { sessionStorage.removeItem(RECOVERY); } catch { /* Cleanup can fail when storage is disabled. */ }
+  try {
+    sessionStorage.removeItem(RECOVERY);
+  } catch {
+    /* Cleanup can fail when storage is disabled. */
+  }
+}
+
+export function saveGuestLink({
+  accessToken,
+  challengeId,
+  actionKey,
+  clientId,
+}) {
+  // Store only exact retry capabilities, never an OTP or account credentials.
+  const serialized = JSON.stringify({
+    accessToken,
+    challengeId,
+    actionKey,
+    clientId,
+  });
+  sessionStorage.setItem(LINK_ATTEMPT, serialized);
+  if (sessionStorage.getItem(LINK_ATTEMPT) !== serialized)
+    throw new Error("Unable to retain linking attempt");
+}
+export function readGuestLink() {
+  try {
+    const value = JSON.parse(sessionStorage.getItem(LINK_ATTEMPT));
+    return /^[A-Za-z0-9_-]{43}$/.test(value?.accessToken || "") &&
+      /^[A-Za-z0-9_-]{43}$/.test(value?.actionKey || "") &&
+      /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+        value?.challengeId || "",
+      ) &&
+      typeof value.clientId === "string" &&
+      value.clientId
+      ? value
+      : null;
+  } catch {
+    return null;
+  }
+}
+export function clearGuestLink() {
+  try {
+    sessionStorage.removeItem(LINK_ATTEMPT);
+  } catch {
+    /* No persistent attempt in this browser. */
+  }
 }

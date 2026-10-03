@@ -18,6 +18,7 @@ import {
   clearGuestRecovery,
 } from "./guestAccess";
 import Footer from "./Footer";
+import GuestLink from "./GuestLink";
 
 export default function GuestTracking() {
   const { lang } = useI18n();
@@ -463,6 +464,7 @@ export default function GuestTracking() {
           )
         )}
       </div>
+      {key && <div className="e-wrap"><GuestLink key={key} accessToken={key} available={!!data?.linking?.available} hasOrder={!!order} /></div>}
       <Footer />
     </>
   );

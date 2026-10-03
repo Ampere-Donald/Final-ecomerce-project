@@ -22,7 +22,7 @@ export class MailService {
       this.logger.log('SMTP transporter configured');
     } else {
       this.logger.warn(
-        'SMTP credentials not configured (SMTP_HOST, SMTP_USER, SMTP_PASS). Emails will be logged to console instead.',
+        'SMTP credentials not configured (SMTP_HOST, SMTP_USER, SMTP_PASS). Emails will not be sent.',
       );
     }
   }
@@ -44,6 +44,28 @@ export class MailService {
       return true;
     } catch {
       this.logger.warn('Guest recovery email could not be delivered.');
+      return false;
+    }
+  }
+
+  /** Explicit consent: this code cannot be used for read-access recovery. */
+  async sendGuestLinkCode(
+    to: string,
+    code: string,
+    reference: string,
+    accountEmail: string,
+  ): Promise<boolean> {
+    if (!this.guestRecoveryAvailable() || !/^\d{8}$/.test(code)) return false;
+    try {
+      await this.transporter!.sendMail({
+        from: process.env.SMTP_FROM || '"NEWOTEG SARL" <noreply@newoteg.com>',
+        to,
+        subject: 'NEWOTEG — Rattacher votre commande à un compte',
+        text: `Votre code est ${code}. Il autorise le rattachement de la commande ${reference} au compte ${accountEmail}. Ce compte pourra consulter les coordonnées et gérer cette commande. Le lien de suivi invité sera désactivé. Le code expire dans 10 minutes et ne peut être utilisé qu’une fois. Ne le partagez pas. Si vous n’avez pas demandé ce rattachement, ignorez ce message. Aucun paiement n’est effectué.`,
+      });
+      return true;
+    } catch {
+      this.logger.warn('Guest linking email could not be delivered.');
       return false;
     }
   }

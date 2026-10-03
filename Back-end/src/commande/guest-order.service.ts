@@ -53,6 +53,9 @@ export class GuestOrderService {
         channels: this.channels(),
         emailRecorded: !!grant.recoveryEmail,
       },
+      linking: {
+        available: !!grant.recoveryEmail && this.mail.guestRecoveryAvailable(),
+      },
     };
   }
 
@@ -162,6 +165,7 @@ export class GuestOrderService {
       const now = new Date();
       if (
         !current ||
+        current.purpose !== 'RECOVER' ||
         !grant ||
         !current.delivered ||
         current.consumedAt ||

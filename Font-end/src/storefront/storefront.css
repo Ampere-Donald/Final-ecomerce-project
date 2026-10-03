@@ -3730,3 +3730,6 @@ body {
 .e-private-link small, .e-private-link .e-text-button { display: block; margin-top: 12px; }
 .e-guest-tracking .e-next-steps .e-actions { align-items: flex-start; flex-direction: column; }
 .e-private-link input, .e-guest-tracking input { min-width: 0; max-width: 100%; }
+.e-guest-link { padding: 24px 0 40px; border-top: 1px solid var(--e-line); }
+.e-guest-link > p { max-width: 760px; margin: 12px 0; color: var(--e-muted); }
+.e-guest-link .e-form p { overflow-wrap: anywhere; }

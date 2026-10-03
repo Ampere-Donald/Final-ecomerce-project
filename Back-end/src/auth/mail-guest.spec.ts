@@ -42,4 +42,32 @@ describe('Private guest email transport', () => {
     expect(JSON.stringify(warn.mock.calls)).not.toContain('SECRET');
     expect(JSON.stringify(warn.mock.calls)).not.toContain('12345678');
   });
+  it('labels linking consent with the destination account and keeps its code out of logs', async () => {
+    const service = new MailService();
+    process.env.GUEST_EMAIL_ENABLED = 'true';
+    const sendMail = jest.fn().mockResolvedValue({});
+    (service as any).transporter = { sendMail };
+    expect(
+      await service.sendGuestLinkCode(
+        'guest@example.invalid',
+        '12345678',
+        'DEMO-ORDER',
+        'account@example.invalid',
+      ),
+    ).toBe(true);
+    expect(sendMail.mock.calls[0][0].text).toContain('account@example.invalid');
+    expect(sendMail.mock.calls[0][0].text).toContain('DEMO-ORDER');
+    expect(sendMail.mock.calls[0][0].text).toContain('coordonnées');
+    expect(sendMail.mock.calls[0][0].html).toBeUndefined();
+    process.env.GUEST_EMAIL_ENABLED = 'false';
+    expect(
+      await service.sendGuestLinkCode(
+        'guest@example.invalid',
+        '12345678',
+        'DEMO-ORDER',
+        'account@example.invalid',
+      ),
+    ).toBe(false);
+    expect(sendMail).toHaveBeenCalledTimes(1);
+  });
 });

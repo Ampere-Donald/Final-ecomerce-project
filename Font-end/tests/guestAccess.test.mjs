@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGuestKey,rememberGuestKey,readGuestKey,forgetGuestKey,captureGuestFragment,saveGuestRecovery,readGuestRecovery,clearGuestRecovery} from '../src/storefront/guestAccess.js';
+import {newGuestKey,rememberGuestKey,readGuestKey,forgetGuestKey,captureGuestFragment,saveGuestRecovery,readGuestRecovery,clearGuestRecovery,saveGuestLink,readGuestLink,clearGuestLink} from '../src/storefront/guestAccess.js';
 import {saveAttempt,readAttempt} from '../src/storefront/orderAttempt.js';
 const map=new Map();
 globalThis.sessionStorage={getItem:key=>map.get(key)||null,setItem:(key,value)=>map.set(key,value),removeItem:key=>map.delete(key)};
@@ -21,4 +21,16 @@ test('Recovery keeps the same key for an uncertain redemption, without saving it
   assert.deepEqual(readGuestRecovery(),{challengeId,key});assert.equal(readGuestKey(),key);
   assert.deepEqual(Object.keys(JSON.parse(map.get('newoteg_guest_recovery_v1'))).sort(),['challengeId','key']);
   clearGuestRecovery();assert.equal(readGuestRecovery(),null);
+});
+test('Link retry keeps separate capabilities bound to the account and omits OTP/credentials',()=>{
+  const attempt={accessToken:newGuestKey(),actionKey:newGuestKey(),challengeId:crypto.randomUUID(),clientId:'client'};
+  saveGuestLink({...attempt,code:'12345678',password:'SECRET'});
+  assert.deepEqual(readGuestLink(),attempt);
+  assert.deepEqual(Object.keys(JSON.parse(map.get('newoteg_guest_link_v1'))).sort(),Object.keys(attempt).sort());
+  const setItem=sessionStorage.setItem; sessionStorage.setItem=()=>{throw Error('storage disabled');};
+  assert.throws(()=>saveGuestLink(attempt)); sessionStorage.setItem=setItem;
+  sessionStorage.setItem=()=>{};
+  assert.throws(()=>saveGuestLink({...attempt,actionKey:newGuestKey()}));sessionStorage.setItem=setItem;
+  clearGuestLink();assert.equal(readGuestLink(),null);
+  saveGuestLink(attempt);forgetGuestKey();assert.equal(readGuestLink(),null);
 });
