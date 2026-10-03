@@ -42,7 +42,7 @@ it('does not request or display private access administration for a seller', asy
   identity.role = 'VENDEUR';
   api.getAll.mockResolvedValue([{ ...order, statut: 'EN_ATTENTE' }]);
   render(<Orders />);
-  fireEvent.click(await screen.findByRole('button', { name: 'Détails', exact: true }));
+  fireEvent.click(await screen.findByRole('button', { name: 'Détails' }));
   await screen.findByRole('dialog', { name: 'Détails de la commande' });
   expect(screen.queryByText('Suivi sans compte')).toBeNull();
   expect(api.getGuestAccess).not.toHaveBeenCalled();

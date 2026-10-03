@@ -1,0 +1,141 @@
+.e-reviews {
+  border-top: 1px solid var(--e-border, #d8e0e9);
+  padding-top: 28px;
+}
+.e-reviews-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.e-reviews-heading h2,
+.e-reviews-heading p {
+  margin: 0;
+}
+.e-reviews-empty {
+  padding: 18px 0;
+  max-width: 70ch;
+}
+.e-customer-review {
+  padding: 22px 0;
+  border-bottom: 1px solid #d8e0e9;
+}
+.e-customer-review header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.e-customer-review time {
+  color: #556579;
+  font-size: 0.88rem;
+  margin-left: auto;
+}
+.e-customer-review p,
+.e-purchase-reviews p {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  max-width: 75ch;
+}
+.e-review-verified {
+  font-size: 0.82rem;
+  color: #186451;
+  background: #e8f4ef;
+  padding: 3px 8px;
+  border-radius: 4px;
+}
+.e-review-project {
+  color: #556579;
+}
+.e-shop-reply {
+  border-left: 3px solid #48877a;
+  padding: 12px 16px;
+  background: #f2f7f6;
+  margin: 16px 0;
+}
+.e-shop-reply p {
+  margin-bottom: 0;
+}
+.e-review-report {
+  max-width: 480px;
+  margin-top: 16px;
+}
+.e-purchase-reviews {
+  margin-top: 28px;
+  border-top: 1px solid #d8e0e9;
+  padding-top: 24px;
+}
+.e-order-detail > .e-purchase-reviews {
+  grid-column: 1/-1;
+}
+.e-review-purchase {
+  padding: 16px 0;
+  border-bottom: 1px solid #d8e0e9;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.e-review-purchase h3 {
+  font-size: 1rem;
+  margin: 0 0 4px;
+}
+.e-review-form {
+  display: grid;
+  gap: 16px;
+}
+.e-review-form fieldset {
+  border: 0;
+  padding: 0;
+  margin: 0;
+}
+.e-review-form legend {
+  margin-bottom: 10px;
+}
+.e-review-rating {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.e-review-rating label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 8px 6px;
+  cursor: pointer;
+}
+.e-review-form textarea {
+  font: inherit;
+  min-height: 135px;
+  resize: vertical;
+}
+.e-review-consent {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  line-height: 1.5;
+}
+.e-review-consent input {
+  margin-top: 5px;
+  flex-shrink: 0;
+}
+.e-review-pending {
+  background: #fff8e8;
+  border-left: 3px solid #b87920;
+  padding: 14px;
+  margin: 16px 0;
+}
+@media (max-width: 540px) {
+  .e-customer-review time {
+    margin-left: 0;
+    width: 100%;
+  }
+  .e-review-purchase {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .e-review-rating {
+    gap: 6px;
+  }
+}

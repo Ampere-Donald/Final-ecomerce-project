@@ -31,6 +31,27 @@ export class MailService {
     return process.env.GUEST_EMAIL_ENABLED === 'true' && !!this.transporter;
   }
 
+  async sendGuestReviewCode(
+    to: string,
+    code: string,
+    reference: string,
+    product: string,
+  ): Promise<boolean> {
+    if (!this.guestRecoveryAvailable() || !/^\d{8}$/.test(code)) return false;
+    try {
+      await this.transporter!.sendMail({
+        from: process.env.SMTP_FROM || '"NEWOTEG SARL" <noreply@newoteg.com>',
+        to,
+        subject: 'NEWOTEG — Confirmer votre avis sur un article reçu',
+        text: `Votre code est ${code}. Il autorise uniquement l’enregistrement de votre avis sur ${product}, commande ${reference}. L’avis et le pseudonyme choisis seront publiés après modération. Il expire dans 10 minutes et ne peut être utilisé qu’une fois. Ne le partagez pas. Si vous n’avez pas demandé cet avis, ignorez ce message. Ce code n’autorise aucun paiement ni modification de commande.`,
+      });
+      return true;
+    } catch {
+      this.logger.warn('Guest review code could not be delivered.');
+      return false;
+    }
+  }
+
   /** Private recovery: opt-in, no code, recipient or transport error in logs. */
   async sendGuestAccessCode(to: string, code: string): Promise<boolean> {
     if (!this.guestRecoveryAvailable() || !/^\d{8}$/.test(code)) return false;

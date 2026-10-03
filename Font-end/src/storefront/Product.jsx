@@ -24,6 +24,7 @@ import ProductAdvice from "./ProductAdvice";
 import { ReceptionSummary } from "./ReceptionChoice";
 import ComparisonAction, { ComparisonLink } from "./ComparisonAction";
 import OfferDetails from './OfferDetails';
+import ProductReviews from './ProductReviews';
 
 function Detail({ product }) {
   const [quantity, setQuantity] = useState(1),
@@ -228,6 +229,7 @@ function Detail({ product }) {
           </section>
         </div>
         <EquivalenceEntry query={name} productId={product.id} />
+        <ProductReviews key={product.id} productId={product.id} />
         {relatedRows.length > 0 && (
           <section className="e-section">
             <h2>

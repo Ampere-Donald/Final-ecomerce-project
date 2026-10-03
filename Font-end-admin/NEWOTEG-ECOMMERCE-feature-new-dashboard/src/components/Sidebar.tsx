@@ -137,6 +137,7 @@ export const Sidebar = ({ open, onClose, compact = false }: SidebarProps) => {
       items: [
         ...add(can.accessCommandesEnLigne(role), { label: 'Commandes en ligne', icon: Globe, path: '/orders' }),
         ...add(['SUPER_ADMIN', 'ADMIN', 'VENDEUR'].includes(role || ''), { label: 'Devis en ligne', icon: BookOpen, path: '/demandes-devis' }),
+        ...add(['SUPER_ADMIN', 'ADMIN'].includes(role || ''), { label: 'Avis clients', icon: BookOpen, path: '/avis' }),
       ],
     },
     {

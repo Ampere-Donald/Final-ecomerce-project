@@ -19,6 +19,7 @@ import { apiMessage, orderState, orderDate } from "./orderData";
 import useOrders from "./useOrders";
 import Footer from "./Footer";
 import Reorder from "./Reorder";
+import PurchaseReviews from "./PurchaseReviews";
 
 export default function Account() {
   const { user, token, logout } = useAuth();
@@ -477,6 +478,12 @@ export default function Account() {
                   </p>
                 </section>
               </aside>
+              <PurchaseReviews
+                key={`${order.id}:${user?.id}:${order.statut}`}
+                orderId={order.id}
+                userId={user?.id}
+                token={token}
+              />
             </div>
           )
         ) : (

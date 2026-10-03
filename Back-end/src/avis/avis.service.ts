@@ -23,13 +23,13 @@ const publicSelect = {
   createdAt: true,
   reponseBoutique: true,
 } satisfies Prisma.AvisProduitSelect;
-const privateSelect = {
+export const privateAvisSelect = {
   ...publicSelect,
   statut: true,
   version: true,
   ligneCommandeId: true,
 };
-const fingerprint = (value: unknown) =>
+export const avisFingerprint = (value: unknown) =>
   createHash('sha256').update(JSON.stringify(value)).digest('hex');
 
 export function avisContent(dto: CreateAvisDto) {
@@ -130,7 +130,7 @@ export class AvisService {
             id: true,
             nomProduit: true,
             produitId: true,
-            avis: { select: privateSelect },
+            avis: { select: privateAvisSelect },
           },
         },
       },
@@ -144,7 +144,7 @@ export class AvisService {
 
   async create(clientId: string, dto: CreateAvisDto) {
     const content = avisContent(dto);
-    const signature = fingerprint({
+    const signature = avisFingerprint({
       clientId,
       ligneCommandeId: dto.ligneCommandeId,
       ...content,
@@ -181,31 +181,50 @@ export class AvisService {
         throw new ConflictException(
           'Un avis est possible après réception de la commande.',
         );
-      if (
-        await tx.avisProduit.findUnique({
-          where: { ligneCommandeId: dto.ligneCommandeId },
-        })
-      )
-        throw new ConflictException(
-          'Un avis est déjà enregistré pour cet article acheté.',
-        );
-      try {
-        const review = await tx.avisProduit.create({
-          data: {
-            ligneCommandeId: dto.ligneCommandeId,
-            requestId: dto.requestId,
-            fingerprint: signature,
-            ...content,
-          },
-          select: { id: true },
-        });
-        return { id: review.id, enregistre: true };
-      } catch (error) {
-        if ((error as { code?: string })?.code === 'P2002')
-          throw new ConflictException('Tentative ou avis déjà enregistré.');
-        throw error;
-      }
+      return this.storeVerified(tx, dto, signature);
     });
+  }
+
+  /** Internal only: caller has checked ownership/receipt under the order lock. */
+  async storeVerified(
+    tx: Prisma.TransactionClient,
+    dto: CreateAvisDto,
+    signature: string,
+  ) {
+    const replay = await tx.avisProduit.findUnique({
+      where: { requestId: dto.requestId },
+    });
+    if (replay) {
+      if (replay.fingerprint !== signature)
+        throw new ConflictException(
+          'Tentative déjà utilisée avec un autre contenu.',
+        );
+      return { id: replay.id, enregistre: true };
+    }
+    if (
+      await tx.avisProduit.findUnique({
+        where: { ligneCommandeId: dto.ligneCommandeId },
+      })
+    )
+      throw new ConflictException(
+        'Un avis est déjà enregistré pour cet article acheté.',
+      );
+    try {
+      const review = await tx.avisProduit.create({
+        data: {
+          ligneCommandeId: dto.ligneCommandeId,
+          requestId: dto.requestId,
+          fingerprint: signature,
+          ...avisContent(dto),
+        },
+        select: { id: true },
+      });
+      return { id: review.id, enregistre: true };
+    } catch (error) {
+      if ((error as { code?: string })?.code === 'P2002')
+        throw new ConflictException('Tentative ou avis déjà enregistré.');
+      throw error;
+    }
   }
 
   async adminList(stateValue?: string, pageValue?: string) {
@@ -216,7 +235,7 @@ export class AvisService {
     return this.db.avisProduit.findMany({
       where: { statut: statut as StatutAvis },
       select: {
-        ...privateSelect,
+        ...privateAvisSelect,
         ligne: { select: { nomProduit: true } },
         _count: { select: { signalements: true } },
         historique: {
@@ -249,7 +268,7 @@ export class AvisService {
       throw new BadRequestException('Réponse incompatible avec cette action.');
     const reponse =
       dto.action === 'REPONDRE' ? text(dto.reponse!, 2, 1000) : null;
-    const signature = fingerprint({ actorId, id, ...dto, reponse });
+    const signature = avisFingerprint({ actorId, id, ...dto, reponse });
     return this.db
       .$transaction(async (tx) => {
         await tx.$queryRaw`SELECT id FROM avis_produit WHERE id = ${id}::uuid FOR UPDATE`;

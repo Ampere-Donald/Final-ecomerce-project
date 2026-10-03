@@ -20,6 +20,8 @@ import {
 import Footer from "./Footer";
 import GuestLink from "./GuestLink";
 import GuestActions from "./GuestActions";
+import PurchaseReviews from "./PurchaseReviews";
+import { guestReviewOrder } from './reviewData.js';
 
 export default function GuestTracking() {
   const { lang } = useI18n();
@@ -229,6 +231,12 @@ export default function GuestTracking() {
   }
   const order = data?.commande,
     state = order && orderState(order.statut, lang);
+  let retainedReviewOrder;
+  try {
+    if (key && !order) retainedReviewOrder = guestReviewOrder(key);
+  } catch {
+    /* Explicit storage errors are shown by the review form when accessible. */
+  }
   return (
     <>
       <Helmet>
@@ -329,6 +337,11 @@ export default function GuestTracking() {
                   "Contact the shop about this order",
                 )}
               </Link>
+              <PurchaseReviews
+                key={`${order.id}:${key}:${order.statut}`}
+                orderId={order.id}
+                accessToken={key}
+              />
             </section>
             <aside className="e-next-steps">
               <h2>{tr("Conserver votre accès", "Keep your access")}</h2>
@@ -526,6 +539,15 @@ export default function GuestTracking() {
             accessToken={key}
             available={!!data?.linking?.available}
             hasOrder={!!order}
+          />
+        </div>
+      )}
+      {!order && retainedReviewOrder && (
+        <div className="e-wrap">
+          <PurchaseReviews
+            key={`${retainedReviewOrder}:${key}`}
+            orderId={retainedReviewOrder}
+            accessToken={key}
           />
         </div>
       )}

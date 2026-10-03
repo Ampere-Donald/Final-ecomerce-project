@@ -1,6 +1,7 @@
 /* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
+import { clearReviewAttempts } from '../storefront/reviewData';
 
 const _rawApi = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 const API = _rawApi.endsWith('/api') ? _rawApi : `${_rawApi}/api`;
@@ -101,6 +102,7 @@ export function AuthProvider({ children }) {
   }, []);
 
   const logout = useCallback(() => {
+    clearReviewAttempts('account');
     setToken(null);
     setUser(null);
   }, []);

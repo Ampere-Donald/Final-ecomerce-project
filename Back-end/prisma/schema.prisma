@@ -829,6 +829,8 @@ model CommandeGuestAccess {
 }
 
 model CommandeGuestChallenge {
+  reviewLineId String? @map("review_line_id")
+  reviewContentHash String? @map("review_content_hash") @db.VarChar(64)
   actionResult Json? @map("action_result")
   purpose String @default("RECOVER") @db.VarChar(12)
   grantVersion Int? @map("grant_version")
