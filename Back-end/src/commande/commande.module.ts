@@ -8,6 +8,7 @@ import { GuestLinkController } from './guest-link.controller';
 import { GuestLinkService } from './guest-link.service';
 import { GuestActionController } from './guest-action.controller';
 import { GuestActionService } from './guest-action.service';
+import { GuestChallengeMaintenanceService } from './guest-challenge-maintenance.service';
 
 @Module({
   imports: [AuthModule],
@@ -22,6 +23,7 @@ import { GuestActionService } from './guest-action.service';
     GuestOrderService,
     GuestLinkService,
     GuestActionService,
+    GuestChallengeMaintenanceService,
   ],
   exports: [CommandeService],
 })

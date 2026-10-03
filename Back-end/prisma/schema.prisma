@@ -848,6 +848,8 @@ model CommandeGuestChallenge {
   access CommandeGuestAccess @relation(fields: [commandeId], references: [commandeId], onDelete: Cascade)
 
   @@index([commandeId, createdAt])
+  @@index([expiresAt, createdAt])
+  @@index([completedAt, createdAt])
   @@map("commande_guest_challenge")
 }
 

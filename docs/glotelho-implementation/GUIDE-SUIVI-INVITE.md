@@ -35,3 +35,6 @@ Les canaux indiqués « service configuré » ne garantissent pas la délivrabil
 ## Avant activation réelle
 
 Valider fournisseur/expéditeur et délivrabilité, procédure humaine de perte d’accès, responsables et entretien des challenges. Tester sur téléphone réel avec l’équipe et en préproduction isolée. Les preuves locales ne valent pas mise en production ni autorisation de publication.
+## Entretien automatique
+
+Le nettoyage est désactivé par défaut. Après validation des migrations et du retour arrière, l’exploitation peut activer `GUEST_CHALLENGE_CLEANUP_ENABLED=true` : passage horaire à :15, au plus 2 000 lignes. Codes périmés conservés au moins 24 heures ; reçus de reprise conservés 30 jours. Les accès et commandes restent inchangés. Un échec fixe dans les journaux impose une vérification ; le prochain passage réessaie. Désactiver le flag arrête les prochains passages, sans restaurer les codes déjà périmés supprimés.
