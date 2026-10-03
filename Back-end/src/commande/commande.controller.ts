@@ -162,12 +162,12 @@ export class CommandeController {
     if (!order.clientId || order.clientId !== req.user.id) {
       throw new ForbiddenException('Cette commande ne vous appartient pas.');
     }
-    return customerOrder(await this.commandeService.cancel(id));
+    return customerOrder(await this.commandeService.cancel(id, req.user.id));
   }
 
   /**
    * Client confirms reception of goods.
-   * ONLY the order owner can call this, and only when status is LIVREE.
+   * Only the owner can confirm a dispatched delivery (EN_LIVRAISON).
    */
   @UseGuards(JwtAuthGuard)
   @Patch(':id/reception')

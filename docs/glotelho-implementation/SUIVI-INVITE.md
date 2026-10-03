@@ -4,7 +4,7 @@ NEWOTEG retient le SMS, sans fournisseur disponible actuellement, et demande aus
 
 L’utilisateur confirme aussi l’absence de service email. Aucun fournisseur SMS/email ni expéditeur réel n’est donc disponible à ce stade ; les envois restent désactivés, sans empêcher le suivi par lien privé.
 
-Ce lot livre le suivi privé des **nouvelles commandes invitées**, la révocation administrative, la récupération email et le rattachement facultatif à un compte avec preuve email. L6 reste ouvert : annulation/réception directement par un invité et interface administrative. Les anciennes commandes sans clé ne deviennent pas accessibles sur la seule base d’un téléphone ou d’un numéro.
+Ce lot livre le suivi privé des **nouvelles commandes invitées**, la révocation administrative, la récupération email, le rattachement facultatif à un compte et les actions invitées d’annulation/réception avec preuve email distincte. L6 reste ouvert pour l’interface administrative, l’activation des canaux et le pilote réel. Les anciennes commandes sans clé ne deviennent pas accessibles sur la seule base d’un téléphone ou d’un numéro.
 
 ## Parcours et protection
 
@@ -21,7 +21,7 @@ Clé reçue seulement dans les corps POST ; fragment du lien retiré avant monta
 
 `POST /api/commandes/guest/access` : lecture privée. `GET .../guest/channels` : disponibilité uniquement. `POST .../guest/recovery` : demande de code, même message et identifiant factice pour des informations inconnues, sans envoi. Cela évite une révélation explicite dans le contenu, sans garantir des temps de réponse identiques. `POST .../guest/recover` : code et nouvelle clé ; verrou de l’accès, compteur d’échecs réellement committé, renouvellement atomique. Email non délivré, code expiré, révocation ou rattachement empêchent la récupération.
 
-`POST .../guest/admin/:id/revoke` : ADMIN/SUPER_ADMIN, acteur/date/motif ; idempotent, bloque aussi la récupération email. Le lien seul ne donne aucun droit d’annulation, réception ou rattachement : ces droits restent explicitement faux. La disponibilité d’un parcours de rattachement avec preuve distincte est annoncée séparément (`linking.available`).
+`POST .../guest/admin/:id/revoke` : ADMIN/SUPER_ADMIN, acteur/date/motif ; idempotent, bloque aussi la récupération email. Le lien seul ne donne aucun droit d’annulation, réception ou rattachement : ces droits restent explicitement faux. Les parcours avec preuve distincte annoncent séparément leur disponibilité (`linking.available`, `actions.canRequestCancel`, `actions.canRequestReception`).
 
 `Cache-Control: private, no-store`, `Referrer-Policy: no-referrer`, `X-Robots-Tag: noindex, nofollow` pour le suivi. Métadonnées de page ; Worker applique aussi ces en-têtes au document avant JavaScript et aux erreurs API privées. Worker testé localement, non déployé ; contrôle réel d’hébergement restant en L8. Aucune collecte analytique de code, clé, email ou référence de commande.
 
@@ -37,7 +37,7 @@ Builds backend/storefront et lints ciblés réussis. Neuf suites backend, 63 tes
 
 Preuves : `C:/Users/pc/Documents/Newoteg/output/implementation-work/captures/guest-access/result.json` et captures `tracking-390.png`, `tracking-1440.png`, `email-recovered-390.png`, clés masquées. Commandes/challenges fictifs supprimés, produit de recette désactivé.
 
-Aucun fournisseur email/SMS réel, paiement, Railway ou déploiement. Pilote réel, téléphone physique, activation du canal et derniers parcours L6 restent ouverts.
+Aucun fournisseur email/SMS réel, paiement, Railway ou déploiement. Pilote réel, téléphone physique, activation du canal et administration L6 restent ouverts.
 
 ## Rattachement au compte avec consentement email — 3 octobre 2026
 
@@ -53,3 +53,18 @@ Migration additive `20261003100000_guest_order_link` : sept colonnes sur les cha
 Builds backend/storefront et lints ciblés réussis. Treize suites backend (78 tests), 53 tests Node storefront. Neuf scénarios dédiés PostgreSQL/HTTP/navigateur réussis dans `Back-end/scripts/verify-guest-link-local.cjs` : vrais JWT, contrôleurs et validation Nest ; codes/email capturés, pas de transport réel. Refus d’une autre base avant connexion. Recette précédente du suivi/récupération repassée avec ses treize contrôles. Captures de consentement et du suivi compte à 390/1440 px inspectées ; réponse de confirmation perdue, rechargement puis consultation du reçu, une seule confirmation avec OTP.
 
 Preuves : `C:/Users/pc/Documents/Newoteg/output/implementation-work/captures/guest-link/result.json`, `consent-390.png`, `consent-1440.png`, `linked-390.png`, `linked-1440.png`. Données/clients fictifs de cette recette supprimés, produit désactivé. Téléphone physique, délivrabilité réelle, nettoyage des anciens challenges et interface d’administration restent à vérifier/compléter avant activation et préproduction.
+
+## Annulation et réception invitées avec preuve distincte — 3 octobre 2026
+
+- `POST .../guest/actions/request` demande explicitement un code pour `CANCEL` ou `RECEIVE` ; `POST .../guest/actions` confirme. Aucun compte obligatoire, destinataire fixé à l’email du checkout. Les paramètres client ne peuvent changer ni propriétaire ni destinataire. Annulation seulement en attente/confirmée ; réception seulement pour une livraison en cours. Le retrait reste une action boutique. Sans service ou adresse enregistrée, le parcours annonce son indisponibilité et renvoie vers le contact.
+- Code dédié à l’action, dix minutes, cinq échecs committés, versions commande/accès liées. Budget partagé avec récupération/rattachement : soixante secondes et trois envois/heure. Une demande remplace les codes en attente. Expiration, révocation, échec d’envoi, changement de propriétaire/version ou de statut refusent l’action.
+- La confirmation sauvegarde avant POST une clé d’action distincte de 256 bits et les identifiants nécessaires ; aucun OTP stocké. Réponse perdue : vérification du reçu avec les mêmes clés sans nouveau code. Reçu minimal historique pendant trente jours (id, référence, action, statut), sans coordonnées ni droits de lecture actuels. Un reçu reste consultable après rattachement/révocation sans rouvrir le suivi invité.
+- Verrou commande puis accès. Statut, retour de stock, mouvements, consommation du code, notification boutique et reçu atomiques. Échec d’une ligne : rollback intégral. Deux confirmations identiques ne restituent le stock et ne notifient qu’une fois. Produits verrouillés dans un ordre stable pour éviter les interblocages lors d’annulations de commandes communes.
+- Les parcours existants de compte, retrait et édition administrative contrôlent maintenant statut, version et propriétaire dans la transaction. Une annulation ne peut être écrasée par un ancien instantané ; deux retraits ne peuvent produire deux entrées caisse. Commandes annulées/livrées non rouvrables par simple édition. Passage d’un retrait en livraison refusé ; annulation administrative passe par le parcours restituant le stock.
+- Direction E conservée, consentement dans le dialogue existant. Mention explicite : annulation sans remboursement automatique, réception après tous les articles sans validation de paiement. Suivi annulé/livré adapté, traduction FR/EN et titre à 360 px vérifiés. Fermeture de l’accès efface la tentative sur l’appareil.
+
+Migration additive `20261003110000_guest_order_actions` : une colonne JSONB pour le reçu. Diff schéma/SQL vérifié, application uniquement à PostgreSQL local dédié ; aucune migration Railway ni réconciliation d’historique.
+
+Builds backend/storefront et lints ciblés réussis. Quinze suites backend, 88 tests ; 54 tests Node storefront. `verify-guest-actions-local.cjs` refuse toute autre base avant connexion et passe neuf scénarios PostgreSQL/HTTP/navigateur : consentement, codes croisés/épuisés, versions, expiration, atomicité, courses déterministes retrait/annulation/admin, budget partagé et réponse perdue. Première exécution : contrôle supplémentaire d’application additive locale. Annulation FR à 360/390 px et réception EN à 1440 px : rechargement et résultat retrouvé sans deuxième OTP, une seule notification ; captures inspectées. Les recettes récupération/suivi (13 contrôles) et rattachement (9) repassent. L’assertion de non-création de compte de la recette suivi a été isolée des clients fictifs des autres recettes : comptage avant/après et propriétaire nul de la commande.
+
+Preuves : `C:/Users/pc/Documents/Newoteg/output/implementation-work/captures/guest-actions/result.json`, `consent-CANCEL-360.png`, `consent-CANCEL-390.png`, `consent-RECEIVE-1440.png` et captures `done-*`. Emails capturés, commandes/clients et entrées caisse fictifs nettoyés, produits désactivés. Backend local relancé sur le build vérifié ; storefront 5187 disponible. Aucun paiement réel ni trafic extérieur. Services email/SMS, délivrabilité, téléphone physique, entretien des challenges, administration et pilote L6 restent ouverts ; L7/L8 restent à traiter. Publication non autorisée.

@@ -70,4 +70,25 @@ describe('Private guest email transport', () => {
     ).toBe(false);
     expect(sendMail).toHaveBeenCalledTimes(1);
   });
+  it('makes cancellation and receipt codes explicit and different from payment or account linking', async () => {
+    const service = new MailService();
+    process.env.GUEST_EMAIL_ENABLED = 'true';
+    const sendMail = jest.fn().mockResolvedValue({});
+    (service as any).transporter = { sendMail };
+    for (const action of ['CANCEL', 'RECEIVE'] as const)
+      expect(
+        await service.sendGuestActionCode(
+          'guest@example.invalid',
+          '12345678',
+          'DEMO',
+          action,
+        ),
+      ).toBe(true);
+    expect(sendMail.mock.calls[0][0].text).toContain('annuler');
+    expect(sendMail.mock.calls[1][0].text).toContain('reçu tous les articles');
+    for (const call of sendMail.mock.calls) {
+      expect(call[0].text).toContain('aucun paiement');
+      expect(call[0].html).toBeUndefined();
+    }
+  });
 });

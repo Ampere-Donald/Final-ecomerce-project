@@ -4,6 +4,7 @@ import { guestTokenHash } from './guest-access';
 import { customerOrder } from './customer-order';
 import { MailService } from '../auth/mail.service';
 import { createHmac, randomInt, randomUUID, timingSafeEqual } from 'crypto';
+import { eligibleGuestAction } from './guest-action.service';
 
 @Injectable()
 export class GuestOrderService {
@@ -55,6 +56,16 @@ export class GuestOrderService {
       },
       linking: {
         available: !!grant.recoveryEmail && this.mail.guestRecoveryAvailable(),
+      },
+      actions: {
+        canRequestCancel:
+          !!grant.recoveryEmail &&
+          this.mail.guestRecoveryAvailable() &&
+          eligibleGuestAction(grant.commande, 'CANCEL'),
+        canRequestReception:
+          !!grant.recoveryEmail &&
+          this.mail.guestRecoveryAvailable() &&
+          eligibleGuestAction(grant.commande, 'RECEIVE'),
       },
     };
   }

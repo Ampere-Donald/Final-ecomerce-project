@@ -1,6 +1,7 @@
 const STORAGE = "newoteg_guest_tracking_v1";
 const RECOVERY = "newoteg_guest_recovery_v1";
 const LINK_ATTEMPT = "newoteg_guest_link_v1";
+const ACTION_ATTEMPT = "newoteg_guest_action_v1";
 let current = "";
 export function newGuestKey() {
   const bytes = crypto.getRandomValues(new Uint8Array(32));
@@ -41,6 +42,7 @@ export function captureGuestFragment() {
   );
   clearGuestRecovery();
   clearGuestLink();
+  clearGuestAction();
   if (/^[A-Za-z0-9_-]{43}$/.test(key || "")) rememberGuestKey(key);
   else forgetGuestKey();
 }
@@ -56,6 +58,7 @@ export function forgetGuestKey() {
   }
   clearGuestRecovery();
   clearGuestLink();
+  clearGuestAction();
 }
 
 export function saveGuestRecovery(challengeId, key) {
@@ -119,5 +122,48 @@ export function clearGuestLink() {
     sessionStorage.removeItem(LINK_ATTEMPT);
   } catch {
     /* No persistent attempt in this browser. */
+  }
+}
+
+export function saveGuestAction({
+  accessToken,
+  challengeId,
+  actionKey,
+  action,
+  orderId,
+}) {
+  const serialized = JSON.stringify({
+    accessToken,
+    challengeId,
+    actionKey,
+    action,
+    orderId,
+  });
+  sessionStorage.setItem(ACTION_ATTEMPT, serialized);
+  if (sessionStorage.getItem(ACTION_ATTEMPT) !== serialized)
+    throw new Error("Unable to retain order action");
+}
+export function readGuestAction() {
+  try {
+    const value = JSON.parse(sessionStorage.getItem(ACTION_ATTEMPT));
+    return /^[A-Za-z0-9_-]{43}$/.test(value?.accessToken || "") &&
+      /^[A-Za-z0-9_-]{43}$/.test(value?.actionKey || "") &&
+      /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+        value?.challengeId || "",
+      ) &&
+      ["CANCEL", "RECEIVE"].includes(value?.action) &&
+      typeof value.orderId === "string" &&
+      value.orderId
+      ? value
+      : null;
+  } catch {
+    return null;
+  }
+}
+export function clearGuestAction() {
+  try {
+    sessionStorage.removeItem(ACTION_ATTEMPT);
+  } catch {
+    /* No durable attempt in this browser. */
   }
 }

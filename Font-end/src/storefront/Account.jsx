@@ -417,7 +417,7 @@ export default function Account() {
                       {tr("Annuler la commande", "Cancel order")}
                     </button>
                   )}
-                  {order.statut === "EN_LIVRAISON" && (
+                  {order.statut === "EN_LIVRAISON" && order.modeReception === "LIVRAISON" && (
                     <button
                       className="e-btn"
                       onClick={() => setAction("reception")}

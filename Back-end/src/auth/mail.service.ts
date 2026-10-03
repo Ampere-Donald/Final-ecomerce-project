@@ -70,6 +70,39 @@ export class MailService {
     }
   }
 
+  async sendGuestActionCode(
+    to: string,
+    code: string,
+    reference: string,
+    action: 'CANCEL' | 'RECEIVE',
+  ): Promise<boolean> {
+    if (
+      !this.guestRecoveryAvailable() ||
+      !/^\d{8}$/.test(code) ||
+      !['CANCEL', 'RECEIVE'].includes(action)
+    )
+      return false;
+    const description =
+      action === 'CANCEL'
+        ? 'annuler votre commande et remettre les articles en stock'
+        : 'confirmer que vous avez reçu tous les articles de votre livraison';
+    try {
+      await this.transporter!.sendMail({
+        from: process.env.SMTP_FROM || '"NEWOTEG SARL" <noreply@newoteg.com>',
+        to,
+        subject:
+          action === 'CANCEL'
+            ? 'NEWOTEG — Annulation de votre commande'
+            : 'NEWOTEG — Confirmation de réception',
+        text: `Votre code est ${code}. Il autorise uniquement à ${description} pour la commande ${reference}. Il expire dans 10 minutes et ne peut être utilisé qu’une fois. Ne le partagez pas. Si vous n’avez pas demandé cette action, ignorez ce message. Ce code n’autorise aucun paiement et ne rattache pas la commande à un compte.`,
+      });
+      return true;
+    } catch {
+      this.logger.warn('Guest order action email could not be delivered.');
+      return false;
+    }
+  }
+
   /**
    * Generic email sender. NEVER throws — logs on failure so callers
    * (e.g. the échéance alert engine) are not broken by SMTP issues.

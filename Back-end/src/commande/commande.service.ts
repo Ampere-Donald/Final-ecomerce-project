@@ -18,6 +18,7 @@ import { QuoteCommandeDto } from './dto/quote-commande.dto';
 import * as bcrypt from 'bcrypt';
 import { previousOrder, completeOrderRequest } from './order-request';
 import { attachGuestAccess, validateGuestAccessRequest } from './guest-access';
+import { cancelOrder, receiveOrder } from './order-transitions';
 
 @Injectable()
 export class CommandeService {
@@ -350,7 +351,20 @@ export class CommandeService {
   }
 
   async update(id: string, dto: UpdateCommandeDto, actor?: NotificationActor) {
-    await this.findOne(id);
+    const previous = await this.findOne(id);
+    if (!dto.statut || dto.statut === previous.statut) return previous;
+    if (['ANNULEE', 'LIVREE'].includes(previous.statut))
+      throw new BadRequestException(
+        'Une commande terminée ne peut pas être rouverte par un changement de statut.',
+      );
+    if (dto.statut === 'ANNULEE')
+      throw new BadRequestException(
+        'Utilisez le parcours d’annulation pour restituer le stock.',
+      );
+    if (dto.statut === 'EN_LIVRAISON' && previous.modeReception !== 'LIVRAISON')
+      throw new BadRequestException(
+        'Un retrait magasin ne peut pas être mis en livraison.',
+      );
 
     const data: any = {
       ...dto,
@@ -367,18 +381,20 @@ export class CommandeService {
         case 'CONFIRMEE':
           data.dateConfirmation = now;
           break;
-        case 'ANNULEE':
-          data.dateAnnulation = now;
-          break;
       }
     }
 
-    const commande = await this.db.commande.update({
-      where: { id },
-      data,
-      include: {
-        lignes: { include: { produit: true } },
-      },
+    const commande = await this.db.$transaction(async (tx) => {
+      const changed = await tx.commande.updateMany({
+        where: { id, version: previous.version, statut: previous.statut },
+        data,
+      });
+      if (changed.count !== 1)
+        throw new ConflictException('Le statut a changé. Actualisez le suivi.');
+      return tx.commande.findUniqueOrThrow({
+        where: { id },
+        include: { lignes: { include: { produit: true } } },
+      });
     });
     if (dto.statut) {
       this.notifications
@@ -471,7 +487,7 @@ export class CommandeService {
   }
 
   /** Cancel an order — restitue le stock dans la même transaction (audit P1). */
-  async cancel(id: string) {
+  async cancel(id: string, clientId?: string) {
     const commande = await this.findOne(id);
 
     if (commande.statut === 'ANNULEE') {
@@ -488,43 +504,12 @@ export class CommandeService {
       );
     }
 
-    const updated = await this.db.$transaction(async (tx: any) => {
-      const changed = await tx.commande.updateMany({
-        where: { id, statut: { in: ['EN_ATTENTE', 'CONFIRMEE'] } },
-        data: {
-          statut: 'ANNULEE',
-          dateAnnulation: new Date(),
-          version: { increment: 1 },
-        },
-      });
-      if (changed.count !== 1)
-        throw new ConflictException('Le statut a changé. Actualisez le suivi.');
-      const result = await tx.commande.findUnique({
-        where: { id },
-        include: { lignes: { include: { produit: true } } },
-      });
-
-      // Restituer le stock de chaque ligne (D3 : CMUP inchangé)
-      for (const ligne of result.lignes) {
-        await tx.produit.update({
-          where: { id: ligne.produitId },
-          data: {
-            quantiteStock: { increment: ligne.quantite },
-            version: { increment: 1 },
-          },
-        });
-        await tx.mouvementStock.create({
-          data: {
-            produitId: ligne.produitId,
-            typeMouvement: 'RETOUR',
-            quantite: ligne.quantite,
-            motif: `Annulation commande #${result.numeroSuivi}`,
-          },
-        });
-      }
-
-      return result;
-    });
+    const updated = await this.db.$transaction((tx) =>
+      cancelOrder(tx, id, {
+        version: commande.version,
+        ...(clientId ? { clientId } : {}),
+      }),
+    );
 
     this.notifications
       .create(
@@ -545,21 +530,18 @@ export class CommandeService {
     if (!commande.clientId || commande.clientId !== clientId) {
       throw new BadRequestException('Cette commande ne vous appartient pas.');
     }
-    if (commande.statut !== 'EN_LIVRAISON') {
+    if (
+      commande.statut !== 'EN_LIVRAISON' ||
+      commande.modeReception !== 'LIVRAISON'
+    ) {
       throw new BadRequestException(
         "La confirmation de réception n'est possible que lorsque la commande est en livraison.",
       );
     }
 
-    const updated = await this.db.commande.update({
-      where: { id },
-      data: {
-        statut: 'LIVREE',
-        dateLivraison: new Date(),
-        version: { increment: 1 },
-      },
-      include: { lignes: { include: { produit: true } } },
-    });
+    const updated = await this.db.$transaction((tx) =>
+      receiveOrder(tx, id, { clientId, version: commande.version }),
+    );
 
     this.notifications
       .create(
@@ -596,17 +578,26 @@ export class CommandeService {
     }
 
     const result = await this.db.$transaction(async (tx: any) => {
-      // 1. Update order status to LIVREE
-      const updated = await tx.commande.update({
-        where: { id },
+      // Claim the pending pickup before recording cash. A cancelled, changed
+      // or concurrently handed-over order must never receive a second entry.
+      const changed = await tx.commande.updateMany({
+        where: {
+          id,
+          version: commande.version,
+          modeReception: 'RETRAIT_MAGASIN',
+          statut: { in: ['EN_ATTENTE', 'CONFIRMEE'] },
+        },
         data: {
           statut: 'LIVREE',
           dateLivraison: new Date(),
           version: { increment: 1 },
         },
-        include: {
-          lignes: { include: { produit: true } },
-        },
+      });
+      if (changed.count !== 1)
+        throw new ConflictException('Le statut a changé. Actualisez le suivi.');
+      const updated = await tx.commande.findUnique({
+        where: { id },
+        include: { lignes: { include: { produit: true } } },
       });
 
       // 2. If paid on site, create Caisse ENTREE
@@ -614,8 +605,8 @@ export class CommandeService {
         await tx.caisse.create({
           data: {
             typeOperation: 'ENTREE',
-            montant: commande.montantTotal,
-            motif: `Retrait magasin - Commande ${commande.numeroSuivi}${dto.methodePaiement ? ` (${dto.methodePaiement})` : ''}`,
+            montant: updated.montantTotal,
+            motif: `Retrait magasin - Commande ${updated.numeroSuivi}${dto.methodePaiement ? ` (${dto.methodePaiement})` : ''}`,
             effectueePar: actor?.id,
           },
         });

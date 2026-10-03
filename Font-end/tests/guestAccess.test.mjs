@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGuestKey,rememberGuestKey,readGuestKey,forgetGuestKey,captureGuestFragment,saveGuestRecovery,readGuestRecovery,clearGuestRecovery,saveGuestLink,readGuestLink,clearGuestLink} from '../src/storefront/guestAccess.js';
+import {newGuestKey,rememberGuestKey,readGuestKey,forgetGuestKey,captureGuestFragment,saveGuestRecovery,readGuestRecovery,clearGuestRecovery,saveGuestLink,readGuestLink,clearGuestLink,saveGuestAction,readGuestAction,clearGuestAction} from '../src/storefront/guestAccess.js';
 import {saveAttempt,readAttempt} from '../src/storefront/orderAttempt.js';
 const map=new Map();
 globalThis.sessionStorage={getItem:key=>map.get(key)||null,setItem:(key,value)=>map.set(key,value),removeItem:key=>map.delete(key)};
@@ -33,4 +33,14 @@ test('Link retry keeps separate capabilities bound to the account and omits OTP/
   assert.throws(()=>saveGuestLink({...attempt,actionKey:newGuestKey()}));sessionStorage.setItem=setItem;
   clearGuestLink();assert.equal(readGuestLink(),null);
   saveGuestLink(attempt);forgetGuestKey();assert.equal(readGuestLink(),null);
+});
+test('Order action attempt retains exact purpose and order, without OTP; discarded storage blocks confirmation',()=>{
+  const attempt={accessToken:newGuestKey(),challengeId:crypto.randomUUID(),actionKey:newGuestKey(),action:'CANCEL',orderId:'order'};
+  saveGuestAction({...attempt,code:'12345678',email:'secret@example.invalid'});
+  assert.deepEqual(readGuestAction(),attempt);
+  assert.deepEqual(Object.keys(JSON.parse(map.get('newoteg_guest_action_v1'))).sort(),Object.keys(attempt).sort());
+  const setItem=sessionStorage.setItem;sessionStorage.setItem=()=>{};
+  assert.throws(()=>saveGuestAction({...attempt,actionKey:newGuestKey()}));sessionStorage.setItem=setItem;
+  clearGuestAction();assert.equal(readGuestAction(),null);
+  saveGuestAction(attempt);forgetGuestKey();assert.equal(readGuestAction(),null);
 });

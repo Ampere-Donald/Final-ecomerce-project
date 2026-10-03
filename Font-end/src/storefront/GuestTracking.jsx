@@ -19,6 +19,7 @@ import {
 } from "./guestAccess";
 import Footer from "./Footer";
 import GuestLink from "./GuestLink";
+import GuestActions from "./GuestActions";
 
 export default function GuestTracking() {
   const { lang } = useI18n();
@@ -37,7 +38,9 @@ export default function GuestTracking() {
     email: "",
     code: "",
   });
-  const [challenge, setChallenge] = useState(() => readGuestRecovery()?.challengeId || "");
+  const [challenge, setChallenge] = useState(
+    () => readGuestRecovery()?.challengeId || "",
+  );
   const lock = useRef(false);
   const [refresh, setRefresh] = useState(0);
   const change = (event) =>
@@ -171,32 +174,49 @@ export default function GuestTracking() {
     event.preventDefault();
     await perform(async () => {
       const pending = readGuestRecovery();
-      const nextKey = pending?.challengeId === challenge ? pending.key : newGuestKey();
+      const nextKey =
+        pending?.challengeId === challenge ? pending.key : newGuestKey();
       // Save before POST: if its response is lost, reopening this page can read
       // the rotated key without issuing a second recovery or order.
       saveGuestRecovery(challenge, nextKey);
       let alreadyRecovered = false;
       if (pending?.challengeId === challenge) {
         try {
-          await apiClient.post("/commandes/guest/access", { accessToken: nextKey }, { timeout: 20000 });
+          await apiClient.post(
+            "/commandes/guest/access",
+            { accessToken: nextKey },
+            { timeout: 20000 },
+          );
           alreadyRecovered = true;
-        } catch (e) { if (e.response?.status !== 401) throw e; }
+        } catch (e) {
+          if (e.response?.status !== 401) throw e;
+        }
       }
       try {
-        if (!alreadyRecovered) await apiClient.post(
-          "/commandes/guest/recover",
-          {
-            challengeId: challenge,
-            code: form.code.trim(),
-            accessToken: nextKey,
-          },
-          { timeout: 20000 },
-        );
+        if (!alreadyRecovered)
+          await apiClient.post(
+            "/commandes/guest/recover",
+            {
+              challengeId: challenge,
+              code: form.code.trim(),
+              accessToken: nextKey,
+            },
+            { timeout: 20000 },
+          );
       } catch (e) {
         try {
-          await apiClient.post("/commandes/guest/access", { accessToken: nextKey }, { timeout: 20000 });
+          await apiClient.post(
+            "/commandes/guest/access",
+            { accessToken: nextKey },
+            { timeout: 20000 },
+          );
         } catch (readError) {
-          if (e.response && e.response.status < 500 && readError.response?.status === 401) clearGuestRecovery();
+          if (
+            e.response &&
+            e.response.status < 500 &&
+            readError.response?.status === 401
+          )
+            clearGuestRecovery();
           throw e;
         }
       }
@@ -278,15 +298,30 @@ export default function GuestTracking() {
                 <strong>{formatFCFA(Number(order.montantTotal))}</strong>
               </div>
               <p>
-                {order.modeReception === "RETRAIT_MAGASIN"
+                {order.statut === "ANNULEE"
                   ? tr(
-                      "Retrait à Akwa · Attendez l’avis de disponibilité.",
-                      "Collect at Akwa · Wait for availability confirmation.",
+                      "Commande annulée · Aucun retrait ni livraison prévu.",
+                      "Order cancelled · No pickup or delivery planned.",
                     )
-                  : tr(
-                      "Livraison · Frais et délai à confirmer.",
-                      "Delivery · Fees and timing to confirm.",
-                    )}
+                  : order.statut === "LIVREE"
+                    ? order.modeReception === "RETRAIT_MAGASIN"
+                      ? tr(
+                          "Retrait en boutique effectué.",
+                          "In-store pickup completed.",
+                        )
+                      : tr(
+                          "Réception de la livraison confirmée.",
+                          "Delivery receipt confirmed.",
+                        )
+                    : order.modeReception === "RETRAIT_MAGASIN"
+                      ? tr(
+                          "Retrait à Akwa · Attendez l’avis de disponibilité.",
+                          "Collect at Akwa · Wait for availability confirmation.",
+                        )
+                      : tr(
+                          "Livraison · Frais et délai à confirmer.",
+                          "Delivery · Fees and timing to confirm.",
+                        )}
               </p>
               <Link to="/contact">
                 {tr(
@@ -320,7 +355,7 @@ export default function GuestTracking() {
                   className="e-btn e-btn-outline"
                   disabled={busy}
                   onClick={() => {
-                      setRefresh((value) => value + 1);
+                    setRefresh((value) => value + 1);
                   }}
                 >
                   <RefreshCw size={16} />
@@ -464,7 +499,36 @@ export default function GuestTracking() {
           )
         )}
       </div>
-      {key && <div className="e-wrap"><GuestLink key={key} accessToken={key} available={!!data?.linking?.available} hasOrder={!!order} /></div>}
+      {key && (
+        <div className="e-wrap">
+          <GuestActions
+            key={`actions-${key}`}
+            accessToken={key}
+            order={order}
+            availability={data?.actions}
+            onDone={(result) => {
+              setNotice(
+                result.action === "CANCEL"
+                  ? tr(
+                      "Votre commande a été annulée. Aucun remboursement automatique n’a été effectué.",
+                      "Your order has been cancelled. No automatic refund was issued.",
+                    )
+                  : tr(
+                      "La réception a été confirmée. Merci !",
+                      "Receipt has been confirmed. Thank you!",
+                    ),
+              );
+              setRefresh((value) => value + 1);
+            }}
+          />
+          <GuestLink
+            key={key}
+            accessToken={key}
+            available={!!data?.linking?.available}
+            hasOrder={!!order}
+          />
+        </div>
+      )}
       <Footer />
     </>
   );

@@ -236,7 +236,12 @@ async function ageChallenge(id) {
     );
     assert.equal(unknown.message, wrong.message);
     assert.equal(mail.count, countBefore);
-    assert.equal(await db.commandeGuestChallenge.count(), 0);
+    assert.equal(
+      await db.commandeGuestChallenge.count({
+        where: { commandeId: first.result.commande.id },
+      }),
+      0,
+    );
     const recovery = await guests.requestRecovery(
       first.result.commande.numeroSuivi,
       ' Guest@Example.invalid ',
@@ -593,11 +598,23 @@ async function ageChallenge(id) {
       const stockBefore = (
         await db.produit.findUnique({ where: { id: product.id } })
       ).quantiteStock;
+      const clientsBefore = await db.client.count({
+        where: { telephone: '600000001' },
+      });
       await page.goto(base + '/product/' + product.id);
       await page
         .getByRole('button', { name: 'Ajouter au panier', exact: true })
         .first()
         .click();
+      // A full document navigation must wait for React's cart persistence effect.
+      await expect
+        .poll(() =>
+          page.evaluate(
+            () =>
+              JSON.parse(localStorage.getItem('newoteg_cart') || '[]').length,
+          ),
+        )
+        .toBe(1);
       await page.goto(base + '/checkout');
       await page
         .getByLabel('Nom complet', { exact: true })
@@ -641,7 +658,12 @@ async function ageChallenge(id) {
       ).toBeVisible();
       assert.equal(
         await db.client.count({ where: { telephone: '600000001' } }),
-        0,
+        clientsBefore,
+      );
+      assert.equal(
+        (await db.commande.findUnique({ where: { id: createdOrder.id } }))
+          .clientId,
+        null,
       );
       await ctx.close();
       ok(

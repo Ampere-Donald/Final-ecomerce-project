@@ -829,6 +829,7 @@ model CommandeGuestAccess {
 }
 
 model CommandeGuestChallenge {
+  actionResult Json? @map("action_result")
   purpose String @default("RECOVER") @db.VarChar(12)
   grantVersion Int? @map("grant_version")
   orderVersion Int? @map("order_version")
