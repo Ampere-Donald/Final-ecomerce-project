@@ -365,6 +365,15 @@ async function main() {
       ok,
       output,
     });
+    await require('./verify-end-to-end-equivalences-browser.cjs')({
+      db,
+      base,
+      api,
+      admin,
+      products,
+      ok,
+      output,
+    });
     assert.deepEqual(outside, []);
     const report = {
       status: 'passed',

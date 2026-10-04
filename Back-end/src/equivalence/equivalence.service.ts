@@ -4,6 +4,8 @@ import { DatabaseService } from 'src/database/database.service';
 import { GeminiClient } from './gemini.client';
 import { SuggestEquivalenceDto } from './dto/suggest-equivalence.dto';
 import { rankCandidates, referenceHints } from './candidate-ranking';
+import { publicCatalogue } from '../produit/public-catalogue';
+import { cataloguePricing } from '../pricing/catalogue-price';
 import {
   EQUIVALENCE_COMPONENT_CATEGORY,
   EQUIVALENCE_INELIGIBLE_MESSAGE,
@@ -44,6 +46,7 @@ const RESPONSE_SCHEMA = {
 interface CandidatProduit {
   id: string;
   nomProduit: string;
+  designationEn: string | null;
   marque: string | null;
   description: string | null;
   categorie: string | null;
@@ -52,6 +55,8 @@ interface CandidatProduit {
   quantiteStock: number;
   prixDetail: number | null;
   prixPromo: number | null;
+  prixPublic: number | null;
+  offre: ReturnType<typeof cataloguePricing>['offre'];
   imageUrl: string | null;
 }
 
@@ -133,10 +138,7 @@ export class EquivalenceService {
     // Do not require a replacement's name to contain the requested reference.
     const activeProducts = produits.filter((p: any) => p.estActif !== false);
     if (activeProducts.length || !looksLikeElectronicComponentQuery(q)) {
-      return rankCandidates(
-        q,
-        activeProducts.map((p) => this.mapCandidat(p)),
-      );
+      return rankCandidates(q, await this.availableCandidates(activeProducts));
     }
     const stockedComponents = await this.db.produit.findMany({
       where: {
@@ -155,15 +157,50 @@ export class EquivalenceService {
     });
     return rankCandidates(
       q,
-      stockedComponents
-        .filter(
+      await this.availableCandidates(
+        stockedComponents.filter(
           (p: any) =>
             p.estActif !== false &&
             isProductEligibleForEquivalence(p) &&
             p.quantiteStock > 0,
-        )
-        .map((p) => this.mapCandidat(p)),
+        ),
+      ),
     );
+  }
+
+  private async availableCandidates(
+    products: any[],
+  ): Promise<CandidatProduit[]> {
+    if (!products.length) return [];
+    // Read the current public catalogue snapshot, including unexpired shop
+    // reservations. Never label physically present but reserved units as stock.
+    const now = new Date();
+    const catalogue = await publicCatalogue(
+      this.db,
+      { limit: MAX_CANDIDATS, inStock: true },
+      now,
+      products.map((p) => p.id),
+    );
+    return catalogue.data
+      .filter((p: any) => isProductEligibleForEquivalence(p))
+      .map((p: any) => this.mapCandidat(p, now));
+  }
+
+  private suggestionProduct(p: CandidatProduit) {
+    return {
+      produitId: p.id,
+      nomProduit: p.nomProduit,
+      designationEn: p.designationEn,
+      marque: p.marque,
+      codeFamille: p.codeFamille,
+      code: p.code,
+      quantiteStock: p.quantiteStock,
+      prixDetail: p.prixDetail,
+      prixPromo: p.prixPromo,
+      prixPublic: p.prixPublic,
+      offre: p.offre,
+      imageUrl: p.imageUrl,
+    };
   }
 
   private buildLocalSuggestions(query: string, candidats: CandidatProduit[]) {
@@ -225,15 +262,7 @@ export class EquivalenceService {
       )
       .slice(0, MAX_SUGGESTIONS)
       .map(({ p }) => ({
-        produitId: p.id,
-        nomProduit: p.nomProduit,
-        marque: p.marque,
-        codeFamille: p.codeFamille,
-        code: p.code,
-        quantiteStock: p.quantiteStock,
-        prixDetail: p.prixDetail,
-        prixPromo: p.prixPromo,
-        imageUrl: p.imageUrl,
+        ...this.suggestionProduct(p),
         raison:
           'Suggestion catalogue basée sur les correspondances produit en stock.',
         compatibilite: 'inconnue',
@@ -242,18 +271,20 @@ export class EquivalenceService {
       }));
   }
 
-  private mapCandidat(p: any): CandidatProduit {
+  private mapCandidat(p: any, now: Date): CandidatProduit {
     return {
       id: p.id,
       nomProduit: p.nomProduit,
+      designationEn: p.designationEn ?? null,
       marque: p.marque ?? null,
       description: p.description ?? null,
       categorie: p.categorie?.nom ?? null,
       codeFamille: p.codeFamille ?? null,
       code: p.code ?? null,
-      quantiteStock: p.quantiteStock,
+      quantiteStock: p.quantiteDisponibleVente,
       prixDetail: p.prixDetail ?? null,
       prixPromo: p.prixPromo ?? null,
+      ...cataloguePricing(p, now),
       imageUrl: p.imageUrl ?? null,
     };
   }
@@ -417,15 +448,7 @@ export class EquivalenceService {
       .map((s: any) => {
         const p = byId.get(s.produitId)!;
         return {
-          produitId: p.id,
-          nomProduit: p.nomProduit,
-          marque: p.marque,
-          codeFamille: p.codeFamille,
-          code: p.code,
-          quantiteStock: p.quantiteStock,
-          prixDetail: p.prixDetail,
-          prixPromo: p.prixPromo,
-          imageUrl: p.imageUrl,
+          ...this.suggestionProduct(p),
           raison: String(s.raison || '').slice(0, 300),
           compatibilite: ['haute', 'moyenne', 'faible'].includes(
             s.compatibilite,

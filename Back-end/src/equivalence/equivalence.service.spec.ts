@@ -5,6 +5,30 @@ import {
   looksLikeElectronicComponentQuery,
 } from './equivalence-eligibility';
 
+// Matching/provider tests use a stable catalogue snapshot without reservations.
+// Public pricing and reservation transitions have their own regression suite.
+function createService(db: any, gemini: any) {
+  db.$transaction = jest.fn(async (callback) => {
+    const latest = db.produit.findMany.mock.results.at(-1);
+    const products = (await latest.value).filter(
+      (p: any) => p.estActif !== false && p.quantiteStock > 0,
+    );
+    return callback({
+      $queryRaw: jest.fn(async () => [
+        {
+          total: BigInt(products.length),
+          rows: products.map((p: any) => ({
+            id: p.id,
+            available: p.quantiteStock,
+          })),
+        },
+      ]),
+      produit: { findMany: jest.fn(async () => products) },
+    });
+  });
+  return new EquivalenceService(db, gemini);
+}
+
 describe('EquivalenceService eligibility', () => {
   it('retrouve BC 547 et BC 548 pour une recherche BC547 sans prendre 300 composants arbitraires', async () => {
     const products = ['BC 547', 'BC 548'].map((nomProduit, i) => ({
@@ -20,7 +44,7 @@ describe('EquivalenceService eligibility', () => {
     const gemini = {
       generateJson: jest.fn().mockResolvedValue({ suggestions: [] }),
     };
-    await new EquivalenceService(db as any, gemini as any).suggest({
+    await createService(db as any, gemini as any).suggest({
       query: 'transistor BC547',
     });
     const filters = db.produit.findMany.mock.calls[0][0].where.OR;
@@ -37,17 +61,15 @@ describe('EquivalenceService eligibility', () => {
   it('exclut la pièce d’origine en amont de la présélection depuis une fiche', async () => {
     const db = {
       produit: {
-        findUnique: jest
-          .fn()
-          .mockResolvedValue({
-            id: 'original',
-            nomProduit: 'BC 547',
-            categorie: { nom: 'Composants Électroniques' },
-          }),
+        findUnique: jest.fn().mockResolvedValue({
+          id: 'original',
+          nomProduit: 'BC 547',
+          categorie: { nom: 'Composants Électroniques' },
+        }),
         findMany: jest.fn().mockResolvedValue([]),
       },
     };
-    const service = new EquivalenceService(
+    const service = createService(
       db as any,
       { generateJson: jest.fn() } as any,
     );
@@ -87,7 +109,7 @@ describe('EquivalenceService eligibility', () => {
         ],
       }),
     };
-    const service = new EquivalenceService(db as any, gemini as any);
+    const service = createService(db as any, gemini as any);
     const result = await service.suggest({
       query: 'BC547',
       source: 'ecommerce',
@@ -110,7 +132,7 @@ describe('EquivalenceService eligibility', () => {
   it('ne transforme pas une recherche non électronique en suggestions de composants', async () => {
     const db = { produit: { findMany: jest.fn().mockResolvedValue([]) } };
     const gemini = { generateJson: jest.fn() };
-    const service = new EquivalenceService(db as any, gemini as any);
+    const service = createService(db as any, gemini as any);
     expect(
       (
         await service.suggest({
@@ -140,7 +162,7 @@ describe('EquivalenceService eligibility', () => {
       },
       suggestionEquivalence: { create: jest.fn().mockResolvedValue({}) },
     };
-    const service = new EquivalenceService(
+    const service = createService(
       db as any,
       { generateJson: jest.fn().mockResolvedValue({ suggestions: [] }) } as any,
     );
@@ -182,7 +204,7 @@ describe('EquivalenceService eligibility', () => {
       },
     };
     const gemini = { generateJson: jest.fn() };
-    const service = new EquivalenceService(db as any, gemini as any);
+    const service = createService(db as any, gemini as any);
 
     const result = await service.suggest({
       produitId: 'p1',
@@ -220,7 +242,7 @@ describe('EquivalenceService provider recovery', () => {
       },
       suggestionEquivalence: { create: jest.fn().mockResolvedValue({}) },
     };
-    const service = new EquivalenceService(
+    const service = createService(
       db as any,
       {
         generateJson: jest.fn().mockRejectedValue(new Error('offline')),
@@ -245,7 +267,7 @@ describe('EquivalenceService provider recovery', () => {
       produit: { findMany: jest.fn().mockResolvedValue([product]) },
       suggestionEquivalence: { create: jest.fn().mockResolvedValue({}) },
     };
-    return new EquivalenceService(db as any, { generateJson } as any);
+    return createService(db as any, { generateJson } as any);
   }
   afterEach(() => jest.restoreAllMocks());
   it('réessaie le fournisseur après 30 secondes de secours, sans conserver la panne 24 h', async () => {

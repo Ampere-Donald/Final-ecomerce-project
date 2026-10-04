@@ -9,6 +9,7 @@ import { adaptProduct } from "./productData";
 import { parseEquivalences } from "./equivalenceData";
 import { Copy, Crumbs, Photo, Price, Stock } from "./Elements";
 import Footer from "./Footer";
+import OfferDetails from "./OfferDetails";
 
 function Finder({ initial, targetId }) {
   const { lang } = useI18n();
@@ -220,11 +221,15 @@ function Finder({ initial, targetId }) {
                       { ...s, id: s.produitId },
                       resolveImageUrl,
                     );
+                    const name =
+                      lang === "en" && product.englishName
+                        ? product.englishName
+                        : product.model;
                     return (
                       <article className="e-equivalent" key={s.produitId}>
                         <Link
                           className="e-equivalent-photo"
-                          aria-label={s.nomProduit}
+                          aria-label={name}
                           to={"/product/" + encodeURIComponent(s.produitId)}
                         >
                           <Photo product={product} />
@@ -235,7 +240,7 @@ function Finder({ initial, targetId }) {
                             <Link
                               to={"/product/" + encodeURIComponent(s.produitId)}
                             >
-                              {s.nomProduit}
+                              {name}
                             </Link>
                           </h3>
                           {s.code && (
@@ -247,9 +252,7 @@ function Finder({ initial, targetId }) {
                           <span
                             className={
                               "e-compatibility e-compatibility--" +
-                              (state.catalogueOnly
-                                ? "inconnue"
-                                : "inconnue")
+                              (state.catalogueOnly ? "inconnue" : "inconnue")
                             }
                           >
                             <Copy
@@ -266,24 +269,41 @@ function Finder({ initial, targetId }) {
                             />
                           </span>
                           {s.raison && (
-                            <p className="e-equivalent-reason">{s.raison}</p>
+                            <p className="e-equivalent-reason">
+                              {state.catalogueOnly ? (
+                                <Copy
+                                  fr="Suggestion catalogue basée sur les correspondances produit en stock."
+                                  en="Catalogue suggestion based on matching stocked products."
+                                />
+                              ) : (
+                                s.raison
+                              )}
+                            </p>
                           )}
                           {(s.avertissement || !state.catalogueOnly) && (
                             <p className="e-equivalent-warning">
                               <strong>
                                 <Copy fr="À vérifier : " en="Check: " />
                               </strong>
-                              {s.avertissement || (
+                              {state.catalogueOnly ? (
                                 <Copy
-                                  fr="le rôle électrique, les valeurs, la polarité, le boîtier et le brochage dans une fiche constructeur."
-                                  en="electrical role, ratings, polarity, package and pinout against a manufacturer datasheet."
+                                  fr="Vérifier les caractéristiques techniques avant substitution."
+                                  en="Check the technical specifications before substitution."
                                 />
+                              ) : (
+                                s.avertissement || (
+                                  <Copy
+                                    fr="le rôle électrique, les valeurs, la polarité, le boîtier et le brochage dans une fiche constructeur."
+                                    en="electrical role, ratings, polarity, package and pinout against a manufacturer datasheet."
+                                  />
+                                )
                               )}
                             </p>
                           )}
                         </div>
                         <div className="e-equivalent-action">
                           <Price value={product.retailPrice} />
+                          <OfferDetails product={product} />
                           <Link
                             className="e-btn e-secondary"
                             to={"/product/" + encodeURIComponent(s.produitId)}
@@ -309,7 +329,7 @@ function Finder({ initial, targetId }) {
                   />
                 </h3>
                 <p>
-                  {state.message || (
+                  {(lang === "fr" && state.message) || (
                     <Copy
                       fr="Aucune pièce en stock n’a pu être proposée pour cette recherche. Précisez votre référence ou demandez conseil."
                       en="No stocked part could be suggested. Refine your reference or ask for advice."
@@ -332,20 +352,25 @@ function Finder({ initial, targetId }) {
 }
 
 export default function Equivalences() {
+  const { lang } = useI18n();
   const [params] = useSearchParams();
   const initial = (params.get("query") || "").slice(0, 255);
   const targetId = params.get("produitId") || "";
   return (
     <>
       <Helmet>
-        <title>Trouver un équivalent — X-Electronic</title>
+        <title>{`${lang === "fr" ? "Trouver un équivalent" : "Find an equivalent"} — X-Electronic`}</title>
         <meta
           name="description"
-          content="Recherchez une pièce de remplacement parmi les composants électroniques NEWOTEG en stock."
+          content={
+            lang === "fr"
+              ? "Recherchez une pièce de remplacement parmi les composants électroniques NEWOTEG en stock."
+              : "Find a replacement part among NEWOTEG electronic components available in stock."
+          }
         />
       </Helmet>
       <div className="e-wrap e-equivalences">
-        <Crumbs title="Équivalences" />
+        <Crumbs title={lang === "fr" ? "Équivalences" : "Equivalents"} />
         <div className="e-page-lead">
           <h1>
             <Copy fr="Trouver un équivalent" en="Find an equivalent" />
