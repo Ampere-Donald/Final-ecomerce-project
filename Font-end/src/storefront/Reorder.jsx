@@ -127,7 +127,7 @@ export default function Reorder({ order, onClose }) {
       const items = current
         .filter((row) => selection[row.key] > 0 && !row.reason)
         .map((row) => ({ product: row.product, quantity: selection[row.key] }));
-      if (!addSelection(items)) {
+      if (!addSelection(items, { reorder: true })) {
         setRows(current);
         setError(
           tr(

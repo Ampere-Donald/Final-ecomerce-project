@@ -19,6 +19,8 @@ import {
 } from "./orderAttempt";
 import Cart from "./Cart";
 import Footer from "./Footer";
+import { newFeeObservation } from "./journey.js";
+import { useVisibleFees } from "./useJourney.js";
 import useReception, {
   setReception,
   getReceptionSnapshot,
@@ -60,6 +62,8 @@ function CheckoutForm() {
   const [uncertain, setUncertain] = useState(Boolean(pending));
   const [success, setSuccess] = useState(null);
   const lock = useRef(false);
+  const feeSession = useRef(null);
+  if (!feeSession.current) feeSession.current = newFeeObservation();
   const heading = useRef();
   // Apply an explicit header change without erasing contact details or reusing consent.
   if (appliedReception !== reception) {
@@ -76,6 +80,12 @@ function CheckoutForm() {
   const delivery = form.mode === "LIVRAISON";
   const quoteMatches = quote && validQuote(quote, cartItems);
   const reviewing = Boolean(quoteMatches);
+  const feeRef = useVisibleFees(
+    feeSession.current,
+    reviewing && !success && !uncertain,
+    delivery ? "LIVRAISON_A_CONFIRMER" : "RETRAIT",
+    lang,
+  );
   const priceChanged =
     reviewing &&
     quote.lignes.some(
@@ -155,6 +165,7 @@ function CheckoutForm() {
       const payload = { ...attempt.payload };
       if (attempt.path === "/commandes/checkout" && attempt.payload.email)
         payload.motDePasse = form.password;
+      feeSession.current.orderStarted();
       const { data } = await apiClient.post(attempt.path, payload, {
         headers:
           attempt.userId && token ? { Authorization: `Bearer ${token}` } : {},
@@ -162,6 +173,7 @@ function CheckoutForm() {
       });
       const order = data.commande || data;
       if (!order.id || !order.numeroSuivi) throw new Error("Uncertain order");
+      feeSession.current.orderKnown();
       if (data.access_token && data.user)
         loginFromToken(data.access_token, data.user);
       const guestAccess = data.guestAccess;
@@ -209,6 +221,7 @@ function CheckoutForm() {
           ),
         );
       } else {
+        feeSession.current.orderRejected();
         forgetAttempt();
         setPending(null);
         setUncertain(false);
@@ -733,7 +746,7 @@ function CheckoutForm() {
                 {formatFCFA(reviewing ? quote.montantArticles : cartTotal)}
               </strong>
             </div>
-            <div>
+            <div ref={feeRef}>
               <span>
                 {delivery
                   ? tr("Frais de livraison", "Delivery fees")

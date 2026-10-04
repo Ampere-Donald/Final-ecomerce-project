@@ -9,6 +9,7 @@ import Header from "./storefront/Header";
 import ProtectedRoute from "./components/ProtectedRoute/ProtectedRoute";
 import Toast from "./components/Toast/Toast";
 import BottomNav from "./storefront/BottomNav";
+import { startJourney, leaveCheckout } from "./storefront/journey.js";
 
 const Home = lazy(() => import("./storefront/Home"));
 const Catalogue = lazy(() => import("./storefront/Catalogue"));
@@ -51,6 +52,10 @@ const PageFallback = () => (
 
 function AppContent() {
   const location = useLocation();
+  useEffect(() => {
+    startJourney();
+    if (location.pathname !== "/checkout") leaveCheckout();
+  }, [location.pathname]);
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [location.pathname]);

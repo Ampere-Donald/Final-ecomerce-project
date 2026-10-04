@@ -10,6 +10,7 @@ import { adaptProduct, resultPage } from "./productData";
 import { Copy, Card, Crumbs, State, Modal } from "./Elements";
 import Footer from "./Footer";
 import { ComparisonLink } from "./ComparisonAction";
+import { useJourneyObservation } from "./useJourney.js";
 
 export default function Catalogue() {
   const [params, setParams] = useSearchParams();
@@ -40,6 +41,26 @@ export default function Catalogue() {
   } catch (e) {
     parseError = e;
   }
+  useJourneyObservation(
+    "RECHERCHE_VIDE",
+    Boolean(
+      query.trim() &&
+      page === 1 &&
+      resource.data &&
+      !resource.loading &&
+      !resource.error &&
+      !parseError &&
+      result.total === 0,
+    ),
+    JSON.stringify([
+      query,
+      category,
+      inStock,
+      params.get("minPrice"),
+      params.get("maxPrice"),
+    ]),
+    lang,
+  );
   const cats = Array.isArray(categories.data)
     ? categories.data
     : categories.data?.data || [];

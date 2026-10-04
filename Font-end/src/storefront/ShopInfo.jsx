@@ -18,6 +18,7 @@ import Footer from "./Footer";
 import team from "./teamData.json";
 import { shopContact as shop } from "./shopContact";
 import "./shop-info.css";
+import { recordObservation } from "./journey.js";
 
 const videos = [
   "20260325_133312",
@@ -338,6 +339,7 @@ function ContactShop() {
             <a
               className="e-contact-whatsapp"
               href={shop.whatsapp}
+              onClick={() => recordObservation("WHATSAPP_OUVERT", lang)}
               target="_blank"
               rel="noopener noreferrer"
             >

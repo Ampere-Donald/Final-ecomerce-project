@@ -3,6 +3,7 @@ import { MessageCircle } from "lucide-react";
 import { useI18n } from "../context/I18nContext";
 import { Modal } from "./Elements";
 import { adviceMessage, adviceHref } from "./productAdviceData";
+import { recordObservation } from "./journey.js";
 export default function ProductAdvice({ product, quantity }) {
   const { lang } = useI18n();
   const tr = (fr, en) => (lang === "en" ? en : fr);
@@ -64,6 +65,7 @@ export default function ProductAdvice({ product, quantity }) {
               href={href}
               target="_blank"
               rel="noopener noreferrer"
+              onClick={() => recordObservation("WHATSAPP_OUVERT", lang)}
             >
               {tr(
                 "Ouvrir ce message dans WhatsApp",

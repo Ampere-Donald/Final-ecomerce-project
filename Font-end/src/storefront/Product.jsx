@@ -23,8 +23,9 @@ import Footer from "./Footer";
 import ProductAdvice from "./ProductAdvice";
 import { ReceptionSummary } from "./ReceptionChoice";
 import ComparisonAction, { ComparisonLink } from "./ComparisonAction";
-import OfferDetails from './OfferDetails';
-import ProductReviews from './ProductReviews';
+import OfferDetails from "./OfferDetails";
+import ProductReviews from "./ProductReviews";
+import { useJourneyObservation } from "./useJourney.js";
 
 function Detail({ product }) {
   const [quantity, setQuantity] = useState(1),
@@ -32,6 +33,7 @@ function Detail({ product }) {
     [zoom, setZoom] = useState(false);
   const { addToCart } = useCart();
   const { lang } = useI18n();
+  useJourneyObservation("FICHE_OUVERTE", Boolean(product.id), product.id, lang);
   const related = useResource(
     "/produits?limit=5" +
       (product.categoryId

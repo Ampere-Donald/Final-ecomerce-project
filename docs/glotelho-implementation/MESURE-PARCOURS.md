@@ -1,6 +1,6 @@
 # Mesurer les parcours NEWOTEG
 
-État du 4 octobre 2026, branche locale `codex/newoteg-evolution`. Lot L7 en cours. Cette livraison prépare le serveur : les observations ne sont pas encore raccordées aux pages et aucun tableau de lecture n’est intégré à l’administration. Aucun résultat commercial n’est établi par la recette fictive.
+État du 4 octobre 2026, branche locale `codex/newoteg-evolution`. Lot L7 en cours. Serveur et observations des pages raccordés localement ; tableau de lecture administratif et registre d’incompatibilités encore à livrer. Collecte désactivée sur le serveur de démonstration. Aucun résultat commercial n’est établi par la recette fictive.
 
 ## Contrat livré
 
@@ -15,6 +15,22 @@ Seuls le jour courant et le précédent sont acceptés pour une reprise courte a
 `parcours_jour` conserve seulement les compteurs par dimensions. `parcours_recu` contient UUID d’observation, empreinte des dimensions et jour d’expiration, sans payload brut ni horodatage individuel. Expiration huit jours après enregistrement ; purge quotidienne de 2 000 reçus expirés au maximum par passage, sans effacer les agrégats. Les observations anciennes restent refusées après purge. La durée d’exploitation de l’historique agrégé et sa capacité sont à relire avant activation.
 
 Le journal métier exclut cette route, y compris les variantes de casse et barre finale reconnues par Express. Il ne conserve donc pas IP, compte ou corrélation pour ces observations. Les journaux du proxy, de l’hébergeur ou du réseau devront être vérifiés en L8. Une panne de base produit une réponse générique sans payload Prisma dans le journal des exceptions.
+
+## Raccordement des pages
+
+Le navigateur vérifie une fois la disponibilité par document. Collecteur désactivé ou inaccessible : aucun POST d’observation, aucun achat bloqué. Requêtes `fetch` distinctes de l’authentification Axios, sans Authorization, cookie ni URL de provenance. Buffer en mémoire de 60 observations au maximum, lots de 20 espacés normalement de cinq secondes ; trois essais au maximum après coupure/erreur serveur, avec les mêmes UUID et payloads. Pas de stockage local/session, pas de suivi individuel. À la fermeture, l’envoi `keepalive` est tenté ; fermeture brutale, rechargement ou panne peuvent perdre des observations, sans inventer des résultats.
+
+| Action | Déclenchement |
+| --- | --- |
+| Recherche vide | Réponse valide de la première page, recherche non vide et zéro résultat. Nouvelle recherche/filtres possibles ; tri et changement de langue seuls ne redoublent pas la même recherche |
+| Fiche ouverte | Détail produit effectivement monté après succès, une fois par visite, même avec les rendus de contrôle React |
+| Ajout panier | Augmentation de quantité effectivement appliquée et rendue par le réducteur ; aucun comptage de restauration, édition, suppression ou clic plafonné par le stock |
+| Réachat | Ajout groupé réellement appliqué depuis l’historique ; également un ajout panier, jamais une commande automatique |
+| Frais vus | Ligne de réception entièrement dans la fenêtre visible après devis valide. Retrait ou livraison à confirmer restent distincts ; pas de faux tarif calculé |
+| Sortie après frais | Navigation hors checkout ou départ du document après exposition, sans commande connue ni tentative en cours/incertaine. Nettoyage React, édition du formulaire et changement d’onglet ne constituent pas un abandon |
+| WhatsApp | Activation du lien du conseil produit/contact ou de la demande de disponibilité ; aucun contenu du message dans la mesure, aucune preuve d’envoi ou de vente |
+
+Le retour d’une page conservée par le navigateur peut exposer les frais à nouveau, sans effacer l’état incertain d’une tentative. Les UUID utilisent aussi le générateur cryptographique de secours quand `crypto.randomUUID` manque ; aucune clé de commande n’est réutilisée. La classe d’écran indique la largeur de fenêtre, pas le modèle matériel ni l’identité du client.
 
 ## Rapport et interprétation
 
@@ -42,10 +58,12 @@ Les observations anonymes peuvent être bloquées ou falsifiées avec de nouveau
 - Six groupes PostgreSQL/Nest/JWT réels : désactivation/DTO ; rejeu/conflit ; concurrence/rollback ; rapport dédupliqué/confidentiel ; droits/session/dates ; expiration/contrainte SQL. Le plafond global n’est pas exercé par cette application Nest minimale.
 - Migration additive `20261004100000_journey_metrics` comparée au diff Prisma hors ligne, avec contraintes SQL supplémentaires. Application locale seulement, aucun accès Railway.
 - Preuve : `C:/Users/pc/Documents/Newoteg/output/implementation-work/captures/parcours-server/result.json`. Fixtures fictives, aucune observation réelle de visiteur.
+- 67 tests Node storefront, lint ciblé et build Vite réussis ; huit tests de mesure portent sur schéma fermé, calendrier, absence de POST si désactivé, rejeu exact, bornes mémoire/essais, concurrence réseau, réduction du panier et départ après frais.
+- Recette navigateur : six groupes supplémentaires avec les vrais endpoints Nest/PostgreSQL de mesure, coques commerce/authentification simulées. Recherche contenant un email fictif non transmis ; entêtes sans jeton/cookie/provenance ; réponse perdue et reçu unique en base ; frais visibles, navigation, succès et réponse incertaine ; réachat ; collecte désactivée ; six largeurs et FR/EN. Le contrôle à 360 px retire la méthode native UUID pour vérifier le secours cryptographique, sans prétendre tester un ancien navigateur ou téléphone réel.
+- Lancer cette recette uniquement avec `NEWOTEG_PARCOURS_TEST_DATABASE_URL` sur la base dédiée et `NEWOTEG_PARCOURS_BROWSER=true`. `verify-parcours-browser.cjs` est appelé par le script gardé, les observations sont enregistrées pour nettoyer leurs seuls reçus/dimensions. Captures 390/1440 px et résultat dans `captures/parcours-ui`, inspectés ; aucun service extérieur, paiement, commande boutique ou activation du collecteur principal.
 
 ## Suite L7
 
-1. Raccorder les observations aux réussites effectives dans les pages, sans compter refus, chargement ou nettoyage React comme action client. Aucun envoi de recherche libre ou identifiant de commande ; panne du collecteur sans blocage d’achat.
-2. Ajouter la lecture administrative : périodes comparables, état désactivé/incomplet, séparation observations et données métier, limites explicites.
-3. Préparer le registre des incompatibilités d’articles reçus et son traitement boutique. Les mouvements de stock d’annulation et les avis négatifs ne sont pas des retours pour incompatibilité.
-4. Recette navigateur et équipe, journaux et base de référence avant activation. L7/L8 ouverts ; publication L9 non autorisée.
+1. Ajouter la lecture administrative : périodes comparables, état désactivé/incomplet, séparation observations et données métier, limites explicites.
+2. Préparer le registre des incompatibilités d’articles reçus et son traitement boutique. Les mouvements de stock d’annulation et les avis négatifs ne sont pas des retours pour incompatibilité.
+3. Recette transversale et équipe, journaux, information de confidentialité et base de référence avant activation. L7/L8 ouverts ; publication L9 non autorisée.

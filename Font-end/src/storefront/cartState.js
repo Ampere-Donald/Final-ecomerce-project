@@ -108,3 +108,26 @@ export function cartReducer(state, action) {
       return state;
   }
 }
+
+// Pure reducer: only committed quantity increases expose observation receipts.
+// HYDRATE/edits/removals never turn into a reported add-to-cart.
+export function cartJourneyReducer(state, action) {
+  if (action.type === "OBSERVATIONS_SENT") {
+    const ids = new Set(action.ids);
+    return {
+      ...state,
+      observations: state.observations.filter((e) => !ids.has(e.id)),
+    };
+  }
+  const items = cartReducer(state.items, action);
+  const count = (rows) => rows.reduce((n, row) => n + row.quantity, 0);
+  const accepted =
+    ["ADD_ITEM", "ADD_SELECTION"].includes(action.type) &&
+    count(items) > count(state.items);
+  return {
+    items,
+    observations: accepted
+      ? [...state.observations, ...(action.observations || []).filter(Boolean)]
+      : state.observations,
+  };
+}

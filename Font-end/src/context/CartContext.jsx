@@ -8,7 +8,12 @@ import {
   useState,
 } from "react";
 
-import { cartReducer, canAddSelection } from "../storefront/cartState";
+import { cartJourneyReducer, canAddSelection } from "../storefront/cartState";
+import {
+  prepareObservation,
+  recordPreparedObservation,
+} from "../storefront/journey.js";
+import { useI18n } from "./I18nContext";
 import { canBuy } from "../storefront/productData";
 import { refreshSavedProducts } from "../utils/refreshSavedProducts";
 import { inquireAboutProduct } from "../utils/productAvailability";
@@ -20,10 +25,20 @@ const CartContext = createContext(null);
 const STORAGE_KEY = "newoteg_cart";
 
 export function CartProvider({ children }) {
-  const [cartItems, dispatch] = useReducer(cartReducer, []);
+  const [{ items: cartItems, observations }, dispatch] = useReducer(
+    cartJourneyReducer,
+    { items: [], observations: [] },
+  );
+  const { lang } = useI18n();
   const [cacheChecked, setCacheChecked] = useState(false);
   const [toasts, setToasts] = useState([]); // [{ id, message, type }]
   const [isCartOpen, setIsCartOpen] = useState(false);
+
+  useEffect(() => {
+    if (!observations.length) return;
+    observations.forEach(recordPreparedObservation);
+    dispatch({ type: "OBSERVATIONS_SENT", ids: observations.map((e) => e.id) });
+  }, [observations]);
 
   useEffect(() => {
     let active = true;
@@ -73,10 +88,14 @@ export function CartProvider({ children }) {
         return;
       }
       if (!Number.isInteger(quantity) || quantity < 1) return;
-      dispatch({ type: "ADD_ITEM", payload: { product, quantity } });
+      dispatch({
+        type: "ADD_ITEM",
+        payload: { product, quantity },
+        observations: [prepareObservation("AJOUT_PANIER", lang)],
+      });
       showToast(product.model, "cart");
     },
-    [showToast],
+    [showToast, lang],
   );
 
   const removeFromCart = useCallback((code) => {
@@ -84,9 +103,16 @@ export function CartProvider({ children }) {
   }, []);
 
   const addSelection = useCallback(
-    (selection) => {
+    (selection, { reorder = false } = {}) => {
       if (!canAddSelection(cartItems, selection)) return false;
-      dispatch({ type: "ADD_SELECTION", payload: selection });
+      dispatch({
+        type: "ADD_SELECTION",
+        payload: selection,
+        observations: [
+          prepareObservation("AJOUT_PANIER", lang),
+          ...(reorder ? [prepareObservation("REACHAT_AJOUTE", lang)] : []),
+        ],
+      });
       showToast(
         selection[0].product.model +
           (selection.length > 1 ? ` + ${selection.length - 1}` : ""),
@@ -94,7 +120,7 @@ export function CartProvider({ children }) {
       );
       return true;
     },
-    [cartItems, showToast],
+    [cartItems, showToast, lang],
   );
 
   const updateQuantity = useCallback((code, quantity) => {

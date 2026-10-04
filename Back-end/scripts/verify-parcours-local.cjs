@@ -38,7 +38,8 @@ const service = new ParcoursService(db),
   orders = [],
   requests = [],
   admins = [],
-  receiptIds = [];
+  receiptIds = [],
+  browserEvents = [];
 let app, client, demande, base;
 const dayMs = 86400000,
   now = new Date(),
@@ -463,6 +464,19 @@ async function fixture(
     ok(
       'Receipt expiry removes only expired dedupe keys, preserves aggregate/history and SQL positive-count bounds',
     );
+    if (process.env.NEWOTEG_PARCOURS_BROWSER === 'true') {
+      const beforeOrders = await db.commande.count();
+      await require('./verify-parcours-browser.cjs')({
+        base,
+        db,
+        ok,
+        remember: (e) => {
+          browserEvents.push(e);
+          receiptIds.push(e.id);
+        },
+      });
+      assert.equal(await db.commande.count(), beforeOrders);
+    }
     const out =
       'C:/Users/pc/Documents/Newoteg/output/implementation-work/captures/parcours-server/result.json';
     fs.mkdirSync(path.dirname(out), { recursive: true });
@@ -474,7 +488,10 @@ async function fixture(
           checks,
           externalRequests: 0,
           limits: [
-            'browser hooks, admin dashboard and compatibility-return registry remain to integrate',
+            'admin dashboard and compatibility-return registry remain to integrate',
+            ...(process.env.NEWOTEG_PARCOURS_BROWSER === 'true'
+              ? ['browser commerce APIs mocked, observation API real']
+              : ['browser recipe not requested in this run']),
             'anonymous observations are not verified sales',
             'migrations local only',
           ],
@@ -496,6 +513,18 @@ async function fixture(
           langue: 'en',
           appareil: 'tablette',
           evenement: { in: ['FICHE_OUVERTE', 'FRAIS_VUS', 'AJOUT_PANIER'] },
+        },
+      });
+    if (browserEvents.length)
+      await db.parcoursJour.deleteMany({
+        where: {
+          OR: browserEvents.map((e) => ({
+            jour: new Date(e.jour + 'T00:00:00Z'),
+            evenement: e.evenement,
+            langue: e.langue,
+            appareil: e.appareil,
+            reception: e.reception,
+          })),
         },
       });
     if (demande) await db.demandeDevis.delete({ where: { id: demande.id } });
