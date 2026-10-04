@@ -7,6 +7,7 @@ import {
 import { createHash } from 'crypto';
 import { Prisma, StatutAvis } from '@prisma/client';
 import { DatabaseService } from '../database/database.service';
+import { photoSignature, preparePhoto } from './avis-photo';
 import {
   AVIS_MOTIFS,
   CreateAvisDto,
@@ -22,6 +23,9 @@ const publicSelect = {
   projetRealise: true,
   createdAt: true,
   reponseBoutique: true,
+  photoWidth: true,
+  photoHeight: true,
+  photoStatut: true,
 } satisfies Prisma.AvisProduitSelect;
 export const privateAvisSelect = {
   ...publicSelect,
@@ -40,7 +44,14 @@ export function avisContent(dto: CreateAvisDto) {
     : null;
   if (!Number.isInteger(dto.note) || dto.note < 1 || dto.note > 5)
     throw new BadRequestException('Note attendue entre 1 et 5.');
-  return { note: dto.note, texte, pseudonyme, projetRealise };
+  const photoInputHash = photoSignature(dto.photo);
+  return {
+    note: dto.note,
+    texte,
+    pseudonyme,
+    projetRealise,
+    ...(photoInputHash ? { photoInputHash } : {}),
+  };
 }
 function text(value: string, min: number, max: number) {
   if (typeof value !== 'string')
@@ -112,7 +123,21 @@ export class AvisService {
           moyenne: summary._avg.note,
           page,
           limit,
-          items: items.map((item) => ({ ...item, achatVerifie: true })),
+          items: items.map(
+            ({ photoWidth, photoHeight, photoStatut, ...item }) => ({
+              ...item,
+              achatVerifie: true,
+              ...(photoStatut === 'PUBLIE' && photoWidth && photoHeight
+                ? {
+                    photo: {
+                      url: `/api/avis/${item.id}/photo`,
+                      width: photoWidth,
+                      height: photoHeight,
+                    },
+                  }
+                : {}),
+            }),
+          ),
         };
       },
       { isolationLevel: Prisma.TransactionIsolationLevel.RepeatableRead },
@@ -216,6 +241,7 @@ export class AvisService {
           requestId: dto.requestId,
           fingerprint: signature,
           ...avisContent(dto),
+          ...(await preparePhoto(dto.photo)),
         },
         select: { id: true },
       });
@@ -239,7 +265,13 @@ export class AvisService {
         ligne: { select: { nomProduit: true } },
         _count: { select: { signalements: true } },
         historique: {
-          select: { action: true, motif: true, createdAt: true },
+          select: {
+            action: true,
+            motif: true,
+            photoAction: true,
+            photoMotif: true,
+            createdAt: true,
+          },
           orderBy: { createdAt: 'desc' },
           take: 20,
         },
@@ -266,6 +298,13 @@ export class AvisService {
       throw new BadRequestException('Motif incompatible avec cette action.');
     if (dto.action !== 'REPONDRE' && dto.reponse !== undefined)
       throw new BadRequestException('Réponse incompatible avec cette action.');
+    if (
+      dto.action !== 'PUBLIER' &&
+      (dto.photoPubliee !== undefined || dto.photoMotif !== undefined)
+    )
+      throw new BadRequestException(
+        'Décision photo incompatible avec cette action.',
+      );
     const reponse =
       dto.action === 'REPONDRE' ? text(dto.reponse!, 2, 1000) : null;
     const signature = avisFingerprint({ actorId, id, ...dto, reponse });
@@ -286,6 +325,26 @@ export class AvisService {
         if (!review) throw new NotFoundException('Avis introuvable.');
         if (review.version !== dto.expectedVersion)
           throw new ConflictException('Avis modifié. Actualisez la liste.');
+        if (dto.action === 'PUBLIER') {
+          if (review.photoData && typeof dto.photoPubliee !== 'boolean')
+            throw new BadRequestException(
+              'Relisez la photo et choisissez explicitement sa publication ou son refus.',
+            );
+          if (
+            !review.photoData &&
+            (dto.photoPubliee !== undefined || dto.photoMotif !== undefined)
+          )
+            throw new BadRequestException('Cet avis ne contient pas de photo.');
+          if (
+            review.photoData &&
+            (dto.photoPubliee
+              ? dto.photoMotif !== undefined
+              : !AVIS_MOTIFS.includes(dto.photoMotif!))
+          )
+            throw new BadRequestException(
+              'Un refus de photo exige un motif de contenu ; une photo publiée n’en exige pas.',
+            );
+        }
         if (dto.action === 'REPONDRE' && review.statut !== 'PUBLIE')
           throw new ConflictException('Publiez l’avis avant de répondre.');
         const result = await tx.avisProduit.update({
@@ -295,6 +354,9 @@ export class AvisService {
               ? { reponseBoutique: reponse }
               : { statut: dto.action === 'PUBLIER' ? 'PUBLIE' : 'REFUSE' }),
             version: { increment: 1 },
+            ...(dto.action === 'PUBLIER' && review.photoData
+              ? { photoStatut: dto.photoPubliee ? 'PUBLIE' : 'REFUSE' }
+              : {}),
           },
           select: { id: true, statut: true, version: true },
         });
@@ -307,6 +369,13 @@ export class AvisService {
             fingerprint: signature,
             action: dto.action,
             motif: dto.motif || null,
+            photoAction:
+              dto.action === 'PUBLIER' && review.photoData
+                ? dto.photoPubliee
+                  ? 'PUBLIE'
+                  : 'REFUSE'
+                : null,
+            photoMotif: dto.photoMotif || null,
             resultat: result,
           },
         });
@@ -338,5 +407,32 @@ export class AvisService {
       // Reports never remove a review automatically, including coordinated reports.
       return { enregistre: true };
     });
+  }
+
+  async publicPhoto(id: string) {
+    return this.photo({
+      id,
+      statut: 'PUBLIE',
+      photoStatut: 'PUBLIE',
+      ligne: {
+        produit: { estActif: true },
+        commande: { statut: 'LIVREE', dateLivraison: { not: null } },
+      },
+    });
+  }
+  async accountPhoto(clientId: string, id: string) {
+    return this.photo({ id, ligne: { commande: { clientId } } });
+  }
+  async adminPhoto(id: string) {
+    return this.photo({ id });
+  }
+  /** Internal only: callers supply an authorization predicate, never an HTTP body. */
+  async photo(where: Prisma.AvisProduitWhereInput) {
+    const review = await this.db.avisProduit.findFirst({
+      where,
+      select: { photoData: true },
+    });
+    if (!review?.photoData) throw new NotFoundException('Photo indisponible.');
+    return Buffer.from(review.photoData);
   }
 }

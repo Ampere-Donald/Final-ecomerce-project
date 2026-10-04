@@ -10,6 +10,7 @@ import {
   Query,
   Request,
   UseGuards,
+  StreamableFile,
 } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
@@ -22,6 +23,43 @@ import { CreateAvisDto, ModererAvisDto, SignalerAvisDto } from './avis.dto';
 @Controller('avis')
 export class AvisController {
   constructor(private readonly service: AvisService) {}
+  @Get(':id/photo')
+  @Header('Cache-Control', 'no-store')
+  @Header('Cross-Origin-Resource-Policy', 'cross-origin')
+  @Header('X-Content-Type-Options', 'nosniff')
+  @Header('Referrer-Policy', 'no-referrer')
+  async publicPhoto(@Param('id', ParseUUIDPipe) id: string) {
+    return new StreamableFile(await this.service.publicPhoto(id), {
+      type: 'image/webp',
+    });
+  }
+  @Get(':id/photo-privee')
+  @UseGuards(JwtAuthGuard)
+  @Header('Cache-Control', 'private, no-store')
+  @Header('X-Robots-Tag', 'noindex, nofollow')
+  @Header('Referrer-Policy', 'no-referrer')
+  @Header('X-Content-Type-Options', 'nosniff')
+  async privatePhoto(
+    @Request() req: any,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
+    return new StreamableFile(
+      await this.service.accountPhoto(req.user.id, id),
+      { type: 'image/webp' },
+    );
+  }
+  @Get('admin/:id/photo')
+  @UseGuards(AdminAuthGuard, RolesGuard)
+  @Roles('ADMIN', 'SUPER_ADMIN')
+  @Header('Cache-Control', 'private, no-store')
+  @Header('X-Robots-Tag', 'noindex, nofollow')
+  @Header('Referrer-Policy', 'no-referrer')
+  @Header('X-Content-Type-Options', 'nosniff')
+  async adminPhoto(@Param('id', ParseUUIDPipe) id: string) {
+    return new StreamableFile(await this.service.adminPhoto(id), {
+      type: 'image/webp',
+    });
+  }
   @Get('produits/:id')
   @Header('Cache-Control', 'no-store')
   publicList(

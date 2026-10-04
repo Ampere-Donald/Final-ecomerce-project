@@ -914,6 +914,11 @@ model AvisProduit {
   version Int @default(1)
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   reponseBoutique String? @map("reponse_boutique") @db.VarChar(1000)
+  photoData Bytes? @map("photo_data")
+  photoInputHash String? @map("photo_input_hash") @db.VarChar(64)
+  photoWidth Int? @map("photo_width")
+  photoHeight Int? @map("photo_height")
+  photoStatut StatutAvis? @map("photo_statut")
   ligne LigneCommande @relation(fields: [ligneCommandeId], references: [id], onDelete: Restrict)
   historique AvisModeration[]
   signalements AvisSignalement[]
@@ -929,6 +934,8 @@ model AvisModeration {
   acteurId String @map("acteur_id")
   action String @db.VarChar(12)
   motif String? @db.VarChar(30)
+  photoAction String? @map("photo_action") @db.VarChar(12)
+  photoMotif String? @map("photo_motif") @db.VarChar(30)
   resultat Json
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   avis AvisProduit @relation(fields: [avisId], references: [id], onDelete: Restrict)

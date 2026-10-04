@@ -186,6 +186,22 @@ const clientToken = (c) => jwt.sign({ sub: c.id, type: 'client' });
         ),
       );
     }
+    const photoColumns = await pool.query(
+      "SELECT 1 FROM information_schema.columns WHERE table_name='avis_produit' AND column_name='photo_data'",
+    );
+    if (!photoColumns.rowCount) {
+      if (process.env.NEWOTEG_REVIEWS_APPLY_SCHEMA !== 'true')
+        throw Error('Explicit isolated schema apply flag required');
+      await pool.query(
+        fs.readFileSync(
+          path.join(
+            __dirname,
+            '../prisma/migrations/20261003150000_review_photos/migration.sql',
+          ),
+          'utf8',
+        ),
+      );
+    }
     category = await db.categorie.create({
       data: { nom: 'Recette avis ' + randomUUID() },
     });
@@ -237,6 +253,7 @@ const clientToken = (c) => jwt.sign({ sub: c.id, type: 'client' });
       ],
     }).compile();
     app = module.createNestApplication({ logger: false });
+    app.useBodyParser('json', { limit: '512kb' });
     app.setGlobalPrefix('api');
     app.useGlobalPipes(
       new ValidationPipe({ whitelist: true, transform: true }),
@@ -791,6 +808,26 @@ const clientToken = (c) => jwt.sign({ sub: c.id, type: 'client' });
       'Shared sending budget, failed delivery consumption and received status enforced for guests',
     );
 
+    await require('./verify-review-photos-local.cjs')({
+      db,
+      base,
+      fixture,
+      guestFixture,
+      clients,
+      admins,
+      product,
+      clientToken,
+      adminToken,
+      http,
+      body,
+      consent,
+      execute,
+      service,
+      guestReviews,
+      mail,
+      ok,
+      failingDb,
+    });
     if (process.env.NEWOTEG_REVIEWS_TEST_BROWSER === 'true')
       await require('./verify-reviews-browser.cjs')({
         db,
@@ -816,7 +853,7 @@ const clientToken = (c) => jwt.sign({ sub: c.id, type: 'client' });
           checks,
           database: 'isolated local fixtures only',
           limits: [
-            'photos and metrics still to deliver',
+            'metrics still to deliver',
             'emails captured only, no provider',
           ],
           externalRequests: 0,

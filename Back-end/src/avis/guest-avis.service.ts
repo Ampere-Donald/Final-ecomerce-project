@@ -10,6 +10,7 @@ import { DatabaseService } from '../database/database.service';
 import { MailService } from '../auth/mail.service';
 import { guestTokenHash } from '../commande/guest-access';
 import { CreateAvisDto } from './avis.dto';
+import { preparePhoto } from './avis-photo';
 import {
   avisContent,
   avisFingerprint,
@@ -144,6 +145,9 @@ export class GuestAvisService {
           'Attendez avant de demander un nouveau code.',
           429,
         );
+      // Decode only after access, purchase and sending budget checks. No file is
+      // persisted or code sent if the image is invalid.
+      await preparePhoto(dto.photo);
       await tx.commandeGuestChallenge.updateMany({
         where: { commandeId: grant.commandeId, consumedAt: null },
         data: { consumedAt: now },
@@ -328,6 +332,25 @@ export class GuestAvisService {
       requestId: dto.requestId,
       ligneCommandeId: dto.ligneCommandeId,
       ...avisContent(dto),
+    });
+  }
+  async photo(token: string, id: string) {
+    const hash = guestTokenHash(token);
+    if (!hash) return this.unavailable();
+    return this.reviews.photo({
+      id,
+      ligne: {
+        commande: {
+          clientId: null,
+          guestAccess: {
+            is: {
+              tokenHash: hash,
+              revokedAt: null,
+              expiresAt: { gt: new Date() },
+            },
+          },
+        },
+      },
     });
   }
   private digest(value: string) {

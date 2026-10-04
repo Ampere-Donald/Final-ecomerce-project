@@ -26,6 +26,8 @@ async function bootstrap() {
 
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
   app.enableShutdownHooks();
+  // One prepared review photo is capped at 256 KiB before base64 encoding.
+  app.useBodyParser('json', { limit: '512kb' });
   app.use(correlationIdMiddleware);
 
   // ── Security headers ───────────────────────────────────────────────────

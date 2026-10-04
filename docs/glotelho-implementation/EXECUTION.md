@@ -1,6 +1,6 @@
 # Suivi d’exécution — NEWOTEG / X-Electronic
 
-Dernière mise à jour : 3 octobre 2026. Exécution des lots L0–L8 autorisée par l’utilisateur; L9 reste soumis à une autorisation distincte.
+Dernière mise à jour : 4 octobre 2026. Exécution des lots L0–L8 autorisée par l’utilisateur; L9 reste soumis à une autorisation distincte.
 
 ## Suivi invité et récupération email — 3 octobre 2026
 
@@ -30,8 +30,8 @@ Dernière mise à jour : 3 octobre 2026. Exécution des lots L0–L8 autorisée 
 | L3 — Recherche et équivalences | En cours | Comparateur de 2–3 références d’une même famille intégré et vérifié sur API simulée et backend local réel. Pistes IA toujours non validées techniquement, aucun ajout automatique. Références étalons, technicien NEWOTEG et budget d’essai distant restent attendus. |
 | L4 — Projets et sélections | En cours | Projets, éditeur, sélection/ajout atomique, offres, arrivages et tri/filtres au prix public vérifiés sur PostgreSQL local. Projet pilote réel relu par NEWOTEG et animation commerciale restent à réaliser. |
 | L5 — Devis et achats récurrents | En cours | Réachat, demande, réponse, acceptation en commande, proposition client imprimable et affectation explicite intégrés. Concurrence et rollback de l’acceptation vérifiés sur PostgreSQL local isolé. Préparation depuis les références choisies et reprise durable intégrées ; migrations non appliquées à Railway. |
-| L6 — Commande invitée | En cours | Achat invité et demande de livraison testés sur API simulée; compte facultatif. Reprise après réponse perdue/rechargement corrigée pour l’invité sans mot de passe, même requestId et payload. La confirmation affiche le contact boutique pour l’invité. Suivi privé et rattachement restent ouverts. |
-| L7 — Avis et mesure | À faire | Preuve de réception, modération et instrumentation à concevoir sans PII. |
+| L6 — Commande invitée | En cours | Achat, suivi privé, récupération email, rattachement, actions sensibles, administration et entretien des codes vérifiés localement. Fournisseurs email/SMS absents, activation et pilote humain encore ouverts. |
+| L7 — Avis et mesure | En cours | Avis par ligne reçue, parcours compte/invité, modération et photos privées jusqu’à validation intégrés et vérifiés. Instrumentation sans PII et recette humaine restantes. |
 | L8 — Recette et préproduction | À faire | Dépend des lots précédents, de l’environnement isolé et de la procédure de restauration. |
 | L9 — Publication publique | Non autorisé | N’entre pas dans l’autorisation actuelle. |
 
@@ -204,3 +204,10 @@ Dernière mise à jour : 3 octobre 2026. Exécution des lots L0–L8 autorisée 
 - Builds backend, storefront et administration, typage admin, lints ciblés, sept suites backend (45 tests) et 58 tests Node storefront réussis. Quatorze groupes PostgreSQL/HTTP réels et quatre groupes navigateur passent, dont publication à 1/5, réponses perdues, reprise sans second email/avis/décision, signalement sans masquage et six largeurs 360–1440 px. Tab/Shift+Tab, Escape et retour du focus du formulaire vérifiés. Coques catalogue/compte/suivi/authentification admin simulées ; toutes les routes d’avis utilisent Nest/JWT/PostgreSQL réel. Edge indépendant, aucun téléphone physique testé.
 - Une première recette interrompue pendant la fermeture du navigateur avait laissé ses fixtures. Les callbacks sont désormais attendus avant fermeture ; sélection de l’avis testé par son identifiant exact. Les fixtures abandonnées ont été nettoyées après vérification des identifiants produit/catégorie et des 24 commandes fictives, dans la seule base dédiée. Preuve de nettoyage dans `captures/reviews-ui/interrupted-fixture-cleanup.json`. Les exécutions suivantes nettoient leurs propres fixtures.
 - Migration additive du challenge comparée hors ligne et appliquée localement ; backend local relancé sur le build vérifié, messages et nettoyage cron désactivés. Aucun stock, paiement, Railway ou déploiement. L7 reste ouvert pour photos et indicateurs ; L4/L6 pour leurs dépendances réelles ; L8 pour recette/pilote. Objectif A–Z actif, publication L9 non autorisée.
+
+## Photos des avis — 3–4 octobre 2026
+
+- Une photo facultative du projet ou de l’article : préparation dans le navigateur, conservation exacte avant envoi et reprise après coupure. Le serveur contrôle et réencode les pixels en WebP, corrige l’orientation, retire les métadonnées et borne taille/dimensions. Octets nettoyés privés en PostgreSQL, enregistrés avec l’avis ; aucune URL publique avant approbation.
+- Consultation du propriétaire/invité actif et ADMIN/SUPER_ADMIN par routes privées. Publication explicite et séparée du texte et de la photo : refuser une photo contenant des coordonnées ne masque pas l’avis négatif conforme. Historique/version/reprise atomiques ; réexamen de la photo sans retirer le texte. Une panne d’image conserve le texte et offre une relance.
+- Builds backend/storefront/admin, typage admin, lints ciblés, huit suites backend (50 tests), 59 tests Node et 20 groupes PostgreSQL/HTTP réussis. Quatre groupes navigateur complétés avec photos, décisions explicites, coupures/rechargement et six largeurs. Captures inspectées ; images unies synthétiques supprimées avec leurs fixtures, aucune photo commerciale ou avis fictif ajouté au catalogue. Le navigateur utilise des coques simulées et toutes les API d’avis réelles.
+- Migration additive comparée hors ligne ; contrainte personnalisée SQL de cohérence et bornes vérifiée. Application seulement dans la base locale dédiée. Contrat, capacité du stockage et guide équipe : `AVIS.md`. Mesures L7, dépendances métier/fournisseurs L4/L6 et recette L8 restent ouvertes ; L9 non autorisé, objectif A–Z actif.

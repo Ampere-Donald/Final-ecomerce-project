@@ -32,6 +32,16 @@ module.exports = async ({
     outside = [],
     posts = [],
     contexts = new Set();
+  const photoFixture = await require('sharp')({
+    create: {
+      width: 300,
+      height: 200,
+      channels: 3,
+      background: '#468370',
+    },
+  })
+    .png()
+    .toBuffer();
   async function closeContext(context) {
     await context.unrouteAll({ behavior: 'wait' });
     await context.close();
@@ -64,6 +74,7 @@ module.exports = async ({
         deny: false,
         error: false,
         empty: false,
+        photoError: false,
       };
       await context.route('**/*', async (route) => {
         const req = route.request(),
@@ -75,6 +86,15 @@ module.exports = async ({
         }
         if (!p.startsWith('/api/')) return route.continue();
         if (p.startsWith('/api/avis')) {
+          if (
+            state.photoError &&
+            req.method() === 'GET' &&
+            /\/avis\/[^/]+\/photo$/.test(p)
+          )
+            return route.fulfill({
+              status: 503,
+              json: { message: 'Fixture image outage' },
+            });
           if (state.error && p.startsWith('/api/avis/produits/'))
             return route.fulfill({
               status: 503,
@@ -94,6 +114,7 @@ module.exports = async ({
               path: p,
               requestId: body.requestId,
               code: !!body.code,
+              photo: body.photo || null,
             });
             if (
               (state.drop &&
@@ -181,6 +202,14 @@ module.exports = async ({
           exact: true,
         })
         .fill('Le câble fonctionne, mais il est trop court pour mon montage.');
+      const fileInput = dialog.locator('input[type="file"]');
+      await fileInput.setInputFiles({
+        name: 'private-fixture.png',
+        mimeType: 'image/png',
+        buffer: photoFixture,
+      });
+      await expect(dialog.locator('.e-review-photo-preview img')).toBeVisible();
+      await expect(fileInput).toHaveValue('');
       await dialog.getByRole('checkbox').check();
       return dialog;
     }
@@ -298,6 +327,22 @@ module.exports = async ({
       );
       const requests = posts.filter((p) => p.path === '/api/avis').slice(-2);
       assert.equal(requests[0].requestId, requests[1].requestId);
+      assert.equal(requests[0].photo, requests[1].photo);
+      assert.ok(requests[0].photo);
+      const savedPhoto = await db.avisProduit.findFirst({
+        where: { ligne: { commandeId: order.id } },
+      });
+      assert.equal(savedPhoto.photoStatut, 'EN_ATTENTE');
+      await ui.page
+        .getByRole('button', {
+          name:
+            lang === 'en' ? 'View the attached photo' : 'Voir la photo jointe',
+        })
+        .click();
+      await expect(
+        ui.page.getByRole('dialog').locator('.e-review-photo-full'),
+      ).toBeVisible();
+      await ui.page.keyboard.press('Escape');
       await ui.page
         .locator('.e-purchase-reviews')
         .screenshot({ path: out + '/account-done-' + width + '.png' });
@@ -384,6 +429,24 @@ module.exports = async ({
       .getByRole('button', { name: 'Préparer la publication' })
       .click();
     await article.getByRole('checkbox').check();
+    await expect(
+      article.getByRole('button', { name: 'Confirmer la décision' }),
+    ).toBeDisabled();
+    await expect(
+      article.getByRole('combobox', { name: 'Photo jointe', exact: true }),
+    ).toBeDisabled();
+    await article
+      .getByRole('button', { name: 'Examiner la photo jointe' })
+      .click();
+    await expect(
+      article.getByRole('img', { name: 'Photo jointe à cet avis' }),
+    ).toBeVisible();
+    await expect(
+      article.getByRole('combobox', { name: 'Photo jointe', exact: true }),
+    ).toBeEnabled();
+    await article
+      .getByRole('combobox', { name: 'Photo jointe', exact: true })
+      .selectOption('PUBLIE');
     await article.screenshot({ path: out + '/moderation-390.png' });
     adminUi.state.drop = true;
     await article
@@ -477,6 +540,30 @@ module.exports = async ({
     const review = publicUi.page
       .locator('.e-customer-review')
       .filter({ hasText: 'Maker <test>' });
+    const publishedPhoto = review.locator('.e-review-photo-public');
+    await expect(publishedPhoto).toBeVisible();
+    await expect
+      .poll(() => publishedPhoto.evaluate((el) => el.naturalWidth))
+      .toBeGreaterThan(0);
+    publicUi.state.photoError = true;
+    await publicUi.page.reload({ waitUntil: 'domcontentloaded' });
+    await review.scrollIntoViewIfNeeded();
+    await expect(
+      review.getByText('La photo est momentanément indisponible.', {
+        exact: true,
+      }),
+    ).toBeVisible();
+    await expect(
+      review.getByText(
+        'Le câble fonctionne, mais il est trop court pour mon montage.',
+        { exact: true },
+      ),
+    ).toBeVisible();
+    publicUi.state.photoError = false;
+    await review.getByRole('button', { name: 'Recharger la photo' }).click();
+    await expect
+      .poll(() => publishedPhoto.evaluate((el) => el.naturalWidth))
+      .toBeGreaterThan(0);
     await review.getByRole('button', { name: 'Signaler un contenu' }).click();
     await review.getByLabel('Motif du signalement').selectOption('HORS_SUJET');
     await review.getByRole('button', { name: 'Signaler ce contenu' }).click();
@@ -532,6 +619,8 @@ module.exports = async ({
           bootstrap:
             'catalogue, account/tracking and admin shells simulated; every avis API uses real Nest/JWT/PostgreSQL',
           widths: [360, 390, 768, 1100, 1240, 1440],
+          photos:
+            'client preparation, exact durable replay, authenticated viewing, explicit moderator choice and public approved pixels',
         },
         null,
         2,

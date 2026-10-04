@@ -12,6 +12,9 @@ import {
   saveReviewAttempt,
 } from "./reviewData";
 import "./reviews.css";
+import { prepareReviewPhoto } from "./reviewPhoto.js";
+import { photoPreview } from "./reviewData";
+import ReviewPhoto from "./ReviewPhoto.jsx";
 
 const empty = { note: 0, pseudonyme: "", texte: "", projetRealise: "" };
 function formError(message) {
@@ -48,10 +51,12 @@ export default function PurchaseReviews({
     [form, setForm] = useState(empty),
     [consent, setConsent] = useState(false);
   const [code, setCode] = useState(""),
+    [photoBusy, setPhotoBusy] = useState(false),
     [busy, setBusy] = useState(false),
     [error, setError] = useState(""),
     [notice, setNotice] = useState("");
   const lock = useRef(false),
+    photoLock = useRef(false),
     active = useRef(true);
   useEffect(() => {
     active.current = true;
@@ -100,6 +105,29 @@ export default function PurchaseReviews({
     setCode("");
     setError("");
     setOpen(true);
+  }
+  async function choosePhoto(event) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file || photoLock.current || lock.current || attempt) return;
+    photoLock.current = true;
+    setPhotoBusy(true);
+    setError("");
+    try {
+      const photo = await prepareReviewPhoto(file);
+      if (active.current) setForm((previous) => ({ ...previous, photo }));
+    } catch {
+      if (active.current)
+        setError(
+          tr(
+            "La photo n’a pas pu être préparée. Choisissez une image JPEG, PNG ou WebP de moins de 5 Mo, ou poursuivez sans photo.",
+            "The photo could not be prepared. Choose a JPEG, PNG or WebP image smaller than 5 MB, or continue without a photo.",
+          ),
+        );
+    } finally {
+      photoLock.current = false;
+      if (active.current) setPhotoBusy(false);
+    }
   }
   function resume() {
     setLine(
@@ -191,6 +219,7 @@ export default function PurchaseReviews({
   }
   async function submit(event) {
     event.preventDefault();
+    if (photoLock.current) return;
     await perform(async () => {
       let value = attempt;
       if (!value) {
@@ -374,6 +403,26 @@ export default function PurchaseReviews({
                         : tr("En attente de modération", "Awaiting moderation")}
                   </p>
                 )}
+                {item.avis?.photoWidth && (
+                  <>
+                    <p>
+                      {item.avis.photoStatut === "REFUSE"
+                        ? tr(
+                            "Photo non publiée après modération",
+                            "Photo not published after moderation",
+                          )
+                        : tr(
+                            "Photo jointe à cet avis",
+                            "Photo attached to this review",
+                          )}
+                    </p>
+                    <ReviewPhoto
+                      id={item.avis.id}
+                      token={token}
+                      accessToken={accessToken}
+                    />
+                  </>
+                )}
               </div>
               {!item.avis && resource.data.eligible && (
                 <button
@@ -438,7 +487,7 @@ export default function PurchaseReviews({
         open={open}
         title={tr("Votre avis sur l’article", "Your review of the item")}
         onClose={() => {
-          if (!busy) setOpen(false);
+          if (!lock.current && !photoLock.current) setOpen(false);
         }}
       >
         <p>
@@ -501,6 +550,54 @@ export default function PurchaseReviews({
             />
           </label>
           {!attempt && (
+            <label className="e-field">
+              {tr(
+                "Photo de votre projet ou de l’article (facultative)",
+                "Photo of your project or item (optional)",
+              )}
+              <input
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                onChange={choosePhoto}
+                disabled={busy || photoBusy}
+              />
+              <small>
+                {tr(
+                  "Une image fixe, 5 Mo maximum. Évitez les visages et coordonnées personnelles.",
+                  "One still image, up to 5 MB. Avoid faces and personal contact details.",
+                )}
+              </small>
+            </label>
+          )}
+          {photoBusy && (
+            <p role="status">
+              {tr("Préparation de la photo…", "Preparing photo…")}
+            </p>
+          )}
+          {display.photo && (
+            <figure className="e-review-photo-preview">
+              <img
+                src={photoPreview(display.photo)}
+                alt={tr(
+                  "Photo qui sera jointe à cet avis",
+                  "Photo that will be attached to this review",
+                )}
+              />
+              {!attempt && (
+                <button
+                  type="button"
+                  className="e-text-button"
+                  disabled={busy || photoBusy}
+                  onClick={() =>
+                    setForm((previous) => ({ ...previous, photo: undefined }))
+                  }
+                >
+                  {tr("Retirer cette photo", "Remove this photo")}
+                </button>
+              )}
+            </figure>
+          )}
+          {!attempt && (
             <label className="e-review-consent">
               <input
                 type="checkbox"
@@ -511,8 +608,8 @@ export default function PurchaseReviews({
               />
               <span>
                 {tr(
-                  "J’accepte que cet avis et ce pseudonyme soient publiés après modération. Ma tentative sera conservée dans cet onglet pour pouvoir reprendre après une coupure.",
-                  "I agree to publication of this review and nickname after moderation. My attempt will be saved in this tab so I can resume after a connection interruption.",
+                  "J’accepte que cet avis, ce pseudonyme et la photo éventuelle soient publiés après modération. Ma tentative sera conservée dans cet onglet pour pouvoir reprendre après une coupure.",
+                  "I agree to publication of this review, nickname and optional photo after moderation. My attempt will be saved in this tab so I can resume after a connection interruption.",
                 )}
               </span>
             </label>
@@ -546,7 +643,10 @@ export default function PurchaseReviews({
             </button>
           )}
           {error && <p role="alert">{error}</p>}
-          <button className="e-btn" disabled={busy || (!attempt && !consent)}>
+          <button
+            className="e-btn"
+            disabled={busy || photoBusy || (!attempt && !consent)}
+          >
             {busy
               ? tr("Vérification…", "Checking…")
               : accessToken && !attempt?.challengeId

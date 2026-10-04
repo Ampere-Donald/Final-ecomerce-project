@@ -1,6 +1,6 @@
 # De la visite de Glotelho aux changements NEWOTEG
 
-État vérifié le 3 octobre 2026. Base : rapport du 28 septembre et plan A–Z approuvé. Les changements ci-dessous concernent la branche locale `codex/newoteg-evolution`, pas le site publié ni Railway.
+État vérifié le 4 octobre 2026. Base : rapport du 28 septembre et plan A–Z approuvé. Les changements ci-dessous concernent la branche locale `codex/newoteg-evolution`, pas le site publié ni Railway.
 
 ## Ce que la visite a conduit à recommander
 
@@ -14,7 +14,7 @@ Le rapport proposait de rendre l’achat plus certain : référence et caractér
 | Sélections, arrivages et offres sur l’accueil | Pages projets et administration livrées ; offres, arrivages, tri et filtres au prix public testés sur backend/PostgreSQL locaux réels | Trouver du matériel utile et des prix commerciaux lisibles | Projet et offres réels à relire par NEWOTEG ; animation commerciale et recette globale |
 | Fiches plus utiles techniquement | Comparateur lit les caractéristiques sources, références, prix et stock, et signale les données absentes | Choisir sur des critères explicites | Enrichissement du catalogue réel, datasheets et résumé par famille restent partiels |
 | Boutique et retrait plus visibles | Retrait Akwa et conditions présentés près de l’achat | Savoir où et selon quelles conditions retirer | Photos, horaires, coordonnées et exploitation du statut prêt au retrait à confirmer |
-| Avis vérifiés et mesure des parcours | Avis par ligne reçue depuis le suivi, formulaires avec compte/invité, modération, réponse boutique et signalements intégrés et testés localement ; avis négatifs conformes conservés | S’appuyer sur des achats vérifiés ; différencier avis produit et réponse boutique ; reprendre après une coupure | Email invité désactivé faute de fournisseur ; photos, instrumentation et pilote humain restent ouverts |
+| Avis vérifiés et mesure des parcours | Avis par ligne reçue depuis le suivi, formulaires avec compte/invité, photo facultative privée jusqu’à validation, modération, réponse boutique et signalements intégrés et testés localement ; avis négatifs conformes conservés même si la photo est refusée | S’appuyer sur des achats vérifiés et voir leurs projets ; différencier avis produit et réponse boutique ; reprendre après une coupure | Email invité désactivé faute de fournisseur ; instrumentation, capacité/sauvegarde photo et pilote humain restent ouverts |
 
 ## Adaptations propres aux clients NEWOTEG
 
@@ -40,4 +40,4 @@ Les preuves datées des parcours déjà livrés sont dans `EXECUTION.md`. L4 et 
 
 Le 3 octobre, tri, filtres, bornes de prix et comptage du catalogue passent sur le prix public, avec disponibilité après réservations boutique et lecture cohérente lors d'une édition concurrente. Six scénarios PostgreSQL et sept contrôles navigateur/HTTP réels réussis. Le client retrouve une offre à 2 800 FCFA dans un budget de 2 800, même si son prix détail est de 3 500. Détails : `CATALOGUE-PRIX.md`.
 
-Le 3 octobre, entretien des codes/reçus livré et testé sur six scénarios PostgreSQL, programmé mais désactivé par défaut. Avis : règle validée par l’utilisateur, formulaires client/invité, affichage public et modération intégrés. Quatorze groupes PostgreSQL/HTTP et quatre groupes navigateur réussis, avec reprise après réponse perdue et publication normale d’un avis à 1/5. Les six largeurs testées ne remplacent pas un essai sur téléphone réel. Aucun avis fictif laissé sur le site. Photos et indicateurs restent à réaliser ; les fournisseurs email/SMS restent absents. Contrat et guide de modération : `AVIS.md`.
+Le 3 octobre, entretien des codes/reçus livré et testé sur six scénarios PostgreSQL, programmé mais désactivé par défaut. Avis : règle validée par l’utilisateur, formulaires client/invité, affichage public, photos facultatives et modération intégrés. Vingt groupes PostgreSQL/HTTP et quatre groupes navigateur réussis, avec reprise après réponse perdue, publication normale d’un avis à 1/5 et décision photo séparée. Photo privée, pixels réencodés sans métadonnées, affichage uniquement après validation. Les six largeurs testées ne remplacent pas un essai sur téléphone réel. Aucun avis fictif laissé sur le site. Indicateurs L7 et recette globale L8 restent à réaliser ; les fournisseurs email/SMS restent absents. Contrat et guide de modération : `AVIS.md`.

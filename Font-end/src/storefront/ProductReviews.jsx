@@ -8,6 +8,42 @@ import { orderDate, apiMessage } from "./orderData";
 import { reviewList } from "./reviewData";
 import "./reviews.css";
 
+function PublishedReviewPhoto({ photo, tr }) {
+  const [failed, setFailed] = useState(false);
+  return failed ? (
+    <div className="e-review-photo-unavailable">
+      <p>
+        {tr(
+          "La photo est momentanément indisponible.",
+          "The photo is temporarily unavailable.",
+        )}
+      </p>
+      <button className="e-text-button" onClick={() => setFailed(false)}>
+        {tr("Recharger la photo", "Reload photo")}
+      </button>
+    </div>
+  ) : (
+    <img
+      className="e-review-photo-public"
+      src={
+        new URL(
+          photo.url,
+          new URL(apiClient.defaults.baseURL, window.location.origin),
+        ).href
+      }
+      alt={tr(
+        "Photo publiée avec cet avis",
+        "Photo published with this review",
+      )}
+      width={photo.width}
+      height={photo.height}
+      loading="lazy"
+      referrerPolicy="no-referrer"
+      onError={() => setFailed(true)}
+    />
+  );
+}
+
 export default function ProductReviews({ productId }) {
   const { lang } = useI18n(),
     { token } = useAuth();
@@ -127,6 +163,9 @@ export default function ProductReviews({ productId }) {
               </time>
             </header>
             <p>{item.texte}</p>
+            {item.photo && (
+              <PublishedReviewPhoto key={item.id} photo={item.photo} tr={tr} />
+            )}
             {item.projetRealise && (
               <p className="e-review-project">
                 {tr("Projet réalisé", "Completed project")} :{" "}

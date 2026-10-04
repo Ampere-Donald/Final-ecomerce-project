@@ -8,6 +8,8 @@ import {
   clearReviewAttempts,
   reviewReceipt,
   guestReviewOrder,
+  reviewPhoto,
+  photoPreview,
 } from "../src/storefront/reviewData.js";
 const id = "0634b3a5-6e4e-48aa-8047-f94bc988c1f3",
   requestId = "21287bd0-cb21-440e-8dc5-47ce89f9cc89";
@@ -39,6 +41,52 @@ test("negative review, explicit content bounds and no silent rating conversion",
     { texte: "abc\0xxxxxxxxxx" },
   ])
     assert.throws(() => reviewContent({ ...content, ...value }));
+});
+
+test("photo stays in the exact durable attempt, enforces base64/size and limits public URL to the review endpoint", () => {
+  // Header fixture only: actual pixel decoding is covered by the server recipe.
+  const bytes = Buffer.concat([
+      Buffer.from([255, 216, 255]),
+      Buffer.alloc(130000),
+    ]),
+    photo = bytes.toString("base64");
+  assert.equal(reviewPhoto(photo), photo);
+  assert.ok(photoPreview(photo).startsWith("data:image/jpeg;base64,"));
+  const value = {
+    scope: "account:user:" + id,
+    mode: "account",
+    orderId: id,
+    body: { requestId, ligneCommandeId: id, ...content, photo },
+  };
+  const store = storage();
+  saveReviewAttempt(value, store);
+  assert.deepEqual(readReviewAttempt(value.scope, store), value);
+  for (const invalid of [
+    "AAAA===",
+    photo.slice(0, -1),
+    "https://example.invalid/image",
+    Buffer.concat([
+      Buffer.from([255, 216, 255]),
+      Buffer.alloc(262144),
+    ]).toString("base64"),
+  ])
+    assert.throws(() => reviewPhoto(invalid));
+  const row = {
+    ...content,
+    id,
+    achatVerifie: true,
+    createdAt: new Date().toISOString(),
+    reponseBoutique: null,
+    photo: { url: `/api/avis/${id}/photo`, width: 300, height: 200 },
+  };
+  const list = (items) => ({ total: 1, moyenne: 1, page: 1, limit: 10, items });
+  assert.equal(reviewList(list([row]), 1).items[0].photo.width, 300);
+  for (const invalid of [
+    { ...row.photo, url: "https://example.invalid/private.jpg" },
+    { ...row.photo, width: 1281 },
+    { ...row.photo, height: 0 },
+  ])
+    assert.throws(() => reviewList(list([{ ...row, photo: invalid }]), 1));
 });
 test("durable attempt retains exact request and content; denied or dropped writes block submission", () => {
   const store = storage(),

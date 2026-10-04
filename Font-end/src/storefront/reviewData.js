@@ -27,7 +27,46 @@ export function reviewContent(value) {
     )
   )
     throw Error("Invalid review text");
-  return { note: value.note, texte, pseudonyme, projetRealise };
+  const photo = reviewPhoto(value.photo);
+  return {
+    note: value.note,
+    texte,
+    pseudonyme,
+    projetRealise,
+    ...(photo ? { photo } : {}),
+  };
+}
+export function reviewPhoto(value) {
+  if (value == null) return null;
+  if (
+    typeof value !== "string" ||
+    value.length > 349528 ||
+    value.length % 4 !== 0 ||
+    !/^[A-Za-z0-9+/]*={0,2}$/.test(value)
+  )
+    throw Error("Invalid review photo");
+  const bytes = atob(value);
+  if (bytes.length < 16 || bytes.length > 262144 || btoa(bytes) !== value)
+    throw Error("Invalid review photo");
+  const jpeg =
+    bytes.charCodeAt(0) === 255 &&
+    bytes.charCodeAt(1) === 216 &&
+    bytes.charCodeAt(2) === 255;
+  const png = value.startsWith("iVBORw0KGgo");
+  const webp = bytes.slice(0, 4) === "RIFF" && bytes.slice(8, 12) === "WEBP";
+  if (!jpeg && !png && !webp) throw Error("Invalid review photo");
+  return value;
+}
+export function photoPreview(value) {
+  reviewPhoto(value);
+  const bytes = atob(value);
+  const type =
+    bytes.slice(0, 4) === "RIFF"
+      ? "webp"
+      : value.startsWith("iVBORw0KGgo")
+        ? "png"
+        : "jpeg";
+  return `data:image/${type};base64,${value}`;
 }
 export function reviewReceipt(value) {
   return UUID.test(value?.id || "") && value?.enregistre === true;
@@ -49,7 +88,7 @@ export function reviewList(value, page) {
     throw Error("Invalid review list");
   const seen = new Set();
   value.items.forEach((item) => {
-    reviewContent(item);
+    reviewContent({ ...item, photo: undefined });
     if (
       !UUID.test(item.id) ||
       seen.has(item.id) ||
@@ -60,6 +99,18 @@ export function reviewList(value, page) {
           item.reponseBoutique.length > 1000))
     )
       throw Error("Invalid review");
+    if (
+      item.photo != null &&
+      (!item.photo ||
+        item.photo.url !== `/api/avis/${item.id}/photo` ||
+        !Number.isInteger(item.photo.width) ||
+        !Number.isInteger(item.photo.height) ||
+        item.photo.width < 1 ||
+        item.photo.height < 1 ||
+        item.photo.width > 1280 ||
+        item.photo.height > 1280)
+    )
+      throw Error("Invalid public photo");
     seen.add(item.id);
   });
   return value;

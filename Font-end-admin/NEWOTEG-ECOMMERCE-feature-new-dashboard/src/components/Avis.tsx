@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAdminAuth } from "../context/AdminAuthContext";
 import api, { getApiErrorMessage } from "../services/api";
+import { AvisPhoto } from "./AvisPhoto";
 
 type State = "EN_ATTENTE" | "PUBLIE" | "REFUSE";
 type Action = "PUBLIER" | "REFUSER" | "REPONDRE";
@@ -15,9 +16,17 @@ type Review = {
   statut: State;
   createdAt: string;
   reponseBoutique: string | null;
+  photoWidth?: number | null;
+  photoStatut?: State | null;
   ligne: { nomProduit: string };
   _count: { signalements: number };
-  historique: { action: string; motif: string | null; createdAt: string }[];
+  historique: {
+    action: string;
+    motif: string | null;
+    photoAction?: string | null;
+    photoMotif?: string | null;
+    createdAt: string;
+  }[];
   signalements: { motif: string; createdAt: string }[];
 };
 type Attempt = {
@@ -28,6 +37,8 @@ type Attempt = {
     action: Action;
     motif?: string;
     reponse?: string;
+    photoPubliee?: boolean;
+    photoMotif?: string;
   };
 };
 const uuid =
@@ -75,6 +86,9 @@ function AvisPanel() {
     }
   });
   const [filter, setFilter] = useState<State>("EN_ATTENTE"),
+    [seenPhotos, setSeenPhotos] = useState<Set<string>>(() => new Set()),
+    [photoPublish, setPhotoPublish] = useState(""),
+    [photoReason, setPhotoReason] = useState(""),
     [page, setPage] = useState(1),
     [rows, setRows] = useState<Review[] | null>(null);
   const [version, setVersion] = useState(0),
@@ -187,7 +201,18 @@ function AvisPanel() {
   }
   function confirm(event: React.FormEvent) {
     event.preventDefault();
-    if (!selected || !agreed || session.attempt || busy) return;
+    if (
+      !selected ||
+      !agreed ||
+      session.attempt ||
+      busy ||
+      (selected.action === "PUBLIER" &&
+        selected.row.photoWidth &&
+        (!seenPhotos.has(selected.row.id) ||
+          !photoPublish ||
+          (photoPublish === "REFUSE" && !photoReason)))
+    )
+      return;
     const value: Attempt = {
       id: selected.row.id,
       body: {
@@ -196,6 +221,12 @@ function AvisPanel() {
         action: selected.action,
         ...(selected.action === "REFUSER" ? { motif } : {}),
         ...(selected.action === "REPONDRE" ? { reponse: reply.trim() } : {}),
+        ...(selected.action === "PUBLIER" && selected.row.photoWidth
+          ? {
+              photoPubliee: photoPublish === "PUBLIE",
+              ...(photoPublish === "REFUSE" ? { photoMotif: photoReason } : {}),
+            }
+          : {}),
       },
     };
     try {
@@ -345,6 +376,28 @@ function AvisPanel() {
             <p className="mt-3 max-w-3xl whitespace-pre-wrap break-words">
               {row.texte}
             </p>
+            {row.photoWidth && (
+              <>
+                <p className="mt-2 text-sm text-slate-600">
+                  Photo :{" "}
+                  {row.photoStatut === "PUBLIE"
+                    ? "approuvée"
+                    : row.photoStatut === "REFUSE"
+                      ? "non publiée"
+                      : "à examiner"}
+                </p>
+                <AvisPhoto
+                  id={row.id}
+                  onSeen={() =>
+                    setSeenPhotos((previous) =>
+                      previous.has(row.id)
+                        ? previous
+                        : new Set([...previous, row.id]),
+                    )
+                  }
+                />
+              </>
+            )}
             {row.projetRealise && (
               <p className="mt-2 text-sm text-slate-600">
                 Projet : {row.projetRealise}
@@ -375,6 +428,9 @@ function AvisPanel() {
                   <p key={i}>
                     {new Date(h.createdAt).toLocaleString("fr-FR")} : {h.action}
                     {h.motif ? " — " + (reasons[h.motif] || h.motif) : ""}
+                    {h.photoAction
+                      ? ` · Photo ${h.photoAction}${h.photoMotif ? " — " + (reasons[h.photoMotif] || h.photoMotif) : ""}`
+                      : ""}
                   </p>
                 ))
               )}
@@ -424,6 +480,57 @@ function AvisPanel() {
                     />
                   </label>
                 )}
+                {selected.action === "PUBLIER" && row.photoWidth && (
+                  <>
+                    <label className="grid gap-1">
+                      Photo jointe
+                      <select
+                        className="rounded border p-2"
+                        value={photoPublish}
+                        onChange={(e) => {
+                          setPhotoPublish(e.target.value);
+                          setPhotoReason("");
+                        }}
+                        required
+                        disabled={busy || !seenPhotos.has(row.id)}
+                      >
+                        <option value="">
+                          Examiner la photo, puis choisir
+                        </option>
+                        <option value="PUBLIE">
+                          Publier le texte et la photo
+                        </option>
+                        <option value="REFUSE">
+                          Publier le texte sans la photo
+                        </option>
+                      </select>
+                    </label>
+                    {!seenPhotos.has(row.id) && (
+                      <p className="text-sm text-amber-800">
+                        Ouvrez la photo ci-dessus avant de décider.
+                      </p>
+                    )}
+                    {photoPublish === "REFUSE" && (
+                      <label className="grid gap-1">
+                        Motif de refus de la photo
+                        <select
+                          className="rounded border p-2"
+                          value={photoReason}
+                          onChange={(e) => setPhotoReason(e.target.value)}
+                          required
+                          disabled={busy}
+                        >
+                          <option value="">Choisir un motif de contenu</option>
+                          {Object.entries(reasons).map(([code, label]) => (
+                            <option key={code} value={code}>
+                              {label}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                    )}
+                  </>
+                )}
                 <label className="flex items-start gap-2">
                   <input
                     className="mt-1"
@@ -442,7 +549,15 @@ function AvisPanel() {
                   <button
                     className={button + " bg-slate-900 text-white"}
                     disabled={
-                      busy || !agreed || !!session.attempt || session.invalid
+                      busy ||
+                      !agreed ||
+                      !!session.attempt ||
+                      session.invalid ||
+                      (selected.action === "PUBLIER" &&
+                        !!row.photoWidth &&
+                        (!seenPhotos.has(row.id) ||
+                          !photoPublish ||
+                          (photoPublish === "REFUSE" && !photoReason)))
                     }
                   >
                     Confirmer la décision
@@ -468,8 +583,11 @@ function AvisPanel() {
                 )
                   .filter(
                     (action) =>
-                      !(row.statut === "PUBLIE" && action === "PUBLIER") &&
-                      !(row.statut === "REFUSE" && action === "REFUSER"),
+                      !(
+                        row.statut === "PUBLIE" &&
+                        action === "PUBLIER" &&
+                        !row.photoWidth
+                      ) && !(row.statut === "REFUSE" && action === "REFUSER"),
                   )
                   .map((action) => (
                     <button
@@ -481,11 +599,15 @@ function AvisPanel() {
                         setMotif("");
                         setReply(row.reponseBoutique || "");
                         setAgreed(false);
+                        setPhotoPublish("");
+                        setPhotoReason("");
                         setError("");
                       }}
                     >
                       {action === "PUBLIER"
-                        ? "Préparer la publication"
+                        ? row.statut === "PUBLIE" && row.photoWidth
+                          ? "Réexaminer la photo"
+                          : "Préparer la publication"
                         : action === "REFUSER"
                           ? "Examiner un refus"
                           : "Répondre"}
