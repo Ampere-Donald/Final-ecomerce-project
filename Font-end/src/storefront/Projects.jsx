@@ -10,7 +10,6 @@ import { ArrowRight, FileText, RefreshCw, ShoppingCart } from "lucide-react";
 import { useI18n } from "../context/I18nContext";
 import { useCart } from "../context/CartContext";
 import apiClient from "../utils/apiClient";
-import { resolveImageUrl } from "../utils/mapProduct";
 import { formatFCFA } from "../utils/formatFCFA";
 import { Copy, Crumbs, Photo } from "./Elements";
 import Footer from "./Footer";
@@ -25,85 +24,10 @@ import {
   readProjectPage,
   selectionChanged,
 } from "./projectData";
+import ProjectListItem, { ProjectVisual } from "./ProjectPreview";
+import { levels, titleOf, summaryOf, materialImage } from "./projectPresentation";
 import "./projects.css";
 
-const levels = {
-  DEBUTANT: ["Débutant", "Beginner"],
-  INTERMEDIAIRE: ["Intermédiaire", "Intermediate"],
-  AVANCE: ["Avancé", "Advanced"],
-};
-const titleOf = (p, lang) => (lang === "en" && p.titreEn ? p.titreEn : p.titre);
-const summaryOf = (p, lang) =>
-  lang === "en" && p.resumeEn ? p.resumeEn : p.resume;
-const materialImage = (raw) => {
-  const safe = projectLink(raw, true);
-  return safe?.startsWith("/design-e/") || safe?.startsWith("/images/")
-    ? safe
-    : safe
-      ? resolveImageUrl(safe)
-      : "";
-};
-function ProjectVisual({ project }) {
-  const image = materialImage(project.imageUrl);
-  const [failed, setFailed] = useState("");
-  return image && failed !== image ? (
-    <img
-      src={image}
-      alt=""
-      width="600"
-      height="400"
-      loading="lazy"
-      onError={() => setFailed(image)}
-    />
-  ) : (
-    <div className="e-project-visual-fallback">
-      <FileText size={36} aria-hidden="true" />
-      <Copy fr="Liste de matériel" en="Material list" />
-    </div>
-  );
-}
-function ProjectListItem({ project }) {
-  const { lang } = useI18n();
-  return (
-    <article className="e-project-list-item">
-      <Link
-        className="e-project-list-visual"
-        to={`/projets/${project.slug}`}
-        aria-label={titleOf(project, lang)}
-      >
-        <ProjectVisual project={project} />
-      </Link>
-      <div>
-        <span className="e-project-level">
-          <Copy fr={levels[project.niveau][0]} en={levels[project.niveau][1]} />
-        </span>
-        <h2>
-          <Link to={`/projets/${project.slug}`}>{titleOf(project, lang)}</Link>
-        </h2>
-        <p>{summaryOf(project, lang)}</p>
-        <p className="e-project-availability">
-          {project.lignes.length} <Copy fr="références" en="references" /> ·{" "}
-          <Copy
-            fr={
-              project.materielRequisDisponible
-                ? "Matériel requis disponible"
-                : "Certaines pièces sont à vérifier"
-            }
-            en={
-              project.materielRequisDisponible
-                ? "Required material available"
-                : "Some parts need checking"
-            }
-          />
-        </p>
-        <Link className="e-project-open" to={`/projets/${project.slug}`}>
-          <Copy fr="Préparer le matériel" en="Prepare the material" />
-          <ArrowRight size={17} />
-        </Link>
-      </div>
-    </article>
-  );
-}
 function ProjectState({ loading, error, retry }) {
   if (loading)
     return (
@@ -148,46 +72,6 @@ function ProjectState({ loading, error, retry }) {
       <Link to="/projets">
         <Copy fr="Tous les projets" en="All projects" />
       </Link>
-    </section>
-  );
-}
-export function ProjectTeaser() {
-  const resource = useResource("/projets?page=1&limit=2");
-  let rows = [];
-  try {
-    if (resource.data) rows = readProjectPage(resource.data).rows;
-  } catch {
-    /* Keep access to the project library if its preview is unavailable. */
-  }
-  return (
-    <section className="e-section e-project-teaser">
-      <div className="e-section-head">
-        <div>
-          <h2>
-            <Copy
-              fr="Un projet, les pièces pour le réaliser"
-              en="A project and the parts to build it"
-            />
-          </h2>
-          <p>
-            <Copy
-              fr="Objectif, accessoires et quantités, réunis dans une liste préparée par la boutique."
-              en="Purpose, accessories and quantities, together in a list prepared by the shop."
-            />
-          </p>
-        </div>
-        <Link to="/projets">
-          <Copy fr="Voir les projets" en="View projects" />{" "}
-          <ArrowRight size={17} />
-        </Link>
-      </div>
-      {rows.length > 0 && (
-        <div className="e-projects-list">
-          {rows.map((p) => (
-            <ProjectListItem key={p.id} project={p} />
-          ))}
-        </div>
-      )}
     </section>
   );
 }

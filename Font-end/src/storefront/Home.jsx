@@ -1,5 +1,5 @@
 import EquivalenceEntry from "./EquivalenceEntry";
-import { ProjectTeaser } from "./Projects";
+import ProjectTeaser from "./ProjectTeaser";
 import { CommercialTeaser } from './Commercial';
 import { createElement } from "react";
 import { useState } from "react";
