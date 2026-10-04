@@ -48,7 +48,25 @@ describe('ProduitService pagination', () => {
         code: { contains: '0042', mode: 'insensitive' },
         quantiteStock: { gt: 0 },
       }),
-      orderBy: { nomProduit: 'asc' },
+      orderBy: [{ nomProduit: 'asc' }, { id: 'asc' }],
+    }));
+  });
+
+  it.each([
+    [undefined, { dateAjout: 'desc' }],
+    ['price_asc', { prixDetail: 'asc' }],
+    ['price_desc', { prixDetail: 'desc' }],
+    ['name_asc', { nomProduit: 'asc' }],
+    ['name_desc', { nomProduit: 'desc' }],
+  ])('départage les valeurs identiques pour une pagination stable (%s)', async (sort, primaryOrder) => {
+    const { service, db } = build();
+
+    await service.findAll({ page: 2, limit: 100, sort });
+
+    expect(db.produit.findMany).toHaveBeenCalledWith(expect.objectContaining({
+      skip: 100,
+      take: 100,
+      orderBy: [primaryOrder, { id: 'asc' }],
     }));
   });
 

@@ -425,7 +425,8 @@ export class ProduitService {
       where,
       skip: salesSearch ? 0 : skip,
       take: salesSearch && trimmedSearch ? Math.min(safeLimit * 2, 80) : safeLimit,
-      orderBy,
+      // A unique tie-breaker keeps equal dates, prices or names on one page.
+      orderBy: [orderBy, { id: 'asc' }],
     };
     if (salesSearch) {
       findArgs.select = {
