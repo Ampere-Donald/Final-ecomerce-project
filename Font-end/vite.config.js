@@ -17,9 +17,14 @@ export default defineConfig({
     port: 5173,
     host: 'localhost',
     proxy: {
-      // Toutes les requêtes commençant par /api sont redirigées vers le backend NestJS
+      // Same-origin API and relative catalogue images use the same local backend.
       '/api': {
-        target: 'http://localhost:3000',
+        target: 'http://127.0.0.1:3000',
+        changeOrigin: true,
+        secure: false,
+      },
+      '/uploads': {
+        target: 'http://127.0.0.1:3000',
         changeOrigin: true,
         secure: false,
       },

@@ -58,3 +58,20 @@ node --test tests/routeMetadata.test.mjs tests/guestWorker.test.mjs tests/guestA
 ```
 
 Le rendu initial public reste un fallback générique et les métadonnées détaillées demandent JavaScript. Pré-rendu/rendu serveur et réponses HTTP des ressources absentes restent à étudier avant de conclure l'indexation. L8 et l'objectif A–Z demeurent ouverts ; L9 non autorisé.
+
+## Vérification suivante — images et essai de préchargement
+
+Correction du résolveur partagé des photos : `/api` conserve une adresse média relative sur le même domaine ; seul le segment final `/api` d'une URL complète est retiré. L'ancien remplacement pouvait altérer un sous-domaine `api` et la valeur relative vide déclenchait une adresse `localhost` chez le visiteur. Les URL absolues HTTP(S) existantes sont conservées. Vite relaie maintenant `/uploads` vers le même backend IPv4 que `/api`, en développement et en preview.
+
+Deux tests ciblés couvrent les configurations relative/absolue, chemins avec et sans slash et images absentes. `verify-local-media.cjs` copie temporairement un WebP marketing sans le modifier dans le dossier du main local dédié, compare les 115 186 octets reçus sur 3000/5187/5188 et supprime son fichier unique dans finally. Trois lectures HTTP réussies ; aucun produit, commande ou stock modifié. Cette preuve concerne le routage local des fichiers, pas les photos du catalogue de production ni son stockage durable.
+
+Un essai de découverte anticipée des modules accueil/catalogue dans le HTML a été retiré : aucun bénéfice mesuré, chargement plus lent lors de cet essai. Il n'est pas livré. Profil identique au protocole précédent ; fluctuations entre passages interdisent une attribution précise de chaque écart au seul changement.
+
+| LCP, trois passages froids | Essai retiré | Version conservée |
+| --- | --- | --- |
+| Accueil | 6 708 / 6 456 / 6 324 ms | 4 484 / 5 608 / 5 884 ms |
+| Catalogue | 7 708 / 7 480 / 7 332 ms | 6 732 / 6 120 / 6 356 ms |
+
+La version conservée reste **budgets-missed**. CLS accueil 0,01549 et catalogue 0 ; JavaScript compressé 196 674 / 186 985 octets. Ces deux budgets passent, le LCP non. Les cibles Android et le design E sont conservés. Build et lint passent ; treize tests Node ciblés réussissent. Les neuf groupes de métadonnées et les trois groupes du runtime d'assets privés sont recontrôlés sur le build conservé. Les vingt parcours commerce de la recette précédente ne sont pas annoncés comme rejoués pour ce correctif de média.
+
+Preuves séparées : `C:/Users/pc/Documents/Newoteg/output/implementation-work/captures/seo-performance/preload-2/` pour l'essai retiré, `.../media-2/` pour la version conservée. Ni gain de performance validé, ni publication.

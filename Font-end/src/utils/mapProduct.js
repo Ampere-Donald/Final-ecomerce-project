@@ -7,7 +7,9 @@
  * future mismatches between pages.
  */
 
-export const API_BASE = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:3000';
+import { productMediaBase, productImageUrl } from './productImageUrl.js';
+
+export const API_BASE = productMediaBase(import.meta.env.VITE_API_URL);
 
 // Empty string signals "no image" — components render <PlaceholderImage> instead
 export const PLACEHOLDER_IMG = '';
@@ -17,9 +19,7 @@ export const PLACEHOLDER_IMG = '';
  * legacy /uploads/ paths are prepended with API_BASE.
  */
 export function resolveImageUrl(raw) {
-    if (!raw) return null;
-    if (raw.startsWith('http://') || raw.startsWith('https://')) return raw;
-    return `${API_BASE}${raw}`;
+    return productImageUrl(raw, API_BASE);
 }
 
 /**

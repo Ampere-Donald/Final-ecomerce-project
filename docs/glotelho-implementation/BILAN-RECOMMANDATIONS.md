@@ -2,6 +2,10 @@
 
 État vérifié le 4 octobre 2026. Base : rapport du 28 septembre et plan A–Z approuvé. Les changements ci-dessous concernent la branche locale `codex/newoteg-evolution`, pas le site publié ni Railway.
 
+Avancement global estimé : **environ 80 % du périmètre d'implémentation**, ordre de grandeur et non mesure automatique. La plupart des parcours sont intégrés localement ; cela ne signifie pas que 80 % des lots sont définitivement validés, ni que le site est prêt à publier. Les tests donnent des preuves par scénario, pas un pourcentage de fonctionnalités. Restent notamment qualification des données/équivalences réelles, fournisseurs de messages, performance et recette sur téléphone, validation équipe et préproduction cible avec migrations/restauration vérifiées. Le tableau de `EXECUTION.md` garde ces lots ouverts.
+
+Dernier correctif : adresses des photos relatives et proxy local `/uploads` réparés, sans changement du design E. Les fichiers arrivent intacts depuis le vrai main local ; l'essai de préchargement des modules a été retiré après des mesures défavorables. Le chargement lent reste à résoudre, sans gain annoncé. Preuves et limites : `INDEXATION-PERFORMANCE-L8.md`.
+
 ## Ce que la visite a conduit à recommander
 
 Le rapport proposait de rendre l’achat plus certain : référence et caractéristiques compréhensibles, réception explicite, interlocuteur accessible, achat sans compte imposé et sélections utiles. Le design E validé est conservé. La visite ne démontre pas les causes du succès commercial de Glotelho ; les bénéfices doivent être mesurés après lancement.

@@ -2,6 +2,10 @@
 
 Dernière mise à jour : 4 octobre 2026. Exécution des lots L0–L8 autorisée par l’utilisateur; L9 reste soumis à une autorisation distincte.
 
+## Dernier correctif — routage des photos
+
+Le résolveur partagé conserve le domaine correct pour `/api` et les sous-domaines `api`, et le proxy local relaie `/uploads` vers le main dédié. Deux tests de résolution et trois lectures des mêmes octets sur backend/dev/preview passent ; fichier temporaire nettoyé, aucune écriture métier. Treize tests Node ciblés, lint et build réussissent. L'essai de préchargement initial des modules est retiré faute de bénéfice mesuré ; la performance à débit limité reste hors objectif. Voir `INDEXATION-PERFORMANCE-L8.md`. Avancement global autour de 80 % est une estimation du périmètre, pas une validation de lancement.
+
 ## Suivi invité et récupération email — 3 octobre 2026
 
 - Décision utilisateur : SMS retenu ; ajout demandé de l’email ; absence de fournisseur SMS et de service email confirmée. Email de suivi facultatif au checkout, distinct de la création de compte. Confirmation E conservée, lien privé et consultation `/suivi-invite`, expiration trente jours et révocation ADMIN/SUPER_ADMIN.
