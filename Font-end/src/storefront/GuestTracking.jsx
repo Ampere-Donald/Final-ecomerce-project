@@ -5,7 +5,8 @@ import { RefreshCw, ArrowRight } from "lucide-react";
 import { useI18n } from "../context/I18nContext";
 import apiClient from "../utils/apiClient";
 import { formatFCFA } from "../utils/formatFCFA";
-import { apiMessage, orderDate, orderState } from "./orderData";
+import { orderDate, orderState } from "./orderData";
+import { guestApiMessage } from "./guestMessages.js";
 import {
   captureGuestFragment,
   readGuestKey,
@@ -22,8 +23,8 @@ import GuestLink from "./GuestLink";
 import GuestActions from "./GuestActions";
 import PurchaseReviews from "./PurchaseReviews";
 import PurchaseIncompatibilities from "./PurchaseIncompatibilities";
-import { guestIssueOrder } from './incompatibilityData';
-import { guestReviewOrder } from './reviewData.js';
+import { guestIssueOrder } from "./incompatibilityData";
+import { guestReviewOrder } from "./reviewData.js";
 
 export default function GuestTracking() {
   const { lang } = useI18n();
@@ -92,8 +93,9 @@ export default function GuestTracking() {
         if (!controller.signal.aborted) {
           setData(null);
           setError(
-            apiMessage(
+            guestApiMessage(
               e,
+              lang,
               tr(
                 "Suivi indisponible. Vérifiez votre connexion ou retrouvez votre accès ci-dessous.",
                 "Tracking unavailable. Check your connection or recover access below.",
@@ -119,8 +121,9 @@ export default function GuestTracking() {
       await task();
     } catch (e) {
       setError(
-        apiMessage(
+        guestApiMessage(
           e,
+          lang,
           tr(
             "Impossible de terminer. Réessayez ou contactez la boutique.",
             "Unable to finish. Try again or contact the shop.",
@@ -166,12 +169,22 @@ export default function GuestTracking() {
         { timeout: 20000 },
       );
       if (value.available === false) {
-        setNotice(value.message);
+        setNotice(
+          tr(
+            "La récupération par email est indisponible. Contactez la boutique.",
+            "Email recovery is unavailable. Contact the shop.",
+          ),
+        );
         return;
       }
       clearGuestRecovery();
       setChallenge(value.challengeId);
-      setNotice(value.message);
+      setNotice(
+        tr(
+          "Si ces informations correspondent à une commande invitée, un code a été envoyé à l’email enregistré.",
+          "If these details match a guest order, a code has been sent to the email recorded at checkout.",
+        ),
+      );
     });
   }
   async function verifyCode(event) {
@@ -243,10 +256,7 @@ export default function GuestTracking() {
   return (
     <>
       <Helmet>
-        <title>
-          {tr("Suivi privé de commande", "Private order tracking")} ·
-          X-Electronic
-        </title>
+        <title>{`${tr("Suivi privé de commande", "Private order tracking")} · X-Electronic`}</title>
         <meta name="robots" content="noindex, nofollow" />
         <meta name="referrer" content="no-referrer" />
       </Helmet>
@@ -345,7 +355,11 @@ export default function GuestTracking() {
                 orderId={order.id}
                 accessToken={key}
               />
-              <PurchaseIncompatibilities key={`issues:${order.id}:${key}`} orderId={order.id} accessToken={key} />
+              <PurchaseIncompatibilities
+                key={`issues:${order.id}:${key}`}
+                orderId={order.id}
+                accessToken={key}
+              />
             </section>
             <aside className="e-next-steps">
               <h2>{tr("Conserver votre accès", "Keep your access")}</h2>
@@ -555,7 +569,15 @@ export default function GuestTracking() {
           />
         </div>
       )}
-      {!order && retainedIssueOrder && <div className="e-wrap"><PurchaseIncompatibilities key={`issues:${retainedIssueOrder}:${key}`} orderId={retainedIssueOrder} accessToken={key} /></div>}
+      {!order && retainedIssueOrder && (
+        <div className="e-wrap">
+          <PurchaseIncompatibilities
+            key={`issues:${retainedIssueOrder}:${key}`}
+            orderId={retainedIssueOrder}
+            accessToken={key}
+          />
+        </div>
+      )}
       <Footer />
     </>
   );

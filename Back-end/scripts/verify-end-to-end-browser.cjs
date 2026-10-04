@@ -505,6 +505,17 @@ module.exports = async ({
     ok(
       'English anonymous delivery records no account or messages; fees remain unconfirmed and dispatched tracking stays private after reload',
     );
+    await require('./verify-end-to-end-guest-browser.cjs')({
+      db,
+      base,
+      mail,
+      guestOrder,
+      initialKey: await page.evaluate(() =>
+        sessionStorage.getItem('newoteg_guest_tracking_v1'),
+      ),
+      ok,
+      output,
+    });
   } catch (error) {
     await screen('failure').catch(() => {});
     fs.writeFileSync(

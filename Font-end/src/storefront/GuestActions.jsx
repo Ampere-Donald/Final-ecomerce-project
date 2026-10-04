@@ -2,7 +2,7 @@ import { useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { useI18n } from "../context/I18nContext";
 import apiClient from "../utils/apiClient";
-import { apiMessage } from "./orderData";
+import { guestApiMessage } from "./guestMessages.js";
 import { Modal } from "./Elements";
 import {
   newGuestKey,
@@ -49,8 +49,9 @@ export default function GuestActions({
       await task();
     } catch (e) {
       setError(
-        apiMessage(
+        guestApiMessage(
           e,
+          lang,
           tr(
             "Le résultat n’a pas pu être vérifié. Conservez cette tentative et vérifiez son résultat avant de recommencer.",
             "The result could not be verified. Keep this attempt and check its result before starting again.",
