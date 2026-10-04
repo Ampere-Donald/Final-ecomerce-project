@@ -15,6 +15,8 @@
 !scripts/
 !scripts/start-preproduction.cjs
 !scripts/verify-release-schema.cjs
+!scripts/release-schema-contract.cjs
+!scripts/release-schema.json
 !Dockerfile.preproduction
 !Dockerfile.preproduction.dockerignore
 **/*.spec.ts
