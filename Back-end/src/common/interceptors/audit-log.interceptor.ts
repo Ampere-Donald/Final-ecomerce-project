@@ -14,6 +14,13 @@ export class AuditLogInterceptor implements NestInterceptor {
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
     const req = context.switchToHttp().getRequest();
     const method = req.method;
+    // Anonymous aggregate observations must not be linked to IP, account or
+    // correlation IDs in the business audit journal. No business mutation here.
+    if (
+      req.route?.path === '/api/parcours/evenements' ||
+      /^\/api\/parcours\/evenements\/?$/i.test(req.path || '')
+    )
+      return next.handle();
     const requestId = req.requestId || 'no-request-id';
 
     if (['POST', 'PATCH', 'PUT', 'DELETE'].includes(method)) {

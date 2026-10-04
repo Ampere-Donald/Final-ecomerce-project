@@ -786,6 +786,29 @@ model Role {
   @@map("role")
 }
 
+// Aggregate observations only: no visitor, product, query, URL or order key.
+model ParcoursJour {
+  jour DateTime @db.Date
+  evenement String @db.VarChar(40)
+  langue String @db.VarChar(2)
+  appareil String @db.VarChar(10)
+  reception String @db.VarChar(25)
+  nombre Int @default(1)
+
+  @@id([jour, evenement, langue, appareil, reception])
+  @@map("parcours_jour")
+}
+
+// Short-lived deduplication keys identify an observation, never a visitor.
+model ParcoursRecu {
+  id String @id @db.Uuid
+  empreinte String @db.VarChar(64)
+  expiration DateTime @db.Date
+
+  @@index([expiration])
+  @@map("parcours_recu")
+}
+
 model Commande {
   guestAccess      CommandeGuestAccess?
   demandeDevis     DemandeDevis?

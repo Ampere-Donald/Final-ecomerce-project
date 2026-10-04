@@ -49,6 +49,7 @@ import { PaieModule } from './paie/paie.module';
 import { DevisModule } from './devis/devis.module';
 import { ProjetModule } from './projet/projet.module';
 import { AvisModule } from './avis/avis.module';
+import { ParcoursModule } from './parcours/parcours.module';
 
 @Module({
   imports: [
@@ -104,6 +105,7 @@ import { AvisModule } from './avis/avis.module';
     DevisModule,
     ProjetModule,
     AvisModule,
+    ParcoursModule,
   ],
   controllers: [AppController],
   providers: [
