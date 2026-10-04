@@ -45,22 +45,29 @@ export class CaisseJourService {
     const today = this.getDateDouala();
     let cj = await this.db.caisseJour.findUnique({ where: { date: today } });
     if (!cj) {
-      cj = await this.db.caisseJour.create({
-        data: {
+      // Several shop screens can read the first cash day simultaneously.
+      // A non-empty, scalar update makes this a native PostgreSQL upsert;
+      // the conflict path preserves status, balance, opening and cashier.
+      cj = await this.db.caisseJour.upsert({
+        where: { date: today },
+        update: { date: today },
+        create: {
           date: today,
           ouvertureAt: new Date(),
           caissierId: caissierId ?? null,
         },
       });
       this.logger.log(
-        `Nouvelle caisse du jour créée : ${today.toISOString().slice(0, 10)}`,
+        `Caisse du jour initialisée ou retrouvée : ${today.toISOString().slice(0, 10)}`,
       );
-    } else if (!cj.caissierId && caissierId) {
+    }
+    if (!cj.caissierId && caissierId) {
       // Premier caissier qui ouvre la session du jour
-      cj = await this.db.caisseJour.update({
-        where: { id: cj.id },
+      await this.db.caisseJour.updateMany({
+        where: { id: cj.id, caissierId: null },
         data: { caissierId },
       });
+      cj = await this.db.caisseJour.findUniqueOrThrow({ where: { id: cj.id } });
     }
     return cj;
   }

@@ -13,6 +13,7 @@ module.exports = async ({
   base,
   api,
   adminToken,
+  admin,
   client,
   password,
   products,
@@ -252,6 +253,20 @@ module.exports = async ({
     const negative =
       'La pièce fonctionne, mais la présentation ne correspondait pas à mes attentes.';
     await dialog.getByLabel('Votre avis', { exact: true }).fill(negative);
+    // A deliberately unrelated, synthetic image: no customer photograph or
+    // real contact. The shop must preserve the negative text while deciding
+    // the attached photo independently.
+    const photoFixture = await require('sharp')({
+      create: { width: 320, height: 160, channels: 3, background: '#468370' },
+    })
+      .png()
+      .toBuffer();
+    await dialog.locator('input[type="file"]').setInputFiles({
+      name: 'fixture-hors-sujet.png',
+      mimeType: 'image/png',
+      buffer: photoFixture,
+    });
+    await expect(dialog.locator('.e-review-photo-preview img')).toBeVisible();
     await dialog.getByRole('checkbox').check();
     for (let i = 0; i < 10; i++) {
       await page.keyboard.press('Tab');
@@ -282,6 +297,7 @@ module.exports = async ({
     });
     assert.equal(review.note, 1);
     assert.equal(review.texte, negative);
+    assert.equal(review.photoStatut, 'EN_ATTENTE');
     assert.equal(await db.avisProduit.count(), 1);
     await deniedReview(review.ligneCommandeId, 409);
     assert.equal(
@@ -294,24 +310,31 @@ module.exports = async ({
       '/avis/produits/' + review.ligne.produitId,
     );
     assert.equal(publicReviews.total, 0);
-    await api(
-      'POST',
-      '/avis/admin/' + review.id + '/moderation',
-      {
-        requestId: randomUUID(),
-        expectedVersion: review.version,
-        action: 'PUBLIER',
-      },
-      adminToken,
-    );
+    await require('./verify-end-to-end-moderation-browser.cjs')({
+      db,
+      base,
+      admin,
+      password,
+      review,
+      ok,
+      output,
+    });
     publicReviews = await api(
       'GET',
       '/avis/produits/' + review.ligne.produitId,
     );
     assert.equal(publicReviews.total, 1);
     assert.equal(publicReviews.items[0].note, 1);
+    assert.equal('photo' in publicReviews.items[0], false);
+    assert.equal(
+      publicReviews.items[0].reponseBoutique,
+      'Nous prenons en compte votre retour. La boutique peut vous conseiller sur votre besoin.',
+    );
     await visit('/product/' + review.ligne.produitId);
     await expect(page.getByText(negative, { exact: true })).toBeVisible();
+    await expect(
+      page.getByText(publicReviews.items[0].reponseBoutique, { exact: true }),
+    ).toBeVisible();
     await screen('negative-review-published-mobile');
     ok(
       'Confirmed pickup unlocks review; lost review response recovers one row; compliant one-star review is published only after moderation',
@@ -501,7 +524,8 @@ module.exports = async ({
           errors,
           blockedExternalHosts: [...new Set(blocked)],
           apiResponsesMocked: false,
-          adminOperations: 'Real API; admin UI not covered by this recipe',
+          adminOperations:
+            'Pickup via real API; review moderation/reply via actual admin UI and authentication',
         },
         null,
         2,

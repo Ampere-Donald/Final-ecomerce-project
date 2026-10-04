@@ -285,6 +285,14 @@ async function main() {
     });
     const adminToken = adminLogin.access_token;
     assert.ok(adminToken, 'Real admin login must return a token');
+    await require('./verify-end-to-end-cash-day.cjs')({
+      app,
+      db,
+      api,
+      adminToken,
+      admin,
+      ok,
+    });
     const draftResult = await api(
       'POST',
       '/projets/admin',
