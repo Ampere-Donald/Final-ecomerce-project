@@ -14,6 +14,7 @@ const Orders = lazy(() => import('./components/Orders').then((m) => ({ default: 
 const DemandesDevis = lazy(() => import('./components/DemandesDevis').then((m) => ({ default: m.DemandesDevis })));
 const Projets = lazy(() => import('./components/Projets').then((m) => ({ default: m.Projets })));
 const Avis = lazy(() => import('./components/Avis').then((m) => ({ default: m.Avis })));
+const Parcours = lazy(() => import('./components/Parcours').then((m) => ({ default: m.Parcours })));
 const Settings = lazy(() => import('./components/Settings').then((m) => ({ default: m.Settings })));
 const Produits = lazy(() => import('./components/Produits').then((m) => ({ default: m.Produits })));
 const Categories = lazy(() => import('./components/Categories').then((m) => ({ default: m.Categories })));
@@ -88,6 +89,7 @@ export default function App() {
             <Route path="demandes-devis" element={<RoleProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN', 'VENDEUR']}><DemandesDevis /></RoleProtectedRoute>} />
             <Route path="projets" element={<RoleProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN']}><Projets /></RoleProtectedRoute>} />
             <Route path="avis" element={<RoleProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN']}><Avis /></RoleProtectedRoute>} />
+            <Route path="parcours" element={<RoleProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN']}><Parcours /></RoleProtectedRoute>} />
 
             {/* Nouveaux écrans connectés au backend */}
             <Route path="produits" element={<Produits />} />

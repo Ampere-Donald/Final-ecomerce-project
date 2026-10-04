@@ -1,6 +1,6 @@
 # Mesurer les parcours NEWOTEG
 
-État du 4 octobre 2026, branche locale `codex/newoteg-evolution`. Lot L7 en cours. Serveur et observations des pages raccordés localement ; tableau de lecture administratif et registre d’incompatibilités encore à livrer. Collecte désactivée sur le serveur de démonstration. Aucun résultat commercial n’est établi par la recette fictive.
+État du 4 octobre 2026, branche locale `codex/newoteg-evolution`. Lot L7 en cours. Serveur, observations des pages et tableau de lecture administratif raccordés localement ; registre d’incompatibilités encore à livrer. Collecte désactivée sur le serveur de démonstration. Aucun résultat commercial n’est établi par la recette fictive.
 
 ## Contrat livré
 
@@ -64,6 +64,15 @@ Les observations anonymes peuvent être bloquées ou falsifiées avec de nouveau
 
 ## Suite L7
 
-1. Ajouter la lecture administrative : périodes comparables, état désactivé/incomplet, séparation observations et données métier, limites explicites.
-2. Préparer le registre des incompatibilités d’articles reçus et son traitement boutique. Les mouvements de stock d’annulation et les avis négatifs ne sont pas des retours pour incompatibilité.
-3. Recette transversale et équipe, journaux, information de confidentialité et base de référence avant activation. L7/L8 ouverts ; publication L9 non autorisée.
+1. Préparer le registre des incompatibilités d’articles reçus et son traitement boutique. Les mouvements de stock d’annulation et les avis négatifs ne sont pas des retours pour incompatibilité.
+2. Recette transversale et équipe, journaux, information de confidentialité et base de référence avant activation. L7/L8 ouverts ; publication L9 non autorisée.
+
+## Lecture administrative livrée localement
+
+Administration `/parcours`, lien « Parcours du site » dans le menu des ADMIN/SUPER_ADMIN. Défaut : sept jours terminés à Douala comparés aux sept précédents. Dates inclusives de 1 à 90 jours, précédent de même durée ; compteurs absolus et écarts sans pourcentage artificiel. Résultats métier, état actuel des commandes créées et observations anonymes séparés. Collecte désactivée, journée incomplète, provenance web inconnue et registre absent expliqués ; couverture historique de collecte non établie, jamais supposée exhaustive.
+
+Rapports uniquement en mémoire de l’écran, route absente des règles de cache de données PWA. Changement de session/compte/rôle efface l’écran ; changement des dates cache les anciens tableaux, requêtes annulées et réponses obsolètes ignorées. Échec d’une des deux périodes : aucun résultat partiel ni zéro inventé, erreur générique et reprise. Parseur fermé : dates/dimensions/compteurs/taux cohérents, doublons et dépassements de précision refusés, aucun payload supplémentaire affiché.
+
+Tests administratifs ciblés : 20 tests réussis (10 nouveaux de calendrier/contrat/lecture/session/reprise, 10 de navigation existante). Typage et build de l’administration réussis ; avertissements de cible legacy et gros bundles existants conservés. Recette gardée `NEWOTEG_PARCOURS_ADMIN_BROWSER=true` sur `verify-parcours-local.cjs` : six groupes serveur et cinq navigateur passent, vrais Nest/JWT/PostgreSQL pour le rapport, coque/auth-me administratifs simulés. Six largeurs 360–1440 px, navigation clavier des dates, collecte désactivée avec historique, panne partielle et vendeur redirigé sans demande de rapport. La capture a révélé des dates trop étroites sur mobile, corrigées puis contrôlées à nouveau ; captures 390/1440 px inspectées.
+
+Preuve : `C:/Users/pc/Documents/Newoteg/output/implementation-work/captures/parcours-admin/result.json`. Aucun trafic extérieur, mutation de commande depuis le navigateur ni activation du serveur principal. Les fixtures serveur sont nettoyées dans la base dédiée ; compteurs, reçus et commandes `MESURE-` revenus à zéro. Guide de lecture et direction : `LECTURE-INDICATEURS.md`. Cette recette ne valide ni téléphone physique, ni résultat commercial, ni L7/L8 complets.

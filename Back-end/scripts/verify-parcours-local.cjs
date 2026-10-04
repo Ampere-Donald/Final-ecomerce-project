@@ -477,6 +477,23 @@ async function fixture(
       });
       assert.equal(await db.commande.count(), beforeOrders);
     }
+    if (process.env.NEWOTEG_PARCOURS_ADMIN_BROWSER === 'true') {
+      const beforeOrders = await db.commande.count();
+      await require('./verify-parcours-admin-browser.cjs')({
+        base,
+        admin: admins[1],
+        adminToken: token(admins[1]),
+        seller: admins[2],
+        sellerToken: token(admins[2]),
+        today: day,
+        expected: await service.report(day, day),
+        ok,
+        setEnabled: (value) => {
+          process.env.PARCOURS_METRICS_ENABLED = String(value);
+        },
+      });
+      assert.equal(await db.commande.count(), beforeOrders);
+    }
     const out =
       'C:/Users/pc/Documents/Newoteg/output/implementation-work/captures/parcours-server/result.json';
     fs.mkdirSync(path.dirname(out), { recursive: true });
@@ -488,7 +505,12 @@ async function fixture(
           checks,
           externalRequests: 0,
           limits: [
-            'admin dashboard and compatibility-return registry remain to integrate',
+            'compatibility-return registry and global business acceptance remain to integrate',
+            ...(process.env.NEWOTEG_PARCOURS_ADMIN_BROWSER === 'true'
+              ? [
+                  'admin report uses real Nest/JWT/PostgreSQL; surrounding administration APIs mocked',
+                ]
+              : ['admin browser recipe not requested in this run']),
             ...(process.env.NEWOTEG_PARCOURS_BROWSER === 'true'
               ? ['browser commerce APIs mocked, observation API real']
               : ['browser recipe not requested in this run']),
