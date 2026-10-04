@@ -9,6 +9,7 @@ import { AllExceptionsFilter } from './common/filters/http-exception.filter';
 import { AuditLogInterceptor } from './common/interceptors/audit-log.interceptor';
 import 'dotenv/config';
 import { correlationIdMiddleware } from './common/middleware/correlation-id.middleware';
+import { guestPrivateHeadersMiddleware } from './common/middleware/guest-private-headers.middleware';
 
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
@@ -26,9 +27,10 @@ async function bootstrap() {
 
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
   app.enableShutdownHooks();
+  app.use(correlationIdMiddleware);
+  app.use(guestPrivateHeadersMiddleware);
   // One prepared review photo is capped at 256 KiB before base64 encoding.
   app.useBodyParser('json', { limit: '512kb' });
-  app.use(correlationIdMiddleware);
 
   // ── Security headers ───────────────────────────────────────────────────
   app.use(helmet({
@@ -75,7 +77,7 @@ async function bootstrap() {
   app.setGlobalPrefix('api');
 
   const port = process.env.PORT || 3000;
-  await app.listen(port, '0.0.0.0');
+  await app.listen(port, process.env.LISTEN_HOST || '0.0.0.0');
   logger.log(`Backend NEWOTEG started on port ${port}`);
 }
 bootstrap();
