@@ -85,7 +85,9 @@ module.exports = async ({
           if (state.failure && url.searchParams.get('fin') === today)
             return route.fulfill({
               status: 503,
-              json: { message: 'Synthetic failure; private detail must not appear' },
+              json: {
+                message: 'Synthetic failure; private detail must not appear',
+              },
             });
           const response = await fetch(base + url.pathname + url.search, {
             headers: { Authorization: auth },
@@ -137,7 +139,9 @@ module.exports = async ({
     await page.getByLabel('Au', { exact: true }).fill(today);
     await expect(page.getByRole('table')).toHaveCount(0);
     await page.getByRole('button', { name: 'Comparer', exact: true }).click();
-    const business = page.getByRole('table', { name: 'Comparaison des résultats métier' });
+    const business = page.getByRole('table', {
+      name: 'Comparaison des résultats métier',
+    });
     await expect(business).toBeVisible();
     const orderRow = business.getByRole('row').filter({ hasText: 'Commandes web enregistrées' });
     await expect(orderRow.locator('td').nth(1)).toHaveText(
@@ -145,11 +149,11 @@ module.exports = async ({
     );
     await expect(page.getByText('Cette journée est incomplète', { exact: false })).toBeVisible();
     await expect(
-      page.getByText('Retours pour incompatibilité : non mesurables actuellement.', {
-        exact: true,
-      }),
+      business.getByRole('row').filter({ hasText: 'Retours pour incompatibilité confirmés' }),
     ).toBeVisible();
-    const observations = page.getByRole('table', { name: 'Comparaison des observations anonymes' });
+    const observations = page.getByRole('table', {
+      name: 'Comparaison des observations anonymes',
+    });
     await expect(
       observations
         .getByRole('row')
@@ -165,7 +169,7 @@ module.exports = async ({
         .getByText('Anglais, tablette, Général', { exact: true }),
     ).toBeVisible();
     pass(
-      'Chosen period renders deduplicated real order and observation counts, incomplete day, unavailable returns and dimension detail',
+      'Chosen period renders deduplicated real order and observation counts, incomplete day, return registry and dimension detail',
     );
     for (const width of [360, 390, 768, 1100, 1240, 1440]) {
       await page.setViewportSize({ width, height: 1100 });
@@ -186,7 +190,9 @@ module.exports = async ({
         await page
           .getByRole('heading', { name: 'Actions observées sur le site' })
           .scrollIntoViewIfNeeded();
-        await page.screenshot({ path: output + '/observations-' + width + '.png' });
+        await page.screenshot({
+          path: output + '/observations-' + width + '.png',
+        });
       }
     }
     await page.getByLabel('Du', { exact: true }).focus();
@@ -239,7 +245,10 @@ module.exports = async ({
     await sellerPage.goto(frontend + '/parcours');
     await expect(sellerPage).toHaveURL(frontend + '/');
     await expect(
-      sellerPage.getByRole('heading', { name: 'Parcours du site', exact: true }),
+      sellerPage.getByRole('heading', {
+        name: 'Parcours du site',
+        exact: true,
+      }),
     ).toHaveCount(0);
     assert.equal(calls.length, before);
     pass('Seller direct route access redirects to authorized home before report fetch');

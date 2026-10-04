@@ -50,6 +50,7 @@ import { DevisModule } from './devis/devis.module';
 import { ProjetModule } from './projet/projet.module';
 import { AvisModule } from './avis/avis.module';
 import { ParcoursModule } from './parcours/parcours.module';
+import { IncompatibilitesModule } from './incompatibilites/incompatibilites.module';
 
 @Module({
   imports: [
@@ -106,6 +107,7 @@ import { ParcoursModule } from './parcours/parcours.module';
     ProjetModule,
     AvisModule,
     ParcoursModule,
+    IncompatibilitesModule,
   ],
   controllers: [AppController],
   providers: [

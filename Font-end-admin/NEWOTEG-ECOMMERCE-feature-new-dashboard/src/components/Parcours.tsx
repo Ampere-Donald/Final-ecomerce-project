@@ -41,7 +41,12 @@ const date = (day: string) =>
   }).format(new Date(day + 'T12:00:00Z'));
 const range = (period: Period) => `${date(period.debut)} au ${date(period.fin)}`;
 type Comparison = Awaited<ReturnType<typeof loadComparison>>;
-type Row = { name: string; description?: string; previous: number; selected: number };
+type Row = {
+  name: string;
+  description?: string;
+  previous: number;
+  selected: number;
+};
 function ComparisonTable({ title, rows }: { title: string; rows: Row[] }) {
   return (
     <table className="block w-full text-sm sm:table sm:table-fixed">
@@ -208,6 +213,30 @@ function Results({ comparison }: { comparison: Comparison }) {
       selected: selected.activite.retraitsPeriode,
     },
   ];
+  const previousReturns = previous.retoursIncompatibilite,
+    selectedReturns = selected.retoursIncompatibilite;
+  const returnsComparable = previousReturns.disponible && selectedReturns.disponible;
+  if (previousReturns.disponible && selectedReturns.disponible)
+    businessRows.push(
+      {
+        name: 'Incompatibilités signalées',
+        description: 'Dossiers créés ; aucun retour ni remboursement supposé.',
+        previous: previousReturns.signalements,
+        selected: selectedReturns.signalements,
+      },
+      {
+        name: 'Retours pour incompatibilité confirmés',
+        description: 'Un dossier par article acheté, daté de la confirmation par la boutique.',
+        previous: previousReturns.nombre,
+        selected: selectedReturns.nombre,
+      },
+      {
+        name: 'Pièces retournées confirmées',
+        description: 'Quantités vérifiées par la boutique, sans mouvement automatique de stock.',
+        previous: previousReturns.articles,
+        selected: selectedReturns.articles,
+      },
+    );
   const before = observationTotals(previous),
     after = observationTotals(selected);
   return (
@@ -295,20 +324,35 @@ function Results({ comparison }: { comparison: Comparison }) {
         />
         <Details comparison={comparison} />
       </section>
-      <p className="border-l-2 border-amber-600 pl-4 text-sm leading-relaxed text-slate-600">
-        <strong className="text-slate-900">
-          Retours pour incompatibilité : non mesurables actuellement.
-        </strong>{' '}
-        Le registre dédié reste à intégrer. Les annulations et les avis négatifs ne sont pas comptés
-        comme des retours.
-      </p>
+      {returnsComparable ? (
+        <p className="border-l-2 border-success pl-4 text-sm leading-relaxed text-slate-600">
+          Les retours du registre sont comptés à la date de confirmation par la boutique. Les
+          signalements, annulations et avis négatifs ne prouvent pas un retour. Aucun remboursement
+          ni remise en stock automatique.
+        </p>
+      ) : (
+        <p className="border-l-2 border-amber-600 pl-4 text-sm leading-relaxed text-slate-600">
+          <strong className="text-slate-900">
+            Retours pour incompatibilité : non mesurables actuellement.
+          </strong>{' '}
+          Le registre est indisponible dans au moins une des deux lectures. Les annulations et les
+          avis négatifs ne sont pas comptés comme des retours.
+        </p>
+      )}
     </div>
   );
 }
 function ParcoursPanel() {
   const [draft, setDraft] = useState(defaultPeriod);
-  const [request, setRequest] = useState({ period: defaultPeriod(), revision: 0 });
-  const [state, setState] = useState<{ key: typeof request; result?: Comparison; error?: string }>({
+  const [request, setRequest] = useState({
+    period: defaultPeriod(),
+    revision: 0,
+  });
+  const [state, setState] = useState<{
+    key: typeof request;
+    result?: Comparison;
+    error?: string;
+  }>({
     key: request,
   });
   const [validation, setValidation] = useState('');

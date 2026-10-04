@@ -260,6 +260,19 @@ export class ParcoursService {
         const commandesSansProvenance = await tx.commande.count({
           where: { NOT: web, dateCommande: range },
         });
+        const retours = await tx.dossierIncompatibilite.aggregate({
+          where: {
+            statut: 'RETOUR_CONFIRME',
+            retourConfirmeAt: range,
+            ligne: { commande: web },
+          },
+          _count: { _all: true },
+          _sum: { retourQuantite: true },
+        });
+        const signalementsIncompatibilite =
+          await tx.dossierIncompatibilite.count({
+            where: { createdAt: range, ligne: { commande: web } },
+          });
         return {
           actif: this.enabled(),
           debut: from,
@@ -285,7 +298,12 @@ export class ParcoursService {
               ? (cohortLivrees + cohortRetirees) / commandesEnregistrees
               : null,
           },
-          retoursIncompatibilite: { disponible: false, nombre: null },
+          retoursIncompatibilite: {
+            disponible: true,
+            nombre: retours._count._all,
+            articles: retours._sum.retourQuantite ?? 0,
+            signalements: signalementsIncompatibilite,
+          },
         };
       },
       { isolationLevel: Prisma.TransactionIsolationLevel.RepeatableRead },

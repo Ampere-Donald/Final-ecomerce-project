@@ -87,6 +87,11 @@ export function updateStoredAdmin(user: unknown): void {
 }
 
 export function clearAdminSession(): void {
+  try {
+    const storage = getStorage('sessionStorage');
+    const keys = Array.from({ length: storage?.length || 0 }, (_, index) => storage!.key(index)).filter(key => key?.startsWith('newoteg_incompatibility_decision_v1:'));
+    keys.forEach(key => storage!.removeItem(key!));
+  } catch { /* Inaccessible storage cannot be read by this session. */ }
   memoryToken = null;
   memoryUser = null;
   clearPersistentSession();

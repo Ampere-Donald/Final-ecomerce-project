@@ -31,6 +31,27 @@ export class MailService {
     return process.env.GUEST_EMAIL_ENABLED === 'true' && !!this.transporter;
   }
 
+  async sendGuestIncompatibiliteCode(
+    to: string,
+    code: string,
+    reference: string,
+    product: string,
+  ): Promise<boolean> {
+    if (!this.guestRecoveryAvailable() || !/^\d{8}$/.test(code)) return false;
+    try {
+      await this.transporter!.sendMail({
+        from: process.env.SMTP_FROM || '"NEWOTEG SARL" <noreply@newoteg.com>',
+        to,
+        subject: 'NEWOTEG — Confirmer votre signalement d’incompatibilité',
+        text: `Votre code est ${code}. Il autorise uniquement l’enregistrement de votre signalement privé concernant ${product}, commande ${reference}. Il expire dans 10 minutes et ne peut être utilisé qu’une fois. Ne le partagez pas. Si vous n’avez pas demandé ce signalement, ignorez ce message. Ce code n’autorise aucun paiement, remboursement ou modification de commande.`,
+      });
+      return true;
+    } catch {
+      this.logger.warn('Guest incompatibility code could not be delivered.');
+      return false;
+    }
+  }
+
   async sendGuestReviewCode(
     to: string,
     code: string,

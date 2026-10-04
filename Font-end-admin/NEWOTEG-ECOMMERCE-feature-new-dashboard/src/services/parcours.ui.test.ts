@@ -46,7 +46,10 @@ describe('périodes de mesure', () => {
   it('utilise les jours terminés à Douala à la frontière UTC et compare une durée inclusive', () => {
     const now = new Date('2026-10-03T23:30:00Z');
     expect(doualaToday(now)).toBe('2026-10-04');
-    expect(defaultPeriod(now)).toEqual({ debut: '2026-09-27', fin: '2026-10-03' });
+    expect(defaultPeriod(now)).toEqual({
+      debut: '2026-09-27',
+      fin: '2026-10-03',
+    });
     expect(comparablePeriods(defaultPeriod(now), now)).toEqual({
       selected: defaultPeriod(now),
       previous: { debut: '2026-09-20', fin: '2026-09-26' },
@@ -71,6 +74,27 @@ describe('périodes de mesure', () => {
   });
 });
 describe('rapport fermé et cohérent', () => {
+  it('sépare signalements, dossiers et quantités confirmées sans texte ni fausse égalité entre périodes', () => {
+    const base = fixture();
+    const retours = {
+      disponible: true,
+      nombre: 2,
+      articles: 5,
+      signalements: 1,
+    };
+    expect(
+      parseReport({ ...base, retoursIncompatibilite: retours }, period).retoursIncompatibilite,
+    ).toEqual(retours);
+    for (const value of [
+      { ...retours, articles: 1 },
+      { ...retours, nombre: 0 },
+      { ...retours, nombre: -1 },
+      { ...retours, articles: 1.5 },
+      { ...retours, description: 'Texte privé' },
+      { ...retours, signalements: NaN },
+    ])
+      expect(() => parseReport({ ...base, retoursIncompatibilite: value }, period)).toThrow();
+  });
   it('sépare absence de registre, absence de commandes et compteurs historiques désactivés', () => {
     const report = parseReport(fixture(period, 0), period);
     expect(report.cohorte.tauxReception).toBeNull();

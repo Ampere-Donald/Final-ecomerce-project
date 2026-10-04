@@ -852,6 +852,8 @@ model CommandeGuestAccess {
 }
 
 model CommandeGuestChallenge {
+  incompatibiliteLineId String? @map("incompatibilite_line_id")
+  incompatibiliteContentHash String? @map("incompatibilite_content_hash") @db.VarChar(64)
   reviewLineId String? @map("review_line_id")
   reviewContentHash String? @map("review_content_hash") @db.VarChar(64)
   actionResult Json? @map("action_result")
@@ -902,6 +904,7 @@ model Favori {
 }
 
 model LigneCommande {
+  incompatibilite DossierIncompatibilite?
   avis         AvisProduit?
   id           String   @id @default(uuid())
   commandeId   String   @map("id_commande")
@@ -915,6 +918,53 @@ model LigneCommande {
   produit      Produit  @relation(fields: [produitId], references: [id])
 
   @@map("ligne_commande")
+}
+
+enum StatutIncompatibilite {
+  SIGNALE
+  EN_EXAMEN
+  RESOLU_SANS_RETOUR
+  CLOTURE
+  RETOUR_CONFIRME
+}
+
+model DossierIncompatibilite {
+  id String @id @default(uuid()) @db.Uuid
+  ligneCommandeId String @unique @map("ligne_commande_id")
+  requestId String @unique @map("request_id") @db.Uuid
+  fingerprint String @db.VarChar(64)
+  quantite Int
+  motif String @db.VarChar(12)
+  description String @db.VarChar(2000)
+  statut StatutIncompatibilite @default(SIGNALE)
+  version Int @default(1)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  reponseBoutique String? @map("reponse_boutique") @db.VarChar(1000)
+  retourQuantite Int? @map("retour_quantite")
+  retourConfirmeAt DateTime? @map("retour_confirme_at") @db.Timestamptz(6)
+  diagnostic String? @db.VarChar(12)
+  ligne LigneCommande @relation(fields: [ligneCommandeId], references: [id], onDelete: Restrict)
+  historique IncompatibiliteDecision[]
+
+  @@index([statut, createdAt, id])
+  @@index([retourConfirmeAt])
+  @@map("dossier_incompatibilite")
+}
+
+model IncompatibiliteDecision {
+  requestId String @id @map("request_id") @db.Uuid
+  dossierId String @map("dossier_id") @db.Uuid
+  fingerprint String @db.VarChar(64)
+  acteurId String @map("acteur_id")
+  action StatutIncompatibilite
+  reponse String @db.VarChar(1000)
+  resultat Json
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  dossier DossierIncompatibilite @relation(fields: [dossierId], references: [id], onDelete: Restrict)
+
+  @@index([dossierId, createdAt])
+  @@map("incompatibilite_decision")
 }
 
 enum StatutAvis {

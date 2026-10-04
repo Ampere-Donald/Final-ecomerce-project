@@ -38,7 +38,14 @@ export type Report = Period & {
     retirees: number;
     tauxReception: number | null;
   };
-  retoursIncompatibilite: { disponible: false; nombre: null };
+  retoursIncompatibilite:
+    | { disponible: false; nombre: null }
+    | {
+        disponible: true;
+        nombre: number;
+        articles: number;
+        signalements: number;
+      };
 };
 const dayMs = 86400000;
 export function doualaToday(now = new Date()) {
@@ -68,7 +75,10 @@ export function comparablePeriods(period: Period, now = new Date()) {
     throw new Error('Choisissez de 1 à 90 jours, sans date future.');
   return {
     selected: { ...period },
-    previous: { debut: dateAt(start - days * dayMs), fin: dateAt(start - dayMs) },
+    previous: {
+      debut: dateAt(start - days * dayMs),
+      fin: dateAt(start - dayMs),
+    },
     days,
   };
 }
@@ -176,9 +186,30 @@ export function parseReport(value: unknown, expected: Period): Report {
         Math.abs(cohort.tauxReception - received / created) > 1e-10)
   )
     throw new Error('Cohorte invalide');
-  const returns = object(report.retoursIncompatibilite, ['disponible', 'nombre']);
-  if (returns.disponible !== false || returns.nombre !== null)
-    throw new Error('Registre non pris en charge');
+  const registryAvailable = (report.retoursIncompatibilite as { disponible?: unknown } | null)
+    ?.disponible;
+  let registry: Report['retoursIncompatibilite'];
+  if (registryAvailable === true) {
+    const returns = object(report.retoursIncompatibilite, [
+      'disponible',
+      'nombre',
+      'articles',
+      'signalements',
+    ]);
+    registry = {
+      disponible: true,
+      nombre: count(returns.nombre),
+      articles: count(returns.articles),
+      signalements: count(returns.signalements),
+    };
+    if (registry.articles < registry.nombre || (registry.nombre === 0 && registry.articles !== 0))
+      throw new Error('Quantités de retour incohérentes');
+  } else {
+    const returns = object(report.retoursIncompatibilite, ['disponible', 'nombre']);
+    if (returns.disponible !== false || returns.nombre !== null)
+      throw new Error('Registre non pris en charge');
+    registry = { disponible: false, nombre: null };
+  }
   const result: Report = {
     ...expected,
     actif: report.actif,
@@ -192,7 +223,7 @@ export function parseReport(value: unknown, expected: Period): Report {
       retirees: collected,
       tauxReception: cohort.tauxReception as number | null,
     },
-    retoursIncompatibilite: { disponible: false, nombre: null },
+    retoursIncompatibilite: registry,
   };
   // Refuse an aggregate overflow rather than render rounded or misleading counts.
   observationTotals(result);
@@ -207,7 +238,11 @@ export function observationTotals(report: Report) {
 export async function loadComparison(period: Period, signal: AbortSignal) {
   const periods = comparablePeriods(period);
   const read = async (range: Period) => {
-    const response = await api.get('/parcours/rapport', { params: range, signal, timeout: 15000 });
+    const response = await api.get('/parcours/rapport', {
+      params: range,
+      signal,
+      timeout: 15000,
+    });
     return parseReport(response.data, range);
   };
   const [previous, selected] = await Promise.all([read(periods.previous), read(periods.selected)]);

@@ -20,6 +20,7 @@ import useOrders from "./useOrders";
 import Footer from "./Footer";
 import Reorder from "./Reorder";
 import PurchaseReviews from "./PurchaseReviews";
+import PurchaseIncompatibilities from "./PurchaseIncompatibilities";
 
 export default function Account() {
   const { user, token, logout } = useAuth();
@@ -484,6 +485,7 @@ export default function Account() {
                 userId={user?.id}
                 token={token}
               />
+              <PurchaseIncompatibilities key={`issues:${order.id}:${user?.id}:${token}`} orderId={order.id} userId={user?.id} token={token} />
             </div>
           )
         ) : (

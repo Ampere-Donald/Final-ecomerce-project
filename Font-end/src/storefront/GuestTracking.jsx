@@ -21,6 +21,8 @@ import Footer from "./Footer";
 import GuestLink from "./GuestLink";
 import GuestActions from "./GuestActions";
 import PurchaseReviews from "./PurchaseReviews";
+import PurchaseIncompatibilities from "./PurchaseIncompatibilities";
+import { guestIssueOrder } from './incompatibilityData';
 import { guestReviewOrder } from './reviewData.js';
 
 export default function GuestTracking() {
@@ -231,9 +233,10 @@ export default function GuestTracking() {
   }
   const order = data?.commande,
     state = order && orderState(order.statut, lang);
-  let retainedReviewOrder;
+  let retainedReviewOrder, retainedIssueOrder;
   try {
     if (key && !order) retainedReviewOrder = guestReviewOrder(key);
+    if (key && !order) retainedIssueOrder = guestIssueOrder(key);
   } catch {
     /* Explicit storage errors are shown by the review form when accessible. */
   }
@@ -342,6 +345,7 @@ export default function GuestTracking() {
                 orderId={order.id}
                 accessToken={key}
               />
+              <PurchaseIncompatibilities key={`issues:${order.id}:${key}`} orderId={order.id} accessToken={key} />
             </section>
             <aside className="e-next-steps">
               <h2>{tr("Conserver votre accès", "Keep your access")}</h2>
@@ -551,6 +555,7 @@ export default function GuestTracking() {
           />
         </div>
       )}
+      {!order && retainedIssueOrder && <div className="e-wrap"><PurchaseIncompatibilities key={`issues:${retainedIssueOrder}:${key}`} orderId={retainedIssueOrder} accessToken={key} /></div>}
       <Footer />
     </>
   );

@@ -1,4 +1,5 @@
 import { clearReviewAttempts } from './reviewData.js';
+import { clearIssueAttempts } from './incompatibilityData.js';
 const STORAGE = "newoteg_guest_tracking_v1";
 const RECOVERY = "newoteg_guest_recovery_v1";
 const LINK_ATTEMPT = "newoteg_guest_link_v1";
@@ -52,6 +53,7 @@ export function privateTrackingLink(key) {
 }
 export function forgetGuestKey() {
   clearReviewAttempts('guest');
+  clearIssueAttempts('guest');
   current = "";
   try {
     sessionStorage.removeItem(STORAGE);

@@ -1,6 +1,6 @@
 # Mesurer les parcours NEWOTEG
 
-État du 4 octobre 2026, branche locale `codex/newoteg-evolution`. Lot L7 en cours. Serveur, observations des pages et tableau de lecture administratif raccordés localement ; registre d’incompatibilités encore à livrer. Collecte désactivée sur le serveur de démonstration. Aucun résultat commercial n’est établi par la recette fictive.
+État du 4 octobre 2026, branche locale `codex/newoteg-evolution`. Lot L7 en cours. Serveur, observations des pages, tableau administratif et registre d’incompatibilités raccordés localement. Collecte désactivée sur le serveur de démonstration. Aucun résultat commercial n’est établi par la recette fictive.
 
 ## Contrat livré
 
@@ -45,7 +45,7 @@ Les commandes et devis proviennent de leurs tables métier, jamais d’un évén
 | Devis demandés | Demandes créées dans la période ; aucune vente supposée |
 | Livraisons/retraits de la période | Commandes web actuellement reçues dont la réception est datée dans la période, même si créées avant |
 | Cohorte | État actuel des commandes créées dans la période : livrées/retirées rapportées à l’effectif créé |
-| Retours pour incompatibilité | `disponible=false`, `nombre=null` tant qu’il n’existe pas de registre dédié ; absence distincte de zéro |
+| Retours pour incompatibilité | Registre dédié : `nombre` dossiers confirmés et `articles` unités confirmées dans la période à la date serveur de confirmation ; `signalements` dossiers créés dans la période, distincts des retours. Provenance web requise. Une ancienne API sans registre reste `disponible=false`, `nombre=null`, sans fausse comparaison à zéro. |
 
 La cohorte n’est pas un journal immuable de transitions : une période ancienne est relue dans l’état actuel. Une cohorte récente a eu moins de temps pour être reçue. Le taux vaut `null` sans commande. Comparer des périodes de même durée et de maturité suffisante ; séparer observations, créations et réceptions. Les clics WhatsApp ne sont pas des ventes. Une sortie après affichage des frais sera un signal d’interface, pas une preuve que les frais causent l’abandon.
 
@@ -64,7 +64,7 @@ Les observations anonymes peuvent être bloquées ou falsifiées avec de nouveau
 
 ## Suite L7
 
-1. Préparer le registre des incompatibilités d’articles reçus et son traitement boutique. Les mouvements de stock d’annulation et les avis négatifs ne sont pas des retours pour incompatibilité.
+1. Valider avec l’équipe l’exploitation du registre et les conditions SAV réelles. Registre, compte/invité et traitement boutique livrés localement ; contrat, limites et preuves dans `INCOMPATIBILITES.md`. Les mouvements de stock d’annulation et les avis négatifs ne sont pas des retours pour incompatibilité.
 2. Recette transversale et équipe, journaux, information de confidentialité et base de référence avant activation. L7/L8 ouverts ; publication L9 non autorisée.
 
 ## Lecture administrative livrée localement

@@ -384,7 +384,12 @@ async function fixture(
         baseline.activite.commandesSansProvenance,
       1,
     );
-    assert.equal(r.retoursIncompatibilite.nombre, null);
+    assert.deepEqual(r.retoursIncompatibilite, {
+      disponible: true,
+      nombre: 0,
+      articles: 0,
+      signalements: 0,
+    });
     assert.equal(
       r.observations.find((o) => o.evenement === 'FICHE_OUVERTE').nombre,
       10,
@@ -433,7 +438,7 @@ async function fixture(
       401,
     );
     ok(
-      'Real admin roles/session and strict dates enforced; unavailable returns remain null rather than a fabricated zero',
+      'Real admin roles/session and strict dates enforced; return counts read from the dedicated registry',
     );
     const expired = randomUUID();
     receiptIds.push(expired);
