@@ -10,35 +10,55 @@ function simulate(statuses, calls) {
     return child;
   };
 }
-test('a failed migration never starts the application or a fallback repair', async () => {
+test('stale source contract prevents any migration or server process', async () => {
+  const calls = [];
+  await assert.rejects(
+    () =>
+      startPreproduction(simulate([0], calls), new EventEmitter(), () => {
+        throw Error('Release schema contract stale');
+      }),
+    /contract stale/,
+  );
+  assert.equal(calls.length, 0);
+});
+test('a divergent historical ledger prevents every migration and application startup', async () => {
   const calls = [];
   assert.equal(
     await startPreproduction(simulate([1], calls), new EventEmitter()),
     1,
   );
   assert.equal(calls.length, 1);
-  assert.deepEqual(calls[0].args.slice(1), ['migrate', 'deploy']);
+  assert.deepEqual(calls[0].args.slice(1), ['--history-only']);
 });
-test('a schema check failure prevents server startup', async () => {
+test('a failed migration never starts the application or a fallback repair', async () => {
   const calls = [];
   assert.equal(
     await startPreproduction(simulate([0, 1], calls), new EventEmitter()),
     1,
   );
   assert.equal(calls.length, 2);
-  assert.match(calls[1].args[0], /verify-release-schema/);
+  assert.deepEqual(calls[1].args.slice(1), ['migrate', 'deploy']);
+});
+test('a schema check failure prevents server startup', async () => {
+  const calls = [];
+  assert.equal(
+    await startPreproduction(simulate([0, 0, 1], calls), new EventEmitter()),
+    1,
+  );
+  assert.equal(calls.length, 3);
+  assert.match(calls[2].args[0], /verify-release-schema/);
 });
 test('server starts after both checks, with duplicate startup migrations disabled', async () => {
   const calls = [];
   assert.equal(
-    await startPreproduction(simulate([0, 0, 0], calls), new EventEmitter()),
+    await startPreproduction(simulate([0, 0, 0, 0], calls), new EventEmitter()),
     0,
   );
-  assert.equal(calls.length, 3);
-  assert.match(calls[2].args[0], /main.js$/);
-  assert.equal(calls[2].options.env.RUN_PRISMA_MIGRATIONS, 'false');
+  assert.equal(calls.length, 4);
+  assert.match(calls[3].args[0], /main.js$/);
+  assert.equal(calls[3].options.env.RUN_PRISMA_MIGRATIONS, 'false');
 });
-for (const stage of [1, 3]) {
+for (const stage of [1, 2, 4]) {
   test(`SIGTERM reaches child during stage ${stage} and prevents further startup`, async () => {
     const signals = new EventEmitter();
     let calls = 0;

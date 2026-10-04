@@ -1,10 +1,18 @@
 // Deliberately fail closed; do not invoke ensure-schema or resolve failed migrations.
 const path = require('node:path');
 const { spawn } = require('node:child_process');
+const { readReleaseContract } = require('./release-schema-contract.cjs');
 
-async function startPreproduction(run = spawn, signals = process) {
+async function startPreproduction(
+  run = spawn,
+  signals = process,
+  checkSources = readReleaseContract,
+) {
+  // Refuse unreviewed source/schema drift BEFORE any migration can be applied.
+  checkSources();
   const root = path.resolve(__dirname, '..');
   const commands = [
+    [path.join(root, 'scripts/verify-release-schema.cjs'), '--history-only'],
     [
       path.join(root, 'node_modules/prisma/build/index.js'),
       'migrate',
