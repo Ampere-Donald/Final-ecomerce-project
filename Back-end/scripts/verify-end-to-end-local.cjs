@@ -355,6 +355,16 @@ async function main() {
       output,
       outside,
     });
+    await require('./verify-end-to-end-devis-browser.cjs')({
+      db,
+      base,
+      client,
+      admin,
+      password,
+      products,
+      ok,
+      output,
+    });
     assert.deepEqual(outside, []);
     const report = {
       status: 'passed',

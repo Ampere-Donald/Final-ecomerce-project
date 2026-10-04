@@ -23,9 +23,14 @@ const MODE_LABELS: Record<ModeReception, { label: string; icon: typeof Truck }> 
 const ALL_STATUSES: StatutCommande[] = ['EN_ATTENTE', 'CONFIRMEE', 'EN_LIVRAISON', 'LIVREE', 'ANNULEE'];
 
 // Admin can only set these statuses.
-const ADMIN_STATUSES: StatutCommande[] = ['EN_ATTENTE', 'EN_LIVRAISON'];
+const ADMIN_STATUSES: StatutCommande[] = ['EN_ATTENTE', 'CONFIRMEE', 'EN_LIVRAISON'];
 // Preserve terminal statuses instead of displaying the select's first option.
-const isStatusLocked = (status: StatutCommande) => ['CONFIRMEE', 'ANNULEE', 'LIVREE'].includes(status);
+const isStatusLocked = (status: StatutCommande) => ['ANNULEE', 'LIVREE'].includes(status);
+const statusOptions = (order: Commande) => {
+  const options = ADMIN_STATUSES.filter(status => status !== 'EN_LIVRAISON' || order.modeReception === 'LIVRAISON');
+  // Preserve the actual label even for an inconsistent historical mode/status.
+  return options.includes(order.statut) ? options : [order.statut, ...options];
+};
 
 export const Orders = () => {
   const { admin } = useAdminAuth();
@@ -280,6 +285,7 @@ export const Orders = () => {
                       </td>
                       <td className="px-6 py-4">
                         <select
+                          aria-label={`Statut de ${order.numeroSuivi}`}
                           value={order.statut}
                           onChange={e => handleStatusChange(order.id, e.target.value as StatutCommande)}
                           disabled={updatingId === order.id || isStatusLocked(order.statut)}
@@ -288,7 +294,7 @@ export const Orders = () => {
                           {isStatusLocked(order.statut) && (
                             <option value={order.statut}>{STATUS_CONFIG[order.statut].label}</option>
                           )}
-                          {!isStatusLocked(order.statut) && ADMIN_STATUSES.map(s => (
+                          {!isStatusLocked(order.statut) && statusOptions(order).map(s => (
                             <option key={s} value={s}>{STATUS_CONFIG[s].label}</option>
                           ))}
                         </select>
@@ -343,6 +349,7 @@ export const Orders = () => {
                     </span>
                     <div className="flex items-center gap-3">
                       <select
+                        aria-label={`Statut de ${order.numeroSuivi}`}
                         value={order.statut}
                         onChange={e => handleStatusChange(order.id, e.target.value as StatutCommande)}
                         disabled={updatingId === order.id || isStatusLocked(order.statut)}
@@ -351,7 +358,7 @@ export const Orders = () => {
                         {isStatusLocked(order.statut) && (
                           <option value={order.statut}>{STATUS_CONFIG[order.statut].label}</option>
                         )}
-                        {!isStatusLocked(order.statut) && ADMIN_STATUSES.map(s => (
+                        {!isStatusLocked(order.statut) && statusOptions(order).map(s => (
                           <option key={s} value={s}>{STATUS_CONFIG[s].label}</option>
                         ))}
                       </select>

@@ -148,10 +148,11 @@ export const AdminLogin: React.FC = () => {
               </button>
             </div>
 
-            <label className="mb-2 block text-sm font-semibold text-slate-700">Nom d'utilisateur</label>
+            <label htmlFor="admin-username" className="mb-2 block text-sm font-semibold text-slate-700">Nom d'utilisateur</label>
             <div className="relative mb-5">
               <User size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
               <input
+                id="admin-username"
                 type="text"
                 required
                 autoComplete="username"
@@ -165,10 +166,11 @@ export const AdminLogin: React.FC = () => {
             {mode === 'password' ? (
               <form onSubmit={handlePasswordLogin} className="space-y-5">
                 <div>
-                  <label className="mb-2 block text-sm font-semibold text-slate-700">Mot de passe</label>
+                  <label htmlFor="admin-password" className="mb-2 block text-sm font-semibold text-slate-700">Mot de passe</label>
                   <div className="relative">
                     <Lock size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                     <input
+                      id="admin-password"
                       type={showPassword ? 'text' : 'password'}
                       required
                       minLength={8}

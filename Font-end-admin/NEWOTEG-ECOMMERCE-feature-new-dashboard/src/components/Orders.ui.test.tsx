@@ -47,3 +47,29 @@ it('does not request or display private access administration for a seller', asy
   expect(screen.queryByText('Suivi sans compte')).toBeNull();
   expect(api.getGuestAccess).not.toHaveBeenCalled();
 });
+
+it('confirms a pickup in both layouts without offering an invalid dispatch', async () => {
+  api.getAll.mockResolvedValue([{ ...order, statut: 'EN_ATTENTE' }]);
+  api.update.mockResolvedValue({ ...order, statut: 'CONFIRMEE' });
+  render(<Orders />);
+  const selects = await screen.findAllByRole('combobox', { name: 'Statut de TEST-RETRAIT' });
+  for (const select of selects) {
+    expect(Array.from((select as HTMLSelectElement).options).some(option => option.value === 'EN_LIVRAISON')).toBe(false);
+  }
+  fireEvent.change(selects[0], { target: { value: 'CONFIRMEE' } });
+  await waitFor(() => expect(api.update).toHaveBeenCalledWith('order-test', { statut: 'CONFIRMEE' }));
+  await waitFor(() => expect((selects[1] as HTMLSelectElement).value).toBe('CONFIRMEE'));
+  expect(screen.getAllByRole('button', { name: /^Retrait$/i })).toHaveLength(2);
+});
+
+it('allows dispatch after a delivery has been confirmed', async () => {
+  api.getAll.mockResolvedValue([{ ...order, modeReception: 'LIVRAISON', statut: 'CONFIRMEE' }]);
+  api.update.mockResolvedValue({ ...order, modeReception: 'LIVRAISON', statut: 'EN_LIVRAISON' });
+  render(<Orders />);
+  const selects = await screen.findAllByRole('combobox');
+  expect((selects[0] as HTMLSelectElement).disabled).toBe(false);
+  expect((selects[0] as HTMLSelectElement).value).toBe('CONFIRMEE');
+  fireEvent.change(selects[0], { target: { value: 'EN_LIVRAISON' } });
+  await waitFor(() => expect(api.update).toHaveBeenCalledWith('order-test', { statut: 'EN_LIVRAISON' }));
+  await waitFor(() => expect((selects[1] as HTMLSelectElement).value).toBe('EN_LIVRAISON'));
+});
