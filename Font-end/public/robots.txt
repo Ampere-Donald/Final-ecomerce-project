@@ -1,11 +1,6 @@
-# NEWOTEG SARL — robots.txt
+# X-Electronic / NEWOTEG
+# Private documents use X-Robots-Tag/noindex; allow crawling to read that rule.
 User-agent: *
 Allow: /
-Disallow: /checkout
-Disallow: /profile
-Disallow: /favourites
-Disallow: /login
-Disallow: /signup
-Disallow: /suivi-invite
 
 Sitemap: https://newoteg.com/sitemap.xml

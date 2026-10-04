@@ -1,7 +1,7 @@
 import EquivalenceEntry from "./EquivalenceEntry";
 import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { Helmet } from "react-helmet-async";
+import PageMeta from "./PageMeta";
 import { ShoppingCart, ZoomIn, FileText } from "lucide-react";
 import { useI18n } from "../context/I18nContext";
 import { useCart } from "../context/CartContext";
@@ -77,20 +77,7 @@ function Detail({ product }) {
   );
   return (
     <>
-      <Helmet>
-        <title>{name} — X-Electronic</title>
-        <meta
-          name="description"
-          content={
-            product.description?.slice(0, 155) ||
-            `${name} — X-Electronic, la boutique électronique de NEWOTEG.`
-          }
-        />
-        <link
-          rel="canonical"
-          href={`https://newoteg.com/product/${product.id}`}
-        />
-      </Helmet>
+      <PageMeta title={`${name} — X-Electronic`} description={product.description?.slice(0, 155) || `${name} — X-Electronic, la boutique électronique de NEWOTEG.`} />
       <div className="e-wrap e-product-page">
         <Crumbs title={name} />
         <div className="e-product-layout">
@@ -269,10 +256,12 @@ function Detail({ product }) {
 }
 export default function Product() {
   const { id } = useParams();
+  const { lang } = useI18n();
   const resource = useResource("/produits/" + encodeURIComponent(id));
   const missing = resource.error?.response?.status === 404;
   return missing ? (
     <>
+      <PageMeta title={`${lang === "en" ? "Product not found" : "Produit introuvable"} — X-Electronic`} noindex />
       <div className="e-wrap e-state">
         <h1>
           <Copy fr="Ce produit est introuvable" en="Product not found" />

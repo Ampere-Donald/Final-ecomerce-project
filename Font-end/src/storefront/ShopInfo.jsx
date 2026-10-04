@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Helmet } from "react-helmet-async";
+import PageMeta from "./PageMeta";
 import {
   ArrowRight,
   Mail,
@@ -36,14 +36,9 @@ export default function ShopInfo() {
     return <LegalPage privacy={pathname === "/privacy"} />;
   return <MissingPage />;
 }
-function Meta({ title, description, path, noindex = false }) {
+function Meta({ title, description, noindex = false }) {
   return (
-    <Helmet>
-      <title>{title} — X-Electronic / NEWOTEG</title>
-      <meta name="description" content={description} />
-      {path && <link rel="canonical" href={`https://newoteg.com${path}`} />}
-      {noindex && <meta name="robots" content="noindex, follow" />}
-    </Helmet>
+    <PageMeta title={`${title} — X-Electronic / NEWOTEG`} description={description} noindex={noindex} />
   );
 }
 function AboutShop() {

@@ -7,37 +7,41 @@
   <link rel="apple-touch-icon" href="/logo.png" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <!-- Preconnect -->
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <!-- Discover the home hero before the React/lazy-route waterfall; no other route downloads it. -->
+  <script>
+    if (window.location.pathname === '/') {
+      var heroPreload = document.createElement('link');
+      heroPreload.rel = 'preload';
+      heroPreload.as = 'image';
+      heroPreload.href = '/design-e/multimetre.webp';
+      heroPreload.setAttribute('fetchpriority', 'high');
+      document.head.appendChild(heroPreload);
+    }
+  </script>
 
-  <!-- Hreflang -->
-  <link rel="alternate" hreflang="fr" href="https://newoteg.com/" />
-  <link rel="alternate" hreflang="en" href="https://newoteg.com/" />
-  <link rel="alternate" hreflang="x-default" href="https://newoteg.com/" />
-  <meta name="description"
-    content="NEWOTEG SARL — Votre partenaire de confiance pour les équipements électroniques, composants industriels et maintenance technique à Douala, Cameroun. Importation directe d'Europe, Chine et Canada." />
-  <meta name="author" content="NEWOTEG SARL" />
-  <!-- Route Helmet owns robots directives; the worker protects private documents before JS. -->
+  <!-- Fallback metadata is handed to the single React owner at startup. -->
+  <meta data-newoteg-fallback name="description"
+    content="Composants, câbles, alimentation et outillage à Douala. X-Electronic, la boutique électronique de NEWOTEG." />
+  <meta name="author" content="X-Electronic / NEWOTEG" />
+  <!-- The route metadata provider owns robots directives; the worker protects private documents before JS. -->
   <meta name="theme-color" content="#2A2FCE" />
 
   <!-- Open Graph -->
-  <meta property="og:type" content="website" />
-  <meta property="og:site_name" content="NEWOTEG SARL" />
-  <meta property="og:locale" content="fr_CM" />
-  <meta property="og:title" content="NEWOTEG SARL — Équipements Électroniques & Composants Industriels" />
-  <meta property="og:description"
-    content="Votre partenaire de confiance pour les équipements électroniques, composants industriels et maintenance technique à Douala, Cameroun." />
-  <meta property="og:image" content="https://newoteg.com/logo.png" />
-  <meta property="og:url" content="https://newoteg.com/" />
+  <meta data-newoteg-fallback property="og:type" content="website" />
+  <meta data-newoteg-fallback property="og:site_name" content="X-Electronic / NEWOTEG" />
+  <meta data-newoteg-fallback property="og:locale" content="fr_CM" />
+  <meta data-newoteg-fallback property="og:title" content="X-Electronic — La boutique électronique de NEWOTEG" />
+  <meta data-newoteg-fallback property="og:description"
+    content="Composants, câbles, alimentation et outillage à Douala. X-Electronic, la boutique électronique de NEWOTEG." />
+  <meta data-newoteg-fallback property="og:image" content="https://newoteg.com/logo.png" />
 
   <!-- Twitter Card -->
-  <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="NEWOTEG SARL — Équipements Électroniques & Composants Industriels" />
-  <meta name="twitter:description"
-    content="Votre partenaire de confiance pour les équipements électroniques et composants industriels à Douala, Cameroun." />
+  <meta data-newoteg-fallback name="twitter:card" content="summary" />
+  <meta data-newoteg-fallback name="twitter:title" content="X-Electronic — La boutique électronique de NEWOTEG" />
+  <meta data-newoteg-fallback name="twitter:description"
+    content="Composants, câbles, alimentation et outillage à Douala. X-Electronic, la boutique électronique de NEWOTEG." />
 
-  <title>NEWOTEG SARL — Équipements Électroniques & Composants Industriels</title>
+  <title data-newoteg-fallback>X-Electronic — La boutique électronique de NEWOTEG</title>
 </head>
 
 <body>

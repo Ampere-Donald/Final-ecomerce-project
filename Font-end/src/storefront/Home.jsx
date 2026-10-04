@@ -4,7 +4,7 @@ import { CommercialTeaser } from './Commercial';
 import { createElement } from "react";
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Helmet } from "react-helmet-async";
+import PageMeta from "./PageMeta";
 import {
   ArrowRight,
   Cable,
@@ -47,13 +47,7 @@ export default function Home() {
   ];
   return (
     <>
-      <Helmet>
-        <title>X-Electronic — La boutique électronique de NEWOTEG</title>
-        <meta
-          name="description"
-          content="Composants, câbles, alimentation et outillage à Douala. Trouvez votre référence ou demandez conseil à X-Electronic, la boutique de NEWOTEG."
-        />
-      </Helmet>
+      <PageMeta />
       <div className="e-wrap e-home">
         <section className="e-discovery">
           <div>
@@ -108,6 +102,7 @@ export default function Home() {
             <Link className="e-measure-scene" to="/catalogue?search=multimètre">
               <img
                 src="/design-e/multimetre.webp"
+                fetchPriority="high"
                 alt="Multimètre — visuel marketing"
                 width="400"
                 height="400"
@@ -120,6 +115,7 @@ export default function Home() {
             <Link className="e-cable-scene" to="/catalogue?search=HDMI">
               <img
                 src="/design-e/hdmi-5m.webp"
+                fetchPriority="low"
                 alt="Câble HDMI — visuel marketing"
                 width="250"
                 height="250"

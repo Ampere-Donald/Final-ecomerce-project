@@ -21,6 +21,8 @@ export function Photo({ product, eager = false }) {
       src={product.image}
       alt={product.model}
       loading={eager ? "eager" : "lazy"}
+      fetchPriority={eager ? "high" : "auto"}
+      decoding="async"
       width="400"
       height="400"
       onError={() => setFailed(product.image)}
@@ -141,7 +143,7 @@ export function Crumbs({ title }) {
     </nav>
   );
 }
-export function Card({ product }) {
+export function Card({ product, eager = false }) {
   const { addToCart } = useCart();
   const { toggleFavorite, isFavorite } = useFavorites();
   const { lang } = useI18n();
@@ -151,7 +153,7 @@ export function Card({ product }) {
     <article className="e-card">
       <div className="e-card-image">
         <Link to={`/product/${product.id}`}>
-          <Photo product={product} />
+          <Photo product={product} eager={eager} />
         </Link>
         <button
           className="e-favorite"

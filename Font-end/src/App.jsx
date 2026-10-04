@@ -10,6 +10,7 @@ import ProtectedRoute from "./components/ProtectedRoute/ProtectedRoute";
 import Toast from "./components/Toast/Toast";
 import BottomNav from "./storefront/BottomNav";
 import { startJourney, leaveCheckout } from "./storefront/journey.js";
+import PageMetadataProvider from "./storefront/PageMetadataProvider";
 
 const Home = lazy(() => import("./storefront/Home"));
 const Catalogue = lazy(() => import("./storefront/Catalogue"));
@@ -181,7 +182,7 @@ function AppContent() {
 function App() {
   return (
     <Router>
-      <AppContent />
+      <PageMetadataProvider><AppContent /></PageMetadataProvider>
     </Router>
   );
 }

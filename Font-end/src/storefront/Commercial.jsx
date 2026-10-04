@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { Helmet } from "react-helmet-async";
+import PageMeta from "./PageMeta";
 import { ArrowRight } from "lucide-react";
 import { useI18n } from "../context/I18nContext";
 import useResource from "./useResource";
@@ -116,9 +116,7 @@ export default function Commercial() {
     resource = useCommercial(mode);
   return (
     <>
-      <Helmet>
-        <title>{offers ? "Offres" : "Arrivages"} — X-Electronic</title>
-      </Helmet>
+      <PageMeta />
       <div className="e-wrap e-commercial-page">
         <Crumbs
           title={

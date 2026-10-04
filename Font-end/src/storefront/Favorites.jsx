@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Helmet } from "react-helmet-async";
+import PageMeta from "./PageMeta";
 import { useFavorites } from "../context/FavoritesContext";
 import { useI18n } from "../context/I18nContext";
 import { resolveImageUrl } from "../utils/mapProduct";
@@ -48,12 +48,7 @@ export default function Favorites() {
   const { lang } = useI18n();
   return (
     <>
-      <Helmet>
-        <title>
-          {lang === "fr" ? "Mes favoris" : "My favourites"} — X-Electronic
-        </title>
-        <meta name="robots" content="noindex,nofollow" />
-      </Helmet>
+      <PageMeta />
       <div className="e-wrap e-catalogue">
         <Crumbs title={lang === "fr" ? "Favoris" : "Favourites"} />
         <div className="e-page-lead">

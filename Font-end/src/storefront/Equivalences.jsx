@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { Helmet } from "react-helmet-async";
+import PageMeta from "./PageMeta";
 import { ArrowRight, Search } from "lucide-react";
 import { useI18n } from "../context/I18nContext";
 import apiClient from "../utils/apiClient";
@@ -358,17 +358,7 @@ export default function Equivalences() {
   const targetId = params.get("produitId") || "";
   return (
     <>
-      <Helmet>
-        <title>{`${lang === "fr" ? "Trouver un équivalent" : "Find an equivalent"} — X-Electronic`}</title>
-        <meta
-          name="description"
-          content={
-            lang === "fr"
-              ? "Recherchez une pièce de remplacement parmi les composants électroniques NEWOTEG en stock."
-              : "Find a replacement part among NEWOTEG electronic components available in stock."
-          }
-        />
-      </Helmet>
+      <PageMeta />
       <div className="e-wrap e-equivalences">
         <Crumbs title={lang === "fr" ? "Équivalences" : "Equivalents"} />
         <div className="e-page-lead">

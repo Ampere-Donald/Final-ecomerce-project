@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Helmet } from "react-helmet-async";
+import PageMeta from "./PageMeta";
 import { RefreshCw, ArrowRight } from "lucide-react";
 import { useI18n } from "../context/I18nContext";
 import apiClient from "../utils/apiClient";
@@ -255,11 +255,7 @@ export default function GuestTracking() {
   }
   return (
     <>
-      <Helmet>
-        <title>{`${tr("Suivi privé de commande", "Private order tracking")} · X-Electronic`}</title>
-        <meta name="robots" content="noindex, nofollow" />
-        <meta name="referrer" content="no-referrer" />
-      </Helmet>
+      <PageMeta title={`${tr("Suivi privé de commande", "Private order tracking")} · X-Electronic`} />
       <div className="e-wrap e-guest-tracking">
         <div className="e-page-lead">
           <span className="e-eyebrow">

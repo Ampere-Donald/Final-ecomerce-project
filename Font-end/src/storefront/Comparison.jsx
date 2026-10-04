@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Helmet } from "react-helmet-async";
+import PageMeta from "./PageMeta";
 import { X, RefreshCw } from "lucide-react";
 import { useI18n } from "../context/I18nContext";
 import { Copy, Crumbs, Photo, Price, Stock } from "./Elements";
@@ -55,10 +55,7 @@ export default function Comparison() {
   };
   return (
     <>
-      <Helmet>
-        <title>{title} — X-Electronic</title>
-        <meta name="robots" content="noindex,follow" />
-      </Helmet>
+      <PageMeta title={`${title} — X-Electronic`} />
       <div className="e-wrap e-comparison-page">
         <Crumbs title={title} />
         <div className="e-comparison-lead">

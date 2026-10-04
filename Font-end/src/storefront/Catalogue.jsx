@@ -1,7 +1,7 @@
 import EquivalenceEntry from "./EquivalenceEntry";
 import { useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { Helmet } from "react-helmet-async";
+import PageMeta from "./PageMeta";
 import { SlidersHorizontal, X, ArrowRight } from "lucide-react";
 import { useI18n } from "../context/I18nContext";
 import { resolveImageUrl } from "../utils/mapProduct";
@@ -134,13 +134,7 @@ export default function Catalogue() {
   );
   return (
     <>
-      <Helmet>
-        <title>{query ? `${query} — ` : ""}Catalogue — X-Electronic</title>
-        <meta
-          name="description"
-          content="Trouvez une référence électronique, comparez ses caractéristiques et sa disponibilité chez X-Electronic."
-        />
-      </Helmet>
+      <PageMeta title={query ? `${query} — Catalogue — X-Electronic` : undefined} />
       <div className="e-wrap e-catalogue">
         <Crumbs title={lang === "fr" ? "Catalogue" : "Catalogue"} />
         <div className="e-page-lead">
@@ -261,8 +255,9 @@ export default function Catalogue() {
             <div
               className={`e-product-grid e-catalog-grid ${list ? "e-list" : ""}`}
             >
-              {result.rows.map((raw) => (
+              {result.rows.map((raw, index) => (
                 <Card
+                  eager={index === 0}
                   key={raw.id}
                   product={adaptProduct(raw, resolveImageUrl)}
                 />

@@ -5,7 +5,7 @@ import {
   useParams,
   useSearchParams,
 } from "react-router-dom";
-import { Helmet } from "react-helmet-async";
+import PageMeta from "./PageMeta";
 import { ArrowRight, FileText, RefreshCw, ShoppingCart } from "lucide-react";
 import { useI18n } from "../context/I18nContext";
 import { useCart } from "../context/CartContext";
@@ -208,9 +208,7 @@ function ProjectLibrary() {
   }
   return (
     <>
-      <Helmet>
-        <title>Projets — X-Electronic</title>
-      </Helmet>
+      <PageMeta />
       <div className="e-wrap e-project-page">
         <Crumbs title={<Copy fr="Projets" en="Projects" />} />
         <div className="e-page-title">
@@ -288,6 +286,7 @@ function ProjectLibrary() {
 }
 function ProjectDetail({ slug }) {
   const resource = useResource(`/projets/public/${encodeURIComponent(slug)}`);
+  const { lang } = useI18n();
   let project = null,
     parseError = null;
   try {
@@ -297,6 +296,7 @@ function ProjectDetail({ slug }) {
   }
   return resource.loading || resource.error || parseError || !project ? (
     <>
+      {resource.error?.response?.status === 404 && <PageMeta title={`${lang === "en" ? "Project not found" : "Projet introuvable"} — X-Electronic`} noindex />}
       <div className="e-wrap e-project-page">
         <Crumbs title={<Copy fr="Projet" en="Project" />} />
         <ProjectState {...resource} error={resource.error || parseError} />
@@ -470,9 +470,7 @@ function MaterialSelection({ initial }) {
   }
   return (
     <>
-      <Helmet>
-        <title>{titleOf(project, lang)} — X-Electronic</title>
-      </Helmet>
+      <PageMeta title={`${titleOf(project, lang)} — X-Electronic`} />
       <div className="e-wrap e-project-page">
         <nav className="e-crumbs" aria-label="Breadcrumb">
           <Link to="/">
