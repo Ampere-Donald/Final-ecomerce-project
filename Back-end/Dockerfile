@@ -36,13 +36,9 @@ COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=builder /app/prisma.config.ts ./
 
-# Copy startup script (ensures tables exist even if migrations fail)
+# Copy release checks and the fail-closed migration startup.
 COPY --from=builder /app/scripts ./scripts
 
 EXPOSE 3000
 
-# 1) ensure-schema creates missing tables/enum values directly via SQL
-# 2) prisma migrate deploy is still attempted, but Railway can keep old applied
-#    migrations that are no longer present locally; do not block startup on that
-# 3) start the app
-CMD ["sh", "-c", "node scripts/ensure-schema.js && (npx prisma migrate deploy || echo 'Prisma migrate deploy failed; continuing after ensure-schema') && node dist/src/main"]
+CMD ["node", "scripts/start-preproduction.cjs"]

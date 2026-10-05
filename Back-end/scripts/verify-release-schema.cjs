@@ -1,5 +1,8 @@
 const { Client } = require('pg');
 const {
+  isAcceptedHistoricalMigration,
+} = require('./accepted-migration-history.cjs');
+const {
   sourceIdentity,
   readStructure,
   compareStructure,
@@ -34,7 +37,10 @@ async function verifyMigrationHistory(db, allowPending = false) {
       (migration) => migration.name === row.migration_name,
     );
     if (!source) differences.push(`unexpected-migration:${row.migration_name}`);
-    else if (row.checksum !== source.sha256)
+    else if (
+      row.checksum !== source.sha256 &&
+      !isAcceptedHistoricalMigration(row, source)
+    )
       differences.push(`migration:${row.migration_name}`);
     if (names.has(row.migration_name))
       differences.push(`duplicate-migration:${row.migration_name}`);

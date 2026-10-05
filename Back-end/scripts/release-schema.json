@@ -234,6 +234,10 @@
       {
         "name": "20261004140000_incompatibilites",
         "sha256": "b5c44cb984bba00cc7496179458d0d2e516ac57f9d1ca147686cd33a11841c60"
+      },
+      {
+        "name": "20261005090000_align_deployed_release",
+        "sha256": "18cf4701747343345b139d3e76b5cec533f16fabb78c314c61614a66d0ec718f"
       }
     ]
   },

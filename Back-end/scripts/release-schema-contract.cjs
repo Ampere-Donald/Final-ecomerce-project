@@ -81,11 +81,18 @@ function compareStructure(expected, actual) {
         Object.keys(row).some(
           (field) =>
             !(
+              kind === 'enums' &&
+              field === 'values' &&
+              JSON.stringify(enumLabels(row[field])) ===
+                JSON.stringify(enumLabels(observed[field]))
+            ) &&
+            !(
               kind === 'constraints' &&
               row.type === 'c' &&
               field === 'definition' &&
               expected.checkRestoreDefinitions?.[key(row)] === observed[field]
-            ) && JSON.stringify(row[field]) !== JSON.stringify(observed[field]),
+            ) &&
+            JSON.stringify(row[field]) !== JSON.stringify(observed[field]),
         )
       )
         differences.push(`${kind}:${key(row)}`);
@@ -94,6 +101,15 @@ function compareStructure(expected, actual) {
   // Extra historical columns/indexes are preserved. They do not prove compatibility
   // of triggers, policies, privileges or data; those require a separate rehearsal.
   return differences;
+}
+
+// These application enums are identifiers, never ordinal ranges. PostgreSQL's
+// historical ADD VALUE order can differ without changing supported values.
+function enumLabels(value) {
+  if (Array.isArray(value)) return [...value].sort();
+  if (typeof value === 'string' && /^\{[A-Z0-9_,]+\}$/.test(value))
+    return value.slice(1, -1).split(',').sort();
+  return value;
 }
 
 function assertFreshContract(contract) {

@@ -14,7 +14,7 @@
     "start:prod": "node dist/src/main",
     "prisma:generate": "npx prisma generate",
     "prisma:migrate:deploy": "npx prisma migrate deploy",
-    "start:migrate:prod": "(npx prisma migrate deploy || node scripts/ensure-schema.js) && node dist/src/main",
+    "start:migrate:prod": "node scripts/start-preproduction.cjs",
     "cleanup:images": "node scripts/cleanup-images.js",
     "db:clear": "npx tsx clear_db.ts",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
@@ -36,13 +36,13 @@
     "@nestjs/schedule": "^6.1.3",
     "@nestjs/serve-static": "^5.0.4",
     "@nestjs/throttler": "^6.5.0",
-    "@prisma/adapter-pg": "^7.4.2",
-    "@prisma/client": "^7.4.2",
+    "@prisma/adapter-pg": "7.10.0",
+    "@prisma/client": "7.10.0",
     "@types/bcrypt": "^6.0.0",
     "@types/cookie-parser": "^1.4.10",
     "@types/nodemailer": "^7.0.11",
     "@types/passport-jwt": "^4.0.1",
-    "adm-zip": "^0.5.16",
+    "adm-zip": "0.6.1",
     "bcrypt": "^6.0.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.4",
@@ -52,11 +52,11 @@
     "google-auth-library": "^10.6.2",
     "helmet": "^8.1.0",
     "multer": "^2.1.1",
-    "nodemailer": "^9.0.3",
+    "nodemailer": "10.0.14",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
     "pg": "^8.13.0",
-    "prisma": "^7.4.2",
+    "prisma": "7.10.0",
     "read-excel-file": "^9.3.1",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
@@ -112,5 +112,13 @@
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
+  },
+  "overrides": {
+    "@prisma/config": {
+      "deepmerge-ts": "8.0.1"
+    },
+    "prisma": {
+      "mysql2": "3.24.5"
+    }
   }
 }

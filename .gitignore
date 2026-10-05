@@ -5,6 +5,7 @@ vendor/
 
 # ─── Build outputs ───────────────────────────────────────
 dist/
+dist-release/
 build/
 out/
 target/
