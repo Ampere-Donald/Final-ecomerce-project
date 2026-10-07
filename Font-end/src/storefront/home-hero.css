@@ -1,0 +1,68 @@
+.e-commerce-hero {
+  display: grid;
+  grid-template-columns: 1fr 1.05fr;
+  align-items: center;
+  position: relative;
+  isolation: isolate;
+  margin-top: 20px;
+  background: #f2f6f8;
+  border-radius: 12px;
+  overflow: hidden;
+}
+.e-hero-copy { padding: 36px 0 36px 32px; z-index: 2; }
+.e-hero-location { display: flex; align-items: center; gap: 7px; color: #38647c; font-size: 12px; margin: 0 0 18px; }
+.e-commerce-hero h1 { font-size: clamp(32px, 3.2vw, 48px); line-height: 1.08; letter-spacing: -1.7px; max-width: 570px; margin: 0 0 20px; color: #152438; }
+.e-commerce-hero h1 span { color: #21678f; }
+.e-hero-description { font-size: 16px; line-height: 1.6; max-width: 485px; margin: 0 0 24px; color: #526474; }
+.e-hero-actions { display: flex; flex-wrap: wrap; gap: 12px; }
+.e-hero-actions .e-btn { background: #155dba; padding: 13px 17px; min-height: 48px; font-size: 13px; }
+.e-hero-actions .e-secondary { background: #ffffffd9; color: #174e94; border-color: #9fb9d8; }
+.e-hero-advice { display: inline-flex; align-items: center; gap: 8px; margin-top: 19px; min-height: 32px; color: #355f5b; font-size: 12px; }
+.e-hero-products { align-self: stretch; min-height: 435px; position: relative; }
+.e-hero-image { position: absolute; width: 100%; height: 100%; object-fit: cover; object-position: 48% center; }
+.e-hero-products::after { content: ''; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(90deg, #f2f6f8, transparent 17%); }
+.e-hero-float { position: absolute; z-index: 1; top: 23px; padding: 12px 15px; background: #ffffffed; border: 1px solid #ffffff; border-radius: 8px; box-shadow: 0 4px 18px #2648590a; color: #20364b; }
+.e-hero-float strong { display: block; font-size: 13px; margin-bottom: 5px; }
+.e-hero-float span { display: flex; align-items: center; gap: 14px; font-size: 11px; color: #45637b; }
+.e-hero-float-power { left: 30px; }
+.e-hero-float-cables { right: 20px; }
+.e-visual-families { display: grid; grid-template-columns: repeat(6,minmax(0,1fr)); gap: 10px; padding: 18px 0; }
+.e-visual-family { display: flex; align-items: center; position: relative; gap: 9px; padding: 12px 9px; border: 1px solid #dde5ed; border-radius: 8px; background: white; color: #23374b; min-width: 0; transition: border-color .15s; }
+.e-visual-family:hover { border-color: #7d9fbe; }
+.e-visual-family img { width: 48px; height: 58px; object-fit: cover; border-radius: 5px; flex-shrink: 0; }
+.e-visual-family strong { display: block; font-size: 12px; line-height: 1.35; }
+.e-visual-family small { display: block; color: #627184; font-size: 10px; line-height: 1.5; margin-top: 5px; }
+.e-visual-family > svg { display: none; }
+.e-home .e-equivalence-entry { background: #f3f8fb; border: 1px solid #dce8f0; border-radius: 10px; padding: 22px; margin-top: 4px; }
+.e-home .e-equivalence-entry > svg { color: #21678f; }
+@media (max-width: 1100px) {
+  .e-hero-copy { padding: 28px 0 28px 24px; }
+  .e-commerce-hero h1 { font-size: 37px; }
+  .e-hero-description { font-size: 14px; }
+  .e-hero-products { min-height: 450px; }
+  .e-hero-float { top: 16px; padding: 10px; }
+  .e-hero-float-power { left: 12px; }
+  .e-hero-float-cables { right: 12px; top: auto; bottom: 16px; }
+  .e-visual-families { grid-template-columns: repeat(3,minmax(0,1fr)); }
+  .e-visual-family img { width: 60px; }
+}
+@media (max-width: 760px) {
+  .e-commerce-hero { grid-template-columns: 1fr; margin-top: 12px; border-radius: 9px; }
+  .e-hero-copy { padding: 24px 20px 10px; }
+  .e-hero-location { font-size: 11px; margin-bottom: 15px; }
+  .e-commerce-hero h1 { font-size: clamp(29px,7.8vw,42px); letter-spacing: -1.1px; max-width: 540px; margin-bottom: 14px; }
+  .e-hero-description { font-size: 14px; margin-bottom: 18px; }
+  .e-hero-actions { gap: 9px; }
+  .e-hero-actions .e-btn { flex: 1 1 170px; justify-content: center; }
+  .e-hero-advice { margin-top: 11px; font-size: 11px; }
+  .e-hero-products { min-height: 0; aspect-ratio: 1.5; }
+  .e-hero-image { object-fit: cover; }
+  .e-hero-products::after { background: linear-gradient(#f2f6f8,transparent 22%); }
+  .e-hero-float { padding: 8px 10px; top: 12px; bottom: auto; }
+  .e-hero-float strong { font-size: 11px; margin: 0; }
+  .e-hero-float span { display: none; }
+  .e-visual-families { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 8px; padding: 14px 0; }
+  .e-visual-family { padding: 10px 7px; gap: 7px; }
+  .e-visual-family img { width: 44px; height: 52px; }
+  .e-visual-family strong { font-size: 11px; }
+}

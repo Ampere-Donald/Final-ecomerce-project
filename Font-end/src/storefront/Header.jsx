@@ -14,6 +14,7 @@ import { useAuth } from "../context/AuthContext";
 import { useCart } from "../context/CartContext";
 import { useI18n } from "../context/I18nContext";
 import { Modal, Copy } from "./Elements";
+import "./header-commerce.css";
 import ReceptionChoice from "./ReceptionChoice";
 
 function SearchForm({ initial }) {
@@ -67,9 +68,10 @@ export default function Header() {
   const links = [
     ["/catalogue", "Tout le catalogue", "All products"],
     ["/catalogue?search=câble", "Câbles & connectique", "Cables & connectors"],
-    ["/catalogue?search=chargeur", "Alimentation", "Power supplies"],
+    ["/catalogue?search=alimentation", "Alimentation", "Power supplies"],
     ["/catalogue?search=composant", "Composants", "Components"],
     ["/catalogue?search=outillage", "Outillage", "Tools"],
+    ["/catalogue?search=adaptateur", "Vidéo & adaptateurs", "Video & adapters"],
     ["/equivalences", "Équivalences", "Equivalents"],
     ["/guides", "Guides", "Guides"],
     ["/devis", "Devis", "Quotes"],
@@ -79,6 +81,7 @@ export default function Header() {
       <a className="e-skip" href="#main-content">
         <Copy fr="Aller au contenu" en="Skip to content" />
       </a>
+      <div className="e-commerce-topline"><div className="e-wrap"><span><Copy fr="Douala · Akwa" en="Douala · Akwa" /></span><Link to="/livraison"><Copy fr="Livraison & retrait" en="Delivery & pickup" /></Link><Link to="/contact"><Copy fr="Besoin d’aide ?" en="Need help?" /></Link></div></div>
       <header className="e-header">
         <div className="e-wrap e-header-main">
           <button

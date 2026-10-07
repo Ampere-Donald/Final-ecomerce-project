@@ -1,16 +1,12 @@
 import EquivalenceEntry from "./EquivalenceEntry";
 import ProjectTeaser from "./ProjectTeaser";
 import { CommercialTeaser } from './Commercial';
-import { createElement } from "react";
+import "./home-hero.css";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import PageMeta from "./PageMeta";
 import {
   ArrowRight,
-  Cable,
-  Cpu,
-  Wrench,
-  Grid2X2,
   MapPin,
   MessageCircle,
   Truck,
@@ -38,103 +34,40 @@ export default function Home() {
     parseError = e;
   }
   const families = [
-    ["Câbles & connectique", "Cables & connectors", Cable, "câble"],
-    ["Alimentation", "Power supplies", Cpu, "chargeur"],
-    ["Composants", "Components", Cpu, "composant"],
-    ["Outillage", "Tools", Wrench, "outillage"],
-    ["Vidéo & adaptateurs", "Video & adapters", Grid2X2, "adaptateur"],
-    ["Tout le catalogue", "All products", Grid2X2, ""],
+    ["Câbles & connectique", "Cables & connectors", "/design-e/hdmi-5m.webp", "câble", "Fils, câbles et connecteurs", "Wires, cables and connectors"],
+    ["Alimentation", "Power supplies", "/design-e/hero-electronique-720.webp", "alimentation", "Modules et chargeurs", "Modules and chargers"],
+    ["Composants", "Components", "/product-images/inventory-condo-1500uf-35v-71894a7f3a05.webp", "composant", "Condensateurs, relais et circuits", "Capacitors, relays and circuits"],
+    ["Outillage", "Tools", "/design-e/multimetre.webp", "outillage", "Mesure et réparation", "Measurement and repair"],
+    ["Vidéo & adaptateurs", "Video & adapters", "/design-e/hdmi-5m.webp", "adaptateur", "HDMI, VGA et conversion", "HDMI, VGA and conversion"],
+    ["Tout le catalogue", "All products", "/design-e/hero-electronique-720.webp", "", "Toutes nos catégories", "Browse every category"],
   ];
   return (
     <>
       <PageMeta />
       <div className="e-wrap e-home">
-        <section className="e-discovery">
-          <div>
-            <p className="e-location">
-              <MapPin size={17} />
-              <Copy
-                fr="Votre boutique électronique à Douala"
-                en="Your electronics shop in Douala"
-              />
-            </p>
-            <h1>
-              <Copy
-                fr={
-                  <>
-                    Votre prochain projet
-                    <br />
-                    commence ici.
-                  </>
-                }
-                en={
-                  <>
-                    Your next project
-                    <br />
-                    starts here.
-                  </>
-                }
-              />
-            </h1>
-            <p className="e-intro">
-              <Copy
-                fr={
-                  <>
-                    Composants, câbles, alimentation et outillage.
-                    <br />
-                    Du premier branchement à votre prochain projet.
-                  </>
-                }
-                en="Components, cables, power supplies and tools. From your first connection to your next project."
-              />
-            </p>
-            <div className="e-actions">
-              <Link className="e-btn e-gold" to="/catalogue">
-                <Copy fr="Explorer le catalogue" en="Explore the catalogue" />
-                <ArrowRight size={18} />
-              </Link>
-              <Link to="/contact">
-                <Copy fr="Un conseil pour choisir ?" en="Need help choosing?" />
-              </Link>
+        <section className="e-commerce-hero" aria-labelledby="home-hero-title">
+          <div className="e-hero-copy">
+            <p className="e-hero-location"><MapPin size={16} aria-hidden="true" /><Copy fr="Votre boutique électronique à Douala · Akwa" en="Your electronics shop in Douala · Akwa" /></p>
+            <h1 id="home-hero-title"><Copy fr={<>Tout l’essentiel pour vos <span>réparations et projets électroniques.</span></>} en={<>Everything for your <span>electronics repairs and projects.</span></>} /></h1>
+            <p className="e-hero-description"><Copy fr="Composants, câbles, alimentation et outillage. Pour les techniciens, les passionnés et les professionnels, avec le conseil pour bien choisir." en="Components, cables, power supplies and tools. For technicians, enthusiasts and professionals, with advice to help you choose." /></p>
+            <div className="e-hero-actions">
+              <Link className="e-btn" to="/catalogue"><Copy fr="Explorer le catalogue" en="Explore the catalogue" /><ArrowRight size={18} /></Link>
+              <Link className="e-btn e-secondary" to="/equivalences"><Copy fr="Trouver un équivalent" en="Find an equivalent" /><ArrowRight size={18} /></Link>
             </div>
+            <Link className="e-hero-advice" to="/contact"><MessageCircle size={17} /><Copy fr="Un doute sur une pièce ? Demandez conseil" en="Unsure about a part? Ask for advice" /></Link>
           </div>
-          <div className="e-photo-composition">
-            <Link className="e-measure-scene" to="/catalogue?search=multimètre">
-              <img
-                src="/design-e/multimetre.webp"
-                fetchPriority="high"
-                alt="Multimètre — visuel marketing"
-                width="400"
-                height="400"
-              />
-              <span>
-                <Copy fr="Mesurer & vérifier" en="Measure & check" />
-                <ArrowRight size={15} />
-              </span>
-            </Link>
-            <Link className="e-cable-scene" to="/catalogue?search=HDMI">
-              <img
-                src="/design-e/hdmi-5m.webp"
-                fetchPriority="low"
-                alt="Câble HDMI — visuel marketing"
-                width="250"
-                height="250"
-              />
-              <span>
-                <Copy fr="Relier vos appareils" en="Connect your devices" />
-              </span>
-            </Link>
+          <div className="e-hero-products">
+            <img className="e-hero-image" src="/design-e/hero-electronique-1280.webp" srcSet="/design-e/hero-electronique-720.webp 720w, /design-e/hero-electronique-1280.webp 1280w" sizes="(max-width: 760px) 100vw, 55vw" width="1280" height="853" fetchPriority="high" alt="Alimentation, multimètre, câbles et composants électroniques — illustration de nos univers produits" />
+            <Link className="e-hero-float e-hero-float-power" to="/catalogue?search=alimentation"><strong><Copy fr="Alimentation" en="Power supplies" /></strong><span><Copy fr="Modules et chargeurs" en="Modules and chargers" /><ArrowRight size={16} /></span></Link>
+            <Link className="e-hero-float e-hero-float-cables" to="/catalogue?search=câble"><strong><Copy fr="Câbles & connectique" en="Cables & connectors" /></strong><span><Copy fr="Voir la sélection" en="Explore the selection" /><ArrowRight size={16} /></span></Link>
           </div>
         </section>
-        <nav className="e-families">
-          {families.map(([fr, en, Icon, q], i) => (
-            <Link
-              className={`e-family e-tone-${i}`}
-              key={fr}
-              to={"/catalogue" + (q ? "?search=" + encodeURIComponent(q) : "")}
-            >
-              <span>{createElement(Icon, { size: 23 })}</span>
-              <Copy fr={fr} en={en} />
+        <nav className="e-visual-families" aria-label="Catégories / Categories">
+          {families.map(([fr, en, image, q, detailFr, detailEn]) => (
+            <Link className="e-visual-family" key={fr} to={"/catalogue" + (q ? "?search=" + encodeURIComponent(q) : "")}>
+              <img src={image} alt="" width="72" height="72" loading="lazy" />
+              <span><strong><Copy fr={fr} en={en} /></strong><small><Copy fr={detailFr} en={detailEn} /></small></span>
+              <ArrowRight size={16} aria-hidden="true" />
             </Link>
           ))}
         </nav>
