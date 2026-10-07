@@ -93,7 +93,7 @@ export default function Header() {
             <Menu />
           </button>
           <Link to="/" className="e-brand">
-            <img src="/logo.png" alt="NEWOTEG" width="42" height="46" />
+            <img src="/logo-header-48.webp" srcSet="/logo-header-48.webp 1x, /logo-header-96.webp 2x" alt="NEWOTEG" width="42" height="46" />
             <span>
               <b>NEWOTEG</b>
               <strong>X-Electronic</strong>
