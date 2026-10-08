@@ -49,7 +49,7 @@ const results = [],
             !production && url.origin === "http://127.0.0.1:5187" &&
             url.pathname.startsWith("/design-e/");
           if (
-            (url.origin !== base && !demoImage && !productionAsset && !(production && url.origin === "https://api.newoteg.com" && url.pathname.startsWith("/uploads/"))) ||
+            (url.origin !== base && !demoImage && !productionAsset && !(production && url.origin === "https://api.newoteg.com" && (url.pathname.startsWith("/uploads/") || url.pathname.startsWith("/api/")))) ||
             request.request().method() !== "GET"
           ) {
             forbidden.push(

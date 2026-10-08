@@ -20,3 +20,7 @@ Reproduction depuis Font-end : définir NEWOTEG_LAB_PRODUCTION=1 et NEWOTEG_SEO_
 ## Vignettes de catégories — optimisation suivante
 
 Trois déclinaisons WebP de 144 px maximum pour un affichage de 72 px (densité ×2), sans recadrage ni changement des photographies. Sources originales conservées pour leurs autres usages. Câbles : 116 714 → 2 510 octets ; outillage : 115 186 → 3 760 ; composants : 75 850 → 2 392. Total des ressources de ces vignettes : 307 750 → 8 662 octets (−97,2 %). Les références hero restent inchangées pour réutiliser leur téléchargement. Ce gain de poids ne prouve pas à lui seul un gain LCP.
+
+Publication du correctif 40b85fd0 confirmée ; le bundle public Home-DHjLchii.js utilise les nouvelles vignettes. Build et lint passent. Une publication automatique a servi un bundle configuré sur api.newoteg.com ; le protocole a été corrigé pour autoriser ses lectures GET publiques, sans autoriser d’écriture. Les essais avec requêtes bloquées sont rejetés.
+
+Mesure finale avec médias et API disponibles : accueil LCP 4 120 / 3 844 / 3 988 ms ; catalogue 5 900 / 6 280 / 6 420 ms. Aucun gain LCP démontré pour l’accueil malgré la réduction de poids ; variations et changement d’origine API interdisent d’attribuer l’écart catalogue à ces vignettes. CLS inchangé, aucun débordement ni erreur JS. Preuves : captures/mobile-production-20261008/thumbnails-final/. Le budget LCP reste ouvert.
