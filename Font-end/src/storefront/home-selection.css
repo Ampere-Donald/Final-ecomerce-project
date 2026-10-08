@@ -1,0 +1,47 @@
+.e-home-selection .e-section-head{align-items:flex-start;margin-bottom:13px}
+.e-home-selection .e-section-head h2{font-size:26px;margin:0 0 4px;font-weight:750}
+.e-home-selection .e-section-head p{font-size:13px;color:#788797;margin:0}
+.e-home-selection .e-section-head>a{display:flex;align-items:center;gap:15px;font-size:12px;padding-top:8px}
+.e-home-selection-filters{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+.e-home-selection-filters button{background:#fff;border:1px solid #e8edf1;border-radius:24px;padding:9px 18px;min-height:44px;font-size:12px;color:#526679;box-shadow:0 1px 3px #20394c06;cursor:pointer}
+.e-home-selection-filters button[aria-pressed=true]{background:#e3f5eb;color:#22804e;border-color:#d5efdf}
+.e-home-selection-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));grid-auto-rows:1fr;gap:12px}
+.e-home-product{min-width:0;border:1px solid #e7edf2;border-radius:12px;background:#fff;box-shadow:0 2px 7px #20394c04;overflow:hidden;display:flex;flex-direction:column}
+.e-home-product-photo{height:190px;padding:19px 18px 5px;background:linear-gradient(#fcfdfe,#fff);position:relative}
+.e-home-product-photo>a{display:block;height:100%}
+.e-home-product-photo img{width:100%;height:100%;object-fit:contain}
+.e-home-product-photo .e-placeholder{height:100%;font-size:11px}
+.e-home-product-heart{position:absolute;top:10px;right:10px;display:grid;place-items:center;width:36px;height:36px;padding:0;border:1px solid #eef1f4;border-radius:50%;background:#fff;color:#94a1ad;box-shadow:0 2px 5px #20394c08;cursor:pointer}
+.e-home-product-heart[aria-pressed=true]{color:#cf4262}
+.e-home-product-body{padding:10px 13px 13px;display:flex;flex-direction:column;flex:1}
+.e-home-stock{align-self:flex-start;display:inline-flex;align-items:center;gap:5px;font-size:10px;line-height:1.3;padding:3px 6px;border-radius:4px;margin-bottom:8px}
+.e-home-stock i{width:6px;height:6px;border-radius:50%;background:currentColor}
+.e-home-stock-ok{background:#e5f6eb;color:#218249}
+.e-home-stock-low{background:#fff2de;color:#ba6905}
+.e-home-stock-out{background:#ffe9ec;color:#cf3248}
+.e-home-stock-unknown{background:#edf2f6;color:#586e80}
+.e-home-product h3{font-size:14px;line-height:1.25;font-weight:700;height:35px;margin:0 0 5px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.e-home-product h3 a{color:#172d41}
+.e-home-product-reference{font-size:10px;color:#8795a3;margin:0 0 5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.e-home-product-prices{margin-top:auto;margin-bottom:9px}
+.e-home-product-promo{height:20px;line-height:14px;font-size:11px;display:flex;align-items:center;gap:7px;color:#8795a3}
+.e-home-product-promo>span{background:#ffe9ec;color:#cf3248;padding:1px 4px;border-radius:3px;font-weight:700}
+.e-home-product .e-price{display:block;color:#075bb9;font-size:23px;font-weight:800;line-height:1.2}
+.e-home-product .e-home-product-cta{display:flex;align-items:center;justify-content:center;gap:8px;min-height:40px;padding:9px 7px;border:1px solid #0862c7;border-radius:6px;background:#0862c7;color:#fff;font-size:11px;font-weight:600}
+.e-home-product-cta svg{flex-shrink:0}
+.e-home-product-cta svg:last-child{margin-left:auto}
+.e-home-product .e-home-product-equivalent{background:#fff;color:#0862c7}
+.e-home-product a:focus-visible,.e-home-product button:focus-visible,.e-home-selection-filters button:focus-visible,.e-home-selection-grid:focus-visible{outline:3px solid #86b9ef;outline-offset:3px}
+@media(min-width:761px) and (max-width:1199px){.e-home-selection-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:760px){
+ .e-home-selection .e-section-head h2{font-size:23px}
+ .e-home-selection .e-section-head>a{font-size:10px;gap:5px;flex-shrink:0}
+ .e-home-selection-grid{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;gap:12px;padding:3px 2px 9px;scrollbar-width:none}
+ .e-home-selection-grid::-webkit-scrollbar{display:none}
+ .e-home-product{flex:0 0 82%;scroll-snap-align:start}
+ .e-home-product-photo{height:205px}
+ .e-home-product h3{font-size:16px;height:40px}
+ .e-home-product .e-price{font-size:25px}
+ .e-home-product .e-home-product-cta{min-height:44px;font-size:13px}
+ .e-home-product-heart{width:44px;height:44px}
+}
