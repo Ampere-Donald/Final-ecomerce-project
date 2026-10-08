@@ -15,7 +15,8 @@ const path = require("node:path");
 const {
   chromium,
 } = require("C:/Users/pc/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright");
-const base = "http://127.0.0.1:5188",
+const production = process.env.NEWOTEG_LAB_PRODUCTION === "1";
+const base = production ? "https://newoteg.com" : "http://127.0.0.1:5188",
   output = process.env.NEWOTEG_SEO_OUTPUT;
 if (!output || !path.isAbsolute(output))
   throw Error("Absolute evidence directory required");
@@ -38,11 +39,17 @@ const results = [],
         });
         await context.route("**/*", (request) => {
           const url = new URL(request.request().url());
+          const productionAsset = production && (
+            (url.origin === "https://res.cloudinary.com" && url.pathname.startsWith("/dm4ij9sxg/image/upload/")) ||
+            (url.origin === "https://static.cloudflareinsights.com" && url.pathname.startsWith("/beacon.min.js/"))
+          );
+          // Exclude analytics submissions, never create production records.
+          if (production && url.pathname === "/cdn-cgi/rum") return request.abort();
           const demoImage =
-            url.origin === "http://127.0.0.1:5187" &&
+            !production && url.origin === "http://127.0.0.1:5187" &&
             url.pathname.startsWith("/design-e/");
           if (
-            (url.origin !== base && !demoImage) ||
+            (url.origin !== base && !demoImage && !productionAsset && !(production && url.origin === "https://api.newoteg.com" && url.pathname.startsWith("/uploads/"))) ||
             request.request().method() !== "GET"
           ) {
             forbidden.push(
@@ -200,7 +207,7 @@ const results = [],
           forbidden,
           limits: [
             "Synthetic desktop Edge viewport/CPU/network, not a physical mobile device",
-            "Local demo API/data through real Vite proxy; fixture images on local 5187/design-e, no remote CDN/HTTPS or production image catalogue",
+            production ? "Public production GET requests only, live catalogue and HTTPS, analytics submissions excluded; not directly comparable with demo measurements" : "Local demo API/data through real Vite proxy; fixture images on local 5187/design-e, no remote CDN/HTTPS or production image catalogue",
             "Load LCP/CLS observed for 5s after network idle, not field percentiles or INP",
             "Modern browser path only; legacy build not exercised",
           ],
