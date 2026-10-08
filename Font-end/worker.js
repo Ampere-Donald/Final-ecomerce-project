@@ -7,6 +7,7 @@
 const BACKEND = 'https://api.newoteg.com';
 import { isPrivateDocument } from './src/storefront/routeMetadata.js';
 import { isApplicationDocument } from './src/storefront/documentRoutes.js';
+import { staticPublicMetadata, renderFallbackMetadata } from './src/storefront/serverMetadata.js';
 
 function privateResponse(response) {
   const headers = new Headers(response.headers);
@@ -24,7 +25,16 @@ export default {
       const response = await fetch(new Request(target, request));
       return /^\/api\/(commandes|avis|incompatibilites)\/guest(?:\/|$)/i.test(url.pathname) ? privateResponse(response) : response;
     }
-    const response = await env.ASSETS.fetch(request);
+    const metadata = request.method === 'GET' ? staticPublicMetadata(url) : null;
+    let assetRequest = request;
+    if (metadata) {
+      // The asset ETag describes shared index.html, not this route's metadata.
+      const headers = new Headers(request.headers);
+      headers.delete('If-None-Match');
+      headers.delete('If-Modified-Since');
+      assetRequest = new Request(request, { headers });
+    }
+    const response = await env.ASSETS.fetch(assetRequest);
     // The asset SPA fallback serves index.html with 200 even for unknown URLs.
     // Keep its body so React renders the useful NotFound page, but report 404
     // before JavaScript executes. Never rewrite assets, redirects or errors.
@@ -39,6 +49,18 @@ export default {
       const missing = new Response(request.method === 'HEAD' ? null : response.body,
         { status: 404, statusText: 'Not Found', headers });
       return isPrivateDocument(url.pathname) ? privateResponse(missing) : missing;
+    }
+    if (request.method === 'GET' && response.status === 200 &&
+        response.headers.get('content-type')?.includes('text/html')) {
+      if (metadata) {
+        const headers = new Headers(response.headers);
+        headers.delete('ETag');
+        headers.delete('Last-Modified');
+        headers.delete('Content-Length');
+        headers.delete('Content-Encoding');
+        headers.set('Cache-Control', 'public, max-age=0, must-revalidate');
+        return new Response(renderFallbackMetadata(await response.text(), metadata), { headers });
+      }
     }
     return isPrivateDocument(url.pathname) ? privateResponse(response) : response;
   },

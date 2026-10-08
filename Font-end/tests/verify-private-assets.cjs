@@ -131,7 +131,12 @@ const ok = (name) => {
         response.headers.get("cache-control"),
         "private, no-store",
       );
-      await response.arrayBuffer();
+      const body = await response.text();
+      if (route === '/catalogue') {
+        assert(body.includes('Catalogue — X-Electronic</title>'));
+        assert(body.includes('rel="canonical" href="https://newoteg.com/catalogue"'));
+        assert.equal((body.match(/name="description"/g) || []).length, 1);
+      }
     }
     const asset = await document("/design-e/multimetre.webp", {});
     assert.equal(asset.status, 200);
@@ -153,7 +158,7 @@ const ok = (name) => {
     }
     ok('Unknown document URLs return real 404 with noindex and retain the application error page');
     ok(
-      "Public documents and marketing image stay public and byte-identical; no outbound request",
+      "Public metadata is present before JavaScript; marketing image byte-identical; no outbound request",
     );
     fs.mkdirSync(output, { recursive: true });
     fs.writeFileSync(
