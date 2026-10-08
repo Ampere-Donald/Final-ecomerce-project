@@ -7,6 +7,7 @@ import { useFavorites } from "../context/FavoritesContext";
 import { formatFCFA } from "../utils/formatFCFA";
 import { stockState, canBuy } from "./productData";
 import ComparisonAction from "./ComparisonAction";
+import { cardImage } from "./cardImage";
 import OfferDetails from './OfferDetails';
 import './commercial.css';
 
@@ -14,18 +15,22 @@ export function Copy({ fr, en }) {
   const { lang } = useI18n();
   return lang === "en" ? en : fr;
 }
-export function Photo({ product, eager = false }) {
+export function Photo({ product, eager = false, thumbnail = false }) {
   const [failed, setFailed] = useState("");
+  const [original, setOriginal] = useState("");
+  const responsive = thumbnail && original !== product.image ? cardImage(product.image) : null;
   return product.image && failed !== product.image ? (
     <img
-      src={product.image}
+      src={responsive?.src || product.image}
+      srcSet={responsive?.srcSet}
+      sizes={responsive?.sizes}
       alt={product.model}
       loading={eager ? "eager" : "lazy"}
       fetchPriority={eager ? "high" : "auto"}
       decoding="async"
       width="400"
       height="400"
-      onError={() => setFailed(product.image)}
+      onError={() => responsive ? setOriginal(product.image) : setFailed(product.image)}
     />
   ) : (
     <div className="e-placeholder">
@@ -153,7 +158,7 @@ export function Card({ product, eager = false }) {
     <article className="e-card">
       <div className="e-card-image">
         <Link to={`/product/${product.id}`}>
-          <Photo product={product} eager={eager} />
+          <Photo product={product} eager={eager} thumbnail />
         </Link>
         <button
           className="e-favorite"
