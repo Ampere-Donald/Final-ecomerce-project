@@ -9,9 +9,15 @@ const output=process.env.NEWOTEG_TEST_OUTPUT||'C:/Users/pc/Documents/Newoteg/out
  const products=(await res.json()).slice(0,5);assert.equal(products.length,5);
  const browser=await chromium.launch({headless:true,executablePath:'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe'});
  const ctx=await browser.newContext({viewport:{width:1440,height:1000}});
- const writes=[],errors=[],checks=[];
+ const writes=[],errors=[],checks=[],telemetry=[];
  await ctx.addInitScript(()=>localStorage.setItem('appLang','fr'));
- await ctx.route('**/*',r=>{if(!['GET','HEAD','OPTIONS'].includes(r.request().method())){writes.push(new URL(r.request().url()).pathname);return r.abort()}return r.continue()});
+ // Block hosting analytics as well as business writes during public verification.
+ await ctx.route('**/*',r=>{
+  const req=r.request(),u=new URL(req.url());
+  if(u.pathname==='/cdn-cgi/rum'){telemetry.push(u.pathname);return r.abort()}
+  if(!['GET','HEAD','OPTIONS'].includes(req.method())){writes.push(u.pathname);return r.abort()}
+  return r.continue();
+ });
  try{
   const page=await ctx.newPage();page.on('pageerror',e=>errors.push(e.message));
   await page.goto(base);const section=page.locator('.e-home-selection'),cards=section.locator('.e-home-product');
@@ -41,7 +47,7 @@ const output=process.env.NEWOTEG_TEST_OUTPUT||'C:/Users/pc/Documents/Newoteg/out
   await page.goto(base+'/catalogue');await expect(page.locator('.e-catalog-grid .e-card').first()).toBeVisible({timeout:30000});
   assert.equal(await page.locator('.e-home-product').count(),0);checks.push('Real catalogue retains standard cards');
   assert.deepEqual(writes,[]);assert.deepEqual(errors,[]);
-  fs.writeFileSync(path.join(output,base.startsWith('https:')?'production-result.json':'live-result.json'),JSON.stringify({base,checks,errors,writes,products:products.map(p=>({id:p.id,name:p.nomProduit,price:p.prixPublic,stock:p.quantiteStock}))},null,2));
-  console.log(JSON.stringify({base,passed:checks.length,checks,errors,writes}));
+  fs.writeFileSync(path.join(output,base.startsWith('https:')?'production-result.json':'live-result.json'),JSON.stringify({base,checks,errors,writes,telemetryBlocked:telemetry.length,products:products.map(p=>({id:p.id,name:p.nomProduit,price:p.prixPublic,stock:p.quantiteStock}))},null,2));
+  console.log(JSON.stringify({base,passed:checks.length,checks,errors,writes,telemetryBlocked:telemetry.length}));
  }finally{await browser.close()}
 })().catch(e=>{console.error(e);process.exitCode=1});
