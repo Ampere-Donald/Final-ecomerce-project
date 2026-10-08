@@ -4,7 +4,7 @@
 
 Départ : branche `codex/newoteg-evolution`, commit `622b066f` ; fichiers préexistants non suivis `Back-end/test/sandbox/` et `docs/refonte-e/` conservés. Mission : document utilisateur `22217b96-fac1-41f8-bbbf-cbd45bd7c060/pasted-text-1.txt`, 16 sections. Livraison frontend uniquement. Aucun prix, promotion, stock, commande réelle ou catégorie administrative à modifier.
 
-Statut : recette locale terminée, publication V3 en préparation. La précédente livraison de cinq cartes ne constitue pas cette V3.
+Statut : V3 publiée et vérifiée sur https://newoteg.com le 08/10/2026. La précédente livraison de cinq cartes ne constitue pas cette V3.
 
 ## Audit avant refonte
 
@@ -16,11 +16,11 @@ Audit public en lecture seule, captures dans `C:/Users/pc/Documents/Newoteg/outp
 - Catalogue : 1 883 références au moment de l'audit ; 24 par page, filtres famille/stock/prix, tri et pagination. Vue mobile précédente en grandes cartes horizontales.
 - Fiche testée : TDA 2148, référence 118057 ; caractéristiques, quantité, stock, tarif gros et ajout panier présents. Les recommandations sont de la même famille.
 - Fiche sans prix : Condensateur ajustable métallique pour radio, référence 104067 ; prix absent et achat impossible. Un visuel renseigné dans l'API peut échouer et déclencher le fallback, ce qui est conservé.
-- Rupture : `stockState` empêche l'achat ; accès existant aux équivalences avec `query` et `produitId`. Recette dédiée à compléter après uniformisation.
+- Rupture : `stockState` empêche l'achat ; accès existant aux équivalences avec `query` et `produitId`. Préremplissage vérifié dans la recette finale.
 - Favoris : sauvegarde via FavoritesContext, page privée sous authentification. Comparaison : route réelle `/comparer`, trois articles d'une même famille. La tentative initiale `/comparaison` était une erreur de l'audit, pas une route attendue du site.
 - Arrivages et offres : endpoints existants, aucune ligne publiée actuellement. Aucun remplacement artificiel par des promotions.
 - Projets : aucune liste publiée actuellement ; accès à la bibliothèque conservé.
-- Panier/checkout : à vérifier par API interceptée en local, sans commande de production.
+- Panier/checkout : vérifiés par API interceptée en local, sans commande de production.
 
 ## Inspirations et composition
 
@@ -71,7 +71,33 @@ Des essais locaux ont rencontré des délais réseau intermittents ; leurs trace
 
 Mesure de référence supplémentaire avec le header intégré : `before-performance-header/mobile-lab-result.json`, même profil, trois échantillons. Accueil LCP 7 744 / 9 816 / 13 492 ms ; catalogue 16 748 / 9 824 / 7 460 ms ; CLS 0 ; JS ~205 ko / 199 ko. La dispersion est importante ; comparer les médianes avec prudence. Le budget absolu de 2,5 s n'est pas atteint avant V3.
 
-## Audit du brief avant publication
+## Publication et mesures après
+
+Code livré : `f3f3f71c54269037a97029e2ec8de968a5c1c34b`, précédé du commit d'implémentation `b787b2ee`, tous deux poussés sur `origin/main` sans force. Build final : 1 922 modules, bundles modernes et legacy, 32,10 s. Seul le frontend a été publié via le Worker Cloudflare existant `newoteg-client`, avec `--keep-vars`, sans modification du backend.
+
+Version Cloudflare : `dcaf9e21-5442-4fe5-9002-fb285ca7f4b1`. La page publique charge bien le point d'entrée du build livré `assets/index-CQfDUQf1.js`. `verify-commercial-v3-live.cjs` a ensuite réussi ses **19 contrôles sur https://newoteg.com**, avec `errors: []` et `writes: []`. Les captures publiques sélection desktop, catalogue mobile et accueil mobile complet ont également été ouvertes et inspectées.
+
+Capacité constatée : sélection éditoriale 6, condensateurs 20, circuits/transistors 14, réparations 7, alimentation 20, connectique 20, outils 16 ; soit **103 emplacements de produits** parmi sept carrousels, pas 103 références distinctes garanties. Cinq cartes visibles sur desktop ; maximum 20 références par collection. Aucun arrivage ni offre publiés au contrôle : blocs masqués. Aucun projet publié : lien neutre vers la bibliothèque conservé.
+
+Comparaison synthétique comparable avec le header déjà intégré, trois passages par route, cache froid, viewport 390 × 844, CPU ×4, 200 000 octets/s et latence 150 ms :
+
+| Route | LCP médian avant | LCP médian après | JS encodé médian avant/après | CLS après |
+| --- | ---: | ---: | ---: | ---: |
+| Accueil | 9 816 ms | 5 912 ms | 205 409 / 209 345 octets | 0 |
+| Catalogue | 9 824 ms | 5 488 ms | 199 193 / 201 308 octets | 0 |
+
+Après : accueil 9 784 / 5 912 / 5 580 ms ; catalogue 5 488 / 4 916 / 5 780 ms. Aucun débordement, erreur JS ou écriture. Le budget JS de 220 Kio et le budget CLS de 0,1 passent. **Le budget LCP de 2,5 s reste dépassé**, comme avant ; résultat de l'outil `budgets-missed`. Les médianes ne montrent pas de régression sur ces passages, mais la dispersion réseau/CDN interdit d'attribuer toute l'amélioration à V3. Ces mesures ne prouvent ni les Core Web Vitals terrain, ni l'INP, ni la performance sur un appareil Android physique. L'amélioration du chargement initial reste un travail ultérieur identifié.
+
+Preuves locales, racine `C:/Users/pc/Documents/Newoteg/output/implementation-work/commercial-v3/` :
+
+- `before/` : état et captures avant.
+- `fixture/result.json` : 12 groupes de scénarios locaux, API interceptée, parcours d'achat sans commande réelle.
+- `legacy/result.json` : exécution du bundle legacy et glissement tactile dans Edge.
+- `after/result.json` : 19 contrôles du build local avec catalogue réel ; neuf vues obligatoires inspectées.
+- `production/result.json` : 19 contrôles publics ; captures aux six largeurs.
+- `before-performance-header/mobile-lab-result.json` et `after-performance/mobile-lab-result.json` : mesures comparables détaillées, limites et budgets.
+
+## Audit final des 16 sections du brief
 
 | Exigence | Preuve / état |
 | --- | --- |
@@ -86,16 +112,16 @@ Mesure de référence supplémentaire avec le header intégré : `before-perform
 | 9. Sélection | Actifs, stock positif, priorité photo/prix, dédoublonnage et diversité ; aucune donnée commerciale éditée. |
 | 10. Parcours | Accueil/recherche/fiche/panier/review testés ; documentation, caractéristiques, gros, achat et contrôles conservés. Libellé « Demander le prix » si tarif absent. |
 | 11. Identité | Hero/logo/navbar intégrée/dégradé/équivalences/Akwa préservés. |
-| 12. Performance/accessibilité | Progressif, deux requêtes de collections, cache public borné, images différées, clavier/tactile/legacy ; mesure avant acquise, après publication à compléter. |
+| 12. Performance/accessibilité | Progressif, deux requêtes de collections, cache public borné, images différées, clavier/tactile/legacy ; mesures avant/après acquises, aucune régression médiane constatée. Budget LCP absolu toujours dépassé, explicitement signalé. |
 | 13. Données | CSV de 77 fiches à compléter ; échantillon déclaré, aucune correction en base. |
 | 14. Recette | Tests et captures ci-dessus ; neuf vues inspectées. Aucun appareil Android physique disponible. |
-| 15. Déploiement | Frontend Cloudflare existant identifié, recette locale passée ; publication et vérification publique restent à effectuer. |
-| 16. Livrables | Code, CSV, captures avant/après et ce rapport ; version publiée et mesure après à ajouter. |
+| 15. Déploiement | Code poussé sur main, frontend Cloudflare publié, empreinte du build et 19 contrôles publics vérifiés ; aucune écriture métier. |
+| 16. Livrables | Code, CSV, captures avant/après, tests, comparaison de performance, version publiée et présent rapport. |
 
-## Gates restants
+## Limites et retour arrière
 
-- Mesures après comparables, correction des régressions significatives.
-- Commit, push main, déploiement Cloudflare existant, vérification publique et preuve de version.
+- Aucun blocage de livraison restant. Les prix/images à compléter, le LCP initial, l'absence de seconde référence distincte et l'absence d'Android physique sont les limites explicites ci-dessus.
+- Les contrôles frontend exécutés localement sont attestés ; aucune affirmation de réussite de l'ensemble du workflow GitHub (backend/admin/Android) n'est faite.
 
 Retour arrière : utiliser la version Cloudflare précédente après identification via `wrangler deployments list`, sans changer de plateforme ni réinitialiser la base. Une version n'est déclarée publiée qu'après contrôle public effectif.
 
