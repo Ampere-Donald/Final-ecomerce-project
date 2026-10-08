@@ -24,3 +24,13 @@ Trois déclinaisons WebP de 144 px maximum pour un affichage de 72 px (densité 
 Publication du correctif 40b85fd0 confirmée ; le bundle public Home-DHjLchii.js utilise les nouvelles vignettes. Build et lint passent. Une publication automatique a servi un bundle configuré sur api.newoteg.com ; le protocole a été corrigé pour autoriser ses lectures GET publiques, sans autoriser d’écriture. Les essais avec requêtes bloquées sont rejetés.
 
 Mesure finale avec médias et API disponibles : accueil LCP 4 120 / 3 844 / 3 988 ms ; catalogue 5 900 / 6 280 / 6 420 ms. Aucun gain LCP démontré pour l’accueil malgré la réduction de poids ; variations et changement d’origine API interdisent d’attribuer l’écart catalogue à ces vignettes. CLS inchangé, aucun débordement ni erreur JS. Preuves : captures/mobile-production-20261008/thumbnails-final/. Le budget LCP reste ouvert.
+
+## Décomposition du chargement — mesure instrumentée
+
+Le protocole conserve maintenant début/fin de téléchargement, début de réponse, DOMContentLoaded et temps de chargement/rendu du candidat LCP. Six passages terminés, sans requête refusée ni erreur JS, preuves dans captures/mobile-production-20261008/waterfall/.
+
+Passage 2 accueil : réponse HTML 137 ms, hero téléchargé entre 375 et 1 448 ms ; module principal fini à 1 877 ms ; module Home découvert à 2 425 ms et fini à 2 820 ms ; LCP 3 828 ms. Le téléchargement du hero se termine largement avant son affichage. La prochaine intervention doit réduire le chemin JavaScript/rendu initial, avec comparaison contrôlée sur une même origine de build, plutôt que réduire encore le poids du hero.
+
+Passage 2 catalogue : module principal fini à 1 570 ms ; requête produits commencée à 3 199 ms, terminée à 3 593 ms ; première photo demandée à 3 874 ms et téléchargée à 6 159 ms ; LCP 6 220 ms. Deux leviers distincts : disponibilité anticipée des données publiques et image dimensionnée pour sa carte. Aucun changement de cache de prix/stocks ou de contrôle d’accès n’est justifié par ces mesures seules.
+
+Il s’agit de diagnostics, pas d’un gain livré. Le rendu HTML initial du corps public et le chargement différé des routes restent à traiter ; les métadonnées serveur livrées ne rendent pas le contenu React avant JavaScript.

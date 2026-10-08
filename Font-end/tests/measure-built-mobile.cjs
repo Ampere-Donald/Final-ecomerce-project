@@ -68,6 +68,8 @@ const results = [],
           new PerformanceObserver((list) => {
             for (const entry of list.getEntries()) {
               window.__lab.lcpMs = entry.startTime;
+              window.__lab.lcpRenderTime = entry.renderTime;
+              window.__lab.lcpLoadTime = entry.loadTime;
               window.__lab.lcpElement = entry.element?.tagName || null;
               window.__lab.lcpPath = entry.url
                 ? new URL(entry.url).pathname
@@ -137,8 +139,13 @@ const results = [],
               encoded: entry.encodedBodySize,
               decoded: entry.decodedBodySize,
               duration: entry.duration,
+              start: entry.startTime,
+              responseStart: entry.responseStart,
+              responseEnd: entry.responseEnd,
             })),
           document: {
+            responseStart: performance.getEntriesByType("navigation")[0].responseStart,
+            domContentLoaded: performance.getEntriesByType("navigation")[0].domContentLoadedEventEnd,
             encoded:
               performance.getEntriesByType("navigation")[0].encodedBodySize,
             decoded:
