@@ -1,70 +1,71 @@
-import { useState } from "react";
-import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
+import { Link, NavLink, useLocation } from "react-router-dom";
 import {
   Menu,
-  Search,
   ArrowRight,
   ShoppingCart,
   User,
-  MessageCircle,
+  Headset,
+  Heart,
+  Phone,
+  ChevronDown,
   Grid2X2,
   Globe,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
+import { useFavorites } from "../context/FavoritesContext";
 import { useCart } from "../context/CartContext";
 import { useI18n } from "../context/I18nContext";
 import { Modal, Copy } from "./Elements";
 import "./header-commerce.css";
 import ReceptionChoice from "./ReceptionChoice";
+import HeaderSearch from "./HeaderSearch";
+import CatalogueMenu from "./CatalogueMenu";
+import { shopContact } from "./shopContact";
 
-function SearchForm({ initial }) {
-  const [value, setValue] = useState(initial);
-  const navigate = useNavigate();
-  const { lang } = useI18n();
-  return (
-    <form
-      className="e-search"
-      role="search"
-      onSubmit={(e) => {
-        e.preventDefault();
-        navigate(
-          `/catalogue${value.trim() ? "?search=" + encodeURIComponent(value.trim()) : ""}`,
-        );
-      }}
-    >
-      <Search aria-hidden="true" size={21} />
-      <label className="e-sr" htmlFor="e-search">
-        {lang === "fr"
-          ? "Rechercher un produit ou une référence"
-          : "Search products or references"}
-      </label>
-      <input
-        id="e-search"
-        name="search"
-        type="search"
-        value={value}
-        onChange={(e) => setValue(e.target.value)}
-        placeholder={
-          lang === "fr"
-            ? "Un produit, une référence, un besoin…"
-            : "A product, a reference, a project…"
-        }
-      />
-      <button aria-label={lang === "fr" ? "Rechercher" : "Search"}>
-        <span>
-          <Copy fr="Rechercher" en="Search" />
-        </span>
-        <ArrowRight size={20} />
-      </button>
-    </form>
-  );
-}
 export default function Header() {
-  const [open, setOpen] = useState(false);
+  const [menu, setMenu] = useState(null);
+  const [drawerCatalogue, setDrawerCatalogue] = useState(false);
+  const root = useRef(null);
+  const trigger = useRef(null);
+  const { favoritesCount } = useFavorites();
   const { cartCount } = useCart();
   const { isAuthenticated, logout } = useAuth();
   const { lang, toggleLang } = useI18n();
   const location = useLocation();
+  const open = menu?.route === location.key && menu.type === "drawer";
+  const mega = menu?.route === location.key && menu.type === "catalogue";
+  // Forget the old route's disclosure, including when returning with browser Back.
+  if (menu && menu.route !== location.key) setMenu(null);
+  const close = () => setMenu(null);
+  useEffect(() => {
+    const outside = (event) => {
+      if (
+        root.current?.querySelector(
+          '[aria-expanded="true"][data-catalogue-trigger]',
+        ) &&
+        !root.current.contains(event.target)
+      )
+        setMenu(null);
+    };
+    const escape = (event) => {
+      if (
+        event.key === "Escape" &&
+        root.current?.querySelector(
+          '[aria-expanded="true"][data-catalogue-trigger]',
+        )
+      ) {
+        setMenu(null);
+        trigger.current?.focus();
+      }
+    };
+    document.addEventListener("pointerdown", outside);
+    document.addEventListener("keydown", escape);
+    return () => {
+      document.removeEventListener("pointerdown", outside);
+      document.removeEventListener("keydown", escape);
+    };
+  }, []);
   const links = [
     ["/catalogue", "Tout le catalogue", "All products"],
     ["/catalogue?search=câble", "Câbles & connectique", "Cables & connectors"],
@@ -81,19 +82,42 @@ export default function Header() {
       <a className="e-skip" href="#main-content">
         <Copy fr="Aller au contenu" en="Skip to content" />
       </a>
-      <div className="e-commerce-topline"><div className="e-wrap"><span><Copy fr="Douala · Akwa" en="Douala · Akwa" /></span><Link to="/livraison"><Copy fr="Livraison & retrait" en="Delivery & pickup" /></Link><Link to="/contact"><Copy fr="Besoin d’aide ?" en="Need help?" /></Link></div></div>
-      <header className="e-header">
+      <div className="e-commerce-topline">
+        <div className="e-wrap">
+          <span>Douala · Akwa</span>
+          <Link className="e-top-pro" to="/devis">
+            <Copy fr="Pour les pros" en="For professionals" />
+          </Link>
+          <Link to="/livraison">
+            <Copy fr="Livraison & retrait" en="Delivery & pickup" />
+          </Link>
+          <Link to="/contact">
+            <Copy fr="Besoin d’aide ?" en="Need help?" />
+          </Link>
+          <a className="e-top-phone" href={"tel:" + shopContact.phone}>
+            <Phone size={12} aria-hidden="true" />
+            {shopContact.phone}
+          </a>
+        </div>
+      </div>
+      <header className="e-header" ref={root}>
         <div className="e-wrap e-header-main">
           <button
             className="e-icon e-menu"
             aria-label={lang === "fr" ? "Ouvrir le menu" : "Open menu"}
             aria-expanded={open}
-            onClick={() => setOpen(true)}
+            onClick={() => setMenu({ route: location.key, type: "drawer" })}
           >
             <Menu />
           </button>
           <Link to="/" className="e-brand">
-            <img src="/logo-header-48.webp" srcSet="/logo-header-48.webp 1x, /logo-header-96.webp 2x" alt="NEWOTEG" width="42" height="46" />
+            <img
+              src="/logo-header-48.webp"
+              srcSet="/logo-header-48.webp 1x, /logo-header-96.webp 2x"
+              alt="NEWOTEG"
+              width="42"
+              height="46"
+            />
             <span>
               <b>NEWOTEG</b>
               <strong>X-Electronic</strong>
@@ -105,13 +129,14 @@ export default function Header() {
               </small>
             </span>
           </Link>
-          <SearchForm
-            key={location.search}
+          <HeaderSearch
+            key={location.key}
+            onInteract={close}
             initial={new URLSearchParams(location.search).get("search") || ""}
           />
           <div className="e-header-actions">
             <Link to="/contact" className="e-advice">
-              <MessageCircle />
+              <Headset />
               <span>
                 <Copy fr="Conseil" en="Advice" />
               </span>
@@ -122,6 +147,15 @@ export default function Header() {
               <User />
               <span>
                 <Copy fr="Mon compte" en="My account" />
+              </span>
+            </Link>
+            <Link
+              to="/favourites"
+              aria-label={`${lang === "fr" ? "Favoris" : "Favourites"} (${favoritesCount})`}
+            >
+              <Heart />
+              <span>
+                <Copy fr="Favoris" en="Favourites" />
               </span>
             </Link>
             <Link
@@ -143,18 +177,50 @@ export default function Header() {
           }
         >
           <div className="e-wrap">
-            {links.map(([url, fr, en], i) => (
+            <button
+              ref={trigger}
+              data-catalogue-trigger
+              className="e-catalogue-trigger"
+              type="button"
+              aria-expanded={mega}
+              aria-controls="header-catalogue-panel"
+              onClick={() =>
+                setMenu(
+                  mega ? null : { route: location.key, type: "catalogue" },
+                )
+              }
+            >
+              <Grid2X2 size={18} />
+              <Copy fr="Tout le catalogue" en="All products" />
+              <ChevronDown size={16} />
+            </button>
+            {links.slice(1).map(([url, fr, en]) => (
               <Link key={url} to={url}>
-                {i === 0 && <Grid2X2 size={18} />}
                 <Copy fr={fr} en={en} />
               </Link>
             ))}
             <ReceptionChoice compact />
           </div>
         </nav>
+        {mega && (
+          <div className="e-mega-position e-wrap">
+            <CatalogueMenu onNavigate={close} />
+          </div>
+        )}
       </header>
-      <Modal open={open} onClose={() => setOpen(false)} title="X-Electronic">
+      <Modal open={open} onClose={close} title="X-Electronic">
         <nav className="e-drawer-links">
+          <button
+            type="button"
+            aria-expanded={open && drawerCatalogue}
+            aria-controls="header-catalogue-panel"
+            onClick={() => setDrawerCatalogue((value) => !value)}
+          >
+            <Grid2X2 size={18} />
+            <Copy fr="Explorer les familles" en="Browse categories" />
+            <ChevronDown size={16} />
+          </button>
+          {open && drawerCatalogue && <CatalogueMenu onNavigate={close} />}
           {[
             ["/", "Accueil", "Home"],
             ...links,
@@ -168,7 +234,7 @@ export default function Header() {
             ["/contact", "Contact", "Contact"],
             ["/livraison", "Livraison et retrait", "Delivery and pickup"],
           ].map(([url, fr, en]) => (
-            <NavLink key={url} to={url} onClick={() => setOpen(false)}>
+            <NavLink key={url} to={url} onClick={close}>
               <Copy fr={fr} en={en} />
               <ArrowRight size={17} />
             </NavLink>
@@ -181,7 +247,7 @@ export default function Header() {
             <button
               onClick={() => {
                 logout();
-                setOpen(false);
+                close();
               }}
             >
               <Copy fr="Se déconnecter" en="Sign out" />

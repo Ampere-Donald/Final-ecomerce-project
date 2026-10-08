@@ -1,0 +1,74 @@
+{
+  "base": "http://127.0.0.1:5192",
+  "responsive": [
+    {
+      "width": 1440,
+      "overflow": false,
+      "search": true,
+      "drawer": false
+    },
+    {
+      "width": 1024,
+      "overflow": false,
+      "search": true,
+      "drawer": true
+    },
+    {
+      "width": 768,
+      "overflow": false,
+      "search": true,
+      "drawer": true
+    },
+    {
+      "width": 390,
+      "overflow": false,
+      "search": true,
+      "drawer": true
+    },
+    {
+      "width": 360,
+      "overflow": false,
+      "search": true,
+      "drawer": true
+    }
+  ],
+  "searches": [
+    {
+      "query": "IRF510",
+      "http": 200,
+      "suggestions": 0
+    },
+    {
+      "query": "condens",
+      "http": 200,
+      "suggestions": 6
+    },
+    {
+      "query": "câble HDMI",
+      "http": 200,
+      "suggestions": 0
+    },
+    {
+      "query": "multimètre",
+      "http": 200,
+      "suggestions": 4
+    },
+    {
+      "query": "qzzzzintrouvable999",
+      "http": 200,
+      "suggestions": 0
+    },
+    {
+      "query": "condensatuer",
+      "http": 200,
+      "suggestions": 6
+    }
+  ],
+  "checks": [
+    "Mega-menu: default family, hover, keyboard, real category URLs, Escape/focus, outside click, route close, no hero shift",
+    "Suggestions: real API, accents, partial/exact/typo/empty query results, highlights, arrows, Escape, mouse and keyboard product navigation, full search Enter",
+    "Rapid typing: 12 characters, one API request after debounce",
+    "Guest favourites still redirects through authentication; cart and reception dialog accessible",
+    "Controlled race: previous request cancelled and slow response cannot replace latest; missing price/out-of-stock; network failure preserves full search"
+  ]
+}
