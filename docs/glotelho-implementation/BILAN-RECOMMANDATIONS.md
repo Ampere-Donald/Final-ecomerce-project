@@ -1,5 +1,7 @@
 # De la visite de Glotelho aux changements NEWOTEG
 
+> Mise à jour : voir [l’état de clôture du 8 octobre](ETAT-CLOTURE-2026-10-08.md). Le bilan ci-dessous est historique ; son estimation de 80 % et ses mentions de non-publication ne décrivent plus la version actuelle.
+
 État vérifié le 4 octobre 2026. Base : rapport du 28 septembre et plan A–Z approuvé. Les changements ci-dessous concernent la branche locale `codex/newoteg-evolution`, pas le site publié ni Railway.
 
 Avancement global estimé : **environ 80 % du périmètre d'implémentation**, ordre de grandeur et non mesure automatique. La plupart des parcours sont intégrés localement ; cela ne signifie pas que 80 % des lots sont définitivement validés, ni que le site est prêt à publier. Les tests donnent des preuves par scénario, pas un pourcentage de fonctionnalités. Restent notamment qualification des données/équivalences réelles, fournisseurs de messages, performance et recette sur téléphone, validation équipe et préproduction cible avec migrations/restauration vérifiées. Le tableau de `EXECUTION.md` garde ces lots ouverts.
