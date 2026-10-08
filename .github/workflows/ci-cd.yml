@@ -60,6 +60,8 @@ jobs:
           cache-dependency-path: Font-end/package-lock.json
       - run: npm ci
       - run: npm run lint
+      - name: Vérifier les contrats des parcours et protections du storefront
+        run: npm test
       - run: npm run build
       - run: npm audit --omit=dev --audit-level=high
 
