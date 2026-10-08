@@ -6,6 +6,7 @@ import useResource from "./useResource";
 import { adaptProduct } from "./productData";
 import { resolveImageUrl } from "../utils/mapProduct";
 import { Card, Copy, Crumbs, State } from "./Elements";
+import useOfferClock from "./useOfferClock";
 import { readMerchandising } from "./offerData";
 import Footer from "./Footer";
 import "./commercial.css";
@@ -13,11 +14,12 @@ function useCommercial(mode) {
   const resource = useResource(
     "/produits/" + (mode === "offres" ? "flash" : "arrivages"),
   );
+  const now = useOfferClock(resource.data);
   let rows = [],
     error = resource.error;
   try {
     if (resource.data)
-      rows = readMerchandising(resource.data, mode).map((raw) => ({
+      rows = readMerchandising(resource.data, mode).filter(raw => mode !== "offres" || Date.parse(raw.offre.fin) > now).map((raw) => ({
         ...adaptProduct(raw, resolveImageUrl),
         arrivalDate: raw.arrivageAt,
       }));
@@ -43,7 +45,7 @@ function CommercialRows({ rows, mode }) {
               </time>
             </p>
           )}
-          <Card product={product} />
+          <Card product={product} compare={false} />
         </div>
       ))}
     </div>

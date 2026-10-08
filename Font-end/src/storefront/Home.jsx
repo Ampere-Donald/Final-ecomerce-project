@@ -1,6 +1,5 @@
 import EquivalenceEntry from "./EquivalenceEntry";
-import ProjectTeaser from "./ProjectTeaser";
-import { CommercialTeaser } from './Commercial';
+import HomeMerchandising from "./HomeMerchandising";
 import "./home-hero.css";
 import HomeSelection from "./HomeSelection";
 import { Link } from "react-router-dom";
@@ -56,9 +55,7 @@ export default function Home() {
         </nav>
         <EquivalenceEntry illustrated />
         <HomeSelection />
-        <ProjectTeaser />
-        <CommercialTeaser mode="arrivages" />
-        <CommercialTeaser mode="offres" />
+        <HomeMerchandising />
         <section className="e-advice-ribbon">
           <MessageCircle size={30} />
           <div>
