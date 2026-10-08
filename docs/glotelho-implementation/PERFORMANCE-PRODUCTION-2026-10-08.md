@@ -34,3 +34,11 @@ Passage 2 accueil : réponse HTML 137 ms, hero téléchargé entre 375 et 1 448 
 Passage 2 catalogue : module principal fini à 1 570 ms ; requête produits commencée à 3 199 ms, terminée à 3 593 ms ; première photo demandée à 3 874 ms et téléchargée à 6 159 ms ; LCP 6 220 ms. Deux leviers distincts : disponibilité anticipée des données publiques et image dimensionnée pour sa carte. Aucun changement de cache de prix/stocks ou de contrôle d’accès n’est justifié par ces mesures seules.
 
 Il s’agit de diagnostics, pas d’un gain livré. Le rendu HTML initial du corps public et le chargement différé des routes restent à traiter ; les métadonnées serveur livrées ne rendent pas le contenu React avant JavaScript.
+
+## Photos responsives des cartes — f8ad0790
+
+Elements.jsx réserve la transformation au composant Card ; les autres Photo, dont les fiches détaillées, gardent leur source originale. cardImage.js accepte seulement les uploads publics versionnés du dossier produits du compte Cloudinary de la boutique. Trois largeurs (240/400/640), limite proportionnelle sans recadrage ni agrandissement, qualité/format automatiques selon la documentation https://cloudinary.com/documentation/image_optimization et https://cloudinary.com/documentation/transformation_reference. URL externe, locale, signée ou déjà transformée inchangée. En cas d’erreur de transformation, Photo retente l’original avant son placeholder.
+
+Build et lint passent ; GET original et dérivé 400 px répondent 200 (123 776 contre 22 734 octets, client HTTP sans négociation moderne). Publication Cloudflare 755d7dcb-a899-4c9b-80e9-6204bbdd94d2. Mesure publique complète, trois passages par route, même protocole : LCP catalogue 4 488 / 4 576 / 4 680 ms (précédent 6 032 / 6 220 / 6 244) ; accueil 4 372 / 4 440 / 3 980 ms. Le candidat catalogue utilise effectivement 240 px et transfère 9 658 octets dans Edge. Amélioration observée du catalogue, sans prétendre à une garantie terrain ; accueil non amélioré. Budget 2 500 ms toujours manqué. CLS 0 catalogue / 0,01075 accueil, aucun débordement global ni erreur JS. Capture catalogue inspectée ; photos initiales présentes, images hors écran restent lazy.
+
+Preuves : captures/mobile-production-20261008/responsive-cards/mobile-lab-result.json et captures associées. Aucun prix/stock ni donnée client modifié.
