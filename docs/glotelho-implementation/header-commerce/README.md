@@ -10,13 +10,15 @@ catalogueNavigation.js : regroupement de présentation des seules catégories r�
 HeaderSearch.jsx : combobox avec six suggestions au maximum, chargement, absence de résultat et erreur réseau. GET /produits?search=...&salesSearch=true&limit=8 ; ordre du backend préservé. Déclenchement à deux caractères avec 300 ms de pause, AbortController et résultats associés à leur requête. Images via Photo/adaptProduct, prix via Price/formatFCFA, stock via Stock. Entrée sur un article ouvre /product/:id ; sinon recherche complète /catalogue?search=... . Flèches, Escape, clic et focus testés. Champ catalogue-query avec autocomplete=off ; les politiques natives du navigateur ne sont pas modifiables par CSS et peuvent ignorer cet attribut.
 
 ## Contrôles locaux
-Lint complet réussi ; build Vite réussi ; 85 tests Node réussis (trois nouveaux contrats de navigation et surlignage). Tests navigateur avec API publique via proxy local : détails dans verification-local.json. Cas contrôlés de réponse retardée, annulation, rupture, prix inconnu, erreur réseau et catégories indisponibles également réussis. Frappe de 12 caractères à 20 ms/caractère : un appel de suggestions. Pas de débordement à 360, 390, 768, 1024 et 1440 px, ainsi qu’à 1100, 1200, 1280 et 1366 px. Français/anglais vérifiés. Favoris invité redirige vers login?returnTo=/favourites ; panier et dialogue de réception restent accessibles. Aucune commande ni message envoyé.
+Lint complet réussi ; build Vite réussi ; 89 tests Node réussis après intégration des derniers changements de main (trois nouveaux contrats de navigation et surlignage). Tests navigateur avec API publique via proxy local : détails dans verification-local.json. Cas contrôlés de réponse retardée, annulation, rupture, prix inconnu, erreur réseau et catégories indisponibles également réussis. Frappe de 12 caractères à 20 ms/caractère : un appel de suggestions. Pas de débordement à 360, 390, 768, 1024 et 1440 px, ainsi qu’à 1100, 1200, 1280 et 1366 px. Français/anglais vérifiés. Favoris invité redirige vers login?returnTo=/favourites ; panier et dialogue de réception restent accessibles. Aucune commande ni message envoyé.
 
 IRF510 et câble HDMI ne renvoient actuellement aucun résultat via le moteur public ; condens donne six suggestions affichées, multimètre quatre, condensatuer six. Aucun produit ni prix inventé pour remplir ces cas.
 
 ## Captures
 Sur le poste : C:/Users/pc/Documents/Newoteg/output/implementation-work/header-commerce/
 header-closed.png, mega-menu.png, suggestions.png, header-390.png, suggestions-390.png, drawer-390.png et variantes par largeur. Les deux nouvelles captures annoncées dans la mission ne figuraient pas parmi les pièces jointes ; comparaison effectuée avec les spécifications détaillées et la direction NEWOTEG existante.
+
+Les améliorations concurrentes de la sélection de produits (commits 541b97a1, ba27c305 et 622b066f) ont été intégrées sans modifier le hero. Lint complet, build et recette navigateur relancés avec succès après intégration.
 
 ## Production
 Publication et vérifications publiques à compléter après livraison avec le workflow Cloudflare Wrangler déjà utilisé pour newoteg-client / newoteg.com.
