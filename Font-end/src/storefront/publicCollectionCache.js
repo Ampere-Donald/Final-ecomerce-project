@@ -5,7 +5,7 @@ let active = 0;
 function drain() {
   while (active < 2 && waiting.length) {
     const job = waiting.shift(); active++;
-    apiClient.get(job.path, { timeout: 12000 }).then(r => job.resolve(r.data), job.reject).finally(() => { active--; drain(); });
+    apiClient.get(job.path, { timeout: 30000 }).then(r => job.resolve(r.data), job.reject).finally(() => { active--; drain(); });
   }
 }
 export function publicCollectionGet(path) {

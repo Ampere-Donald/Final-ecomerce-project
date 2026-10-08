@@ -56,5 +56,8 @@ export function selectCollection(responses, resolveImage, max = 20) {
   for (let i=0;i<longest;i++) for (const batch of batches) if (batch[i] && !merged.has(batch[i].id)) merged.set(batch[i].id, batch[i]);
   const rows = [...merged.values()].filter(p => ["ok", "low"].includes(stockState(p)));
   const complete = rows.filter(p => p.image && p.retailPrice > 0);
-  return (complete.length >= 5 ? complete : rows).slice(0, Math.min(20, max));
+  // Even in a sparsely priced family, show every complete reference before
+  // incomplete ones. Never manufacture a price to fill the first five cards.
+  const candidates = complete.length >= 5 ? complete : [...complete, ...rows.filter(p => !p.image || !(p.retailPrice > 0))];
+  return candidates.slice(0, Math.min(20, max));
 }

@@ -32,5 +32,6 @@ test("Home price has no manufactured fallback and preserves validated public off
   const product = adaptProduct({ ...raw("sale"), prixPublic: 2900, offre: { prixCatalogue: 3400, prixOffre: 2900, fin: "2099-01-01T00:00:00Z" } }, () => "");
   assert.equal(selectionPrice(product), 2900);
   assert.equal(product.offer.cataloguePrice, 3400);
+  assert.equal(selectionPrice(product, Date.parse("2099-01-01T00:00:01Z")), null);
   assert.equal(adaptProduct({ ...raw("unknown"), prixPublic: null, prixDetail: 3000 }, () => "").retailPrice, null);
 });

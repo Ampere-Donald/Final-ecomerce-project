@@ -28,6 +28,9 @@ export function selectionAction(product) {
     to: "/equivalences?" + new URLSearchParams({ query: product.reference || product.model, produitId: product.id }),
   } : { equivalent: false, to: "/product/" + product.id };
 }
-export function selectionPrice(product) {
+export function selectionPrice(product, now = Date.now()) {
+  // A cached offer price is no longer authoritative after its server deadline.
+  // Do not substitute the catalogue tariff; the detail page re-reads the API.
+  if (product.offer && Date.parse(product.offer.end) <= now) return null;
   return typeof product.retailPrice === "number" && Number.isFinite(product.retailPrice) && product.retailPrice > 0 ? product.retailPrice : null;
 }

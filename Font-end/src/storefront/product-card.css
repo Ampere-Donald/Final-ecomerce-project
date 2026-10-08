@@ -3,7 +3,7 @@
 .e-product-card .e-home-product-photo{flex:none}
 .e-product-card .e-home-product-body{min-width:0}
 .e-product-card .e-home-product-cta{font-weight:650}
-.e-product-card .e-card-volume{font-size:10px;color:#6e7f8c;margin:0 0 8px;line-height:1.4}
+.e-product-card .e-home-product-promo:empty{display:none}
 .e-product-card .e-comparison-action{margin-top:10px;padding-top:8px;border-top:1px solid #eef2f5}
 .e-product-card .e-compare-toggle{font-size:11px;min-height:36px}
 .e-catalog-grid.e-product-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}
@@ -27,7 +27,6 @@
  .e-catalog-grid:not(.e-list) .e-product-card .e-price,.e-commercial-grid .e-product-card .e-price{font-size:17px;min-height:40px;display:flex;align-items:flex-end}
  .e-catalog-grid:not(.e-list) .e-home-product-cta,.e-commercial-grid .e-home-product-cta{font-size:11px;gap:4px;line-height:1.25;padding:7px 5px}
  .e-catalog-grid:not(.e-list) .e-home-product-cta svg,.e-commercial-grid .e-home-product-cta svg{width:13px}
- .e-catalog-grid:not(.e-list) .e-card-volume,.e-commercial-grid .e-card-volume{min-height:28px;font-size:9px}
  .e-catalog-grid.e-list .e-product-card.e-card{grid-template-columns:108px minmax(0,1fr)}
  .e-catalog-grid.e-list .e-home-product-photo{padding:8px;height:100%;min-height:220px}
  .e-catalog-grid.e-list .e-home-product-body{padding:10px}

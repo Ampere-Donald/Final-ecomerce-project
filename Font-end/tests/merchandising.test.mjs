@@ -43,6 +43,8 @@ test("Complete references take priority; partial/empty collections never invent 
   assert.equal(partial.length, 2);
   assert.equal(partial.find(p => p.id === "unknown").retailPrice, null);
   assert.equal(partial.find(p => p.id === "no-image").image, "");
+  const mixed = selectCollection([[unknown, complete[0]], [noImage]], v => v || "");
+  assert.equal(mixed[0].id, complete[0].id);
   assert.deepEqual(selectCollection([], v => v), []);
   assert.deepEqual(selectCollection([[]], v => v), []);
   assert.throws(() => selectCollection([{ message: "bad" }], v => v));

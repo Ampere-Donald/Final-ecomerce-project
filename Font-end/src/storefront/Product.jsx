@@ -63,11 +63,15 @@ function Detail({ product }) {
             fr={
               stock === "out"
                 ? "Produit indisponible — nous contacter"
+                : !(product.retailPrice > 0)
+                  ? "Demander le prix"
                 : "Faire confirmer la disponibilité"
             }
             en={
               stock === "out"
                 ? "Unavailable — contact us"
+                : !(product.retailPrice > 0)
+                  ? "Ask for the price"
                 : "Confirm availability"
             }
           />

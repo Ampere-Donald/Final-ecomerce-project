@@ -9,6 +9,7 @@ const ids=['capacitors','semiconductors','repair','power','connect','tools'];
 (async()=>{
  fs.mkdirSync(output,{recursive:true});
  const browser=await chromium.launch({headless:true,executablePath:'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe'});
+ let page;
  try{
   const ctx=await browser.newContext({viewport:{width:1440,height:1000},reducedMotion:'reduce'});
   await ctx.addInitScript(()=>localStorage.setItem('appLang','fr'));
@@ -18,7 +19,8 @@ const ids=['capacitors','semiconductors','repair','power','connect','tools'];
    if(!['GET','HEAD','OPTIONS'].includes(req.method())){writes.push(u.pathname);return r.abort()}
    return r.continue();
   });
-  const page=await ctx.newPage();page.on('pageerror',e=>errors.push(e.message));
+ page=await ctx.newPage();page.on('pageerror',e=>errors.push(e.message));
+ page.on('requestfailed',req=>{if(new URL(req.url()).pathname.startsWith('/api/'))console.log('API request failed',new URL(req.url()).pathname,req.failure()?.errorText)});
   page.on('response',async res=>{
    const u=new URL(res.url());if(!u.pathname.startsWith('/api/produits'))return;
    try { const data=await res.json(); responses.push({path:u.pathname+u.search,status:res.status(),data}); }catch{ /* Non-JSON failures are asserted through visible error states. */ }
@@ -55,6 +57,7 @@ const ids=['capacitors','semiconductors','repair','power','connect','tools'];
   const second=page.locator('[data-collection="capacitors"]');await second.scrollIntoViewIfNeeded();
   await expect.poll(()=>second.locator('img').first().evaluate(el=>el.complete&&el.naturalWidth>0),{timeout:20000}).toBe(true);
   await second.screenshot({path:path.join(output,'second-group-1440.png')});
+  await page.locator('.e-merch-banner').first().evaluate(el=>window.scrollTo(0,el.getBoundingClientRect().top+window.scrollY-210));
   await page.locator('.e-merch-banner').first().screenshot({path:path.join(output,'banner-1440.png')});
   await selection.getByRole('button',{name:'Produits suivants'}).click();
   await expect.poll(()=>selection.locator('.e-carousel-track').evaluate(el=>el.scrollLeft)).toBeGreaterThan(0);
@@ -62,16 +65,19 @@ const ids=['capacitors','semiconductors','repair','power','connect','tools'];
   const target=await second.locator('h3 a').first().getAttribute('href');
   for(const width of [360,390,768,1024,1440,1920]){
    await page.setViewportSize({width,height:1000});await page.goto(base+'/catalogue');
-   await expect(page.locator('.e-catalog-grid .e-product-card')).toHaveCount(24,{timeout:30000});
+   try {await expect(page.locator('.e-catalog-grid .e-product-card')).toHaveCount(24,{timeout:45000});}
+   catch(error){await page.screenshot({path:path.join(output,`catalogue-failure-${width}.png`),fullPage:true});fs.writeFileSync(path.join(output,'failure.json'),JSON.stringify({width,body:await page.locator('main').innerText(),errors,responses:responses.map(r=>({path:r.path,status:r.status}))},null,2));throw error;}
    assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),`Catalogue overflow ${width}`);
    const firstTwo=await page.locator('.e-catalog-grid .e-product-card').evaluateAll(nodes=>nodes.slice(0,2).map(n=>{const r=n.getBoundingClientRect();return{y:r.y,w:r.width,body:n.querySelector('.e-home-product-body').getBoundingClientRect().width}}));
    assert.ok(firstTwo.every(p=>p.w>130&&p.body>110));assert.equal(firstTwo[0].y,firstTwo[1].y);
-   await page.screenshot({path:path.join(output,`catalogue-${width}.png`),fullPage:true});
+   await page.locator('.e-catalog-grid').evaluate(el=>window.scrollTo(0,el.getBoundingClientRect().top+window.scrollY-190));
+   await expect.poll(()=>page.locator('.e-catalog-grid img').first().evaluate(el=>el.complete&&el.naturalWidth>0),{timeout:20000}).toBe(true);
+   await page.screenshot({path:path.join(output,`catalogue-${width}.png`)});
    if(width<=390){await page.locator('.e-catalog-grid').scrollIntoViewIfNeeded();await page.screenshot({path:path.join(output,`catalogue-cards-${width}.png`)});}
    checks.push(`Compact actual catalogue ${width}px`);
   }
   await page.setViewportSize({width:1440,height:1000});await page.goto(base+target);
-  await expect(page.locator('.e-product-top h1')).toBeVisible({timeout:30000});
+  await expect(page.locator('.e-product-info h1')).toBeVisible({timeout:30000});
   await page.screenshot({path:path.join(output,'product-1440.png'),fullPage:true});
   await page.setViewportSize({width:390,height:1000});await page.screenshot({path:path.join(output,'product-390.png'),fullPage:true});
   checks.push('Actual component detail; original purchase controls retained');
@@ -81,5 +87,9 @@ const ids=['capacitors','semiconductors','repair','power','connect','tools'];
   assert.deepEqual(errors,[]);assert.deepEqual(writes,[]);
   fs.writeFileSync(path.join(output,'result.json'),JSON.stringify({base,date:new Date().toISOString(),checks,errors,writes,rows,responses:responses.map(r=>({path:r.path,status:r.status,count:(Array.isArray(r.data)?r.data:r.data?.data||[]).length})),detail:target},null,2));
   console.log(JSON.stringify({base,passed:checks.length,counts:rows.map(r=>[r.id,r.products.length]),errors,writes}));
+ }catch(error){
+  if(page)await page.screenshot({path:path.join(output,'failure-page.png'),fullPage:true});
+  fs.writeFileSync(path.join(output,'failure.json'),JSON.stringify({base,message:error.message,errors,rows,responses:responses.map(r=>({path:r.path,status:r.status,data:r.status===200?undefined:r.data})),body:page?await page.locator('main').innerText():null},null,2));
+  throw error;
  }finally{await browser.close()}
 })().catch(e=>{console.error(e);process.exitCode=1});

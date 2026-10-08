@@ -35,7 +35,6 @@ export default function ProductCard({ product, eager = false, compare = true, im
       <span className={"e-home-stock e-home-stock-" + state}><i aria-hidden="true" /><Copy fr={labels[state][0]} en={labels[state][1]} /></span>
       <h3 title={name}><Link to={"/product/" + product.id}>{name}</Link></h3>
       <p className="e-home-product-reference">{product.reference ? <><Copy fr="Réf. " en="Ref. " />{product.reference}</> : product.brand || product.categoryName || <Copy fr="Référence à confirmer" en="Reference to confirm" />}</p>
-      {product.wholesalePrice > 0 && <p className="e-card-volume"><Copy fr="Tarifs par quantité sur la fiche" en="Volume terms on the product page" /></p>}
       <div className="e-home-product-prices">
         <div className="e-home-product-promo">{offer && <><small><Copy fr="Catalogue " en="Catalogue " /></small><del aria-label={(lang === "fr" ? "Prix catalogue hors offre : " : "Catalogue price outside offer: ") + formatFCFA(offer.cataloguePrice)}>{formatFCFA(offer.cataloguePrice)}</del><span>−{Math.round((1 - price / offer.cataloguePrice) * 100)} %</span></>}</div>
         <Price value={price} />
