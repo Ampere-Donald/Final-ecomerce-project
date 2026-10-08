@@ -8,6 +8,7 @@ const BACKEND = 'https://api.newoteg.com';
 import { isPrivateDocument } from './src/storefront/routeMetadata.js';
 import { isApplicationDocument } from './src/storefront/documentRoutes.js';
 import { staticPublicMetadata, renderFallbackMetadata } from './src/storefront/serverMetadata.js';
+import { publicRecord, recordMetadata } from './src/storefront/recordMetadata.js';
 
 function privateResponse(response) {
   const headers = new Headers(response.headers);
@@ -26,8 +27,9 @@ export default {
       return /^\/api\/(commandes|avis|incompatibilites)\/guest(?:\/|$)/i.test(url.pathname) ? privateResponse(response) : response;
     }
     const metadata = request.method === 'GET' ? staticPublicMetadata(url) : null;
+    const record = ['GET', 'HEAD'].includes(request.method) ? publicRecord(url.pathname) : null;
     let assetRequest = request;
-    if (metadata) {
+    if (metadata || record) {
       // The asset ETag describes shared index.html, not this route's metadata.
       const headers = new Headers(request.headers);
       headers.delete('If-None-Match');
@@ -35,6 +37,17 @@ export default {
       assetRequest = new Request(request, { headers });
     }
     const response = await env.ASSETS.fetch(assetRequest);
+    if (record && response.status === 200 && response.headers.get('content-type')?.includes('text/html')) {
+      const resolved = await recordMetadata(record);
+      const headers = new Headers(response.headers);
+      for (const key of ['ETag', 'Last-Modified', 'Content-Length', 'Content-Encoding']) headers.delete(key);
+      // Never cache a removed reference or an outage as a durable public page.
+      headers.set('Cache-Control', 'no-store');
+      headers.set('X-Robots-Tag', resolved.metadata.robots);
+      if (resolved.status === 503) headers.set('Retry-After', '60');
+      return new Response(request.method === 'HEAD' ? null : renderFallbackMetadata(await response.text(), resolved.metadata),
+        { status: resolved.status, headers });
+    }
     // The asset SPA fallback serves index.html with 200 even for unknown URLs.
     // Keep its body so React renders the useful NotFound page, but report 404
     // before JavaScript executes. Never rewrite assets, redirects or errors.
