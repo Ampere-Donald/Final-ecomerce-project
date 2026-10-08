@@ -3,7 +3,8 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
 const http = require("node:http");
-const { Miniflare } = require("miniflare");
+const { Miniflare, convertV4MiniflareOptions } = require("miniflare");
+const runtimeOptions = (options) => convertV4MiniflareOptions ? convertV4MiniflareOptions(options) : options;
 const { build } = require("esbuild");
 const root = path.resolve(__dirname, "..");
 const output = process.env.NEWOTEG_SEO_OUTPUT;
@@ -13,6 +14,7 @@ const config = JSON.parse(
   fs.readFileSync(path.join(root, "wrangler.jsonc"), "utf8"),
 );
 assert.equal(config.assets.run_worker_first, true);
+const assetDirectory = path.resolve(root, process.env.NEWOTEG_ASSET_DIR || config.assets.directory);
 const checks = [],
   outbound = [];
 const privatePaths = [
@@ -48,14 +50,12 @@ const ok = (name) => {
       modules: true,
       script: bundle.outputFiles[0].text,
       compatibilityDate: config.compatibility_date,
-      host: "127.0.0.1",
-      port: 0,
       outboundService: () => {
         outbound.push("outbound attempted");
         throw Error("Outbound disabled for local asset test");
       },
       assets: {
-        directory: path.resolve(root, config.assets.directory),
+        directory: assetDirectory,
         binding: config.assets.binding,
         routerConfig: {
           has_user_worker: true,
@@ -64,7 +64,7 @@ const ok = (name) => {
         assetConfig: { not_found_handling: config.assets.not_found_handling },
       },
     };
-    runtime = new Miniflare(options);
+    runtime = new Miniflare(runtimeOptions({ host: "127.0.0.1", port: 0, workers: [options] }));
     const headers = { "Sec-Fetch-Mode": "navigate", Accept: "text/html" };
     // Node fetch rewrites Sec-Fetch-Mode to cors. Raw HTTP exercises real navigation routing.
     const document = async (route, requestHeaders = headers) => {
@@ -97,7 +97,7 @@ const ok = (name) => {
     ok(
       "Prior asset-first routing serves the private SPA without Worker privacy headers",
     );
-    await runtime.setOptions({
+    await runtime.setOptions(runtimeOptions({ host: "127.0.0.1", port: 0, workers: [{
       ...options,
       assets: {
         ...options.assets,
@@ -106,7 +106,7 @@ const ok = (name) => {
           invoke_user_worker_ahead_of_assets: config.assets.run_worker_first,
         },
       },
-    });
+    }] }));
     for (const route of privatePaths) {
       const response = await document(route);
       assert.equal(response.status, 200);
@@ -122,7 +122,7 @@ const ok = (name) => {
       "/",
       "/catalogue",
       "/equivalences",
-      "/suivi-invite-extra",
+      "/comparer",
     ]) {
       const response = await document(route);
       assert.equal(response.status, 200);
@@ -139,11 +139,19 @@ const ok = (name) => {
     assert.equal(
       Buffer.compare(
         Buffer.from(await asset.arrayBuffer()),
-        fs.readFileSync(path.join(root, "dist/design-e/multimetre.webp")),
+        fs.readFileSync(path.join(assetDirectory, "design-e/multimetre.webp")),
       ),
       0,
     );
     assert.deepEqual(outbound, []);
+    for (const route of ['/suivi-invite-extra', '/page-inexistante', '/product/a/b']) {
+      const missing = await document(route);
+      assert.equal(missing.status, 404);
+      assert.equal(missing.headers.get('x-robots-tag'), 'noindex, nofollow');
+      assert.equal(missing.headers.get('cache-control'), 'no-store');
+      assert.equal(await missing.text(), beforeBody);
+    }
+    ok('Unknown document URLs return real 404 with noindex and retain the application error page');
     ok(
       "Public documents and marketing image stay public and byte-identical; no outbound request",
     );
