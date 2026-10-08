@@ -2,7 +2,7 @@ import EquivalenceEntry from "./EquivalenceEntry";
 import ProjectTeaser from "./ProjectTeaser";
 import { CommercialTeaser } from './Commercial';
 import "./home-hero.css";
-import { useState } from "react";
+import HomeSelection from "./HomeSelection";
 import { Link } from "react-router-dom";
 import PageMeta from "./PageMeta";
 import {
@@ -11,28 +11,10 @@ import {
   MessageCircle,
   Truck,
 } from "lucide-react";
-import useResource from "./useResource";
-import { adaptProduct, resultPage } from "./productData";
-import { resolveImageUrl } from "../utils/mapProduct";
-import { Copy, Card, State } from "./Elements";
+import { Copy } from "./Elements";
 import Footer from "./Footer";
 
 export default function Home() {
-  const [project, setProject] = useState("");
-  const resource = useResource(
-    "/produits?limit=5&inStock=true" +
-      (project ? "&search=" + encodeURIComponent(project) : ""),
-  );
-  let rows = [],
-    parseError = null;
-  try {
-    if (resource.data)
-      rows = resultPage(resource.data).rows.map((p) =>
-        adaptProduct(p, resolveImageUrl),
-      );
-  } catch (e) {
-    parseError = e;
-  }
   const families = [
     ["Câbles & connectique", "Cables & connectors", "/design-e/category-v2-cables.webp", "câble", "Fils, câbles et connecteurs", "Wires, cables and connectors"],
     ["Alimentation", "Power supplies", "/design-e/category-v2-power.webp", "alimentation", "Modules et chargeurs", "Modules and chargers"],
@@ -73,60 +55,7 @@ export default function Home() {
           ))}
         </nav>
         <EquivalenceEntry illustrated />
-        <section className="e-section">
-          <div className="e-section-head">
-            <div>
-              <h2>
-                <Copy
-                  fr="Pour vos prochains projets"
-                  en="For your next projects"
-                />
-              </h2>
-              <p>
-                <Copy
-                  fr="Les bons accessoires pour passer à la pratique."
-                  en="Find the right accessories to get started."
-                />
-              </p>
-            </div>
-            <Link to="/catalogue">
-              <Copy fr="Tout le catalogue" en="All products" />{" "}
-              <ArrowRight size={17} />
-            </Link>
-          </div>
-          <div className="e-tabs">
-            {[
-              ["", "Tous", "All"],
-              ["câble", "Connecter", "Connect"],
-              ["chargeur", "Alimenter", "Power"],
-              ["outillage", "Mesurer & assembler", "Measure & assemble"],
-            ].map(([value, fr, en]) => (
-              <button
-                key={value}
-                aria-pressed={project === value}
-                onClick={() => setProject(value)}
-              >
-                <Copy fr={fr} en={en} />
-              </button>
-            ))}
-          </div>
-          <State {...resource} error={resource.error || parseError}>
-            {rows.length ? (
-              <div className="e-product-grid e-project-grid">
-                {rows.map((p) => (
-                  <Card key={p.id} product={p} />
-                ))}
-              </div>
-            ) : (
-              <p className="e-note">
-                <Copy
-                  fr="Aucune référence disponible dans cette sélection. Consultez le catalogue ou demandez conseil."
-                  en="No products available in this selection. Browse the catalogue or ask us for advice."
-                />
-              </p>
-            )}
-          </State>
-        </section>
+        <HomeSelection />
         <ProjectTeaser />
         <CommercialTeaser mode="arrivages" />
         <CommercialTeaser mode="offres" />
