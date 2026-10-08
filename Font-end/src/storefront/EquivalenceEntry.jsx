@@ -1,13 +1,13 @@
 import { Link } from "react-router-dom";
 import { ArrowRight, ArrowLeftRight } from "lucide-react";
 import { Copy } from "./Elements";
-export default function EquivalenceEntry({ query = "", productId = "" }) {
+export default function EquivalenceEntry({ query = "", productId = "", illustrated = false }) {
   const params = new URLSearchParams();
   if (query) params.set("query", query.slice(0, 255));
   if (productId) params.set("produitId", productId);
   return (
-    <aside className="e-equivalence-entry">
-      <ArrowLeftRight size={26} aria-hidden="true" />
+    <aside className={"e-equivalence-entry" + (illustrated ? " e-equivalence-illustrated" : "")}>
+      {illustrated ? <span className="e-equivalence-symbol"><ArrowLeftRight size={30} aria-hidden="true" /></span> : <ArrowLeftRight size={26} aria-hidden="true" />}
       <div>
         <h2>
           <Copy
@@ -29,6 +29,7 @@ export default function EquivalenceEntry({ query = "", productId = "" }) {
         <Copy fr="Trouver un équivalent" en="Find an equivalent" />
         <ArrowRight size={18} />
       </Link>
+      {illustrated && <img className="e-equivalence-parts" src="/design-e/equivalence-parts-v2.webp" width="220" height="74" loading="lazy" alt="" />}
     </aside>
   );
 }

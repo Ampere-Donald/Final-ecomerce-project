@@ -34,18 +34,19 @@ export default function Home() {
     parseError = e;
   }
   const families = [
-    ["Câbles & connectique", "Cables & connectors", "/design-e/category-hdmi-5m-144.webp", "câble", "Fils, câbles et connecteurs", "Wires, cables and connectors"],
-    ["Alimentation", "Power supplies", "/design-e/hero-electronique-720.webp", "alimentation", "Modules et chargeurs", "Modules and chargers"],
-    ["Composants", "Components", "/design-e/category-composants-144.webp", "composant", "Condensateurs, relais et circuits", "Capacitors, relays and circuits"],
-    ["Outillage", "Tools", "/design-e/category-multimetre-144.webp", "outillage", "Mesure et réparation", "Measurement and repair"],
-    ["Vidéo & adaptateurs", "Video & adapters", "/design-e/category-hdmi-5m-144.webp", "adaptateur", "HDMI, VGA et conversion", "HDMI, VGA and conversion"],
-    ["Tout le catalogue", "All products", "/design-e/hero-electronique-720.webp", "", "Toutes nos catégories", "Browse every category"],
+    ["Câbles & connectique", "Cables & connectors", "/design-e/category-v2-cables.webp", "câble", "Fils, câbles et connecteurs", "Wires, cables and connectors"],
+    ["Alimentation", "Power supplies", "/design-e/category-v2-power.webp", "alimentation", "Modules et chargeurs", "Modules and chargers"],
+    ["Composants", "Components", "/design-e/category-v2-components.webp", "composant", "Condensateurs, relais et circuits", "Capacitors, relays and circuits"],
+    ["Outillage", "Tools", "/design-e/category-v2-tools.webp", "outillage", "Mesure et réparation", "Measurement and repair"],
+    ["Vidéo & adaptateurs", "Video & adapters", "/design-e/category-v2-video.webp", "adaptateur", "HDMI, VGA et conversion", "HDMI, VGA and conversion"],
+    ["Tout le catalogue", "All products", "/design-e/category-v2-catalogue.webp", "", "Toutes nos catégories", "Browse every category"],
   ];
   return (
     <>
       <PageMeta />
       <div className="e-wrap e-home">
         <section className="e-commerce-hero" aria-labelledby="home-hero-title">
+          <img className="e-hero-scene" src="/design-e/hero-scene-v2-1440.webp" srcSet="/design-e/hero-scene-v2-1440.webp 1440w, /design-e/hero-scene-v2-2160.webp 2160w" sizes="100vw" width="2160" height="720" fetchPriority="high" alt="Atelier électronique : alimentation, multimètre, câbles et composants" />
           <div className="e-hero-copy">
             <p className="e-hero-location"><MapPin size={16} aria-hidden="true" /><Copy fr="Votre boutique électronique à Douala · Akwa" en="Your electronics shop in Douala · Akwa" /></p>
             <h1 id="home-hero-title"><Copy fr={<>Tout l’essentiel pour vos <span>réparations et projets électroniques.</span></>} en={<>Everything for your <span>electronics repairs and projects.</span></>} /></h1>
@@ -57,9 +58,9 @@ export default function Home() {
             <Link className="e-hero-advice" to="/contact"><MessageCircle size={17} /><Copy fr="Un doute sur une pièce ? Demandez conseil" en="Unsure about a part? Ask for advice" /></Link>
           </div>
           <div className="e-hero-products">
-            <img className="e-hero-image" src="/design-e/hero-electronique-1280.webp" srcSet="/design-e/hero-electronique-720.webp 720w, /design-e/hero-electronique-1280.webp 1280w" sizes="(max-width: 760px) 100vw, 55vw" width="1280" height="853" fetchPriority="high" alt="Alimentation, multimètre, câbles et composants électroniques — illustration de nos univers produits" />
-            <Link className="e-hero-float e-hero-float-power" to="/catalogue?search=alimentation"><strong><Copy fr="Alimentation" en="Power supplies" /></strong><span><Copy fr="Modules et chargeurs" en="Modules and chargers" /><ArrowRight size={16} /></span></Link>
-            <Link className="e-hero-float e-hero-float-cables" to="/catalogue?search=câble"><strong><Copy fr="Câbles & connectique" en="Cables & connectors" /></strong><span><Copy fr="Voir la sélection" en="Explore the selection" /><ArrowRight size={16} /></span></Link>
+
+            <Link className="e-hero-float e-hero-float-power" to="/catalogue?search=alimentation"><img src="/design-e/category-v2-power.webp" width="72" height="72" alt="" /><div><strong><Copy fr="Alimentation" en="Power supplies" /></strong><span><Copy fr="Modules et chargeurs" en="Modules and chargers" /><ArrowRight size={16} /></span></div></Link>
+            <Link className="e-hero-float e-hero-float-cables" to="/catalogue?search=câble"><img src="/design-e/hero-wire-v2.webp" width="72" height="72" alt="" /><div><strong><Copy fr="Câbles & connectique" en="Cables & connectors" /></strong><span><Copy fr="Voir la sélection" en="Explore the selection" /><ArrowRight size={16} /></span></div></Link>
           </div>
         </section>
         <nav className="e-visual-families" aria-label="Catégories / Categories">
@@ -71,7 +72,7 @@ export default function Home() {
             </Link>
           ))}
         </nav>
-        <EquivalenceEntry />
+        <EquivalenceEntry illustrated />
         <section className="e-section">
           <div className="e-section-head">
             <div>
