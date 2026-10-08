@@ -16,3 +16,7 @@ Le candidat LCP de l’accueil est hero-electronique-720.webp. Celui du catalogu
 Preuves : C:/Users/pc/Documents/Newoteg/output/implementation-work/captures/mobile-production-20261008/complete-assets/mobile-lab-result.json et captures PNG associées.
 
 Reproduction depuis Font-end : définir NEWOTEG_LAB_PRODUCTION=1 et NEWOTEG_SEO_OUTPUT à un dossier absolu, puis node tests/measure-built-mobile.cjs. Le mode par défaut conserve le laboratoire local historique.
+
+## Vignettes de catégories — optimisation suivante
+
+Trois déclinaisons WebP de 144 px maximum pour un affichage de 72 px (densité ×2), sans recadrage ni changement des photographies. Sources originales conservées pour leurs autres usages. Câbles : 116 714 → 2 510 octets ; outillage : 115 186 → 3 760 ; composants : 75 850 → 2 392. Total des ressources de ces vignettes : 307 750 → 8 662 octets (−97,2 %). Les références hero restent inchangées pour réutiliser leur téléchargement. Ce gain de poids ne prouve pas à lui seul un gain LCP.

@@ -34,11 +34,11 @@ export default function Home() {
     parseError = e;
   }
   const families = [
-    ["Câbles & connectique", "Cables & connectors", "/design-e/hdmi-5m.webp", "câble", "Fils, câbles et connecteurs", "Wires, cables and connectors"],
+    ["Câbles & connectique", "Cables & connectors", "/design-e/category-hdmi-5m-144.webp", "câble", "Fils, câbles et connecteurs", "Wires, cables and connectors"],
     ["Alimentation", "Power supplies", "/design-e/hero-electronique-720.webp", "alimentation", "Modules et chargeurs", "Modules and chargers"],
-    ["Composants", "Components", "/product-images/inventory-condo-1500uf-35v-71894a7f3a05.webp", "composant", "Condensateurs, relais et circuits", "Capacitors, relays and circuits"],
-    ["Outillage", "Tools", "/design-e/multimetre.webp", "outillage", "Mesure et réparation", "Measurement and repair"],
-    ["Vidéo & adaptateurs", "Video & adapters", "/design-e/hdmi-5m.webp", "adaptateur", "HDMI, VGA et conversion", "HDMI, VGA and conversion"],
+    ["Composants", "Components", "/design-e/category-composants-144.webp", "composant", "Condensateurs, relais et circuits", "Capacitors, relays and circuits"],
+    ["Outillage", "Tools", "/design-e/category-multimetre-144.webp", "outillage", "Mesure et réparation", "Measurement and repair"],
+    ["Vidéo & adaptateurs", "Video & adapters", "/design-e/category-hdmi-5m-144.webp", "adaptateur", "HDMI, VGA et conversion", "HDMI, VGA and conversion"],
     ["Tout le catalogue", "All products", "/design-e/hero-electronique-720.webp", "", "Toutes nos catégories", "Browse every category"],
   ];
   return (
