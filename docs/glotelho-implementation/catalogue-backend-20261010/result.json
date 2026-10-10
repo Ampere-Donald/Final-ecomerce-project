@@ -1,0 +1,97 @@
+{
+  "status": "local-prototype-verified-not-deployed",
+  "rendererId": "fbf21be7dae9e1b5056204075f3f204c20cadb412d285e92b4d0005e304a656c",
+  "frontendTests": 102,
+  "backendTests": 419,
+  "backendSuites": 58,
+  "browser": {
+    "base": "http://127.0.0.1:5213",
+    "checks": [
+      "Real products, totals, CSS and native search available without JS at five widths; uncached public-only data",
+      "Hydration keeps original nodes/content, avoids duplicate product GET; sort/pagination/stock filter fetch correct URLs",
+      "Leaving the initial route and browser Back read fresh catalogue data",
+      "Direct filtered URL hydrates matching search, sort and price bounds",
+      "Saved English and comparison selection restore after anonymous French HTML without hydration errors at five widths",
+      "Upstream 503 falls back to the existing unavailable state, never a false zero-result success"
+    ],
+    "errors": [],
+    "writes": [],
+    "status": "passed"
+  },
+  "http": {
+    "checks": [
+      "Real Nest route rejects malformed URL/arguments and version mismatch",
+      "Anonymous and credential-bearing requests select identical public resources; private fields absent",
+      "API outage is an error, never a false empty catalogue",
+      "Worker preserves client fallback when backend rendering fails"
+    ],
+    "status": "passed",
+    "rendererId": "fbf21be7dae9e1b5056204075f3f204c20cadb412d285e92b4d0005e304a656c"
+  },
+  "profile": {
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "latencyMs": 150,
+    "downstreamBytesPerSecond": 200000,
+    "upstreamBytesPerSecond": 93750,
+    "cpuSlowdown": 4,
+    "coldCache": true,
+    "samplesPerRoute": 3
+  },
+  "baseline": [
+    {
+      "sample": 1,
+      "lcpMs": 4416,
+      "cls": 0,
+      "scriptEncodedBytes": 195897
+    },
+    {
+      "sample": 2,
+      "lcpMs": 4136,
+      "cls": 0,
+      "scriptEncodedBytes": 195897
+    },
+    {
+      "sample": 3,
+      "lcpMs": 4556,
+      "cls": 0,
+      "scriptEncodedBytes": 195897
+    }
+  ],
+  "candidate": [
+    {
+      "sample": 1,
+      "lcpMs": 2244,
+      "cls": 0,
+      "scriptEncodedBytes": 197304
+    },
+    {
+      "sample": 2,
+      "lcpMs": 1996,
+      "cls": 0,
+      "scriptEncodedBytes": 197304
+    },
+    {
+      "sample": 3,
+      "lcpMs": 2048,
+      "cls": 0,
+      "scriptEncodedBytes": 197304
+    }
+  ],
+  "medianLcp": {
+    "baseline": 4416,
+    "candidate": 2048
+  },
+  "workerDryRun": {
+    "uploadKiB": 28.91,
+    "gzipKiB": 8.26
+  },
+  "pending": [
+    "isolated Railway image build and real database reads",
+    "actual Workers Free CPU and backend latency",
+    "matching production deployment",
+    "business and physical-phone acceptance"
+  ]
+}

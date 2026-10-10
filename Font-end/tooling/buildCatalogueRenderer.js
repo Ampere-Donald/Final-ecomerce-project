@@ -2,6 +2,7 @@ import { build } from 'vite';
 import react from '@vitejs/plugin-react';
 import { resolve } from 'node:path';
 import { readFile, writeFile } from 'node:fs/promises';
+import { buildCataloguePackage } from './cataloguePackage.js';
 
 export default function buildCatalogueRenderer() {
   let config;
@@ -29,6 +30,7 @@ export default function buildCatalogueRenderer() {
       }
       visit('index.html'); visit('src/storefront/Catalogue.jsx');
       await writeFile(resolve(output, 'styles.js'), `export const catalogueStyles = ${JSON.stringify([...styles])};\n`);
+      await buildCataloguePackage(config.root, config.env, resolve(config.root, '.catalogue-backend'));
     },
   };
 }

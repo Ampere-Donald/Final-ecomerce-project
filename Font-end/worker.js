@@ -11,6 +11,7 @@ import { staticPublicMetadata, renderFallbackMetadata } from './src/storefront/s
 import { publicRecord, recordMetadata } from './src/storefront/recordMetadata.js';
 import { injectInitialHome } from './src/storefront/initialHome.js';
 import { catalogueSnapshot, injectInitialCatalogue } from './src/storefront/initialCatalogue.js';
+import { catalogueBackendFragment, injectBackendCatalogue } from './src/storefront/backendCatalogue.js';
 
 function privateResponse(response) {
   const headers = new Headers(response.headers);
@@ -75,7 +76,15 @@ export default {
         headers.delete('Content-Encoding');
         headers.set('Cache-Control', 'public, max-age=0, must-revalidate');
         let html = renderFallbackMetadata(await response.text(), metadata);
-        if (url.pathname === '/catalogue' && typeof env.renderCatalogue === 'function') {
+        if (url.pathname === '/catalogue' && env.backendCatalogue) {
+          try {
+            const fragment = await catalogueBackendFragment(url, env.backendCatalogue);
+            if (fragment) {
+              html = injectBackendCatalogue(html, fragment, env.catalogueStyles);
+              headers.set('Cache-Control', 'no-store');
+            }
+          } catch (error) { env.reportCatalogueFailure?.(error); }
+        } else if (url.pathname === '/catalogue' && typeof env.renderCatalogue === 'function') {
           try {
             const snapshot = await catalogueSnapshot(url);
             if (snapshot) {

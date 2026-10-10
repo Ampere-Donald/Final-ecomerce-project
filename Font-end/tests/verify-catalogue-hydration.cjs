@@ -84,7 +84,12 @@ const report = { base, checks: [], errors: [], writes: [] };
     await early.waitForFunction(() => document.querySelectorAll('.e-catalog-grid article').length > 0);
     assert(apiRequests.some(value => new URL(value).searchParams.get('page') === '2'));
     await early.getByRole('button', { name: 'Filtres', exact: true }).click();
-    await early.getByLabel('En stock uniquement', { exact: true }).check();
+    // The controlled checkbox commits during React Router's transition. Verify
+    // the resulting URL and checked state after that commit, not in the click's
+    // intermediate browser frame.
+    await early.getByLabel('En stock uniquement', { exact: true }).click();
+    await early.waitForURL('**instock=true');
+    await early.waitForFunction(() => document.querySelector('.e-modal input[type="checkbox"]')?.checked === true);
     await early.getByRole('button', { name: 'Voir les résultats', exact: true }).click();
     await early.waitForURL('**instock=true');
     await early.waitForFunction(() => document.querySelectorAll('.e-catalog-grid article').length > 0);

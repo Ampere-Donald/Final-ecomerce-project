@@ -320,3 +320,7 @@ Les mentions antérieures « L9 non autorisé » décrivent leur date de rédact
 ## Catalogue public initial — 10 octobre 2026
 
 Rendu expérimental des vrais produits implémenté, lint/100 tests/build et contrats navigateur locaux/distants réussis. LCP médian local comparable 4320 → 2356 ms, CLS 0. Workers Free confirmé par erreur API 100328 ; coût mesuré sur Worker temporaire séparé : 18–70 ms, médiane 22 ms, supérieur au budget gratuit 10 ms. Le gain local n'autorise pas l'activation de ce renderer sur le domaine public. Worker de mesure supprimé après traces ; production inchangée, aucun fournisseur ni commande fictive. [Preuves, limites et suite](catalogue-html-20261010/README.md). L8 et l'objectif A–Z restent actifs ; prochaine adaptation : alléger le rendu ou le déplacer sur Railway avant nouvelle mesure.
+
+## Préparation du rendu catalogue sur Railway — 10 octobre 2026
+
+Paquet Node des composants réels, endpoint public Nest, projection commune prix/stock, transport HTML borné et contrôle de version implémentés. Builds/lint, 102 tests frontend, 419 tests backend, paquet compilé, quatre groupes HTTP et six groupes navigateur réussis. Médianes locales comparables 4416 → 2048 ms, CLS 0 ; Worker à blanc 8,26 Kio gzip. Image Docker optionnelle/workflow préparés, pas exécutés sur hébergeur. Pas de publication ou activation dans cette étape. [Contrats, preuves et limites](catalogue-backend-20261010/README.md). Suite : image isolée Railway, concordance de données réelle, CPU Free puis livraison concordante. L8 et l'objectif restent actifs.

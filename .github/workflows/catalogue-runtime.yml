@@ -1,0 +1,32 @@
+name: Catalogue runtime contract
+on:
+  pull_request:
+    branches: [main]
+    paths: ['Font-end/**', 'Back-end/**', 'Dockerfile.catalogue', '.github/workflows/catalogue-runtime.yml']
+  push:
+    branches: [main]
+    paths: ['Font-end/**', 'Back-end/**', 'Dockerfile.catalogue', '.github/workflows/catalogue-runtime.yml']
+permissions:
+  contents: read
+jobs:
+  catalogue-runtime:
+    runs-on: ubuntu-latest
+    env:
+      VITE_API_URL: /api
+      VITE_CATALOGUE_SSR_BUILD: 'true'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            Font-end/package-lock.json
+            Back-end/package-lock.json
+      - run: npm ci --prefix Font-end
+      - run: npm ci --prefix Back-end
+      - run: npm run build --prefix Font-end
+      - run: npm run build:catalogue-package --prefix Font-end
+      - run: npm run build --prefix Back-end
+      - name: Verify compiled package and frontend version handshake
+        run: node Font-end/tests/verify-catalogue-package.cjs

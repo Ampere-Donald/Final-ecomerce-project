@@ -1,0 +1,45 @@
+# Optional Railway backend image, built from the REPOSITORY ROOT.
+# Existing Back-end/Dockerfile and production settings are not switched by this
+# file. Enable the renderer only after the matching frontend release is ready.
+ARG NODE_IMAGE=node:22-alpine
+FROM ${NODE_IMAGE} AS storefront-builder
+WORKDIR /source/Font-end
+COPY Font-end/package.json Font-end/package-lock.json ./
+RUN npm ci --no-audit --no-fund
+COPY Font-end/src ./src
+COPY Font-end/tooling ./tooling
+ENV VITE_API_URL=/api
+RUN npm run build:catalogue-package
+
+FROM ${NODE_IMAGE} AS backend-builder
+WORKDIR /app
+RUN apk add --no-cache openssl
+COPY Back-end/package.json Back-end/package-lock.json Back-end/prisma.config.ts ./
+COPY Back-end/prisma ./prisma
+RUN npm ci --no-audit --no-fund
+COPY Back-end/tsconfig.json Back-end/tsconfig.build.json Back-end/nest-cli.json ./
+COPY Back-end/src ./src
+RUN npm run build
+
+FROM ${NODE_IMAGE} AS production-dependencies
+WORKDIR /app
+COPY Back-end/package.json Back-end/package-lock.json ./
+RUN npm ci --omit=dev --no-audit --no-fund
+
+FROM ${NODE_IMAGE} AS production
+WORKDIR /app
+RUN apk add --no-cache openssl
+ENV NODE_ENV=production
+# Feature defaults off. Deployment must explicitly opt in after verification.
+COPY --from=production-dependencies --chown=node:node /app/node_modules ./node_modules
+COPY --from=backend-builder --chown=node:node /app/node_modules/.prisma ./node_modules/.prisma
+COPY --from=backend-builder --chown=node:node /app/dist ./dist
+COPY --from=storefront-builder --chown=node:node /source/Back-end/.storefront-renderer ./.storefront-renderer
+COPY --chown=node:node Back-end/package.json Back-end/package-lock.json Back-end/prisma.config.ts ./
+COPY --chown=node:node Back-end/prisma ./prisma
+COPY --chown=node:node Back-end/scripts/start-preproduction.cjs Back-end/scripts/verify-release-schema.cjs Back-end/scripts/release-schema-contract.cjs Back-end/scripts/release-schema.json ./scripts/
+RUN mkdir -p /app/uploads && chown node:node /app/uploads
+USER node
+EXPOSE 3000
+HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 CMD node -e "fetch('http://127.0.0.1:'+ (process.env.PORT || 3000) + '/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+CMD ["node", "scripts/start-preproduction.cjs"]

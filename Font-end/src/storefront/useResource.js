@@ -29,7 +29,11 @@ export default function useResource(path) {
     return () => controller.abort();
   }, [path, key, attempt, initial]);
   return {
-    ...(state.key === key ? state : { data: null, error: null, loading: true }),
+    // The request identity is hook-internal; exposing it as `key` changes React
+    // reconciliation when callers spread the result onto their state wrapper.
+    data: state.key === key ? state.data : null,
+    error: state.key === key ? state.error : null,
+    loading: state.key === key ? state.loading : true,
     retry: () => setAttempt((n) => n + 1),
   };
 }

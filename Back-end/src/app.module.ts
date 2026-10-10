@@ -51,6 +51,7 @@ import { ProjetModule } from './projet/projet.module';
 import { AvisModule } from './avis/avis.module';
 import { ParcoursModule } from './parcours/parcours.module';
 import { IncompatibilitesModule } from './incompatibilites/incompatibilites.module';
+import { StorefrontRenderingModule } from './storefront-rendering/storefront-rendering.module';
 
 @Module({
   imports: [
@@ -108,6 +109,7 @@ import { IncompatibilitesModule } from './incompatibilites/incompatibilites.modu
     AvisModule,
     ParcoursModule,
     IncompatibilitesModule,
+    StorefrontRenderingModule,
   ],
   controllers: [AppController],
   providers: [

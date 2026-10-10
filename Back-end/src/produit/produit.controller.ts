@@ -27,28 +27,10 @@ import { AdminAuthGuard } from '../admin-auth/admin-auth.guard';
 import { OptionalAdminAuthGuard } from '../admin-auth/optional-admin-auth.guard';
 import { RolesGuard } from '../admin-auth/roles.guard';
 import { Roles } from '../admin-auth/roles.decorator';
-import { cataloguePricing } from '../pricing/catalogue-price';
+import { masquerCouts } from './public-product';
 
-/** Champs de coût/fournisseur jamais exposés au public ni au personnel non-admin. */
-const CHAMPS_COUTS = [
-  'cmupActuel',
-  'dernierCoutAchatFcfa',
-  'derniereDeviseAchat',
-  'dernierFournisseurId',
-  'dernierAchatAt',
-];
 const peutVoirCouts = (user: any): boolean =>
   !!user && user.role === 'SUPER_ADMIN';
-const masquerCouts = (p: any, now = new Date(), publicView = true): any => {
-  if (!p || typeof p !== 'object') return p;
-  const copie: any = { ...p };
-  for (const f of CHAMPS_COUTS) delete copie[f];
-  if (publicView) {
-    if (copie.quantiteDisponibleVente !== undefined) copie.quantiteStock = copie.quantiteDisponibleVente;
-    delete copie.quantiteReservee;
-  }
-  return { ...copie, ...cataloguePricing(copie, now) };
-};
 
 const imageFileFilter = (_req: any, file: Express.Multer.File, cb: any) => {
   if (!file.mimetype.match(/^image\/(jpeg|png|gif|webp)$/)) {
