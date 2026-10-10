@@ -3659,6 +3659,9 @@ body {
   font-size: 12px;
   font-weight: 400;
 }
+.e-comparison-table th small.e-compare-unit-note {
+  color: #577084;
+}
 .e-comparison-table tr:last-child > * {
   border-bottom: 0;
 }

@@ -1,0 +1,63 @@
+{
+  "status": "budgets-missed",
+  "profile": {
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "latencyMs": 150,
+    "downstreamBytesPerSecond": 200000,
+    "upstreamBytesPerSecond": 93750,
+    "cpuSlowdown": 4,
+    "coldCache": true,
+    "samplesPerRoute": 3
+  },
+  "budgets": {
+    "lcpMs": 2500,
+    "cls": 0.1,
+    "scriptEncodedBytes": 225280
+  },
+  "results": [
+    {
+      "sample": 1,
+      "lcpMs": 2796,
+      "cls": 0,
+      "scriptEncodedBytes": 211682,
+      "budgetPass": {
+        "lcp": false,
+        "cls": true,
+        "scriptBytes": true
+      }
+    },
+    {
+      "sample": 2,
+      "lcpMs": 2540,
+      "cls": 0,
+      "scriptEncodedBytes": 211739,
+      "budgetPass": {
+        "lcp": false,
+        "cls": true,
+        "scriptBytes": true
+      }
+    },
+    {
+      "sample": 3,
+      "lcpMs": 2336,
+      "cls": 0,
+      "scriptEncodedBytes": 211735,
+      "budgetPass": {
+        "lcp": true,
+        "cls": true,
+        "scriptBytes": true
+      }
+    }
+  ],
+  "errors": [],
+  "forbidden": [],
+  "limits": [
+    "Synthetic desktop Edge viewport/CPU/network, not a physical mobile device",
+    "Public production GET requests only, live catalogue and HTTPS, analytics submissions excluded; not directly comparable with demo measurements",
+    "Load LCP/CLS observed for 5s after network idle, not field percentiles or INP",
+    "Modern browser path only; legacy build not exercised"
+  ]
+}

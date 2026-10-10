@@ -1,4 +1,5 @@
 import { adaptProduct } from "./productData.js";
+export { comparisonRows } from "./comparisonRows.js";
 
 export const COMPARISON_KEY = "newoteg_comparison_v1";
 export const EMPTY_COMPARISON = Object.freeze({ categoryId: "", ids: [] });
@@ -71,31 +72,4 @@ export function comparisonProduct(raw, expectedId, categoryId, resolveImage) {
   )
     return { error: "invalid" };
   return { product: adaptProduct(raw, resolveImage) };
-}
-
-// Preserve exact attribute labels and units. Missing values never prove equality or a difference.
-export function comparisonRows(products) {
-  const columns = products.map((product) => {
-    const map = new Map();
-    for (const [label, value] of product.attributes || []) {
-      const key = label.trim(),
-        text = String(value).trim();
-      if (!key || !text) continue;
-      map.set(key, [...new Set([...(map.get(key) || []), text])]);
-    }
-    return map;
-  });
-  const labels = [...new Set(columns.flatMap((column) => [...column.keys()]))];
-  return labels.map((label) => {
-    const values = columns.map(
-      (column) => column.get(label)?.join(" ; ") || null,
-    );
-    const complete = values.every((value) => value !== null);
-    return {
-      label,
-      values,
-      incomplete: !complete,
-      different: complete && new Set(values).size > 1,
-    };
-  });
 }

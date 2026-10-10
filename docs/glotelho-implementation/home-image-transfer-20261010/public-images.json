@@ -1,0 +1,91 @@
+{
+  "cases": [
+    {
+      "width": 390,
+      "dpr": 1,
+      "current": "/design-e/hero-scene-v2-960.webp",
+      "heroRequests": [
+        "/design-e/hero-scene-v2-960.webp"
+      ],
+      "overflow": false,
+      "wire": "/design-e/hero-wire-v2-192.webp",
+      "copyX": 0,
+      "productsX": 0
+    },
+    {
+      "width": 390,
+      "dpr": 2,
+      "current": "/design-e/hero-scene-v2-1440.webp",
+      "heroRequests": [
+        "/design-e/hero-scene-v2-1440.webp"
+      ],
+      "overflow": false,
+      "wire": "/design-e/hero-wire-v2-192.webp",
+      "copyX": 0,
+      "productsX": 0
+    },
+    {
+      "width": 390,
+      "dpr": 3,
+      "current": "/design-e/hero-scene-v2-1440.webp",
+      "heroRequests": [
+        "/design-e/hero-scene-v2-1440.webp"
+      ],
+      "overflow": false,
+      "wire": "/design-e/hero-wire-v2-192.webp",
+      "copyX": 0,
+      "productsX": 0
+    },
+    {
+      "width": 768,
+      "dpr": 1,
+      "current": "/design-e/hero-scene-v2-960.webp",
+      "heroRequests": [
+        "/design-e/hero-scene-v2-960.webp"
+      ],
+      "overflow": false,
+      "wire": "/design-e/hero-wire-v2-192.webp",
+      "copyX": 0,
+      "productsX": 0
+    },
+    {
+      "width": 1024,
+      "dpr": 1,
+      "current": "/design-e/hero-scene-v2-1440.webp",
+      "heroRequests": [
+        "/design-e/hero-scene-v2-1440.webp"
+      ],
+      "overflow": false,
+      "wire": "/design-e/hero-wire-v2-192.webp",
+      "copyX": 0,
+      "productsX": 0
+    },
+    {
+      "width": 1440,
+      "dpr": 1,
+      "current": "/design-e/hero-scene-v2-1440.webp",
+      "heroRequests": [
+        "/design-e/hero-scene-v2-1440.webp"
+      ],
+      "overflow": false,
+      "wire": "/design-e/hero-wire-v2-192.webp",
+      "copyX": 0,
+      "productsX": 720
+    },
+    {
+      "width": 1920,
+      "dpr": 1,
+      "current": "/design-e/hero-scene-v2-2160.webp",
+      "heroRequests": [
+        "/design-e/hero-scene-v2-2160.webp"
+      ],
+      "overflow": false,
+      "wire": "/design-e/hero-wire-v2-192.webp",
+      "copyX": 0,
+      "productsX": 960
+    }
+  ],
+  "errors": [],
+  "writes": [],
+  "limits": "Public storefront assets verified in Edge; API responses deliberately isolated for image/layout checks; not a real Android device or a commerce acceptance test"
+}

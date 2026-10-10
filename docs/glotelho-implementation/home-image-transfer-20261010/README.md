@@ -31,4 +31,14 @@ Mesure publique avant changement : accueil 2864 / 2712 / 2652 ms ; catalogue 511
 
 Preuves locales complètes : `C:/Users/pc/Documents/Newoteg/output/implementation-work/home-performance-20261010/` (build, tests, comparison-final, hydration, legacy, images-result.json et captures). Résumés de résultats joints ici. Ces mesures synthétiques locales ne sont ni des mesures publiques après publication, ni des percentiles terrain, ni une mesure INP.
 
-Reste : publier le changement puis vérifier les ressources publiques ; hébergement isolé Railway et validation du rendu catalogue complet, performances publiques, téléphone réel et gates métier de l'objectif A–Z.
+## Publication et vérification publique
+
+PR [#7](https://github.com/Ampere-Donald/Final-ecomerce-project/pull/7) fusionnée sur main `8228f7b9a6b36140b51bc15724fd45bb13865094`. CI complète et deux configurations du contrat catalogue réussies, ainsi que les builds Cloudflare et le déploiement Railway automatique.
+
+À 18:00 UTC, storefront Cloudflare `82c87e04-17d8-4f8c-bdd7-4c7826ae6d7e` à 100 %, administration `9dc98454-4f52-40b1-8aad-78df2ef7e80f` à 100 %. SHA-256 des fichiers modernes/legacy/CSS principaux et des deux nouveaux assets identiques au build local vérifié. Les sept cas largeur/densité passent sur le domaine public ; les requêtes analytiques sont bloquées dans la recette. Les réponses API y sont isolées pour vérifier les images et la disposition, sans prétendre tester une commande réelle.
+
+Mesure publique après publication, même profil : LCP 2796 / 2540 / 2336 ms ; CLS 0, pas d'erreur JS ni écriture. Médiane 2540 ms contre 2712 ms avant ; seulement trois échantillons par série et non alternés sur le domaine, donc tendance, pas preuve d'un gain terrain. Deux passages dépassent toujours 2500 ms : **L8 reste ouvert**.
+
+API/base/stockage sains ; rendu catalogue toujours désactivé (503), email/SMS invités absents, collecteur arrêté, zéro projet publié. Les résultats publics ajoutés à ce dossier sont le relevé local post-publication ; ils ne modifient aucune configuration.
+
+Reste : hébergement isolé Railway et validation du rendu catalogue complet, performances publiques, téléphone réel et gates métier de l'objectif A–Z.
