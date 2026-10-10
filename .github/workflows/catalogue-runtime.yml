@@ -11,8 +11,12 @@ permissions:
 jobs:
   catalogue-runtime:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        api-url: ['/api', 'https://api.newoteg.com']
     env:
-      VITE_API_URL: /api
+      VITE_API_URL: ${{ matrix.api-url }}
       VITE_CATALOGUE_SSR_BUILD: 'true'
     steps:
       - uses: actions/checkout@v4
@@ -31,7 +35,7 @@ jobs:
       - name: Verify compiled package and frontend version handshake
         run: node Font-end/tests/verify-catalogue-package.cjs
       - name: Build the actual Railway candidate image
-        run: docker build --progress plain -t newoteg-catalogue-contract -f Dockerfile.catalogue .
+        run: docker build --progress plain --build-arg VITE_API_URL="$VITE_API_URL" -t newoteg-catalogue-contract -f Dockerfile.catalogue .
       - name: Verify image runtime without network or database
         run: |
           docker run --rm --network none --read-only --tmpfs /tmp:rw,noexec,nosuid,size=16m \
