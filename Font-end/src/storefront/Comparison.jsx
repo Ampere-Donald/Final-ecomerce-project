@@ -11,6 +11,7 @@ import useComparison, {
 import useComparisonProducts from "./useComparisonProducts";
 import { comparisonRows } from "./comparisonRows";
 import Footer from "./Footer";
+import TechnicalSource from "./TechnicalSource";
 
 export default function Comparison() {
   const { selection, saved } = useComparison();
@@ -302,7 +303,13 @@ export default function Comparison() {
                                 )}
                               </th>
                               {row.values.map((value, i) => (
-                                <td key={products[i].id}>{value ?? missing}</td>
+                                <td key={products[i].id}>
+                                  {value ?? missing}
+                                  {value !== null && (() => {
+                                    const sourceValues = (products[i].technicalAttributes || []).filter(a => a.label.trim() === row.label).flatMap(a => a.values);
+                                    return sourceValues.length ? sourceValues.map((v, j) => <div key={j}>{sourceValues.length > 1 && <small>{v.value}</small>}<TechnicalSource source={v.source} /></div>) : <TechnicalSource />;
+                                  })()}
+                                </td>
                               ))}
                             </tr>
                           ))}

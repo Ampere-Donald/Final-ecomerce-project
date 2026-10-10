@@ -1,0 +1,21 @@
+{
+  "checks": [
+    "same family, missing category and maximum of three; IDs only persisted",
+    "exact references, units, differences and missing data; no internal fields",
+    "selection survives reload; price reloaded from catalogue",
+    "six widths without body overflow; keyboard-accessible table scrolling",
+    "network failure, removed/inactive reference, changed family, malformed attributes; explicit removal restores table",
+    "no documented difference is not a compatibility claim; missing data still signalled with filter enabled",
+    "selection from product page and explicit guidance with a single product",
+    "selection changes synchronized across tabs",
+    "a late catalogue reply cannot restore a cleared selection",
+    "corrupt storage recovers; denied storage reports temporary selection and still works",
+    "English labels and product designation",
+    "SI conversion preserves source cells, real differences and unknown ratings; five widths and fr labels",
+    "SI conversion preserves source cells, real differences and unknown ratings; five widths and en labels",
+    "no page errors or API mutations; existing Google script requests blocked, no external traffic allowed"
+  ],
+  "errors": [],
+  "mutations": [],
+  "blockedExternalRequests": []
+}

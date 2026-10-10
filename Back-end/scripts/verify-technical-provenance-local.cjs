@@ -1,7 +1,7 @@
 // Owned local PostgreSQL only. Rehearse additive migration, dump/restore,
 // actual HTTP guards/DTOs and concurrent annotation using synthetic fixtures.
 const fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict');
-const {spawnSync}=require('node:child_process'),{randomUUID,randomBytes}=require('node:crypto');
+const {spawnSync,fork}=require('node:child_process'),{randomUUID,randomBytes}=require('node:crypto');
 const {Client,Pool}=require('pg'),{PrismaPg}=require('@prisma/adapter-pg'),{PrismaClient}=require('@prisma/client');
 const {readStructure,compareStructure,sourceIdentity}=require('./release-schema-contract.cjs');
 const url=new URL(process.env.NEWOTEG_TECHNICAL_TEST_DATABASE_URL||'');
@@ -64,7 +64,7 @@ async function connect(name){const u=new URL(url);u.pathname='/'+name;const c=ne
   app=module.createNestApplication({logger:false});app.setGlobalPrefix('api');app.useGlobalPipes(new ValidationPipe({whitelist:true,transform:true}));await app.listen(0,'127.0.0.1');
   const base=await app.getUrl(),jwt=new JwtService({secret}),tokens={};
   for(const role of ['ADMIN','VENDEUR']){const a=await db.adminUser.create({data:{nom:'Fixture '+role,role,isActive:true}});tokens[role]=jwt.sign({sub:a.id,type:'admin',sessionVersion:0,role})}
-  async function request(method,route,body,token){const r=await fetch(base+'/api'+route,{method,headers:{'Content-Type':'application/json',...(token?{Authorization:'Bearer '+token}:{})},...(body===undefined?{}:{body:JSON.stringify(body)})});return {status:r.status,data:await r.json()}}
+  async function request(method,route,body,token){const r=await fetch(base+'/api'+route,{method,headers:{'Content-Type':'application/json',...(token?{Authorization:'Bearer '+token}:{})},...(body===undefined?{}:{body:JSON.stringify(body)})});return {status:r.status,data:await r.json(),cacheControl:r.headers.get('cache-control')}}
   const endpoint='/valeurs-attribut/'+value+'/documentation',input={version:0,valeurVersion:1,attributVersion:1,produitVersion:1,etat:'A_VERIFIER',uniteSource:'mA',valeurNormalisee:'1',uniteNormalisee:'A',sourceUrl:'https://manufacturer.example/fixture.pdf',sourceDocument:'Fixture only',sourceRepere:'Page 1, tableau 2',motif:'Synthetic test relecture, not a real approval',confirmerRelecture:true};
   assert.equal((await request('PATCH',endpoint,input)).status,401);
   assert.equal((await request('PATCH',endpoint,input,tokens.VENDEUR)).status,403);
@@ -74,12 +74,30 @@ async function connect(name){const u=new URL(url);u.pathname='/'+name;const c=ne
   assert.equal((await request('POST',endpoint+'/relire',{...input,confirmerRelecture:false},tokens.ADMIN)).status,400);
   assert.equal((await request('POST',endpoint+'/relire',{...input,sourceRepere:''},tokens.ADMIN)).status,400);
   assert.equal((await db.documentationValeur.count()),0);ok('DTO/review refusals cannot stamp a review or create a record');
+  if(process.argv.includes('--browser')){
+   const raw=await db.produit.findUnique({where:{id:product},include:{categorie:true,attributs:{include:{valeurs:true}}}});
+   const {masquerCouts}=load('produit/public-product');
+   await new Promise((resolve,reject)=>{
+    const child=fork(path.join(__dirname,'verify-technical-provenance-browser.cjs'),[],{env:{...baseEnv,TECHNICAL_ADMIN_BASE:process.env.TECHNICAL_ADMIN_BASE,TECHNICAL_STOREFRONT_BASE:process.env.TECHNICAL_STOREFRONT_BASE,TECHNICAL_BROWSER_OUTPUT:path.join(output,'real-browser')},stdio:['ignore','pipe','pipe','ipc']});
+    child.stdout.on('data',chunk=>process.stdout.write(chunk));child.stderr.on('data',chunk=>process.stderr.write(chunk));
+    const timeout=setTimeout(()=>{child.kill();reject(Error('Owned technical browser recipe timed out'))},120000);
+    child.on('error',error=>{clearTimeout(timeout);reject(error)});
+    child.on('exit',code=>{clearTimeout(timeout);code===0?resolve():reject(Error('Owned technical browser recipe failed'))});
+    // Synthetic JWT stays in memory/IPC. Never save or log an access token.
+    child.send({base,token:tokens.ADMIN,value,product:masquerCouts(raw)});
+   });
+   // Only annotation fixture changed. Reset it before the independent HTTP suite.
+   assert.equal((await db.valeurAttribut.findUnique({where:{id:value}})).version,1);
+   await db.documentationValeur.deleteMany({where:{valeurId:value}});
+   ok('Built admin browser writes through real JWT/DTO/PostgreSQL; storefront displays current public source');
+  }
   const draft=await request('PATCH',endpoint,input,tokens.ADMIN);assert.equal(draft.status,200);assert.equal(draft.data.etat,'A_VERIFIER');
   const concurrent=await Promise.all([request('POST',endpoint+'/relire',{...input,version:1},tokens.ADMIN),request('PATCH',endpoint,{...input,version:1,conditions:'Conflicting edit'},tokens.ADMIN)]);
   assert.deepEqual(concurrent.map(r=>r.status===201?200:r.status).sort((a,b)=>a-b),[200,409]);
   // A POST success is 201 in Nest; normalize only the HTTP success category.
   assert.equal(concurrent.filter(r=>[200,201].includes(r.status)).length,1);assert.equal(concurrent.filter(r=>r.status===409).length,1);
   let current=await request('GET',endpoint+'-admin',undefined,tokens.ADMIN);
+  assert.equal(current.cacheControl,'private, no-store');
   if(current.data.documentation.etat!=='DOCUMENTE'){
    const reviewed=await request('POST',endpoint+'/relire',{...input,version:current.data.documentation.version},tokens.ADMIN);assert.equal(reviewed.status,201)}
   const visible=await request('GET',endpoint);assert.equal(visible.data.etat,'DOCUMENTE');assert(!JSON.stringify(visible.data).includes('reluParId'));assert.equal(visible.data.uniteSource,'mA');

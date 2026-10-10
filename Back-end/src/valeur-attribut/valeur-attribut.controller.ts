@@ -10,6 +10,7 @@ import {
   Query,
   UseGuards,
   Req,
+  Header,
 } from '@nestjs/common';
 import { ValeurAttributService } from './valeur-attribut.service';
 import { CreateValeurAttributDto } from './dto/create-valeur-attribut.dto';
@@ -38,6 +39,7 @@ export class ValeurAttributController {
   @UseGuards(AdminAuthGuard, RolesGuard)
   @Roles('SUPER_ADMIN', 'ADMIN')
   @Get(':id/documentation-admin')
+  @Header('Cache-Control', 'private, no-store')
   readDocumentationAdmin(@Param('id', ParseUUIDPipe) id: string) {
     return this.documentation.read(id, true);
   }
@@ -45,6 +47,7 @@ export class ValeurAttributController {
   @UseGuards(AdminAuthGuard, RolesGuard)
   @Roles('SUPER_ADMIN', 'ADMIN')
   @Patch(':id/documentation')
+  @Header('Cache-Control', 'private, no-store')
   editDocumentation(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() input: DocumentationValeurDto,
@@ -56,6 +59,7 @@ export class ValeurAttributController {
   @UseGuards(AdminAuthGuard, RolesGuard)
   @Roles('SUPER_ADMIN', 'ADMIN')
   @Post(':id/documentation/relire')
+  @Header('Cache-Control', 'private, no-store')
   reviewDocumentation(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() input: RelireDocumentationDto,

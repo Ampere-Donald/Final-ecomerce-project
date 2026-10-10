@@ -1,4 +1,5 @@
 import { readOffer } from "./offerData.js";
+import { technicalAttributes } from "./technicalProvenance.js";
 
 const positive = (value) =>
   ["number", "string"].includes(typeof value) &&
@@ -71,6 +72,7 @@ export function adaptProduct(raw, resolveImage) {
         (a.valeurs || []).map((v) => v.valeur).join(", "),
       ])
       .filter((a) => a[0] && a[1]),
+    technicalAttributes: technicalAttributes(raw.attributs),
   };
 }
 

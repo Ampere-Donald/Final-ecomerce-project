@@ -204,12 +204,12 @@ const check = (text) => {
       .click();
     await expect(page.getByRole("table")).toBeVisible();
     await expect(
-      page.getByRole("row", { name: "Longueur 5 m 2 m 5 m", exact: true }),
+      page.getByRole("row", { name: "Longueur 5 m À vérifier 2 m À vérifier 5 m À vérifier", exact: true }),
     ).toBeVisible();
     await expect(page.locator(".e-compare-different")).toHaveCount(1);
     await expect(
       page.getByRole("row", {
-        name: "Blindage Données incomplètes Double Non renseigné Non renseigné",
+        name: "Blindage Données incomplètes Double À vérifier Non renseigné Non renseigné",
         exact: true,
       }),
     ).toBeVisible();

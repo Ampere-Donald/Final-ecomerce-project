@@ -1,0 +1,37 @@
+{
+  "passed": true,
+  "fixture": "Synthetic local articles; no production traffic",
+  "legacy": false,
+  "checks": [
+    {
+      "width": 390,
+      "states": true,
+      "sourceDetails": true,
+      "zero": true,
+      "staleHidden": true,
+      "noPrivateIdentity": true,
+      "noPageOverflow": true
+    },
+    {
+      "width": 768,
+      "states": true,
+      "sourceDetails": true,
+      "zero": true,
+      "staleHidden": true,
+      "noPrivateIdentity": true,
+      "noPageOverflow": true
+    },
+    {
+      "width": 1440,
+      "states": true,
+      "sourceDetails": true,
+      "zero": true,
+      "staleHidden": true,
+      "noPrivateIdentity": true,
+      "noPageOverflow": true
+    }
+  ],
+  "errors": [],
+  "writes": [],
+  "outside": []
+}

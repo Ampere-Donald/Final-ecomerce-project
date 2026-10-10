@@ -25,6 +25,7 @@ import { ReceptionSummary } from "./ReceptionChoice";
 import ComparisonAction, { ComparisonLink } from "./ComparisonAction";
 import OfferDetails from "./OfferDetails";
 import ProductReviews from "./ProductReviews";
+import TechnicalSource from "./TechnicalSource";
 import { useJourneyObservation } from "./useJourney.js";
 
 function Detail({ product }) {
@@ -142,7 +143,6 @@ function Detail({ product }) {
                     product.categoryName,
                   ],
                   [lang === "fr" ? "Marque" : "Brand", product.brand],
-                  ...product.attributes,
                 ]
                   .filter(([, v]) => v)
                   .map(([key, value]) => (
@@ -151,6 +151,12 @@ function Detail({ product }) {
                       <dd>{value}</dd>
                     </div>
                   ))}
+                {(product.technicalAttributes || []).map((a, i) => (
+                  <div key={`${a.label}-${i}`}>
+                    <dt>{a.label}</dt>
+                    <dd>{a.values.map((v, j) => <div className="e-technical-value" key={j}>{v.value}<TechnicalSource source={v.source} /></div>)}</dd>
+                  </div>
+                ))}
               </dl>
             </section>
             <div className="e-product-price">

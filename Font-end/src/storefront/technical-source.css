@@ -1,0 +1,12 @@
+.e-technical-state, .e-technical-source { display: block; margin-top: 5px; color: var(--e-muted); font-size: 12px; line-height: 1.5; }
+.e-technical-source summary { cursor: pointer; }
+.e-technical-source summary span { display: block; color: var(--e-blue, #185cba); text-decoration: underline; text-underline-offset: 2px; }
+.e-technical-source summary:focus-visible { outline: 2px solid var(--e-blue, #185cba); outline-offset: 3px; }
+.e-technical-contradictoire { color: #9b341f; }
+.e-technical-documente { color: #226957; }
+.e-technical-content { color: var(--e-ink, #182335); border-left: 2px solid var(--e-line); padding: 8px 0 0 10px; overflow-wrap: anywhere; }
+.e-technical-content ul { margin: 0 0 8px; padding: 0; list-style: none; }
+.e-technical-content li { margin: 0 0 5px; }
+.e-technical-content p { margin: 8px 0 0; font-size: 12px; line-height: 1.5; }
+.e-technical-content a { overflow-wrap: anywhere; }
+.e-technical-value + .e-technical-value { margin-top: 12px; }

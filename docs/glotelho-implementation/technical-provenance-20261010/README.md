@@ -1,6 +1,6 @@
 # Sources et relecture des caractéristiques — contrat serveur L1/L3
 
-10 octobre 2026. Implémentation serveur en cours, non publiée. Le formulaire d'administration et l'affichage fiche/comparateur restent à raccorder avant livraison complète.
+10 octobre 2026. Contrat serveur, formulaire d'administration et affichage fiche/comparateur raccordés et vérifiés localement. Version candidate non publiée, PR #10 en brouillon. La validation des données réelles et les conditions de livraison restent ouvertes.
 
 ## Comportement livré dans les sources
 
@@ -10,11 +10,11 @@ Les états sont inconnu, à vérifier, documenté, contradictoire et non applica
 
 L'état documenté demande une action administrative séparée, une confirmation explicite, un document identifiable, une URL, un repère précis et une note de décision. La saisie de brouillon ne peut pas définir cet état. Le serveur attribue l'identité et l'heure de relecture ; les champs forgés ne sont pas utilisés. Cela trace la déclaration d'un opérateur, sans prouver physiquement un remplacement ni vérifier automatiquement le document externe.
 
-La documentation est liée aux versions de la valeur, de l'attribut et du produit. Modifier la valeur, son libellé ou l'identité/version du produit rend l'annotation obsolète : état public à vérifier, ancienne normalisation/source non affichée comme actuelle. La preuve antérieure reste disponible dans la lecture administrative. Un changement commercial incrémentant la version produit peut également demander une nouvelle relecture : choix conservateur à expliquer dans l'éditeur.
+La documentation est liée aux versions de la valeur, de l'attribut et du produit. Modifier la valeur, son libellé ou l'identité/version du produit rend l'annotation obsolète : état public à vérifier, ancienne normalisation/source non affichée comme actuelle. La preuve antérieure reste disponible dans la lecture administrative jusqu'à remplacement de l'annotation. Ce modèle conserve la dernière annotation, pas un historique immuable de toutes les relectures. Un changement commercial incrémentant la version produit peut également demander une nouvelle relecture : choix conservateur signalé dans le formulaire.
 
 Les modifications de documentation verrouillent valeur, attribut et produit dans une transaction PostgreSQL et vérifient les quatre versions. Deux écritures depuis la même version ont un seul gagnant ; l'autre reçoit 409 et doit recharger. Supprimer une valeur supprime sa documentation facultative.
 
-Les fiches JSON chargent la documentation et la projettent explicitement, sans identité du relecteur. Le frontend actuel ignore encore ces métadonnées. Les lectures publiques d'attributs ne renvoient plus le produit complet : uniquement identité, nom et références internes, pour exclure les coûts et informations fournisseur. Les écritures existantes restent réservées aux administrateurs.
+Les fiches JSON chargent la documentation et la projettent explicitement, sans identité du relecteur. Fiche et comparateur utilisent ces métadonnées. Les lectures publiques d'attributs ne renvoient plus le produit complet : uniquement identité, nom et références internes, pour exclure les coûts et informations fournisseur. Les écritures existantes restent réservées aux administrateurs.
 
 ## Contrat HTTP
 
@@ -33,18 +33,28 @@ Le body contient `version` (0 si annotation absente), `valeurVersion`, `attribut
 
 - Build Nest/Prisma réussi, 60 suites / 456 tests backend passent.
 - Lint ciblé des modules/projections modifiés réussi ; dette historique du gros ProduitService non reformatée. Contrôle de syntaxe et diff sans erreur d'espace.
-- Script `Back-end/scripts/verify-technical-provenance-local.cjs` : onze groupes réels réussis. Trois bases dédiées sur le cluster local quote_test, données fictives uniquement ; création à partir du schéma Git baseline 7e5ec507, sauvegarde pg_dump, restauration psql puis application du fichier exact de migration sur les deux copies. Valeurs source identiques, zéro annotation créée par migration, structures concordantes avec le schéma Prisma candidat.
+- Script `Back-end/scripts/verify-technical-provenance-local.cjs --browser --update-contract` : douze groupes réels réussis. Trois bases dédiées sur le cluster local quote_test, données fictives uniquement ; création à partir du schéma Git baseline 7e5ec507, sauvegarde pg_dump, restauration psql puis application du fichier exact de migration sur les deux copies. Valeurs source identiques, zéro annotation créée par migration, structures concordantes avec le schéma Prisma candidat.
 - Application Nest limitée aux contrôleurs concernés, vrais services, véritable PostgreSQL, stratégie JWT admin et RolesGuard réels. Accès anonyme 401, vendeur 403, body interdit/refus de relecture 400, écritures concurrentes avec un succès et un 409, projection publique sans identité/coûts, invalidation après changements de valeur/libellé/produit et cascade exercés.
 - Connexion de chaque service à la base exactement créée vérifiée. Bases supprimées, contrôle indépendant à zéro base technique restante ; serveur PostgreSQL de test arrêté après essais. Aucun trafic ou écriture Railway, client réel, commande, encaissement, fournisseur ou notification.
 - Contrat de livraison régénéré pour les seules nouvelles définitions testées et l'identité des sources ; définitions historiques conservées. Ce n'est pas une répétition de l'historique Railway ni une sauvegarde de production.
 
 Voir `result.json`. Les confirmations de relecture des fixtures sont des actions de recette fictives, pas des validations métier NEWOTEG.
 
+## Interfaces et vérifications ajoutées
+
+- L'éditeur utilise `/valeurs-attribut` et les champs backend réels. Chaque attribut appartient à un produit choisi dans une recherche limitée à huit résultats, différée de 300 ms et annulable. Les vendeurs consultent les valeurs sans accès au formulaire privé ni aux écritures.
+- Le formulaire distingue état actuel et brouillon ; charge tous les champs et versions ; présente la note comme publique. Une case non cochée initialement et une action séparée sont nécessaires pour relire. Toute modification de champ retire cette confirmation. Un 409 conserve la saisie et bloque une nouvelle écriture jusqu'au rechargement volontaire. Une actualisation échouée après enregistrement bloque aussi l'édition du contexte périmé.
+- Les lectures/écritures privées de sources portent `Cache-Control: private, no-store`. Les champs d'identité administrative ne sont jamais projetés sur le storefront.
+- Fiche et comparateur affichent états et sources précises en FR/EN au niveau de chaque valeur : document, repère, révision, conditions, note, date, lien HTTPS et normalisation éventuelle. Aucune source périmée n'est présentée comme actuelle ; les valeurs anciennes restent visibles avec « À vérifier ». Zéro demeure une valeur. Une égalité après conversion ne certifie pas une équivalence.
+- 112 tests storefront réussis ; lint des sources (export local excluant seulement les anciens bundles générés et `.wrangler`) et build réussis. TypeScript admin, 23 tests de services, 121 tests d'interface puis 11 tests ciblés (dont trois nouveaux contrats de service) passent ; build moderne/legacy/PWA réussi. L'avertissement de taille des gros bundles admin préexistants demeure.
+- Recette sources moderne et bundle legacy forcé : 390/768/1440 px, document et conditions, zéro, obsolescence, confidentialité, aucun débordement de page, aucune erreur JS ni appel externe/écriture. Recette du comparateur existante : quatorze groupes, six largeurs, stockage, changements de sélection, réponses tardives, erreurs, unités et FR/EN réussis.
+- Chaîne navigateur/PostgreSQL réelle : brouillon PATCH, édition concurrente produisant un 409, saisie conservée, rechargement, confirmation explicite et POST 201, projection publique actuelle affichée dans le build produit. Le serveur Nest, JWT, gardes, DTO, transactions et base sont réels ; la session de consultation admin et le contenant produit sont des adaptateurs de fixture. Les captures et validations concernent uniquement les articles fictifs. Les contrôles mobiles vérifient que les actions restent atteignables et non couvertes par la navigation fixe.
+
+Résultats : `result.json`, `browser-modern.json`, `browser-legacy.json`, `real-browser.json`, `comparison-regression.json`. Captures : [source admin desktop](captures/admin-1440.png), [actions admin mobile](captures/admin-actions-390.png), [fiche mobile](captures/product-390.png), [comparateur desktop](captures/comparison-1440.png).
+
 ## Suite obligatoire avant publication et clôture
 
-1. Réparer l'éditeur existant : route `/valeurs-attribut`, attribut rattaché à un produit, champs `nomAttribut`/`typeAttribut` réels ; intégrer le formulaire de sources, les versions, le refus 409 et la relecture explicite.
-2. Afficher l'état, la source précise et les conditions sur fiche/comparateur en FR/EN, sans assimiler normalisation et compatibilité. Vérifier le clavier, les petites largeurs et les sources obsolètes.
-3. Rejouer la chaîne UI/API en base isolée puis les builds frontend/admin et la CI. Préparer la livraison additive backend avant UI, le relevé de sauvegarde cible et le retour au code précédent en conservant la nouvelle table ; ne pas supprimer les sources pour revenir en arrière.
-4. Faire accepter le dictionnaire/échantillon et relire les valeurs par la boutique avant toute annotation réelle ou conclusion d'équivalence. Fabricant, alias documentés et grille définitive par famille restent à finaliser.
+1. Vérifier la CI sur la nouvelle tête de PR, préparer la livraison additive backend avant UI, relever la sauvegarde restaurable de la cible et la répétition en préproduction. Le retour au code précédent conserve la table ; ne pas supprimer les sources pour revenir en arrière. La restauration locale sur fixtures n'est pas une sauvegarde de production.
+2. Faire accepter le dictionnaire/échantillon et relire les valeurs par la boutique avant toute annotation réelle ou conclusion d'équivalence. Fabricant, alias documentés et grille définitive par famille restent à finaliser.
 
 L1/L3, la recette métier, la préproduction Railway et l'objectif A–Z restent ouverts. Ce contrat serveur ne remplace aucune exigence du plan complet.
