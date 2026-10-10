@@ -1,0 +1,14 @@
+{
+  "date": "2026-10-10T18:58:36.820Z",
+  "checks": [
+    "Public comparison conversion/source/filter/overflow 390",
+    "Public comparison conversion/source/filter/overflow 1440"
+  ],
+  "errors": [],
+  "mutations": [],
+  "blocked": [
+    "https://static.cloudflareinsights.com",
+    "https://static.cloudflareinsights.com"
+  ],
+  "limits": "Deployed resources with fixture API; not real product compatibility or physical-device evidence"
+}

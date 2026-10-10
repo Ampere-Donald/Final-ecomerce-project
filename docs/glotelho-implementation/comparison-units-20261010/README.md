@@ -24,3 +24,7 @@ Preuves locales : `C:/Users/pc/Documents/Newoteg/output/implementation-work/comp
 ## Livraison
 
 Sources prêtes après les vérifications locales. La CI distante, la fusion et les ressources réellement servies doivent être vérifiées séparément avant de déclarer cette correction publiée. Aucun changement d'abonnement Cloudflare ni activation du renderer catalogue Railway n'est inclus.
+
+## Publication constatée
+
+PR [#8](https://github.com/Ampere-Donald/Final-ecomerce-project/pull/8) fusionnée, main `168f961e0f951a81cc2677ea7302b2c455ecd201`. Cloudflare client `b1d28454-b4bd-4fcd-a7c4-44526624462a` à 100 %. Sept ressources servies identiques au build local, deux contrôles UI publics 390/1440 réussis avec API de recette simulée, aucune écriture ni erreur. Les résultats sont dans `public-verification.json` et `public-ui.json`. CI complète et deux configurations Docker catalogue réussies sur main ; builds Cloudflare client/admin et déploiement Railway existant réussis (`release-status.json`). Les gates métier restent ouverts, le renderer catalogue optionnel reste désactivé. La mention « sources prêtes » ci-dessus décrit le jalon précédant cette publication.

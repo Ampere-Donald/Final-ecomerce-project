@@ -1,0 +1,55 @@
+{
+  "date": "2026-10-10T18:57:46.640Z",
+  "assets": [
+    {
+      "path": "/assets/polyfills-pQR8bD5G.js",
+      "status": 200,
+      "bytes": 125550,
+      "sha256": "6db3adab19221eeeeffdcf015d3f4d2e56dbcdba312f7946e660d468b2b43d36"
+    },
+    {
+      "path": "/assets/index-SZ-V7eqh.js",
+      "status": 200,
+      "bytes": 424212,
+      "sha256": "ee1149f0018263315683e34ae302aa10c9dcea2096482c6a9ec9e0c6a9adbd88"
+    },
+    {
+      "path": "/assets/index-Dh6d3Wlq.css",
+      "status": 200,
+      "bytes": 73796,
+      "sha256": "7a8645cd522c8d8e34f8550bcbbb259ffb6fc4c006ac2ed403558cf700d99d6e"
+    },
+    {
+      "path": "/assets/polyfills-legacy-CZDukNjG.js",
+      "status": 200,
+      "bytes": 168012,
+      "sha256": "638706bd6336f64a7208dbb1bfafb73e39e55b347258d73b597241baaa053775"
+    },
+    {
+      "path": "/assets/index-legacy-Bm9223en.js",
+      "status": 200,
+      "bytes": 523145,
+      "sha256": "f207015b054d18dfefe20a00dd2fc4e775c863b3a9a18dd6c30b060e31657491"
+    },
+    {
+      "path": "/assets/Comparison-Cxect-tV.js",
+      "status": 200,
+      "bytes": 10435,
+      "sha256": "65bb1f95b535052a1dfe965905ecdd16b561f0d3c3bb22ca08eba5939d5f3e3f"
+    },
+    {
+      "path": "/assets/Comparison-legacy-BTf16n0Y.js",
+      "status": 200,
+      "bytes": 17144,
+      "sha256": "8b94b952257380fba33a8bd9c252bdd9d47859416ac8b92e8a09c9a8d9120ebf"
+    }
+  ],
+  "health": {
+    "status": "ok",
+    "checks": {
+      "api": "ok",
+      "database": "ok",
+      "storage": "ok"
+    }
+  }
+}

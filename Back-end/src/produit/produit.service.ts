@@ -12,16 +12,12 @@ import { join, basename } from 'path';
 import { addSellableStock } from 'src/ticket-vente/ticket-stock.util';
 import { cataloguePricing, validateCataloguePromotion } from '../pricing/catalogue-price';
 import { publicCatalogue, publicPriceMetadata } from './public-catalogue';
+import {
+  normalizeSalesSearch,
+  normalizedSearchSql,
+} from './search-normalization';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const csvParser = require('csv-parser');
-
-const normalizeSalesSearch = (value?: string | null) =>
-  (value || '')
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, ' ')
-    .trim();
 
 const salesSearchScore = (product: any, rawQuery: string) => {
   const query = normalizeSalesSearch(rawQuery);
@@ -102,11 +98,20 @@ export class ProduitService {
     limit: number,
   ): Promise<string[]> {
     const normalizedQuery = normalizeSalesSearch(query);
+    if (normalizedQuery.length < 2) return [];
     const rows = await this.db.$queryRawUnsafe<Array<{ id: string }>>(
       `
         SELECT p.id
         FROM produit p
         LEFT JOIN categorie c ON c.id = p.id_categorie
+        CROSS JOIN LATERAL (SELECT
+          ${normalizedSearchSql('p.nom_produit')} AS name,
+          ${normalizedSearchSql('p.designation_en')} AS english_name,
+          ${normalizedSearchSql('p.marque')} AS brand,
+          ${normalizedSearchSql('p.code_famille')} AS family,
+          ${normalizedSearchSql('p.code')} AS code,
+          ${normalizedSearchSql('c.nom')} AS category
+        ) AS n
         WHERE ($2::text IS NULL OR p.id_categorie = $2::text)
           AND p.est_actif = TRUE
           AND ($3::boolean = FALSE OR p.quantite_stock > 0)
@@ -115,38 +120,38 @@ export class ProduitService {
             FROM unnest(regexp_split_to_array(lower(trim($1::text)), '\\s+')) AS search_term(term)
             WHERE length(search_term.term) >= 2
               AND NOT (
-              lower(coalesce(p.nom_produit, '')) LIKE '%' || search_term.term || '%'
-              OR lower(coalesce(p.designation_en, '')) LIKE '%' || search_term.term || '%'
-              OR lower(coalesce(p.marque, '')) LIKE '%' || search_term.term || '%'
-              OR lower(coalesce(p.code_famille, '')) LIKE '%' || search_term.term || '%'
-              OR lower(coalesce(p.code, '')) LIKE '%' || search_term.term || '%'
-              OR lower(coalesce(c.nom, '')) LIKE '%' || search_term.term || '%'
+              n.name LIKE '%' || search_term.term || '%'
+              OR n.english_name LIKE '%' || search_term.term || '%'
+              OR n.brand LIKE '%' || search_term.term || '%'
+              OR n.family LIKE '%' || search_term.term || '%'
+              OR n.code LIKE '%' || search_term.term || '%'
+              OR n.category LIKE '%' || search_term.term || '%'
               OR (
                 length(search_term.term) >= 4
                 AND search_term.term !~ '[0-9]'
                 AND GREATEST(
-                  word_similarity(search_term.term, lower(coalesce(p.nom_produit, ''))),
-                  word_similarity(search_term.term, lower(coalesce(p.designation_en, ''))),
-                  word_similarity(search_term.term, lower(coalesce(p.marque, ''))),
-                  word_similarity(search_term.term, lower(coalesce(c.nom, '')))
+                  word_similarity(search_term.term, n.name),
+                  word_similarity(search_term.term, n.english_name),
+                  word_similarity(search_term.term, n.brand),
+                  word_similarity(search_term.term, n.category)
                 ) >= 0.52
               )
             )
           )
         ORDER BY
           CASE
-            WHEN lower(coalesce(p.code, '')) = lower($1::text) THEN 0
-            WHEN lower(coalesce(p.nom_produit, '')) = lower($1::text) THEN 1
-            WHEN lower(coalesce(p.nom_produit, '')) LIKE lower($1::text) || '%' THEN 2
+            WHEN n.code = $1::text THEN 0
+            WHEN n.name = $1::text THEN 1
+            WHEN n.name LIKE $1::text || '%' THEN 2
             ELSE 3
           END,
           GREATEST(
-            similarity(lower(coalesce(p.nom_produit, '')), lower($1::text)),
-            word_similarity(lower($1::text), lower(coalesce(p.nom_produit, ''))),
-            similarity(lower(coalesce(p.designation_en, '')), lower($1::text)),
-            similarity(lower(coalesce(p.marque, '')), lower($1::text))
+            similarity(n.name, $1::text),
+            word_similarity($1::text, n.name),
+            similarity(n.english_name, $1::text),
+            similarity(n.brand, $1::text)
           ) DESC,
-          p.nom_produit ASC
+          p.nom_produit ASC, p.id ASC
         LIMIT $4::integer
       `,
       normalizedQuery,
@@ -154,7 +159,7 @@ export class ProduitService {
       Boolean(inStock),
       limit,
     );
-    return rows.map(row => row.id);
+    return rows.map((row) => row.id);
   }
 
   getImportStatus() {

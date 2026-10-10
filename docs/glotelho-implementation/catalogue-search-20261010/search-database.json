@@ -1,0 +1,55 @@
+{
+  "date": "2026-10-10T19:31:05.288Z",
+  "readOnly": true,
+  "checks": [
+    "JS/SQL normalization agrees for composed/decomposed/uppercase accents and reference suffixes; only fixed columns accepted",
+    "Real PostgreSQL candidate SQL: accent variants, typo, exact reference before suffix, category/stock/inactive filters and absent/injection-like input",
+    "Existing catalogue: actual public service returns identical ordered IDs for accented/unaccented/uppercase requests in catalogue and suggestion modes"
+  ],
+  "queries": [
+    {
+      "search": "câble HDMI",
+      "salesSearch": false,
+      "total": 2,
+      "rows": 2,
+      "elapsedMs": 1888
+    },
+    {
+      "search": "cable HDMI",
+      "salesSearch": false,
+      "total": 2,
+      "rows": 2,
+      "elapsedMs": 1730
+    },
+    {
+      "search": "CÂBLE HDMI",
+      "salesSearch": false,
+      "total": 2,
+      "rows": 2,
+      "elapsedMs": 1709
+    },
+    {
+      "search": "câble HDMI",
+      "salesSearch": true,
+      "total": 8,
+      "rows": 8,
+      "elapsedMs": 1984
+    },
+    {
+      "search": "cable HDMI",
+      "salesSearch": true,
+      "total": 8,
+      "rows": 8,
+      "elapsedMs": 1966
+    },
+    {
+      "search": "CÂBLE HDMI",
+      "salesSearch": true,
+      "total": 8,
+      "rows": 8,
+      "elapsedMs": 2278
+    }
+  ],
+  "status": "passed",
+  "phase": "connections closed"
+}
