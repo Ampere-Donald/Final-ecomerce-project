@@ -90,9 +90,44 @@ model ValeurAttribut {
   valeur     String   @db.VarChar(100)
   version    Int      @default(1)
   attribut   Attribut @relation(fields: [attributId], references: [id], onDelete: Cascade)
+  documentation DocumentationValeur?
 
   @@unique([attributId, valeur], name: "unique_valeur")
   @@map("valeur_attribut")
+}
+
+enum EtatDonneeTechnique {
+  INCONNU
+  A_VERIFIER
+  DOCUMENTE
+  CONTRADICTOIRE
+  NON_APPLICABLE
+}
+
+// Optional additive record: legacy attribute values keep their source text.
+// Context versions prevent an old review from certifying an edited value/name.
+model DocumentationValeur {
+  valeurId          String @id @map("valeur_id")
+  version           Int @default(1)
+  etat              EtatDonneeTechnique @default(A_VERIFIER)
+  valeurVersion     Int @map("valeur_version")
+  attributVersion   Int @map("attribut_version")
+  produitVersion    Int @map("produit_version")
+  valeurSource      String @map("valeur_source") @db.VarChar(100)
+  uniteSource       String? @map("unite_source") @db.VarChar(40)
+  valeurNormalisee  String? @map("valeur_normalisee") @db.VarChar(100)
+  uniteNormalisee   String? @map("unite_normalisee") @db.VarChar(40)
+  conditions        String? @db.VarChar(500)
+  sourceUrl         String? @map("source_url") @db.VarChar(800)
+  sourceDocument    String? @map("source_document") @db.VarChar(200)
+  sourceRepere      String? @map("source_repere") @db.VarChar(160)
+  sourceRevision    String? @map("source_revision") @db.VarChar(100)
+  motif             String? @db.VarChar(500)
+  reluParId         String? @map("relu_par_id")
+  reluLe            DateTime? @map("relu_le")
+  valeur            ValeurAttribut @relation(fields: [valeurId], references: [id], onDelete: Cascade)
+
+  @@map("documentation_valeur")
 }
 
 model Fournisseur {

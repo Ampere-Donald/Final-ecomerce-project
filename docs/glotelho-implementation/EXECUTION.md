@@ -356,3 +356,8 @@ Défaut réel corrigé : « câble HDMI » ne retrouvait aucun article dans les 
 
 
 Publication de la recherche accentuée vérifiée sur main 7e5ec507, PR #9 : CI complète/images et déploiements Workers/Railway réussis, six GET réels et parcours public 390/1440 passent sans écriture ; santé API/base/stockage OK. [Preuves](catalogue-search-20261010/README.md). Le dictionnaire technique et un échantillon proposé de huit fiches réelles sont préparés dans [le dossier pilote](catalogue-pilot-20261010/DICTIONNAIRE.md) : pas d'attribut dans ces réponses détaillées, aucune valeur technique inventée ou publiée, relecture toujours attendue. L1/L3 et l'objectif A–Z restent ouverts.
+
+
+## Sources et relecture technique — contrat serveur du 10 octobre 2026
+
+Table facultative additive, états explicites, source précise, normalisation sans effacement du texte, action de relecture distincte et identité/heure serveur. Versions valeur/attribut/produit liées à la preuve ; modification ou contexte périmé invalide l'état documenté. Projection publique sans identité du relecteur et lectures d'attributs limitées aux champs produit nécessaires. Build/lint ciblé, 456 tests backend et onze groupes PostgreSQL/HTTP réels passent : sauvegarde/restauration du schéma baseline et migration répétée sur fixtures locales, droits, concurrence et invalidations. Trois bases retirées, aucun écrit Railway ni validation réelle. [Contrats, preuves et étapes restantes](technical-provenance-20261010/README.md). Formulaire admin et affichage fiche/comparateur pas encore raccordés ; sources non publiées, validation métier L1/L3 toujours requise, objectif A–Z actif.

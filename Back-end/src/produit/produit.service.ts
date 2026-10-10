@@ -504,7 +504,7 @@ export class ProduitService {
       where: { id },
       include: {
         categorie: true,
-        attributs: { include: { valeurs: true } },
+        attributs: { include: { valeurs: { include: { documentation: true } } } },
       },
     });
     if (!produit) {
@@ -518,7 +518,7 @@ export class ProduitService {
       where: { codeFamille: codeFamille.trim(), code: code.trim(), estActif: true },
       include: {
         categorie: true,
-        attributs: { include: { valeurs: true } },
+        attributs: { include: { valeurs: { include: { documentation: true } } } },
       },
     });
     if (!produit) {
@@ -540,7 +540,7 @@ export class ProduitService {
 
     const include = {
       categorie: true,
-      attributs: { include: { valeurs: true } },
+      attributs: { include: { valeurs: { include: { documentation: true } } } },
     };
 
     // Comportement principal historique : la valeur de la douchette est le code.
