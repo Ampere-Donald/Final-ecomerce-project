@@ -1,0 +1,25 @@
+{
+  "number": 8,
+  "url": "https://github.com/Ampere-Donald/Final-ecomerce-project/pull/8",
+  "head": "0ee5637767bd80e744af7e053e9b36cc03f38832",
+  "draft": false,
+  "mergeable": true,
+  "mergeableState": "unstable",
+  "state": "open",
+  "runs": [
+    {
+      "id": 38077565246,
+      "name": "Catalogue runtime contract",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/Ampere-Donald/Final-ecomerce-project/actions/runs/38077565246"
+    },
+    {
+      "id": 38077565252,
+      "name": "Newoteg CI",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/Ampere-Donald/Final-ecomerce-project/actions/runs/38077565252"
+    }
+  ]
+}
