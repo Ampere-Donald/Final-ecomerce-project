@@ -54,7 +54,19 @@ Résultats : `result.json`, `browser-modern.json`, `browser-legacy.json`, `real-
 
 ## Suite obligatoire avant publication et clôture
 
-1. Vérifier la CI sur la nouvelle tête de PR, préparer la livraison additive backend avant UI, relever la sauvegarde restaurable de la cible et la répétition en préproduction. Le retour au code précédent conserve la table ; ne pas supprimer les sources pour revenir en arrière. La restauration locale sur fixtures n'est pas une sauvegarde de production.
+1. Vérifier la CI sur la nouvelle tête de PR, préparer la livraison additive backend avant UI et réaliser la répétition en préproduction distante. La sauvegarde réelle et sa restauration locale sont maintenant prouvées ci-dessous ; elles doivent être actualisées si l'état de la cible change avant livraison. Le retour au code précédent conserve la table ; ne pas supprimer les sources pour revenir en arrière.
 2. Faire accepter le dictionnaire/échantillon et relire les valeurs par la boutique avant toute annotation réelle ou conclusion d'équivalence. Fabricant, alias documentés et grille définitive par famille restent à finaliser.
 
 L1/L3, la recette métier, la préproduction Railway et l'objectif A–Z restent ouverts. Ce contrat serveur ne remplace aucune exigence du plan complet.
+
+## Sauvegarde réelle et répétition sur copie — 11 octobre, heure de Douala
+
+À 22:54 UTC le 10 octobre, accès direct à PostgreSQL Railway 18.6 confirmé. Transaction répétable en lecture seule, export d'un snapshot partagé avec `pg_dump` 18.6 : sauvegarde réelle cohérente de 69 tables, dont l'historique Prisma. Une seule migration candidate est en attente ; aucune migration historique divergente ou échouée n'a été réparée.
+
+Archive restaurée transactionnellement dans une nouvelle base locale PostgreSQL 18.6 ; comparaison des empreintes de toutes les lignes avec le même snapshot distant réussie. La session de comparaison utilise UTC pour éviter de confondre formatage du fuseau et modification de données. Le premier contrôle local avait échoué sur cette différence de formatage ; il a été corrigé sans modifier les données ni assouplir la comparaison.
+
+Application locale de la migration avec `prisma migrate deploy`, puis vérification complète du contrat de livraison : 68 tables métier et 61 enregistrements historiques conservés exactement, un nouvel enregistrement de migration, aucune annotation/relecture créée automatiquement. Base temporaire supprimée ; zéro base de répétition restante et cluster dédié arrêté. La suppression récursive des fichiers du cluster a été refusée par le contrôle automatique ; ces fichiers restent dans le dossier privé protégé, sans serveur actif.
+
+Voir `target-rehearsal.json`. Sauvegarde et preuves privées conservées hors Git dans un dossier dont les droits NTFS sont limités à l'utilisateur local et SYSTEM. Aucun dump, ligne métier, secret ou identifiant client dans les fichiers du dépôt. L'archive couvre la base PostgreSQL ; elle n'est pas une sauvegarde des objets/images ou de la configuration de l'hébergement.
+
+Cette répétition ne lance pas l'application contre les données clients, n'envoie aucune notification et n'écrit pas sur Railway. Elle ne prouve pas le démarrage dans une préproduction distante. L'accès de gestion Railway reste à rétablir pour cette étape. PR #10 encore en brouillon ; lot non publié, validation métier toujours attendue. L'offre Cloudflare est inconnue : aucune offre payante ni modification de facturation présumée.
