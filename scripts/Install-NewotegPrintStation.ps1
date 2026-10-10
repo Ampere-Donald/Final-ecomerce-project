@@ -24,7 +24,7 @@ function Get-QzRuntimeProcess {
 }
 
 if (-not (Test-IsAdministrator)) {
-  throw 'Relancez PowerShell en tant qu’administrateur pour préparer le poste d’impression.'
+  throw 'Relancez PowerShell en tant qu''administrateur pour préparer le poste d''impression.'
 }
 
 if ($EpsonDriverInf) {
@@ -48,7 +48,7 @@ $qzCandidates = @(@(
 
 if ($qzCandidates.Count -eq 0 -and $QzInstaller) {
   $installerPath = (Resolve-Path -LiteralPath $QzInstaller).Path
-  if ($PSCmdlet.ShouldProcess($installerPath, 'Lancer l’installateur QZ Tray')) {
+  if ($PSCmdlet.ShouldProcess($installerPath, 'Lancer l''installateur QZ Tray')) {
     $qzProcess = if ($SilentQzInstall) {
       Start-Process -FilePath $installerPath -ArgumentList @('/S') -Wait -PassThru
     } else {
@@ -77,7 +77,7 @@ if ($QzServerHost) {
     throw 'qz-tray-console.exe est introuvable. QZ Tray 2.2 ou une version plus récente est requis.'
   }
 
-  if ($PSCmdlet.ShouldProcess($QzServerHost, 'Régénérer le certificat QZ Tray pour le poste d’impression réseau')) {
+  if ($PSCmdlet.ShouldProcess($QzServerHost, 'Régénérer le certificat QZ Tray pour le poste d''impression réseau')) {
     Get-QzRuntimeProcess | ForEach-Object { Stop-Process -Id $_.ProcessId -Force }
     $certProcess = Start-Process -FilePath $qzConsole -ArgumentList @('certgen', '--host', $QzServerHost) -Wait -PassThru -WindowStyle Hidden
     if ($certProcess.ExitCode -ne 0) {
@@ -87,7 +87,7 @@ if ($QzServerHost) {
 }
 
 $spooler = Get-Service -Name Spooler
-if ($spooler.Status -ne 'Running' -and $PSCmdlet.ShouldProcess('Spooler', 'Démarrer le service d’impression Windows')) {
+if ($spooler.Status -ne 'Running' -and $PSCmdlet.ShouldProcess('Spooler', 'Démarrer le service d''impression Windows')) {
   Start-Service -Name Spooler
 }
 
@@ -158,7 +158,7 @@ if ($AllowPrivateQzPort) {
   Write-Host '- Pare-feu : TCP 8181 autorisé uniquement sur le profil privé et le sous-réseau local.'
 }
 if ($epsonPrinters.Count -eq 0) {
-  Write-Warning 'Aucune vraie file Epson TM-T20II reliée à un port USB n’est disponible. Une file Coupon Generator/nul: ne compte pas comme imprimante.'
+  Write-Warning 'Aucune vraie file Epson TM-T20II reliée à un port USB n''est disponible. Une file Coupon Generator/nul: ne compte pas comme imprimante.'
 } else {
   foreach ($printer in $epsonPrinters) {
     Write-Host "- Imprimante détectée : $($printer.Name) [$($printer.DriverName)]" -ForegroundColor Green

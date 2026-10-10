@@ -60,7 +60,7 @@ jobs:
           cache-dependency-path: Font-end/package-lock.json
       - run: npm ci
       - run: npm run lint
-      - name: Vérifier les contrats des parcours et protections du storefront
+      - name: VÃ©rifier les contrats des parcours et protections du storefront
         run: npm test
       - run: npm run build
       - run: npm audit --omit=dev --audit-level=high
@@ -83,6 +83,8 @@ jobs:
           java-version: 21
           cache: gradle
       - uses: android-actions/setup-android@v3
+        with:
+          packages: platform-tools
       - run: npm ci
       - run: npm run build
       - run: npx cap sync android

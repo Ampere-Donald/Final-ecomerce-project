@@ -111,7 +111,7 @@ function Invoke-ElevatedRepair {
         $process = Start-Process -FilePath 'powershell.exe' -Verb RunAs -WindowStyle Hidden -ArgumentList $arguments -Wait -PassThru
         exit $process.ExitCode
     } catch {
-        Write-RepairResult (New-RepairResult -Status 'ELEVATION_CANCELLED' -Message 'L’autorisation administrateur a été annulée.') 5
+        Write-RepairResult (New-RepairResult -Status 'ELEVATION_CANCELLED' -Message 'L''autorisation administrateur a été annulée.') 5
     }
 }
 
@@ -172,7 +172,7 @@ try {
     if (-not $driver) {
         Write-RepairResult (New-RepairResult `
             -Status 'DRIVER_NOT_FOUND' `
-            -Message 'Le pilote EPSON TM-T20II Receipt est absent ou seule l’imprimante Coupon Generator est installée.' `
+            -Message 'Le pilote EPSON TM-T20II Receipt est absent ou seule l''imprimante Coupon Generator est installée.' `
             -InvalidQueueCount $invalidQueues.Count) 11
     }
 
@@ -183,7 +183,7 @@ try {
     if (-not $port) {
         Write-RepairResult (New-RepairResult `
             -Status 'PORT_NOT_FOUND' `
-            -Message 'Le pilote existe mais aucun port USB Epson ESDPRT/USB utilisable n’a été créé.' `
+            -Message 'Le pilote existe mais aucun port USB Epson ESDPRT/USB utilisable n''a été créé.' `
             -DriverName $driver.Name `
             -InvalidQueueCount $invalidQueues.Count) 12
     }
@@ -203,7 +203,7 @@ try {
     } until (($repaired -and $repaired.DriverName -match $validDriverPattern -and $repaired.PortName -match $validPortPattern) -or (Get-Date) -ge $deadline)
 
     if (-not $repaired -or $repaired.PortName -notmatch $validPortPattern) {
-        throw 'Windows n’a pas confirmé la création de la file Epson sur le port USB.'
+        throw 'Windows n''a pas confirmé la création de la file Epson sur le port USB.'
     }
 
     Set-VerifiedDefaultPrinter -PrinterName $queueName

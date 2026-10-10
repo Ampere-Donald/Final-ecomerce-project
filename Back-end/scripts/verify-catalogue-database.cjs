@@ -61,8 +61,10 @@ const parseBoot = html => JSON.parse(html.match(/id="initial-catalogue-data">([\
       const rows = boot.resources[route.path];
       assert.equal(boot.url, url); assert.equal(rows.meta.total, expected.meta.total);
       assert.equal(rows.meta.lastPage, expected.meta.lastPage);
-      assert.deepEqual(rows.data.map(p => [p.id, p.prixPublic, p.quantiteStock, p.offre]),
-        expected.data.map(p => [p.id, p.prixPublic, p.quantiteStock, p.offre]));
+      // The public allowlist omits an absent offer; the JSON API emits null.
+      // Both mean no dated offer. Positive offers remain compared exactly.
+      assert.deepEqual(rows.data.map(p => [p.id, p.prixPublic, p.quantiteStock, p.offre ?? null]),
+        expected.data.map(p => [p.id, p.prixPublic, p.quantiteStock, p.offre ?? null]));
       assert(!/cmupActuel|dernierCoutAchatFcfa|dernierFournisseurId|quantiteReservee/.test(rendered.html));
       assert(rows.data.every(p => p.estActif !== false));
       if (url.includes('instock=true')) assert(rows.data.every(p => p.quantiteStock > 0));
