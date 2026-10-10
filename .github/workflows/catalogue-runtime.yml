@@ -30,3 +30,11 @@ jobs:
       - run: npm run build --prefix Back-end
       - name: Verify compiled package and frontend version handshake
         run: node Font-end/tests/verify-catalogue-package.cjs
+      - name: Build the actual Railway candidate image
+        run: docker build --progress plain -t newoteg-catalogue-contract -f Dockerfile.catalogue .
+      - name: Verify image runtime without network or database
+        run: |
+          docker run --rm --network none --read-only --tmpfs /tmp:rw,noexec,nosuid,size=16m \
+            -v "$PWD/Font-end/.catalogue-backend/manifest.json:/client-manifest.json:ro" \
+            -v "$PWD/Back-end/scripts/verify-catalogue-image.cjs:/verification.cjs:ro" \
+            --entrypoint node newoteg-catalogue-contract /verification.cjs /client-manifest.json
