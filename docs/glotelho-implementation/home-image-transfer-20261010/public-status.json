@@ -1,0 +1,101 @@
+{
+  "date": "2026-10-10T18:00:23.886Z",
+  "deployments": [
+    {
+      "worker": "newoteg-client",
+      "current": {
+        "id": "5b8f3421-d1b4-4b78-b3b8-2681bc617d1a",
+        "created": "2026-10-10T17:49:08.992123Z",
+        "versions": [
+          {
+            "version_id": "82c87e04-17d8-4f8c-bdd7-4c7826ae6d7e",
+            "percentage": 100
+          }
+        ]
+      }
+    },
+    {
+      "worker": "newoteg-admin",
+      "current": {
+        "id": "1aede092-da85-4b78-99d9-b5aaadd29ba7",
+        "created": "2026-10-10T17:51:23.373558Z",
+        "versions": [
+          {
+            "version_id": "9dc98454-4f52-40b1-8aad-78df2ef7e80f",
+            "percentage": 100
+          }
+        ]
+      }
+    }
+  ],
+  "public": [
+    {
+      "url": "https://newoteg.com/",
+      "status": 200,
+      "initialHome": true,
+      "initialCatalogue": false,
+      "entry": "/assets/polyfills-pQR8bD5G.js"
+    },
+    {
+      "url": "https://newoteg.com/catalogue",
+      "status": 200,
+      "initialHome": false,
+      "initialCatalogue": false,
+      "entry": "/assets/polyfills-pQR8bD5G.js"
+    },
+    {
+      "url": "https://admin.newoteg.com/",
+      "status": 200,
+      "initialHome": false,
+      "initialCatalogue": false,
+      "entry": "/assets/polyfills-CMHhRGo8.js"
+    },
+    {
+      "url": "https://api.newoteg.com/api/health",
+      "status": 200,
+      "initialHome": false,
+      "initialCatalogue": false,
+      "entry": null,
+      "checks": {
+        "api": "ok",
+        "database": "ok",
+        "storage": "ok"
+      },
+      "health": "ok"
+    },
+    {
+      "url": "https://api.newoteg.com/api/storefront/catalogue?renderer=0000000000000000000000000000000000000000000000000000000000000000&url=%2Fcatalogue",
+      "status": 503,
+      "initialHome": false,
+      "initialCatalogue": false,
+      "entry": null
+    },
+    {
+      "url": "https://api.newoteg.com/api/commandes/guest/channels",
+      "status": 200,
+      "initialHome": false,
+      "initialCatalogue": false,
+      "entry": null,
+      "channels": {
+        "email": false,
+        "sms": false
+      }
+    },
+    {
+      "url": "https://api.newoteg.com/api/projets?page=1&limit=1",
+      "status": 200,
+      "initialHome": false,
+      "initialCatalogue": false,
+      "entry": null,
+      "total": 0
+    },
+    {
+      "url": "https://api.newoteg.com/api/parcours/disponibilite",
+      "status": 200,
+      "initialHome": false,
+      "initialCatalogue": false,
+      "entry": null,
+      "active": false
+    }
+  ]
+}

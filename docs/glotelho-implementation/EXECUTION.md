@@ -338,3 +338,5 @@ Argument Docker public `VITE_API_URL` et matrice CI pour `/api` / `https://api.n
 ## Réduction du transfert des images de l'accueil — 10 octobre 2026
 
 Deux variantes WebP existantes optimisées, préchargement cohérent avec picture et placement desktop conservé. 34 478 octets économisés sur mobile de densité 1 ; résolution existante conservée en densité 2/3. Build, 102 tests, sept groupes d'hydratation, sept cas largeur/densité et bundle legacy réussis. Gain LCP local marginal, insuffisant pour conclure : L8 reste ouvert. [Résultats et limites](home-image-transfer-20261010/README.md). Publication et vérification publique à suivre ; objectif A–Z actif.
+
+Publication ensuite confirmée sur main `8228f7b9` (PR #7) : CI et déploiements automatiques réussis, SHA des ressources publiques identiques au build vérifié, sept cas largeur/densité réussis sur le domaine. LCP public après 2796 / 2540 / 2336 ms, CLS 0 : deux passages au-dessus du budget, L8 non clôturé. État de gestion Railway toujours distinct du déploiement automatique ; catalogue SSR désactivé. Relevés publics et limites ajoutés au dossier de preuves, objectif A–Z toujours actif.

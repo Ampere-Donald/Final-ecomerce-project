@@ -1,0 +1,58 @@
+{
+  "date": "2026-10-10T17:53:33.184Z",
+  "checks": [
+    "Initial HTML serves the approved layout with updated responsive picture and cable thumbnail"
+  ],
+  "assets": [
+    {
+      "path": "/assets/polyfills-pQR8bD5G.js",
+      "status": 200,
+      "bytes": 125550,
+      "sha256": "6db3adab19221eeeeffdcf015d3f4d2e56dbcdba312f7946e660d468b2b43d36"
+    },
+    {
+      "path": "/assets/index-BEMRdJfj.js",
+      "status": 200,
+      "bytes": 424212,
+      "sha256": "ab3d6e39281d3d0d7fa97cf746d756d76029b9a57de8e6a4cbd48314dd0807ab"
+    },
+    {
+      "path": "/assets/index-C88ardjo.css",
+      "status": 200,
+      "bytes": 73733,
+      "sha256": "27e51073f5c4d0ab63d45f1f53d66f339f5df3d0b74524f1e696a0adc7dad747"
+    },
+    {
+      "path": "/assets/polyfills-legacy-CZDukNjG.js",
+      "status": 200,
+      "bytes": 168012,
+      "sha256": "638706bd6336f64a7208dbb1bfafb73e39e55b347258d73b597241baaa053775"
+    },
+    {
+      "path": "/assets/index-legacy-B_CFmMO2.js",
+      "status": 200,
+      "bytes": 523082,
+      "sha256": "dd9aba0ea6d60330685670b8f6dfee9b9f7d9812b9268d11ee8501f695296333"
+    },
+    {
+      "path": "/design-e/hero-scene-v2-960.webp",
+      "status": 200,
+      "bytes": 23436,
+      "sha256": "0df90e4a2407088bf006e706536025f2c8c6c162845dc8331a1c9da9fa42908b"
+    },
+    {
+      "path": "/design-e/hero-wire-v2-192.webp",
+      "status": 200,
+      "bytes": 7918,
+      "sha256": "54928f87e3c857604e318d0501668eb3965e3c1b57b319c49a86a4c56bc12adb"
+    }
+  ],
+  "health": {
+    "status": "ok",
+    "checks": {
+      "api": "ok",
+      "database": "ok",
+      "storage": "ok"
+    }
+  }
+}
