@@ -31,4 +31,8 @@ Captures et preuves sur le poste : `C:/Users/pc/Documents/Newoteg/output/impleme
 
 ## Publication
 
-Statut de publication et contrôle public à compléter après livraison par le workflow Cloudflare Wrangler déjà configuré, sans modification d'hébergement.
+Correction poussée sur `main`, commit `42a62427`. Publication Wrangler réussie avec le workflow existant `newoteg-client`, version `8f7b0022-fe73-4d34-89de-d35608c6da02`. Le déploiement automatique du dépôt a ensuite publié la version active `dfa1824f-7282-4716-bb35-d35083830206` ; son bundle public `index-Cz5V3LM5.js` contient également la reprise du champ focalisé. Aucun changement d'hébergement.
+
+Contrôle public après livraison : HTTP 200, tests complets du méga-menu et des suggestions réussis aux cinq largeurs, absence d'erreur JavaScript, un appel pour la frappe rapide. Le test de saisie avant JavaScript réussit aussi sur `https://newoteg.com`, avec conservation du nœud, du texte et du focus ; une valeur non focalisée ne rouvre pas le panneau. Preuves dans `verification-public-20261010.json` et `hydration-public-20261010.json`. Les captures du domaine public sont dans le sous-dossier `production/` du dossier local indiqué ci-dessus.
+
+L'API publique renvoie actuellement zéro suggestion pour `IRF510` et `câble HDMI`, six pour `condens`, quatre pour `multimètre` et six pour `condensatuer`. Ces absences sont affichées honnêtement ; elles ne prouvent pas qu'un produit n'existe pas hors du résultat de cette recherche.

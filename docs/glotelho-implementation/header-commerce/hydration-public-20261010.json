@@ -1,0 +1,19 @@
+{
+  "base": "https://newoteg.com",
+  "cases": [
+    {
+      "focused": true,
+      "textAndNodePreserved": true,
+      "suggestions": true
+    },
+    {
+      "focused": false,
+      "textAndNodePreserved": true,
+      "suggestions": false
+    }
+  ],
+  "errors": [],
+  "requests": [
+    "multimètre"
+  ]
+}
