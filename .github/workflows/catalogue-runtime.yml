@@ -42,3 +42,18 @@ jobs:
             -v "$PWD/Font-end/.catalogue-backend/manifest.json:/client-manifest.json:ro" \
             -v "$PWD/Back-end/scripts/verify-catalogue-image.cjs:/verification.cjs:ro" \
             --entrypoint node newoteg-catalogue-contract /verification.cjs /client-manifest.json
+          docker run --rm --network none --read-only --tmpfs /tmp:rw,noexec,nosuid,size=16m \
+            -v "$PWD/Back-end/scripts/verify-release-image.cjs:/verification.cjs:ro" \
+            --entrypoint node newoteg-catalogue-contract /verification.cjs
+
+  preproduction-runtime:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build the isolated preproduction image
+        run: docker build --progress plain -t newoteg-preproduction-contract -f Back-end/Dockerfile.preproduction Back-end
+      - name: Load packaged startup guards without network or database
+        run: |
+          docker run --rm --network none --read-only --tmpfs /tmp:rw,noexec,nosuid,size=16m \
+            -v "$PWD/Back-end/scripts/verify-release-image.cjs:/verification.cjs:ro" \
+            --entrypoint node newoteg-preproduction-contract /verification.cjs
