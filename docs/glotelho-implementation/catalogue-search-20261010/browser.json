@@ -1,0 +1,31 @@
+{
+  "checks": [
+    "Real corrected service: accented suggestions, keyboard product destination, catalogue and overflow 390",
+    "Real corrected service: accented suggestions, keyboard product destination, catalogue and overflow 1440"
+  ],
+  "errors": [],
+  "mutations": [],
+  "requests": [
+    {
+      "width": 390,
+      "search": "câble HDMI",
+      "suggestions": true
+    },
+    {
+      "width": 390,
+      "search": "câble HDMI",
+      "suggestions": false
+    },
+    {
+      "width": 1440,
+      "search": "câble HDMI",
+      "suggestions": true
+    },
+    {
+      "width": 1440,
+      "search": "câble HDMI",
+      "suggestions": false
+    }
+  ],
+  "limits": "Public UI with isolated read-only service adapter; not deployed backend proof"
+}

@@ -348,3 +348,8 @@ Le comparateur conserve les valeurs sources mais ne signale plus 1 A / 1000 mA c
 
 
 Publication de la correction vérifiée à 18:58 UTC : PR #8 fusionnée, main `168f961e`, version client Cloudflare `b1d28454-b4bd-4fcd-a7c4-44526624462a` à 100 %. Sept ressources publiques (dont les deux chunks de comparaison) identiques au build local par SHA-256. Deux contrôles publics de l’interface 390/1440 réussis avec API de recette simulée : données sources, conversion, filtre, absence de débordement/erreurs/écritures. CI complète et les deux images catalogue passent sur main ; déploiement Railway existant réussi, santé API/base/stockage OK. Les données réelles n’ont pas été modifiées et ces tests ne prouvent aucune compatibilité physique. Renderer catalogue, email/SMS et collecteur toujours désactivés, zéro projet public. L1/L3/L8 et les autres validations métier restent ouverts. [Dossier de preuve](comparison-units-20261010/README.md).
+
+
+## Recherche du catalogue avec accents — 10 octobre 2026
+
+Défaut réel corrigé : « câble HDMI » ne retrouvait aucun article dans les suggestions alors que « HDMI » en trouvait. Clé JS/SQL commune, noms et données sources conservés, suffixes significatifs, filtres inchangés et ponctuation seule sans résultat. 420 tests backend/build réussis, véritable SQL et six lectures catalogue en session strictement en lecture seule passent, parcours navigateur clavier/catalogue à 390/1440 passent avec service isolé. Publication à vérifier ; pas de migration ni de données fictives en production. [Preuves et limites](catalogue-search-20261010/README.md). Avancée L3 ; validation technique L1/L3, accès Railway, L8 et l'objectif A–Z restent ouverts.

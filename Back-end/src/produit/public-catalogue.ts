@@ -1,6 +1,11 @@
 import { BadRequestException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { cataloguePriceSql } from '../pricing/catalogue-price.sql';
+import {
+  normalizeSalesSearch,
+  normalizedSearchSql,
+  SearchColumn,
+} from './search-normalization';
 
 export interface PublicCatalogueParams {
   page?: number;
@@ -63,11 +68,29 @@ export async function publicCatalogue(
       .trim()
       .slice(0, 120);
     if (search) {
-      const pattern = contains(search);
-      conditions.push(Prisma.sql`(p.nom_produit ILIKE ${pattern}
-        OR p.designation_en ILIKE ${pattern} OR p.marque ILIKE ${pattern}
-        OR p.code_famille ILIKE ${pattern} OR p.code ILIKE ${pattern}
-        OR p.description ILIKE ${pattern} OR c.nom ILIKE ${pattern})`);
+      const normalized = normalizeSalesSearch(search);
+      if (!normalized) conditions.push(Prisma.sql`FALSE`);
+      else {
+        const pattern = contains(normalized);
+        const fields: SearchColumn[] = [
+          'p.nom_produit',
+          'p.designation_en',
+          'p.marque',
+          'p.code_famille',
+          'p.code',
+          'p.description',
+          'c.nom',
+        ];
+        conditions.push(
+          Prisma.sql`(${Prisma.join(
+            fields.map(
+              (field) =>
+                Prisma.sql`${Prisma.raw(normalizedSearchSql(field))} LIKE ${pattern}`,
+            ),
+            ' OR ',
+          )})`,
+        );
+      }
     }
   }
   const filters: Prisma.Sql[] = [Prisma.sql`TRUE`];

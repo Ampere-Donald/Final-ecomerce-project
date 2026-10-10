@@ -101,6 +101,15 @@ describe('ProduitService pagination', () => {
     expect(db.produit.count).not.toHaveBeenCalled();
     expect(result.meta).toEqual({ total: 0, page: 1, limit: 20, lastPage: 1 });
   });
+
+  it('ne transforme pas une recherche sans terme exploitable en tout le catalogue', async () => {
+    const { service, db } = build();
+    await service.findAll({ search: '%_ --', salesSearch: true, limit: 8 });
+    expect(db.$queryRawUnsafe).not.toHaveBeenCalled();
+    expect(db.produit.findMany).toHaveBeenCalledWith(expect.objectContaining({
+      where: expect.objectContaining({ id: { in: [] } }),
+    }));
+  });
 });
 
 describe('ProduitService creation avec code automatique', () => {
