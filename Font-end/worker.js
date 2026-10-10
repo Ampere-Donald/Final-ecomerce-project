@@ -10,6 +10,7 @@ import { isApplicationDocument } from './src/storefront/documentRoutes.js';
 import { staticPublicMetadata, renderFallbackMetadata } from './src/storefront/serverMetadata.js';
 import { publicRecord, recordMetadata } from './src/storefront/recordMetadata.js';
 import { injectInitialHome } from './src/storefront/initialHome.js';
+import { catalogueSnapshot, injectInitialCatalogue } from './src/storefront/initialCatalogue.js';
 
 function privateResponse(response) {
   const headers = new Headers(response.headers);
@@ -74,6 +75,21 @@ export default {
         headers.delete('Content-Encoding');
         headers.set('Cache-Control', 'public, max-age=0, must-revalidate');
         let html = renderFallbackMetadata(await response.text(), metadata);
+        if (url.pathname === '/catalogue' && typeof env.renderCatalogue === 'function') {
+          try {
+            const snapshot = await catalogueSnapshot(url);
+            if (snapshot) {
+              html = injectInitialCatalogue(html, env.renderCatalogue(snapshot), snapshot, env.catalogueStyles);
+              // Products and pricing are read for this request only, never cached
+              // with a client's URL or served as a build-time stock snapshot.
+              headers.set('Cache-Control', 'no-store');
+            }
+          } catch (error) {
+            // An experiment may record a bounded failure reason. Production has
+            // no reporter and retains the normal API-backed error states.
+            env.reportCatalogueFailure?.(error);
+          }
+        }
         if (url.pathname === '/') {
           try {
             const snapshot = await env.ASSETS.fetch(new Request(new URL('/__public-home.json', url.origin)));

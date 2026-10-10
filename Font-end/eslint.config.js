@@ -6,7 +6,7 @@ import { defineConfig, globalIgnores } from 'eslint/config'
 
 export default defineConfig([
   // Ancien export catalogue conservé comme archive de migration, non exécuté.
-  globalIgnores(['dist', 'dist-release', 'src/data/productsData.js']),
+  globalIgnores(['dist', 'dist-release', '.catalogue-ssr', 'src/data/productsData.js']),
   {
     files: ['**/*.{js,jsx}'],
     extends: [

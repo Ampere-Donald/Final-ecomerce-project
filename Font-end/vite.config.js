@@ -2,6 +2,7 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import legacy from '@vitejs/plugin-legacy'
 import prerenderHome from './tooling/prerenderHome.js'
+import buildCatalogueRenderer from './tooling/buildCatalogueRenderer.js'
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -14,6 +15,7 @@ export default defineConfig({
       modernPolyfills: true,
     }),
     prerenderHome(),
+    buildCatalogueRenderer(),
   ],
   build: { manifest: true },
   server: {

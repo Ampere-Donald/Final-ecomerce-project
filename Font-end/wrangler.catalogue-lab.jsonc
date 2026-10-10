@@ -1,0 +1,16 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "newoteg-catalogue-lab-20261010",
+  "main": "catalogue-preview-worker.js",
+  "compatibility_date": "2026-06-24",
+  "observability": { "enabled": true },
+  // Workers Free was confirmed by API error 100328. Its CPU limit is fixed;
+  // specifying a custom cpu_ms is refused. This separate GET-only Worker has no
+  // production domain, account features, order writes or transport providers.
+  "assets": {
+    "directory": "./dist-release",
+    "binding": "ASSETS",
+    "run_worker_first": true,
+    "not_found_handling": "single-page-application"
+  }
+}

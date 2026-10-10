@@ -6,6 +6,7 @@ vendor/
 # ─── Build outputs ───────────────────────────────────────
 dist/
 dist-release/
+.catalogue-ssr/
 build/
 out/
 target/
