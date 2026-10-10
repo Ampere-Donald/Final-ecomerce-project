@@ -14,8 +14,9 @@ function Highlight({ text, query }) {
   );
 }
 
-export default function HeaderSearch({ initial = "", onInteract }) {
-  const [value, setValue] = useState(initial);
+export default function HeaderSearch({ initial = "", preserveInitialValue = false, onInteract }) {
+  const [value, setValue] = useState(() => preserveInitialValue && typeof document !== 'undefined'
+    ? document.getElementById('header-product-search')?.value || initial : initial);
   const [open, setOpen] = useState(false);
   const [selected, setSelected] = useState(-1);
   const [result, setResult] = useState({ query: "", rows: [], error: false });
@@ -109,6 +110,8 @@ export default function HeaderSearch({ initial = "", onInteract }) {
       <form
         className="e-search"
         role="search"
+        action="/catalogue"
+        method="get"
         autoComplete="off"
         onSubmit={(event) => {
           event.preventDefault();
@@ -125,7 +128,7 @@ export default function HeaderSearch({ initial = "", onInteract }) {
         </label>
         <input
           id="header-product-search"
-          name="catalogue-query"
+          name="search"
           type="search"
           autoComplete="off"
           autoCorrect="off"

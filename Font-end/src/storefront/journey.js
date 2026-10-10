@@ -81,7 +81,7 @@ export function startJourney() {
 }
 
 // Browser departure is not a React effect cleanup (including StrictMode).
-window.addEventListener("pagehide", () => {
+if (typeof window !== "undefined") window.addEventListener("pagehide", () => {
   leaveCheckout();
   void collector.flush(true);
 });

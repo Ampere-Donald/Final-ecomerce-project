@@ -9,6 +9,7 @@ import { isPrivateDocument } from './src/storefront/routeMetadata.js';
 import { isApplicationDocument } from './src/storefront/documentRoutes.js';
 import { staticPublicMetadata, renderFallbackMetadata } from './src/storefront/serverMetadata.js';
 import { publicRecord, recordMetadata } from './src/storefront/recordMetadata.js';
+import { injectInitialHome } from './src/storefront/initialHome.js';
 
 function privateResponse(response) {
   const headers = new Headers(response.headers);
@@ -72,7 +73,15 @@ export default {
         headers.delete('Content-Length');
         headers.delete('Content-Encoding');
         headers.set('Cache-Control', 'public, max-age=0, must-revalidate');
-        return new Response(renderFallbackMetadata(await response.text(), metadata), { headers });
+        let html = renderFallbackMetadata(await response.text(), metadata);
+        if (url.pathname === '/') {
+          try {
+            const snapshot = await env.ASSETS.fetch(new Request(new URL('/__public-home.json', url.origin)));
+            if (snapshot.ok && snapshot.headers.get('content-type')?.includes('application/json'))
+              html = injectInitialHome(html, await snapshot.json());
+          } catch { /* Older asset versions retain the existing client-rendered fallback. */ }
+        }
+        return new Response(html, { headers });
       }
     }
     return isPrivateDocument(url.pathname) ? privateResponse(response) : response;

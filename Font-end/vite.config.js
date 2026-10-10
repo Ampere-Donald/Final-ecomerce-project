@@ -1,6 +1,7 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import legacy from '@vitejs/plugin-legacy'
+import prerenderHome from './tooling/prerenderHome.js'
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -12,7 +13,9 @@ export default defineConfig({
       targets: ['defaults', 'chrome >= 64', 'android >= 7'],
       modernPolyfills: true,
     }),
+    prerenderHome(),
   ],
+  build: { manifest: true },
   server: {
     port: 5173,
     host: 'localhost',

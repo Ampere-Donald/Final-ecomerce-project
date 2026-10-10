@@ -5,8 +5,10 @@ import { MapPin } from "lucide-react";
 import { useI18n } from "../context/I18nContext";
 import { Modal } from "./Elements";
 import useReception, { setReception } from "./useReception";
+import useBrowserReady from "./useBrowserReady";
 
 export default function ReceptionChoice({ compact = false }) {
+  const ready = useBrowserReady();
   const reception = useReception();
   const { lang } = useI18n();
   const tr = (fr, en) => (lang === "en" ? en : fr);
@@ -65,6 +67,7 @@ export default function ReceptionChoice({ compact = false }) {
     <>
       <button
         type="button"
+        disabled={!ready}
         className={
           compact ? "e-destination-button" : "e-text-button e-reception-change"
         }
@@ -79,7 +82,7 @@ export default function ReceptionChoice({ compact = false }) {
           tr("Modifier la réception", "Change reception")
         )}
       </button>
-      {createPortal(
+      {ready && createPortal(
         <Modal
           open={open}
           onClose={() => setOpen(false)}

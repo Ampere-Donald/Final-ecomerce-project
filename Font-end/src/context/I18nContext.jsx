@@ -7,13 +7,27 @@ const translations = { fr, en };
 
 const I18nContext = createContext();
 
-export const I18nProvider = ({ children }) => {
-  const [lang, setLangState] = useState(() => {
+function preferredLanguage() {
+  try {
     const savedLang = localStorage.getItem('appLang');
     if (savedLang === 'fr' || savedLang === 'en') return savedLang;
-    const browserLang = navigator.language || navigator.userLanguage;
-    return browserLang.toLowerCase().startsWith('fr') ? 'fr' : 'en';
+  } catch { /* Browser storage may be unavailable. */ }
+  const browserLang = typeof navigator === 'undefined' ? 'fr' : navigator.language || navigator.userLanguage || 'fr';
+  return browserLang.toLowerCase().startsWith('fr') ? 'fr' : 'en';
+}
+
+export const I18nProvider = ({ children, initialLanguage }) => {
+  const [lang, setLangState] = useState(() => {
+    return initialLanguage || preferredLanguage();
   });
+
+  useEffect(() => {
+    let active = true;
+    if (initialLanguage) Promise.resolve().then(() => {
+      if (active) setLangState(preferredLanguage());
+    });
+    return () => { active = false; };
+  }, [initialLanguage]);
 
   useEffect(() => {
     document.documentElement.lang = lang;
@@ -21,7 +35,8 @@ export const I18nProvider = ({ children }) => {
 
   const setLang = (newLang) => {
     setLangState(newLang);
-    localStorage.setItem('appLang', newLang);
+    try { localStorage.setItem('appLang', newLang); }
+    catch { /* Language can still change for this visit. */ }
   };
 
   const t = (key, variables = {}) => {

@@ -22,29 +22,33 @@ function initAuth() {
   }
 }
 
-export function AuthProvider({ children }) {
-  const [token, setToken] = useState(() => initAuth().token);
-  const [user, setUser] = useState(() => initAuth().user);
+export function AuthProvider({ children, initialAnonymous = false }) {
+  const [token, setToken] = useState(() => initialAnonymous ? null : initAuth().token);
+  const [user, setUser] = useState(() => initialAnonymous ? null : initAuth().user);
   const [loading, setLoading] = useState(true);
 
   // Set default Authorization header when token changes
   useEffect(() => {
+    // Match the public HTML first; never erase a saved session before /auth/me restores it.
+    if (initialAnonymous && loading) return;
     if (token) {
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-      localStorage.setItem(TOKEN_KEY, token);
     } else {
       delete axios.defaults.headers.common['Authorization'];
-      localStorage.removeItem(TOKEN_KEY);
     }
-  }, [token]);
+    try {
+      if (token) localStorage.setItem(TOKEN_KEY, token);
+      else localStorage.removeItem(TOKEN_KEY);
+    } catch { /* Session remains usable when browser storage is denied. */ }
+  }, [token, initialAnonymous, loading]);
 
   useEffect(() => {
-    if (user) {
-      localStorage.setItem(USER_KEY, JSON.stringify(user));
-    } else {
-      localStorage.removeItem(USER_KEY);
-    }
-  }, [user]);
+    if (initialAnonymous && loading) return;
+    try {
+      if (user) localStorage.setItem(USER_KEY, JSON.stringify(user));
+      else localStorage.removeItem(USER_KEY);
+    } catch { /* User state remains in memory for this visit. */ }
+  }, [user, initialAnonymous, loading]);
 
   // Try to restore session on mount via GET /api/auth/me
   useEffect(() => {

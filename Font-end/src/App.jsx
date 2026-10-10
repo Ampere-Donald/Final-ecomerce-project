@@ -51,7 +51,8 @@ const PageFallback = () => (
   </div>
 );
 
-function AppContent() {
+function AppContent({ initialHome }) {
+  const HomeRoute = initialHome || Home;
   const location = useLocation();
   useEffect(() => {
     startJourney();
@@ -80,10 +81,10 @@ function AppContent() {
       )}
       <Header />
       <main className="app__content" id="main-content" tabIndex={-1}>
-        <div key={location.pathname} className="page-enter">
+        <div key={location.pathname} className={initialHome && location.pathname === '/' ? 'page-enter initial-home' : 'page-enter'}>
           <Suspense fallback={<PageFallback />}>
             <Routes location={location}>
-              <Route path="/" element={<Home />} />
+              <Route path="/" element={<HomeRoute />} />
               <Route path="/catalogue" element={<Catalogue />} />
               <Route path="/comparer" element={<Comparison />} />
               <Route path="/projets" element={<Projects />} />
@@ -179,11 +180,12 @@ function AppContent() {
   );
 }
 
-function App() {
+function App({ initialHome, router }) {
+  const RouterComponent = router || Router;
   return (
-    <Router>
-      <PageMetadataProvider><AppContent /></PageMetadataProvider>
-    </Router>
+    <RouterComponent>
+      <PageMetadataProvider><AppContent initialHome={initialHome} /></PageMetadataProvider>
+    </RouterComponent>
   );
 }
 

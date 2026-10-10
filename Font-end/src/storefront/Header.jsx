@@ -22,8 +22,10 @@ import ReceptionChoice from "./ReceptionChoice";
 import HeaderSearch from "./HeaderSearch";
 import CatalogueMenu from "./CatalogueMenu";
 import { shopContact } from "./shopContact";
+import useBrowserReady from "./useBrowserReady";
 
 export default function Header() {
+  const ready = useBrowserReady();
   const [menu, setMenu] = useState(null);
   const [drawerCatalogue, setDrawerCatalogue] = useState(false);
   const root = useRef(null);
@@ -104,6 +106,7 @@ export default function Header() {
         <div className="e-wrap e-header-main">
           <button
             className="e-icon e-menu"
+            disabled={!ready}
             aria-label={lang === "fr" ? "Ouvrir le menu" : "Open menu"}
             aria-expanded={open}
             onClick={() => setMenu({ route: location.key, type: "drawer" })}
@@ -131,6 +134,7 @@ export default function Header() {
           </Link>
           <HeaderSearch
             key={location.key}
+            preserveInitialValue={!ready}
             onInteract={close}
             initial={new URLSearchParams(location.search).get("search") || ""}
           />
@@ -180,6 +184,7 @@ export default function Header() {
             <button
               ref={trigger}
               data-catalogue-trigger
+              disabled={!ready}
               className="e-catalogue-trigger"
               type="button"
               aria-expanded={mega}

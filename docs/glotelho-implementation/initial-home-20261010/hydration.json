@@ -1,0 +1,14 @@
+{
+  "base": "http://127.0.0.1:5208",
+  "checks": [
+    "Initial home and styles visible without JavaScript at 390/768/1440; native GET search and equivalent link",
+    "React retains initial hero/input nodes; pre-hydration typing and focus retained; metadata single owner; drawer operates",
+    "Navigation uses the new route query rather than reusing the previous input DOM value",
+    "Saved token not erased while auth verification pending; account/cart/favourites/delivery restored; English at seven widths",
+    "Expired session is cleared only after auth rejects it",
+    "Storage denial leaves rendering and language control usable",
+    "Intentional home chunk failure retains public HTML, metadata and native search"
+  ],
+  "errors": [],
+  "writes": []
+}
