@@ -9,7 +9,7 @@ import useComparison, {
   removeComparedProduct,
 } from "./useComparison";
 import useComparisonProducts from "./useComparisonProducts";
-import { comparisonRows } from "./comparisonData";
+import { comparisonRows } from "./comparisonRows";
 import Footer from "./Footer";
 
 export default function Comparison() {
@@ -287,6 +287,11 @@ export default function Comparison() {
                             >
                               <th scope="row">
                                 {row.label}
+                                {row.unitEquivalent && (
+                                  <small className="e-compare-unit-note">
+                                    <Copy fr="Même valeur après conversion" en="Same value after conversion" />
+                                  </small>
+                                )}
                                 {row.incomplete && (
                                   <small>
                                     <Copy

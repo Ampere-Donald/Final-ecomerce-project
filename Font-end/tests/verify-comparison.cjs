@@ -8,10 +8,11 @@ const {
 const assert = require("node:assert/strict"),
   fs = require("node:fs"),
   path = require("node:path");
-const base = "http://127.0.0.1:5187",
+const base = process.env.COMPARISON_BASE || "http://127.0.0.1:5187",
   key = "newoteg_comparison_v1";
+assert(/^http:\/\/127\.0\.0\.1:\d+$/.test(base), "Local preview required");
 const output =
-  "C:/Users/pc/Documents/Newoteg/output/implementation-work/captures/comparator";
+  process.env.COMPARISON_OUTPUT || "C:/Users/pc/Documents/Newoteg/output/implementation-work/captures/comparator";
 fs.mkdirSync(output, { recursive: true });
 const make = (id, name, categoryId = "connectors", attributes = []) => ({
   id,
@@ -93,11 +94,20 @@ const check = (text) => {
         },
         { key, ...options },
       );
-      await ctx.route("**/*", (route) =>
-        new URL(route.request().url()).origin === base
-          ? route.continue()
-          : (outside.push(route.request().url()), route.abort()),
-      );
+      await ctx.route("**/*", async (route) => {
+        if (new URL(route.request().url()).origin !== base) {
+          outside.push(route.request().url());
+          return route.abort();
+        }
+        if (process.env.COMPARISON_LEGACY === "1" && route.request().resourceType() === "document") {
+          const response = await route.fetch();
+          const body = (await response.text())
+            .replace(/<script\b[^>]*type="module"[^>]*>[\s\S]*?<\/script>/g, "")
+            .replace(/\snomodule/g, "");
+          return route.fulfill({ response, body });
+        }
+        return route.continue();
+      });
       await ctx.route("**/api/**", async (route) => {
         if (route.request().method() !== "GET")
           mutations.push(route.request().url());
@@ -256,7 +266,8 @@ const check = (text) => {
           el.blur();
           window.scrollTo({ top: 0, behavior: "instant" });
         });
-        await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0);
+        // Full-page capture includes the top even if focus scroll anchoring
+        // adjusts the viewport by a few pixels after keyboard scrolling.
         await page.screenshot({
           path: path.join(output, "comparison-" + width + ".png"),
           fullPage: true,
@@ -443,6 +454,53 @@ const check = (text) => {
     await expect(ep.getByRole("row", { name: /^Retail price/ })).toBeVisible();
     await english.close();
     check("English labels and product designation");
+    products.a.attributs = make("a", "", "connectors", [
+      ["Courant", "1 A"], ["Tension", "3.3 V"], ["Fréquence", "1 MHz"],
+      ["Capacité", "0.1 µF"], ["Broches", "8"], ["Tension max", "5 V max"],
+      ["Blindage", "Double"],
+    ]).attributs;
+    products.b.attributs = make("b", "", "connectors", [
+      ["Courant", "1000 mA"], ["Tension", "3300 mV"], ["Fréquence", "1000 kHz"],
+      ["Capacité", "100 nF"], ["Broches", "16"], ["Tension max", "5 V"],
+    ]).attributs;
+    for (const lang of ["fr", "en"]) {
+      const units = await context({ lang });
+      const up = await units.newPage();
+      up.on("pageerror", e => errors.push(e.message));
+      await up.addInitScript(({ key }) => localStorage.setItem(key,
+        JSON.stringify({ schema: 1, categoryId: "connectors", ids: ["a", "b"] })), { key });
+      await up.goto(base + "/comparer");
+      await expect(up.locator(".e-compare-unit-note")).toHaveCount(4);
+      if (process.env.COMPARISON_LEGACY === "1") {
+        const loaded = await up.evaluate(() => performance.getEntriesByType("resource").map(r => r.name));
+        assert(loaded.some(url => /\/Comparison-legacy-/.test(url)), "Legacy comparison must load");
+        assert(!loaded.some(url => /\/index-(?!legacy)[^/]*\.js$/.test(url)), "Modern entry must not load");
+      }
+      await expect(up.getByRole("row", { name: /^Courant/ })).toContainText("1 A");
+      await expect(up.getByRole("row", { name: /^Courant/ })).toContainText("1000 mA");
+      await expect(up.getByRole("row", { name: /^Capacité/ })).toContainText("0.1 µF");
+      await expect(up.getByRole("row", { name: /^Capacité/ })).toContainText("100 nF");
+      await expect(up.locator(".e-compare-unit-note").first()).toHaveText(
+        lang === "fr" ? "Même valeur après conversion" : "Same value after conversion");
+      await expect(up.locator(".e-compare-different")).toHaveCount(2);
+      for (const width of [360, 390, 768, 1024, 1440]) {
+        await up.setViewportSize({ width, height: 1000 });
+        assert(await up.evaluate(() => document.documentElement.scrollWidth <= innerWidth), "Units overflow " + width);
+        if ([390, 1440].includes(width)) await up.screenshot({
+          path: path.join(output, `units-${lang}-${width}.png`), fullPage: true,
+        });
+      }
+      await up.getByRole("checkbox").check();
+      await expect(up.getByRole("row", { name: /^Courant/ })).toHaveCount(0);
+      await expect(up.locator(".e-compare-unit-note")).toHaveCount(0);
+      await expect(up.getByRole("row", { name: /^Broches/ })).toBeVisible();
+      await expect(up.getByRole("row", { name: /^Tension max/ })).toBeVisible();
+      await expect(up.getByText(lang === "fr"
+        ? "Des champs sont incomplets et ne figurent pas dans ce filtre. Décochez-le pour voir les données manquantes."
+        : "Some fields are incomplete and are excluded by this filter. Uncheck it to see missing data.", { exact: true })).toBeVisible();
+      await units.close();
+      check(`SI conversion preserves source cells, real differences and unknown ratings; five widths and ${lang} labels`);
+    }
     assert.deepEqual(errors, []);
     assert.deepEqual(mutations, []);
     assert(
