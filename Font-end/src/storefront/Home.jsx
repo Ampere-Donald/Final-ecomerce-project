@@ -27,7 +27,11 @@ export default function Home() {
       <PageMeta />
       <div className="e-wrap e-home">
         <section className="e-commerce-hero" aria-labelledby="home-hero-title">
-          <img className="e-hero-scene" src="/design-e/hero-scene-v2-1440.webp" srcSet="/design-e/hero-scene-v2-1440.webp 1440w, /design-e/hero-scene-v2-2160.webp 2160w" sizes="100vw" width="2160" height="720" fetchPriority="high" alt="Atelier électronique : alimentation, multimètre, câbles et composants" />
+          <picture className="e-hero-picture">
+            {/* Keep the same scene/crop; dense mobile screens retain the existing 1440px image. */}
+            <source media="(max-width: 810px)" srcSet="/design-e/hero-scene-v2-960.webp 1x, /design-e/hero-scene-v2-1440.webp 2x" />
+            <img className="e-hero-scene" src="/design-e/hero-scene-v2-1440.webp" srcSet="/design-e/hero-scene-v2-1440.webp 1440w, /design-e/hero-scene-v2-2160.webp 2160w" sizes="100vw" width="2160" height="720" fetchPriority="high" alt="Atelier électronique : alimentation, multimètre, câbles et composants" />
+          </picture>
           <div className="e-hero-copy">
             <p className="e-hero-location"><MapPin size={16} aria-hidden="true" /><Copy fr="Votre boutique électronique à Douala · Akwa" en="Your electronics shop in Douala · Akwa" /></p>
             <h1 id="home-hero-title"><Copy fr={<>Tout l’essentiel pour vos <span>réparations et projets électroniques.</span></>} en={<>Everything for your <span>electronics repairs and projects.</span></>} /></h1>
@@ -41,7 +45,7 @@ export default function Home() {
           <div className="e-hero-products">
 
             <Link className="e-hero-float e-hero-float-power" to="/catalogue?search=alimentation"><img src="/design-e/category-v2-power.webp" width="72" height="72" alt="" /><div><strong><Copy fr="Alimentation" en="Power supplies" /></strong><span><Copy fr="Modules et chargeurs" en="Modules and chargers" /><ArrowRight size={16} /></span></div></Link>
-            <Link className="e-hero-float e-hero-float-cables" to="/catalogue?search=câble"><img src="/design-e/hero-wire-v2.webp" width="72" height="72" alt="" /><div><strong><Copy fr="Câbles & connectique" en="Cables & connectors" /></strong><span><Copy fr="Voir la sélection" en="Explore the selection" /><ArrowRight size={16} /></span></div></Link>
+            <Link className="e-hero-float e-hero-float-cables" to="/catalogue?search=câble"><img src="/design-e/hero-wire-v2-192.webp" width="72" height="72" alt="" /><div><strong><Copy fr="Câbles & connectique" en="Cables & connectors" /></strong><span><Copy fr="Voir la sélection" en="Explore the selection" /><ArrowRight size={16} /></span></div></Link>
           </div>
         </section>
         <nav className="e-visual-families" aria-label="Catégories / Categories">

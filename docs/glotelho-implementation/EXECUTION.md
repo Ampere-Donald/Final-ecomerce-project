@@ -334,3 +334,7 @@ Lecture réelle du catalogue avec les services compilés : cinq routes réussies
 ## Parité du build et mesure du transport — 10 octobre 2026
 
 Argument Docker public `VITE_API_URL` et matrice CI pour `/api` / `https://api.newoteg.com` livrés sur main `6bbd1ae1`, PR #6 ; vrais builds frontend/paquet/image et identités réussis pour les deux. Déploiements automatiques/publication et santé vérifiés ; aucun renderer activé. Le Worker temporaire de transport mesure 2–5 ms CPU pour 102 Ko de HTML public et 5–8 ms près de 512 Kio, cinq échantillons par taille. Réponse construite directement, sans copie de diagnostic ; figures instrumentées antérieures jusqu'à 16 ms non assimilées au coût de production. Source du fragment fixe : assets de laboratoire, pas Railway. [Protocole, limites et suppression vérifiée](catalogue-transport-20261010/README.md). Reste l'hébergement isolé, sa latence, l'intégration complète et les gates métier ; objectif A–Z actif.
+
+## Réduction du transfert des images de l'accueil — 10 octobre 2026
+
+Deux variantes WebP existantes optimisées, préchargement cohérent avec picture et placement desktop conservé. 34 478 octets économisés sur mobile de densité 1 ; résolution existante conservée en densité 2/3. Build, 102 tests, sept groupes d'hydratation, sept cas largeur/densité et bundle legacy réussis. Gain LCP local marginal, insuffisant pour conclure : L8 reste ouvert. [Résultats et limites](home-image-transfer-20261010/README.md). Publication et vérification publique à suivre ; objectif A–Z actif.
