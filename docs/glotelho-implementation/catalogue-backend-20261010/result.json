@@ -1,5 +1,5 @@
 {
-  "status": "local-prototype-verified-not-deployed",
+  "status": "ci-and-real-database-verified-rendering-not-activated",
   "rendererId": "fbf21be7dae9e1b5056204075f3f204c20cadb412d285e92b4d0005e304a656c",
   "frontendTests": 102,
   "backendTests": 419,
@@ -89,9 +89,79 @@
     "gzipKiB": 8.26
   },
   "pending": [
-    "isolated Railway image build and real database reads",
-    "actual Workers Free CPU and backend latency",
-    "matching production deployment",
+    "isolated Railway hosting and endpoint latency",
+    "actual Workers Free CPU with hosted backend",
+    "matching rendering activation and production verification",
     "business and physical-phone acceptance"
-  ]
+  ],
+  "ci": {
+    "head": "d2c2d27e5c9cddb2de1391690925721cd9f5feea",
+    "main": {
+      "jobs": [
+        "backend",
+        "storefront",
+        "admin",
+        "android",
+        "workstation-tools"
+      ],
+      "status": "passed",
+      "url": "https://github.com/Ampere-Donald/Final-ecomerce-project/actions/runs/38062416783"
+    },
+    "catalogueRuntime": {
+      "status": "passed",
+      "url": "https://github.com/Ampere-Donald/Final-ecomerce-project/actions/runs/38062416779",
+      "actualDockerImageBuilt": true,
+      "imageSmokeWithoutNetworkOrDatabase": true
+    }
+  },
+  "realDatabase": {
+    "date": "2026-10-10T14:48:59.693Z",
+    "readOnly": true,
+    "checks": [
+      "Connection and Prisma transactions forced read-only",
+      "Actual public product/category service and compiled rendering service used",
+      "Exact product identity, public prices, dated offers, available stock and totals preserved",
+      "Pagination, price sort/bounds, accents, stock, real category and zero-result routes",
+      "Inactive products and private costs/reservations absent"
+    ],
+    "routes": [
+      {
+        "url": "/catalogue",
+        "rows": 24,
+        "total": 1883,
+        "elapsedMs": 10247,
+        "htmlBytes": 111817
+      },
+      {
+        "url": "/catalogue?page=2&sort=price-desc",
+        "rows": 24,
+        "total": 1883,
+        "elapsedMs": 8536,
+        "htmlBytes": 115569
+      },
+      {
+        "url": "/catalogue?search=c%C3%A2ble&instock=true&sort=price-asc&minPrice=1&maxPrice=100000",
+        "rows": 24,
+        "total": 73,
+        "elapsedMs": 8128,
+        "htmlBytes": 117294
+      },
+      {
+        "url": "/catalogue?category=22822148-a030-49ef-acc1-28a90ee83b8e",
+        "rows": 23,
+        "total": 23,
+        "elapsedMs": 7963,
+        "htmlBytes": 113363
+      },
+      {
+        "url": "/catalogue?search=NEWOTEG_LAB_ABSENT_5D0C9D87",
+        "rows": 0,
+        "total": 0,
+        "elapsedMs": 5707,
+        "htmlBytes": 25310
+      }
+    ],
+    "status": "passed",
+    "rendererId": "fbf21be7dae9e1b5056204075f3f204c20cadb412d285e92b4d0005e304a656c"
+  }
 }

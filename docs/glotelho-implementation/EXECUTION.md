@@ -324,3 +324,9 @@ Rendu expérimental des vrais produits implémenté, lint/100 tests/build et con
 ## Préparation du rendu catalogue sur Railway — 10 octobre 2026
 
 Paquet Node des composants réels, endpoint public Nest, projection commune prix/stock, transport HTML borné et contrôle de version implémentés. Builds/lint, 102 tests frontend, 419 tests backend, paquet compilé, quatre groupes HTTP et six groupes navigateur réussis. Médianes locales comparables 4416 → 2048 ms, CLS 0 ; Worker à blanc 8,26 Kio gzip. Image Docker optionnelle/workflow préparés, pas exécutés sur hébergeur. Pas de publication ou activation dans cette étape. [Contrats, preuves et limites](catalogue-backend-20261010/README.md). Suite : image isolée Railway, concordance de données réelle, CPU Free puis livraison concordante. L8 et l'objectif restent actifs.
+
+## Vérification distante de la livraison — 10 octobre 2026
+
+La CI complète et le workflow catalogue passent au commit d2c2d27e : builds/tests/audits de la boutique, du backend et de l'administration, APK Android et recette Windows à blanc. La vraie image Docker candidate est construite puis son paquet exécuté sans réseau/base/migrations. Les vulnérabilités hautes/critiques de proxy-addr, source-map-js et Capacitor sont corrigées ; une alerte esbuild faible reste dans l'administration. Le setup SDK Android et les chaînes PowerShell sont réparés sans supprimer de contrôle.
+
+Lecture réelle du catalogue avec les services compilés : cinq routes réussies, session/transactions forcées en lecture seule, identités/prix/offres/stock/totaux exacts. Aucun envoi ou écriture. Ces lectures depuis le poste ne prouvent pas la latence sur Railway. L'accès de gestion Railway n'est pas connecté et l'association demandée a expiré. Le rendu catalogue reste désactivé ; hébergement isolé, CPU Free, activation concordante et gates métier toujours ouverts. [Résultats et liens CI](catalogue-backend-20261010/README.md).
