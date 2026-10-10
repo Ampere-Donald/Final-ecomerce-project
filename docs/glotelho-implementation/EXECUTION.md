@@ -316,3 +316,17 @@ Les mentions antérieures « L9 non autorisé » décrivent leur date de rédact
 - Lint, build et 73 tests storefront réussis pour la hero ; rendu contrôlé en desktop, tablette et mobile. Image WebP responsive 51/115 ko. Rapport : HERO-2026-10-07.md.
 - Revue après publication : ancien préchargement multimetre.webp encore présent dans index.html. Remplacé par le même srcset et sizes que le nouveau hero pour prioriser la bonne ressource. Ce correctif ne constitue pas une nouvelle mesure du budget LCP.
 - Restent ouverts : fournisseurs email/SMS, validation métier du catalogue et des cas positifs d’équivalences, projet pilote réel, exploitation collective et téléphone physique, performances réseau limité et indexation initiale. Les succès locaux ne prouvent pas ces validations. L’objectif A–Z reste actif ; la publication ne vaut pas achèvement de tous les lots.
+
+## Catalogue public initial — 10 octobre 2026
+
+Rendu expérimental des vrais produits implémenté, lint/100 tests/build et contrats navigateur locaux/distants réussis. LCP médian local comparable 4320 → 2356 ms, CLS 0. Workers Free confirmé par erreur API 100328 ; coût mesuré sur Worker temporaire séparé : 18–70 ms, médiane 22 ms, supérieur au budget gratuit 10 ms. Le gain local n'autorise pas l'activation de ce renderer sur le domaine public. Worker de mesure supprimé après traces ; production inchangée, aucun fournisseur ni commande fictive. [Preuves, limites et suite](catalogue-html-20261010/README.md). L8 et l'objectif A–Z restent actifs ; prochaine adaptation : alléger le rendu ou le déplacer sur Railway avant nouvelle mesure.
+
+## Préparation du rendu catalogue sur Railway — 10 octobre 2026
+
+Paquet Node des composants réels, endpoint public Nest, projection commune prix/stock, transport HTML borné et contrôle de version implémentés. Builds/lint, 102 tests frontend, 419 tests backend, paquet compilé, quatre groupes HTTP et six groupes navigateur réussis. Médianes locales comparables 4416 → 2048 ms, CLS 0 ; Worker à blanc 8,26 Kio gzip. Image Docker optionnelle/workflow préparés, pas exécutés sur hébergeur. Pas de publication ou activation dans cette étape. [Contrats, preuves et limites](catalogue-backend-20261010/README.md). Suite : image isolée Railway, concordance de données réelle, CPU Free puis livraison concordante. L8 et l'objectif restent actifs.
+
+## Vérification distante de la livraison — 10 octobre 2026
+
+La CI complète et le workflow catalogue passent au commit d2c2d27e : builds/tests/audits de la boutique, du backend et de l'administration, APK Android et recette Windows à blanc. La vraie image Docker candidate est construite puis son paquet exécuté sans réseau/base/migrations. Les vulnérabilités hautes/critiques de proxy-addr, source-map-js et Capacitor sont corrigées ; une alerte esbuild faible reste dans l'administration. Le setup SDK Android et les chaînes PowerShell sont réparés sans supprimer de contrôle.
+
+Lecture réelle du catalogue avec les services compilés : cinq routes réussies, session/transactions forcées en lecture seule, identités/prix/offres/stock/totaux exacts. Aucun envoi ou écriture. Ces lectures depuis le poste ne prouvent pas la latence sur Railway. L'accès de gestion Railway n'est pas connecté et l'association demandée a expiré. Le rendu catalogue reste désactivé ; hébergement isolé, CPU Free, activation concordante et gates métier toujours ouverts. [Résultats et liens CI](catalogue-backend-20261010/README.md).

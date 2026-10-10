@@ -5,10 +5,9 @@ import {
   Route,
   useLocation,
 } from "react-router-dom";
-import Header from "./storefront/Header";
 import ProtectedRoute from "./components/ProtectedRoute/ProtectedRoute";
-import Toast from "./components/Toast/Toast";
-import BottomNav from "./storefront/BottomNav";
+import StorefrontFrame from "./storefront/StorefrontFrame";
+import InitialResources from "./storefront/InitialResources";
 import { startJourney, leaveCheckout } from "./storefront/journey.js";
 import PageMetadataProvider from "./storefront/PageMetadataProvider";
 
@@ -51,8 +50,9 @@ const PageFallback = () => (
   </div>
 );
 
-function AppContent({ initialHome }) {
+function AppContent({ initialHome, initialCatalogue }) {
   const HomeRoute = initialHome || Home;
+  const CatalogueRoute = initialCatalogue || Catalogue;
   const location = useLocation();
   useEffect(() => {
     startJourney();
@@ -63,128 +63,106 @@ function AppContent({ initialHome }) {
   }, [location.pathname]);
 
   return (
-    <div className="app">
-      {import.meta.env.VITE_SANDBOX === "true" && (
-        <div
-          role="note"
-          style={{
-            background: "#fff1c9",
-            color: "#503b0b",
-            padding: "8px 16px",
-            textAlign: "center",
-            fontSize: 13,
-          }}
-        >
-          Environnement de test · Prix et stocks de démonstration · Aucune
-          commande boutique
-        </div>
-      )}
-      <Header />
-      <main className="app__content" id="main-content" tabIndex={-1}>
-        <div key={location.pathname} className={initialHome && location.pathname === '/' ? 'page-enter initial-home' : 'page-enter'}>
-          <Suspense fallback={<PageFallback />}>
-            <Routes location={location}>
-              <Route path="/" element={<HomeRoute />} />
-              <Route path="/catalogue" element={<Catalogue />} />
-              <Route path="/comparer" element={<Comparison />} />
-              <Route path="/projets" element={<Projects />} />
-              <Route path="/offres" element={<Commercial />} />
-              <Route path="/arrivages" element={<Commercial />} />
-              <Route path="/projets/:slug" element={<Projects />} />
-              <Route path="/product/:id" element={<ProductDetails />} />
-              <Route path="/panier" element={<Cart />} />
-              <Route path="/equivalences" element={<Equivalences />} />
-              <Route path="/guides" element={<Editorial />} />
-              <Route path="/faq" element={<Editorial />} />
-              <Route path="/livraison" element={<Editorial />} />
-              <Route path="/checkout" element={<Checkout />} />
-              <Route path="/suivi-invite" element={<GuestTracking />} />
-              <Route path="/devis" element={<Devis />} />
-              <Route
-                path="/mes-devis"
-                element={
-                  <ProtectedRoute>
-                    <Devis />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/mes-devis/:id"
-                element={
-                  <ProtectedRoute>
-                    <Devis />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/mes-devis/:id/imprimer"
-                element={
-                  <ProtectedRoute>
-                    <DevisPrint />
-                  </ProtectedRoute>
-                }
-              />
-              <Route path="/about" element={<About />} />
-              <Route path="/contact" element={<Contact />} />
-              <Route path="/terms" element={<Terms />} />
-              <Route path="/privacy" element={<Privacy />} />
+    <StorefrontFrame path={location.pathname} initial={Boolean((initialHome && location.pathname === '/') || (initialCatalogue && location.pathname === '/catalogue'))}>
+      <Suspense fallback={<PageFallback />}>
+        <Routes location={location}>
+          <Route path="/" element={<HomeRoute />} />
+          <Route path="/catalogue" element={<CatalogueRoute />} />
+          <Route path="/comparer" element={<Comparison />} />
+          <Route path="/projets" element={<Projects />} />
+          <Route path="/offres" element={<Commercial />} />
+          <Route path="/arrivages" element={<Commercial />} />
+          <Route path="/projets/:slug" element={<Projects />} />
+          <Route path="/product/:id" element={<ProductDetails />} />
+          <Route path="/panier" element={<Cart />} />
+          <Route path="/equivalences" element={<Equivalences />} />
+          <Route path="/guides" element={<Editorial />} />
+          <Route path="/faq" element={<Editorial />} />
+          <Route path="/livraison" element={<Editorial />} />
+          <Route path="/checkout" element={<Checkout />} />
+          <Route path="/suivi-invite" element={<GuestTracking />} />
+          <Route path="/devis" element={<Devis />} />
+          <Route
+            path="/mes-devis"
+            element={
+              <ProtectedRoute>
+                <Devis />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/mes-devis/:id"
+            element={
+              <ProtectedRoute>
+                <Devis />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/mes-devis/:id/imprimer"
+            element={
+              <ProtectedRoute>
+                <DevisPrint />
+              </ProtectedRoute>
+            }
+          />
+          <Route path="/about" element={<About />} />
+          <Route path="/contact" element={<Contact />} />
+          <Route path="/terms" element={<Terms />} />
+          <Route path="/privacy" element={<Privacy />} />
 
-              {/* Auth */}
-              <Route path="/login" element={<Login />} />
-              <Route path="/signup" element={<Signup />} />
-              <Route path="/forgot-password" element={<Login />} />
-              <Route
-                path="/commandes"
-                element={
-                  <ProtectedRoute>
-                    <Profile />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/commandes/:id"
-                element={
-                  <ProtectedRoute>
-                    <Profile />
-                  </ProtectedRoute>
-                }
-              />
+          {/* Auth */}
+          <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<Signup />} />
+          <Route path="/forgot-password" element={<Login />} />
+          <Route
+            path="/commandes"
+            element={
+              <ProtectedRoute>
+                <Profile />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/commandes/:id"
+            element={
+              <ProtectedRoute>
+                <Profile />
+              </ProtectedRoute>
+            }
+          />
 
-              {/* Protected */}
-              <Route
-                path="/profile"
-                element={
-                  <ProtectedRoute>
-                    <Profile />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/favourites"
-                element={
-                  <ProtectedRoute>
-                    <Favorites />
-                  </ProtectedRoute>
-                }
-              />
+          {/* Protected */}
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <Profile />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/favourites"
+            element={
+              <ProtectedRoute>
+                <Favorites />
+              </ProtectedRoute>
+            }
+          />
 
-              {/* 404 */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </Suspense>
-        </div>
-      </main>
-      <Toast />
-      <BottomNav />
-    </div>
+          {/* 404 */}
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </Suspense>
+    </StorefrontFrame>
   );
 }
 
-function App({ initialHome, router }) {
+function App({ initialHome, initialCatalogue, snapshot, router }) {
   const RouterComponent = router || Router;
   return (
     <RouterComponent>
-      <PageMetadataProvider><AppContent initialHome={initialHome} /></PageMetadataProvider>
+      <InitialResources snapshot={snapshot}><PageMetadataProvider><AppContent initialHome={initialHome} initialCatalogue={initialCatalogue} /></PageMetadataProvider></InitialResources>
     </RouterComponent>
   );
 }

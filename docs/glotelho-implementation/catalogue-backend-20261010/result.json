@@ -1,0 +1,167 @@
+{
+  "status": "ci-and-real-database-verified-rendering-not-activated",
+  "rendererId": "fbf21be7dae9e1b5056204075f3f204c20cadb412d285e92b4d0005e304a656c",
+  "frontendTests": 102,
+  "backendTests": 419,
+  "backendSuites": 58,
+  "browser": {
+    "base": "http://127.0.0.1:5213",
+    "checks": [
+      "Real products, totals, CSS and native search available without JS at five widths; uncached public-only data",
+      "Hydration keeps original nodes/content, avoids duplicate product GET; sort/pagination/stock filter fetch correct URLs",
+      "Leaving the initial route and browser Back read fresh catalogue data",
+      "Direct filtered URL hydrates matching search, sort and price bounds",
+      "Saved English and comparison selection restore after anonymous French HTML without hydration errors at five widths",
+      "Upstream 503 falls back to the existing unavailable state, never a false zero-result success"
+    ],
+    "errors": [],
+    "writes": [],
+    "status": "passed"
+  },
+  "http": {
+    "checks": [
+      "Real Nest route rejects malformed URL/arguments and version mismatch",
+      "Anonymous and credential-bearing requests select identical public resources; private fields absent",
+      "API outage is an error, never a false empty catalogue",
+      "Worker preserves client fallback when backend rendering fails"
+    ],
+    "status": "passed",
+    "rendererId": "fbf21be7dae9e1b5056204075f3f204c20cadb412d285e92b4d0005e304a656c"
+  },
+  "profile": {
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "latencyMs": 150,
+    "downstreamBytesPerSecond": 200000,
+    "upstreamBytesPerSecond": 93750,
+    "cpuSlowdown": 4,
+    "coldCache": true,
+    "samplesPerRoute": 3
+  },
+  "baseline": [
+    {
+      "sample": 1,
+      "lcpMs": 4416,
+      "cls": 0,
+      "scriptEncodedBytes": 195897
+    },
+    {
+      "sample": 2,
+      "lcpMs": 4136,
+      "cls": 0,
+      "scriptEncodedBytes": 195897
+    },
+    {
+      "sample": 3,
+      "lcpMs": 4556,
+      "cls": 0,
+      "scriptEncodedBytes": 195897
+    }
+  ],
+  "candidate": [
+    {
+      "sample": 1,
+      "lcpMs": 2244,
+      "cls": 0,
+      "scriptEncodedBytes": 197304
+    },
+    {
+      "sample": 2,
+      "lcpMs": 1996,
+      "cls": 0,
+      "scriptEncodedBytes": 197304
+    },
+    {
+      "sample": 3,
+      "lcpMs": 2048,
+      "cls": 0,
+      "scriptEncodedBytes": 197304
+    }
+  ],
+  "medianLcp": {
+    "baseline": 4416,
+    "candidate": 2048
+  },
+  "workerDryRun": {
+    "uploadKiB": 28.91,
+    "gzipKiB": 8.26
+  },
+  "pending": [
+    "isolated Railway hosting and endpoint latency",
+    "actual Workers Free CPU with hosted backend",
+    "matching rendering activation and production verification",
+    "business and physical-phone acceptance"
+  ],
+  "ci": {
+    "head": "d2c2d27e5c9cddb2de1391690925721cd9f5feea",
+    "main": {
+      "jobs": [
+        "backend",
+        "storefront",
+        "admin",
+        "android",
+        "workstation-tools"
+      ],
+      "status": "passed",
+      "url": "https://github.com/Ampere-Donald/Final-ecomerce-project/actions/runs/38062416783"
+    },
+    "catalogueRuntime": {
+      "status": "passed",
+      "url": "https://github.com/Ampere-Donald/Final-ecomerce-project/actions/runs/38062416779",
+      "actualDockerImageBuilt": true,
+      "imageSmokeWithoutNetworkOrDatabase": true
+    }
+  },
+  "realDatabase": {
+    "date": "2026-10-10T14:48:59.693Z",
+    "readOnly": true,
+    "checks": [
+      "Connection and Prisma transactions forced read-only",
+      "Actual public product/category service and compiled rendering service used",
+      "Exact product identity, public prices, dated offers, available stock and totals preserved",
+      "Pagination, price sort/bounds, accents, stock, real category and zero-result routes",
+      "Inactive products and private costs/reservations absent"
+    ],
+    "routes": [
+      {
+        "url": "/catalogue",
+        "rows": 24,
+        "total": 1883,
+        "elapsedMs": 10247,
+        "htmlBytes": 111817
+      },
+      {
+        "url": "/catalogue?page=2&sort=price-desc",
+        "rows": 24,
+        "total": 1883,
+        "elapsedMs": 8536,
+        "htmlBytes": 115569
+      },
+      {
+        "url": "/catalogue?search=c%C3%A2ble&instock=true&sort=price-asc&minPrice=1&maxPrice=100000",
+        "rows": 24,
+        "total": 73,
+        "elapsedMs": 8128,
+        "htmlBytes": 117294
+      },
+      {
+        "url": "/catalogue?category=22822148-a030-49ef-acc1-28a90ee83b8e",
+        "rows": 23,
+        "total": 23,
+        "elapsedMs": 7963,
+        "htmlBytes": 113363
+      },
+      {
+        "url": "/catalogue?search=NEWOTEG_LAB_ABSENT_5D0C9D87",
+        "rows": 0,
+        "total": 0,
+        "elapsedMs": 5707,
+        "htmlBytes": 25310
+      }
+    ],
+    "status": "passed",
+    "rendererId": "fbf21be7dae9e1b5056204075f3f204c20cadb412d285e92b4d0005e304a656c"
+  }
+}

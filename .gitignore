@@ -6,6 +6,9 @@ vendor/
 # ─── Build outputs ───────────────────────────────────────
 dist/
 dist-release/
+.catalogue-ssr/
+.catalogue-backend/
+Back-end/.storefront-renderer/
 build/
 out/
 target/

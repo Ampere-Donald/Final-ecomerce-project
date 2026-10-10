@@ -16,9 +16,9 @@
     "test:printing": "tsx --test src/services/printerStatus.test.ts"
   },
   "dependencies": {
-    "@capacitor/android": "7.6.4",
-    "@capacitor/cli": "7.6.4",
-    "@capacitor/core": "7.6.4",
+    "@capacitor/android": "7.6.9",
+    "@capacitor/cli": "7.6.9",
+    "@capacitor/core": "7.6.9",
     "@google/genai": "^1.29.0",
     "@point-of-sale/receipt-printer-encoder": "^3.0.3",
     "@types/jsbarcode": "^3.11.4",

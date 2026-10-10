@@ -77,7 +77,7 @@ function Add-DurationCheck {
   }
 
   while ($true) {
-    $raw = (Read-Host 'Durée chronométrée en secondes d’une vente standard après entraînement').Trim()
+    $raw = (Read-Host 'Durée chronométrée en secondes d''une vente standard après entraînement').Trim()
     $seconds = 0.0
     if ([double]::TryParse($raw, [ref]$seconds) -and $seconds -gt 0) {
       Add-Check -Id 'express-sale-duration' -Label 'Vente standard en 20 secondes maximum' `
@@ -95,7 +95,7 @@ function Escape-MarkdownCell {
 }
 
 if ($env:OS -ne 'Windows_NT') {
-  throw 'Cette recette doit être exécutée sur le poste Windows relié à l’Epson TM-T20II.'
+  throw 'Cette recette doit être exécutée sur le poste Windows relié à l''Epson TM-T20II.'
 }
 
 $startedAt = Get-Date
@@ -166,7 +166,7 @@ try {
 
     $jobs = @(Get-PrintJob -PrinterName $printer.Name -ErrorAction SilentlyContinue)
     $blockedJobs = @($jobs | Where-Object { [string]$_.JobStatus -match 'Error|Blocked|Offline|PaperOut|Paused' })
-    Add-Check -Id 'epson-print-queue' -Label 'File d’impression non bloquée' `
+    Add-Check -Id 'epson-print-queue' -Label 'File d''impression non bloquée' `
       -Status $(if ($blockedJobs.Count -eq 0) { 'PASS' } else { 'FAIL' }) `
       -Evidence "$($jobs.Count) tâche(s), dont $($blockedJobs.Count) bloquée(s)."
   }
@@ -291,7 +291,7 @@ if ($RequireRemotePrint) {
       -Evidence "$QzServerHost`:8181 ; TCP : $reachable."
   } else {
     Add-Check -Id 'qz-host-reachable' -Label 'Hôte QZ joignable sur 8181' -Status 'FAIL' `
-      -Evidence 'Paramètre -QzServerHost manquant : fournissez l’IP fixe ou le nom DNS utilisé par Android.'
+      -Evidence 'Paramètre -QzServerHost manquant : fournissez l''IP fixe ou le nom DNS utilisé par Android.'
   }
 
   $certificateRoots = @(
@@ -355,7 +355,7 @@ Write-Host ''
 Write-Host 'Recette physique Newoteg — confirmez uniquement ce que vous observez réellement.' -ForegroundColor Cyan
 
 Add-ManualCheck -Id 'paper-58mm' -Label 'Guide et réglage papier 58 mm' `
-  -Prompt 'Le guide 58 mm est-il installé et la largeur 58 mm configurée dans l’imprimante ?'
+  -Prompt 'Le guide 58 mm est-il installé et la largeur 58 mm configurée dans l''imprimante ?'
 Add-ManualCheck -Id 'windows-test-page-physical' -Label 'Page Windows physiquement lisible' `
   -Prompt 'Une page de test Windows est-elle réellement sortie, complète et lisible ?'
 Add-ManualCheck -Id 'five-receipts' -Label 'Cinq tickets consécutifs' `
@@ -369,16 +369,16 @@ Add-ManualCheck -Id 'duplicate-label' -Label 'Duplicata clairement identifié' `
 Add-ManualCheck -Id 'cut-and-layout' -Label 'Coupe, centrage et 32 colonnes' `
   -Prompt 'La coupe, les marges, le centrage et la mise en page 32 colonnes sont-ils corrects ?'
 Add-ManualCheck -Id 'failure-no-duplicate-sale' -Label 'Panne sans vente dupliquée' `
-  -Prompt 'Après un échec puis une relance d’impression, la vente est-elle restée unique ?'
+  -Prompt 'Après un échec puis une relance d''impression, la vente est-elle restée unique ?'
 Add-ManualCheck -Id 'barcode-scanner' -Label 'Lecteur code-barres réel' `
   -Prompt 'Le lecteur réel ajoute-t-il les produits et rend-il immédiatement le focus au scanner ?'
 Add-ManualCheck -Id 'keyboard-only-sale' -Label 'Vente standard sans souris' `
   -Prompt 'Une vente standard complète peut-elle être finalisée au scanner et au clavier, sans souris ?'
 Add-DurationCheck
 Add-ManualCheck -Id 'print-audit-evidence' -Label 'Journal des impressions cohérent' `
-  -Prompt 'Le journal d’impression montre-t-il le poste, l’utilisateur, les cinq succès, le duplicata et l’échec simulé ?'
+  -Prompt 'Le journal d''impression montre-t-il le poste, l''utilisateur, les cinq succès, le duplicata et l''échec simulé ?'
 Add-ManualCheck -Id 'offline-browser-restart' -Label 'File hors ligne après redémarrage' `
-  -Prompt 'Une opération mise hors ligne survit-elle au redémarrage de l’application puis se synchronise-t-elle une seule fois ?'
+  -Prompt 'Une opération mise hors ligne survit-elle au redémarrage de l''application puis se synchronise-t-elle une seule fois ?'
 Add-ManualCheck -Id 'android-wss' -Label 'Impression Android via WSS' `
   -Prompt 'Le téléphone Android imprime-t-il via le PC QZ sur le même Wi-Fi, en WSS sécurisé ?'
 Add-ManualCheck -Id 'android-network-recovery' -Label 'Reprise après coupure Wi-Fi' `
@@ -428,7 +428,7 @@ foreach ($check in $script:Checks) {
   $lines.Add("| $(Escape-MarkdownCell $check.label) | $($check.source) | $($check.status) | $(Escape-MarkdownCell $check.evidence) |")
 }
 $lines.Add('')
-$lines.Add('Un résultat PASS n’est valide que pour le poste, le matériel et le réseau identifiés dans ce rapport.')
+$lines.Add('Un résultat PASS n''est valide que pour le poste, le matériel et le réseau identifiés dans ce rapport.')
 $lines | Set-Content -LiteralPath $markdownPath -Encoding UTF8
 
 Write-Host ''

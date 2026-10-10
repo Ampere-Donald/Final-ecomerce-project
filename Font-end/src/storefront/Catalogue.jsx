@@ -11,28 +11,17 @@ import { Copy, Card, Crumbs, State, Modal } from "./Elements";
 import Footer from "./Footer";
 import { ComparisonLink } from "./ComparisonAction";
 import { useJourneyObservation } from "./useJourney.js";
+import { catalogueQuery } from "./catalogueQuery";
+import useBrowserReady from "./useBrowserReady";
 
 export default function Catalogue() {
   const [params, setParams] = useSearchParams();
   const [open, setOpen] = useState(false);
   const [list, setList] = useState(false);
   const { lang } = useI18n();
-  const query = params.get("search") || "",
-    category = params.get("category") || "",
-    inStock = params.get("instock") === "true",
-    sort = params.get("sort") || "name-asc";
-  const page = Math.max(1, Number(params.get("page")) || 1);
-  const apiParams = new URLSearchParams({
-    page: String(page),
-    limit: "24",
-    sort: sort.replace("-", "_"),
-  });
-  if (query) apiParams.set("search", query);
-  if (category) apiParams.set("categoryId", category);
-  if (inStock) apiParams.set("inStock", "true");
-  for (const key of ["minPrice", "maxPrice"])
-    if (Number(params.get(key)) > 0) apiParams.set(key, params.get(key));
-  const resource = useResource("/produits?" + apiParams);
+  const ready = useBrowserReady();
+  const { query, category, inStock, sort, page, path } = catalogueQuery(params);
+  const resource = useResource(path);
   const categories = useResource("/categories");
   let result = { rows: [], total: 0, pages: 1 },
     parseError = null;
@@ -78,6 +67,7 @@ export default function Catalogue() {
       <label className="e-field">
         <Copy fr="Famille" en="Category" />
         <select
+          disabled={!ready}
           value={category}
           onChange={(e) => change("category", e.target.value)}
         >
@@ -102,6 +92,7 @@ export default function Catalogue() {
       <label className="e-check">
         <input
           type="checkbox"
+          disabled={!ready}
           checked={inStock}
           onChange={(e) => change("instock", e.target.checked ? "true" : "")}
         />
@@ -116,6 +107,7 @@ export default function Catalogue() {
             <Copy fr={fr} en={en} /> (FCFA)
             <input
               type="number"
+              disabled={!ready}
               min="0"
               inputMode="numeric"
               value={params.get(key) || ""}
@@ -126,6 +118,7 @@ export default function Catalogue() {
       </div>
       <button
         className="e-btn e-secondary"
+        disabled={!ready}
         onClick={() => setParams(query ? { search: query } : {})}
       >
         <Copy fr="Réinitialiser les filtres" en="Reset filters" />
@@ -172,11 +165,11 @@ export default function Catalogue() {
           </Link>
         </div>
         <div className="e-tools">
-          <button className="e-btn e-secondary" onClick={() => setOpen(true)}>
+          <button className="e-btn e-secondary" disabled={!ready} onClick={() => setOpen(true)}>
             <SlidersHorizontal size={18} />
             <Copy fr="Filtres" en="Filters" />
           </button>
-          <button className="e-view" onClick={() => setList(!list)}>
+          <button className="e-view" disabled={!ready} onClick={() => setList(!list)}>
             <Copy
               fr={list ? "Vue grille" : "Vue liste"}
               en={list ? "Grid view" : "List view"}
@@ -187,6 +180,7 @@ export default function Catalogue() {
               <Copy fr="Trier par" en="Sort by" />
             </span>
             <select
+              disabled={!ready}
               aria-label={
                 lang === "fr" ? "Trier les produits" : "Sort products"
               }
@@ -241,6 +235,7 @@ export default function Catalogue() {
               <span key={k}>
                 {v}
                 <button
+                  disabled={!ready}
                   aria-label={`${lang === "fr" ? "Effacer" : "Remove"} ${v}`}
                   onClick={() => change(k, "")}
                 >
@@ -277,7 +272,7 @@ export default function Catalogue() {
                   en="Try another reference or remove a filter."
                 />
               </p>
-              <button className="e-btn" onClick={() => setParams({})}>
+              <button className="e-btn" disabled={!ready} onClick={() => setParams({})}>
                 <Copy fr="Voir tous les produits" en="View all products" />
               </button>
               <Link to="/contact">
@@ -289,7 +284,7 @@ export default function Catalogue() {
         {!resource.error && result.pages > 1 && (
           <nav className="e-pagination" aria-label="Pagination">
             <button
-              disabled={page <= 1}
+              disabled={!ready || page <= 1}
               onClick={() => change("page", String(page - 1))}
             >
               <Copy fr="Précédent" en="Previous" />
@@ -298,7 +293,7 @@ export default function Catalogue() {
               {page} / {result.pages}
             </span>
             <button
-              disabled={page >= result.pages}
+              disabled={!ready || page >= result.pages}
               onClick={() => change("page", String(page + 1))}
             >
               <Copy fr="Suivant" en="Next" />

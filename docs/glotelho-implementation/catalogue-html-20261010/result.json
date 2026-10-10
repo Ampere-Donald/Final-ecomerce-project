@@ -1,0 +1,143 @@
+{
+  "decision": "Keep catalogue rendering experimental; do not activate on production Workers Free",
+  "accountPlan": {
+    "name": "Workers Free",
+    "proof": "Cloudflare API error 100328 on explicit CPU ceiling upload; no plan change"
+  },
+  "runtime": {
+    "version": "77330200-a57e-4f2f-936f-2292b12f66c0",
+    "ceilingMs": 10,
+    "samples": 9,
+    "medianMs": 22,
+    "minMs": 18,
+    "maxMs": 70,
+    "rows": [
+      {
+        "route": "/catalogue",
+        "cpuMs": 70,
+        "wallMs": 1522,
+        "outcome": "ok",
+        "status": 200,
+        "version": "77330200-a57e-4f2f-936f-2292b12f66c0"
+      },
+      {
+        "route": "/catalogue?search=condens",
+        "cpuMs": 30,
+        "wallMs": 800,
+        "outcome": "ok",
+        "status": 200,
+        "version": "77330200-a57e-4f2f-936f-2292b12f66c0"
+      },
+      {
+        "route": "/catalogue?sort=price-desc&page=2",
+        "cpuMs": 24,
+        "wallMs": 265,
+        "outcome": "ok",
+        "status": 200,
+        "version": "77330200-a57e-4f2f-936f-2292b12f66c0"
+      },
+      {
+        "route": "/catalogue?instock=true",
+        "cpuMs": 19,
+        "wallMs": 265,
+        "outcome": "ok",
+        "status": 200,
+        "version": "77330200-a57e-4f2f-936f-2292b12f66c0"
+      },
+      {
+        "route": "/catalogue",
+        "cpuMs": 22,
+        "wallMs": 255,
+        "outcome": "ok",
+        "status": 200,
+        "version": "77330200-a57e-4f2f-936f-2292b12f66c0"
+      },
+      {
+        "route": "/catalogue",
+        "cpuMs": 30,
+        "wallMs": 275,
+        "outcome": "ok",
+        "status": 200,
+        "version": "77330200-a57e-4f2f-936f-2292b12f66c0"
+      },
+      {
+        "route": "/catalogue",
+        "cpuMs": 19,
+        "wallMs": 249,
+        "outcome": "ok",
+        "status": 200,
+        "version": "77330200-a57e-4f2f-936f-2292b12f66c0"
+      },
+      {
+        "route": "/catalogue",
+        "cpuMs": 18,
+        "wallMs": 271,
+        "outcome": "ok",
+        "status": 200,
+        "version": "77330200-a57e-4f2f-936f-2292b12f66c0"
+      },
+      {
+        "route": "/catalogue",
+        "cpuMs": 21,
+        "wallMs": 255,
+        "outcome": "ok",
+        "status": 200,
+        "version": "77330200-a57e-4f2f-936f-2292b12f66c0"
+      },
+      {
+        "route": "/profile",
+        "cpuMs": 0,
+        "wallMs": 0,
+        "outcome": "ok",
+        "status": 403,
+        "version": "77330200-a57e-4f2f-936f-2292b12f66c0"
+      }
+    ]
+  },
+  "localLab": {
+    "profile": {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "latencyMs": 150,
+      "downstreamBytesPerSecond": 200000,
+      "upstreamBytesPerSecond": 93750,
+      "cpuSlowdown": 4,
+      "coldCache": true,
+      "samplesPerRoute": 3
+    },
+    "budgets": {
+      "lcpMs": 2500,
+      "cls": 0.1,
+      "scriptEncodedBytes": 225280
+    },
+    "beforeLcp": [
+      4320,
+      4208,
+      4664
+    ],
+    "afterLcp": [
+      2384,
+      2356,
+      1924
+    ],
+    "beforeMedian": 4320,
+    "afterMedian": 2356,
+    "beforeScriptBytes": 195897,
+    "afterScriptBytes": 197296,
+    "cls": [
+      0,
+      0,
+      0
+    ],
+    "errors": [],
+    "forbidden": []
+  },
+  "limits": [
+    "Synthetic local Edge measurements; not field CWV or public production LCP",
+    "Nine GET render samples, not a sustained load certification",
+    "No CPU logs available for version preview URLs; separate temporary GET-only Worker used",
+    "API timeout can retain normal client-rendered fallback"
+  ]
+}

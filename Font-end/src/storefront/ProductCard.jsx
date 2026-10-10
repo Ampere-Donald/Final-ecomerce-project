@@ -1,6 +1,6 @@
 import "./home-selection.css";
 import "./product-card.css";
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Heart, ShoppingCart, ArrowRight, Search } from "lucide-react";
 import { useI18n } from "../context/I18nContext";
@@ -10,6 +10,7 @@ import { stockState } from "./productData";
 import { selectionAction, selectionPrice } from "./homeSelectionData";
 import ComparisonAction from "./ComparisonAction";
 import { formatFCFA } from "../utils/formatFCFA";
+import { InitialResourceContext } from "./initialResourceContext";
 export default function ProductCard({ product, eager = false, compare = true, imageSizes }) {
   const { lang } = useI18n();
   const { toggleFavorite, isFavorite } = useFavorites();
@@ -17,8 +18,9 @@ export default function ProductCard({ product, eager = false, compare = true, im
   const state = stockState(product);
   const labels = { ok: ["En stock", "In stock"], low: ["Stock faible", "Low stock"], out: ["Rupture de stock", "Out of stock"], unknown: ["Disponibilité à confirmer", "Availability to confirm"] };
   const action = selectionAction(product);
-  const price = selectionPrice(product);
-  const [now, setNow] = useState(() => Date.now());
+  const initial = useContext(InitialResourceContext);
+  const [now, setNow] = useState(() => initial?.at ?? Date.now());
+  const price = selectionPrice(product, now);
   useEffect(() => {
     const end = Date.parse(product.offer?.end);
     if (!Number.isFinite(end) || end <= now) return;
