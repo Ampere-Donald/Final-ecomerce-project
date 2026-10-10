@@ -1,0 +1,25 @@
+{
+  "checkedAt": "2026-10-10T09:52:32.0743017Z",
+  "url": "https://newoteg.com/",
+  "commit": "96c94c03",
+  "deployedVersion": "5a5d0a92-b50f-49ef-8bc6-42543f6a3c43",
+  "http": 200,
+  "initialHtml": true,
+  "hero": true,
+  "initialStyles": true,
+  "entry": [
+    "/assets/index-Ce7Lwjfh.js",
+    "/assets/index-legacy-BcUxa-M0.js"
+  ],
+  "privateRouteNoHomeHtml": true,
+  "privateCache": [
+    "no-store, private"
+  ],
+  "privateRobots": [
+    "noindex, nofollow"
+  ],
+  "privateReferrer": [
+    "no-referrer"
+  ],
+  "githubCi": "Not verified: gh CLI not authenticated"
+}

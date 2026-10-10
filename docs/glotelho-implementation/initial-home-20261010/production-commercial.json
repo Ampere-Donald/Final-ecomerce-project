@@ -1,0 +1,770 @@
+{
+  "base": "https://newoteg.com",
+  "date": "2026-10-10T09:47:27.566Z",
+  "checks": [
+    "capacitors: 20 actual available references",
+    "semiconductors: 14 actual available references",
+    "repair: 7 actual available references",
+    "power: 20 actual available references",
+    "connect: 20 actual available references",
+    "tools: 16 actual available references",
+    "Home and selection 360px",
+    "Home and selection 390px",
+    "Home and selection 768px",
+    "Home and selection 1024px",
+    "Home and selection 1440px",
+    "Home and selection 1920px",
+    "Compact actual catalogue 360px",
+    "Compact actual catalogue 390px",
+    "Compact actual catalogue 768px",
+    "Compact actual catalogue 1024px",
+    "Compact actual catalogue 1440px",
+    "Compact actual catalogue 1920px",
+    "Actual component detail; original purchase controls retained"
+  ],
+  "errors": [],
+  "writes": [],
+  "rows": [
+    {
+      "id": "capacitors",
+      "products": [
+        {
+          "name": "CONDO 22NF 400V (223J)",
+          "href": "/product/08b727b1-78c6-4c72-b093-6bc29407a102",
+          "price": "1 000 FCFA",
+          "stock": "En stock"
+        },
+        {
+          "name": "CONDO NIPPON CHEMI-CON KMG 120UF 160V",
+          "href": "/product/06d4d393-83a1-42d9-a6de-9e544593d512",
+          "price": "200 FCFA",
+          "stock": "En stock"
+        },
+        {
+          "name": "CONDO 2.2UF 250V",
+          "href": "/product/10f91a45-8c39-4927-85ce-ae5d3ef13173",
+          "price": "1 500 FCFA",
+          "stock": "En stock"
+        },
+        {
+          "name": "CONDO 100UF 160V",
+          "href": "/product/0c4ad06c-6b7b-45f5-bfec-4b6c84ee75dd",
+          "price": "200 FCFA",
+          "stock": "En stock"
+        },
+        {
+          "name": "CONDO 10000UF 35V",
+          "href": "/product/11178668-34ed-4265-864e-e2a88ee7c8c4",
+          "price": "2 000 FCFA",
+          "stock": "En stock"
+        },
+        {
+          "name": "CONDO RUBYCON 22UF 160V",
+          "href": "/product/24ae59ba-7ffb-4e6a-8ad8-104f4f466dc4",
+          "price": "200 FCFA",
+          "stock": "En stock"
+        },
+        {
+          "name": "CONDO JAUNE 6.8UF 250V",
+          "href": "/product/218ddb1d-393f-4d6c-8685-841da62699a5",
+          "price": "1 000 FCFA",
+          "stock": "Stock faible"
+        },
+        {
+          "name": "CONDO 4.7UF 400V~ (475K)",
+          "href": "/product/260ac6eb-54ed-41b6-b180-f593dd4425d8",
+          "price": "1 000 FCFA",
+          "stock": "En stock"
+        },
+        {
+          "name": "CONDO 10000UF 16V",
+          "href": "/product/42ae4e97-b760-4b5b-822f-3831c3d2c535",
+          "price": "2 000 FCFA",
+          "stock": "En stock"
+        },
+        {
+          "name": "CONDO KY 1000UF 35V",
+          "href": "/product/27e810fd-7e6c-4e7d-bc07-1774a6b2e536",
+          "price": "200 FCFA",
+          "stock": "En stock"
+        },
+        {
+          "name": "CONDO JAUNE 33UF 250V",
+          "href": "/product/536d817c-ba04-4f22-91cc-d4e93a8576c0",
+          "price": "2 000 FCFA",
+          "stock": "Stock faible"
+        },
+        {
+          "name": "CONDO RUBYCON YK 6.8UF 160V",
+          "href": "/product/3df9beff-2ca7-4b07-b62d-959ef15afdcd",
+          "price": "200 FCFA",
+          "stock": "En stock"
+        },
+        {
+          "name": "CONDO 10000UF 25V",
+          "href": "/product/6c47a497-8d9c-42f5-8740-33dc0dcf206a",
+          "price": "2 000 FCFA",
+          "stock": "En stock"
+        },
+        {
+          "name": "CONDO ELNA 100UF 6.3V",
+          "href": "/product/6220bb9f-b900-4b71-8ef0-80346ba5529f",
+          "price": "200 FCFA",
+          "stock": "En stock"
+        },
+        {
+          "name": "CONDO 10000UF 63V",
+          "href": "/product/7d1ea1a4-5e96-4e09-a2f9-e1453d1a4a61",
+          "price": "2 000 FCFA",
+          "stock": "En stock"
+        },
+        {
+          "name": "CONDO NICHICON 1800UF 6.3V",
+          "href": "/product/7978423b-cb36-4ebd-bd9e-d9924c412086",
+          "price": "200 FCFA",
+          "stock": "En stock"
+        },
+        {
+          "name": "CONDO 10000UF 50V",
+          "href": "/product/93135880-5d7a-4d19-b200-b6a0c3d9f71a",
+          "price": "2 000 FCFA",
+          "stock": "En stock"
+        },
+        {
+          "name": "CONDO RUBYCON 680UF 35V",
+          "href": "/product/ad7a7610-1b7b-4153-96c2-1076a41a6fb9",
+          "price": "300 FCFA",
+          "stock": "En stock"
+        },
+        {
+          "name": "CONDO JAUNE 15UF 250V",
+          "href": "/product/af2789f6-9c30-440d-91c1-da30782f63a7",
+          "price": "2 000 FCFA",
+          "stock": "Stock faible"
+        },
+        {
+          "name": "CONDO CL21 820NF 400V (824J)",
+          "href": "/product/dbb14511-6807-4d7f-873b-80fea8bd46d2",
+          "price": "1 000 FCFA",
+          "stock": "En stock"
+        }
+      ],
+      "link": "/catalogue?category=4412d73b-1cbd-4996-a5ad-993101657e74&search=cond"
+    },
+    {
+      "id": "semiconductors",
+      "products": [
+        {
+          "name": "TDA 7379 PM",
+          "href": "/product/8e014c89-5582-4f57-8114-c30782bf5079",
+          "price": "1 000 FCFA",
+          "stock": "En stock"
+        },
+        {
+          "name": "Transistor IGBT IRG71C28U, boîtier TO-247",
+          "href": "/product/047e7aa4-453a-4959-9521-8f9bf369855e",
+          "price": "Prix à confirmer",
+          "stock": "Stock faible"
+        },
+        {
+          "name": "Transistor MOSFET 2N7000, référence à confirmer",
+          "href": "/product/098ab3fd-41b3-41f0-93cb-50b47b356b51",
+          "price": "Prix à confirmer",
+          "stock": "Stock faible"
+        },
+        {
+          "name": "Circuit intégré TDA4502",
+          "href": "/product/088dcafd-cfc1-48c8-9a82-221adf3f4357",
+          "price": "Prix à confirmer",
+          "stock": "Stock faible"
+        },
+        {
+          "name": "Transistor de puissance 60N100, boîtier TO-247",
+          "href": "/product/04de2344-89f7-4019-8103-51309feb5964",
+          "price": "Prix à confirmer",
+          "stock": "Stock faible"
+        },
+        {
+          "name": "Circuit intégré amplificateur TDA7293",
+          "href": "/product/4311ad6b-d76e-46cf-b1d5-5c28c7cac8e2",
+          "price": "Prix à confirmer",
+          "stock": "En stock"
+        },
+        {
+          "name": "Circuit intégré audio TDA7263M",
+          "href": "/product/6ea37584-7cb0-4e02-b8fc-79b94673a1e1",
+          "price": "Prix à confirmer",
+          "stock": "En stock"
+        },
+        {
+          "name": "Transistor BF871, boîtier de puissance à 3 pattes",
+          "href": "/product/09d9ceb4-77f9-4cf3-9f12-6fecc01e9799",
+          "price": "Prix à confirmer",
+          "stock": "Stock faible"
+        },
+        {
+          "name": "Circuit intégré TDA2649",
+          "href": "/product/ac5f7f5e-57e4-4888-9aaf-c564d484f84f",
+          "price": "Prix à confirmer",
+          "stock": "Stock faible"
+        },
+        {
+          "name": "Transistor ST1802 d’occasion, boîtier de puissance",
+          "href": "/product/0a0aa439-8d69-4c17-8d72-57dd9bab8a9e",
+          "price": "Prix à confirmer",
+          "stock": "En stock"
+        },
+        {
+          "name": "Circuit intégré TDA2595",
+          "href": "/product/bca4b54e-af85-4973-ac28-86b756e565ca",
+          "price": "Prix à confirmer",
+          "stock": "En stock"
+        },
+        {
+          "name": "Transistor BF487",
+          "href": "/product/0ac09f85-96a7-4fa2-ac0a-0099c7cf4f75",
+          "price": "Prix à confirmer",
+          "stock": "Stock faible"
+        },
+        {
+          "name": "Transistor Y418 d’occasion",
+          "href": "/product/0d636d05-43fb-4a3e-bd7e-cd492aa26962",
+          "price": "Prix à confirmer",
+          "stock": "En stock"
+        },
+        {
+          "name": "Transistor de puissance 80N65 / G80T65, boîtier TO-247",
+          "href": "/product/238bc7b7-4e2a-4693-a1f7-5f035e21341c",
+          "price": "Prix à confirmer",
+          "stock": "Stock faible"
+        }
+      ],
+      "link": "/catalogue?category=4412d73b-1cbd-4996-a5ad-993101657e74"
+    },
+    {
+      "id": "repair",
+      "products": [
+        {
+          "name": "CARTE MERE TV LCD/LED 42\" LG SMART",
+          "href": "/product/1c676cb3-8ec9-4dcd-8849-fb9d0f1cadcd",
+          "price": "25 000 FCFA",
+          "stock": "En stock"
+        },
+        {
+          "name": "MODUL AMPLI 4 XTOR",
+          "href": "/product/2d2d4e83-9d45-46cb-8d82-911a55e1807c",
+          "price": "6 000 FCFA",
+          "stock": "Stock faible"
+        },
+        {
+          "name": "CARTE MERE TV TV 32'' - 42\" LED/LCD  LG OCAS",
+          "href": "/product/4a415bfc-ced6-495c-ae52-e9c64ac6245d",
+          "price": "15 000 FCFA",
+          "stock": "Stock faible"
+        },
+        {
+          "name": "MODUL AMPLI NIG 2 XTOR A1943/C5200",
+          "href": "/product/43bd16b6-1f24-469e-9adc-1e64ed3687bb",
+          "price": "3 000 FCFA",
+          "stock": "En stock"
+        },
+        {
+          "name": "CARTE MERE TV LCD/LED VERT XCL 14'' - 55\"",
+          "href": "/product/d766fd93-9f4f-4884-a09a-0373c10f610f",
+          "price": "15 000 FCFA",
+          "stock": "Stock faible"
+        },
+        {
+          "name": "MODUL AMPLI 6 XTOR A1105/ C2580 25-50V",
+          "href": "/product/9a9c6eab-838d-44fb-833d-3e9a0947beb2",
+          "price": "6 500 FCFA",
+          "stock": "Stock faible"
+        },
+        {
+          "name": "CARTE MERE TV LCD SONY 50''",
+          "href": "/product/f38a3245-a201-465a-a61a-92da35bba068",
+          "price": "25 000 FCFA",
+          "stock": "Stock faible"
+        }
+      ],
+      "link": "/catalogue?search=TV"
+    },
+    {
+      "id": "power",
+      "products": [
+        {
+          "name": "ALIMT  STABILISE 12V 40A",
+          "href": "/product/1dbcdd4e-ea8a-4e25-9df5-e4d154f247ff",
+          "price": "23 000 FCFA",
+          "stock": "Stock faible"
+        },
+        {
+          "name": "CHARGER LAP HP 18.5V 3.5A 65W",
+          "href": "/product/118480e0-c4b9-4107-b306-643f77a06f6c",
+          "price": "5 000 FCFA",
+          "stock": "Stock faible"
+        },
+        {
+          "name": "BATTERIE RECHARGEABLE 6V 4,5AH",
+          "href": "/product/046def79-5449-4af9-b70a-2c9a8efa5253",
+          "price": "3 000 FCFA",
+          "stock": "En stock"
+        },
+        {
+          "name": "ALIMENTATION STABILISEE 12V 60A",
+          "href": "/product/237513d3-4f13-479f-ab3f-31837299247c",
+          "price": "25 000 FCFA",
+          "stock": "Stock faible"
+        },
+        {
+          "name": "CHARGER DIV 3.7V 355MA",
+          "href": "/product/161933ac-c8b5-49a6-b81f-29dff02122a3",
+          "price": "3 000 FCFA",
+          "stock": "Stock faible"
+        },
+        {
+          "name": "BATTERIE RECHARGEABLE 4V 4,5A",
+          "href": "/product/40b91857-3b79-40c9-b1b5-f63210310ca4",
+          "price": "9 000 FCFA",
+          "stock": "Stock faible"
+        },
+        {
+          "name": "ALIMENTATION STABILISEE 12V 20A",
+          "href": "/product/253c9547-35b1-434b-851e-89e39188d2cd",
+          "price": "15 000 FCFA",
+          "stock": "Stock faible"
+        },
+        {
+          "name": "CHARGEUR LAPTOP REGLABLE 1,5-24V MY-120W",
+          "href": "/product/22449f5a-e606-4be0-9158-15f9d2c6ebcf",
+          "price": "4 000 FCFA",
+          "stock": "En stock"
+        },
+        {
+          "name": "PILE MAXDAY RECHARGEABLE 3A (JEUX DE 4)",
+          "href": "/product/5ac824fb-6758-4e9f-8441-c48f1c7d8348",
+          "price": "4 000 FCFA",
+          "stock": "En stock"
+        },
+        {
+          "name": "ALIMT  STABILISE 24V 30A METAL",
+          "href": "/product/389a4e15-ccd4-4187-a137-fd3b99830181",
+          "price": "25 000 FCFA",
+          "stock": "Stock faible"
+        },
+        {
+          "name": "CHARGER 19V- 4.62A DELL",
+          "href": "/product/2b53b2e9-79b6-474f-a019-e8fd92842fe8",
+          "price": "5 000 FCFA",
+          "stock": "Stock faible"
+        },
+        {
+          "name": "PILE 9V  DURACEL",
+          "href": "/product/92bf4922-be91-4fb0-ab9f-2811c115cf76",
+          "price": "2 000 FCFA",
+          "stock": "En stock"
+        },
+        {
+          "name": "CONTROLEUR DE CHARGE 60A",
+          "href": "/product/6654888a-5374-4c73-87f1-66a10c44f888",
+          "price": "23 000 FCFA",
+          "stock": "Stock faible"
+        },
+        {
+          "name": "CHARGER DIV 7.5V 230MA",
+          "href": "/product/35a2ebf2-2e00-439e-ad1d-60ded0a705a5",
+          "price": "3 000 FCFA",
+          "stock": "Stock faible"
+        },
+        {
+          "name": "PILE RECHARGEABLE KM R6 JEU DE 4",
+          "href": "/product/ac3fb6ed-5459-4f19-94cd-b1b737f68e58",
+          "price": "2 000 FCFA",
+          "stock": "En stock"
+        },
+        {
+          "name": "REGULATEUR TENSION STAR PROTECT 1000VA",
+          "href": "/product/de210e2a-b223-4d4f-90fa-25e4172d01b8",
+          "price": "17 000 FCFA",
+          "stock": "En stock"
+        },
+        {
+          "name": "POWER BANK DEPIN 12W 10000mmah",
+          "href": "/product/3c7f7ce5-06ce-4bf6-b99c-e9568ca5007f",
+          "price": "7 000 FCFA",
+          "stock": "Stock faible"
+        },
+        {
+          "name": "PILE 9V ENERGIZER",
+          "href": "/product/ac51885d-8ee6-444b-b370-a62125d50d0a",
+          "price": "2 000 FCFA",
+          "stock": "Stock faible"
+        },
+        {
+          "name": "REGULATEUR TENSION STAR PROTECT 1500VA",
+          "href": "/product/e9563e46-3ed0-4f14-bedb-fccc5aebf43a",
+          "price": "20 000 FCFA",
+          "stock": "Stock faible"
+        },
+        {
+          "name": "CHARGER PIANO YAMAHA PA- 200 C 12V 2A",
+          "href": "/product/e45bf401-4cd6-462a-af5f-037ec5f6d87b",
+          "price": "5 000 FCFA",
+          "stock": "Stock faible"
+        }
+      ],
+      "link": "/catalogue?category=e8df4ded-9ae1-47ce-b733-41c2dda3158c"
+    },
+    {
+      "id": "connect",
+      "products": [
+        {
+          "name": "CORDON VGA M/ VGA MAL 20M",
+          "href": "/product/08250814-9cc5-4bb0-a679-57b3fe95e52c",
+          "price": "7 500 FCFA",
+          "stock": "Stock faible"
+        },
+        {
+          "name": "CORDON DISQUE DURE 2,5 SATA (EXTERNE)",
+          "href": "/product/12edeac4-0241-4126-b6ce-0dc9b8789c80",
+          "price": "1 000 FCFA",
+          "stock": "Stock faible"
+        },
+        {
+          "name": "FICHE SPEAKON MAL ORG NEUTRIK",
+          "href": "/product/2c97be1e-d9ec-4855-94c7-fe87c924b610",
+          "price": "1 000 FCFA",
+          "stock": "En stock"
+        },
+        {
+          "name": "CORDON VGA M/ VGA MAL 1.5M",
+          "href": "/product/3f855232-78e4-4dcf-8cc3-6962860c6ca2",
+          "price": "1 000 FCFA",
+          "stock": "En stock"
+        },
+        {
+          "name": "CORDON VGA M/ VGA M 5M",
+          "href": "/product/42ac6a04-22d3-4831-a412-7c651b556e95",
+          "price": "2 000 FCFA",
+          "stock": "Stock faible"
+        },
+        {
+          "name": "RELAIS 24V A FICHE",
+          "href": "/product/4419400f-5eb6-4e8d-879a-4e5cb0782e75",
+          "price": "1 500 FCFA",
+          "stock": "Stock faible"
+        },
+        {
+          "name": "RELAIS A FICHE 24V",
+          "href": "/product/448c702b-69d0-4d03-bc9c-b0eb16099340",
+          "price": "1 500 FCFA",
+          "stock": "Stock faible"
+        },
+        {
+          "name": "COSS STATION A SOUDER PM",
+          "href": "/product/4a16d4bc-e545-492a-9b1c-af6da0982441",
+          "price": "1 000 FCFA",
+          "stock": "En stock"
+        },
+        {
+          "name": "ADAPT PRISE 1M/4F",
+          "href": "/product/5c9631d0-d0e3-42ae-9072-fa697e6d2aa2",
+          "price": "1 000 FCFA",
+          "stock": "Stock faible"
+        },
+        {
+          "name": "CORDON MULTI NUM ORG 1M",
+          "href": "/product/62cc34dc-106a-43bc-9dd6-22bd5c303f15",
+          "price": "1 000 FCFA",
+          "stock": "Stock faible"
+        },
+        {
+          "name": "COSS STATION A SOUDER GM",
+          "href": "/product/6b970cd4-2f43-452d-97af-bdb0aca63ecc",
+          "price": "1 500 FCFA",
+          "stock": "Stock faible"
+        },
+        {
+          "name": "CABLE ALIMT LAP 3 FOYER",
+          "href": "/product/6dea3fb8-043f-4776-9da3-75839cecf29d",
+          "price": "1 000 FCFA",
+          "stock": "Stock faible"
+        },
+        {
+          "name": "CORDON 2RCA M/ 2RCA M 5M",
+          "href": "/product/7ee5ad75-8b62-4dac-9db6-dd58ee332506",
+          "price": "1 000 FCFA",
+          "stock": "En stock"
+        },
+        {
+          "name": "TESTEUR CABLE RESEAU",
+          "href": "/product/a3822b17-063c-47b8-a9ec-95b6af13b9a6",
+          "price": "3 500 FCFA",
+          "stock": "En stock"
+        },
+        {
+          "name": "CORDON VGA M/VGA 3M",
+          "href": "/product/abae9e88-0498-4147-b646-62eb01bfbe4b",
+          "price": "3 000 FCFA",
+          "stock": "En stock"
+        },
+        {
+          "name": "CORDON HDMI M/ HDMI M 5M",
+          "href": "/product/ba45bbad-b98e-4b9e-b7c4-4a0a7d9eb81f",
+          "price": "2 500 FCFA",
+          "stock": "Stock faible"
+        },
+        {
+          "name": "CABLE TV  100Y RG6",
+          "href": "/product/d2a130ae-5453-4ae4-b84a-9d6af4b2d889",
+          "price": "6 500 FCFA",
+          "stock": "Stock faible"
+        },
+        {
+          "name": "CORDON 3RCA M/ 3RCA M 5M",
+          "href": "/product/d52b50fa-c6a6-49c6-ab9c-5c11239c2085",
+          "price": "1 500 FCFA",
+          "stock": "En stock"
+        },
+        {
+          "name": "CORDON VGA M/ VGA M 10M",
+          "href": "/product/d8a8bbda-7641-47ac-803c-77140b0c37eb",
+          "price": "3 500 FCFA",
+          "stock": "En stock"
+        },
+        {
+          "name": "CABLE RESEAU UTP EN ROULEAU DE 100m",
+          "href": "/product/e3012a86-b57f-4065-b8cd-c7605c35b8e6",
+          "price": "20 000 FCFA",
+          "stock": "Stock faible"
+        }
+      ],
+      "link": "/catalogue?category=d47b23aa-2d48-4281-a161-de79cb32e821"
+    },
+    {
+      "id": "tools",
+      "products": [
+        {
+          "name": "MULTIMETRE EPICA EP-60551",
+          "href": "/product/01c4196c-5e44-47bf-8061-cdc06ef6ae9b",
+          "price": "11 000 FCFA",
+          "stock": "Stock faible"
+        },
+        {
+          "name": "106 DE FER A SOUDER 40W ORG",
+          "href": "/product/0053c248-e592-4859-9258-1d69755123a4",
+          "price": "2 000 FCFA",
+          "stock": "En stock"
+        },
+        {
+          "name": "SATELITE FINDER DIGISAT 9505",
+          "href": "/product/2c55d4dc-5e2e-4878-8db0-8b7558e6e0c3",
+          "price": "4 500 FCFA",
+          "stock": "Stock faible"
+        },
+        {
+          "name": "TOURNEVIS PORTABLE JEUX 07 PIECES SW993",
+          "href": "/product/0e54be09-e8f5-404c-814f-5773557214d2",
+          "price": "2 000 FCFA",
+          "stock": "En stock"
+        },
+        {
+          "name": "MULTIMETRE DT83 SERIE",
+          "href": "/product/3adebd14-a588-4b3a-b82a-26a95b3e7067",
+          "price": "3 000 FCFA",
+          "stock": "En stock"
+        },
+        {
+          "name": "SUPPORT DE FER A SOUDER",
+          "href": "/product/1a215790-f3db-4316-b9f1-6c1a10a7fafa",
+          "price": "2 500 FCFA",
+          "stock": "Stock faible"
+        },
+        {
+          "name": "TESTEUR DE LED",
+          "href": "/product/540f6ad5-3672-44eb-9d8c-0017344fcdb7",
+          "price": "10 000 FCFA",
+          "stock": "En stock"
+        },
+        {
+          "name": "ETAIN ORG EN RLX 100G 1MM SUOER",
+          "href": "/product/22f4c3ac-748a-48d2-ad55-3b2ef80f246a",
+          "price": "2 000 FCFA",
+          "stock": "En stock"
+        },
+        {
+          "name": "MULTI NUM A PINCE AMPER DT-266",
+          "href": "/product/7738bfad-3823-4bf7-84ad-3b85c5ca5dd9",
+          "price": "5 000 FCFA",
+          "stock": "Stock faible"
+        },
+        {
+          "name": "TOURNEVIS PORTABLE+LOUPE JEUX DE 12 PIECES TN 6120",
+          "href": "/product/39c0be3e-0a15-4594-bf5d-983a64559ad9",
+          "price": "3 000 FCFA",
+          "stock": "En stock"
+        },
+        {
+          "name": "MULTI  ANALOG YX 360 TRES MOY",
+          "href": "/product/8a3e12dd-f05d-4c32-a264-5569e068a561",
+          "price": "3 500 FCFA",
+          "stock": "Stock faible"
+        },
+        {
+          "name": "FER A SOUDER REGLABLE 60W JAUNE JYD",
+          "href": "/product/419b8982-7101-4302-bedc-380f3c6f71ac",
+          "price": "4 000 FCFA",
+          "stock": "En stock"
+        },
+        {
+          "name": "TOURNEVIS PORTABLE JEUX  DE 13 PIECES SW1030",
+          "href": "/product/5dd4dba5-850d-4ce6-8392-5444ab3082d8",
+          "price": "2 500 FCFA",
+          "stock": "En stock"
+        },
+        {
+          "name": "PINCE ROWTON RT-8007 EN JEUX",
+          "href": "/product/8797d8ea-a758-4932-aa2b-40c1eeb6111f",
+          "price": "6 500 FCFA",
+          "stock": "Stock faible"
+        },
+        {
+          "name": "LOUPE + 1 LED LJ008",
+          "href": "/product/aaef5042-41a0-4658-9c31-cdb20d022c75",
+          "price": "3 000 FCFA",
+          "stock": "Stock faible"
+        },
+        {
+          "name": "TOURNEVIS EPICA EP60018 JEUX DE 6",
+          "href": "/product/edb1eb1e-a8da-49fe-8a05-86f555678e90",
+          "price": "4 000 FCFA",
+          "stock": "En stock"
+        }
+      ],
+      "link": "/catalogue?category=7172768e-7aa1-41cf-9afe-bf319a064666"
+    }
+  ],
+  "responses": [
+    {
+      "path": "/api/produits/populaires",
+      "status": 200,
+      "count": 6
+    },
+    {
+      "path": "/api/produits?categoryId=4412d73b-1cbd-4996-a5ad-993101657e74&limit=12&page=1&sort=price_desc&inStock=true&search=CONDO",
+      "status": 200,
+      "count": 12
+    },
+    {
+      "path": "/api/produits?categoryId=4412d73b-1cbd-4996-a5ad-993101657e74&limit=12&page=1&sort=price_desc&inStock=true&search=condensateur",
+      "status": 200,
+      "count": 12
+    },
+    {
+      "path": "/api/produits?categoryId=4412d73b-1cbd-4996-a5ad-993101657e74&limit=8&page=1&sort=price_desc&inStock=true&search=transistor",
+      "status": 200,
+      "count": 8
+    },
+    {
+      "path": "/api/produits?categoryId=4412d73b-1cbd-4996-a5ad-993101657e74&limit=8&page=1&sort=price_desc&inStock=true&search=TDA",
+      "status": 200,
+      "count": 6
+    },
+    {
+      "path": "/api/produits?categoryId=4412d73b-1cbd-4996-a5ad-993101657e74&limit=8&page=1&sort=price_desc&inStock=true&search=MOSFET",
+      "status": 200,
+      "count": 1
+    },
+    {
+      "path": "/api/produits?categoryId=4412d73b-1cbd-4996-a5ad-993101657e74&limit=8&page=1&sort=price_desc&inStock=true&search=CARTE+MERE+TV",
+      "status": 200,
+      "count": 4
+    },
+    {
+      "path": "/api/produits?categoryId=69e8ab9e-bf6a-41de-9093-028170405f55&limit=8&page=1&sort=price_desc&inStock=true&search=ampli",
+      "status": 200,
+      "count": 8
+    },
+    {
+      "path": "/api/produits?categoryId=7d9e521c-7a37-414b-9a55-2770ffd3e6f2&limit=8&page=1&sort=price_desc&inStock=true&search=LED",
+      "status": 200,
+      "count": 8
+    },
+    {
+      "path": "/api/produits?categoryId=e8df4ded-9ae1-47ce-b733-41c2dda3158c&limit=7&page=1&sort=price_desc&inStock=true",
+      "status": 200,
+      "count": 7
+    },
+    {
+      "path": "/api/produits?categoryId=797cbd97-708e-43c7-890d-b62fdfd6f899&limit=7&page=1&sort=price_desc&inStock=true",
+      "status": 200,
+      "count": 7
+    },
+    {
+      "path": "/api/produits?categoryId=ec593ebd-142a-46e9-b0da-de134274c59b&limit=7&page=1&sort=price_desc&inStock=true",
+      "status": 200,
+      "count": 7
+    },
+    {
+      "path": "/api/produits?categoryId=d47b23aa-2d48-4281-a161-de79cb32e821&limit=20&page=1&sort=price_desc&inStock=true",
+      "status": 200,
+      "count": 20
+    },
+    {
+      "path": "/api/produits?categoryId=7172768e-7aa1-41cf-9afe-bf319a064666&limit=10&page=1&sort=price_desc&inStock=true",
+      "status": 200,
+      "count": 10
+    },
+    {
+      "path": "/api/produits?categoryId=773bcbec-0100-4ea0-88d2-2df52d528a47&limit=10&page=1&sort=price_desc&inStock=true",
+      "status": 200,
+      "count": 10
+    },
+    {
+      "path": "/api/produits/arrivages",
+      "status": 200,
+      "count": 0
+    },
+    {
+      "path": "/api/produits/flash",
+      "status": 200,
+      "count": 0
+    },
+    {
+      "path": "/api/produits?page=1&limit=24&sort=name_asc",
+      "status": 200,
+      "count": 24
+    },
+    {
+      "path": "/api/produits?page=1&limit=24&sort=name_asc",
+      "status": 200,
+      "count": 24
+    },
+    {
+      "path": "/api/produits?page=1&limit=24&sort=name_asc",
+      "status": 200,
+      "count": 24
+    },
+    {
+      "path": "/api/produits?page=1&limit=24&sort=name_asc",
+      "status": 200,
+      "count": 24
+    },
+    {
+      "path": "/api/produits?page=1&limit=24&sort=name_asc",
+      "status": 200,
+      "count": 24
+    },
+    {
+      "path": "/api/produits?page=1&limit=24&sort=name_asc",
+      "status": 200,
+      "count": 24
+    },
+    {
+      "path": "/api/produits/08b727b1-78c6-4c72-b093-6bc29407a102",
+      "status": 200,
+      "count": 0
+    }
+  ],
+  "detail": "/product/08b727b1-78c6-4c72-b093-6bc29407a102"
+}

@@ -37,4 +37,10 @@ Preuves `hydration.json`, `legacy.json`. Scripts, logs, captures et autres résu
 
 ## Livraison
 
-Les tests locaux autorisent la livraison incrémentale du gain d'accueil. Le contrôle public et sa version Cloudflare doivent être ajoutés après publication effective ; ils ne sont pas déduits du build. Le catalogue reste côté client, et les gates métier/fournisseurs/téléphone/préproduction/observation du plan A–Z restent ouverts.
+Commit applicatif `96c94c03` poussé sur main. Publication Wrangler existante réussie, version Cloudflare `5a5d0a92-b50f-49ef-8bc6-42543f6a3c43`. GET https://newoteg.com/ : 200, HTML du hero et feuilles initiales réellement présents avant JavaScript ; module public `index-Ce7Lwjfh.js` identique à la livraison testée. `/profile` n'inclut pas cet HTML et conserve cache privé/no-store, noindex/nofollow et no-referrer. Preuve `public-delivery.json`.
+
+Les sept contrats de reprise ont également passé sur le domaine public (`production-hydration.json`), y compris les cas simulés dans des contextes isolés. Recette du vrai catalogue publiée : dix-neuf contrôles réussis, sans erreur JS ou écriture métier (`production-commercial.json`). Aucune commande réelle créée. Le statut de la CI GitHub n'a pas été vérifié : le CLI gh n'est pas authentifié ; les succès locaux et publics ne sont pas présentés comme un résultat de CI distante.
+
+Mesures du domaine publié, même profil synthétique et trois passages froids : accueil 3148 / 2744 / 2960 ms, médiane 2960 ms ; catalogue 5652 / 5152 / 5052 ms, médiane 5152 ms. CLS 0 ; environ 209,9 ko JS accueil / 202 ko catalogue, incluant les ressources propres à la production ; aucun débordement, erreur JS ou requête interdite. Les six LCP publics restent au-dessus de 2500 ms. `production-measures.json` conserve les résultats complets. **Le gain de 47,4 % décrit la comparaison locale contrôlée ; il ne constitue pas un pourcentage de gain certifié en production ou sur téléphone.**
+
+Gates relus à 09:48 UTC (`public-gates.json`) : API/base/stockage OK, email=false, SMS=false, aucun projet public, collecteur arrêté. Le catalogue reste côté client ; rendu/données précoces du catalogue, budget LCP public et autres gates métier/fournisseurs/téléphone/préproduction/observation du plan A–Z restent ouverts.

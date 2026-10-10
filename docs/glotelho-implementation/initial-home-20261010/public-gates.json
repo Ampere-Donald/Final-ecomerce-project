@@ -1,0 +1,20 @@
+{
+  "checkedAt": "2026-10-10T09:48:51.5746023Z",
+  "health": {
+    "status": "ok",
+    "timestamp": "2026-10-10T09:48:49.847Z",
+    "checks": {
+      "api": "ok",
+      "database": "ok",
+      "storage": "ok"
+    }
+  },
+  "channels": {
+    "email": false,
+    "sms": false
+  },
+  "projectTotal": 0,
+  "observations": {
+    "actif": false
+  }
+}
