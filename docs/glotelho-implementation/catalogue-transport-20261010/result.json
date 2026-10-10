@@ -1,0 +1,102 @@
+{
+  "date": "2026-10-10T16:39:45.143Z",
+  "version": "7ee9e5b4-ade6-41b1-b8d5-c8e7ecce5b14",
+  "processingOnly": true,
+  "ceilingMs": 10,
+  "samples": {
+    "representative": {
+      "count": 5,
+      "minMs": 2,
+      "medianMs": 2,
+      "maxMs": 5,
+      "allWithinBudget": true
+    },
+    "boundary": {
+      "count": 5,
+      "minMs": 5,
+      "medianMs": 6,
+      "maxMs": 8,
+      "allWithinBudget": true
+    }
+  },
+  "rows": [
+    {
+      "path": "/payload?size=representative&sample=0",
+      "cpuMs": 5,
+      "wallMs": 37,
+      "outcome": "ok",
+      "status": 200
+    },
+    {
+      "path": "/payload?size=boundary&sample=1",
+      "cpuMs": 8,
+      "wallMs": 191,
+      "outcome": "ok",
+      "status": 200
+    },
+    {
+      "path": "/payload?size=representative&sample=2",
+      "cpuMs": 2,
+      "wallMs": 15,
+      "outcome": "ok",
+      "status": 200
+    },
+    {
+      "path": "/payload?size=boundary&sample=3",
+      "cpuMs": 6,
+      "wallMs": 23,
+      "outcome": "ok",
+      "status": 200
+    },
+    {
+      "path": "/payload?size=representative&sample=4",
+      "cpuMs": 2,
+      "wallMs": 13,
+      "outcome": "ok",
+      "status": 200
+    },
+    {
+      "path": "/payload?size=boundary&sample=5",
+      "cpuMs": 6,
+      "wallMs": 29,
+      "outcome": "ok",
+      "status": 200
+    },
+    {
+      "path": "/payload?size=representative&sample=6",
+      "cpuMs": 2,
+      "wallMs": 17,
+      "outcome": "ok",
+      "status": 200
+    },
+    {
+      "path": "/payload?size=boundary&sample=7",
+      "cpuMs": 7,
+      "wallMs": 36,
+      "outcome": "ok",
+      "status": 200
+    },
+    {
+      "path": "/payload?size=representative&sample=8",
+      "cpuMs": 3,
+      "wallMs": 19,
+      "outcome": "ok",
+      "status": 200
+    },
+    {
+      "path": "/payload?size=boundary&sample=9",
+      "cpuMs": 5,
+      "wallMs": 23,
+      "outcome": "ok",
+      "status": 200
+    }
+  ],
+  "limits": [
+    "Compiled production transport/metadata functions, fixed public HTML asset instead of Railway response",
+    "Plaintext diagnostic prevents shopping/JavaScript execution; no production domain",
+    "No diagnostic Response.text/byte-encoding copy in Worker",
+    "Five samples per size, not sustained load or field performance",
+    "Actual Railway latency and complete hosted integration still required"
+  ],
+  "decision": "Transport processing sample fits Free CPU; Railway hosting/latency still unproven"
+}

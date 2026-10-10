@@ -1,0 +1,101 @@
+{
+  "profile": {
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "latencyMs": 150,
+    "downstreamBytesPerSecond": 200000,
+    "upstreamBytesPerSecond": 93750,
+    "cpuSlowdown": 4,
+    "coldCache": true,
+    "samplesPerRoute": 3
+  },
+  "budgets": {
+    "lcpMs": 2500,
+    "cls": 0.1,
+    "scriptEncodedBytes": 225280
+  },
+  "results": [
+    {
+      "variant": null,
+      "sample": 1,
+      "lcpMs": 2804,
+      "cls": 0,
+      "scriptEncodedBytes": 204878,
+      "budgetPass": {
+        "lcp": false,
+        "cls": true,
+        "scriptBytes": true
+      }
+    },
+    {
+      "variant": null,
+      "sample": 2,
+      "lcpMs": 2436,
+      "cls": 0,
+      "scriptEncodedBytes": 204921,
+      "budgetPass": {
+        "lcp": true,
+        "cls": true,
+        "scriptBytes": true
+      }
+    },
+    {
+      "variant": null,
+      "sample": 3,
+      "lcpMs": 2268,
+      "cls": 0,
+      "scriptEncodedBytes": 204878,
+      "budgetPass": {
+        "lcp": true,
+        "cls": true,
+        "scriptBytes": true
+      }
+    },
+    {
+      "variant": null,
+      "sample": 4,
+      "lcpMs": 2236,
+      "cls": 0,
+      "scriptEncodedBytes": 204921,
+      "budgetPass": {
+        "lcp": true,
+        "cls": true,
+        "scriptBytes": true
+      }
+    },
+    {
+      "variant": null,
+      "sample": 5,
+      "lcpMs": 2268,
+      "cls": 0,
+      "scriptEncodedBytes": 204878,
+      "budgetPass": {
+        "lcp": true,
+        "cls": true,
+        "scriptBytes": true
+      }
+    },
+    {
+      "variant": null,
+      "sample": 6,
+      "lcpMs": 2244,
+      "cls": 0,
+      "scriptEncodedBytes": 204921,
+      "budgetPass": {
+        "lcp": true,
+        "cls": true,
+        "scriptBytes": true
+      }
+    }
+  ],
+  "errors": [],
+  "forbidden": [],
+  "limits": [
+    "Synthetic desktop Edge viewport/CPU/network, not a physical mobile device",
+    "Local gzip preview, frozen public GET API responses shared before/after, live CDN product images; not field measurements",
+    "Load LCP/CLS observed for 5s after network idle, not field percentiles or INP",
+    "Modern browser path only; legacy build not exercised"
+  ]
+}

@@ -13,9 +13,14 @@
       var heroPreload = document.createElement('link');
       heroPreload.rel = 'preload';
       heroPreload.as = 'image';
-      heroPreload.href = '/design-e/hero-scene-v2-1440.webp';
-      heroPreload.imageSrcset = '/design-e/hero-scene-v2-1440.webp 1440w, /design-e/hero-scene-v2-2160.webp 2160w';
-      heroPreload.imageSizes = '100vw';
+      if (window.matchMedia('(max-width: 810px)').matches) {
+        heroPreload.href = '/design-e/hero-scene-v2-960.webp';
+        heroPreload.imageSrcset = '/design-e/hero-scene-v2-960.webp 1x, /design-e/hero-scene-v2-1440.webp 2x';
+      } else {
+        heroPreload.href = '/design-e/hero-scene-v2-1440.webp';
+        heroPreload.imageSrcset = '/design-e/hero-scene-v2-1440.webp 1440w, /design-e/hero-scene-v2-2160.webp 2160w';
+        heroPreload.imageSizes = '100vw';
+      }
       heroPreload.setAttribute('fetchpriority', 'high');
       document.head.appendChild(heroPreload);
     }
