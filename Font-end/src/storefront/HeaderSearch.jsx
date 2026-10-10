@@ -30,6 +30,19 @@ export default function HeaderSearch({ initial = "", preserveInitialValue = fals
   const tr = (fr, en) => (lang === "en" ? en : fr);
   const destination = `/catalogue${query ? "?search=" + encodeURIComponent(query) : ""}`;
 
+  // Native HTML may receive focus and typing before React attaches handlers.
+  // Open only after hydration so the first render still matches the server HTML.
+  useEffect(() => {
+    let active = true;
+    const input = root.current?.querySelector("input");
+    if (input && document.activeElement === input && input.value.trim().length >= 2) {
+      Promise.resolve().then(() => {
+        if (active && document.activeElement === input) setOpen(true);
+      });
+    }
+    return () => { active = false; };
+  }, []);
+
   useEffect(() => {
     if (query.length < 2 || !open) return;
     const controller = new AbortController();
