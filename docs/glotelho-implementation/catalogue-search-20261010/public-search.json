@@ -1,0 +1,56 @@
+{
+  "date": "2026-10-10T20:05:14.776Z",
+  "checks": [
+    "Public GET accented/unaccented/uppercase variants return identical ordered products within each search mode",
+    "Public API health OK"
+  ],
+  "queries": [
+    {
+      "search": "câble HDMI",
+      "salesSearch": false,
+      "rows": 2,
+      "total": 2
+    },
+    {
+      "search": "cable HDMI",
+      "salesSearch": false,
+      "rows": 2,
+      "total": 2
+    },
+    {
+      "search": "CÂBLE HDMI",
+      "salesSearch": false,
+      "rows": 2,
+      "total": 2
+    },
+    {
+      "search": "câble HDMI",
+      "salesSearch": true,
+      "rows": 8,
+      "total": 8
+    },
+    {
+      "search": "cable HDMI",
+      "salesSearch": true,
+      "rows": 8,
+      "total": 8
+    },
+    {
+      "search": "CÂBLE HDMI",
+      "salesSearch": true,
+      "rows": 8,
+      "total": 8
+    }
+  ],
+  "writes": 0,
+  "status": "passed",
+  "health": {
+    "status": "ok",
+    "timestamp": "2026-10-10T20:05:18.905Z",
+    "checks": {
+      "api": "ok",
+      "database": "ok",
+      "storage": "ok"
+    }
+  }
+}

@@ -1,7 +1,7 @@
 {
   "version": 1,
   "sources": {
-    "schemaSha256": "f5b4d6e14b93f47ef0aa46d7d0ec081eefa7ec815658aa08b37a990390ddf408",
+    "schemaSha256": "2c87e536b68e2f4fe4d6feaa0678779fb1cd8579b6582ab42afd419e5273726b",
     "migrations": [
       {
         "name": "20260303155632_init",
@@ -238,6 +238,10 @@
       {
         "name": "20261005090000_align_deployed_release",
         "sha256": "18cf4701747343345b139d3e76b5cec533f16fabb78c314c61614a66d0ec718f"
+      },
+      {
+        "name": "20261010210000_technical_provenance",
+        "sha256": "e6042416c06fb7dabfdb568823734c3add4be84919a96fbab899a91f1c205934"
       }
     ]
   },
@@ -9686,6 +9690,222 @@
         "numeric_precision": 32,
         "numeric_scale": 0,
         "datetime_precision": null
+      },
+      {
+        "table_name": "documentation_valeur",
+        "column_name": "attribut_version",
+        "type": "int4",
+        "type_schema": "pg_catalog",
+        "is_nullable": "NO",
+        "column_default": null,
+        "character_maximum_length": null,
+        "numeric_precision": 32,
+        "numeric_scale": 0,
+        "datetime_precision": null
+      },
+      {
+        "table_name": "documentation_valeur",
+        "column_name": "conditions",
+        "type": "varchar",
+        "type_schema": "pg_catalog",
+        "is_nullable": "YES",
+        "column_default": null,
+        "character_maximum_length": 500,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "datetime_precision": null
+      },
+      {
+        "table_name": "documentation_valeur",
+        "column_name": "etat",
+        "type": "EtatDonneeTechnique",
+        "type_schema": "public",
+        "is_nullable": "NO",
+        "column_default": "'A_VERIFIER'::\"EtatDonneeTechnique\"",
+        "character_maximum_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "datetime_precision": null
+      },
+      {
+        "table_name": "documentation_valeur",
+        "column_name": "motif",
+        "type": "varchar",
+        "type_schema": "pg_catalog",
+        "is_nullable": "YES",
+        "column_default": null,
+        "character_maximum_length": 500,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "datetime_precision": null
+      },
+      {
+        "table_name": "documentation_valeur",
+        "column_name": "produit_version",
+        "type": "int4",
+        "type_schema": "pg_catalog",
+        "is_nullable": "NO",
+        "column_default": null,
+        "character_maximum_length": null,
+        "numeric_precision": 32,
+        "numeric_scale": 0,
+        "datetime_precision": null
+      },
+      {
+        "table_name": "documentation_valeur",
+        "column_name": "relu_le",
+        "type": "timestamp",
+        "type_schema": "pg_catalog",
+        "is_nullable": "YES",
+        "column_default": null,
+        "character_maximum_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "datetime_precision": 3
+      },
+      {
+        "table_name": "documentation_valeur",
+        "column_name": "relu_par_id",
+        "type": "text",
+        "type_schema": "pg_catalog",
+        "is_nullable": "YES",
+        "column_default": null,
+        "character_maximum_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "datetime_precision": null
+      },
+      {
+        "table_name": "documentation_valeur",
+        "column_name": "source_document",
+        "type": "varchar",
+        "type_schema": "pg_catalog",
+        "is_nullable": "YES",
+        "column_default": null,
+        "character_maximum_length": 200,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "datetime_precision": null
+      },
+      {
+        "table_name": "documentation_valeur",
+        "column_name": "source_repere",
+        "type": "varchar",
+        "type_schema": "pg_catalog",
+        "is_nullable": "YES",
+        "column_default": null,
+        "character_maximum_length": 160,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "datetime_precision": null
+      },
+      {
+        "table_name": "documentation_valeur",
+        "column_name": "source_revision",
+        "type": "varchar",
+        "type_schema": "pg_catalog",
+        "is_nullable": "YES",
+        "column_default": null,
+        "character_maximum_length": 100,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "datetime_precision": null
+      },
+      {
+        "table_name": "documentation_valeur",
+        "column_name": "source_url",
+        "type": "varchar",
+        "type_schema": "pg_catalog",
+        "is_nullable": "YES",
+        "column_default": null,
+        "character_maximum_length": 800,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "datetime_precision": null
+      },
+      {
+        "table_name": "documentation_valeur",
+        "column_name": "unite_normalisee",
+        "type": "varchar",
+        "type_schema": "pg_catalog",
+        "is_nullable": "YES",
+        "column_default": null,
+        "character_maximum_length": 40,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "datetime_precision": null
+      },
+      {
+        "table_name": "documentation_valeur",
+        "column_name": "unite_source",
+        "type": "varchar",
+        "type_schema": "pg_catalog",
+        "is_nullable": "YES",
+        "column_default": null,
+        "character_maximum_length": 40,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "datetime_precision": null
+      },
+      {
+        "table_name": "documentation_valeur",
+        "column_name": "valeur_id",
+        "type": "text",
+        "type_schema": "pg_catalog",
+        "is_nullable": "NO",
+        "column_default": null,
+        "character_maximum_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "datetime_precision": null
+      },
+      {
+        "table_name": "documentation_valeur",
+        "column_name": "valeur_normalisee",
+        "type": "varchar",
+        "type_schema": "pg_catalog",
+        "is_nullable": "YES",
+        "column_default": null,
+        "character_maximum_length": 100,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "datetime_precision": null
+      },
+      {
+        "table_name": "documentation_valeur",
+        "column_name": "valeur_source",
+        "type": "varchar",
+        "type_schema": "pg_catalog",
+        "is_nullable": "NO",
+        "column_default": null,
+        "character_maximum_length": 100,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "datetime_precision": null
+      },
+      {
+        "table_name": "documentation_valeur",
+        "column_name": "valeur_version",
+        "type": "int4",
+        "type_schema": "pg_catalog",
+        "is_nullable": "NO",
+        "column_default": null,
+        "character_maximum_length": null,
+        "numeric_precision": 32,
+        "numeric_scale": 0,
+        "datetime_precision": null
+      },
+      {
+        "table_name": "documentation_valeur",
+        "column_name": "version",
+        "type": "int4",
+        "type_schema": "pg_catalog",
+        "is_nullable": "NO",
+        "column_default": "1",
+        "character_maximum_length": null,
+        "numeric_precision": 32,
+        "numeric_scale": 0,
+        "datetime_precision": null
       }
     ],
     "constraints": [
@@ -11128,6 +11348,24 @@
         "validated": true,
         "deferrable": false,
         "deferred": false
+      },
+      {
+        "table_name": "documentation_valeur",
+        "name": "documentation_valeur_pkey",
+        "type": "p",
+        "definition": "PRIMARY KEY (valeur_id)",
+        "validated": true,
+        "deferrable": false,
+        "deferred": false
+      },
+      {
+        "table_name": "documentation_valeur",
+        "name": "documentation_valeur_valeur_id_fkey",
+        "type": "f",
+        "definition": "FOREIGN KEY (valeur_id) REFERENCES valeur_attribut(id) ON UPDATE CASCADE ON DELETE CASCADE",
+        "validated": true,
+        "deferrable": false,
+        "deferred": false
       }
     ],
     "indexes": [
@@ -12348,6 +12586,13 @@
         "definition": "CREATE UNIQUE INDEX vente_pkey ON public.vente USING btree (id)",
         "valid": true,
         "ready": true
+      },
+      {
+        "table_name": "documentation_valeur",
+        "name": "documentation_valeur_pkey",
+        "definition": "CREATE UNIQUE INDEX documentation_valeur_pkey ON public.documentation_valeur USING btree (valeur_id)",
+        "valid": true,
+        "ready": true
       }
     ],
     "enums": [
@@ -12494,6 +12739,10 @@
       {
         "name": "TypeOperation",
         "values": "{ENTREE,SORTIE}"
+      },
+      {
+        "name": "EtatDonneeTechnique",
+        "values": "{INCONNU,A_VERIFIER,DOCUMENTE,CONTRADICTOIRE,NON_APPLICABLE}"
       }
     ],
     "checkRestoreDefinitions": {

@@ -16,7 +16,12 @@ export class AttributService {
 
   async findAll() {
     return await this.db.attribut.findMany({
-      include: { produit: true, valeurs: true },
+      include: {
+        produit: {
+          select: { id: true, nomProduit: true, code: true, codeFamille: true },
+        },
+        valeurs: true,
+      },
     });
   }
 
@@ -30,7 +35,12 @@ export class AttributService {
   async findOne(id: string) {
     const attribut = await this.db.attribut.findUnique({
       where: { id },
-      include: { produit: true, valeurs: true },
+      include: {
+        produit: {
+          select: { id: true, nomProduit: true, code: true, codeFamille: true },
+        },
+        valeurs: true,
+      },
     });
     if (!attribut) {
       throw new NotFoundException(`Attribut avec l'id ${id} non trouvé`);

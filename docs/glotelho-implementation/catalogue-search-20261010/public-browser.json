@@ -1,0 +1,32 @@
+{
+  "date": "2026-10-10T20:05:27.752Z",
+  "checks": [
+    "Deployed public service: accented suggestions, keyboard product destination, catalogue and overflow 390",
+    "Deployed public service: accented suggestions, keyboard product destination, catalogue and overflow 1440"
+  ],
+  "errors": [],
+  "mutations": [],
+  "requests": [
+    {
+      "width": 390,
+      "search": "câble HDMI",
+      "suggestions": true
+    },
+    {
+      "width": 390,
+      "search": "câble HDMI",
+      "suggestions": false
+    },
+    {
+      "width": 1440,
+      "search": "câble HDMI",
+      "suggestions": true
+    },
+    {
+      "width": 1440,
+      "search": "câble HDMI",
+      "suggestions": false
+    }
+  ],
+  "limits": "Deployed public UI and API, GET only"
+}
