@@ -35,3 +35,7 @@ Les preuves commerciales locales sont datées dans RECETTE-TRANSVERSALE-L8.md ; 
 GUIDE-TRAITER-DEVIS.md, GUIDE-SUIVI-INVITE.md, GUIDE-INCOMPATIBILITES.md, AVIS.md et LECTURE-INDICATEURS.md décrivent les gestes et limites. Les phrases historiques « local uniquement » ou « publication non autorisée » y décrivent leur date de rédaction ; l’activation d’un fournisseur ou d’une collecte reste distincte du déploiement du code.
 
 Aucun pourcentage global renouvelé : un chiffre unique masquerait les validations manquantes. Le présent audit ne refait pas tous les tests ni ne prouve la clôture de chaque exigence ; il identifie les preuves actuelles et les gates encore ouverts.
+
+## Actualisation du 10 octobre
+
+Les quatre gates publics ci-dessus ont été relus : état inchangé, API/base/stockage OK, transports invités et collecteur désactivés, aucun projet publié. Le travail L8 a comparé un préchargement conditionnel de routes au build V3 actuel : gain catalogue faible, accueil légèrement plus lent, budget LCP toujours non atteint. Le candidat a été retiré et n'est pas déployé. [Mesures, limites et décision](performance-20261010/README.md). Le rendu public initial et le temps d'exécution restent la prochaine cible technique ; aucun lot n'est clôturé par cette expérience.

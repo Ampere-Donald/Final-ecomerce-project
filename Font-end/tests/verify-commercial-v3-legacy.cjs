@@ -3,8 +3,8 @@
 const { chromium } = require('C:/Users/pc/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright');
 const { expect } = require('C:/Users/pc/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright/test');
 const assert=require('node:assert/strict'),fs=require('node:fs');
-const base='http://127.0.0.1:5199';
-const output='C:/Users/pc/Documents/Newoteg/output/implementation-work/commercial-v3/legacy';
+const base=process.env.NEWOTEG_TEST_URL||'http://127.0.0.1:5199';
+const output=process.env.NEWOTEG_TEST_OUTPUT||'C:/Users/pc/Documents/Newoteg/output/implementation-work/commercial-v3/legacy';
 (async()=>{
  fs.mkdirSync(output,{recursive:true});
  const browser=await chromium.launch({headless:true,executablePath:'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe'});

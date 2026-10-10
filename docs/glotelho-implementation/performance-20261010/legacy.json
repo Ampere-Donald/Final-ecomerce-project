@@ -1,0 +1,6 @@
+{
+  "legacyBundle": true,
+  "nativeTouchScroll": true,
+  "errors": [],
+  "limits": "Modern Edge executing legacy JavaScript with mobile viewport/touch; not a physical Android device"
+}

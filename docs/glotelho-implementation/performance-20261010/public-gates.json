@@ -1,0 +1,28 @@
+{
+  "checkedAt": "2026-10-10T07:47:43.3848589Z",
+  "writes": 0,
+  "health": {
+    "status": "ok",
+    "timestamp": "2026-10-10T07:47:45.483Z",
+    "checks": {
+      "api": "ok",
+      "database": "ok",
+      "storage": "ok"
+    }
+  },
+  "guestChannels": {
+    "email": false,
+    "sms": false
+  },
+  "pilotProjects": {
+    "data": [],
+    "meta": {
+      "total": 0,
+      "page": 1,
+      "lastPage": 1
+    }
+  },
+  "journeyCollector": {
+    "actif": false
+  }
+}
