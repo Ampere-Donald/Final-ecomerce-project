@@ -12,6 +12,7 @@ import { join, basename } from 'path';
 import { addSellableStock } from 'src/ticket-vente/ticket-stock.util';
 import { cataloguePricing, validateCataloguePromotion } from '../pricing/catalogue-price';
 import { publicCatalogue, publicPriceMetadata } from './public-catalogue';
+import { documentedSearchValuesSql } from './documented-search';
 import {
   normalizeSalesSearch,
   normalizedSearchSql,
@@ -112,10 +113,16 @@ export class ProduitService {
           ${normalizedSearchSql('p.code')} AS code,
           ${normalizedSearchSql('c.nom')} AS category
         ) AS n
+        CROSS JOIN LATERAL (SELECT
+          coalesce(bool_or(documented.cle_technique = 'REFERENCE_FABRICANT'), FALSE) AS reference_exact,
+          coalesce(bool_or(documented.cle_technique = 'ALIAS_RECHERCHE'), FALSE) AS alias_exact
+          FROM (${documentedSearchValuesSql}) AS documented
+          WHERE ${normalizedSearchSql('documented.valeur')} = $1::text
+        ) AS technical
         WHERE ($2::text IS NULL OR p.id_categorie = $2::text)
           AND p.est_actif = TRUE
           AND ($3::boolean = FALSE OR p.quantite_stock > 0)
-          AND NOT EXISTS (
+          AND (technical.reference_exact OR technical.alias_exact OR NOT EXISTS (
             SELECT 1
             FROM unnest(regexp_split_to_array(lower(trim($1::text)), '\\s+')) AS search_term(term)
             WHERE length(search_term.term) >= 2
@@ -137,13 +144,15 @@ export class ProduitService {
                 ) >= 0.52
               )
             )
-          )
+          ))
         ORDER BY
           CASE
             WHEN n.code = $1::text THEN 0
-            WHEN n.name = $1::text THEN 1
-            WHEN n.name LIKE $1::text || '%' THEN 2
-            ELSE 3
+            WHEN technical.reference_exact THEN 1
+            WHEN n.name = $1::text THEN 2
+            WHEN technical.alias_exact THEN 3
+            WHEN n.name LIKE $1::text || '%' THEN 4
+            ELSE 5
           END,
           GREATEST(
             similarity(n.name, $1::text),

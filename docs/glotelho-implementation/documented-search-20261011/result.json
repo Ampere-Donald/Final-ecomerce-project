@@ -1,0 +1,23 @@
+{
+  "date": "2026-10-11T18:03:44.009Z",
+  "checks": [
+    "Owned synthetic baseline dump restores exactly",
+    "Exact additive migration preserves source rows and creates no validation in original/restored fixtures",
+    "Migrated/restored structure matches the candidate Prisma schema",
+    "Actual admin JWT/roles protect edits and private provenance; anonymous reads remain unverified",
+    "DTO/review refusals cannot stamp a review or create a record",
+    "Concurrent real PostgreSQL writes have one winner; reviewed public source hides reviewer identity and cost",
+    "Public attribute endpoints exclude internal product fields",
+    "Real legacy value/name edits invalidate review without deleting the original proof",
+    "Product identity/version changes also invalidate the review",
+    "Value deletion cascades its optional documentation",
+    "Real paginated/suggestion SQL ranks internal code, documented reference, exact name and alias; suffixes and filters preserved",
+    "Unknown, draft, contradictory, unstamped and ordinary values are excluded from both search paths",
+    "Value, attribute and product edits invalidate references; clearing the key withdraws an alias immediately",
+    "Documented identity never bypasses stock or archived-product filters",
+    "Actual HTTP/JWT permits explicit admin dictionary keys, rejects unknown keys and permits clearing without backfill",
+    "Release contract retains historical definitions and adds only rehearsed table/enum"
+  ],
+  "status": "passed",
+  "ownedDatabasesRemoved": true
+}

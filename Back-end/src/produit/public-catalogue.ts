@@ -1,6 +1,7 @@
 import { BadRequestException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { cataloguePriceSql } from '../pricing/catalogue-price.sql';
+import { documentedSearchMatch } from './documented-search';
 import {
   normalizeSalesSearch,
   normalizedSearchSql,
@@ -88,7 +89,7 @@ export async function publicCatalogue(
                 Prisma.sql`${Prisma.raw(normalizedSearchSql(field))} LIKE ${pattern}`,
             ),
             ' OR ',
-          )})`,
+          )} OR ${documentedSearchMatch(normalized)})`,
         );
       }
     }
@@ -105,9 +106,22 @@ export async function publicCatalogue(
     ['name_asc', Prisma.sql`e.name ASC, e.id ASC`],
     ['name_desc', Prisma.sql`e.name DESC, e.id ASC`],
   ]);
+  const normalizedQuery = normalizeSalesSearch(
+    String(params.search || '')
+      .trim()
+      .slice(0, 120),
+  );
+  const searchRank = normalizedQuery
+    ? Prisma.sql`CASE
+    WHEN ${Prisma.raw(normalizedSearchSql('p.code'))} = ${normalizedQuery} THEN 0
+    WHEN ${documentedSearchMatch(normalizedQuery, 'REFERENCE_FABRICANT')} THEN 1
+    WHEN ${Prisma.raw(normalizedSearchSql('p.nom_produit'))} = ${normalizedQuery} THEN 2
+    WHEN ${documentedSearchMatch(normalizedQuery, 'ALIAS_RECHERCHE')} THEN 3
+    ELSE 4 END`
+    : Prisma.sql`4`;
   const relevance = candidateIds?.length
     ? Prisma.sql`array_position(ARRAY[${Prisma.join(candidateIds)}]::text[], e.id) ASC, e.id ASC`
-    : Prisma.sql`e.added DESC, e.id ASC`;
+    : Prisma.sql`e.search_rank ASC, e.added DESC, e.id ASC`;
   const order = orders.get(params.sort || '') || relevance;
 
   return await db.$transaction(
@@ -120,6 +134,7 @@ export async function publicCatalogue(
         GROUP BY l.produit_id
       ), priced AS (
         SELECT p.id, p.nom_produit AS name, p.date_ajout AS added,
+          ${searchRank} AS search_rank,
           ${cataloguePriceSql(now)} AS price,
           greatest(0, p.quantite_stock - coalesce(r.quantity, 0)) AS available
         FROM produit p JOIN categorie c ON c.id = p.id_categorie

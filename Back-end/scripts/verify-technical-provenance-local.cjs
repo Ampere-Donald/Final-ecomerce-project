@@ -39,7 +39,7 @@ async function connect(name){const u=new URL(url);u.pathname='/'+name;const c=ne
   const restored=await connect(names[1]);
   run(pg+'psql.exe',['--host=127.0.0.1','--port=55439','--username=quote_test','--set=ON_ERROR_STOP=1','--file='+dump,names[1]]);
   assert.deepEqual((await restored.query('SELECT * FROM valeur_attribut ORDER BY id')).rows,before);ok('Owned synthetic baseline dump restores exactly');
-  const migration=fs.readFileSync(path.join(root,'prisma/migrations/20261010210000_technical_provenance/migration.sql'),'utf8');
+  const migration=['20261010210000_technical_provenance','20261011090000_documented_search_keys'].map(name=>fs.readFileSync(path.join(root,'prisma/migrations',name,'migration.sql'),'utf8')).join('\n');
   for(const target of [c,restored]){await target.query('BEGIN');await target.query(migration);await target.query('COMMIT');
    assert.deepEqual((await target.query('SELECT * FROM valeur_attribut ORDER BY id')).rows,before);
    assert.equal((await target.query('SELECT count(*)::int AS n FROM documentation_valeur')).rows[0].n,0)}
@@ -117,12 +117,14 @@ async function connect(name){const u=new URL(url);u.pathname='/'+name;const c=ne
   await db.produit.update({where:{id:product},data:{marque:'Another fixture manufacturer',version:{increment:1}}});
   assert.deepEqual((await request('GET',endpoint)).data,{etat:'A_VERIFIER',obsolete:true});ok('Product identity/version changes also invalidate the review');
   await db.valeurAttribut.delete({where:{id:value}});assert.equal(await db.documentationValeur.count(),0);ok('Value deletion cascades its optional documentation');
-  // Merge only the newly rehearsed table/enum into the reviewed release contract.
+  await c.query('CREATE EXTENSION IF NOT EXISTS pg_trgm');
+  await require('./verify-documented-search.cjs')({db,root,request,tokens,ok});
+  // Merge only the newly rehearsed structures into the reviewed release contract.
   if(process.argv.includes('--update-contract')){
    const file=path.join(__dirname,'release-schema.json'),contract=JSON.parse(fs.readFileSync(file,'utf8'));
    contract.sources=sourceIdentity();
    for(const kind of ['columns','constraints','indexes','enums']){
-    const isNew=row=>kind==='enums'?row.name==='EtatDonneeTechnique':row.table_name==='documentation_valeur';
+    const isNew=row=>kind==='enums'?['EtatDonneeTechnique','CleAttributTechnique'].includes(row.name):row.table_name==='documentation_valeur'||(row.table_name==='attribut'&&(row.column_name==='cle_technique'||row.name==='attribut_id_produit_cle_technique_idx'));
     contract.structure[kind]=[...contract.structure[kind].filter(row=>!isNew(row)),...targetStructure[kind].filter(isNew)];
    }
    fs.writeFileSync(file,JSON.stringify(contract,null,2)+'\n');ok('Release contract retains historical definitions and adds only rehearsed table/enum');

@@ -3,12 +3,12 @@ import { beforeEach, expect, it, vi } from 'vitest';
 import { TechnicalDocumentation } from './TechnicalDocumentation';
 import { Attributs } from './Attributs';
 
-const mocks = vi.hoisted(() => ({ read: vi.fn(), save: vi.fn(), review: vi.fn(), attributes: vi.fn(), values: vi.fn(), create: vi.fn(), products: vi.fn(), admin: { role: 'ADMIN' } }));
+const mocks = vi.hoisted(() => ({ read: vi.fn(), save: vi.fn(), review: vi.fn(), attributes: vi.fn(), values: vi.fn(), create: vi.fn(), update: vi.fn(), products: vi.fn(), admin: { role: 'ADMIN' } }));
 vi.mock('../services/technicalDocumentation', async () => {
   const actual = await vi.importActual('../services/technicalDocumentation');
   return { ...actual, technicalDocumentationApi: { read: mocks.read, save: mocks.save, review: mocks.review } };
 });
-vi.mock('../services/api', () => ({ default: {}, getApiErrorMessage: (_: unknown, fallback: string) => fallback, attributApi: { getAll: mocks.attributes, create: mocks.create }, valeurAttributApi: { getAll: mocks.values }, produitApi: { list: mocks.products } }));
+vi.mock('../services/api', () => ({ default: {}, getApiErrorMessage: (_: unknown, fallback: string) => fallback, attributApi: { getAll: mocks.attributes, create: mocks.create, update: mocks.update }, valeurAttributApi: { getAll: mocks.values }, produitApi: { list: mocks.products } }));
 vi.mock('../context/AdminAuthContext', () => ({ useAdminAuth: () => ({ admin: mocks.admin }) }));
 const context = { valeur: '0', attribut: 'Résistance', valeurVersion: 3, attributVersion: 4, produitVersion: 5, documentation: null, effective: { etat: 'A_VERIFIER', obsolete: false } };
 beforeEach(() => { vi.clearAllMocks(); mocks.admin.role = 'ADMIN'; mocks.read.mockResolvedValue(context); mocks.save.mockResolvedValue({}); mocks.review.mockResolvedValue({}); mocks.attributes.mockResolvedValue([{ id: 'a', nomAttribut: 'Résistance', produitId: 'p', typeAttribut: 'TEXTE', produit: { id: 'p', nomProduit: 'Pièce recette', code: 'DEMO' } }]); mocks.values.mockResolvedValue([{ id: 'v', attributId: 'a', valeur: '0' }]); mocks.products.mockResolvedValue({ data: [{ id: 'p', nomProduit: 'Pièce recette', code: 'DEMO' }] }); });
@@ -55,5 +55,24 @@ it('Creates an attribute using a real selected product and the backend field nam
   render(<Attributs />); await screen.findByText('Pièce recette — DEMO'); fireEvent.click(screen.getByRole('button', { name: 'Ajouter un attribut' }));
   fireEvent.change(screen.getByLabelText('Nom de l’attribut'), { target: { value: 'Tension' } }); fireEvent.change(screen.getByLabelText('Chercher le produit'), { target: { value: 'Pièce' } });
   await screen.findByRole('option', { name: 'Pièce recette — DEMO' }); fireEvent.change(screen.getByLabelText('Produit associé'), { target: { value: 'p' } }); fireEvent.click(screen.getByRole('button', { name: 'Enregistrer' }));
-  await waitFor(() => expect(mocks.create).toHaveBeenCalledWith({ nomAttribut: 'Tension', produitId: 'p', typeAttribut: 'TEXTE', obligatoire: false }));
+  await waitFor(() => expect(mocks.create).toHaveBeenCalledWith({ nomAttribut: 'Tension', produitId: 'p', typeAttribut: 'TEXTE', cleTechnique: null, obligatoire: false }));
+});
+
+it('Requires an explicit search usage and explains that an alias is not an equivalent', async () => {
+  render(<Attributs />); await screen.findByText('Pièce recette — DEMO'); fireEvent.click(screen.getByRole('button', { name: 'Modifier l’attribut' }));
+  const usage = screen.getByLabelText('Usage dans la recherche');
+  expect((usage as HTMLSelectElement).value).toBe('');
+  expect(screen.getByText(/Un alias facilite la recherche/)).toBeTruthy();
+  fireEvent.change(usage, { target: { value: 'ALIAS_RECHERCHE' } });
+  expect((usage as HTMLSelectElement).value).toBe('ALIAS_RECHERCHE');
+  fireEvent.click(screen.getByRole('button', { name: 'Enregistrer' }));
+  await waitFor(() => expect(mocks.update).toHaveBeenCalledWith('a', expect.objectContaining({ cleTechnique: 'ALIAS_RECHERCHE' })));
+});
+
+it('Clears an existing reference key explicitly rather than omitting it from the update', async () => {
+  mocks.attributes.mockResolvedValue([{ id: 'a', nomAttribut: 'Référence', produitId: 'p', typeAttribut: 'TEXTE', cleTechnique: 'REFERENCE_FABRICANT', produit: { id: 'p', nomProduit: 'Pièce recette', code: 'DEMO' } }]);
+  render(<Attributs />); await screen.findByText('Pièce recette — DEMO'); fireEvent.click(screen.getByRole('button', { name: 'Modifier l’attribut' }));
+  const usage = screen.getByLabelText('Usage dans la recherche'); expect((usage as HTMLSelectElement).value).toBe('REFERENCE_FABRICANT');
+  fireEvent.change(usage, { target: { value: '' } }); fireEvent.click(screen.getByRole('button', { name: 'Enregistrer' }));
+  await waitFor(() => expect(mocks.update).toHaveBeenCalledWith('a', expect.objectContaining({ cleTechnique: null })));
 });

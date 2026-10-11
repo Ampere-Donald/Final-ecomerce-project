@@ -1,7 +1,7 @@
 {
   "version": 1,
   "sources": {
-    "schemaSha256": "2c87e536b68e2f4fe4d6feaa0678779fb1cd8579b6582ab42afd419e5273726b",
+    "schemaSha256": "5a7ecd5b42a224b49cd7f8a8473c3d132d81ba9b6945439ab461d0e98ed72979",
     "migrations": [
       {
         "name": "20260303155632_init",
@@ -242,6 +242,10 @@
       {
         "name": "20261010210000_technical_provenance",
         "sha256": "e6042416c06fb7dabfdb568823734c3add4be84919a96fbab899a91f1c205934"
+      },
+      {
+        "name": "20261011090000_documented_search_keys",
+        "sha256": "86ec76e7f3115ecefaf6c7f04409ce57d9a14c73333e528836e3645813709c48"
       }
     ]
   },
@@ -9692,6 +9696,18 @@
         "datetime_precision": null
       },
       {
+        "table_name": "attribut",
+        "column_name": "cle_technique",
+        "type": "CleAttributTechnique",
+        "type_schema": "public",
+        "is_nullable": "YES",
+        "column_default": null,
+        "character_maximum_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "datetime_precision": null
+      },
+      {
         "table_name": "documentation_valeur",
         "column_name": "attribut_version",
         "type": "int4",
@@ -12588,6 +12604,13 @@
         "ready": true
       },
       {
+        "table_name": "attribut",
+        "name": "attribut_id_produit_cle_technique_idx",
+        "definition": "CREATE INDEX attribut_id_produit_cle_technique_idx ON public.attribut USING btree (id_produit, cle_technique)",
+        "valid": true,
+        "ready": true
+      },
+      {
         "table_name": "documentation_valeur",
         "name": "documentation_valeur_pkey",
         "definition": "CREATE UNIQUE INDEX documentation_valeur_pkey ON public.documentation_valeur USING btree (valeur_id)",
@@ -12739,6 +12762,10 @@
       {
         "name": "TypeOperation",
         "values": "{ENTREE,SORTIE}"
+      },
+      {
+        "name": "CleAttributTechnique",
+        "values": "{REFERENCE_FABRICANT,ALIAS_RECHERCHE}"
       },
       {
         "name": "EtatDonneeTechnique",

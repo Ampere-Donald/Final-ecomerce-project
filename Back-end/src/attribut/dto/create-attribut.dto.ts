@@ -6,7 +6,7 @@ import {
   IsEnum,
   MaxLength,
 } from 'class-validator';
-import { TypeAttribut } from '@prisma/client';
+import { CleAttributTechnique, TypeAttribut } from '@prisma/client';
 
 export class CreateAttributDto {
   @IsUUID()
@@ -15,6 +15,10 @@ export class CreateAttributDto {
   @IsString()
   @MaxLength(100)
   nomAttribut: string;
+
+  @IsOptional()
+  @IsEnum(CleAttributTechnique)
+  cleTechnique?: CleAttributTechnique | null;
 
   @IsEnum(TypeAttribut)
   typeAttribut: TypeAttribut;

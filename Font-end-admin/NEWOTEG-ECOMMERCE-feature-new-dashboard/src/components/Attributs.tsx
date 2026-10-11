@@ -4,9 +4,10 @@ import { useAdminAuth } from '../context/AdminAuthContext';
 import { TechnicalDocumentation } from './TechnicalDocumentation';
 
 type Product = { id: string; nomProduit: string; code?: string };
-type Attribute = { id: string; nomAttribut: string; produitId: string; typeAttribut: 'TEXTE' | 'NOMBRE' | 'LISTE'; obligatoire?: boolean; produit?: Product };
+type Attribute = { id: string; nomAttribut: string; produitId: string; typeAttribut: 'TEXTE' | 'NOMBRE' | 'LISTE'; cleTechnique?: 'REFERENCE_FABRICANT' | 'ALIAS_RECHERCHE' | null; obligatoire?: boolean; produit?: Product };
 type Value = { id: string; attributId: string; valeur: string };
-const emptyAttribute = { nomAttribut: '', produitId: '', typeAttribut: 'TEXTE' as Attribute['typeAttribut'], obligatoire: false };
+const emptyAttribute = { nomAttribut: '', produitId: '', typeAttribut: 'TEXTE' as Attribute['typeAttribut'], cleTechnique: '' as NonNullable<Attribute['cleTechnique']> | '', obligatoire: false };
+const technicalLabels = { REFERENCE_FABRICANT: 'Référence fabricant', ALIAS_RECHERCHE: 'Alias de recherche' };
 const fieldClass = 'w-full border border-slate-300 rounded px-3 py-2 bg-white focus:outline-2 focus:outline-primary';
 
 export function Attributs() {
@@ -53,7 +54,7 @@ export function Attributs() {
   const closeEditors = () => { setAttributeEditor(null); setValueEditor(null); setSourceId(null); setError(''); setMessage(''); };
   const editAttribute = (a?: Attribute) => {
     closeEditors(); setAttributeEditor(a?.id || 'new'); setSelectedProduct(a?.produit || null); setProductSearch('');
-    setAttributeForm(a ? { nomAttribut: a.nomAttribut, produitId: a.produitId, typeAttribut: a.typeAttribut, obligatoire: Boolean(a.obligatoire) } : emptyAttribute);
+    setAttributeForm(a ? { nomAttribut: a.nomAttribut, produitId: a.produitId, typeAttribut: a.typeAttribut, cleTechnique: a.cleTechnique || '', obligatoire: Boolean(a.obligatoire) } : emptyAttribute);
   };
   const editValue = (v?: Value, a?: Attribute) => {
     closeEditors(); setValueEditor(v?.id || 'new'); setValueForm({ attributId: v?.attributId || a?.id || '', valeur: v?.valeur || '' });
@@ -63,7 +64,7 @@ export function Attributs() {
     setBusy(true); setError(''); setMessage('');
     try {
       if (attributeEditor) {
-        const body = { ...attributeForm, nomAttribut: attributeForm.nomAttribut.trim() };
+        const body = { ...attributeForm, nomAttribut: attributeForm.nomAttribut.trim(), cleTechnique: attributeForm.cleTechnique || null };
         if (attributeEditor === 'new') await attributApi.create(body); else await attributApi.update(attributeEditor, body);
       } else if (valueEditor) {
         const body = { ...valueForm, valeur: valueForm.valeur.trim() };
@@ -91,6 +92,8 @@ export function Attributs() {
       <form onSubmit={submit}><fieldset disabled={busy} className="space-y-4">
         {attributeEditor ? <>
           <label className="block" htmlFor="attribute-name">Nom de l’attribut<input id="attribute-name" required maxLength={100} value={attributeForm.nomAttribut} onChange={e => setAttributeForm({ ...attributeForm, nomAttribut: e.target.value })} className={fieldClass} /></label>
+          <label className="block" htmlFor="attribute-key">Usage dans la recherche<select id="attribute-key" value={attributeForm.cleTechnique} onChange={e => setAttributeForm({ ...attributeForm, cleTechnique: e.target.value as typeof attributeForm.cleTechnique })} className={fieldClass} aria-describedby="attribute-key-help"><option value="">Caractéristique ordinaire</option><option value="REFERENCE_FABRICANT">Référence fabricant</option><option value="ALIAS_RECHERCHE">Alias de recherche</option></select></label>
+          <p id="attribute-key-help" className="text-sm text-slate-600">Seules les valeurs documentées et relues servent de référence ou d’alias. Conservez la référence complète et ses suffixes, avec une valeur par alias. Un alias facilite la recherche ; il ne prouve pas une équivalence. Modifier cet usage exige une nouvelle relecture.</p>
           <label className="block" htmlFor="attribute-product-search">Chercher le produit<input id="attribute-product-search" type="search" autoComplete="off" value={productSearch} onChange={e => setProductSearch(e.target.value)} className={fieldClass} /></label>
           <p className="text-sm text-slate-600">Saisissez au moins deux caractères, puis choisissez un produit.</p>
           {productError && <p role="alert">{productError}</p>}
@@ -113,6 +116,7 @@ export function Attributs() {
     {loading ? <p role="status">Chargement des attributs…</p> : !filtered.length ? <p>Aucun attribut. {canEdit ? 'Ajoutez une caractéristique à un produit.' : 'Essayez un autre filtre.'}</p> : <div className="space-y-4">
       {filtered.map(a => <section key={a.id} className="border border-slate-200 bg-white rounded-lg p-4">
         <div className="flex flex-wrap justify-between gap-3"><div><h2 className="font-semibold">{a.nomAttribut}</h2><p className="text-sm text-slate-600">{a.produit?.nomProduit || 'Produit sans libellé'}{a.produit?.code ? ` — ${a.produit.code}` : ''}</p></div>{canEdit && <div className="flex flex-wrap gap-3 text-sm"><button type="button" disabled={busy} onClick={() => editAttribute(a)} className="text-primary underline">Modifier l’attribut</button><button type="button" disabled={busy} onClick={() => editValue(undefined, a)} className="text-primary underline">Ajouter une valeur</button><button type="button" disabled={busy} onClick={() => void remove(a.id, 'attribute')} className="text-red-800 underline">Supprimer l’attribut</button></div>}</div>
+        {a.cleTechnique && <p className="text-sm mt-2">Recherche : {technicalLabels[a.cleTechnique]}</p>}
         <ul className="mt-3 divide-y divide-slate-100">{values.filter(v => v.attributId === a.id).map(v => <li key={v.id} className="py-3 flex flex-wrap justify-between items-start gap-3"><span className="break-words">{v.valeur}</span>{canEdit && <div className="flex flex-wrap gap-3 text-sm"><button type="button" disabled={busy} onClick={e => { closeEditors(); sourceTrigger.current = e.currentTarget; setSourceId(v.id); }} className="text-primary underline" aria-label={`Source de ${a.nomAttribut} : ${v.valeur}`}>Source et relecture</button><button type="button" disabled={busy} onClick={() => editValue(v)} className="text-primary underline">Modifier la valeur</button><button type="button" disabled={busy} onClick={() => void remove(v.id, 'value')} className="text-red-800 underline">Supprimer la valeur</button></div>}</li>)}</ul>
         {!values.some(v => v.attributId === a.id) && <p className="text-sm text-slate-600 mt-3">Aucune valeur renseignée.</p>}
         {canEdit && sourceId && values.some(v => v.id === sourceId && v.attributId === a.id) && <TechnicalDocumentation key={sourceId} valueId={sourceId} onClose={() => { setSourceId(null); sourceTrigger.current?.focus(); }} />}

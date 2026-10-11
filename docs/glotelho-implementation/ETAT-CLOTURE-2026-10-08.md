@@ -87,3 +87,7 @@ Sauvegarde cohérente réelle de PostgreSQL Railway 18.6 effectuée en lecture s
 ## Images de livraison — défaut de dépendance corrigé le 11 octobre
 
 Le garde de migrations importait un fichier absent des deux images optionnelles catalogue/préproduction. Deux tests de chargement reproduisent MODULE_NOT_FOUND avant correction ; inclusion et allowlists corrigées, treize tests locaux passent. La CI construit désormais la préproduction et charge les gardes des trois images candidates sans base/réseau. CI exacte 79fe5b6f verte : trois images réelles et leurs gardes passent, ainsi que les cinq jobs de la CI complète. Preuve image-startup.json ; aucun déploiement ni nouvelle exception à l'historique. [Portée](technical-provenance-20261010/README.md). Accès de gestion Railway, préproduction réelle et critères métier toujours ouverts.
+
+## Poursuite sans préproduction Railway — 11 octobre
+
+L’utilisateur demande de continuer sans cette étape : connexion et préproduction Railway sont différées. Administration des références fabricant/alias documentés et raccordement aux deux recherches catalogue réalisés, sans données inventées ni publication. Migration supplémentaire nullable et sans reprise automatique, répétée avec la précédente sur schéma historique/restauration synthétique. [Preuves et limites](documented-search-20261011/README.md). La répétition réelle précédente concernait une seule migration ; ne pas l’appliquer comme preuve à la nouvelle version. Objectif A–Z, validation des données et autres critères métier restent ouverts.

@@ -74,6 +74,7 @@ model Attribut {
   id           String           @id @default(uuid())
   produitId    String           @map("id_produit")
   nomAttribut  String           @map("nom_attribut") @db.VarChar(100)
+  cleTechnique CleAttributTechnique? @map("cle_technique")
   typeAttribut TypeAttribut     @map("type_attribut")
   obligatoire  Boolean          @default(false)
   version      Int              @default(1)
@@ -81,7 +82,14 @@ model Attribut {
   valeurs      ValeurAttribut[]
 
   @@unique([produitId, nomAttribut], name: "unique_attribut")
+  @@index([produitId, cleTechnique])
   @@map("attribut")
+}
+
+// Explicit dictionary keys, never inferred from a translated display label.
+enum CleAttributTechnique {
+  REFERENCE_FABRICANT
+  ALIAS_RECHERCHE
 }
 
 model ValeurAttribut {
