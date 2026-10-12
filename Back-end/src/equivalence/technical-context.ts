@@ -1,4 +1,5 @@
 import { publicDocumentation } from '../valeur-attribut/documentation-data';
+import { technicalDictionaryEntries } from '../attribut/technical-dictionary';
 
 // A reviewed characteristic is evidence about one article, never a verdict
 // about replacing another article. Always derive it from the current context.
@@ -20,7 +21,8 @@ export function reviewedTechnicalContext(product: any) {
           {
             nomAttribut: String(attribute.nomAttribut).slice(0, 100),
             valeur: String(value.valeur).slice(0, 100),
-            cleTechnique: ['REFERENCE_FABRICANT', 'ALIAS_RECHERCHE'].includes(
+            cleTechnique: Object.hasOwn(
+              technicalDictionaryEntries,
               attribute.cleTechnique,
             )
               ? attribute.cleTechnique

@@ -512,6 +512,7 @@ export const roleApi = {
 
 // Attributs
 export const attributApi = {
+  dictionary: (signal?: AbortSignal) => api.get('/attributs/dictionnaire', { signal }).then(res => res.data),
   getAll: () => api.get('/attributs').then(toArray),
   create: (data: any) => api.post('/attributs', data).then(res => res.data),
   update: (id: string, data: any) => api.patch(`/attributs/${id}`, data).then(res => res.data),

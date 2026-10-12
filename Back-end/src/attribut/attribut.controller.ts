@@ -16,10 +16,16 @@ import { UpdateAttributDto } from './dto/update-attribut.dto';
 import { AdminAuthGuard } from '../admin-auth/admin-auth.guard';
 import { RolesGuard } from '../admin-auth/roles.guard';
 import { Roles } from '../admin-auth/roles.decorator';
+import { technicalDictionary } from './technical-dictionary';
 
 @Controller('attributs')
 export class AttributController {
   constructor(private readonly attributService: AttributService) {}
+
+  @Get('dictionnaire')
+  dictionary() {
+    return technicalDictionary();
+  }
 
   @UseGuards(AdminAuthGuard, RolesGuard)
   @Roles('SUPER_ADMIN', 'ADMIN')

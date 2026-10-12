@@ -39,7 +39,7 @@ async function connect(name){const u=new URL(url);u.pathname='/'+name;const c=ne
   const restored=await connect(names[1]);
   run(pg+'psql.exe',['--host=127.0.0.1','--port=55439','--username=quote_test','--set=ON_ERROR_STOP=1','--file='+dump,names[1]]);
   assert.deepEqual((await restored.query('SELECT * FROM valeur_attribut ORDER BY id')).rows,before);ok('Owned synthetic baseline dump restores exactly');
-  const migration=['20261010210000_technical_provenance','20261011090000_documented_search_keys'].map(name=>fs.readFileSync(path.join(root,'prisma/migrations',name,'migration.sql'),'utf8')).join('\n');
+  const migration=['20261010210000_technical_provenance','20261011090000_documented_search_keys','20261012220000_technical_dictionary_keys'].map(name=>fs.readFileSync(path.join(root,'prisma/migrations',name,'migration.sql'),'utf8')).join('\n');
   for(const target of [c,restored]){await target.query('BEGIN');await target.query(migration);await target.query('COMMIT');
    assert.deepEqual((await target.query('SELECT * FROM valeur_attribut ORDER BY id')).rows,before);
    assert.equal((await target.query('SELECT count(*)::int AS n FROM documentation_valeur')).rows[0].n,0)}
@@ -121,6 +121,7 @@ async function connect(name){const u=new URL(url);u.pathname='/'+name;const c=ne
   await db.valeurAttribut.delete({where:{id:value}});assert.equal(await db.documentationValeur.count(),0);ok('Value deletion cascades its optional documentation');
   await c.query('CREATE EXTENSION IF NOT EXISTS pg_trgm');
   await require('./verify-documented-search.cjs')({db,root,request,tokens,ok,base,output});
+  await require('./verify-technical-dictionary.cjs')({db,root,request,tokens,ok,base,output});
   // Merge only the newly rehearsed structures into the reviewed release contract.
   if(process.argv.includes('--update-contract')){
    const file=path.join(__dirname,'release-schema.json'),contract=JSON.parse(fs.readFileSync(file,'utf8'));

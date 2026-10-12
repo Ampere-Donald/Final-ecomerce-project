@@ -3,15 +3,15 @@ import { beforeEach, expect, it, vi } from 'vitest';
 import { TechnicalDocumentation } from './TechnicalDocumentation';
 import { Attributs } from './Attributs';
 
-const mocks = vi.hoisted(() => ({ read: vi.fn(), save: vi.fn(), review: vi.fn(), attributes: vi.fn(), values: vi.fn(), create: vi.fn(), update: vi.fn(), products: vi.fn(), admin: { role: 'ADMIN' } }));
+const mocks = vi.hoisted(() => ({ read: vi.fn(), save: vi.fn(), review: vi.fn(), attributes: vi.fn(), values: vi.fn(), create: vi.fn(), update: vi.fn(), products: vi.fn(), dictionary: vi.fn(), admin: { role: 'ADMIN' } }));
 vi.mock('../services/technicalDocumentation', async () => {
   const actual = await vi.importActual('../services/technicalDocumentation');
   return { ...actual, technicalDocumentationApi: { read: mocks.read, save: mocks.save, review: mocks.review } };
 });
-vi.mock('../services/api', () => ({ default: {}, getApiErrorMessage: (_: unknown, fallback: string) => fallback, attributApi: { getAll: mocks.attributes, create: mocks.create, update: mocks.update }, valeurAttributApi: { getAll: mocks.values }, produitApi: { list: mocks.products } }));
+vi.mock('../services/api', () => ({ default: {}, getApiErrorMessage: (_: unknown, fallback: string) => fallback, attributApi: { getAll: mocks.attributes, create: mocks.create, update: mocks.update, dictionary: mocks.dictionary }, valeurAttributApi: { getAll: mocks.values }, produitApi: { list: mocks.products } }));
 vi.mock('../context/AdminAuthContext', () => ({ useAdminAuth: () => ({ admin: mocks.admin }) }));
 const context = { valeur: '0', attribut: 'Résistance', valeurVersion: 3, attributVersion: 4, produitVersion: 5, documentation: null, effective: { etat: 'A_VERIFIER', obsolete: false } };
-beforeEach(() => { vi.clearAllMocks(); mocks.admin.role = 'ADMIN'; mocks.read.mockResolvedValue(context); mocks.save.mockResolvedValue({}); mocks.review.mockResolvedValue({}); mocks.attributes.mockResolvedValue([{ id: 'a', nomAttribut: 'Résistance', produitId: 'p', typeAttribut: 'TEXTE', produit: { id: 'p', nomProduit: 'Pièce recette', code: 'DEMO' } }]); mocks.values.mockResolvedValue([{ id: 'v', attributId: 'a', valeur: '0' }]); mocks.products.mockResolvedValue({ data: [{ id: 'p', nomProduit: 'Pièce recette', code: 'DEMO' }] }); });
+beforeEach(() => { vi.clearAllMocks(); mocks.admin.role = 'ADMIN'; mocks.dictionary.mockResolvedValue({ version: 1, groups: [{ key: 'commun', fr: 'Commun', en: 'Common' }], entries: [{ key: 'REFERENCE_FABRICANT', group: 'commun', fr: 'Référence fabricant', en: 'Manufacturer reference' }, { key: 'ALIAS_RECHERCHE', group: 'commun', fr: 'Alias de recherche', en: 'Search alias' }, { key: 'BOITIER', group: 'commun', fr: 'Boîtier', en: 'Package' }] }); mocks.read.mockResolvedValue(context); mocks.save.mockResolvedValue({}); mocks.review.mockResolvedValue({}); mocks.attributes.mockResolvedValue([{ id: 'a', nomAttribut: 'Résistance', produitId: 'p', typeAttribut: 'TEXTE', produit: { id: 'p', nomProduit: 'Pièce recette', code: 'DEMO' } }]); mocks.values.mockResolvedValue([{ id: 'v', attributId: 'a', valeur: '0' }]); mocks.products.mockResolvedValue({ data: [{ id: 'p', nomProduit: 'Pièce recette', code: 'DEMO' }] }); });
 async function open() { render(<TechnicalDocumentation valueId="v" onClose={() => {}} />); await screen.findByLabelText('État du brouillon'); }
 function fillSource() { for (const [label, value] of [['Lien HTTPS vers la source', 'https://example.com/data.pdf'], ['Titre du document', 'Fiche recette'], ['Page, tableau ou section', 'Tableau 2'], ['Note de décision (publique)', 'Valeur vérifiée à 25 °C']]) fireEvent.change(screen.getByLabelText(label), { target: { value } }); }
 it('Does not review automatically and passes all version contexts on a draft save', async () => {
@@ -60,7 +60,7 @@ it('Creates an attribute using a real selected product and the backend field nam
 
 it('Requires an explicit search usage and explains that an alias is not an equivalent', async () => {
   render(<Attributs />); await screen.findByText('Pièce recette — DEMO'); fireEvent.click(screen.getByRole('button', { name: 'Modifier l’attribut' }));
-  const usage = screen.getByLabelText('Usage dans la recherche');
+  const usage = screen.getByLabelText('Clé du dictionnaire');
   expect((usage as HTMLSelectElement).value).toBe('');
   expect(screen.getByText(/Un alias facilite la recherche/)).toBeTruthy();
   fireEvent.change(usage, { target: { value: 'ALIAS_RECHERCHE' } });
@@ -72,7 +72,27 @@ it('Requires an explicit search usage and explains that an alias is not an equiv
 it('Clears an existing reference key explicitly rather than omitting it from the update', async () => {
   mocks.attributes.mockResolvedValue([{ id: 'a', nomAttribut: 'Référence', produitId: 'p', typeAttribut: 'TEXTE', cleTechnique: 'REFERENCE_FABRICANT', produit: { id: 'p', nomProduit: 'Pièce recette', code: 'DEMO' } }]);
   render(<Attributs />); await screen.findByText('Pièce recette — DEMO'); fireEvent.click(screen.getByRole('button', { name: 'Modifier l’attribut' }));
-  const usage = screen.getByLabelText('Usage dans la recherche'); expect((usage as HTMLSelectElement).value).toBe('REFERENCE_FABRICANT');
+  const usage = screen.getByLabelText('Clé du dictionnaire'); expect((usage as HTMLSelectElement).value).toBe('REFERENCE_FABRICANT');
   fireEvent.change(usage, { target: { value: '' } }); fireEvent.click(screen.getByRole('button', { name: 'Enregistrer' }));
   await waitFor(() => expect(mocks.update).toHaveBeenCalledWith('a', expect.objectContaining({ cleTechnique: null })));
+});
+
+it('Saves an explicit parameter key without renaming or reviewing the source value', async () => {
+  render(<Attributs />); await screen.findByText('Pièce recette — DEMO'); fireEvent.click(screen.getByRole('button', { name: 'Modifier l’attribut' }));
+  const key = screen.getByLabelText('Clé du dictionnaire'); await waitFor(() => expect(key.matches(':disabled')).toBe(false));
+  fireEvent.change(key, { target: { value: 'BOITIER' } }); fireEvent.click(screen.getByRole('button', { name: 'Enregistrer' }));
+  await waitFor(() => expect(mocks.update).toHaveBeenCalledWith('a', expect.objectContaining({ nomAttribut: 'Résistance', cleTechnique: 'BOITIER' })));
+  expect(mocks.review).not.toHaveBeenCalled();
+});
+
+it('Keeps the editor input while a failed dictionary load is retried', async () => {
+  mocks.dictionary.mockRejectedValueOnce(new Error('Offline'));
+  render(<Attributs />); await screen.findByRole('button', { name: 'Recharger le dictionnaire' });
+  fireEvent.click(screen.getByRole('button', { name: 'Modifier l’attribut' }));
+  fireEvent.change(screen.getByLabelText('Nom de l’attribut'), { target: { value: 'Saisie conservée' } });
+  expect(screen.getByLabelText('Clé du dictionnaire').matches(':disabled')).toBe(true);
+  fireEvent.click(screen.getByRole('button', { name: 'Enregistrer' })); expect(mocks.update).not.toHaveBeenCalled();
+  fireEvent.click(screen.getByRole('button', { name: 'Recharger le dictionnaire' }));
+  await waitFor(() => expect(screen.getByLabelText('Clé du dictionnaire').matches(':disabled')).toBe(false));
+  expect((screen.getByLabelText('Nom de l’attribut') as HTMLInputElement).value).toBe('Saisie conservée');
 });

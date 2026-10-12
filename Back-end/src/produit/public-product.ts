@@ -1,5 +1,6 @@
 import { cataloguePricing } from '../pricing/catalogue-price';
 import { publicDocumentation } from '../valeur-attribut/documentation-data';
+import { technicalDictionaryEntries } from '../attribut/technical-dictionary';
 
 /** Same projection for the public JSON API and the initial storefront HTML. */
 export function masquerCouts(p: any, now = new Date(), publicView = true): any {
@@ -8,6 +9,18 @@ export function masquerCouts(p: any, now = new Date(), publicView = true): any {
   if (Array.isArray(copie.attributs))
     copie.attributs = copie.attributs.map((a: any) => ({
       ...a,
+      ...(Object.hasOwn(technicalDictionaryEntries, a.cleTechnique)
+        ? {
+            libelleTechnique: {
+              fr: technicalDictionaryEntries[
+                a.cleTechnique as keyof typeof technicalDictionaryEntries
+              ].fr,
+              en: technicalDictionaryEntries[
+                a.cleTechnique as keyof typeof technicalDictionaryEntries
+              ].en,
+            },
+          }
+        : {}),
       valeurs: Array.isArray(a.valeurs)
         ? a.valeurs.map((v: any) => ({
             ...v,

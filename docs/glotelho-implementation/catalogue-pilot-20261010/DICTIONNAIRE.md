@@ -46,10 +46,14 @@ Toutes les caractéristiques normalisées, preuves et relectures du dossier sont
 
 ## Étapes de validation
 
-1. Accepter les références pilotes et désigner leur relecteur.
+Responsable de la validation technique désigné par le propriétaire le 12 octobre 2026 : **Mr Jude Fogueng, CEO et propriétaire de NEWOTEG**. Cette désignation concerne la relecture des fiches et les décisions de remplacement pour un usage défini. Elle ne constitue ni une acceptation des huit références proposées, ni une relecture déjà effectuée. Aucun compte, annotation ou verdict n’est créé en son nom.
+
+1. Faire accepter les références pilotes par Mr Jude Fogueng.
 2. Identifier fabricant, variante et document exact pour chaque article ; laisser inconnus les champs non établis.
 3. Renseigner valeurs sources, unités et conditions, puis documenter chaque normalisation justifiée.
 4. Relire un cas exact, un remplacement acceptable pour un usage défini, un candidat refusé avec motif et un cas sans candidat. Aucune substitution automatique.
 5. Répéter l'import et la comparaison en base isolée, contrôler les inconnus et contradictions ; publier seulement les valeurs relues.
 
 Ce dossier prépare L1/L3 ; il ne clôture ni ces lots ni la recette technique des équivalences.
+
+Le 12 octobre, le contrat logiciel évolue vers un dictionnaire de 45 clés explicites, regroupées en sept familles, et des libellés publics FR/EN. Les sources et les noms historiques restent conservés ; la sélection d’une clé ne renseigne aucune valeur et une modification impose une nouvelle relecture. Voir [la recette du dictionnaire](../technical-dictionary-20261012/README.md). Les champs obligatoires et les critères de substitution restent à confirmer par Mr Jude Fogueng.

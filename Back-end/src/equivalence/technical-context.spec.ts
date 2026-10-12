@@ -172,6 +172,14 @@ describe('Equivalence sources and application context', () => {
     expect(r.suggestions[0].compatibilite).toBe('inconnue');
     expect(r.suggestions[0].caracteristiques[0].valeur).toBe('BC547P');
   });
+  it('transmits a semantic parameter key without treating its value as a search alias', async () => {
+    const { service, p, gemini } = setup();
+    p.attributs[0].cleTechnique = 'BOITIER';
+    expect(reviewedTechnicalContext(p)[0].cleTechnique).toBe('BOITIER');
+    gemini.generateJson.mockRejectedValue(new Error('No provider'));
+    const result = await service.suggest({ query: 'BC547P' });
+    expect(result.suggestions).toEqual([]);
+  });
   it('bounds provider sources with complete JSON records without truncating the sources returned to the client', async () => {
     const { service, p, gemini } = setup();
     const attribute = p.attributs[0];

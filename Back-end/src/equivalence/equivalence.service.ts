@@ -330,7 +330,9 @@ export class EquivalenceService {
       imageUrl: p.imageUrl ?? null,
       caracteristiques,
       identitesDocumentees: caracteristiques
-        .filter((c) => c.cleTechnique)
+        .filter((c) =>
+          ['REFERENCE_FABRICANT', 'ALIAS_RECHERCHE'].includes(c.cleTechnique),
+        )
         .map((c) => c.valeur),
     };
   }
