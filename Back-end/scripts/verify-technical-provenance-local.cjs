@@ -39,7 +39,7 @@ async function connect(name){const u=new URL(url);u.pathname='/'+name;const c=ne
   const restored=await connect(names[1]);
   run(pg+'psql.exe',['--host=127.0.0.1','--port=55439','--username=quote_test','--set=ON_ERROR_STOP=1','--file='+dump,names[1]]);
   assert.deepEqual((await restored.query('SELECT * FROM valeur_attribut ORDER BY id')).rows,before);ok('Owned synthetic baseline dump restores exactly');
-  const migration=['20261010210000_technical_provenance','20261011090000_documented_search_keys','20261012220000_technical_dictionary_keys'].map(name=>fs.readFileSync(path.join(root,'prisma/migrations',name,'migration.sql'),'utf8')).join('\n');
+  const migration=['20261010210000_technical_provenance','20261011090000_documented_search_keys','20261012220000_technical_dictionary_keys','20261012230000_replacement_cases'].map(name=>fs.readFileSync(path.join(root,'prisma/migrations',name,'migration.sql'),'utf8')).join('\n');
   for(const target of [c,restored]){await target.query('BEGIN');await target.query(migration);await target.query('COMMIT');
    assert.deepEqual((await target.query('SELECT * FROM valeur_attribut ORDER BY id')).rows,before);
    assert.equal((await target.query('SELECT count(*)::int AS n FROM documentation_valeur')).rows[0].n,0)}
@@ -58,10 +58,11 @@ async function connect(name){const u=new URL(url);u.pathname='/'+name;const c=ne
   const {DocumentationValeurService}=load('valeur-attribut/documentation-valeur.service');
   const {AttributController}=load('attribut/attribut.controller'),{AttributService}=load('attribut/attribut.service');
   const {EquivalenceController}=load('equivalence/equivalence.controller'),{EquivalenceService}=load('equivalence/equivalence.service'),{GeminiClient}=load('equivalence/gemini.client');
+  const {ReplacementCaseController}=load('equivalence/replacement-case.controller'),{ReplacementCaseService}=load('equivalence/replacement-case.service');
   const secret=randomBytes(48).toString('hex');
-  const module=await Test.createTestingModule({imports:[PassportModule],controllers:[ValeurAttributController,AttributController,EquivalenceController],providers:[
+  const module=await Test.createTestingModule({imports:[PassportModule],controllers:[ValeurAttributController,AttributController,EquivalenceController,ReplacementCaseController],providers:[
    ValeurAttributService,DocumentationValeurService,AttributService,AdminJwtStrategy,
-   EquivalenceService,{provide:GeminiClient,useValue:{generateJson:async()=>{throw Error('Owned recipe without provider')}}},
+   EquivalenceService,ReplacementCaseService,{provide:GeminiClient,useValue:{generateJson:async()=>{throw Error('Owned recipe without provider')}}},
    {provide:DatabaseService,useValue:db},{provide:ConfigService,useValue:new ConfigService({JWT_SECRET:secret})}]}).compile();
   app=module.createNestApplication({logger:false});app.setGlobalPrefix('api');app.useGlobalPipes(new ValidationPipe({whitelist:true,transform:true}));await app.listen(0,'127.0.0.1');
   const base=await app.getUrl(),jwt=new JwtService({secret}),tokens={};
@@ -122,12 +123,13 @@ async function connect(name){const u=new URL(url);u.pathname='/'+name;const c=ne
   await c.query('CREATE EXTENSION IF NOT EXISTS pg_trgm');
   await require('./verify-documented-search.cjs')({db,root,request,tokens,ok,base,output});
   await require('./verify-technical-dictionary.cjs')({db,root,request,tokens,ok,base,output});
+  await require('./verify-replacement-cases.cjs')({db,root,request,tokens,ok});
   // Merge only the newly rehearsed structures into the reviewed release contract.
   if(process.argv.includes('--update-contract')){
    const file=path.join(__dirname,'release-schema.json'),contract=JSON.parse(fs.readFileSync(file,'utf8'));
    contract.sources=sourceIdentity();
    for(const kind of ['columns','constraints','indexes','enums']){
-    const isNew=row=>kind==='enums'?['EtatDonneeTechnique','CleAttributTechnique'].includes(row.name):row.table_name==='documentation_valeur'||(row.table_name==='attribut'&&(row.column_name==='cle_technique'||row.name==='attribut_id_produit_cle_technique_idx'));
+    const isNew=row=>kind==='enums'?['EtatDonneeTechnique','CleAttributTechnique','VerdictRemplacement'].includes(row.name):['documentation_valeur','cas_remplacement','relecture_remplacement'].includes(row.table_name)||(row.table_name==='attribut'&&(row.column_name==='cle_technique'||row.name==='attribut_id_produit_cle_technique_idx'));
     contract.structure[kind]=[...contract.structure[kind].filter(row=>!isNew(row)),...targetStructure[kind].filter(isNew)];
    }
    fs.writeFileSync(file,JSON.stringify(contract,null,2)+'\n');ok('Release contract retains historical definitions and adds only rehearsed table/enum');

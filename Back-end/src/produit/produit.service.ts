@@ -644,9 +644,14 @@ export class ProduitService {
 
   async remove(id: string, actor?: NotificationActor) {
     const produit = await this.findOne(id);
-    const result = await this.db.produit.delete({
-      where: { id },
-    });
+    let result;
+    try {
+      result = await this.db.produit.delete({ where: { id } });
+    } catch (error) {
+      if (error?.code === 'P2003')
+        throw new ConflictException('Ce produit est lié à un historique ou un cas technique. Désactivez-le pour le retirer du catalogue sans perdre cet historique.');
+      throw error;
+    }
 
     // Clean up images from Cloudinary
     if (produit.imageUrl) this.cloudinary.deleteByUrl(produit.imageUrl).catch(() => {});

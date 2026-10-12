@@ -52,6 +52,8 @@ model Produit {
   poids                Float?           @map("poids")
   volume               Float?           @map("volume")
   attributs            Attribut[]
+  remplacementsProposes CasRemplacement[] @relation("RemplacementCandidat")
+  remplacementsCibles CasRemplacement[] @relation("RemplacementCible")
   projetsLignes        ProjetLigne[]
   favoris              Favori[]
   lignesAchat          LigneAchat[]
@@ -179,6 +181,63 @@ model DocumentationValeur {
   valeur            ValeurAttribut @relation(fields: [valeurId], references: [id], onDelete: Cascade)
 
   @@map("documentation_valeur")
+}
+
+enum VerdictRemplacement {
+  DIRECT_DOCUMENTE
+  ADAPTATION_NECESSAIRE
+  REFUSE
+  A_CONFIRMER
+}
+
+// A human decision for an exact reference and declared application, independent
+// of model scores. No existing product receives a decision during migration.
+model CasRemplacement {
+  id             String                  @id @default(uuid())
+  cleCas         String                  @unique @map("cle_cas") @db.VarChar(64)
+  version        Int                     @default(1)
+  reference      String                  @db.VarChar(255)
+  referenceCle   String                  @map("reference_cle") @db.VarChar(255)
+  cibleId        String?                 @map("cible_id")
+  candidatId     String                  @map("candidat_id")
+  application    String                  @db.VarChar(500)
+  verdict        VerdictRemplacement
+  justification  String                  @db.VarChar(1500)
+  limites        String                  @db.VarChar(1500)
+  adaptations    String?                 @db.VarChar(1500)
+  sourceUrl      String                  @map("source_url") @db.VarChar(800)
+  sourceDocument String                  @map("source_document") @db.VarChar(200)
+  sourceRepere   String                  @map("source_repere") @db.VarChar(160)
+  sourceRevision String?                 @map("source_revision") @db.VarChar(100)
+  valeurIds      String[]                @map("valeur_ids")
+  reluVersion    Int?                    @map("relu_version")
+  reluParId      String?                 @map("relu_par_id")
+  reluLe         DateTime?               @map("relu_le")
+  empreinteRelue String?                 @map("empreinte_relue") @db.VarChar(64)
+  retire         Boolean                 @default(false)
+  createdAt      DateTime                @default(now()) @map("created_at")
+  updatedAt      DateTime                @updatedAt @map("updated_at")
+  candidat       Produit                 @relation("RemplacementCandidat", fields: [candidatId], references: [id], onDelete: Restrict)
+  cible          Produit?                @relation("RemplacementCible", fields: [cibleId], references: [id], onDelete: Restrict)
+  historique     RelectureRemplacement[]
+
+  @@index([referenceCle])
+  @@index([cibleId, candidatId])
+  @@map("cas_remplacement")
+}
+
+model RelectureRemplacement {
+  id         String          @id @default(uuid())
+  casId      String          @map("cas_id")
+  casVersion Int             @map("cas_version")
+  reluParId  String          @map("relu_par_id")
+  reluLe     DateTime        @default(now()) @map("relu_le")
+  empreinte  String          @db.VarChar(64)
+  preuve     Json
+  cas        CasRemplacement @relation(fields: [casId], references: [id], onDelete: Restrict)
+
+  @@unique([casId, casVersion])
+  @@map("relecture_remplacement")
 }
 
 model Fournisseur {
