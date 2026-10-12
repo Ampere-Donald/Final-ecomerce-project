@@ -25,6 +25,60 @@ import {
 export class ReplacementCaseService {
   constructor(private readonly db: DatabaseService) {}
 
+  async evidence(id: string, after?: string) {
+    return this.db.$transaction(
+      async (tx) => {
+        const produit = await tx.produit.findUnique({
+          where: { id },
+          select: {
+            id: true,
+            version: true,
+            nomProduit: true,
+            code: true,
+            estActif: true,
+          },
+        });
+        if (!produit) throw new NotFoundException('Pièce introuvable.');
+        const rows = await tx.valeurAttribut.findMany({
+          where: {
+            attribut: { produitId: id },
+            ...(after ? { id: { gt: after } } : {}),
+          },
+          orderBy: { id: 'asc' },
+          take: 101,
+          include: {
+            documentation: true,
+            attribut: {
+              select: {
+                id: true,
+                version: true,
+                produitId: true,
+                nomAttribut: true,
+                cleTechnique: true,
+              },
+            },
+          },
+        });
+        const page = rows.slice(0, 100);
+        return {
+          produit,
+          valeurs: page.map((v) => ({
+            id: v.id,
+            attribut: v.attribut,
+            valeur: v.valeur,
+            documentation: publicDocumentation(
+              v,
+              v.attribut.version,
+              produit.version,
+            ),
+          })),
+          next: rows.length > 100 ? page[page.length - 1].id : null,
+        };
+      },
+      { isolationLevel: Prisma.TransactionIsolationLevel.RepeatableRead },
+    );
+  }
+
   // Bounded, selected evidence: every chosen value must belong to the described
   // pair and carry a current review. The human still decides sufficiency.
   private async context(tx: Prisma.TransactionClient, cas: any) {

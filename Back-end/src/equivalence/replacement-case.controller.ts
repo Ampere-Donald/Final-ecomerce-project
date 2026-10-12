@@ -31,6 +31,17 @@ export class ReplacementCaseController {
     return this.service.evaluate(input);
   }
 
+  @Get('pieces/:id/preuves')
+  @UseGuards(AdminAuthGuard, RolesGuard)
+  @Roles('SUPER_ADMIN', 'ADMIN')
+  @Header('Cache-Control', 'private, no-store')
+  evidence(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Query('after', new ParseUUIDPipe({ optional: true })) after?: string,
+  ) {
+    return this.service.evidence(id, after);
+  }
+
   @Get()
   @UseGuards(AdminAuthGuard, RolesGuard)
   @Roles('SUPER_ADMIN', 'ADMIN')

@@ -2,7 +2,15 @@
 const assert = require('node:assert/strict'),
   path = require('node:path'),
   { randomUUID } = require('node:crypto');
-module.exports = async ({ db, root, request, tokens, ok }) => {
+module.exports = async ({
+  db,
+  root,
+  request,
+  tokens,
+  ok,
+  base: serverBase,
+  output,
+}) => {
   const [owner] = await db.$queryRawUnsafe(
     'SELECT current_database() AS name,host(inet_server_addr()) AS host,inet_server_port() AS port',
   );
@@ -76,6 +84,81 @@ module.exports = async ({ db, root, request, tokens, ok }) => {
   }
   const route = '/equivalence/cas',
     candidatId = products[0].id;
+  const evidenceRoute = route + '/pieces/' + candidatId + '/preuves';
+  assert.equal((await request('GET', evidenceRoute)).status, 401);
+  assert.equal(
+    (await request('GET', evidenceRoute, undefined, tokens.VENDEUR)).status,
+    403,
+  );
+  assert.equal(
+    (
+      await request(
+        'GET',
+        route + '/pieces/not-a-uuid/preuves',
+        undefined,
+        tokens.ADMIN,
+      )
+    ).status,
+    400,
+  );
+  assert.equal(
+    (
+      await request(
+        'GET',
+        evidenceRoute + '?after=not-a-uuid',
+        undefined,
+        tokens.ADMIN,
+      )
+    ).status,
+    400,
+  );
+  assert.equal(
+    (
+      await request(
+        'GET',
+        route + '/pieces/' + randomUUID() + '/preuves',
+        undefined,
+        tokens.ADMIN,
+      )
+    ).status,
+    404,
+  );
+  const extraIds = Array.from({ length: 101 }, () => randomUUID());
+  await db.valeurAttribut.createMany({
+    data: extraIds.map((id, index) => ({
+      id,
+      attributId: values[0].attributId,
+      valeur: 'Pagination fixture only ' + index,
+    })),
+  });
+  const page1 = await request('GET', evidenceRoute, undefined, tokens.ADMIN);
+  assert.equal(page1.cacheControl, 'private, no-store');
+  assert.equal(page1.data.valeurs.length, 100);
+  assert(page1.data.next);
+  const page2 = await request(
+    'GET',
+    evidenceRoute + '?after=' + page1.data.next,
+    undefined,
+    tokens.ADMIN,
+  );
+  assert.equal(page2.data.valeurs.length, 2);
+  assert.equal(page2.data.next, null);
+  assert.equal(
+    new Set([...page1.data.valeurs, ...page2.data.valeurs].map((v) => v.id))
+      .size,
+    102,
+  );
+  assert(
+    [...page1.data.valeurs, ...page2.data.valeurs].every(
+      (v) => v.attribut.produitId === candidatId,
+    ),
+  );
+  assert(!JSON.stringify(page1.data).includes('cmupActuel'));
+  assert(!JSON.stringify(page1.data).includes('reluParId'));
+  await db.valeurAttribut.deleteMany({ where: { id: { in: extraIds } } });
+  ok(
+    'Private evidence picker checks roles and UUIDs, paginates one product without cost/reviewer leakage and never omits a trailing page',
+  );
   const base = {
     version: 0,
     reference: 'BC547B',
@@ -190,6 +273,47 @@ module.exports = async ({ db, root, request, tokens, ok }) => {
     'Actual JWT/roles isolate replacement drafts/history; forged stamps, unrelated evidence and unreviewed values cannot publish a decision',
   );
   await source(0);
+  if (process.argv.includes('--replacement-browser')) {
+    await source(2);
+    await new Promise((resolve, reject) => {
+      const child = require('node:child_process').fork(
+        path.join(__dirname, 'verify-replacement-cases-browser.cjs'),
+        [],
+        {
+          env: {
+            ...process.env,
+            TECHNICAL_BROWSER_OUTPUT: path.join(output, 'admin-browser'),
+          },
+          stdio: ['ignore', 'pipe', 'pipe', 'ipc'],
+        },
+      );
+      child.stdout.on('data', (chunk) => process.stdout.write(chunk));
+      child.stderr.on('data', (chunk) => process.stderr.write(chunk));
+      const timeout = setTimeout(() => {
+        child.kill();
+        reject(Error('Owned replacement browser timed out'));
+      }, 180000);
+      child.on('error', (error) => {
+        clearTimeout(timeout);
+        reject(error);
+      });
+      child.on('exit', (code) => {
+        clearTimeout(timeout);
+        code === 0
+          ? resolve()
+          : reject(Error('Owned replacement browser failed'));
+      });
+      child.send({
+        base: serverBase,
+        token: tokens.ADMIN,
+        piece: { id: products[2].id, nomProduit: products[2].nomProduit },
+        value: values[2].id,
+      });
+    });
+    ok(
+      'Built replacement admin creates, edits and reviews through actual Nest JWT/DTO/PostgreSQL; real stale-source conflict preserves input; 390/768/1440 controls verified',
+    );
+  }
   read = await request('GET', route + '/' + id, undefined, tokens.ADMIN);
   assert.equal(read.data.sourcesSelectionRelues, true);
   assert.equal(
