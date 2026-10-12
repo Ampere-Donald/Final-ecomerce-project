@@ -1,7 +1,7 @@
 // Called only inside the owned local provenance recipe, never on the shop DB.
 const assert = require('node:assert/strict');
 const path = require('node:path');
-module.exports = async ({ db, root, request, tokens, ok }) => {
+module.exports = async ({ db, root, request, tokens, ok, base, output }) => {
   const [owner] = await db.$queryRawUnsafe('SELECT current_database() AS name, host(inet_server_addr()) AS host, inet_server_port() AS port');
   assert.match(owner.name, /^newoteg_tech_[a-f0-9]{32}$/);
   assert.equal(owner.host, '127.0.0.1'); assert.equal(owner.port, 55439);
@@ -93,4 +93,57 @@ module.exports = async ({ db, root, request, tokens, ok }) => {
   assert.equal(accepted.status, 201); assert.equal(accepted.data.cleTechnique, 'ALIAS_RECHERCHE');
   assert.equal((await request('PATCH', '/attributs/' + accepted.data.id, { cleTechnique: null }, tokens.ADMIN)).status, 200);
   ok('Actual HTTP/JWT permits explicit admin dictionary keys, rejects unknown keys and permits clearing without backfill');
+
+  const components = await db.categorie.create({ data: { nom: 'Composants Électroniques' } });
+  const candidate = await product('Pièce technique de recette', { categorieId: components.id });
+  const target = await product('Pièce cible de recette', { categorieId: components.id, quantiteStock: 0 });
+  const candidateProof = await annotate(candidate, 'REFERENCE_FABRICANT', 'BC547P');
+  await annotate(target, 'REFERENCE_FABRICANT', 'BC547PB');
+  const { EquivalenceService } = require(path.join(root, 'dist/src/equivalence/equivalence.service'));
+  const prompts = [];
+  const provider = { generateJson: async prompt => { prompts.push(prompt); return { suggestions: [{ produitId: candidate.id, raison: 'Synthetic only', compatibilite: 'haute', sourceUrl: 'https://invented.example/' }] }; } };
+  const equivalence = new EquivalenceService(db, provider);
+  const direct = await equivalence.suggest({ query: 'BC547P', application: 'PRIVATE_APPLICATION_A', source: 'ecommerce' });
+  assert.equal(direct.suggestions[0].produitId, candidate.id);
+  assert.equal(direct.suggestions[0].caracteristiques[0].valeur, 'BC547P');
+  assert.equal(direct.suggestions[0].caracteristiques[0].documentation.sourceDocument, 'Synthetic only');
+  assert.equal(JSON.stringify(direct).includes('reluParId'), false);
+  assert.equal(JSON.stringify(direct).includes('cmupActuel'), false);
+  assert.equal(JSON.stringify(direct).includes('invented.example'), false);
+  assert(prompts[0].includes('PRIVATE_APPLICATION_A'));
+  await equivalence.suggest({ query: 'BC547P', application: 'PRIVATE_APPLICATION_A', source: 'ecommerce' });
+  assert.equal(prompts.length, 1);
+  await equivalence.suggest({ query: 'BC547P', application: 'PRIVATE_APPLICATION_B', source: 'ecommerce' });
+  assert.equal(prompts.length, 2);
+  await equivalence.suggest({ produitId: target.id, application: 'PRIVATE_APPLICATION_B', source: 'ecommerce' });
+  assert(prompts[2].includes('BC547PB'));
+  await db.attribut.update({ where: { id: candidateProof.a.id }, data: { version: { increment: 1 } } });
+  const stale = await equivalence.suggest({ query: 'BC547P', application: 'PRIVATE_APPLICATION_B', source: 'ecommerce' });
+  assert.equal(stale.suggestions[0].caracteristiques.length, 0);
+  assert.equal(prompts.length, 4);
+  assert.equal(prompts[3].includes('"valeur":"BC547P"'), false);
+  // Asynchronous legacy log writes are confined to this owned fixture DB.
+  let logs = [];
+  for (let attempts=0; attempts<50; attempts++) { logs=await db.suggestionEquivalence.findMany(); if(logs.length>=4)break; await new Promise(resolve=>setTimeout(resolve,100)); }
+  assert(logs.length>=4);
+  assert.equal(JSON.stringify(logs).includes('PRIVATE_APPLICATION'), false);
+  ok('Real equivalence retrieval uses reviewed identity and snapshot sources; application/source edits invalidate cache, provider sources and private fields are excluded');
+  await db.attribut.update({where:{id:candidateProof.a.id},data:{version:1}});
+  assert.equal((await request('POST','/equivalence/suggest',{query:'BC547P',application:'X'.repeat(501),source:'ecommerce'})).status,400);
+  assert.equal((await request('POST','/equivalence/suggest',{query:'BC547P',application:123,source:'ecommerce'})).status,400);
+  const http = await request('POST','/equivalence/suggest',{query:'BC547P',application:'PRIVATE_HTTP_APPLICATION',source:'ecommerce'});
+  assert.equal(http.status,201); assert.equal(http.data.mode,'catalogue');
+  assert.equal(http.data.suggestions[0].caracteristiques[0].valeur,'BC547P');
+  assert.equal(http.data.suggestions[0].compatibilite,'inconnue');
+  ok('Actual public HTTP validates application type/length and returns reviewed catalogue sources without a provider');
+  if(process.argv.includes('--equivalence-browser')){
+    const {fork}=require('node:child_process');
+    await new Promise((resolve,reject)=>{
+      const child=fork(path.join(root,'../Font-end/tests/verify-equivalence-sources.cjs'),[],{env:{...process.env,EQUIVALENCE_BROWSER_OUTPUT:path.join(output,'equivalence-browser')},stdio:['ignore','pipe','pipe','ipc'],windowsHide:true});
+      child.stdout.on('data',chunk=>process.stdout.write(chunk));child.stderr.on('data',chunk=>process.stderr.write(chunk));
+      child.on('error',reject);child.on('exit',code=>code===0?resolve():reject(Error('Equivalence browser recipe failed')));
+      child.send({base,candidateId:candidate.id});
+    });
+    ok('Built equivalence UI posts application to real HTTP/DTO/SQL and displays current sources in FR/EN on mobile/tablet/desktop');
+  }
 };

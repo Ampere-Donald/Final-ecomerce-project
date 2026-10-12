@@ -58,3 +58,13 @@ test("Explicit provenance remains catalogue-only even without the French message
     false,
   );
 });
+
+test('Technical sources are whitelisted and stale or unreviewed claims are excluded', () => {
+  const documentation = { etat: 'DOCUMENTE', reluLe: '2026-10-12T12:00:00Z', sourceDocument: 'Fixture', sourceRepere: 'Page 1', sourceUrl: 'https://example.com/fixture.pdf', reluParId: 'PRIVATE' };
+  const c = { nomAttribut: 'Courant', valeur: '0 A', documentation };
+  const s = { produitId: 'a', nomProduit: 'QA', quantiteStock: 2, caracteristiques: [c, { ...c, documentation: { ...documentation, obsolete: true } }, { ...c, documentation: { etat: 'A_VERIFIER' } }, { ...c, nomAttribut: null }] };
+  const result = parseEquivalences({ suggestions: [s] });
+  assert.equal(result.suggestions[0].caracteristiques.length, 1);
+  assert.equal(result.suggestions[0].caracteristiques[0].valeur, '0 A');
+  assert.equal(JSON.stringify(result).includes('PRIVATE'), false);
+});

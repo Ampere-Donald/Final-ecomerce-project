@@ -8,6 +8,7 @@ import {
 // Matching/provider tests use a stable catalogue snapshot without reservations.
 // Public pricing and reservation transitions have their own regression suite.
 function createService(db: any, gemini: any) {
+  db.$queryRaw ||= jest.fn().mockResolvedValue([]);
   db.$transaction = jest.fn(async (callback) => {
     const latest = db.produit.findMany.mock.results.at(-1);
     const products = (await latest.value).filter(

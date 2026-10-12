@@ -2,6 +2,7 @@ import { BadRequestException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { cataloguePriceSql } from '../pricing/catalogue-price.sql';
 import { documentedSearchMatch } from './documented-search';
+import { technicalAttributesSelection } from '../equivalence/technical-context';
 import {
   normalizeSalesSearch,
   normalizedSearchSql,
@@ -28,6 +29,7 @@ export async function publicCatalogue(
   params: PublicCatalogueParams,
   now: Date,
   candidateIds?: string[],
+  includeTechnicalSources = false,
 ) {
   const page = Number.isFinite(params.page)
     ? Math.max(1, Math.floor(params.page!))
@@ -154,7 +156,12 @@ export async function publicCatalogue(
       const products = ids.length
         ? await tx.produit.findMany({
             where: { id: { in: ids } },
-            include: { categorie: true, attributs: true },
+            include: {
+              categorie: true,
+              attributs: includeTechnicalSources
+                ? technicalAttributesSelection
+                : true,
+            },
           })
         : [];
       const byId = new Map(

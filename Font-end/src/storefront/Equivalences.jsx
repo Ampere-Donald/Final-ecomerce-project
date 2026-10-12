@@ -10,10 +10,12 @@ import { parseEquivalences } from "./equivalenceData";
 import { Copy, Crumbs, Photo, Price, Stock } from "./Elements";
 import Footer from "./Footer";
 import OfferDetails from "./OfferDetails";
+import TechnicalSource from "./TechnicalSource";
 
 function Finder({ initial, targetId }) {
   const { lang } = useI18n();
   const [query, setQuery] = useState(initial);
+  const [application, setApplication] = useState("");
   const [state, setState] = useState({ status: "idle" });
   const active = useRef(null);
   const resultsRef = useRef(null);
@@ -28,6 +30,12 @@ function Finder({ initial, targetId }) {
     active.current?.abort();
     active.current = null;
     setQuery(value);
+    setState({ status: "idle" });
+  }
+  function editApplication(value) {
+    active.current?.abort();
+    active.current = null;
+    setApplication(value);
     setState({ status: "idle" });
   }
   async function submit(event) {
@@ -45,6 +53,7 @@ function Finder({ initial, targetId }) {
         {
           ...(useTarget ? { produitId: targetId } : { query: text }),
           source: "ecommerce",
+          ...(application.trim() ? { application: application.trim() } : {}),
         },
         { signal: controller.signal, timeout: 45000 },
       );
@@ -53,6 +62,7 @@ function Finder({ initial, targetId }) {
         status: "success",
         ...parseEquivalences(data, useTarget ? targetId : null),
         searched: text,
+        searchedApplication: application.trim(),
       });
     } catch (error) {
       if (active.current !== controller || controller.signal.aborted) return;
@@ -104,6 +114,31 @@ function Finder({ initial, targetId }) {
               </button>
             </p>
           )}
+          <label htmlFor="equivalence-application">
+            <Copy
+              fr="Votre montage et ses contraintes (facultatif)"
+              en="Your circuit and its requirements (optional)"
+            />
+          </label>
+          <textarea
+            id="equivalence-application"
+            value={application}
+            onChange={(e) => editApplication(e.target.value)}
+            maxLength={500}
+            rows={3}
+            aria-describedby="equivalence-application-hint"
+            placeholder={
+              lang === "fr"
+                ? "Usage, alimentation, boîtier, brochage, température…"
+                : "Use, supply, package, pinout, temperature…"
+            }
+          />
+          <p id="equivalence-application-hint">
+            <Copy
+              fr="Indiquez les conditions que la pièce doit respecter. Évitez les coordonnées personnelles."
+              en="Describe the requirements the part must meet. Do not include personal contact details."
+            />
+          </p>
           <button
             className="e-btn"
             disabled={!query.trim() || state.status === "loading"}
@@ -199,6 +234,14 @@ function Finder({ initial, targetId }) {
                 en={`Results for “${state.searched}”`}
               />
             </h2>
+            {state.searchedApplication && (
+              <p className="e-equivalence-summary">
+                <strong>
+                  <Copy fr="Votre montage : " en="Your circuit: " />
+                </strong>
+                {state.searchedApplication}
+              </p>
+            )}
             {state.suggestions.length ? (
               <>
                 <p className="e-equivalence-summary">
@@ -298,6 +341,38 @@ function Finder({ initial, targetId }) {
                                   />
                                 )
                               )}
+                            </p>
+                          )}
+                          {s.caracteristiques?.length ? (
+                            <details className="e-equivalent-sources">
+                              <summary>
+                                <Copy
+                                  fr="Caractéristiques et sources disponibles"
+                                  en="Available specifications and sources"
+                                />
+                              </summary>
+                              <p>
+                                <Copy
+                                  fr="Ces sources documentent la pièce proposée. Elles ne valident pas son remplacement dans votre montage."
+                                  en="These sources document the suggested part. They do not validate it as a replacement in your circuit."
+                                />
+                              </p>
+                              <ul>
+                                {s.caracteristiques.map((c, index) => (
+                                  <li key={index}>
+                                    <strong>{c.nomAttribut}</strong>
+                                    <span>{c.valeur}</span>
+                                    <TechnicalSource source={c.documentation} />
+                                  </li>
+                                ))}
+                              </ul>
+                            </details>
+                          ) : (
+                            <p className="e-equivalent-source-empty">
+                              <Copy
+                                fr="Aucune caractéristique relue disponible pour cette proposition. Consultez la fiche et faites vérifier votre montage."
+                                en="No reviewed specifications available for this suggestion. Review the product and have your circuit checked."
+                              />
                             </p>
                           )}
                         </div>

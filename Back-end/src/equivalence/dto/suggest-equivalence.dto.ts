@@ -7,6 +7,12 @@ export class SuggestEquivalenceDto {
   @MaxLength(255)
   query?: string;
 
+  /** Application constraints: used for this request, never persisted in logs. */
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  application?: string;
+
   /** Produit ciblé (rupture) dont on cherche un équivalent. */
   @IsOptional()
   @IsUUID()

@@ -57,9 +57,11 @@ async function connect(name){const u=new URL(url);u.pathname='/'+name;const c=ne
   const {ValeurAttributController}=load('valeur-attribut/valeur-attribut.controller'),{ValeurAttributService}=load('valeur-attribut/valeur-attribut.service');
   const {DocumentationValeurService}=load('valeur-attribut/documentation-valeur.service');
   const {AttributController}=load('attribut/attribut.controller'),{AttributService}=load('attribut/attribut.service');
+  const {EquivalenceController}=load('equivalence/equivalence.controller'),{EquivalenceService}=load('equivalence/equivalence.service'),{GeminiClient}=load('equivalence/gemini.client');
   const secret=randomBytes(48).toString('hex');
-  const module=await Test.createTestingModule({imports:[PassportModule],controllers:[ValeurAttributController,AttributController],providers:[
+  const module=await Test.createTestingModule({imports:[PassportModule],controllers:[ValeurAttributController,AttributController,EquivalenceController],providers:[
    ValeurAttributService,DocumentationValeurService,AttributService,AdminJwtStrategy,
+   EquivalenceService,{provide:GeminiClient,useValue:{generateJson:async()=>{throw Error('Owned recipe without provider')}}},
    {provide:DatabaseService,useValue:db},{provide:ConfigService,useValue:new ConfigService({JWT_SECRET:secret})}]}).compile();
   app=module.createNestApplication({logger:false});app.setGlobalPrefix('api');app.useGlobalPipes(new ValidationPipe({whitelist:true,transform:true}));await app.listen(0,'127.0.0.1');
   const base=await app.getUrl(),jwt=new JwtService({secret}),tokens={};
@@ -118,7 +120,7 @@ async function connect(name){const u=new URL(url);u.pathname='/'+name;const c=ne
   assert.deepEqual((await request('GET',endpoint)).data,{etat:'A_VERIFIER',obsolete:true});ok('Product identity/version changes also invalidate the review');
   await db.valeurAttribut.delete({where:{id:value}});assert.equal(await db.documentationValeur.count(),0);ok('Value deletion cascades its optional documentation');
   await c.query('CREATE EXTENSION IF NOT EXISTS pg_trgm');
-  await require('./verify-documented-search.cjs')({db,root,request,tokens,ok});
+  await require('./verify-documented-search.cjs')({db,root,request,tokens,ok,base,output});
   // Merge only the newly rehearsed structures into the reviewed release contract.
   if(process.argv.includes('--update-contract')){
    const file=path.join(__dirname,'release-schema.json'),contract=JSON.parse(fs.readFileSync(file,'utf8'));

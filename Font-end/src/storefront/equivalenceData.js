@@ -1,4 +1,5 @@
 // The service owns matching. Never substitute generic catalogue matches here.
+import { readTechnicalSource } from "./technicalProvenance.js";
 export function parseEquivalences(data, targetId) {
   if (!data || !Array.isArray(data.suggestions))
     throw new Error("Invalid equivalence response");
@@ -26,6 +27,23 @@ export function parseEquivalences(data, targetId) {
         : "inconnue",
       raison: typeof s.raison === "string" ? s.raison : "",
       avertissement: typeof s.avertissement === "string" ? s.avertissement : "",
+      ...(Array.isArray(s.caracteristiques)
+        ? {
+            caracteristiques: s.caracteristiques
+              .slice(0, 12)
+              .filter(
+                (c) =>
+                  typeof c?.nomAttribut === "string" &&
+                  typeof c.valeur === "string",
+              )
+              .map((c) => ({
+                nomAttribut: c.nomAttribut.slice(0, 100),
+                valeur: c.valeur.slice(0, 100),
+                documentation: readTechnicalSource(c.documentation),
+              }))
+              .filter((c) => c.documentation.etat === "DOCUMENTE"),
+          }
+        : {}),
     }));
   return {
     suggestions,
