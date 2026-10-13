@@ -1,0 +1,51 @@
+/* Isolated homepage selection: shared catalogue and shelf cards stay unchanged. */
+.e-selection-premium .e-section-head{margin-bottom:14px;align-items:flex-start}
+.e-selection-premium .e-section-head h2{font-size:26px;font-weight:750;letter-spacing:-.5px}
+.e-selection-premium .e-section-head p{color:#63798a;font-size:13px}
+.e-selection-premium .e-section-head>a{min-height:44px;font-size:12px;gap:12px;padding-top:0}
+.e-selection-premium .e-home-selection-filters{margin-bottom:14px}
+.e-selection-track{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;align-items:stretch}
+.e-selection-card{min-width:0;display:flex;flex-direction:column;background:#fff;border:1px solid #e7edf2;border-radius:12px;box-shadow:0 2px 7px #20394c04;overflow:hidden}
+.e-selection-photo{position:relative;height:190px;flex:none;padding:18px 18px 6px;background:#fdfefe}
+.e-selection-photo>a{display:block;height:100%}
+.e-selection-photo img{display:block;width:100%;height:100%;object-fit:contain}
+.e-selection-photo .e-placeholder{height:100%;font-size:11px}
+.e-selection-heart{position:absolute;top:8px;right:8px;width:44px;height:44px;display:grid;place-items:center;padding:0;background:#fff;border:1px solid #edf1f4;box-shadow:0 2px 5px #20394c08;border-radius:50%;color:#8697a5;cursor:pointer}
+.e-selection-heart[aria-pressed=true]{color:#cf4262}
+.e-selection-body{display:flex;flex-direction:column;flex:1;min-width:0;padding:10px 13px 13px}
+.e-selection-stock{align-self:flex-start;display:inline-flex;gap:5px;align-items:center;min-height:21px;margin-bottom:8px;padding:3px 6px;border-radius:4px;font-size:11px;line-height:1.3}
+.e-selection-stock i{width:6px;height:6px;border-radius:50%;background:currentColor;flex:none}
+.e-selection-stock-ok{background:#e5f6eb;color:#218249}
+.e-selection-stock-low{background:#fff2de;color:#a96106}
+.e-selection-stock-out{background:#ffe9ec;color:#c92f45}
+.e-selection-stock-unknown{background:#edf2f6;color:#526b7e}
+.e-selection-card h3{height:36px;margin:0 0 5px;font-size:14px;line-height:18px;font-weight:700;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.e-selection-card h3 a{color:#172d41}
+.e-selection-reference{font-size:12px;line-height:18px;min-height:18px;margin:0 0 7px;color:#687e90;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.e-selection-prices{margin-top:auto;margin-bottom:10px;min-height:49px;display:flex;flex-direction:column;justify-content:flex-end}
+.e-selection-promo{height:19px;display:flex;align-items:center;gap:7px;color:#738697;font-size:11px}
+.e-selection-promo>span{background:#ffe9ec;color:#c92f45;padding:1px 4px;border-radius:3px;font-weight:700}
+.e-selection-card .e-price{display:block;font-size:23px;line-height:1.25;font-weight:800;color:#075bb9}
+.e-selection-card .e-selection-cta{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:44px;padding:9px 10px;background:#0862c7;color:#fff;border:1px solid #0862c7;border-radius:6px;font-size:12px;font-weight:650;line-height:1.3}
+.e-selection-cta svg{flex:none}
+.e-selection-cta svg:last-child{margin-left:auto}
+.e-selection-card .e-selection-equivalent{background:#fff;color:#0862c7}
+.e-selection-card a:focus-visible,.e-selection-card button:focus-visible,.e-selection-track:focus-visible{outline:3px solid #86b9ef;outline-offset:3px}
+@media(max-width:1199px){
+ .e-selection-track{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;overscroll-behavior-x:contain;scrollbar-width:none;padding:2px 0 8px}
+ .e-selection-track::-webkit-scrollbar{display:none}
+ .e-selection-card{flex:0 0 calc((100% - 24px)/3);scroll-snap-align:start}
+}
+@media(max-width:760px){
+ .e-selection-premium .e-section-head{gap:10px}
+ .e-selection-premium .e-section-head h2{font-size:23px}
+ .e-selection-premium .e-section-head>a{font-size:12px;gap:5px;flex-shrink:0}
+ .e-selection-premium .e-home-selection-filters{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;padding-bottom:3px}
+ .e-selection-premium .e-home-selection-filters::-webkit-scrollbar{display:none}
+ .e-selection-premium .e-home-selection-filters button{flex:none}
+ .e-selection-card{flex-basis:82%}
+ .e-selection-photo{height:205px}
+ .e-selection-card h3{font-size:16px;line-height:20px;height:40px}
+ .e-selection-card .e-price{font-size:25px}
+ .e-selection-card .e-selection-cta{font-size:13px;min-height:46px}
+}
