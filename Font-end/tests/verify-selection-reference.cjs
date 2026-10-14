@@ -51,7 +51,8 @@ let mode='normal';const checks=[],errors=[],writes=[],requests=[],geometry=[];
    checks.push('Genuine stock/unknown price/validated offer; favorites persist; detail and equivalents routes');
   }
   for(const label of ['Connecter','Alimenter','Mesurer & assembler','Réparer']){
-   await section.getByRole('button',{name:label,exact:true}).click();await expect(cards.first()).toBeVisible({timeout:45000});
+   await section.getByRole('button',{name:label,exact:true}).click();
+   try{await expect(cards.first()).toBeVisible({timeout:45000})}catch(e){console.error('Filter:',label,await section.innerText());throw e}
    assert.ok(await cards.count()<=5);await expect(section.getByRole('button',{name:label,exact:true})).toHaveAttribute('aria-pressed','true');
    if(!live)assert.ok(!(await cards.first().locator('h3').innerText()).includes('Composant 0-0')||label==='Réparer');
   }
@@ -65,6 +66,8 @@ let mode='normal';const checks=[],errors=[],writes=[],requests=[],geometry=[];
    else {const visible=await track.evaluate(el=>(el.clientWidth+12)/(el.firstElementChild.getBoundingClientRect().width+12));assert.ok(width<=760?visible>1.1&&visible<1.3:Math.abs(visible-3)<.03);await track.focus();await page.keyboard.press('ArrowRight');await expect.poll(()=>track.evaluate(el=>el.scrollLeft)).toBeGreaterThan(0);await track.press('Home');}
    assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));
    await expect.poll(()=>section.locator('img').first().evaluate(el=>el.complete)).toBe(true);
+   await page.evaluate(()=>document.activeElement?.blur());
+   await section.evaluate(el=>window.scrollTo(0,el.getBoundingClientRect().top+window.scrollY-210));
    await section.screenshot({path:path.join(output,`selection-${width}.png`)});geometry.push({width,cards:g});
   }
   checks.push('Equal cards, aligned price/actions, 5/3/1.2 layout; six widths and keyboard');
