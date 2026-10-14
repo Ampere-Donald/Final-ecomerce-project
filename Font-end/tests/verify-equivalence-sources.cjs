@@ -49,6 +49,21 @@ process.once("message", async (fixture) => {
             if (url.pathname.startsWith("/api/")) {
               if (
                 request.method() === "POST" &&
+                url.pathname === "/api/equivalence/cas/rechercher"
+              ) {
+                const r = await fetch(fixture.base + url.pathname, {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: request.postData(),
+                });
+                assert.equal(r.status, 201);
+                return route.fulfill({
+                  status: r.status,
+                  json: await r.json(),
+                });
+              }
+              if (
+                request.method() === "POST" &&
                 url.pathname === "/api/equivalence/suggest"
               ) {
                 lastBody = request.postDataJSON();

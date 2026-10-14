@@ -1,0 +1,1282 @@
+{
+  "passed": true,
+  "fixture": "Synthetic only. Actual public lookup/suggestion and admin fixture source/case writes through Nest/JWT/DTO/PostgreSQL. Unrelated GET chrome and failure/provider spoofing are explicit test adapters; no real supplier, physical approval or production interaction.",
+  "checks": [
+    {
+      "legacy": false,
+      "lang": "fr",
+      "width": 390,
+      "passed": true
+    },
+    {
+      "legacy": false,
+      "lang": "fr",
+      "width": 768,
+      "passed": true
+    },
+    {
+      "legacy": false,
+      "lang": "fr",
+      "width": 1440,
+      "passed": true
+    },
+    {
+      "legacy": false,
+      "lang": "en",
+      "width": 390,
+      "passed": true
+    },
+    {
+      "legacy": false,
+      "lang": "en",
+      "width": 768,
+      "passed": true
+    },
+    {
+      "legacy": false,
+      "lang": "en",
+      "width": 1440,
+      "passed": true
+    },
+    {
+      "legacy": true,
+      "lang": "fr",
+      "width": 390,
+      "passed": true
+    },
+    {
+      "legacy": true,
+      "lang": "fr",
+      "width": 768,
+      "passed": true
+    },
+    {
+      "legacy": true,
+      "lang": "fr",
+      "width": 1440,
+      "passed": true
+    },
+    {
+      "legacy": true,
+      "lang": "en",
+      "width": 390,
+      "passed": true
+    },
+    {
+      "legacy": true,
+      "lang": "en",
+      "width": 768,
+      "passed": true
+    },
+    {
+      "legacy": true,
+      "lang": "en",
+      "width": 1440,
+      "passed": true
+    }
+  ],
+  "calls": [
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 503,
+      "injectedFailure": true
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 503,
+      "injectedFailure": true
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 503,
+      "injectedFailure": true
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 503,
+      "injectedFailure": true
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 503,
+      "injectedFailure": true
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 503,
+      "injectedFailure": true
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 503,
+      "injectedFailure": true
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 503,
+      "injectedFailure": true
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 503,
+      "injectedFailure": true
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 503,
+      "injectedFailure": true
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 503,
+      "injectedFailure": true
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 503,
+      "injectedFailure": true
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 503,
+      "injectedFailure": true
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 503,
+      "injectedFailure": true
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 503,
+      "injectedFailure": true
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 503,
+      "injectedFailure": true
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 503,
+      "injectedFailure": true
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 503,
+      "injectedFailure": true
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 503,
+      "injectedFailure": true
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 503,
+      "injectedFailure": true
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 503,
+      "injectedFailure": true
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 503,
+      "injectedFailure": true
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 503,
+      "injectedFailure": true
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 503,
+      "injectedFailure": true
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 503,
+      "injectedFailure": true
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 503,
+      "injectedFailure": true
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 503,
+      "injectedFailure": true
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 503,
+      "injectedFailure": true
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 503,
+      "injectedFailure": true
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 503,
+      "injectedFailure": true
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 503,
+      "injectedFailure": true
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 503,
+      "injectedFailure": true
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 503,
+      "injectedFailure": true
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 503,
+      "injectedFailure": true
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 503,
+      "injectedFailure": true
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 503,
+      "injectedFailure": true
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 503,
+      "injectedFailure": true
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 503,
+      "injectedFailure": true
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 503,
+      "injectedFailure": true
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 503,
+      "injectedFailure": true
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 503,
+      "injectedFailure": true
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 503,
+      "injectedFailure": true
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 503,
+      "injectedFailure": true
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 503,
+      "injectedFailure": true
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 503,
+      "injectedFailure": true
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 503,
+      "injectedFailure": true
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 503,
+      "injectedFailure": true
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 503,
+      "injectedFailure": true
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/suggest",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/cas/rechercher",
+      "status": 201
+    }
+  ],
+  "errors": [],
+  "outside": []
+}

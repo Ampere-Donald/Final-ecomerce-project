@@ -16,6 +16,7 @@ import { RolesGuard } from '../admin-auth/roles.guard';
 import { Roles } from '../admin-auth/roles.decorator';
 import {
   EvaluateReplacementDto,
+  FindReplacementDto,
   ReplacementCaseDto,
   ReviewReplacementDto,
 } from './dto/replacement-case.dto';
@@ -29,6 +30,12 @@ export class ReplacementCaseController {
   @Header('Cache-Control', 'no-store')
   evaluate(@Body() input: EvaluateReplacementDto) {
     return this.service.evaluate(input);
+  }
+
+  @Post('rechercher')
+  @Header('Cache-Control', 'no-store')
+  find(@Body() input: FindReplacementDto) {
+    return this.service.find(input);
   }
 
   @Get('pieces/:id/preuves')

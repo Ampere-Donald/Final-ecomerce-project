@@ -49,6 +49,8 @@ const ok = (name) => {
           contentType: "application/json",
           body: JSON.stringify(data),
         });
+      if (u.pathname === "/api/equivalence/cas/rechercher")
+        return send({ dossiers: [], nextPage: null });
       if (u.pathname === "/api/equivalence/suggest") {
         assert.equal(r.request().method(), "POST");
         payloads.push(r.request().postDataJSON());

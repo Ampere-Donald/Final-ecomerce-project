@@ -11,6 +11,7 @@ import {
   IsString,
   IsUUID,
   Matches,
+  Max,
   MaxLength,
   Min,
   MinLength,
@@ -55,4 +56,11 @@ export class EvaluateReplacementDto {
   @ArrayMaxSize(5)
   @IsUUID('all', { each: true })
   candidatIds: string[];
+}
+
+export class FindReplacementDto {
+  @IsOptional() @IsString() @MaxLength(255) query?: string;
+  @IsOptional() @IsUUID() produitId?: string;
+  @IsOptional() @IsString() @MaxLength(500) application?: string;
+  @IsOptional() @IsInt() @Min(0) @Max(1000) page?: number;
 }

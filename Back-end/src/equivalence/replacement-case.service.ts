@@ -8,9 +8,11 @@ import { Prisma } from '@prisma/client';
 import { DatabaseService } from 'src/database/database.service';
 import { publicDocumentation } from '../valeur-attribut/documentation-data';
 import { publicCatalogue } from '../produit/public-catalogue';
+import { masquerCouts } from '../produit/public-product';
 import { isProductEligibleForEquivalence } from './equivalence-eligibility';
 import {
   EvaluateReplacementDto,
+  FindReplacementDto,
   ReplacementCaseDto,
   ReviewReplacementDto,
 } from './dto/replacement-case.dto';
@@ -19,6 +21,7 @@ import {
   fingerprint,
   replacementData,
   scopeApplication,
+  scopeReference,
 } from './replacement-case-data';
 
 @Injectable()
@@ -369,26 +372,125 @@ export class ReplacementCaseService {
               return { produitId, decision: null };
             return {
               produitId,
-              decision: {
-                verdict: cas.verdict,
-                reference: cas.reference,
-                application: cas.application,
-                justification: cas.justification,
-                limites: cas.limites,
-                adaptations: cas.adaptations,
-                reluLe: cas.reluLe,
-                source: {
-                  url: cas.sourceUrl,
-                  document: cas.sourceDocument,
-                  repere: cas.sourceRepere,
-                  revision: cas.sourceRevision,
-                },
-              },
+              decision: this.publicDecision(cas),
             };
           }),
         );
       },
       { isolationLevel: Prisma.TransactionIsolationLevel.RepeatableRead },
     );
+  }
+
+  private publicDecision(cas: any) {
+    return {
+      verdict: cas.verdict,
+      reference: cas.reference,
+      application: cas.application,
+      justification: cas.justification,
+      limites: cas.limites,
+      adaptations: cas.adaptations,
+      reluLe: cas.reluLe,
+      source: {
+        url: cas.sourceUrl,
+        document: cas.sourceDocument,
+        repere: cas.sourceRepere,
+        revision: cas.sourceRevision,
+      },
+    };
+  }
+
+  // Discover reviewed pairs independently of the lexical/model shortlist.
+  // A different/unspecified circuit receives the dossier's stated scope only,
+  // never a claim that the decision applies to the customer's own circuit.
+  async find(input: FindReplacementDto) {
+    const reference = scopeReference(input.query || '');
+    const application = scopeApplication(input.application || '');
+    if (!reference && !input.produitId)
+      throw new BadRequestException(
+        'Indiquez une référence exacte ou une pièce cible.',
+      );
+    const page = input.page ?? 0;
+    const scope = input.produitId
+      ? Prisma.sql`c.cible_id = ${input.produitId}`
+      : Prisma.sql`c.cible_id IS NULL AND c.reference_cle = ${reference}`;
+    // Stable, bounded pages; page numbers expose no draft/history identifiers.
+    // Invalidated evidence is filtered below, so an empty page isn't a claim
+    // that no later dossier exists. The response retains the next-page flag.
+    const rows = await this.db.$queryRaw<
+      Array<{ id: string; candidatId: string }>
+    >(Prisma.sql`
+      SELECT c.id, c.candidat_id AS "candidatId" FROM cas_remplacement c
+      WHERE ${scope} AND c.retire = FALSE AND c.relu_version = c.version
+        AND c.relu_par_id IS NOT NULL AND c.relu_le IS NOT NULL
+      ORDER BY (${application} <> '' AND c.application = ${application}) DESC, c.id ASC
+      LIMIT 6 OFFSET ${page * 5}
+    `);
+    const ids = rows.slice(0, 5);
+    const catalogue = ids.length
+      ? await publicCatalogue(
+          this.db,
+          { limit: 5, inStock: true },
+          new Date(),
+          [...new Set(ids.map((r) => r.candidatId))],
+          true,
+        )
+      : { data: [] };
+    const byProduct = new Map(catalogue.data.map((p) => [p.id, p]));
+    const dossiers = await this.db.$transaction(
+      async (tx) => {
+        const cases = await tx.casRemplacement.findMany({
+          where: {
+            id: { in: ids.map((r) => r.id) },
+            ...(input.produitId
+              ? { cibleId: input.produitId }
+              : { cibleId: null, referenceCle: reference }),
+          },
+        });
+        const byId = new Map(cases.map((c) => [c.id, c]));
+        const result: Array<{
+          produit: unknown;
+          decision: ReturnType<ReplacementCaseService['publicDecision']>;
+          correspondAuMontage: boolean;
+        }> = [];
+        for (const row of ids) {
+          const cas = byId.get(row.id),
+            produit = byProduct.get(row.candidatId);
+          if (!cas || !produit || cas.candidatId !== row.candidatId) continue;
+          const context = await this.context(tx, cas);
+          if (!this.effective(cas, context)) continue;
+          const publicProduct = masquerCouts(produit);
+          result.push({
+            produit: Object.fromEntries(
+              [
+                'id',
+                'nomProduit',
+                'designationEn',
+                'marque',
+                'codeFamille',
+                'code',
+                'quantiteStock',
+                'prixDetail',
+                'prixPromo',
+                'prixPublic',
+                'offre',
+                'imageUrl',
+                'attributs',
+              ].map((key) => [key, publicProduct[key]]),
+            ),
+            decision: this.publicDecision(cas),
+            correspondAuMontage: Boolean(
+              application && cas.application === application,
+            ),
+          });
+        }
+        return result;
+      },
+      { isolationLevel: Prisma.TransactionIsolationLevel.RepeatableRead },
+    );
+    return {
+      dossiers,
+      nextPage: rows.length > 5 && page < 1000 ? page + 1 : null,
+      limiteAtteinte: rows.length > 5 && page === 1000,
+    };
   }
 }

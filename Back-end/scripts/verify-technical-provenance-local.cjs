@@ -124,6 +124,7 @@ async function connect(name){const u=new URL(url);u.pathname='/'+name;const c=ne
   await require('./verify-documented-search.cjs')({db,root,request,tokens,ok,base,output});
   await require('./verify-technical-dictionary.cjs')({db,root,request,tokens,ok,base,output});
   await require('./verify-replacement-cases.cjs')({db,root,request,tokens,ok,base,output});
+  await require('./verify-replacement-discovery.cjs')({db,root,request,tokens,ok,base,output});
   // Merge only the newly rehearsed structures into the reviewed release contract.
   if(process.argv.includes('--update-contract')){
    const file=path.join(__dirname,'release-schema.json'),contract=JSON.parse(fs.readFileSync(file,'utf8'));
