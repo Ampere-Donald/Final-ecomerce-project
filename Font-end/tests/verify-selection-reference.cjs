@@ -19,8 +19,8 @@ let mode='normal';const checks=[],errors=[],writes=[],requests=[],geometry=[];
   await ctx.addInitScript(()=>{if(!localStorage.getItem('appLang'))localStorage.setItem('appLang','fr')});
   await ctx.route('**/*',r=>{
    const req=r.request(),u=new URL(req.url());
-   if(!['GET','HEAD','OPTIONS'].includes(req.method())){writes.push(u.pathname);return r.abort()}
    if(u.pathname==='/cdn-cgi/rum')return r.abort();
+   if(!['GET','HEAD','OPTIONS'].includes(req.method())){writes.push(u.pathname);return r.abort()}
    if(!live&&u.origin!==base)return r.abort();
    return r.continue();
   });

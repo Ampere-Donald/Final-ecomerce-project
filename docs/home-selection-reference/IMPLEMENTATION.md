@@ -33,4 +33,8 @@ Les photos réelles et leurs fonds sont conservés. Les cinq références ne son
 
 ## Publication
 
-Publication via le Worker Cloudflare existant newoteg-client avec conservation des variables. Statut et version à confirmer après contrôle public ; cette section ne constitue pas une déclaration que toute la V3.1 est terminée.
+Code poussé sur main (`8bb37e36`). Publication via le Worker Cloudflare existant newoteg-client avec conservation des variables, version manuelle `d35f9ee6-2ea6-4cec-9aa9-ed8ea1785bc7`, puis version automatique active `aca29876-d110-479e-a2bd-4507e0802895`.
+
+Contrôle public du 15 octobre 2026 : HTTP 200, bundle `index-ausXhLff.js`, section `e-selection-premium` réellement servie. Recette navigateur sur https://newoteg.com réussie : cinq résultats, filtres réels, six largeurs, cartes alignées et catalogue grille/liste/comparaison fonctionnel ; zéro écriture métier et zéro erreur JavaScript. Captures et résultat : `C:/Users/pc/Documents/Newoteg/output/implementation-work/selection-reference/production/`. La télémétrie Cloudflare `/cdn-cgi/rum` est bloquée séparément par le test et ne constitue pas une commande client.
+
+Cette publication termine la section isolée, pas toute la V3.1. Les travaux de galerie, menu, animation et performance de cette passe globale restent séparés et doivent être intégrés puis vérifiés avant de déclarer cet objectif global terminé.
