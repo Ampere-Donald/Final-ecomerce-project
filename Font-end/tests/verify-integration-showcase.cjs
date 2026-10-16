@@ -12,6 +12,7 @@ const base=process.env.NEWOTEG_TEST_URL||'http://127.0.0.1:5202',out=process.env
   const shot=async(name,node)=>{await page.evaluate(()=>document.activeElement?.blur());await node.evaluate(el=>window.scrollTo(0,el.getBoundingClientRect().top+window.scrollY-200));await node.locator('img').evaluateAll(async images=>{await Promise.all(images.filter(img=>{const r=img.getBoundingClientRect();return r.right>0&&r.left<innerWidth}).map(img=>img.decode().catch(()=>{})))});await node.screenshot({path:path.join(out,name+'.png')})};
   await page.goto(base);assert.equal(await page.locator('#root').getAttribute('data-initial-home'),'fr');await expect(page.locator('.e-selection-card')).toHaveCount(5,{timeout:45000});
   assert.equal(scripts.some(p=>/^\/assets\/ProductCarousel-.*\.js$/.test(p)),false);
+  assert.equal(await page.locator('.e-banner-slides').first().evaluate(el=>getComputedStyle(el).display),'grid');
   await page.evaluate(()=>window.scrollTo(0,0));await page.screenshot({path:path.join(out,'home-desktop.png')});
   await page.locator('.e-progressive').first().scrollIntoViewIfNeeded();const shelf=page.locator('[data-collection="capacitors"]'),track=shelf.locator('.e-carousel-track');
   await expect(shelf.locator('.e-product-card').first()).toBeVisible({timeout:45000});assert.ok(await shelf.locator('.e-product-card').count()>5);

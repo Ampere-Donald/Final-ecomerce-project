@@ -13,6 +13,7 @@ import { adaptProduct } from "./productData";
 import useOfferClock from "./useOfferClock";
 import ProjectTeaser from "./ProjectTeaser";
 import BannerRotator from "./BannerRotator";
+import "./merchandising.css";
 function ShelfCarousel(props) {
   return <Suspense fallback={<div className="e-state" role="status"><Copy fr="Chargement des produits…" en="Loading products…" /></div>}><ProductCarousel {...props} /></Suspense>;
 }
