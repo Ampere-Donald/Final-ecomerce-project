@@ -1,4 +1,4 @@
-import { createElement, useEffect, useRef, useState } from "react";
+import { createElement, lazy, Suspense, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, MapPin, Search, MessageCircle, Truck } from "lucide-react";
 import { useI18n } from "../context/I18nContext";
@@ -7,12 +7,15 @@ import { State } from "./Elements";
 import { homeCollections, collectionPaths, collectionLink, selectCollection, resolveCategory, categoryLabel } from "./merchandisingData";
 import { publicCollectionGet } from "./publicCollectionCache";
 import { resolveImageUrl } from "../utils/mapProduct";
-import ProductCarousel from "./ProductCarousel";
+const ProductCarousel = lazy(() => import("./ProductCarousel"));
 import { readMerchandising } from "./offerData";
 import { adaptProduct } from "./productData";
 import useOfferClock from "./useOfferClock";
 import ProjectTeaser from "./ProjectTeaser";
 import BannerRotator from "./BannerRotator";
+function ShelfCarousel(props) {
+  return <Suspense fallback={<div className="e-state" role="status"><Copy fr="Chargement des produits…" en="Loading products…" /></div>}><ProductCarousel {...props} /></Suspense>;
+}
 function Progressive({ children }) {
   const ref = useRef();
   const [ready, setReady] = useState(false);
@@ -44,7 +47,7 @@ function Collection({ config }) {
       const category = resolveCategory(state.categories, name);
       return category ? <Link key={name} to={"/catalogue?category=" + encodeURIComponent(category.id)}>{categoryLabel(name, lang)}</Link> : null;
     })}</nav>
-    <State {...state} retry={() => { setState(previous => ({ ...previous, error: null, loading: true })); setAttempt(n => n+1); }}><ProductCarousel products={state.rows} label={title} /></State>
+    <State {...state} retry={() => { setState(previous => ({ ...previous, error: null, loading: true })); setAttempt(n => n+1); }}><ShelfCarousel products={state.rows} label={title} /></State>
   </section>;
 }
 function CommercialCollection({ mode }) {
@@ -64,7 +67,7 @@ function CommercialCollection({ mode }) {
   const title = mode === "offres" ? ["Offres du moment", "Current offers"] : ["Nouveaux arrivages", "New arrivals"];
   return <section className="e-section e-merch-collection e-commercial-teaser" data-collection={mode}>
     <div className="e-section-head"><div><h2>{title[lang === "fr" ? 0 : 1]}</h2><p><Copy fr={mode === "offres" ? "Des offres actives, à vérifier sur chaque fiche." : "Les dernières réceptions validées, disponibles en boutique."} en={mode === "offres" ? "Active offers. Check each product page for terms." : "Recent validated receipts, available at the shop."} /></p></div><Link to={"/" + mode}><Copy fr="Voir tous les produits" en="View all products" /><ArrowRight size={17} /></Link></div>
-    <ProductCarousel products={rows} label={title[lang === "fr" ? 0 : 1]} arrival={mode === "arrivages"} />
+    <ShelfCarousel products={rows} label={title[lang === "fr" ? 0 : 1]} arrival={mode === "arrivages"} />
   </section>;
 }
 export function MerchBanner({ workshop = false }) {
