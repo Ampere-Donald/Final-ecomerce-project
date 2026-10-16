@@ -16,7 +16,11 @@ const {
   chromium,
 } = require("C:/Users/pc/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright");
 const production = process.env.NEWOTEG_LAB_PRODUCTION === "1";
-const base = production ? "https://newoteg.com" : "http://127.0.0.1:5188",
+const override = process.env.NEWOTEG_LAB_BASE;
+if (override && !["127.0.0.1", "localhost"].includes(new URL(override).hostname)) throw Error("Lab override must be local");
+const routes = process.env.NEWOTEG_LAB_ROUTE ? [process.env.NEWOTEG_LAB_ROUTE] : ["/", "/catalogue"];
+if (routes.some(route => !["/", "/catalogue"].includes(route))) throw Error("Unknown lab route");
+const base = override || (production ? "https://newoteg.com" : "http://127.0.0.1:5188"),
   output = process.env.NEWOTEG_SEO_OUTPUT;
 if (!output || !path.isAbsolute(output))
   throw Error("Absolute evidence directory required");
@@ -32,7 +36,7 @@ const results = [],
         "C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe",
       headless: true,
     });
-    for (const route of ["/", "/catalogue"])
+    for (const route of routes)
       for (let sample = 1; sample <= profile.samplesPerRoute; sample++) {
         const context = await browser.newContext({
           viewport: profile.viewport,
@@ -41,6 +45,7 @@ const results = [],
           const url = new URL(request.request().url());
           const productionAsset = production && (
             (url.origin === "https://res.cloudinary.com" && url.pathname.startsWith("/dm4ij9sxg/image/upload/")) ||
+            (url.origin === "https://newoteg.com" && /^\/(product-images|uploads)\//.test(url.pathname)) ||
             (url.origin === "https://static.cloudflareinsights.com" && url.pathname.startsWith("/beacon.min.js/"))
           );
           // Exclude analytics submissions, never create production records.
@@ -93,6 +98,7 @@ const results = [],
               window.__lab.shifts.push({
                 time: entry.startTime,
                 value: entry.value,
+                sources: entry.sources?.map(source => ({tag:source.node?.tagName,className:source.node?.className,previous:source.previousRect.toJSON(),current:source.currentRect.toJSON()})),
               });
             }
           }).observe({ type: "layout-shift", buffered: true });
@@ -214,7 +220,7 @@ const results = [],
           forbidden,
           limits: [
             "Synthetic desktop Edge viewport/CPU/network, not a physical mobile device",
-            production ? "Public production GET requests only, live catalogue and HTTPS, analytics submissions excluded; not directly comparable with demo measurements" : "Local demo API/data through real Vite proxy; fixture images on local 5187/design-e, no remote CDN/HTTPS or production image catalogue",
+            override ? "Local production build and live catalogue/CDN; document transport differs from public HTTPS" : production ? "Public production GET requests only, live catalogue and HTTPS, analytics submissions excluded; not directly comparable with demo measurements" : "Local demo API/data through real Vite proxy; fixture images on local 5187/design-e, no remote CDN/HTTPS or production image catalogue",
             "Load LCP/CLS observed for 5s after network idle, not field percentiles or INP",
             "Modern browser path only; legacy build not exercised",
           ],

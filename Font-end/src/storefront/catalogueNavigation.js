@@ -57,6 +57,21 @@ export function categoryDestination(id) {
   return `/catalogue?category=${encodeURIComponent(id)}`;
 }
 
+// Editorial filters, not invented administrative categories. These searches
+// remain scoped to an actual family returned by /categories.
+const usefulSearches = {
+  cables: [["USB", "USB", "USB"], ["HDMI", "HDMI", "HDMI"], ["RCA", "RCA", "RCA"], ["Jacks audio", "Audio jacks", "JACK"]],
+  components: [["Condensateurs", "Capacitors", "CONDO"], ["Circuits TDA", "TDA circuits", "TDA"], ["Transistors", "Transistors", "transistor"], ["MOSFET", "MOSFET", "MOSFET"], ["Relais", "Relays", "relais"], ["Cartes TV", "TV boards", "CARTE MERE TV"]],
+  tools: [["Soudure", "Soldering", "SOUD"], ["Tournevis", "Screwdrivers", "TOURNEVIS"]],
+  video: [["Cartes TV", "TV boards", "TV"], ["LED", "LED", "LED"]],
+};
+export function familySearches(family) {
+  if (!family?.categories?.[0]) return [];
+  return (usefulSearches[family.key] || []).map(([fr, en, search]) => ({
+    fr, en, href: categoryDestination(family.categories[0].id) + "&search=" + encodeURIComponent(search),
+  }));
+}
+
 export function suggestionPath(query) {
   return (
     "/produits?" +

@@ -152,18 +152,6 @@ export default function Catalogue() {
             )}
           </p>
         </div>
-        <div className="e-catalogue-hint">
-          <span>
-            <Copy
-              fr="Une référence ou un besoin précis ?"
-              en="A reference or a specific need?"
-            />
-          </span>
-          <Link to="/contact">
-            <Copy fr="Demander conseil" en="Ask for advice" />
-            <ArrowRight size={16} />
-          </Link>
-        </div>
         <div className="e-tools">
           <button className="e-btn e-secondary" disabled={!ready} onClick={() => setOpen(true)}>
             <SlidersHorizontal size={18} />
@@ -175,6 +163,7 @@ export default function Catalogue() {
               en={list ? "Grid view" : "List view"}
             />
           </button>
+          <ComparisonLink />
           <label className="e-sort">
             <span>
               <Copy fr="Trier par" en="Sort by" />
@@ -199,15 +188,6 @@ export default function Catalogue() {
               ))}
             </select>
           </label>
-        </div>
-        <div className="e-catalogue-comparison">
-          <ComparisonLink />
-          <span>
-            <Copy
-              fr="Choisissez jusqu’à trois articles d’une même famille."
-              en="Choose up to three products from one category."
-            />
-          </span>
         </div>
         <div className="e-chips">
           {[
@@ -244,7 +224,6 @@ export default function Catalogue() {
               </span>
             ))}
         </div>
-        {query && <EquivalenceEntry query={query} />}
         <State {...resource} error={resource.error || parseError}>
           {result.rows.length ? (
             <div
@@ -300,6 +279,11 @@ export default function Catalogue() {
             </button>
           </nav>
         )}
+        {query && <EquivalenceEntry query={query} />}
+        <div className="e-catalogue-hint">
+          <span><Copy fr="Une référence ou un besoin précis ?" en="A reference or a specific need?" /></span>
+          <Link to="/contact"><Copy fr="Demander conseil" en="Ask for advice" /><ArrowRight size={16} /></Link>
+        </div>
       </div>
       <Modal
         open={open}

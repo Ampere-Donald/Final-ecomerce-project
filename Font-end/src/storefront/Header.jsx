@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import { Link, NavLink, useLocation } from "react-router-dom";
 import {
   Menu,
@@ -20,7 +20,7 @@ import { Modal, Copy } from "./Elements";
 import "./header-commerce.css";
 import ReceptionChoice from "./ReceptionChoice";
 import HeaderSearch from "./HeaderSearch";
-import CatalogueMenu from "./CatalogueMenu";
+const CatalogueMenu = lazy(() => import("./CatalogueMenu"));
 import { shopContact } from "./shopContact";
 import useBrowserReady from "./useBrowserReady";
 
@@ -209,7 +209,7 @@ export default function Header() {
         </nav>
         {mega && (
           <div className="e-mega-position e-wrap">
-            <CatalogueMenu onNavigate={close} />
+            <Suspense fallback={<div className="e-menu-loading" role="status"><Copy fr="Chargement des familles…" en="Loading categories…" /></div>}><CatalogueMenu onNavigate={close} /></Suspense>
           </div>
         )}
       </header>
@@ -225,7 +225,7 @@ export default function Header() {
             <Copy fr="Explorer les familles" en="Browse categories" />
             <ChevronDown size={16} />
           </button>
-          {open && drawerCatalogue && <CatalogueMenu onNavigate={close} />}
+          {open && drawerCatalogue && <Suspense fallback={<p role="status"><Copy fr="Chargement des familles…" en="Loading categories…" /></p>}><CatalogueMenu onNavigate={close} /></Suspense>}
           {[
             ["/", "Accueil", "Home"],
             ...links,

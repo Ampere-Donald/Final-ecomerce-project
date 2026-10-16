@@ -17,7 +17,7 @@ import {
 import { useI18n } from "../context/I18nContext";
 import { Copy } from "./Elements";
 import useResource from "./useResource";
-import { catalogueFamilies, categoryDestination } from "./catalogueNavigation";
+import { catalogueFamilies, categoryDestination, familySearches } from "./catalogueNavigation";
 
 const icons = {
   cables: Cable,
@@ -65,7 +65,7 @@ export default function CatalogueMenu({ onNavigate }) {
   const resource = useResource("/categories");
   const families = catalogueFamilies(resource.data);
   const [selected, setSelected] = useState("");
-  const family = families.find((f) => f.key === selected) || families[0];
+  const family = families.find((f) => f.key === selected) || families.find(f => f.key === "components") || families[0];
   const { lang } = useI18n();
   const label = (item) => (lang === "en" ? item.en : item.fr);
   return (
@@ -144,6 +144,9 @@ export default function CatalogueMenu({ onNavigate }) {
             </Link>
           ))}
         </div>
+        {familySearches(family).length > 0 && <nav className="e-catalogue-subfamilies" aria-label={lang === "en" ? "Explore this family" : "Explorer cette famille"}>
+          {familySearches(family).map(item => <Link to={item.href} onClick={onNavigate} key={item.href}>{label(item)}<ChevronRight size={14} aria-hidden="true" /></Link>)}
+        </nav>}
         {!resource.loading && !resource.error && !families.length && (
           <p>
             <Copy
