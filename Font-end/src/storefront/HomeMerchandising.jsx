@@ -12,6 +12,7 @@ import { readMerchandising } from "./offerData";
 import { adaptProduct } from "./productData";
 import useOfferClock from "./useOfferClock";
 import ProjectTeaser from "./ProjectTeaser";
+import BannerRotator from "./BannerRotator";
 function Progressive({ children }) {
   const ref = useRef();
   const [ready, setReady] = useState(false);
@@ -67,10 +68,14 @@ function CommercialCollection({ mode }) {
   </section>;
 }
 export function MerchBanner({ workshop = false }) {
+  const [categories, setCategories] = useState([]);
+  useEffect(() => { let active = true; publicCollectionGet("/categories").then(data => { if (active) setCategories(data); }).catch(() => {}); return () => { active = false; }; }, []);
   const main = workshop ? "category-v2-tools" : "category-v2-components";
   const secondary = workshop ? "category-v2-power" : "equivalence-parts-v2";
+  const category = resolveCategory(Array.isArray(categories) ? categories : [], workshop ? "Outillage" : "Composants Électroniques");
+  const href = category ? "/catalogue?category=" + encodeURIComponent(category.id) : "/catalogue";
   return <aside className={"e-merch-banner" + (workshop ? " is-workshop" : "")}>
-    <div><h2><Copy fr={workshop ? "Équipez votre atelier" : "Tout pour vos montages et réparations électroniques"} en={workshop ? "Equip your workshop" : "Everything for your electronic circuits and repairs"} /></h2><p><Copy fr={workshop ? "Les bons outils pour mesurer, souder et assembler." : "Composants, cartes, alimentations et accessoires pour donner vie à vos projets."} en={workshop ? "The right tools to measure, solder and assemble." : "Components, boards, power supplies and accessories for your projects."} /></p><Link className="e-btn" to={"/catalogue?search=" + (workshop ? "outillage" : "composants")}><Copy fr={workshop ? "Découvrir l’outillage" : "Découvrir les composants"} en={workshop ? "Discover tools" : "Explore components"} /><ArrowRight size={18} /></Link></div>
+    <div><h2><Copy fr={workshop ? "Équipez votre atelier" : "Tout pour vos montages et réparations électroniques"} en={workshop ? "Equip your workshop" : "Everything for your electronic circuits and repairs"} /></h2><p><Copy fr={workshop ? "Les bons outils pour mesurer, souder et assembler." : "Composants, cartes, alimentations et accessoires pour donner vie à vos projets."} en={workshop ? "The right tools to measure, solder and assemble." : "Components, boards, power supplies and accessories for your projects."} /></p><Link className="e-btn" to={href}><Copy fr={workshop ? "Découvrir l’outillage" : "Découvrir les composants"} en={workshop ? "Discover tools" : "Explore components"} /><ArrowRight size={18} /></Link></div>
     <div className="e-merch-banner-visual" aria-hidden="true">
       <img src={"/design-e/" + main + ".webp"} srcSet={`/design-e/${main}-144.webp 144w, /design-e/${main}.webp 288w`} sizes="(max-width: 760px) 45vw, 288px" width="288" height="288" alt="" loading="lazy" decoding="async" />
       <img src={"/design-e/" + secondary + ".webp"} srcSet={workshop ? `/design-e/${secondary}-144.webp 144w, /design-e/${secondary}.webp 288w` : `/design-e/${secondary}-240.webp 240w, /design-e/${secondary}.webp 480w`} sizes="(max-width: 760px) 32vw, 210px" width={workshop ? 288 : 480} height={workshop ? 288 : 160} alt="" loading="lazy" decoding="async" />
@@ -87,8 +92,8 @@ export function StoreReassurance() {
 }
 export default function HomeMerchandising() {
   return <>
-    <MerchBanner />
-    {homeCollections.map((config,index) => <div key={config.id}>{index === 5 && <MerchBanner workshop />}<Progressive><Collection config={config} /></Progressive></div>)}
+    <BannerRotator slides={[<MerchBanner key="parts" />, <MerchBanner workshop key="tools" />]} />
+    {homeCollections.map((config,index) => <div key={config.id}>{index === 5 && <BannerRotator initial={1} slides={[<MerchBanner key="parts" />, <MerchBanner workshop key="tools" />]} />}<Progressive><Collection config={config} /></Progressive></div>)}
     <Progressive><CommercialCollection mode="arrivages" /><CommercialCollection mode="offres" /><ProjectTeaser /></Progressive>
     <StoreReassurance />
   </>;

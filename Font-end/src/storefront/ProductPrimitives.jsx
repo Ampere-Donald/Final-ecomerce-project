@@ -8,10 +8,10 @@ export function Copy({ fr, en }) {
   const { lang } = useI18n();
   return lang === "en" ? en : fr;
 }
-export function Photo({ product, eager = false, thumbnail = false, sizes }) {
+export function Photo({ product, eager = false, thumbnail = false, sizes, detail = false }) {
   const [failed, setFailed] = useState("");
   const [original, setOriginal] = useState("");
-  const responsive = thumbnail && original !== product.image ? cardImage(product.image) : null;
+  const responsive = thumbnail && original !== product.image ? cardImage(product.image, detail ? [400, 640, 960, 1280] : undefined) : null;
   return product.image && failed !== product.image ? (
     <img
       src={responsive?.src || product.image}

@@ -1,0 +1,21 @@
+.e-product-viewer{position:fixed;inset:0;margin:auto;width:min(1400px,96vw);height:94vh;height:94dvh;max-width:none;max-height:none;padding:0;border:1px solid #e0e9ef;border-radius:12px;background:#fff;color:#172d41;display:grid;grid-template-rows:auto minmax(0,1fr) auto auto;overflow:hidden;box-shadow:0 24px 90px #102a4050}
+.e-product-viewer:not([open]){display:none}
+.e-product-viewer::backdrop{background:#102335b8}
+.e-viewer-head{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px 20px;border-bottom:1px solid #e7edf2}
+.e-viewer-head>div{min-width:0;display:flex;flex-wrap:wrap;align-items:center;gap:8px 18px}
+.e-viewer-head strong{font-size:16px;overflow-wrap:anywhere}
+.e-viewer-head span{font-size:13px;color:#526a7e;white-space:nowrap}
+.e-product-viewer button{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-width:48px;min-height:48px;border:1px solid #d9e4ec;border-radius:7px;background:#fff;color:#075bb9;cursor:pointer;flex-shrink:0}
+.e-product-viewer button:focus-visible{outline:3px solid #86b9ef;outline-offset:2px}
+.e-viewer-stage{min-height:0;overflow:auto;background:#f5f7f9;overscroll-behavior:contain;touch-action:pan-x pan-y pinch-zoom}
+.e-viewer-canvas{width:100%;height:100%;padding:16px;display:grid;place-items:center}
+.e-viewer-canvas>img{width:100%;height:100%;object-fit:contain;min-height:0}
+.e-viewer-stage.is-zoomed .e-viewer-canvas{width:150%;height:150%;min-width:150%;min-height:150%}
+.e-viewer-controls{display:flex;justify-content:center;gap:12px;padding:10px}
+.e-viewer-zoom{padding:0 18px;font:600 14px "Segoe UI",sans-serif}
+.e-viewer-thumbs{display:flex;justify-content:center;gap:8px;padding:0 12px 12px;overflow:auto}
+.e-viewer-thumbs button{width:64px;height:64px;padding:4px}
+.e-viewer-thumbs button[aria-pressed=true]{border:2px solid #0862c7}
+.e-viewer-thumbs img{width:100%;height:100%;object-fit:contain}
+@media(max-width:760px){.e-product-viewer{width:100vw;height:100vh;height:100dvh;border:0;border-radius:0}.e-viewer-head{padding:10px 12px}.e-viewer-head strong{font-size:14px}.e-viewer-canvas{padding:8px}}
+@media(prefers-reduced-motion:no-preference){.e-product-viewer[open]{animation:e-viewer-open .16s ease-out}@keyframes e-viewer-open{from{opacity:0;transform:scale(.985)}to{opacity:1;transform:scale(1)}}}

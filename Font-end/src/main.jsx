@@ -3,6 +3,7 @@ import "./styles/main.scss";
 import App from "./App.jsx";
 import "./storefront/storefront.css";
 import StorefrontProviders from "./StorefrontProviders.jsx";
+import "./storefront/refinement.css";
 import { captureGuestFragment } from "./storefront/guestAccess";
 import { readCatalogueBoot } from "./storefront/initialCatalogue";
 

@@ -50,3 +50,24 @@
 
 .e-collection-families{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
 .e-collection-families a{padding:6px 10px;min-height:36px;display:flex;align-items:center;border:1px solid #e1eaf0;border-radius:18px;font-size:11px}
+
+.e-carousel-controls button{transition:background-color .15s ease,border-color .15s ease,transform .15s ease}
+.e-carousel-controls button:not(:disabled):hover{background:#eaf4ff;border-color:#8eb9e5}
+.e-carousel-controls button:not(:disabled):active{transform:scale(.94)}
+.e-collection-families a{font-size:13px;min-height:44px}
+.e-merch-collection .e-section-head>a,.e-home-selection .e-section-head>a{font-size:13px;min-height:44px}
+.e-banner-rotator{margin:8px 0 24px;position:relative;background:#f0f7fb;border:1px solid #dbe9f2;border-radius:12px;overflow:hidden;touch-action:pan-y pinch-zoom}
+.e-banner-slides{display:grid}
+.e-banner-slide{grid-area:1/1;opacity:0;visibility:hidden;pointer-events:none;transition:opacity .25s ease}
+.e-banner-slide.is-active{opacity:1;visibility:visible;pointer-events:auto}
+.e-banner-slide .e-merch-banner{margin:0;border:0;border-radius:0;padding-bottom:24px}
+.e-banner-controls{display:flex;align-items:center;justify-content:flex-end;gap:4px;padding:0 16px 10px;background:#f0f7fb}
+.e-banner-controls button{width:44px;height:44px;display:grid;place-items:center;border:1px solid transparent;border-radius:50%;background:transparent;color:#075bb9;cursor:pointer}
+.e-banner-controls button:hover{background:#fff;border-color:#d7e5ef}
+.e-banner-controls button:focus-visible{outline:3px solid #86b9ef;outline-offset:-2px}
+.e-banner-dots{display:flex;gap:0}
+.e-banner-dots span{width:6px;height:6px;border-radius:8px;background:#acbecd;transition:width .2s ease,background-color .2s ease}
+.e-banner-dots [aria-pressed=true] span{width:22px;background:#075bb9}
+@media(max-width:760px){.e-merch-collection .e-section-head>a,.e-home-selection .e-section-head>a{font-size:12px}.e-banner-slide .e-merch-banner{padding-bottom:12px}.e-banner-controls{justify-content:center;padding-bottom:8px}}
+@media(prefers-reduced-motion:no-preference){.e-progressive.is-ready .e-merch-collection{animation:e-shelf-reveal .22s ease-out}@keyframes e-shelf-reveal{from{opacity:.5}to{opacity:1}}}
+@media(prefers-reduced-motion:reduce){.e-carousel-controls button,.e-banner-slide,.e-banner-dots span{transition:none}}

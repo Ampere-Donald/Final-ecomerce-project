@@ -1,5 +1,5 @@
 import EquivalenceEntry from "./EquivalenceEntry";
-import { useState } from "react";
+import { lazy, Suspense, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import PageMeta from "./PageMeta";
 import { ShoppingCart, ZoomIn, FileText } from "lucide-react";
@@ -13,7 +13,6 @@ import {
   Card,
   Copy,
   Crumbs,
-  Modal,
   Photo,
   Price,
   State,
@@ -27,6 +26,7 @@ import OfferDetails from "./OfferDetails";
 import ProductReviews from "./ProductReviews";
 import TechnicalSource from "./TechnicalSource";
 import { useJourneyObservation } from "./useJourney.js";
+const ProductViewer = lazy(() => import("./ProductViewer"));
 
 function Detail({ product }) {
   const [quantity, setQuantity] = useState(1),
@@ -98,7 +98,7 @@ function Detail({ product }) {
                 lang === "fr" ? "Agrandir le visuel" : "Enlarge image"
               }
             >
-              <Photo product={chosen} eager />
+              <Photo product={chosen} eager thumbnail detail sizes="(max-width: 760px) 95vw, 600px" />
               {chosen.image && (
                 <span>
                   <ZoomIn size={17} />
@@ -115,7 +115,7 @@ function Detail({ product }) {
                     aria-pressed={active === i}
                     onClick={() => setActive(i)}
                   >
-                    <img src={image} alt="" width="52" height="52" />
+                    <Photo product={{ ...product, image }} thumbnail sizes="64px" />
                   </button>
                 ))}
               </div>
@@ -255,11 +255,9 @@ function Detail({ product }) {
         <Price value={product.retailPrice} />
         {purchase}
       </aside>
-      <Modal open={zoom} onClose={() => setZoom(false)} title={name}>
-        <div className="e-zoom-photo">
-          <Photo product={chosen} eager />
-        </div>
-      </Modal>
+      {zoom && <Suspense fallback={<div className="e-viewer-loading" role="status"><Copy fr="Ouverture de l’image…" en="Opening image…" /></div>}>
+        <ProductViewer product={product} initial={active} onSelect={setActive} onClose={() => setZoom(false)} />
+      </Suspense>}
       <Footer />
     </>
   );
