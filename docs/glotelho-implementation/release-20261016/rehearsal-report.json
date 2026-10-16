@@ -1,0 +1,20 @@
+{
+  "date": "2026-10-16T18:04:35.916Z",
+  "sourceReadOnly": true,
+  "sourceVersion": "180006",
+  "pendingMigrations": 4,
+  "consistentSnapshot": true,
+  "tables": 69,
+  "bytes": 821237,
+  "sha256": "8388069f66948ab4ac794eed6b32a526b0232e3df8e7f76f5e78f24eb4da6f9e",
+  "restored": true,
+  "sourceWrites": false,
+  "localMigrationApplied": true,
+  "preservedTables": 68,
+  "historicalRecordsPreserved": 61,
+  "newMigrationRecords": 4,
+  "autoReviewedValues": 0,
+  "releaseSchemaPassed": true,
+  "restoredLocallyOnly": true,
+  "remotePreproductionVerified": false
+}

@@ -1,0 +1,52 @@
+{
+  "date": "2026-10-16T18:23:00.104Z",
+  "checks": [
+    "Published equivalence form/read-only register/focus/edit reset/overflow fr 390",
+    "Published homepage/retained selection/overflow 390",
+    "Published administration private route requires login 390",
+    "Published equivalence form/read-only register/focus/edit reset/overflow fr 768",
+    "Published equivalence form/read-only register/focus/edit reset/overflow fr 1440",
+    "Published homepage/retained selection/overflow 1440",
+    "Published administration private route requires login 1440",
+    "Published equivalence form/read-only register/focus/edit reset/overflow en 390"
+  ],
+  "errors": [],
+  "blockedWrites": [],
+  "blockedTelemetry": [
+    "/cdn-cgi/rum",
+    "/cdn-cgi/rum",
+    "/cdn-cgi/rum",
+    "/cdn-cgi/rum",
+    "/cdn-cgi/rum",
+    "/cdn-cgi/rum",
+    "/cdn-cgi/rum",
+    "/cdn-cgi/rum"
+  ],
+  "registerResponses": [
+    {
+      "lang": "fr",
+      "width": 390,
+      "status": 201,
+      "dossiers": 0
+    },
+    {
+      "lang": "fr",
+      "width": 768,
+      "status": 201,
+      "dossiers": 0
+    },
+    {
+      "lang": "fr",
+      "width": 1440,
+      "status": 201,
+      "dossiers": 0
+    },
+    {
+      "lang": "en",
+      "width": 390,
+      "status": 201,
+      "dossiers": 0
+    }
+  ],
+  "limits": "Public deployed assets and actual read-only register. Suggestion response deliberately empty and simulated to avoid provider calls. Cloudflare RUM blocked during verification. No physical-device or actual technician approval proof."
+}
