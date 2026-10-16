@@ -11,6 +11,7 @@ import useComparison, {
 import useComparisonProducts from "./useComparisonProducts";
 import { comparisonRows } from "./comparisonRows";
 import Footer from "./Footer";
+import TechnicalSource from "./TechnicalSource";
 
 export default function Comparison() {
   const { selection, saved } = useComparison();
@@ -20,7 +21,7 @@ export default function Comparison() {
   const products = entries.map((entry) => entry.product).filter(Boolean);
   const ready =
     !loading && entries.length >= 2 && products.length === entries.length;
-  const rows = ready ? comparisonRows(products) : [];
+  const rows = ready ? comparisonRows(products, lang) : [];
   const differences = rows.filter((row) => row.different);
   const shownRows = onlyDifferences ? differences : rows;
   const categoryLink = selection.categoryId
@@ -280,7 +281,11 @@ export default function Comparison() {
                           </tr>
                           {shownRows.map((row) => (
                             <tr
-                              key={row.label}
+                              key={
+                                row.technicalKey
+                                  ? `technical:${row.technicalKey}`
+                                  : `label:${row.label}`
+                              }
                               className={
                                 row.different ? "e-compare-different" : ""
                               }
@@ -289,7 +294,10 @@ export default function Comparison() {
                                 {row.label}
                                 {row.unitEquivalent && (
                                   <small className="e-compare-unit-note">
-                                    <Copy fr="Même valeur après conversion" en="Same value after conversion" />
+                                    <Copy
+                                      fr="Même valeur après conversion"
+                                      en="Same value after conversion"
+                                    />
                                   </small>
                                 )}
                                 {row.incomplete && (
@@ -302,7 +310,37 @@ export default function Comparison() {
                                 )}
                               </th>
                               {row.values.map((value, i) => (
-                                <td key={products[i].id}>{value ?? missing}</td>
+                                <td key={products[i].id}>
+                                  {value ?? missing}
+                                  {value !== null &&
+                                    (() => {
+                                      const sourceValues = (
+                                        products[i].technicalAttributes || []
+                                      )
+                                        .filter((a) =>
+                                          row.technicalKey
+                                            ? a.technicalKey ===
+                                              row.technicalKey
+                                            : !a.technicalKey &&
+                                              a.label.trim() === row.label,
+                                        )
+                                        .flatMap((a) => a.values);
+                                      return sourceValues.length ? (
+                                        sourceValues.map((v, j) => (
+                                          <div key={j}>
+                                            {sourceValues.length > 1 && (
+                                              <small>{v.value}</small>
+                                            )}
+                                            <TechnicalSource
+                                              source={v.source}
+                                            />
+                                          </div>
+                                        ))
+                                      ) : (
+                                        <TechnicalSource />
+                                      );
+                                    })()}
+                                </td>
                               ))}
                             </tr>
                           ))}

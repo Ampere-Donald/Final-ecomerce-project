@@ -6,20 +6,33 @@ import { useI18n } from "../context/I18nContext";
 import apiClient from "../utils/apiClient";
 import { resolveImageUrl } from "../utils/mapProduct";
 import { adaptProduct } from "./productData";
-import { parseEquivalences } from "./equivalenceData";
+import {
+  mergeReplacementSuggestions,
+  parseEquivalences,
+  parseReplacementDossiers,
+} from "./equivalenceData";
 import { Copy, Crumbs, Photo, Price, Stock } from "./Elements";
 import Footer from "./Footer";
 import OfferDetails from "./OfferDetails";
+import TechnicalSource from "./TechnicalSource";
+import ReplacementDecision from "./ReplacementDecision";
 
 function Finder({ initial, targetId }) {
   const { lang } = useI18n();
   const [query, setQuery] = useState(initial);
+  const [application, setApplication] = useState("");
   const [state, setState] = useState({ status: "idle" });
   const active = useRef(null);
   const resultsRef = useRef(null);
   useEffect(() => () => active.current?.abort(), []);
   useEffect(() => {
     if (["success", "error"].includes(state.status)) {
+      const header = document.querySelector(".e-header");
+      const pinned =
+        header &&
+        ["sticky", "fixed"].includes(getComputedStyle(header).position);
+      if (resultsRef.current)
+        resultsRef.current.style.scrollMarginTop = `${(pinned ? header.getBoundingClientRect().height : 0) + 18}px`;
       resultsRef.current?.focus({ preventScroll: true });
       resultsRef.current?.scrollIntoView({ block: "start" });
     }
@@ -30,8 +43,14 @@ function Finder({ initial, targetId }) {
     setQuery(value);
     setState({ status: "idle" });
   }
-  async function submit(event) {
-    event.preventDefault();
+  function editApplication(value) {
+    active.current?.abort();
+    active.current = null;
+    setApplication(value);
+    setState({ status: "idle" });
+  }
+  async function submit(event, options = {}) {
+    event?.preventDefault();
     const text = query.trim();
     if (!text || text.length > 255) return;
     active.current?.abort();
@@ -39,25 +58,71 @@ function Finder({ initial, targetId }) {
     active.current = controller;
     setState({ status: "loading" });
     const useTarget = targetId && query === initial;
-    try {
-      const { data } = await apiClient.post(
-        "/equivalence/suggest",
-        {
-          ...(useTarget ? { produitId: targetId } : { query: text }),
-          source: "ecommerce",
-        },
-        { signal: controller.signal, timeout: 45000 },
-      );
-      if (active.current !== controller || controller.signal.aborted) return;
+    const searchedApplication = options.application ?? application.trim();
+    const page = options.page ?? 0;
+    if (options.application !== undefined) setApplication(options.application);
+    const scope = useTarget ? { produitId: targetId } : { query: text };
+    const [model, reviewed] = await Promise.allSettled([
+      apiClient
+        .post(
+          "/equivalence/suggest",
+          {
+            ...scope,
+            source: "ecommerce",
+            ...(searchedApplication
+              ? { application: searchedApplication }
+              : {}),
+          },
+          { signal: controller.signal, timeout: 45000 },
+        )
+        .then(({ data }) =>
+          parseEquivalences(data, useTarget ? targetId : null),
+        ),
+      apiClient
+        .post(
+          "/equivalence/cas/rechercher",
+          { ...scope, application: searchedApplication, page },
+          { signal: controller.signal, timeout: 15000 },
+        )
+        .then(({ data }) =>
+          parseReplacementDossiers(
+            data,
+            searchedApplication,
+            useTarget ? targetId : null,
+          ),
+        ),
+    ]);
+    if (active.current !== controller || controller.signal.aborted) return;
+    if (model.status === "rejected" && reviewed.status === "rejected") {
       setState({
-        status: "success",
-        ...parseEquivalences(data, useTarget ? targetId : null),
-        searched: text,
+        status: "error",
+        limited: [model, reviewed].some(
+          (r) => r.reason?.response?.status === 429,
+        ),
       });
-    } catch (error) {
-      if (active.current !== controller || controller.signal.aborted) return;
-      setState({ status: "error", limited: error.response?.status === 429 });
+      return;
     }
+    const modelData =
+      model.status === "fulfilled"
+        ? model.value
+        : { suggestions: [], catalogueOnly: true, message: "" };
+    const register =
+      reviewed.status === "fulfilled"
+        ? reviewed.value
+        : { suggestions: [], nextPage: null, limiteAtteinte: false };
+    setState({
+      status: "success",
+      ...modelData,
+      suggestions: mergeReplacementSuggestions(modelData, register),
+      hasDossiers: register.suggestions.length > 0,
+      nextPage: register.nextPage,
+      limiteAtteinte: register.limiteAtteinte,
+      page,
+      reviewError: reviewed.status === "rejected",
+      matchingError: model.status === "rejected",
+      searched: text,
+      searchedApplication,
+    });
   }
   return (
     <>
@@ -104,6 +169,31 @@ function Finder({ initial, targetId }) {
               </button>
             </p>
           )}
+          <label htmlFor="equivalence-application">
+            <Copy
+              fr="Votre montage et ses contraintes (facultatif)"
+              en="Your circuit and its requirements (optional)"
+            />
+          </label>
+          <textarea
+            id="equivalence-application"
+            value={application}
+            onChange={(e) => editApplication(e.target.value)}
+            maxLength={500}
+            rows={3}
+            aria-describedby="equivalence-application-hint"
+            placeholder={
+              lang === "fr"
+                ? "Usage, alimentation, boîtier, brochage, température…"
+                : "Use, supply, package, pinout, temperature…"
+            }
+          />
+          <p id="equivalence-application-hint">
+            <Copy
+              fr="Indiquez les conditions que la pièce doit respecter. Évitez les coordonnées personnelles."
+              en="Describe the requirements the part must meet. Do not include personal contact details."
+            />
+          </p>
           <button
             className="e-btn"
             disabled={!query.trim() || state.status === "loading"}
@@ -199,19 +289,56 @@ function Finder({ initial, targetId }) {
                 en={`Results for “${state.searched}”`}
               />
             </h2>
+            {state.searchedApplication && (
+              <p className="e-equivalence-summary">
+                <strong>
+                  <Copy fr="Votre montage : " en="Your circuit: " />
+                </strong>
+                {state.searchedApplication}
+              </p>
+            )}
+            {(state.reviewError || state.matchingError) && (
+              <div className="e-equivalence-partial" role="alert">
+                <p>
+                  <Copy
+                    fr={
+                      state.reviewError
+                        ? "Les dossiers relus n’ont pas pu être vérifiés. Les pistes ci-dessous restent non validées."
+                        : "Les autres pistes sont indisponibles. Les dossiers relus ci-dessous restent consultables."
+                    }
+                    en={
+                      state.reviewError
+                        ? "Reviewed dossiers could not be checked. The suggestions below remain unverified."
+                        : "Other suggestions are unavailable. The reviewed dossiers below are still available."
+                    }
+                  />
+                </p>
+                <button
+                  type="button"
+                  className="e-text-button"
+                  onClick={(e) => submit(e, { page: state.page })}
+                >
+                  <Copy fr="Réessayer la recherche" en="Retry the search" />
+                </button>
+              </div>
+            )}
             {state.suggestions.length ? (
               <>
                 <p className="e-equivalence-summary">
                   <Copy
                     fr={
-                      state.catalogueOnly
-                        ? "Pistes issues du catalogue : leur compatibilité technique reste à vérifier."
-                        : "Le moteur propose des pistes à examiner. Aucune compatibilité technique n’est validée : faites vérifier les caractéristiques par un technicien avant tout remplacement."
+                      state.hasDossiers
+                        ? "Les dossiers relus décrivent un usage précis. Les autres pistes restent à vérifier avec un technicien."
+                        : state.catalogueOnly
+                          ? "Pistes issues du catalogue : leur compatibilité technique reste à vérifier."
+                          : "Le moteur propose des pistes à examiner. Aucune compatibilité technique n’est validée : faites vérifier les caractéristiques par un technicien avant tout remplacement."
                     }
                     en={
-                      state.catalogueOnly
-                        ? "Catalogue matches: technical compatibility still needs checking."
-                        : "The matching engine suggests parts to review. Technical compatibility is not verified: ask a technician to check the specifications before replacing your component."
+                      state.hasDossiers
+                        ? "Reviewed dossiers describe a specific use. Other suggestions still need checking by a technician."
+                        : state.catalogueOnly
+                          ? "Catalogue matches: technical compatibility still needs checking."
+                          : "The matching engine suggests parts to review. Technical compatibility is not verified: ask a technician to check the specifications before replacing your component."
                     }
                   />
                 </p>
@@ -249,26 +376,32 @@ function Finder({ initial, targetId }) {
                               {s.code}
                             </p>
                           )}
-                          <span
-                            className={
-                              "e-compatibility e-compatibility--" +
-                              (state.catalogueOnly ? "inconnue" : "inconnue")
-                            }
-                          >
-                            <Copy
-                              fr={
-                                state.catalogueOnly
-                                  ? "Correspondance catalogue"
-                                  : "Piste non validée par un technicien"
-                              }
-                              en={
-                                state.catalogueOnly
-                                  ? "Catalogue match"
-                                  : "Not technician-verified"
+                          {!s.dossiers?.length && (
+                            <span className="e-compatibility e-compatibility--inconnue">
+                              <Copy
+                                fr={
+                                  state.catalogueOnly
+                                    ? "Correspondance catalogue"
+                                    : "Piste non validée par un technicien"
+                                }
+                                en={
+                                  state.catalogueOnly
+                                    ? "Catalogue match"
+                                    : "Not technician-verified"
+                                }
+                              />
+                            </span>
+                          )}
+                          {s.dossiers?.map((d) => (
+                            <ReplacementDecision
+                              key={d.application}
+                              dossier={d}
+                              onUseScope={(application) =>
+                                submit(null, { application })
                               }
                             />
-                          </span>
-                          {s.raison && (
+                          ))}
+                          {!s.dossiers?.length && s.raison && (
                             <p className="e-equivalent-reason">
                               {state.catalogueOnly ? (
                                 <Copy
@@ -280,24 +413,57 @@ function Finder({ initial, targetId }) {
                               )}
                             </p>
                           )}
-                          {(s.avertissement || !state.catalogueOnly) && (
-                            <p className="e-equivalent-warning">
-                              <strong>
-                                <Copy fr="À vérifier : " en="Check: " />
-                              </strong>
-                              {state.catalogueOnly ? (
-                                <Copy
-                                  fr="Vérifier les caractéristiques techniques avant substitution."
-                                  en="Check the technical specifications before substitution."
-                                />
-                              ) : (
-                                s.avertissement || (
+                          {!s.dossiers?.length &&
+                            (s.avertissement || !state.catalogueOnly) && (
+                              <p className="e-equivalent-warning">
+                                <strong>
+                                  <Copy fr="À vérifier : " en="Check: " />
+                                </strong>
+                                {state.catalogueOnly ? (
                                   <Copy
-                                    fr="le rôle électrique, les valeurs, la polarité, le boîtier et le brochage dans une fiche constructeur."
-                                    en="electrical role, ratings, polarity, package and pinout against a manufacturer datasheet."
+                                    fr="Vérifier les caractéristiques techniques avant substitution."
+                                    en="Check the technical specifications before substitution."
                                   />
-                                )
-                              )}
+                                ) : (
+                                  s.avertissement || (
+                                    <Copy
+                                      fr="le rôle électrique, les valeurs, la polarité, le boîtier et le brochage dans une fiche constructeur."
+                                      en="electrical role, ratings, polarity, package and pinout against a manufacturer datasheet."
+                                    />
+                                  )
+                                )}
+                              </p>
+                            )}
+                          {s.caracteristiques?.length ? (
+                            <details className="e-equivalent-sources">
+                              <summary>
+                                <Copy
+                                  fr="Caractéristiques et sources disponibles"
+                                  en="Available specifications and sources"
+                                />
+                              </summary>
+                              <p>
+                                <Copy
+                                  fr="Ces sources documentent la pièce proposée. Elles ne valident pas son remplacement dans votre montage."
+                                  en="These sources document the suggested part. They do not validate it as a replacement in your circuit."
+                                />
+                              </p>
+                              <ul>
+                                {s.caracteristiques.map((c, index) => (
+                                  <li key={index}>
+                                    <strong>{c.nomAttribut}</strong>
+                                    <span>{c.valeur}</span>
+                                    <TechnicalSource source={c.documentation} />
+                                  </li>
+                                ))}
+                              </ul>
+                            </details>
+                          ) : (
+                            <p className="e-equivalent-source-empty">
+                              <Copy
+                                fr="Aucune caractéristique relue disponible pour cette proposition. Consultez la fiche et faites vérifier votre montage."
+                                en="No reviewed specifications available for this suggestion. Review the product and have your circuit checked."
+                              />
                             </p>
                           )}
                         </div>
@@ -324,16 +490,31 @@ function Finder({ initial, targetId }) {
               <div className="e-state">
                 <h3>
                   <Copy
-                    fr="Aucun équivalent proposé"
-                    en="No equivalent suggested"
+                    fr={
+                      state.nextPage !== null || state.page > 0
+                        ? "Aucun dossier relu disponible sur cette page"
+                        : "Aucun équivalent proposé"
+                    }
+                    en={
+                      state.nextPage !== null || state.page > 0
+                        ? "No reviewed dossier available on this page"
+                        : "No equivalent suggested"
+                    }
                   />
                 </h3>
                 <p>
-                  {(lang === "fr" && state.message) || (
+                  {state.nextPage !== null || state.page > 0 ? (
                     <Copy
-                      fr="Aucune pièce en stock n’a pu être proposée pour cette recherche. Précisez votre référence ou demandez conseil."
-                      en="No stocked part could be suggested. Refine your reference or ask for advice."
+                      fr="Consultez les autres pages de dossiers ou demandez conseil à la boutique."
+                      en="Check the other dossier pages or ask the shop for advice."
                     />
+                  ) : (
+                    (lang === "fr" && state.message) || (
+                      <Copy
+                        fr="Aucune pièce en stock n’a pu être proposée pour cette recherche. Précisez votre référence ou demandez conseil."
+                        en="No stocked part could be suggested. Refine your reference or ask for advice."
+                      />
+                    )
                   )}
                 </p>
                 <Link className="e-btn e-secondary" to="/contact">
@@ -346,6 +527,55 @@ function Finder({ initial, targetId }) {
             )}
           </>
         )}
+        {state.status === "success" &&
+          (state.nextPage !== null ||
+            state.page > 0 ||
+            state.limiteAtteinte) && (
+            <nav
+              className="e-replacement-pages"
+              aria-label={
+                lang === "fr"
+                  ? "Dossiers de remplacement"
+                  : "Replacement dossiers"
+              }
+            >
+              <p>
+                <Copy
+                  fr={`Dossiers relus — page ${state.page + 1}. Les pistes de recherche peuvent être répétées d’une page à l’autre.`}
+                  en={`Reviewed dossiers — page ${state.page + 1}. Search suggestions may repeat across pages.`}
+                />
+              </p>
+              {state.page > 0 && (
+                <button
+                  type="button"
+                  className="e-btn e-secondary"
+                  onClick={(e) => submit(e, { page: state.page - 1 })}
+                >
+                  <Copy fr="Dossiers précédents" en="Previous dossiers" />
+                </button>
+              )}
+              {state.nextPage !== null && (
+                <button
+                  type="button"
+                  className="e-btn e-secondary"
+                  onClick={(e) => submit(e, { page: state.nextPage })}
+                >
+                  <Copy
+                    fr="Autres dossiers relus"
+                    en="More reviewed dossiers"
+                  />
+                </button>
+              )}
+              {state.limiteAtteinte && (
+                <p>
+                  <Copy
+                    fr="La limite de consultation est atteinte. Demandez conseil à la boutique pour poursuivre."
+                    en="The browsing limit has been reached. Ask the shop for help continuing."
+                  />
+                </p>
+              )}
+            </nav>
+          )}
       </div>
     </>
   );

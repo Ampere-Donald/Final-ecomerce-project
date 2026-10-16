@@ -1,0 +1,175 @@
+{
+  "observedAt": "2026-10-10T20:09:14.529Z",
+  "selection": "Proposed review sample, not technician-approved",
+  "mode": "Public GET product details only",
+  "products": [
+    {
+      "id": "0019c717-6f78-4abb-a090-dac2357e4509",
+      "family": "cable",
+      "code": "237091",
+      "codeFamille": "237",
+      "name": "Câble HDMI mâle-mâle, 15 m",
+      "brand": "Générique",
+      "category": "Câbles & Connectique",
+      "datasheetUrl": null,
+      "attributes": [],
+      "review": {
+        "status": "a_verifier",
+        "manufacturerPartNumber": null,
+        "sourceDocument": null,
+        "sourcePage": null,
+        "reviewer": null,
+        "reviewedAt": null,
+        "normalizedValues": null
+      },
+      "note": "The display name is not a verified manufacturer specification. No compatibility conclusion."
+    },
+    {
+      "id": "3adebd14-a588-4b3a-b82a-26a95b3e7067",
+      "family": "multimetre",
+      "code": "0000161",
+      "codeFamille": "000",
+      "name": "MULTIMETRE DT83 SERIE",
+      "brand": null,
+      "category": "Mesure & Test",
+      "datasheetUrl": null,
+      "attributes": [],
+      "review": {
+        "status": "a_verifier",
+        "manufacturerPartNumber": null,
+        "sourceDocument": null,
+        "sourcePage": null,
+        "reviewer": null,
+        "reviewedAt": null,
+        "normalizedValues": null
+      },
+      "note": "The display name is not a verified manufacturer specification. No compatibility conclusion."
+    },
+    {
+      "id": "01c4196c-5e44-47bf-8061-cdc06ef6ae9b",
+      "family": "multimetre",
+      "code": "0000162",
+      "codeFamille": "000",
+      "name": "MULTIMETRE EPICA EP-60551",
+      "brand": "Epica",
+      "category": "Mesure & Test",
+      "datasheetUrl": "https://www.epica-tools.com",
+      "attributes": [],
+      "review": {
+        "status": "a_verifier",
+        "manufacturerPartNumber": null,
+        "sourceDocument": null,
+        "sourcePage": null,
+        "reviewer": null,
+        "reviewedAt": null,
+        "normalizedValues": null
+      },
+      "note": "The display name is not a verified manufacturer specification. No compatibility conclusion."
+    },
+    {
+      "id": "681d7acd-e363-4d17-a804-1189cbe826fb",
+      "family": "alimentation",
+      "code": "0000045",
+      "codeFamille": "000",
+      "name": "ALIMENTATION STABILISE 12V 5A",
+      "brand": "Generic",
+      "category": "Alimentation & Energie",
+      "datasheetUrl": null,
+      "attributes": [],
+      "review": {
+        "status": "a_verifier",
+        "manufacturerPartNumber": null,
+        "sourceDocument": null,
+        "sourcePage": null,
+        "reviewer": null,
+        "reviewedAt": null,
+        "normalizedValues": null
+      },
+      "note": "The display name is not a verified manufacturer specification. No compatibility conclusion."
+    },
+    {
+      "id": "775ecd46-e394-46da-af16-6831744010da",
+      "family": "alimentation",
+      "code": "0000009",
+      "codeFamille": "000",
+      "name": "ALIMENTATION STABILISEE 12V 10A",
+      "brand": "Generic",
+      "category": "Alimentation & Energie",
+      "datasheetUrl": null,
+      "attributes": [],
+      "review": {
+        "status": "a_verifier",
+        "manufacturerPartNumber": null,
+        "sourceDocument": null,
+        "sourcePage": null,
+        "reviewer": null,
+        "reviewedAt": null,
+        "normalizedValues": null
+      },
+      "note": "The display name is not a verified manufacturer specification. No compatibility conclusion."
+    },
+    {
+      "id": "d3b1f846-aa17-4467-905e-69283c1471ed",
+      "family": "relais",
+      "code": "116006",
+      "codeFamille": "116",
+      "name": "RELAIS 12V 10A 5PAT RECT",
+      "brand": null,
+      "category": "Composants Électroniques",
+      "datasheetUrl": null,
+      "attributes": [],
+      "review": {
+        "status": "a_verifier",
+        "manufacturerPartNumber": null,
+        "sourceDocument": null,
+        "sourcePage": null,
+        "reviewer": null,
+        "reviewedAt": null,
+        "normalizedValues": null
+      },
+      "note": "The display name is not a verified manufacturer specification. No compatibility conclusion."
+    },
+    {
+      "id": "1164d265-635c-4190-a072-a9a520df3721",
+      "family": "condensateur",
+      "code": "123464",
+      "codeFamille": "123",
+      "name": "Condensateur au tantale goutte 10 µF",
+      "brand": "Générique",
+      "category": "Composants Électroniques",
+      "datasheetUrl": null,
+      "attributes": [],
+      "review": {
+        "status": "a_verifier",
+        "manufacturerPartNumber": null,
+        "sourceDocument": null,
+        "sourcePage": null,
+        "reviewer": null,
+        "reviewedAt": null,
+        "normalizedValues": null
+      },
+      "note": "The display name is not a verified manufacturer specification. No compatibility conclusion."
+    },
+    {
+      "id": "a1b0b01f-2af4-4377-8f2c-592be60f396c",
+      "family": "condensateur",
+      "code": "104062",
+      "codeFamille": "104",
+      "name": "Condensateur CBB61 2 µF 450 VAC ±5 % pour climatisation",
+      "brand": "Générique",
+      "category": "Composants Électroniques",
+      "datasheetUrl": null,
+      "attributes": [],
+      "review": {
+        "status": "a_verifier",
+        "manufacturerPartNumber": null,
+        "sourceDocument": null,
+        "sourcePage": null,
+        "reviewer": null,
+        "reviewedAt": null,
+        "normalizedValues": null
+      },
+      "note": "The display name is not a verified manufacturer specification. No compatibility conclusion."
+    }
+  ]
+}

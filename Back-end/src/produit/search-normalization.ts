@@ -15,6 +15,8 @@ const columns = [
   'p.code',
   'p.description',
   'c.nom',
+  'v.valeur',
+  'documented.valeur',
 ] as const;
 export type SearchColumn = (typeof columns)[number];
 

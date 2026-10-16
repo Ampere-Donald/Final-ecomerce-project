@@ -1,0 +1,62 @@
+{
+  "passed": true,
+  "fixture": "Synthetic only; actual Nest guards/DTO/services/PostgreSQL for source reads and writes; product shell and session lookup are fixture adapters",
+  "checks": [
+    "draft",
+    "no automatic review",
+    "real 409 preserves inputs",
+    "reload then explicit review",
+    "private identity omitted",
+    "390/768/1440 admin",
+    "real public source in built product UI"
+  ],
+  "apiCalls": [
+    {
+      "path": "/api/valeurs-attribut",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/attributs",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/valeurs-attribut/022ddaf5-99b6-4c49-8079-f9847f51e473/documentation-admin",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/valeurs-attribut/022ddaf5-99b6-4c49-8079-f9847f51e473/documentation",
+      "method": "PATCH",
+      "status": 200
+    },
+    {
+      "path": "/api/valeurs-attribut/022ddaf5-99b6-4c49-8079-f9847f51e473/documentation-admin",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/valeurs-attribut/022ddaf5-99b6-4c49-8079-f9847f51e473/documentation",
+      "method": "PATCH",
+      "status": 409
+    },
+    {
+      "path": "/api/valeurs-attribut/022ddaf5-99b6-4c49-8079-f9847f51e473/documentation-admin",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/valeurs-attribut/022ddaf5-99b6-4c49-8079-f9847f51e473/documentation/relire",
+      "method": "POST",
+      "status": 201
+    },
+    {
+      "path": "/api/valeurs-attribut/022ddaf5-99b6-4c49-8079-f9847f51e473/documentation-admin",
+      "method": "GET",
+      "status": 200
+    }
+  ],
+  "errors": [],
+  "outside": []
+}

@@ -1,4 +1,5 @@
 import { normalizeEligibilityText } from './equivalence-eligibility';
+import { normalizeSalesSearch } from '../produit/search-normalization';
 
 // Lexical retrieval only: a similar marking does not establish compatibility.
 export function referenceHints(query: string) {
@@ -38,7 +39,12 @@ export function referenceHints(query: string) {
 }
 
 export function rankCandidates<
-  T extends { id: string; nomProduit: string; code: string | null },
+  T extends {
+    id: string;
+    nomProduit: string;
+    code: string | null;
+    identitesDocumentees?: string[];
+  },
 >(query: string, candidates: T[], limit = 40): T[] {
   const hints = referenceHints(query);
   const words = normalizeEligibilityText(query)
@@ -49,6 +55,12 @@ export function rankCandidates<
       const name = normalizeEligibilityText(product.nomProduit);
       const markings = referenceHints(name).map((h) => h.compact);
       const score =
+        (product.identitesDocumentees?.some(
+          (value) =>
+            normalizeSalesSearch(value) === normalizeSalesSearch(query),
+        )
+          ? 1000
+          : 0) +
         hints.reduce(
           (sum, h) =>
             sum +
@@ -58,7 +70,8 @@ export function rankCandidates<
                 ? 20
                 : 0),
           0,
-        ) + words.reduce((sum, w) => sum + (name.includes(w) ? 1 : 0), 0);
+        ) +
+        words.reduce((sum, w) => sum + (name.includes(w) ? 1 : 0), 0);
       return { product, score };
     })
     .sort(

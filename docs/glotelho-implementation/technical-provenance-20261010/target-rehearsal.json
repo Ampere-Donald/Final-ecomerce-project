@@ -1,0 +1,26 @@
+{
+  "date": "2026-10-10T23:00:16.217Z",
+  "sourceReadOnly": true,
+  "sourceVersion": "180006",
+  "pendingMigrations": 1,
+  "consistentSnapshot": true,
+  "tables": 69,
+  "bytes": 817113,
+  "sha256": "8305a4776a2f4f2942b376feedf7a27482c831b9225063a1a957a0b4cf7d60e2",
+  "restored": true,
+  "sourceWrites": false,
+  "localMigrationApplied": true,
+  "preservedTables": 68,
+  "historicalRecordsPreserved": 61,
+  "newMigrationRecords": 1,
+  "autoReviewedValues": 0,
+  "releaseSchemaPassed": true,
+  "restoredLocallyOnly": true,
+  "remotePreproductionVerified": false,
+  "cleanup": {
+    "clusterRemovalRejected": true,
+    "clusterStopped": true,
+    "clusterFilesRemoved": false,
+    "remainingDatabases": 0
+  }
+}

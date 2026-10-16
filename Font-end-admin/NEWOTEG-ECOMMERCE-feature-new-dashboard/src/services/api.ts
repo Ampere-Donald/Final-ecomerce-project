@@ -512,6 +512,7 @@ export const roleApi = {
 
 // Attributs
 export const attributApi = {
+  dictionary: (signal?: AbortSignal) => api.get('/attributs/dictionnaire', { signal }).then(res => res.data),
   getAll: () => api.get('/attributs').then(toArray),
   create: (data: any) => api.post('/attributs', data).then(res => res.data),
   update: (id: string, data: any) => api.patch(`/attributs/${id}`, data).then(res => res.data),
@@ -520,10 +521,10 @@ export const attributApi = {
 
 // Valeurs d'attributs
 export const valeurAttributApi = {
-  getAll: () => api.get('/valeur-attributs').then(toArray),
-  create: (data: any) => api.post('/valeur-attributs', data).then(res => res.data),
-  update: (id: string, data: any) => api.patch(`/valeur-attributs/${id}`, data).then(res => res.data),
-  delete: (id: string) => api.delete(`/valeur-attributs/${id}`).then(res => res.data),
+  getAll: () => api.get('/valeurs-attribut').then(toArray),
+  create: (data: any) => api.post('/valeurs-attribut', data).then(res => res.data),
+  update: (id: string, data: any) => api.patch(`/valeurs-attribut/${id}`, data).then(res => res.data),
+  delete: (id: string) => api.delete(`/valeurs-attribut/${id}`).then(res => res.data),
 };
 
 export const bonVenteApi = {

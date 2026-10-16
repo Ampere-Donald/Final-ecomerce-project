@@ -1,515 +1,140 @@
-import React, { useEffect, useState } from 'react';
-import { PlusCircle, Search, Edit2, Trash2, Tags, X } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
-import { attributApi, valeurAttributApi } from '../services/api';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
+import { attributApi, valeurAttributApi, produitApi, getApiErrorMessage } from '../services/api';
+import { useAdminAuth } from '../context/AdminAuthContext';
+import { TechnicalDocumentation } from './TechnicalDocumentation';
+import { readTechnicalDictionary, type TechnicalDictionary } from '../services/technicalDictionary';
 
-/* ── Attribut Modal Form ─────────────────────────────────────────────
-   Extracted OUTSIDE the main component so React doesn't unmount it on
-   every parent state change (avoids "one character at a time" bug).
-──────────────────────────────────────────────────────────────────────*/
-interface AttributModalProps {
-  title: string;
-  formData: { nom: string };
-  setFormData: React.Dispatch<React.SetStateAction<{ nom: string }>>;
-  isSubmitting: boolean;
-  onSubmit: (e: React.FormEvent) => void;
-  onClose: () => void;
+type Product = { id: string; nomProduit: string; code?: string };
+type Attribute = { id: string; nomAttribut: string; produitId: string; typeAttribut: 'TEXTE' | 'NOMBRE' | 'LISTE'; cleTechnique?: string | null; obligatoire?: boolean; produit?: Product };
+type Value = { id: string; attributId: string; valeur: string };
+const emptyAttribute = { nomAttribut: '', produitId: '', typeAttribut: 'TEXTE' as Attribute['typeAttribut'], cleTechnique: '' as NonNullable<Attribute['cleTechnique']> | '', obligatoire: false };
+const fieldClass = 'w-full border border-slate-300 rounded px-3 py-2 bg-white focus:outline-2 focus:outline-primary';
+
+export function Attributs() {
+  const { admin } = useAdminAuth();
+  const canEdit = ['ADMIN', 'SUPER_ADMIN'].includes(admin?.role || '');
+  const [attributes, setAttributes] = useState<Attribute[]>([]);
+  const [values, setValues] = useState<Value[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [message, setMessage] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [search, setSearch] = useState('');
+  const [attributeEditor, setAttributeEditor] = useState<string | null>(null);
+  const [attributeForm, setAttributeForm] = useState(emptyAttribute);
+  const [productSearch, setProductSearch] = useState('');
+  const [products, setProducts] = useState<Product[]>([]);
+  const [productError, setProductError] = useState('');
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [valueEditor, setValueEditor] = useState<string | null>(null);
+  const [valueForm, setValueForm] = useState({ attributId: '', valeur: '' });
+  const [sourceId, setSourceId] = useState<string | null>(null);
+  const [dictionary, setDictionary] = useState<TechnicalDictionary | null>(null);
+  const [dictionaryError, setDictionaryError] = useState('');
+  const [dictionaryRetry, setDictionaryRetry] = useState(0);
+  const sourceTrigger = useRef<HTMLButtonElement | null>(null);
+  const editorHeading = useRef<HTMLHeadingElement>(null);
+  const load = async () => {
+    setLoading(true); setError('');
+    try { const [a, v] = await Promise.all([attributApi.getAll(), valeurAttributApi.getAll()]); setAttributes(a); setValues(v); }
+    catch (e) { setError(getApiErrorMessage(e, 'Impossible de charger les attributs et leurs valeurs. Réessayez.')); }
+    finally { setLoading(false); }
+  };
+  useEffect(() => { void load(); }, []);
+  useEffect(() => {
+    const controller = new AbortController(); setDictionaryError('');
+    attributApi.dictionary(controller.signal).then(data => {
+      if (!controller.signal.aborted) setDictionary(readTechnicalDictionary(data));
+    }).catch(() => {
+      if (!controller.signal.aborted) setDictionaryError('Dictionnaire indisponible. Rechargez-le avant d’enregistrer un attribut. Votre saisie est conservée.');
+    });
+    return () => controller.abort();
+  }, [dictionaryRetry]);
+  useEffect(() => { editorHeading.current?.focus(); }, [attributeEditor, valueEditor]);
+  useEffect(() => {
+    setProducts([]); setProductError('');
+    if (attributeEditor === null || productSearch.trim().length < 2) return;
+    const controller = new AbortController();
+    const timer = window.setTimeout(async () => {
+      try {
+        const data = await produitApi.list({ search: productSearch.trim(), limit: 8, includeInactive: true }, { signal: controller.signal });
+        if (!controller.signal.aborted) setProducts(Array.isArray(data) ? data : data.data || []);
+      } catch (e) { if (!controller.signal.aborted) setProductError(getApiErrorMessage(e, 'Recherche de produit indisponible. Réessayez.')); }
+    }, 300);
+    return () => { window.clearTimeout(timer); controller.abort(); };
+  }, [productSearch, attributeEditor]);
+  const closeEditors = () => { setAttributeEditor(null); setValueEditor(null); setSourceId(null); setError(''); setMessage(''); };
+  const editAttribute = (a?: Attribute) => {
+    closeEditors(); setAttributeEditor(a?.id || 'new'); setSelectedProduct(a?.produit || null); setProductSearch('');
+    setAttributeForm(a ? { nomAttribut: a.nomAttribut, produitId: a.produitId, typeAttribut: a.typeAttribut, cleTechnique: a.cleTechnique || '', obligatoire: Boolean(a.obligatoire) } : emptyAttribute);
+  };
+  const editValue = (v?: Value, a?: Attribute) => {
+    closeEditors(); setValueEditor(v?.id || 'new'); setValueForm({ attributId: v?.attributId || a?.id || '', valeur: v?.valeur || '' });
+  };
+  const submit = async (e: FormEvent) => {
+    e.preventDefault(); if (!canEdit || busy) return;
+    setBusy(true); setError(''); setMessage('');
+    try {
+      if (attributeEditor) {
+        if (!dictionary) { setError('Chargez le dictionnaire avant d’enregistrer cet attribut.'); return; }
+        const body = { ...attributeForm, nomAttribut: attributeForm.nomAttribut.trim(), cleTechnique: attributeForm.cleTechnique || null };
+        if (attributeEditor === 'new') await attributApi.create(body); else await attributApi.update(attributeEditor, body);
+      } else if (valueEditor) {
+        const body = { ...valueForm, valeur: valueForm.valeur.trim() };
+        if (valueEditor === 'new') await valeurAttributApi.create(body); else await valeurAttributApi.update(valueEditor, body);
+      }
+      setAttributeEditor(null); setValueEditor(null); await load(); setMessage('Enregistré. Une modification exige une nouvelle relecture des sources concernées.');
+    } catch (e) { setError(getApiErrorMessage(e, 'Enregistrement impossible. La saisie est conservée.')); }
+    finally { setBusy(false); }
+  };
+  const remove = async (id: string, kind: 'attribute' | 'value') => {
+    if (!canEdit || busy || !window.confirm(kind === 'attribute' ? 'Supprimer cet attribut, ses valeurs et leurs sources ?' : 'Supprimer cette valeur et sa source ?')) return;
+    setBusy(true); setError('');
+    try { if (kind === 'attribute') await attributApi.delete(id); else await valeurAttributApi.delete(id); closeEditors(); await load(); }
+    catch (e) { setError(getApiErrorMessage(e, 'Suppression impossible. Réessayez.')); }
+    finally { setBusy(false); }
+  };
+  const filtered = attributes.filter(a => `${a.nomAttribut} ${a.produit?.nomProduit || ''} ${a.produit?.code || ''}`.toLocaleLowerCase('fr').includes(search.toLocaleLowerCase('fr')));
+  return <div className="p-4 sm:p-8 max-w-6xl mx-auto text-slate-800">
+    <header className="flex flex-wrap justify-between items-start gap-4 mb-6"><div><h1 className="text-2xl font-semibold">Attributs techniques</h1><p className="text-slate-600 mt-2">Reliez chaque caractéristique à un produit et conservez sa source.</p></div>{canEdit && <button type="button" disabled={busy} onClick={() => editAttribute()} className="bg-primary text-white px-4 py-2 rounded">Ajouter un attribut</button>}</header>
+    {!canEdit && <p className="mb-4 text-slate-600">Consultation uniquement. La modification et la relecture sont réservées aux administrateurs.</p>}
+    {error && <p role="alert" className="text-red-800 my-4">{error} <button type="button" onClick={() => void load()} className="underline">Recharger la liste</button></p>}
+    {message && <p role="status" className="my-4">{message}</p>}
+    {dictionaryError && <p role="alert" className="my-4">{dictionaryError} <button type="button" className="underline" onClick={() => setDictionaryRetry(value => value + 1)}>Recharger le dictionnaire</button></p>}
+    {canEdit && (attributeEditor || valueEditor) && <section className="border border-slate-200 bg-white p-4 sm:p-6 rounded-lg mb-6">
+      <h2 ref={editorHeading} tabIndex={-1} className="text-lg font-semibold mb-4">{attributeEditor ? 'Éditer un attribut' : 'Éditer une valeur'}</h2>
+      <form onSubmit={submit}><fieldset disabled={busy} className="space-y-4">
+        {attributeEditor ? <>
+          <label className="block" htmlFor="attribute-name">Nom de l’attribut<input id="attribute-name" required maxLength={100} value={attributeForm.nomAttribut} onChange={e => setAttributeForm({ ...attributeForm, nomAttribut: e.target.value })} className={fieldClass} /></label>
+          <label className="block" htmlFor="attribute-key">Clé du dictionnaire<select id="attribute-key" disabled={!dictionary} value={attributeForm.cleTechnique} onChange={e => setAttributeForm({ ...attributeForm, cleTechnique: e.target.value })} className={fieldClass} aria-describedby="attribute-key-help"><option value="">Sans clé commune — libellé seul</option>{attributeForm.cleTechnique && !dictionary?.entries.some(entry => entry.key === attributeForm.cleTechnique) && <option value={attributeForm.cleTechnique}>{attributeForm.cleTechnique} (clé conservée)</option>}{dictionary?.groups.map(group => <optgroup key={group.key} label={group.fr}>{dictionary.entries.filter(entry => entry.group === group.key).map(entry => <option key={entry.key} value={entry.key}>{entry.fr}</option>)}</optgroup>)}</select></label>
+          <p id="attribute-key-help" className="text-sm text-slate-600">Choisissez le paramètre exact, indépendamment du libellé : entrée et sortie, tension nominale et limite absolue restent distinctes. Aucun champ obligatoire ni seuil de remplacement n’est déduit de cette grille. Seules les valeurs documentées et relues servent de référence ou d’alias ; conservez les suffixes. Un alias facilite la recherche ; il ne prouve pas une équivalence. Modifier la clé exige une nouvelle relecture.</p>
+          <label className="block" htmlFor="attribute-product-search">Chercher le produit<input id="attribute-product-search" type="search" autoComplete="off" value={productSearch} onChange={e => setProductSearch(e.target.value)} className={fieldClass} /></label>
+          <p className="text-sm text-slate-600">Saisissez au moins deux caractères, puis choisissez un produit.</p>
+          {productError && <p role="alert">{productError}</p>}
+          <label className="block" htmlFor="attribute-product">Produit associé<select id="attribute-product" required value={attributeForm.produitId} onChange={e => { setAttributeForm({ ...attributeForm, produitId: e.target.value }); setSelectedProduct(products.find(p => p.id === e.target.value) || selectedProduct); }} className={fieldClass}>
+            <option value="">Choisir un produit</option>
+            {selectedProduct && !products.some(p => p.id === selectedProduct.id) && <option value={selectedProduct.id}>{selectedProduct.nomProduit} — {selectedProduct.code || 'Sans référence'}</option>}
+            {products.map(p => <option key={p.id} value={p.id}>{p.nomProduit} — {p.code || 'Sans référence'}</option>)}
+          </select></label>
+          <label className="block" htmlFor="attribute-type">Type<select id="attribute-type" value={attributeForm.typeAttribut} onChange={e => setAttributeForm({ ...attributeForm, typeAttribut: e.target.value as Attribute['typeAttribut'] })} className={fieldClass}><option value="TEXTE">Texte</option><option value="NOMBRE">Nombre</option><option value="LISTE">Liste</option></select></label>
+          <label className="flex gap-2"><input type="checkbox" checked={attributeForm.obligatoire} onChange={e => setAttributeForm({ ...attributeForm, obligatoire: e.target.checked })} />Attribut obligatoire</label>
+        </> : <>
+          <label className="block" htmlFor="value-attribute">Attribut du produit<select id="value-attribute" required value={valueForm.attributId} onChange={e => setValueForm({ ...valueForm, attributId: e.target.value })} className={fieldClass}><option value="">Choisir un attribut</option>{attributes.map(a => <option key={a.id} value={a.id}>{a.produit?.nomProduit} — {a.nomAttribut}</option>)}</select></label>
+          <label className="block" htmlFor="attribute-value">Valeur d’origine<input id="attribute-value" required maxLength={100} value={valueForm.valeur} onChange={e => setValueForm({ ...valueForm, valeur: e.target.value })} className={fieldClass} /></label>
+          <p className="text-sm text-slate-600">Conservez la valeur telle qu’elle apparaît dans votre source. Documentez-la après l’enregistrement.</p>
+        </>}
+        <div className="flex gap-3"><button type="submit" className="bg-primary text-white px-4 py-2 rounded">{busy ? 'Enregistrement…' : 'Enregistrer'}</button><button type="button" onClick={closeEditors} className="border border-slate-300 rounded px-4 py-2">Annuler</button></div>
+      </fieldset></form>
+    </section>}
+    <label className="block mb-5" htmlFor="attribute-filter">Filtrer par produit, référence ou attribut<input id="attribute-filter" type="search" value={search} onChange={e => setSearch(e.target.value)} className={fieldClass} /></label>
+    {loading ? <p role="status">Chargement des attributs…</p> : !filtered.length ? <p>Aucun attribut. {canEdit ? 'Ajoutez une caractéristique à un produit.' : 'Essayez un autre filtre.'}</p> : <div className="space-y-4">
+      {filtered.map(a => <section key={a.id} className="border border-slate-200 bg-white rounded-lg p-4">
+        <div className="flex flex-wrap justify-between gap-3"><div><h2 className="font-semibold">{a.nomAttribut}</h2><p className="text-sm text-slate-600">{a.produit?.nomProduit || 'Produit sans libellé'}{a.produit?.code ? ` — ${a.produit.code}` : ''}</p></div>{canEdit && <div className="flex flex-wrap gap-3 text-sm"><button type="button" disabled={busy} onClick={() => editAttribute(a)} className="text-primary underline">Modifier l’attribut</button><button type="button" disabled={busy} onClick={() => editValue(undefined, a)} className="text-primary underline">Ajouter une valeur</button><button type="button" disabled={busy} onClick={() => void remove(a.id, 'attribute')} className="text-red-800 underline">Supprimer l’attribut</button></div>}</div>
+        {a.cleTechnique && <p className="text-sm mt-2">Dictionnaire : {dictionary?.entries.find(entry => entry.key === a.cleTechnique)?.fr || a.cleTechnique}</p>}
+        <ul className="mt-3 divide-y divide-slate-100">{values.filter(v => v.attributId === a.id).map(v => <li key={v.id} className="py-3 flex flex-wrap justify-between items-start gap-3"><span className="break-words">{v.valeur}</span>{canEdit && <div className="flex flex-wrap gap-3 text-sm"><button type="button" disabled={busy} onClick={e => { closeEditors(); sourceTrigger.current = e.currentTarget; setSourceId(v.id); }} className="text-primary underline" aria-label={`Source de ${a.nomAttribut} : ${v.valeur}`}>Source et relecture</button><button type="button" disabled={busy} onClick={() => editValue(v)} className="text-primary underline">Modifier la valeur</button><button type="button" disabled={busy} onClick={() => void remove(v.id, 'value')} className="text-red-800 underline">Supprimer la valeur</button></div>}</li>)}</ul>
+        {!values.some(v => v.attributId === a.id) && <p className="text-sm text-slate-600 mt-3">Aucune valeur renseignée.</p>}
+        {canEdit && sourceId && values.some(v => v.id === sourceId && v.attributId === a.id) && <TechnicalDocumentation key={sourceId} valueId={sourceId} onClose={() => { setSourceId(null); sourceTrigger.current?.focus(); }} />}
+      </section>)}
+    </div>}
+  </div>;
 }
-
-const AttributModalForm: React.FC<AttributModalProps> = ({ title, formData, setFormData, isSubmitting, onSubmit, onClose }) => (
-  <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
-    <motion.div
-      initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
-      className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden"
-    >
-      <div className="flex items-center justify-between p-6 border-b border-slate-100">
-        <h2 className="text-xl font-bold text-slate-800">{title}</h2>
-        <button onClick={onClose} className="text-slate-400 hover:text-slate-600 transition-colors"><X size={24} /></button>
-      </div>
-      <form onSubmit={onSubmit} className="p-6 space-y-4">
-        <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">Nom de l'attribut *</label>
-          <input
-            type="text" required maxLength={100}
-            value={formData.nom}
-            onChange={e => setFormData(prev => ({ ...prev, nom: e.target.value }))}
-            className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary/20 outline-none transition-all"
-            placeholder="Ex: Couleur, Taille, Matiere..."
-            autoFocus
-          />
-        </div>
-        <div className="pt-4 border-t border-slate-100 flex justify-end gap-3">
-          <button type="button" onClick={onClose} className="px-5 py-2 text-sm font-bold text-slate-600 bg-slate-100 rounded-lg hover:bg-slate-200 transition-colors">Annuler</button>
-          <button type="submit" disabled={isSubmitting} className="px-5 py-2 text-sm font-bold text-white bg-primary rounded-lg hover:bg-opacity-90 transition-all shadow-sm disabled:opacity-50">
-            {isSubmitting ? 'Enregistrement...' : 'Enregistrer'}
-          </button>
-        </div>
-      </form>
-    </motion.div>
-  </div>
-);
-
-/* ── Valeur Modal Form ──────────────────────────────────────────────*/
-interface ValeurModalProps {
-  title: string;
-  formData: { valeur: string; attributId: string };
-  setFormData: React.Dispatch<React.SetStateAction<{ valeur: string; attributId: string }>>;
-  attributs: any[];
-  isSubmitting: boolean;
-  onSubmit: (e: React.FormEvent) => void;
-  onClose: () => void;
-}
-
-const ValeurModalForm: React.FC<ValeurModalProps> = ({ title, formData, setFormData, attributs, isSubmitting, onSubmit, onClose }) => (
-  <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
-    <motion.div
-      initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
-      className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden"
-    >
-      <div className="flex items-center justify-between p-6 border-b border-slate-100">
-        <h2 className="text-xl font-bold text-slate-800">{title}</h2>
-        <button onClick={onClose} className="text-slate-400 hover:text-slate-600 transition-colors"><X size={24} /></button>
-      </div>
-      <form onSubmit={onSubmit} className="p-6 space-y-4">
-        <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">Attribut parent *</label>
-          <select
-            required
-            value={formData.attributId}
-            onChange={e => setFormData(prev => ({ ...prev, attributId: e.target.value }))}
-            className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary/20 outline-none transition-all"
-          >
-            <option value="">-- Choisir un attribut --</option>
-            {attributs.map(a => (
-              <option key={a.id} value={a.id}>{a.nom}</option>
-            ))}
-          </select>
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">Valeur *</label>
-          <input
-            type="text" required maxLength={100}
-            value={formData.valeur}
-            onChange={e => setFormData(prev => ({ ...prev, valeur: e.target.value }))}
-            className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary/20 outline-none transition-all"
-            placeholder="Ex: Rouge, XL, Coton..."
-            autoFocus
-          />
-        </div>
-        <div className="pt-4 border-t border-slate-100 flex justify-end gap-3">
-          <button type="button" onClick={onClose} className="px-5 py-2 text-sm font-bold text-slate-600 bg-slate-100 rounded-lg hover:bg-slate-200 transition-colors">Annuler</button>
-          <button type="submit" disabled={isSubmitting} className="px-5 py-2 text-sm font-bold text-white bg-primary rounded-lg hover:bg-opacity-90 transition-all shadow-sm disabled:opacity-50">
-            {isSubmitting ? 'Enregistrement...' : 'Enregistrer'}
-          </button>
-        </div>
-      </form>
-    </motion.div>
-  </div>
-);
-
-/* ── Main Component ─────────────────────────────────────────────────*/
-export const Attributs = () => {
-  // ── Attributs state ──
-  const [attributs, setAttributs] = useState<any[]>([]);
-  const [loadingAttr, setLoadingAttr] = useState(true);
-  const [isAttrModalOpen, setIsAttrModalOpen] = useState(false);
-  const [editAttrModal, setEditAttrModal] = useState<{ open: boolean; attr: any }>({ open: false, attr: null });
-  const [attrFormData, setAttrFormData] = useState({ nom: '' });
-  const [isAttrSubmitting, setIsAttrSubmitting] = useState(false);
-  const [searchAttr, setSearchAttr] = useState('');
-
-  // ── Valeurs state ──
-  const [valeurs, setValeurs] = useState<any[]>([]);
-  const [loadingVal, setLoadingVal] = useState(true);
-  const [isValModalOpen, setIsValModalOpen] = useState(false);
-  const [editValModal, setEditValModal] = useState<{ open: boolean; val: any }>({ open: false, val: null });
-  const [valFormData, setValFormData] = useState({ valeur: '', attributId: '' });
-  const [isValSubmitting, setIsValSubmitting] = useState(false);
-  const [searchVal, setSearchVal] = useState('');
-
-  // ── Fetch ──
-  const fetchAttributs = async () => {
-    try {
-      const data = await attributApi.getAll();
-      setAttributs(data);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoadingAttr(false);
-    }
-  };
-
-  const fetchValeurs = async () => {
-    try {
-      const data = await valeurAttributApi.getAll();
-      setValeurs(data);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoadingVal(false);
-    }
-  };
-
-  useEffect(() => { fetchAttributs(); fetchValeurs(); }, []);
-
-  // ── Helpers ──
-  const getAttributName = (attributId: string) => {
-    const attr = attributs.find(a => a.id === attributId);
-    return attr ? attr.nom : '—';
-  };
-
-  const countValeurs = (attributId: string) => valeurs.filter(v => v.attributId === attributId).length;
-
-  // ── Attribut CRUD ──
-  const resetAttrForm = () => setAttrFormData({ nom: '' });
-
-  const handleAttrSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      setIsAttrSubmitting(true);
-      await attributApi.create(attrFormData);
-      await fetchAttributs();
-      setIsAttrModalOpen(false);
-      resetAttrForm();
-    } catch (err) {
-      console.error(err);
-      alert('Erreur lors de la creation de l\'attribut.');
-    } finally {
-      setIsAttrSubmitting(false);
-    }
-  };
-
-  const handleAttrEdit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!editAttrModal.attr) return;
-    try {
-      setIsAttrSubmitting(true);
-      await attributApi.update(editAttrModal.attr.id, attrFormData);
-      await fetchAttributs();
-      setEditAttrModal({ open: false, attr: null });
-      resetAttrForm();
-    } catch (err) {
-      console.error(err);
-      alert('Erreur lors de la mise a jour.');
-    } finally {
-      setIsAttrSubmitting(false);
-    }
-  };
-
-  const handleAttrDelete = async (id: string) => {
-    if (!confirm('Supprimer cet attribut ? Les valeurs associees seront egalement supprimees.')) return;
-    try {
-      await attributApi.delete(id);
-      setAttributs(prev => prev.filter(a => a.id !== id));
-      setValeurs(prev => prev.filter(v => v.attributId !== id));
-    } catch (err) {
-      alert('Erreur lors de la suppression.');
-    }
-  };
-
-  const openAttrEdit = (attr: any) => {
-    setAttrFormData({ nom: attr.nom });
-    setEditAttrModal({ open: true, attr });
-  };
-
-  // ── Valeur CRUD ──
-  const resetValForm = () => setValFormData({ valeur: '', attributId: '' });
-
-  const handleValSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      setIsValSubmitting(true);
-      await valeurAttributApi.create(valFormData);
-      await fetchValeurs();
-      setIsValModalOpen(false);
-      resetValForm();
-    } catch (err) {
-      console.error(err);
-      alert('Erreur lors de la creation de la valeur.');
-    } finally {
-      setIsValSubmitting(false);
-    }
-  };
-
-  const handleValEdit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!editValModal.val) return;
-    try {
-      setIsValSubmitting(true);
-      await valeurAttributApi.update(editValModal.val.id, valFormData);
-      await fetchValeurs();
-      setEditValModal({ open: false, val: null });
-      resetValForm();
-    } catch (err) {
-      console.error(err);
-      alert('Erreur lors de la mise a jour.');
-    } finally {
-      setIsValSubmitting(false);
-    }
-  };
-
-  const handleValDelete = async (id: string) => {
-    if (!confirm('Supprimer cette valeur ?')) return;
-    try {
-      await valeurAttributApi.delete(id);
-      setValeurs(prev => prev.filter(v => v.id !== id));
-    } catch (err) {
-      alert('Erreur lors de la suppression.');
-    }
-  };
-
-  const openValEdit = (val: any) => {
-    setValFormData({ valeur: val.valeur, attributId: val.attributId });
-    setEditValModal({ open: true, val });
-  };
-
-  // ── Filtered lists ──
-  const filteredAttributs = attributs.filter(a => a.nom?.toLowerCase().includes(searchAttr.toLowerCase()));
-  const filteredValeurs = valeurs.filter(v =>
-    v.valeur?.toLowerCase().includes(searchVal.toLowerCase()) ||
-    getAttributName(v.attributId).toLowerCase().includes(searchVal.toLowerCase())
-  );
-
-  return (
-    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
-
-      {/* ════════════════════════════════════════════════════════════════
-          SECTION 1 — Attributs
-      ════════════════════════════════════════════════════════════════ */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900">Attributs Produits</h1>
-          <p className="text-sm text-slate-500 mt-1">Gerez les attributs et leurs valeurs pour enrichir vos fiches produits.</p>
-        </div>
-        <button onClick={() => { resetAttrForm(); setIsAttrModalOpen(true); }}
-          className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-opacity-90 transition-all font-semibold shadow-sm">
-          <PlusCircle size={18} /><span>Nouvel Attribut</span>
-        </button>
-      </div>
-
-      {/* Attribut modals */}
-      <AnimatePresence>
-        {isAttrModalOpen && (
-          <AttributModalForm
-            title="Ajouter un attribut"
-            formData={attrFormData} setFormData={setAttrFormData}
-            isSubmitting={isAttrSubmitting} onSubmit={handleAttrSubmit}
-            onClose={() => setIsAttrModalOpen(false)}
-          />
-        )}
-        {editAttrModal.open && (
-          <AttributModalForm
-            title="Modifier l'attribut"
-            formData={attrFormData} setFormData={setAttrFormData}
-            isSubmitting={isAttrSubmitting} onSubmit={handleAttrEdit}
-            onClose={() => setEditAttrModal({ open: false, attr: null })}
-          />
-        )}
-      </AnimatePresence>
-
-      {/* Attributs table */}
-      <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
-        <div className="p-4 border-b border-slate-100">
-          <div className="relative w-full max-w-md">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-            <input type="text" placeholder="Rechercher un attribut..." value={searchAttr} onChange={e => setSearchAttr(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 bg-slate-50 border-none rounded-lg text-sm focus:ring-2 focus:ring-primary/20 outline-none" />
-          </div>
-        </div>
-
-        {/* Desktop table */}
-        <div className="hidden md:block overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-slate-50 text-slate-500 text-xs font-bold uppercase tracking-wider">
-                <th className="px-6 py-4">Nom de l'attribut</th>
-                <th className="px-6 py-4">Nombre de valeurs</th>
-                <th className="px-6 py-4 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {loadingAttr ? (
-                <tr><td colSpan={3} className="px-6 py-8 text-center text-slate-500">Chargement...</td></tr>
-              ) : filteredAttributs.length === 0 ? (
-                <tr><td colSpan={3} className="px-6 py-12 text-center">
-                  <Tags size={36} className="mx-auto text-slate-300 mb-3" />
-                  <p className="text-slate-500">Aucun attribut trouve.</p>
-                </td></tr>
-              ) : (
-                filteredAttributs.map(attr => (
-                  <tr key={attr.id} className="hover:bg-slate-50 transition-colors">
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="size-9 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
-                          <Tags size={18} />
-                        </div>
-                        <span className="font-bold text-slate-900">{attr.nom}</span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-sm font-semibold text-primary">{countValeurs(attr.id)} valeur{countValeurs(attr.id) !== 1 ? 's' : ''}</td>
-                    <td className="px-6 py-4 text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <button onClick={() => openAttrEdit(attr)} className="p-1.5 text-slate-400 hover:text-primary transition-colors hover:bg-slate-100 rounded-lg"><Edit2 size={16} /></button>
-                        <button onClick={() => handleAttrDelete(attr.id)} className="p-1.5 text-slate-400 hover:text-red-500 transition-colors hover:bg-slate-100 rounded-lg"><Trash2 size={16} /></button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Mobile cards */}
-        <div className="md:hidden divide-y divide-slate-100">
-          {loadingAttr ? (
-            <p className="py-8 text-center text-slate-500">Chargement...</p>
-          ) : filteredAttributs.length === 0 ? (
-            <div className="py-12 text-center">
-              <Tags size={36} className="mx-auto text-slate-300 mb-3" />
-              <p className="text-slate-500">Aucun attribut trouve.</p>
-            </div>
-          ) : (
-            filteredAttributs.map(attr => (
-              <div key={attr.id} className="p-4 flex items-center gap-3">
-                <div className="size-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary shrink-0">
-                  <Tags size={18} />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-bold text-slate-900">{attr.nom}</p>
-                  <p className="text-xs font-semibold text-primary mt-0.5">{countValeurs(attr.id)} valeur{countValeurs(attr.id) !== 1 ? 's' : ''}</p>
-                </div>
-                <div className="flex items-center gap-1 shrink-0">
-                  <button onClick={() => openAttrEdit(attr)} className="p-1.5 text-slate-400 hover:text-primary hover:bg-slate-100 rounded-lg"><Edit2 size={16} /></button>
-                  <button onClick={() => handleAttrDelete(attr.id)} className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg"><Trash2 size={16} /></button>
-                </div>
-              </div>
-            ))
-          )}
-        </div>
-      </div>
-
-      {/* ════════════════════════════════════════════════════════════════
-          SECTION 2 — Valeurs d'attributs
-      ════════════════════════════════════════════════════════════════ */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pt-4">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900">Valeurs d'Attributs</h1>
-          <p className="text-sm text-slate-500 mt-1">Ajoutez et gerez les valeurs associees a chaque attribut.</p>
-        </div>
-        <button onClick={() => { resetValForm(); setIsValModalOpen(true); }}
-          className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-opacity-90 transition-all font-semibold shadow-sm">
-          <PlusCircle size={18} /><span>Nouvelle Valeur</span>
-        </button>
-      </div>
-
-      {/* Valeur modals */}
-      <AnimatePresence>
-        {isValModalOpen && (
-          <ValeurModalForm
-            title="Ajouter une valeur"
-            formData={valFormData} setFormData={setValFormData}
-            attributs={attributs} isSubmitting={isValSubmitting}
-            onSubmit={handleValSubmit} onClose={() => setIsValModalOpen(false)}
-          />
-        )}
-        {editValModal.open && (
-          <ValeurModalForm
-            title="Modifier la valeur"
-            formData={valFormData} setFormData={setValFormData}
-            attributs={attributs} isSubmitting={isValSubmitting}
-            onSubmit={handleValEdit} onClose={() => setEditValModal({ open: false, val: null })}
-          />
-        )}
-      </AnimatePresence>
-
-      {/* Valeurs table */}
-      <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
-        <div className="p-4 border-b border-slate-100">
-          <div className="relative w-full max-w-md">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-            <input type="text" placeholder="Rechercher une valeur..." value={searchVal} onChange={e => setSearchVal(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 bg-slate-50 border-none rounded-lg text-sm focus:ring-2 focus:ring-primary/20 outline-none" />
-          </div>
-        </div>
-
-        {/* Desktop table */}
-        <div className="hidden md:block overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-slate-50 text-slate-500 text-xs font-bold uppercase tracking-wider">
-                <th className="px-6 py-4">Valeur</th>
-                <th className="px-6 py-4">Attribut parent</th>
-                <th className="px-6 py-4 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {loadingVal ? (
-                <tr><td colSpan={3} className="px-6 py-8 text-center text-slate-500">Chargement...</td></tr>
-              ) : filteredValeurs.length === 0 ? (
-                <tr><td colSpan={3} className="px-6 py-12 text-center">
-                  <Tags size={36} className="mx-auto text-slate-300 mb-3" />
-                  <p className="text-slate-500">Aucune valeur trouvee.</p>
-                </td></tr>
-              ) : (
-                filteredValeurs.map(val => (
-                  <tr key={val.id} className="hover:bg-slate-50 transition-colors">
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="size-9 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
-                          <Tags size={18} />
-                        </div>
-                        <span className="font-bold text-slate-900">{val.valeur}</span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-slate-500">
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-primary/10 text-primary">
-                        {getAttributName(val.attributId)}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <button onClick={() => openValEdit(val)} className="p-1.5 text-slate-400 hover:text-primary transition-colors hover:bg-slate-100 rounded-lg"><Edit2 size={16} /></button>
-                        <button onClick={() => handleValDelete(val.id)} className="p-1.5 text-slate-400 hover:text-red-500 transition-colors hover:bg-slate-100 rounded-lg"><Trash2 size={16} /></button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Mobile cards */}
-        <div className="md:hidden divide-y divide-slate-100">
-          {loadingVal ? (
-            <p className="py-8 text-center text-slate-500">Chargement...</p>
-          ) : filteredValeurs.length === 0 ? (
-            <div className="py-12 text-center">
-              <Tags size={36} className="mx-auto text-slate-300 mb-3" />
-              <p className="text-slate-500">Aucune valeur trouvee.</p>
-            </div>
-          ) : (
-            filteredValeurs.map(val => (
-              <div key={val.id} className="p-4 flex items-center gap-3">
-                <div className="size-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary shrink-0">
-                  <Tags size={18} />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-bold text-slate-900">{val.valeur}</p>
-                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-primary/10 text-primary mt-0.5">
-                    {getAttributName(val.attributId)}
-                  </span>
-                </div>
-                <div className="flex items-center gap-1 shrink-0">
-                  <button onClick={() => openValEdit(val)} className="p-1.5 text-slate-400 hover:text-primary hover:bg-slate-100 rounded-lg"><Edit2 size={16} /></button>
-                  <button onClick={() => handleValDelete(val.id)} className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg"><Trash2 size={16} /></button>
-                </div>
-              </div>
-            ))
-          )}
-        </div>
-      </div>
-    </motion.div>
-  );
-};

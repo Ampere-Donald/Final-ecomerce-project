@@ -1,0 +1,81 @@
+{
+  "productionDeployed": false,
+  "fullWorkflow": 38095106990,
+  "jobs": [
+    {
+      "runId": 38095107018,
+      "name": "Catalogue runtime contract",
+      "jobs": [
+        {
+          "name": "preproduction-runtime",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "catalogue-runtime (/api)",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "catalogue-runtime (https://api.newoteg.com)",
+          "status": "completed",
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "runId": 38095106990,
+      "name": "Newoteg CI",
+      "jobs": [
+        {
+          "name": "backend",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "storefront",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "admin",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "android",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "workstation-tools",
+          "status": "completed",
+          "conclusion": "success"
+        }
+      ]
+    }
+  ],
+  "localRegressionBeforeFix": "Both images fail with MODULE_NOT_FOUND: accepted-migration-history.cjs",
+  "localTestsPassed": 13,
+  "railwayPreproductionVerified": false,
+  "scope": "Actual Linux image builds and packaged guard imports; no network, database, migrations or application startup in the image checks",
+  "codeCommit": "79fe5b6f7153fbcf1a6646efbae570af13a89461",
+  "workflows": [
+    {
+      "id": 38095107018,
+      "name": "Catalogue runtime contract",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/Ampere-Donald/Final-ecomerce-project/actions/runs/38095107018"
+    },
+    {
+      "id": 38095106990,
+      "name": "Newoteg CI",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/Ampere-Donald/Final-ecomerce-project/actions/runs/38095106990"
+    }
+  ],
+  "date": "2026-10-10T23:31:33.0900553Z",
+  "runtimeWorkflow": 38095107018
+}

@@ -23,7 +23,7 @@ function copy(relative) {
 }
 for(const name of ['package.json','package-lock.json','prisma.config.ts','tsconfig.json','tsconfig.build.json',
   'nest-cli.json','Dockerfile.preproduction','Dockerfile.preproduction.dockerignore','src','prisma/schema.prisma',
-  'prisma/migrations','scripts/start-preproduction.cjs','scripts/verify-release-schema.cjs',
+  'prisma/migrations','scripts/start-preproduction.cjs','scripts/verify-release-schema.cjs','scripts/accepted-migration-history.cjs',
   'scripts/release-schema-contract.cjs','scripts/release-schema.json']) copy(name);
 // The physical context is already minimal; this also supports classic Docker builders.
 fs.copyFileSync(path.join(context,'Dockerfile.preproduction.dockerignore'),path.join(context,'.dockerignore'));

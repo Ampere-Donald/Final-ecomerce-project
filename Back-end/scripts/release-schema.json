@@ -1,7 +1,7 @@
 {
   "version": 1,
   "sources": {
-    "schemaSha256": "f5b4d6e14b93f47ef0aa46d7d0ec081eefa7ec815658aa08b37a990390ddf408",
+    "schemaSha256": "3d7bdd809dfaba07268bd1bd7300e7c701bd6944625cb12599784f5654e4f2f1",
     "migrations": [
       {
         "name": "20260303155632_init",
@@ -238,6 +238,22 @@
       {
         "name": "20261005090000_align_deployed_release",
         "sha256": "18cf4701747343345b139d3e76b5cec533f16fabb78c314c61614a66d0ec718f"
+      },
+      {
+        "name": "20261010210000_technical_provenance",
+        "sha256": "e6042416c06fb7dabfdb568823734c3add4be84919a96fbab899a91f1c205934"
+      },
+      {
+        "name": "20261011090000_documented_search_keys",
+        "sha256": "86ec76e7f3115ecefaf6c7f04409ce57d9a14c73333e528836e3645813709c48"
+      },
+      {
+        "name": "20261012220000_technical_dictionary_keys",
+        "sha256": "1fe5677f935a24d76a4189e0e7a45f2425e95ddd9481e5c52aff36ec7824e29b"
+      },
+      {
+        "name": "20261012230000_replacement_cases",
+        "sha256": "39bd36069cb55d2dc22d8710d5ad9778a4cea696255f16344d96269cf0859ea3"
       }
     ]
   },
@@ -9686,6 +9702,606 @@
         "numeric_precision": 32,
         "numeric_scale": 0,
         "datetime_precision": null
+      },
+      {
+        "table_name": "attribut",
+        "column_name": "cle_technique",
+        "type": "CleAttributTechnique",
+        "type_schema": "public",
+        "is_nullable": "YES",
+        "column_default": null,
+        "character_maximum_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "datetime_precision": null
+      },
+      {
+        "table_name": "cas_remplacement",
+        "column_name": "adaptations",
+        "type": "varchar",
+        "type_schema": "pg_catalog",
+        "is_nullable": "YES",
+        "column_default": null,
+        "character_maximum_length": 1500,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "datetime_precision": null
+      },
+      {
+        "table_name": "cas_remplacement",
+        "column_name": "application",
+        "type": "varchar",
+        "type_schema": "pg_catalog",
+        "is_nullable": "NO",
+        "column_default": null,
+        "character_maximum_length": 500,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "datetime_precision": null
+      },
+      {
+        "table_name": "cas_remplacement",
+        "column_name": "candidat_id",
+        "type": "text",
+        "type_schema": "pg_catalog",
+        "is_nullable": "NO",
+        "column_default": null,
+        "character_maximum_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "datetime_precision": null
+      },
+      {
+        "table_name": "cas_remplacement",
+        "column_name": "cible_id",
+        "type": "text",
+        "type_schema": "pg_catalog",
+        "is_nullable": "YES",
+        "column_default": null,
+        "character_maximum_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "datetime_precision": null
+      },
+      {
+        "table_name": "cas_remplacement",
+        "column_name": "cle_cas",
+        "type": "varchar",
+        "type_schema": "pg_catalog",
+        "is_nullable": "NO",
+        "column_default": null,
+        "character_maximum_length": 64,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "datetime_precision": null
+      },
+      {
+        "table_name": "cas_remplacement",
+        "column_name": "created_at",
+        "type": "timestamp",
+        "type_schema": "pg_catalog",
+        "is_nullable": "NO",
+        "column_default": "CURRENT_TIMESTAMP",
+        "character_maximum_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "datetime_precision": 3
+      },
+      {
+        "table_name": "cas_remplacement",
+        "column_name": "empreinte_relue",
+        "type": "varchar",
+        "type_schema": "pg_catalog",
+        "is_nullable": "YES",
+        "column_default": null,
+        "character_maximum_length": 64,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "datetime_precision": null
+      },
+      {
+        "table_name": "cas_remplacement",
+        "column_name": "id",
+        "type": "text",
+        "type_schema": "pg_catalog",
+        "is_nullable": "NO",
+        "column_default": null,
+        "character_maximum_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "datetime_precision": null
+      },
+      {
+        "table_name": "cas_remplacement",
+        "column_name": "justification",
+        "type": "varchar",
+        "type_schema": "pg_catalog",
+        "is_nullable": "NO",
+        "column_default": null,
+        "character_maximum_length": 1500,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "datetime_precision": null
+      },
+      {
+        "table_name": "cas_remplacement",
+        "column_name": "limites",
+        "type": "varchar",
+        "type_schema": "pg_catalog",
+        "is_nullable": "NO",
+        "column_default": null,
+        "character_maximum_length": 1500,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "datetime_precision": null
+      },
+      {
+        "table_name": "cas_remplacement",
+        "column_name": "reference",
+        "type": "varchar",
+        "type_schema": "pg_catalog",
+        "is_nullable": "NO",
+        "column_default": null,
+        "character_maximum_length": 255,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "datetime_precision": null
+      },
+      {
+        "table_name": "cas_remplacement",
+        "column_name": "reference_cle",
+        "type": "varchar",
+        "type_schema": "pg_catalog",
+        "is_nullable": "NO",
+        "column_default": null,
+        "character_maximum_length": 255,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "datetime_precision": null
+      },
+      {
+        "table_name": "cas_remplacement",
+        "column_name": "relu_le",
+        "type": "timestamp",
+        "type_schema": "pg_catalog",
+        "is_nullable": "YES",
+        "column_default": null,
+        "character_maximum_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "datetime_precision": 3
+      },
+      {
+        "table_name": "cas_remplacement",
+        "column_name": "relu_par_id",
+        "type": "text",
+        "type_schema": "pg_catalog",
+        "is_nullable": "YES",
+        "column_default": null,
+        "character_maximum_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "datetime_precision": null
+      },
+      {
+        "table_name": "cas_remplacement",
+        "column_name": "relu_version",
+        "type": "int4",
+        "type_schema": "pg_catalog",
+        "is_nullable": "YES",
+        "column_default": null,
+        "character_maximum_length": null,
+        "numeric_precision": 32,
+        "numeric_scale": 0,
+        "datetime_precision": null
+      },
+      {
+        "table_name": "cas_remplacement",
+        "column_name": "retire",
+        "type": "bool",
+        "type_schema": "pg_catalog",
+        "is_nullable": "NO",
+        "column_default": "false",
+        "character_maximum_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "datetime_precision": null
+      },
+      {
+        "table_name": "cas_remplacement",
+        "column_name": "source_document",
+        "type": "varchar",
+        "type_schema": "pg_catalog",
+        "is_nullable": "NO",
+        "column_default": null,
+        "character_maximum_length": 200,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "datetime_precision": null
+      },
+      {
+        "table_name": "cas_remplacement",
+        "column_name": "source_repere",
+        "type": "varchar",
+        "type_schema": "pg_catalog",
+        "is_nullable": "NO",
+        "column_default": null,
+        "character_maximum_length": 160,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "datetime_precision": null
+      },
+      {
+        "table_name": "cas_remplacement",
+        "column_name": "source_revision",
+        "type": "varchar",
+        "type_schema": "pg_catalog",
+        "is_nullable": "YES",
+        "column_default": null,
+        "character_maximum_length": 100,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "datetime_precision": null
+      },
+      {
+        "table_name": "cas_remplacement",
+        "column_name": "source_url",
+        "type": "varchar",
+        "type_schema": "pg_catalog",
+        "is_nullable": "NO",
+        "column_default": null,
+        "character_maximum_length": 800,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "datetime_precision": null
+      },
+      {
+        "table_name": "cas_remplacement",
+        "column_name": "updated_at",
+        "type": "timestamp",
+        "type_schema": "pg_catalog",
+        "is_nullable": "NO",
+        "column_default": null,
+        "character_maximum_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "datetime_precision": 3
+      },
+      {
+        "table_name": "cas_remplacement",
+        "column_name": "valeur_ids",
+        "type": "_text",
+        "type_schema": "pg_catalog",
+        "is_nullable": "YES",
+        "column_default": null,
+        "character_maximum_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "datetime_precision": null
+      },
+      {
+        "table_name": "cas_remplacement",
+        "column_name": "verdict",
+        "type": "VerdictRemplacement",
+        "type_schema": "public",
+        "is_nullable": "NO",
+        "column_default": null,
+        "character_maximum_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "datetime_precision": null
+      },
+      {
+        "table_name": "cas_remplacement",
+        "column_name": "version",
+        "type": "int4",
+        "type_schema": "pg_catalog",
+        "is_nullable": "NO",
+        "column_default": "1",
+        "character_maximum_length": null,
+        "numeric_precision": 32,
+        "numeric_scale": 0,
+        "datetime_precision": null
+      },
+      {
+        "table_name": "documentation_valeur",
+        "column_name": "attribut_version",
+        "type": "int4",
+        "type_schema": "pg_catalog",
+        "is_nullable": "NO",
+        "column_default": null,
+        "character_maximum_length": null,
+        "numeric_precision": 32,
+        "numeric_scale": 0,
+        "datetime_precision": null
+      },
+      {
+        "table_name": "documentation_valeur",
+        "column_name": "conditions",
+        "type": "varchar",
+        "type_schema": "pg_catalog",
+        "is_nullable": "YES",
+        "column_default": null,
+        "character_maximum_length": 500,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "datetime_precision": null
+      },
+      {
+        "table_name": "documentation_valeur",
+        "column_name": "etat",
+        "type": "EtatDonneeTechnique",
+        "type_schema": "public",
+        "is_nullable": "NO",
+        "column_default": "'A_VERIFIER'::\"EtatDonneeTechnique\"",
+        "character_maximum_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "datetime_precision": null
+      },
+      {
+        "table_name": "documentation_valeur",
+        "column_name": "motif",
+        "type": "varchar",
+        "type_schema": "pg_catalog",
+        "is_nullable": "YES",
+        "column_default": null,
+        "character_maximum_length": 500,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "datetime_precision": null
+      },
+      {
+        "table_name": "documentation_valeur",
+        "column_name": "produit_version",
+        "type": "int4",
+        "type_schema": "pg_catalog",
+        "is_nullable": "NO",
+        "column_default": null,
+        "character_maximum_length": null,
+        "numeric_precision": 32,
+        "numeric_scale": 0,
+        "datetime_precision": null
+      },
+      {
+        "table_name": "documentation_valeur",
+        "column_name": "relu_le",
+        "type": "timestamp",
+        "type_schema": "pg_catalog",
+        "is_nullable": "YES",
+        "column_default": null,
+        "character_maximum_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "datetime_precision": 3
+      },
+      {
+        "table_name": "documentation_valeur",
+        "column_name": "relu_par_id",
+        "type": "text",
+        "type_schema": "pg_catalog",
+        "is_nullable": "YES",
+        "column_default": null,
+        "character_maximum_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "datetime_precision": null
+      },
+      {
+        "table_name": "documentation_valeur",
+        "column_name": "source_document",
+        "type": "varchar",
+        "type_schema": "pg_catalog",
+        "is_nullable": "YES",
+        "column_default": null,
+        "character_maximum_length": 200,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "datetime_precision": null
+      },
+      {
+        "table_name": "documentation_valeur",
+        "column_name": "source_repere",
+        "type": "varchar",
+        "type_schema": "pg_catalog",
+        "is_nullable": "YES",
+        "column_default": null,
+        "character_maximum_length": 160,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "datetime_precision": null
+      },
+      {
+        "table_name": "documentation_valeur",
+        "column_name": "source_revision",
+        "type": "varchar",
+        "type_schema": "pg_catalog",
+        "is_nullable": "YES",
+        "column_default": null,
+        "character_maximum_length": 100,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "datetime_precision": null
+      },
+      {
+        "table_name": "documentation_valeur",
+        "column_name": "source_url",
+        "type": "varchar",
+        "type_schema": "pg_catalog",
+        "is_nullable": "YES",
+        "column_default": null,
+        "character_maximum_length": 800,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "datetime_precision": null
+      },
+      {
+        "table_name": "documentation_valeur",
+        "column_name": "unite_normalisee",
+        "type": "varchar",
+        "type_schema": "pg_catalog",
+        "is_nullable": "YES",
+        "column_default": null,
+        "character_maximum_length": 40,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "datetime_precision": null
+      },
+      {
+        "table_name": "documentation_valeur",
+        "column_name": "unite_source",
+        "type": "varchar",
+        "type_schema": "pg_catalog",
+        "is_nullable": "YES",
+        "column_default": null,
+        "character_maximum_length": 40,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "datetime_precision": null
+      },
+      {
+        "table_name": "documentation_valeur",
+        "column_name": "valeur_id",
+        "type": "text",
+        "type_schema": "pg_catalog",
+        "is_nullable": "NO",
+        "column_default": null,
+        "character_maximum_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "datetime_precision": null
+      },
+      {
+        "table_name": "documentation_valeur",
+        "column_name": "valeur_normalisee",
+        "type": "varchar",
+        "type_schema": "pg_catalog",
+        "is_nullable": "YES",
+        "column_default": null,
+        "character_maximum_length": 100,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "datetime_precision": null
+      },
+      {
+        "table_name": "documentation_valeur",
+        "column_name": "valeur_source",
+        "type": "varchar",
+        "type_schema": "pg_catalog",
+        "is_nullable": "NO",
+        "column_default": null,
+        "character_maximum_length": 100,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "datetime_precision": null
+      },
+      {
+        "table_name": "documentation_valeur",
+        "column_name": "valeur_version",
+        "type": "int4",
+        "type_schema": "pg_catalog",
+        "is_nullable": "NO",
+        "column_default": null,
+        "character_maximum_length": null,
+        "numeric_precision": 32,
+        "numeric_scale": 0,
+        "datetime_precision": null
+      },
+      {
+        "table_name": "documentation_valeur",
+        "column_name": "version",
+        "type": "int4",
+        "type_schema": "pg_catalog",
+        "is_nullable": "NO",
+        "column_default": "1",
+        "character_maximum_length": null,
+        "numeric_precision": 32,
+        "numeric_scale": 0,
+        "datetime_precision": null
+      },
+      {
+        "table_name": "relecture_remplacement",
+        "column_name": "cas_id",
+        "type": "text",
+        "type_schema": "pg_catalog",
+        "is_nullable": "NO",
+        "column_default": null,
+        "character_maximum_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "datetime_precision": null
+      },
+      {
+        "table_name": "relecture_remplacement",
+        "column_name": "cas_version",
+        "type": "int4",
+        "type_schema": "pg_catalog",
+        "is_nullable": "NO",
+        "column_default": null,
+        "character_maximum_length": null,
+        "numeric_precision": 32,
+        "numeric_scale": 0,
+        "datetime_precision": null
+      },
+      {
+        "table_name": "relecture_remplacement",
+        "column_name": "empreinte",
+        "type": "varchar",
+        "type_schema": "pg_catalog",
+        "is_nullable": "NO",
+        "column_default": null,
+        "character_maximum_length": 64,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "datetime_precision": null
+      },
+      {
+        "table_name": "relecture_remplacement",
+        "column_name": "id",
+        "type": "text",
+        "type_schema": "pg_catalog",
+        "is_nullable": "NO",
+        "column_default": null,
+        "character_maximum_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "datetime_precision": null
+      },
+      {
+        "table_name": "relecture_remplacement",
+        "column_name": "preuve",
+        "type": "jsonb",
+        "type_schema": "pg_catalog",
+        "is_nullable": "NO",
+        "column_default": null,
+        "character_maximum_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "datetime_precision": null
+      },
+      {
+        "table_name": "relecture_remplacement",
+        "column_name": "relu_le",
+        "type": "timestamp",
+        "type_schema": "pg_catalog",
+        "is_nullable": "NO",
+        "column_default": "CURRENT_TIMESTAMP",
+        "character_maximum_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "datetime_precision": 3
+      },
+      {
+        "table_name": "relecture_remplacement",
+        "column_name": "relu_par_id",
+        "type": "text",
+        "type_schema": "pg_catalog",
+        "is_nullable": "NO",
+        "column_default": null,
+        "character_maximum_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "datetime_precision": null
       }
     ],
     "constraints": [
@@ -11128,6 +11744,69 @@
         "validated": true,
         "deferrable": false,
         "deferred": false
+      },
+      {
+        "table_name": "cas_remplacement",
+        "name": "cas_remplacement_candidat_id_fkey",
+        "type": "f",
+        "definition": "FOREIGN KEY (candidat_id) REFERENCES produit(id) ON UPDATE CASCADE ON DELETE RESTRICT",
+        "validated": true,
+        "deferrable": false,
+        "deferred": false
+      },
+      {
+        "table_name": "cas_remplacement",
+        "name": "cas_remplacement_cible_id_fkey",
+        "type": "f",
+        "definition": "FOREIGN KEY (cible_id) REFERENCES produit(id) ON UPDATE CASCADE ON DELETE RESTRICT",
+        "validated": true,
+        "deferrable": false,
+        "deferred": false
+      },
+      {
+        "table_name": "cas_remplacement",
+        "name": "cas_remplacement_pkey",
+        "type": "p",
+        "definition": "PRIMARY KEY (id)",
+        "validated": true,
+        "deferrable": false,
+        "deferred": false
+      },
+      {
+        "table_name": "documentation_valeur",
+        "name": "documentation_valeur_pkey",
+        "type": "p",
+        "definition": "PRIMARY KEY (valeur_id)",
+        "validated": true,
+        "deferrable": false,
+        "deferred": false
+      },
+      {
+        "table_name": "documentation_valeur",
+        "name": "documentation_valeur_valeur_id_fkey",
+        "type": "f",
+        "definition": "FOREIGN KEY (valeur_id) REFERENCES valeur_attribut(id) ON UPDATE CASCADE ON DELETE CASCADE",
+        "validated": true,
+        "deferrable": false,
+        "deferred": false
+      },
+      {
+        "table_name": "relecture_remplacement",
+        "name": "relecture_remplacement_cas_id_fkey",
+        "type": "f",
+        "definition": "FOREIGN KEY (cas_id) REFERENCES cas_remplacement(id) ON UPDATE CASCADE ON DELETE RESTRICT",
+        "validated": true,
+        "deferrable": false,
+        "deferred": false
+      },
+      {
+        "table_name": "relecture_remplacement",
+        "name": "relecture_remplacement_pkey",
+        "type": "p",
+        "definition": "PRIMARY KEY (id)",
+        "validated": true,
+        "deferrable": false,
+        "deferred": false
       }
     ],
     "indexes": [
@@ -12348,6 +13027,62 @@
         "definition": "CREATE UNIQUE INDEX vente_pkey ON public.vente USING btree (id)",
         "valid": true,
         "ready": true
+      },
+      {
+        "table_name": "attribut",
+        "name": "attribut_id_produit_cle_technique_idx",
+        "definition": "CREATE INDEX attribut_id_produit_cle_technique_idx ON public.attribut USING btree (id_produit, cle_technique)",
+        "valid": true,
+        "ready": true
+      },
+      {
+        "table_name": "cas_remplacement",
+        "name": "cas_remplacement_cible_id_candidat_id_idx",
+        "definition": "CREATE INDEX cas_remplacement_cible_id_candidat_id_idx ON public.cas_remplacement USING btree (cible_id, candidat_id)",
+        "valid": true,
+        "ready": true
+      },
+      {
+        "table_name": "cas_remplacement",
+        "name": "cas_remplacement_cle_cas_key",
+        "definition": "CREATE UNIQUE INDEX cas_remplacement_cle_cas_key ON public.cas_remplacement USING btree (cle_cas)",
+        "valid": true,
+        "ready": true
+      },
+      {
+        "table_name": "cas_remplacement",
+        "name": "cas_remplacement_pkey",
+        "definition": "CREATE UNIQUE INDEX cas_remplacement_pkey ON public.cas_remplacement USING btree (id)",
+        "valid": true,
+        "ready": true
+      },
+      {
+        "table_name": "cas_remplacement",
+        "name": "cas_remplacement_reference_cle_idx",
+        "definition": "CREATE INDEX cas_remplacement_reference_cle_idx ON public.cas_remplacement USING btree (reference_cle)",
+        "valid": true,
+        "ready": true
+      },
+      {
+        "table_name": "documentation_valeur",
+        "name": "documentation_valeur_pkey",
+        "definition": "CREATE UNIQUE INDEX documentation_valeur_pkey ON public.documentation_valeur USING btree (valeur_id)",
+        "valid": true,
+        "ready": true
+      },
+      {
+        "table_name": "relecture_remplacement",
+        "name": "relecture_remplacement_cas_id_cas_version_key",
+        "definition": "CREATE UNIQUE INDEX relecture_remplacement_cas_id_cas_version_key ON public.relecture_remplacement USING btree (cas_id, cas_version)",
+        "valid": true,
+        "ready": true
+      },
+      {
+        "table_name": "relecture_remplacement",
+        "name": "relecture_remplacement_pkey",
+        "definition": "CREATE UNIQUE INDEX relecture_remplacement_pkey ON public.relecture_remplacement USING btree (id)",
+        "valid": true,
+        "ready": true
       }
     ],
     "enums": [
@@ -12494,6 +13229,18 @@
       {
         "name": "TypeOperation",
         "values": "{ENTREE,SORTIE}"
+      },
+      {
+        "name": "CleAttributTechnique",
+        "values": "{REFERENCE_FABRICANT,ALIAS_RECHERCHE,FABRICANT,FONCTION,UNITE_VENDUE,BOITIER,BROCHAGE,DIMENSIONS,ACCESSOIRES,REVISION_ARTICLE,ALIMENTATION_ENTREE_NATURE,ALIMENTATION_ENTREE_PLAGE,ALIMENTATION_ENTREE_FREQUENCE,ALIMENTATION_SORTIE_NATURE,ALIMENTATION_SORTIE_TENSION,ALIMENTATION_SORTIE_COURANT,ALIMENTATION_SORTIE_POLARITE,ALIMENTATION_SORTIE_CONNECTEUR,CONNECTEUR_ENTREE,CONNECTEUR_SORTIE,LONGUEUR_CABLE,SENS_CONVERSION,NATURE_ADAPTATEUR,MODES_VIDEO,RELAIS_BOBINE_NATURE,RELAIS_BOBINE_TENSION,RELAIS_CONTACTS,RELAIS_CHARGES,CONDENSATEUR_TECHNOLOGIE,CONDENSATEUR_CAPACITE,CONDENSATEUR_TOLERANCE,CONDENSATEUR_TENSION_NATURE,CONDENSATEUR_TENSION,CONDENSATEUR_POLARITE,CONDENSATEUR_ENTRAXE,CONDENSATEUR_TEMPERATURE,MESURE_GRANDEURS,MESURE_PLAGES,MESURE_PRECISION,MESURE_CATEGORIE,MESURE_TENSION_CATEGORIE,SEMICONDUCTEUR_TYPE,LIMITES_ABSOLUES,CONDITIONS_FONCTIONNEMENT,INTERFACE_MODULE}"
+      },
+      {
+        "name": "EtatDonneeTechnique",
+        "values": "{INCONNU,A_VERIFIER,DOCUMENTE,CONTRADICTOIRE,NON_APPLICABLE}"
+      },
+      {
+        "name": "VerdictRemplacement",
+        "values": "{DIRECT_DOCUMENTE,ADAPTATION_NECESSAIRE,REFUSE,A_CONFIRMER}"
       }
     ],
     "checkRestoreDefinitions": {

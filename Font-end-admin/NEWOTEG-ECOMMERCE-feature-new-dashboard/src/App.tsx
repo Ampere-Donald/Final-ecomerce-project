@@ -32,6 +32,7 @@ const Coffres = lazy(() => import('./components/Coffres').then((m) => ({ default
 const Echeances = lazy(() => import('./components/Echeances').then((m) => ({ default: m.Echeances })));
 const Roles = lazy(() => import('./components/Roles').then((m) => ({ default: m.Roles })));
 const Attributs = lazy(() => import('./components/Attributs').then((m) => ({ default: m.Attributs })));
+const ReplacementCases = lazy(() => import('./components/ReplacementCases').then((m) => ({ default: m.ReplacementCases })));
 const AdminAccounts = lazy(() => import('./components/AdminAccounts').then((m) => ({ default: m.AdminAccounts })));
 const NotificationsPage = lazy(() => import('./components/NotificationsPage').then((m) => ({ default: m.NotificationsPage })));
 const StockAlerts = lazy(() => import('./components/StockAlerts').then((m) => ({ default: m.StockAlerts })));
@@ -108,6 +109,7 @@ export default function App() {
             <Route path="credits" element={<RoleProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN', 'CAISSIER']}><CreditsClients /></RoleProtectedRoute>} />
             <Route path="fournisseurs" element={<Fournisseurs />} />
             <Route path="attributs" element={<Attributs />} />
+            <Route path="cas-remplacement" element={<RoleProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN']}><ReplacementCases /></RoleProtectedRoute>} />
 
             {/* Routes protégées par rôle */}
             <Route path="caisse" element={<RoleProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN']}><Caisse /></RoleProtectedRoute>} />

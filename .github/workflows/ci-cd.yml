@@ -26,6 +26,8 @@ jobs:
       - run: npm run prisma:generate
       - run: npm run build
       - run: npm test -- --runInBand
+      - name: Verify packaged migration startup guards
+        run: node --test test/preproduction/image-startup.test.cjs test/preproduction/startup.test.cjs test/preproduction/accepted-history.test.cjs
       - run: npm audit --omit=dev --audit-level=high
 
   admin:

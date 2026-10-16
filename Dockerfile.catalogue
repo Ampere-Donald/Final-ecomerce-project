@@ -40,7 +40,7 @@ COPY --from=backend-builder --chown=node:node /app/dist ./dist
 COPY --from=storefront-builder --chown=node:node /source/Back-end/.storefront-renderer ./.storefront-renderer
 COPY --chown=node:node Back-end/package.json Back-end/package-lock.json Back-end/prisma.config.ts ./
 COPY --chown=node:node Back-end/prisma ./prisma
-COPY --chown=node:node Back-end/scripts/start-preproduction.cjs Back-end/scripts/verify-release-schema.cjs Back-end/scripts/release-schema-contract.cjs Back-end/scripts/release-schema.json ./scripts/
+COPY --chown=node:node Back-end/scripts/start-preproduction.cjs Back-end/scripts/verify-release-schema.cjs Back-end/scripts/accepted-migration-history.cjs Back-end/scripts/release-schema-contract.cjs Back-end/scripts/release-schema.json ./scripts/
 RUN mkdir -p /app/uploads && chown node:node /app/uploads
 USER node
 EXPOSE 3000

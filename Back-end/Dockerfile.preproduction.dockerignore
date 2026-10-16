@@ -15,6 +15,7 @@
 !scripts/
 !scripts/start-preproduction.cjs
 !scripts/verify-release-schema.cjs
+!scripts/accepted-migration-history.cjs
 !scripts/release-schema-contract.cjs
 !scripts/release-schema.json
 !Dockerfile.preproduction

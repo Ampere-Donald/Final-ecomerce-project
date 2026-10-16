@@ -1,0 +1,161 @@
+{
+  "passed": true,
+  "date": "2026-10-12T20:50:22.902Z",
+  "fixture": "Owned synthetic DB; real admin HTTP/JWT/DTO; public product responses from actual service with key-edit adapter; no provider or shop traffic",
+  "checks": [
+    {
+      "legacy": false,
+      "lang": "fr",
+      "width": 390,
+      "semanticKeys": true,
+      "rolesSeparated": true,
+      "sourcePerProduct": true,
+      "unitConversion": true,
+      "noPageOverflow": true
+    },
+    {
+      "legacy": false,
+      "lang": "fr",
+      "width": 768,
+      "semanticKeys": true,
+      "rolesSeparated": true,
+      "sourcePerProduct": true,
+      "unitConversion": true,
+      "noPageOverflow": true
+    },
+    {
+      "legacy": false,
+      "lang": "fr",
+      "width": 1440,
+      "semanticKeys": true,
+      "rolesSeparated": true,
+      "sourcePerProduct": true,
+      "unitConversion": true,
+      "noPageOverflow": true
+    },
+    {
+      "legacy": false,
+      "lang": "en",
+      "width": 390,
+      "semanticKeys": true,
+      "rolesSeparated": true,
+      "sourcePerProduct": true,
+      "unitConversion": true,
+      "noPageOverflow": true
+    },
+    {
+      "legacy": false,
+      "lang": "en",
+      "width": 768,
+      "semanticKeys": true,
+      "rolesSeparated": true,
+      "sourcePerProduct": true,
+      "unitConversion": true,
+      "noPageOverflow": true
+    },
+    {
+      "legacy": false,
+      "lang": "en",
+      "width": 1440,
+      "semanticKeys": true,
+      "rolesSeparated": true,
+      "sourcePerProduct": true,
+      "unitConversion": true,
+      "noPageOverflow": true
+    },
+    {
+      "legacy": true,
+      "lang": "fr",
+      "width": 390,
+      "semanticKeys": true,
+      "rolesSeparated": true,
+      "sourcePerProduct": true,
+      "unitConversion": true,
+      "noPageOverflow": true
+    },
+    {
+      "legacy": true,
+      "lang": "fr",
+      "width": 768,
+      "semanticKeys": true,
+      "rolesSeparated": true,
+      "sourcePerProduct": true,
+      "unitConversion": true,
+      "noPageOverflow": true
+    },
+    {
+      "legacy": true,
+      "lang": "fr",
+      "width": 1440,
+      "semanticKeys": true,
+      "rolesSeparated": true,
+      "sourcePerProduct": true,
+      "unitConversion": true,
+      "noPageOverflow": true
+    },
+    {
+      "legacy": true,
+      "lang": "en",
+      "width": 390,
+      "semanticKeys": true,
+      "rolesSeparated": true,
+      "sourcePerProduct": true,
+      "unitConversion": true,
+      "noPageOverflow": true
+    },
+    {
+      "legacy": true,
+      "lang": "en",
+      "width": 768,
+      "semanticKeys": true,
+      "rolesSeparated": true,
+      "sourcePerProduct": true,
+      "unitConversion": true,
+      "noPageOverflow": true
+    },
+    {
+      "legacy": true,
+      "lang": "en",
+      "width": 1440,
+      "semanticKeys": true,
+      "rolesSeparated": true,
+      "sourcePerProduct": true,
+      "unitConversion": true,
+      "noPageOverflow": true
+    }
+  ],
+  "calls": [
+    {
+      "path": "/api/attributs/dictionnaire",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/valeurs-attribut",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/attributs",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/attributs/d60090c5-ca9a-4260-8a2b-fb0e0c648f49",
+      "method": "PATCH",
+      "status": 200
+    },
+    {
+      "path": "/api/attributs",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/valeurs-attribut",
+      "method": "GET",
+      "status": 200
+    }
+  ],
+  "errors": [],
+  "outside": []
+}

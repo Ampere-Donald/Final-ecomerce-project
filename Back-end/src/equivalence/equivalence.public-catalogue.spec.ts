@@ -25,6 +25,7 @@ describe('Equivalence public catalogue consistency', () => {
       produit: { findMany: jest.fn(async () => [product]) },
     };
     const db = {
+      $queryRaw: jest.fn().mockResolvedValue([]),
       produit: { findMany: jest.fn(async () => [product]) },
       $transaction: jest.fn(async (callback) => callback(tx)),
       suggestionEquivalence: { create: jest.fn().mockResolvedValue({}) },

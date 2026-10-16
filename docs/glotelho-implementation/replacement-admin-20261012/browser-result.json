@@ -1,0 +1,159 @@
+{
+  "passed": true,
+  "fixture": "Synthetic only; built admin and actual case/evidence/source Nest/JWT/DTO/PostgreSQL. Session lookup, product search and unrelated chrome are fixture adapters.",
+  "checks": [
+    "create with selected evidence",
+    "adaptations",
+    "source-only stale hash conflict",
+    "concurrent save conflict",
+    "input preservation",
+    "explicit reload/review",
+    "immutable history",
+    "retirement",
+    "390/768/1440 interactive controls"
+  ],
+  "calls": [
+    {
+      "path": "/api/equivalence/cas",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/equivalence/cas/pieces/6c23f929-69ee-4fb7-bda9-5861f9a638ae/preuves",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/equivalence/cas",
+      "method": "POST",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/cas/386690a9-ef0b-4d97-8720-ac1ab3e9a5ee",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/equivalence/cas/pieces/6c23f929-69ee-4fb7-bda9-5861f9a638ae/preuves",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/equivalence/cas",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/equivalence/cas/386690a9-ef0b-4d97-8720-ac1ab3e9a5ee/relire",
+      "method": "POST",
+      "status": 409
+    },
+    {
+      "path": "/api/equivalence/cas/386690a9-ef0b-4d97-8720-ac1ab3e9a5ee",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/equivalence/cas/pieces/6c23f929-69ee-4fb7-bda9-5861f9a638ae/preuves",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/equivalence/cas/386690a9-ef0b-4d97-8720-ac1ab3e9a5ee/relire",
+      "method": "POST",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/cas/386690a9-ef0b-4d97-8720-ac1ab3e9a5ee",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/equivalence/cas",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/equivalence/cas/pieces/6c23f929-69ee-4fb7-bda9-5861f9a638ae/preuves",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/equivalence/cas/386690a9-ef0b-4d97-8720-ac1ab3e9a5ee",
+      "method": "PATCH",
+      "status": 409
+    },
+    {
+      "path": "/api/equivalence/cas/386690a9-ef0b-4d97-8720-ac1ab3e9a5ee",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/equivalence/cas/pieces/6c23f929-69ee-4fb7-bda9-5861f9a638ae/preuves",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/equivalence/cas/386690a9-ef0b-4d97-8720-ac1ab3e9a5ee",
+      "method": "PATCH",
+      "status": 200
+    },
+    {
+      "path": "/api/equivalence/cas/386690a9-ef0b-4d97-8720-ac1ab3e9a5ee",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/equivalence/cas",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/equivalence/cas/pieces/6c23f929-69ee-4fb7-bda9-5861f9a638ae/preuves",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/equivalence/cas/386690a9-ef0b-4d97-8720-ac1ab3e9a5ee/relire",
+      "method": "POST",
+      "status": 201
+    },
+    {
+      "path": "/api/equivalence/cas/386690a9-ef0b-4d97-8720-ac1ab3e9a5ee",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/equivalence/cas",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/equivalence/cas/pieces/6c23f929-69ee-4fb7-bda9-5861f9a638ae/preuves",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/equivalence/cas/386690a9-ef0b-4d97-8720-ac1ab3e9a5ee",
+      "method": "PATCH",
+      "status": 200
+    },
+    {
+      "path": "/api/equivalence/cas/386690a9-ef0b-4d97-8720-ac1ab3e9a5ee",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/equivalence/cas",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/equivalence/cas/pieces/6c23f929-69ee-4fb7-bda9-5861f9a638ae/preuves",
+      "method": "GET",
+      "status": 200
+    }
+  ],
+  "errors": [],
+  "outside": []
+}
