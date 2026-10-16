@@ -31,11 +31,14 @@ const fs = require('node:fs');
       await page.goto(report.base, { waitUntil: 'commit' });
       const input = page.locator('#header-product-search');
       await input.waitFor();
+      const selectionFilter = page.getByRole('button', { name: 'Connecter', exact: true });
+      assert.equal(await selectionFilter.isEnabled(), false);
       await page.evaluate(() => { window.initialSearchNode = document.querySelector('#header-product-search'); });
       await input.fill('multimètre');
       if (!focused) await input.evaluate(element => element.blur());
       release();
       await page.waitForFunction(() => !document.querySelector('.e-menu').disabled);
+      assert.equal(await selectionFilter.isEnabled(), true);
       assert.equal(await input.inputValue(), 'multimètre');
       assert.equal(await page.evaluate(() => window.initialSearchNode === document.querySelector('#header-product-search')), true);
       if (focused) {

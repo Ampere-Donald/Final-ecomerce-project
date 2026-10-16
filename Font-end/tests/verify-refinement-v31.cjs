@@ -72,4 +72,3 @@ const checks=[],errors=[],writes=[];const pass=name=>{checks.push(name);console.
   fs.writeFileSync(path.join(output,'result.json'),JSON.stringify({checks,errors,writes,fixtureOnly:true},null,2));
  }catch(e){await page.screenshot({path:path.join(output,'failure.png'),fullPage:true});fs.writeFileSync(path.join(output,'failure.json'),JSON.stringify({error:e.stack,checks,errors,writes},null,2));throw e}finally{await browser.close()}
 })();
-

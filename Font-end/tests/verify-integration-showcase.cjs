@@ -22,6 +22,7 @@ const base=process.env.NEWOTEG_TEST_URL||'http://127.0.0.1:5202',out=process.env
   await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:320,y}]});
   for(const x of [280,230,180,130,80])await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x,y}]});
   await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});await expect.poll(()=>track.evaluate(el=>el.scrollLeft)).toBeGreaterThan(50);
+  await expect.poll(()=>track.evaluate(el=>{const step=el.firstElementChild.getBoundingClientRect().width+12;return Math.abs(el.scrollLeft-Math.round(el.scrollLeft/step)*step)})).toBeLessThan(2);
   await shot('carousel-mobile-after',shelf);await cdp.detach();
   assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));assert.deepEqual(errors,[]);assert.deepEqual(writes,[]);
   fs.writeFileSync(path.join(out,'result.json'),JSON.stringify({base,status:'passed',initialHtml:true,fiveCardSelection:true,actualShelf:true,touchScroll:await track.evaluate(el=>el.scrollLeft),errors,writes},null,2));console.log('PASS initial HTML, five-card selection, actual shelves, native mobile swipe and captures');

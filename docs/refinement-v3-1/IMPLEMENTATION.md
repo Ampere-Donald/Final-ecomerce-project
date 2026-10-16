@@ -30,7 +30,7 @@ Brief : `983d0164-2cca-4175-9efc-829ad1c9e66c/pasted-text-1.txt`. La sélection 
 
 ## Validation et captures
 
-108 tests unitaires réussis. Recette ciblée V3.1 : sept groupes réussis, dont six largeurs 360/390/412/768/1024/1440, galerie multiple et unique, zoom, fermeture, carrousel, bannières, panier avec données interceptées, menu/recherche et gestes tactiles. Recette sélection : cinq groupes réussis, conservation des cinq cartes et de leurs règles. Recette réelle avec Worker local : sept groupes réussis, zéro écriture et zéro erreur JavaScript. Recette existante d’hydratation : deux scénarios réussis, saisie et nœud de recherche conservés avant chargement du JavaScript.
+125 tests unitaires réussis après intégration des derniers changements de main. Lint réussi et build final réussi en 42,80 s (`index-BdUHoZdH.js`). Recette ciblée V3.1 : sept groupes réussis, dont six largeurs 360/390/412/768/1024/1440, galerie multiple et unique, zoom, fermeture, carrousel, bannières, panier avec données interceptées, menu/recherche et gestes tactiles. Recette sélection : cinq groupes réussis, conservation des cinq cartes et de leurs règles. Recette réelle avec Worker local : sept groupes réussis, zéro écriture et zéro erreur JavaScript. Recette existante d’hydratation : deux scénarios réussis, saisie et nœud de recherche conservés avant chargement du JavaScript. Les filtres de la sélection attendent désormais l’activation du navigateur, ce qui évite un clic sans effet sur le HTML initial.
 
 Preuves locales : `C:/Users/pc/Documents/Newoteg/output/implementation-work/v31-integration/`.
 
@@ -54,4 +54,4 @@ Le module du menu est désormais différé ; la visionneuse et les photos origin
 
 Les mesures sont effectuées avec l’outil existant : Edge, viewport 390×844, CPU ×4, réseau 200 kB/s avec 150 ms de latence, cache froid, trois échantillons par route. Les métriques locales et publiques doivent être distinguées, car le transport du document est différent. Les seuils internes LCP 2,5 s / CLS 0,1 / JS 220 Kio ne sont pas des données terrain.
 
-Statut de travail : intégration fonctionnelle validée localement ; mesures finales de stabilité et publication encore à confirmer. Ne pas présenter ce document intermédiaire comme la preuve d’un déploiement V3.1 terminé.
+Le catalogue compact a initialement révélé un déplacement pendant le remplacement du chargement par les résultats. Une hauteur minimale réservée au chargement corrige ce défaut : CLS local de 0,496 à 0,0047 sur trois mesures après correction. Les mesures LCP restent au-dessus de 2,5 s sur le réseau ralenti ; ce seuil n’est pas déclaré atteint. Les mesures publiques avant/après et la version de publication seront ajoutées après contrôle effectif.

@@ -9,10 +9,12 @@ import { resolveImageUrl } from "../utils/mapProduct";
 import { selectionPaths, selectionRows } from "./homeSelectionData";
 import HomeProductCard from "./HomeProductCard";
 import { useI18n } from "../context/I18nContext";
+import useBrowserReady from "./useBrowserReady";
 import "./home-selection.css";
 import "./home-selection-premium.css";
 export default function HomeSelection() {
   const { lang } = useI18n();
+  const ready = useBrowserReady();
   const [filter, setFilter] = useState("");
   const [attempt, setAttempt] = useState(0);
   const categories = useResource("/categories");
@@ -32,7 +34,7 @@ export default function HomeSelection() {
   const current = state.key === key ? state : { rows: [], loading: true };
   return <section className="e-section e-home-selection e-selection-premium" aria-labelledby="home-selection-title">
     <div className="e-section-head"><div><h2 id="home-selection-title"><Copy fr="Notre sélection" en="Our selection" /></h2><p><Copy fr="Une sélection de composants et accessoires à découvrir." en="A selection of components and accessories to discover." /></p></div><Link to="/catalogue"><Copy fr="Tout le catalogue" en="All products" /><ArrowRight size={17} /></Link></div>
-    <div className="e-home-selection-filters" aria-label="Filtres / Filters">{[["", "Tous", "All"], ["connect", "Connecter", "Connect"], ["power", "Alimenter", "Power"], ["tools", "Mesurer & assembler", "Measure & assemble"], ["repair", "Réparer", "Repair"]].map(([value, fr, en]) => <button key={value} aria-pressed={filter === value} onClick={() => setFilter(value)}><Copy fr={fr} en={en} /></button>)}</div>
+    <div className="e-home-selection-filters" aria-label="Filtres / Filters">{[["", "Tous", "All"], ["connect", "Connecter", "Connect"], ["power", "Alimenter", "Power"], ["tools", "Mesurer & assembler", "Measure & assemble"], ["repair", "Réparer", "Repair"]].map(([value, fr, en]) => <button key={value} disabled={!ready} aria-pressed={filter === value} onClick={() => setFilter(value)}><Copy fr={fr} en={en} /></button>)}</div>
     <State loading={current.loading && !(filter && categories.error)} error={current.error || (filter && categories.error)} retry={() => { setAttempt((a) => a + 1); if (categories.error) categories.retry(); }}>
       {current.rows.length ? <div className="e-selection-track" role="region" aria-label={lang === "fr" ? "Notre sélection de produits" : "Our product selection"} tabIndex={0} onKeyDown={event => {
         if (event.target !== event.currentTarget || !["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
