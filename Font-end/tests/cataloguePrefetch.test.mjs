@@ -82,6 +82,8 @@ test('first-image preload uses the same responsive card URL and rejects other ho
   const image = 'https://res.cloudinary.com/dm4ij9sxg/image/upload/v123/produits/fixture.webp';
   assert.deepEqual(catalogueLeadImage({data:[{imageUrl:image}]}),cardImage(image));
   assert.deepEqual(catalogueLeadImage([{imageUrl:'/product-images/fixture.webp'}]),{src:'/product-images/fixture.webp'});
+  for(const base of ['https://api.newoteg.com','https://api.newoteg.com/api'])
+    assert.deepEqual(catalogueLeadImage([{imageUrl:'/product-images/fixture.webp'}],base),{src:'https://api.newoteg.com/product-images/fixture.webp'});
   for(const imageUrl of ['https://other.example/image.webp','https://res.cloudinary.com/other/image/upload/v1/produits/image.webp','/uploads/original.jpg','javascript:invalid',null])
     assert.equal(catalogueLeadImage({data:[{imageUrl}]}),null);
   assert.equal(catalogueLeadImage({data:[]}),null);

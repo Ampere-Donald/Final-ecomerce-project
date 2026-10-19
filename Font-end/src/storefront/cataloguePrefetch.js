@@ -34,7 +34,7 @@ export function startCataloguePrefetch(win, apiBase, queryFor, canRender, leadIm
       if (key === path && leadImage && win.location.href === url.href &&
           win.__newotegCataloguePrefetch === state) {
         try {
-          var image = leadImage(data);
+          var image = leadImage(data, apiBase);
           if (image) {
             var link = win.document.createElement("link");
             // Older browsers cannot reuse responsive preloads. Leave discovery

@@ -3,6 +3,7 @@ import { catalogueQuery, canRenderCatalogue } from '../src/storefront/catalogueQ
 import { catalogueLeadImage } from '../src/storefront/catalogueLeadImage.js';
 import { cardImage } from '../src/storefront/cardImage.js';
 import { transformWithEsbuild } from 'vite';
+import { productImageUrl, productMediaBase } from '../src/utils/productImageUrl.js';
 
 export default function prefetchCatalogue() {
   let config;
@@ -17,7 +18,7 @@ export default function prefetchCatalogue() {
         const base = config.env.VITE_API_URL || '/api';
         // No React, runtime import or Worker request. Start the public reads in
         // parallel with deferred scripts; use the same filter contract as React.
-        const source = `(function(){var catalogueQuery=${catalogueQuery.toString()};var canRenderCatalogue=${canRenderCatalogue.toString()};var cardImage=${cardImage.toString()};var catalogueLeadImage=${catalogueLeadImage.toString()};(${startCataloguePrefetch.toString()})(window,${JSON.stringify(base)},catalogueQuery,canRenderCatalogue,catalogueLeadImage);})();`;
+        const source = `(function(){var catalogueQuery=${catalogueQuery.toString()};var canRenderCatalogue=${canRenderCatalogue.toString()};var cardImage=${cardImage.toString()};var productImageUrl=${productImageUrl.toString()};var productMediaBase=${productMediaBase.toString()};var catalogueLeadImage=${catalogueLeadImage.toString()};(${startCataloguePrefetch.toString()})(window,${JSON.stringify(base)},catalogueQuery,canRenderCatalogue,catalogueLeadImage);})();`;
         const { code } = await transformWithEsbuild(source, 'catalogue-prefetch.js',
           { minify: true, target: 'es2017' });
         // Before parser-blocking legacy scripts, after the root so the SSR
