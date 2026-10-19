@@ -1,0 +1,2094 @@
+{
+  "date": "2026-10-19T21:31:45.842Z",
+  "before": 5016,
+  "after": 4148,
+  "gainPercent": 17.304625199362043,
+  "results": [
+    {
+      "variant": "baseline",
+      "sample": 1,
+      "route": "/catalogue",
+      "lcpMs": 5016,
+      "cls": 0.004705356561783866,
+      "longTasks": [
+        {
+          "start": 1068.1000000238419,
+          "duration": 228
+        },
+        {
+          "start": 1551.300000011921,
+          "duration": 280
+        },
+        {
+          "start": 1840.300000011921,
+          "duration": 336
+        },
+        {
+          "start": 2754,
+          "duration": 71
+        },
+        {
+          "start": 3372.2000000178814,
+          "duration": 50
+        },
+        {
+          "start": 3630.5,
+          "duration": 437
+        }
+      ],
+      "shifts": [
+        {
+          "time": 4392.800000011921,
+          "value": 0.004705356561783866,
+          "sources": [
+            {
+              "tag": "DIV",
+              "className": "e-product-grid e-catalog-grid ",
+              "previous": {
+                "x": 16,
+                "y": 431.0625,
+                "width": 358,
+                "height": 412.9375,
+                "top": 431.0625,
+                "right": 374,
+                "bottom": 844,
+                "left": 16
+              },
+              "current": {
+                "x": 5,
+                "y": 414.0625,
+                "width": 380,
+                "height": 429.9375,
+                "top": 414.0625,
+                "right": 385,
+                "bottom": 844,
+                "left": 5
+              }
+            }
+          ]
+        }
+      ],
+      "lcpRenderTime": 5016,
+      "lcpLoadTime": 4970,
+      "lcpElement": "IMG",
+      "lcpPath": "/dm4ij9sxg/image/upload/c_limit,w_240,h_240/q_auto/f_auto/v1790436144/produits/wsmhmsfhizjnv4o4qjwo.webp",
+      "resources": [
+        {
+          "path": "/assets/polyfills-CyODn4CA.js",
+          "type": "script",
+          "encoded": 47290,
+          "decoded": 126037,
+          "duration": 805.5999999940395,
+          "start": 248.7000000178814,
+          "responseStart": 338.80000001192093,
+          "responseEnd": 1054.300000011921
+        },
+        {
+          "path": "/assets/index-ChIGG98j.js",
+          "type": "script",
+          "encoded": 140355,
+          "decoded": 420190,
+          "duration": 1274.300000011921,
+          "start": 256.5,
+          "responseStart": 366,
+          "responseEnd": 1530.800000011921
+        },
+        {
+          "path": "/assets/index-CoVQL5XR.css",
+          "type": "link",
+          "encoded": 16486,
+          "decoded": 81021,
+          "duration": 503.90000000596046,
+          "start": 257,
+          "responseStart": 374.60000002384186,
+          "responseEnd": 760.9000000059605
+        },
+        {
+          "path": "/assets/Catalogue-CJ3oAbRS.js",
+          "type": "script",
+          "encoded": 2637,
+          "decoded": 6519,
+          "duration": 291.80000001192093,
+          "start": 2087.5,
+          "responseStart": 2193.7000000178814,
+          "responseEnd": 2379.300000011921
+        },
+        {
+          "path": "/assets/EquivalenceEntry-DGZTGQ9y.js",
+          "type": "script",
+          "encoded": 669,
+          "decoded": 1216,
+          "duration": 273.69999998807907,
+          "start": 2090.2000000178814,
+          "responseStart": 2201.100000023842,
+          "responseEnd": 2363.9000000059605
+        },
+        {
+          "path": "/assets/arrow-left-right-D8jh0JDr.js",
+          "type": "script",
+          "encoded": 196,
+          "decoded": 249,
+          "duration": 272.40000000596046,
+          "start": 2092.9000000059605,
+          "responseStart": 2204.4000000059605,
+          "responseEnd": 2365.300000011921
+        },
+        {
+          "path": "/assets/PageMeta-vBy4PvT5.js",
+          "type": "script",
+          "encoded": 260,
+          "decoded": 348,
+          "duration": 282,
+          "start": 2094.800000011921,
+          "responseStart": 2207.5,
+          "responseEnd": 2376.800000011921
+        },
+        {
+          "path": "/assets/useResource-DQXfK5HQ.js",
+          "type": "script",
+          "encoded": 578,
+          "decoded": 1150,
+          "duration": 296.5,
+          "start": 2096.800000011921,
+          "responseStart": 2210.600000023842,
+          "responseEnd": 2393.300000011921
+        },
+        {
+          "path": "/assets/Footer-Bar0Uc0K.js",
+          "type": "script",
+          "encoded": 747,
+          "decoded": 1824,
+          "duration": 296.90000000596046,
+          "start": 2098.9000000059605,
+          "responseStart": 2214.7000000178814,
+          "responseEnd": 2395.800000011921
+        },
+        {
+          "path": "/assets/ProductCard-D6gc6NCF.js",
+          "type": "script",
+          "encoded": 1991,
+          "decoded": 4545,
+          "duration": 462.40000000596046,
+          "start": 2101.5,
+          "responseStart": 2366.5,
+          "responseEnd": 2563.9000000059605
+        },
+        {
+          "path": "/assets/homeSelectionData-CqGV5PA5.js",
+          "type": "script",
+          "encoded": 833,
+          "decoded": 1411,
+          "duration": 434.09999999403954,
+          "start": 2104.100000023842,
+          "responseStart": 2369,
+          "responseEnd": 2538.2000000178814
+        },
+        {
+          "path": "/assets/useComparison-r0oMF5iX.js",
+          "type": "script",
+          "encoded": 1003,
+          "decoded": 2179,
+          "duration": 447.19999998807907,
+          "start": 2105.800000011921,
+          "responseStart": 2379,
+          "responseEnd": 2553
+        },
+        {
+          "path": "/assets/check-DeqQQm_o.js",
+          "type": "script",
+          "encoded": 137,
+          "decoded": 120,
+          "duration": 445,
+          "start": 2108.600000023842,
+          "responseStart": 2381,
+          "responseEnd": 2553.600000023842
+        },
+        {
+          "path": "/assets/useJourney-bwwqgJb0.js",
+          "type": "script",
+          "encoded": 488,
+          "decoded": 1005,
+          "duration": 462.2000000178814,
+          "start": 2111,
+          "responseStart": 2395.100000023842,
+          "responseEnd": 2573.2000000178814
+        },
+        {
+          "path": "/logo-header-48.webp",
+          "type": "img",
+          "encoded": 2622,
+          "decoded": 2622,
+          "duration": 412.40000000596046,
+          "start": 2175.5,
+          "responseStart": 2399.800000011921,
+          "responseEnd": 2587.9000000059605
+        },
+        {
+          "path": "/api/parcours/disponibilite",
+          "type": "fetch",
+          "encoded": 35,
+          "decoded": 15,
+          "duration": 564.3000000119209,
+          "start": 2681.9000000059605,
+          "responseStart": 3231.7000000178814,
+          "responseEnd": 3246.2000000178814
+        },
+        {
+          "path": "/favicon-32.png",
+          "type": "other",
+          "encoded": 2939,
+          "decoded": 2939,
+          "duration": 183.60000002384186,
+          "start": 2733,
+          "responseStart": 2738.9000000059605,
+          "responseEnd": 2916.600000023842
+        },
+        {
+          "path": "/api/produits",
+          "type": "xmlhttprequest",
+          "encoded": 2365,
+          "decoded": 23604,
+          "duration": 197.2999999821186,
+          "start": 3417.600000023842,
+          "responseStart": 3430.4000000059605,
+          "responseEnd": 3614.9000000059605
+        },
+        {
+          "path": "/api/categories",
+          "type": "xmlhttprequest",
+          "encoded": 1136,
+          "decoded": 3774,
+          "duration": 181.5,
+          "start": 3422.300000011921,
+          "responseStart": 3432.4000000059605,
+          "responseEnd": 3603.800000011921
+        },
+        {
+          "path": "/dm4ij9sxg/image/upload/c_limit,w_240,h_240/q_auto/f_auto/v1790436144/produits/wsmhmsfhizjnv4o4qjwo.webp",
+          "type": "img",
+          "encoded": 9658,
+          "decoded": 9658,
+          "duration": 909.2000000178814,
+          "start": 4058.4000000059605,
+          "responseStart": 4864.5,
+          "responseEnd": 4967.600000023842
+        },
+        {
+          "path": "/dm4ij9sxg/image/upload/c_limit,w_240,h_240/q_auto/f_auto/v1790436147/produits/y18npddctyamfhnlwejf.webp",
+          "type": "img",
+          "encoded": 8289,
+          "decoded": 8289,
+          "duration": 727,
+          "start": 4444.300000011921,
+          "responseStart": 5097.700000017881,
+          "responseEnd": 5171.300000011921
+        },
+        {
+          "path": "/dm4ij9sxg/image/upload/c_limit,w_240,h_240/q_auto/f_auto/v1790436150/produits/eib14wharcn9q4hzzzrr.webp",
+          "type": "img",
+          "encoded": 9723,
+          "decoded": 9723,
+          "duration": 490,
+          "start": 4447,
+          "responseStart": 4813.300000011921,
+          "responseEnd": 4937
+        },
+        {
+          "path": "/dm4ij9sxg/image/upload/c_limit,w_240,h_240/q_auto/f_auto/v1790436152/produits/sqtwtgdggmc42o4wbnnq.webp",
+          "type": "img",
+          "encoded": 3758,
+          "decoded": 3758,
+          "duration": 363.09999999403954,
+          "start": 4448.600000023842,
+          "responseStart": 4763.200000017881,
+          "responseEnd": 4811.700000017881
+        },
+        {
+          "path": "/dm4ij9sxg/image/upload/c_limit,w_240,h_240/q_auto/f_auto/v1790434400/produits/pncbibztemlhdnvgjjfh.webp",
+          "type": "img",
+          "encoded": 2998,
+          "decoded": 2998,
+          "duration": 393.90000000596046,
+          "start": 4449.5,
+          "responseStart": 4777.200000017881,
+          "responseEnd": 4843.4000000059605
+        },
+        {
+          "path": "/product-images/inventory-transistor-6f0121e6eeba.webp",
+          "type": "img",
+          "encoded": 0,
+          "decoded": 0,
+          "duration": 532.4000000059605,
+          "start": 4450.300000011921,
+          "responseStart": 0,
+          "responseEnd": 4982.700000017881
+        },
+        {
+          "path": "/dm4ij9sxg/image/upload/c_limit,w_240,h_240/q_auto/f_auto/v1790424279/produits/j3wf7eu6qsdegrh2wwjd.webp",
+          "type": "img",
+          "encoded": 3854,
+          "decoded": 3854,
+          "duration": 439.59999999403954,
+          "start": 4451.4000000059605,
+          "responseStart": 4813.100000023842,
+          "responseEnd": 4891
+        },
+        {
+          "path": "/dm4ij9sxg/image/upload/c_limit,w_240,h_240/q_auto/f_auto/v1790500509/produits/zqzquadjcuhhgf2ophma.webp",
+          "type": "img",
+          "encoded": 3634,
+          "decoded": 3634,
+          "duration": 735,
+          "start": 4452,
+          "responseStart": 5130.9000000059605,
+          "responseEnd": 5187
+        }
+      ],
+      "document": {
+        "responseStart": 45.70000001788139,
+        "domContentLoaded": 1836.5,
+        "encoded": 1619,
+        "decoded": 4554
+      },
+      "overflow": false,
+      "scriptEncodedBytes": 197184,
+      "budgetPass": {
+        "lcp": false,
+        "cls": true,
+        "scriptBytes": true
+      }
+    },
+    {
+      "variant": "candidate",
+      "sample": 1,
+      "route": "/catalogue",
+      "lcpMs": 4148,
+      "cls": 0.004705356561783866,
+      "longTasks": [
+        {
+          "start": 1050.1000000238419,
+          "duration": 265
+        },
+        {
+          "start": 1546.1000000238419,
+          "duration": 292
+        },
+        {
+          "start": 1845.6000000238419,
+          "duration": 320
+        },
+        {
+          "start": 2611.5,
+          "duration": 59
+        },
+        {
+          "start": 3274,
+          "duration": 401
+        }
+      ],
+      "shifts": [
+        {
+          "time": 3975.800000011921,
+          "value": 0.004705356561783866,
+          "sources": [
+            {
+              "tag": "DIV",
+              "className": "e-product-grid e-catalog-grid ",
+              "previous": {
+                "x": 16,
+                "y": 431.0625,
+                "width": 358,
+                "height": 412.9375,
+                "top": 431.0625,
+                "right": 374,
+                "bottom": 844,
+                "left": 16
+              },
+              "current": {
+                "x": 5,
+                "y": 414.0625,
+                "width": 380,
+                "height": 429.9375,
+                "top": 414.0625,
+                "right": 385,
+                "bottom": 844,
+                "left": 5
+              }
+            }
+          ]
+        }
+      ],
+      "lcpRenderTime": 4148,
+      "lcpLoadTime": 3705.300000011921,
+      "lcpElement": "IMG",
+      "lcpPath": "/dm4ij9sxg/image/upload/c_limit,w_240,h_240/q_auto/f_auto/v1790436144/produits/wsmhmsfhizjnv4o4qjwo.webp",
+      "resources": [
+        {
+          "path": "/assets/polyfills-CyODn4CA.js",
+          "type": "script",
+          "encoded": 47290,
+          "decoded": 126037,
+          "duration": 799.3000000119209,
+          "start": 234.90000000596046,
+          "responseStart": 277.60000002384186,
+          "responseEnd": 1034.2000000178814
+        },
+        {
+          "path": "/assets/index-ChIGG98j.js",
+          "type": "script",
+          "encoded": 140355,
+          "decoded": 420190,
+          "duration": 1274.5999999940395,
+          "start": 238.60000002384186,
+          "responseStart": 302.60000002384186,
+          "responseEnd": 1513.2000000178814
+        },
+        {
+          "path": "/assets/index-CoVQL5XR.css",
+          "type": "link",
+          "encoded": 16486,
+          "decoded": 81021,
+          "duration": 468.30000001192093,
+          "start": 239.90000000596046,
+          "responseStart": 309.30000001192093,
+          "responseEnd": 708.2000000178814
+        },
+        {
+          "path": "/api/produits",
+          "type": "fetch",
+          "encoded": 2365,
+          "decoded": 23604,
+          "duration": 243.40000000596046,
+          "start": 759.7000000178814,
+          "responseStart": 772.2000000178814,
+          "responseEnd": 1003.1000000238419
+        },
+        {
+          "path": "/api/categories",
+          "type": "fetch",
+          "encoded": 1136,
+          "decoded": 3774,
+          "duration": 209.5,
+          "start": 762.7000000178814,
+          "responseStart": 774.1000000238419,
+          "responseEnd": 972.2000000178814
+        },
+        {
+          "path": "/dm4ij9sxg/image/upload/c_limit,w_240,h_240/q_auto/f_auto/v1790436144/produits/wsmhmsfhizjnv4o4qjwo.webp",
+          "type": "link",
+          "encoded": 9658,
+          "decoded": 9658,
+          "duration": 945.2000000178814,
+          "start": 1012,
+          "responseStart": 1903.800000011921,
+          "responseEnd": 1957.2000000178814
+        },
+        {
+          "path": "/assets/Catalogue-CJ3oAbRS.js",
+          "type": "script",
+          "encoded": 2637,
+          "decoded": 6519,
+          "duration": 287.69999998807907,
+          "start": 2103.7000000178814,
+          "responseStart": 2178.9000000059605,
+          "responseEnd": 2391.4000000059605
+        },
+        {
+          "path": "/assets/EquivalenceEntry-DGZTGQ9y.js",
+          "type": "script",
+          "encoded": 669,
+          "decoded": 1216,
+          "duration": 241,
+          "start": 2106,
+          "responseStart": 2185,
+          "responseEnd": 2347
+        },
+        {
+          "path": "/assets/arrow-left-right-D8jh0JDr.js",
+          "type": "script",
+          "encoded": 196,
+          "decoded": 249,
+          "duration": 251.30000001192093,
+          "start": 2108.9000000059605,
+          "responseStart": 2185.9000000059605,
+          "responseEnd": 2360.2000000178814
+        },
+        {
+          "path": "/assets/PageMeta-vBy4PvT5.js",
+          "type": "script",
+          "encoded": 260,
+          "decoded": 348,
+          "duration": 252.09999999403954,
+          "start": 2110.300000011921,
+          "responseStart": 2188.100000023842,
+          "responseEnd": 2362.4000000059605
+        },
+        {
+          "path": "/assets/useResource-DQXfK5HQ.js",
+          "type": "script",
+          "encoded": 578,
+          "decoded": 1150,
+          "duration": 259.90000000596046,
+          "start": 2111.5,
+          "responseStart": 2190.100000023842,
+          "responseEnd": 2371.4000000059605
+        },
+        {
+          "path": "/assets/Footer-Bar0Uc0K.js",
+          "type": "script",
+          "encoded": 747,
+          "decoded": 1824,
+          "duration": 263.69999998807907,
+          "start": 2113.800000011921,
+          "responseStart": 2193.7000000178814,
+          "responseEnd": 2377.5
+        },
+        {
+          "path": "/assets/ProductCard-D6gc6NCF.js",
+          "type": "script",
+          "encoded": 1991,
+          "decoded": 4545,
+          "duration": 680.7000000178814,
+          "start": 2115.4000000059605,
+          "responseStart": 2349.100000023842,
+          "responseEnd": 2796.100000023842
+        },
+        {
+          "path": "/assets/homeSelectionData-CqGV5PA5.js",
+          "type": "script",
+          "encoded": 833,
+          "decoded": 1411,
+          "duration": 677.1999999880791,
+          "start": 2117.2000000178814,
+          "responseStart": 2362.2000000178814,
+          "responseEnd": 2794.4000000059605
+        },
+        {
+          "path": "/assets/useComparison-r0oMF5iX.js",
+          "type": "script",
+          "encoded": 1003,
+          "decoded": 2179,
+          "duration": 676.3000000119209,
+          "start": 2118.300000011921,
+          "responseStart": 2363.800000011921,
+          "responseEnd": 2794.600000023842
+        },
+        {
+          "path": "/assets/check-DeqQQm_o.js",
+          "type": "script",
+          "encoded": 137,
+          "decoded": 120,
+          "duration": 674.7000000178814,
+          "start": 2120,
+          "responseStart": 2373,
+          "responseEnd": 2794.7000000178814
+        },
+        {
+          "path": "/assets/useJourney-bwwqgJb0.js",
+          "type": "script",
+          "encoded": 488,
+          "decoded": 1005,
+          "duration": 673.9000000059605,
+          "start": 2121.5,
+          "responseStart": 2379.100000023842,
+          "responseEnd": 2795.4000000059605
+        },
+        {
+          "path": "/logo-header-48.webp",
+          "type": "img",
+          "encoded": 2622,
+          "decoded": 2622,
+          "duration": 631.5999999940395,
+          "start": 2164.7000000178814,
+          "responseStart": 2395.600000023842,
+          "responseEnd": 2796.300000011921
+        },
+        {
+          "path": "/api/parcours/disponibilite",
+          "type": "fetch",
+          "encoded": 35,
+          "decoded": 15,
+          "duration": 402.09999999403954,
+          "start": 2576.600000023842,
+          "responseStart": 2812.800000011921,
+          "responseEnd": 2978.7000000178814
+        },
+        {
+          "path": "/favicon-32.png",
+          "type": "other",
+          "encoded": 2939,
+          "decoded": 2939,
+          "duration": 382.90000000596046,
+          "start": 2610.4000000059605,
+          "responseStart": 2815.4000000059605,
+          "responseEnd": 2993.300000011921
+        },
+        {
+          "path": "/dm4ij9sxg/image/upload/c_limit,w_240,h_240/q_auto/f_auto/v1790436147/produits/y18npddctyamfhnlwejf.webp",
+          "type": "img",
+          "encoded": 8289,
+          "decoded": 8289,
+          "duration": 490.5,
+          "start": 4025.2000000178814,
+          "responseStart": 4315.700000017881,
+          "responseEnd": 4515.700000017881
+        },
+        {
+          "path": "/dm4ij9sxg/image/upload/c_limit,w_240,h_240/q_auto/f_auto/v1790436150/produits/eib14wharcn9q4hzzzrr.webp",
+          "type": "img",
+          "encoded": 9723,
+          "decoded": 9723,
+          "duration": 488.60000002384186,
+          "start": 4027,
+          "responseStart": 4299,
+          "responseEnd": 4515.600000023842
+        },
+        {
+          "path": "/dm4ij9sxg/image/upload/c_limit,w_240,h_240/q_auto/f_auto/v1790436152/produits/sqtwtgdggmc42o4wbnnq.webp",
+          "type": "img",
+          "encoded": 3758,
+          "decoded": 3758,
+          "duration": 423.80000001192093,
+          "start": 4029.9000000059605,
+          "responseStart": 4338.9000000059605,
+          "responseEnd": 4453.700000017881
+        },
+        {
+          "path": "/dm4ij9sxg/image/upload/c_limit,w_240,h_240/q_auto/f_auto/v1790434400/produits/pncbibztemlhdnvgjjfh.webp",
+          "type": "img",
+          "encoded": 2998,
+          "decoded": 2998,
+          "duration": 422.39999997615814,
+          "start": 4031.100000023842,
+          "responseStart": 4339,
+          "responseEnd": 4453.5
+        },
+        {
+          "path": "/product-images/inventory-transistor-6f0121e6eeba.webp",
+          "type": "img",
+          "encoded": 0,
+          "decoded": 0,
+          "duration": 494.2999999821186,
+          "start": 4033.600000023842,
+          "responseStart": 0,
+          "responseEnd": 4527.9000000059605
+        },
+        {
+          "path": "/dm4ij9sxg/image/upload/c_limit,w_240,h_240/q_auto/f_auto/v1790424279/produits/j3wf7eu6qsdegrh2wwjd.webp",
+          "type": "img",
+          "encoded": 3854,
+          "decoded": 3854,
+          "duration": 462.7999999821186,
+          "start": 4036.600000023842,
+          "responseStart": 4339,
+          "responseEnd": 4499.4000000059605
+        },
+        {
+          "path": "/dm4ij9sxg/image/upload/c_limit,w_240,h_240/q_auto/f_auto/v1790500509/produits/zqzquadjcuhhgf2ophma.webp",
+          "type": "img",
+          "encoded": 3634,
+          "decoded": 3634,
+          "duration": 454,
+          "start": 4037.800000011921,
+          "responseStart": 4355.4000000059605,
+          "responseEnd": 4491.800000011921
+        }
+      ],
+      "document": {
+        "responseStart": 18.700000017881393,
+        "domContentLoaded": 1842.2000000178814,
+        "encoded": 2981,
+        "decoded": 7530
+      },
+      "overflow": false,
+      "scriptEncodedBytes": 197184,
+      "budgetPass": {
+        "lcp": false,
+        "cls": true,
+        "scriptBytes": true
+      }
+    },
+    {
+      "variant": "baseline",
+      "sample": 1,
+      "route": "/catalogue",
+      "lcpMs": 5020,
+      "cls": 0.004705356561783866,
+      "longTasks": [
+        {
+          "start": 987,
+          "duration": 254
+        },
+        {
+          "start": 1467.7000000178814,
+          "duration": 307
+        },
+        {
+          "start": 1784.0999999940395,
+          "duration": 346
+        },
+        {
+          "start": 2781.4000000059605,
+          "duration": 55
+        },
+        {
+          "start": 3416.5999999940395,
+          "duration": 59
+        },
+        {
+          "start": 3686.2000000178814,
+          "duration": 420
+        }
+      ],
+      "shifts": [
+        {
+          "time": 4475,
+          "value": 0.004705356561783866,
+          "sources": [
+            {
+              "tag": "DIV",
+              "className": "e-product-grid e-catalog-grid ",
+              "previous": {
+                "x": 16,
+                "y": 431.0625,
+                "width": 358,
+                "height": 412.9375,
+                "top": 431.0625,
+                "right": 374,
+                "bottom": 844,
+                "left": 16
+              },
+              "current": {
+                "x": 5,
+                "y": 414.0625,
+                "width": 380,
+                "height": 429.9375,
+                "top": 414.0625,
+                "right": 385,
+                "bottom": 844,
+                "left": 5
+              }
+            }
+          ]
+        }
+      ],
+      "lcpRenderTime": 5020,
+      "lcpLoadTime": 4989.200000017881,
+      "lcpElement": "IMG",
+      "lcpPath": "/dm4ij9sxg/image/upload/c_limit,w_240,h_240/q_auto/f_auto/v1790436144/produits/wsmhmsfhizjnv4o4qjwo.webp",
+      "resources": [
+        {
+          "path": "/assets/polyfills-CyODn4CA.js",
+          "type": "script",
+          "encoded": 47290,
+          "decoded": 126037,
+          "duration": 753.3000000119209,
+          "start": 218.40000000596046,
+          "responseStart": 263.59999999403954,
+          "responseEnd": 971.7000000178814
+        },
+        {
+          "path": "/assets/index-ChIGG98j.js",
+          "type": "script",
+          "encoded": 140355,
+          "decoded": 420190,
+          "duration": 1220,
+          "start": 221.30000001192093,
+          "responseStart": 286,
+          "responseEnd": 1441.300000011921
+        },
+        {
+          "path": "/assets/index-CoVQL5XR.css",
+          "type": "link",
+          "encoded": 16486,
+          "decoded": 81021,
+          "duration": 465.10000002384186,
+          "start": 222.59999999403954,
+          "responseStart": 292.7000000178814,
+          "responseEnd": 687.7000000178814
+        },
+        {
+          "path": "/assets/Catalogue-CJ3oAbRS.js",
+          "type": "script",
+          "encoded": 2637,
+          "decoded": 6519,
+          "duration": 258.40000000596046,
+          "start": 2054.5999999940395,
+          "responseStart": 2142.5999999940395,
+          "responseEnd": 2313
+        },
+        {
+          "path": "/assets/EquivalenceEntry-DGZTGQ9y.js",
+          "type": "script",
+          "encoded": 669,
+          "decoded": 1216,
+          "duration": 269.19999998807907,
+          "start": 2058.7000000178814,
+          "responseStart": 2148.2000000178814,
+          "responseEnd": 2327.9000000059605
+        },
+        {
+          "path": "/assets/arrow-left-right-D8jh0JDr.js",
+          "type": "script",
+          "encoded": 196,
+          "decoded": 249,
+          "duration": 268.39999997615814,
+          "start": 2060.2000000178814,
+          "responseStart": 2149.7000000178814,
+          "responseEnd": 2328.5999999940395
+        },
+        {
+          "path": "/assets/PageMeta-vBy4PvT5.js",
+          "type": "script",
+          "encoded": 260,
+          "decoded": 348,
+          "duration": 282.09999999403954,
+          "start": 2061.7000000178814,
+          "responseStart": 2151.800000011921,
+          "responseEnd": 2343.800000011921
+        },
+        {
+          "path": "/assets/useResource-DQXfK5HQ.js",
+          "type": "script",
+          "encoded": 578,
+          "decoded": 1150,
+          "duration": 280.69999998807907,
+          "start": 2063.800000011921,
+          "responseStart": 2153.4000000059605,
+          "responseEnd": 2344.5
+        },
+        {
+          "path": "/assets/Footer-Bar0Uc0K.js",
+          "type": "script",
+          "encoded": 747,
+          "decoded": 1824,
+          "duration": 294.5,
+          "start": 2065.300000011921,
+          "responseStart": 2154.5999999940395,
+          "responseEnd": 2359.800000011921
+        },
+        {
+          "path": "/assets/ProductCard-D6gc6NCF.js",
+          "type": "script",
+          "encoded": 1991,
+          "decoded": 4545,
+          "duration": 419.30000001192093,
+          "start": 2067.5,
+          "responseStart": 2315,
+          "responseEnd": 2486.800000011921
+        },
+        {
+          "path": "/assets/homeSelectionData-CqGV5PA5.js",
+          "type": "script",
+          "encoded": 833,
+          "decoded": 1411,
+          "duration": 432.5,
+          "start": 2069.300000011921,
+          "responseStart": 2330.4000000059605,
+          "responseEnd": 2501.800000011921
+        },
+        {
+          "path": "/assets/useComparison-r0oMF5iX.js",
+          "type": "script",
+          "encoded": 1003,
+          "decoded": 2179,
+          "duration": 431,
+          "start": 2071.2000000178814,
+          "responseStart": 2331.300000011921,
+          "responseEnd": 2502.2000000178814
+        },
+        {
+          "path": "/assets/check-DeqQQm_o.js",
+          "type": "script",
+          "encoded": 137,
+          "decoded": 120,
+          "duration": 443.59999999403954,
+          "start": 2074.300000011921,
+          "responseStart": 2346.2000000178814,
+          "responseEnd": 2517.9000000059605
+        },
+        {
+          "path": "/assets/useJourney-bwwqgJb0.js",
+          "type": "script",
+          "encoded": 488,
+          "decoded": 1005,
+          "duration": 441.80000001192093,
+          "start": 2076.5,
+          "responseStart": 2347.7000000178814,
+          "responseEnd": 2518.300000011921
+        },
+        {
+          "path": "/logo-header-48.webp",
+          "type": "img",
+          "encoded": 2622,
+          "decoded": 2622,
+          "duration": 404.40000000596046,
+          "start": 2128.300000011921,
+          "responseStart": 2362.9000000059605,
+          "responseEnd": 2532.7000000178814
+        },
+        {
+          "path": "/api/parcours/disponibilite",
+          "type": "fetch",
+          "encoded": 35,
+          "decoded": 15,
+          "duration": 175.80000001192093,
+          "start": 2710.9000000059605,
+          "responseStart": 2718.300000011921,
+          "responseEnd": 2886.7000000178814
+        },
+        {
+          "path": "/favicon-32.png",
+          "type": "other",
+          "encoded": 2939,
+          "decoded": 2939,
+          "duration": 186.2000000178814,
+          "start": 2768,
+          "responseStart": 2773.800000011921,
+          "responseEnd": 2954.2000000178814
+        },
+        {
+          "path": "/api/produits",
+          "type": "xmlhttprequest",
+          "encoded": 2365,
+          "decoded": 23604,
+          "duration": 189.7999999821186,
+          "start": 3471.300000011921,
+          "responseStart": 3482.300000011921,
+          "responseEnd": 3661.0999999940395
+        },
+        {
+          "path": "/api/categories",
+          "type": "xmlhttprequest",
+          "encoded": 1136,
+          "decoded": 3774,
+          "duration": 200.80000001192093,
+          "start": 3475.9000000059605,
+          "responseStart": 3483.7000000178814,
+          "responseEnd": 3676.7000000178814
+        },
+        {
+          "path": "/dm4ij9sxg/image/upload/c_limit,w_240,h_240/q_auto/f_auto/v1790436144/produits/wsmhmsfhizjnv4o4qjwo.webp",
+          "type": "img",
+          "encoded": 9658,
+          "decoded": 9658,
+          "duration": 881.3000000119209,
+          "start": 4099.5999999940395,
+          "responseStart": 4729.700000017881,
+          "responseEnd": 4980.9000000059605
+        },
+        {
+          "path": "/dm4ij9sxg/image/upload/c_limit,w_240,h_240/q_auto/f_auto/v1790436147/produits/y18npddctyamfhnlwejf.webp",
+          "type": "img",
+          "encoded": 8289,
+          "decoded": 8289,
+          "duration": 451.40000000596046,
+          "start": 4520.300000011921,
+          "responseStart": 4808.300000011921,
+          "responseEnd": 4971.700000017881
+        },
+        {
+          "path": "/dm4ij9sxg/image/upload/c_limit,w_240,h_240/q_auto/f_auto/v1790436150/produits/eib14wharcn9q4hzzzrr.webp",
+          "type": "img",
+          "encoded": 9723,
+          "decoded": 9723,
+          "duration": 482.09999999403954,
+          "start": 4522.5,
+          "responseStart": 4833,
+          "responseEnd": 5004.5999999940395
+        },
+        {
+          "path": "/dm4ij9sxg/image/upload/c_limit,w_240,h_240/q_auto/f_auto/v1790436152/produits/sqtwtgdggmc42o4wbnnq.webp",
+          "type": "img",
+          "encoded": 3758,
+          "decoded": 3758,
+          "duration": 431.7000000178814,
+          "start": 4524,
+          "responseStart": 4857.700000017881,
+          "responseEnd": 4955.700000017881
+        },
+        {
+          "path": "/dm4ij9sxg/image/upload/c_limit,w_240,h_240/q_auto/f_auto/v1790434400/produits/pncbibztemlhdnvgjjfh.webp",
+          "type": "img",
+          "encoded": 2998,
+          "decoded": 2998,
+          "duration": 306.90000000596046,
+          "start": 4526.300000011921,
+          "responseStart": 4722.200000017881,
+          "responseEnd": 4833.200000017881
+        },
+        {
+          "path": "/product-images/inventory-transistor-6f0121e6eeba.webp",
+          "type": "img",
+          "encoded": 0,
+          "decoded": 0,
+          "duration": 523.3000000119209,
+          "start": 4527.0999999940395,
+          "responseStart": 0,
+          "responseEnd": 5050.4000000059605
+        },
+        {
+          "path": "/dm4ij9sxg/image/upload/c_limit,w_240,h_240/q_auto/f_auto/v1790424279/produits/j3wf7eu6qsdegrh2wwjd.webp",
+          "type": "img",
+          "encoded": 3854,
+          "decoded": 3854,
+          "duration": 318.19999998807907,
+          "start": 4528.4000000059605,
+          "responseStart": 4722.4000000059605,
+          "responseEnd": 4846.5999999940395
+        },
+        {
+          "path": "/dm4ij9sxg/image/upload/c_limit,w_240,h_240/q_auto/f_auto/v1790500509/produits/zqzquadjcuhhgf2ophma.webp",
+          "type": "img",
+          "encoded": 3634,
+          "decoded": 3634,
+          "duration": 491.30000001192093,
+          "start": 4529.5,
+          "responseStart": 4943.800000011921,
+          "responseEnd": 5020.800000011921
+        }
+      ],
+      "document": {
+        "responseStart": 21.599999994039536,
+        "domContentLoaded": 1779.9000000059605,
+        "encoded": 1619,
+        "decoded": 4554
+      },
+      "overflow": false,
+      "scriptEncodedBytes": 197184,
+      "budgetPass": {
+        "lcp": false,
+        "cls": true,
+        "scriptBytes": true
+      }
+    },
+    {
+      "variant": "candidate",
+      "sample": 1,
+      "route": "/catalogue",
+      "lcpMs": 4580,
+      "cls": 0.004705356561783866,
+      "longTasks": [
+        {
+          "start": 1029.4000000059605,
+          "duration": 252
+        },
+        {
+          "start": 1512.7000000178814,
+          "duration": 336
+        },
+        {
+          "start": 1862.9000000059605,
+          "duration": 356
+        },
+        {
+          "start": 2676,
+          "duration": 60
+        },
+        {
+          "start": 3544.4000000059605,
+          "duration": 454
+        }
+      ],
+      "shifts": [
+        {
+          "time": 4411.5,
+          "value": 0.004705356561783866,
+          "sources": [
+            {
+              "tag": "DIV",
+              "className": "e-product-grid e-catalog-grid ",
+              "previous": {
+                "x": 16,
+                "y": 431.0625,
+                "width": 358,
+                "height": 412.9375,
+                "top": 431.0625,
+                "right": 374,
+                "bottom": 844,
+                "left": 16
+              },
+              "current": {
+                "x": 5,
+                "y": 414.0625,
+                "width": 380,
+                "height": 429.9375,
+                "top": 414.0625,
+                "right": 385,
+                "bottom": 844,
+                "left": 5
+              }
+            }
+          ]
+        }
+      ],
+      "lcpRenderTime": 4580,
+      "lcpLoadTime": 4036.7000000178814,
+      "lcpElement": "IMG",
+      "lcpPath": "/dm4ij9sxg/image/upload/c_limit,w_240,h_240/q_auto/f_auto/v1790436144/produits/wsmhmsfhizjnv4o4qjwo.webp",
+      "resources": [
+        {
+          "path": "/assets/polyfills-CyODn4CA.js",
+          "type": "script",
+          "encoded": 47290,
+          "decoded": 126037,
+          "duration": 788.7999999821186,
+          "start": 223.60000002384186,
+          "responseStart": 265.90000000596046,
+          "responseEnd": 1012.4000000059605
+        },
+        {
+          "path": "/assets/index-ChIGG98j.js",
+          "type": "script",
+          "encoded": 140355,
+          "decoded": 420190,
+          "duration": 1260.9000000059605,
+          "start": 226.7000000178814,
+          "responseStart": 284.2000000178814,
+          "responseEnd": 1487.6000000238419
+        },
+        {
+          "path": "/assets/index-CoVQL5XR.css",
+          "type": "link",
+          "encoded": 16486,
+          "decoded": 81021,
+          "duration": 459.69999998807907,
+          "start": 227.7000000178814,
+          "responseStart": 290.10000002384186,
+          "responseEnd": 687.4000000059605
+        },
+        {
+          "path": "/api/produits",
+          "type": "fetch",
+          "encoded": 2365,
+          "decoded": 23604,
+          "duration": 242.30000001192093,
+          "start": 740,
+          "responseStart": 751.2000000178814,
+          "responseEnd": 982.3000000119209
+        },
+        {
+          "path": "/api/categories",
+          "type": "fetch",
+          "encoded": 1136,
+          "decoded": 3774,
+          "duration": 209.2999999821186,
+          "start": 743.1000000238419,
+          "responseStart": 752.5,
+          "responseEnd": 952.4000000059605
+        },
+        {
+          "path": "/dm4ij9sxg/image/upload/c_limit,w_240,h_240/q_auto/f_auto/v1790436144/produits/wsmhmsfhizjnv4o4qjwo.webp",
+          "type": "link",
+          "encoded": 9658,
+          "decoded": 9658,
+          "duration": 1237.699999988079,
+          "start": 993.7000000178814,
+          "responseStart": 2184.5,
+          "responseEnd": 2231.4000000059605
+        },
+        {
+          "path": "/assets/Catalogue-CJ3oAbRS.js",
+          "type": "script",
+          "encoded": 2637,
+          "decoded": 6519,
+          "duration": 614.5,
+          "start": 2141.2000000178814,
+          "responseStart": 2234.5,
+          "responseEnd": 2755.7000000178814
+        },
+        {
+          "path": "/assets/EquivalenceEntry-DGZTGQ9y.js",
+          "type": "script",
+          "encoded": 669,
+          "decoded": 1216,
+          "duration": 605.5,
+          "start": 2144.600000023842,
+          "responseStart": 2236.100000023842,
+          "responseEnd": 2750.100000023842
+        },
+        {
+          "path": "/assets/arrow-left-right-D8jh0JDr.js",
+          "type": "script",
+          "encoded": 196,
+          "decoded": 249,
+          "duration": 603.8000000119209,
+          "start": 2146.5,
+          "responseStart": 2244.800000011921,
+          "responseEnd": 2750.300000011921
+        },
+        {
+          "path": "/assets/PageMeta-vBy4PvT5.js",
+          "type": "script",
+          "encoded": 260,
+          "decoded": 348,
+          "duration": 601.6999999880791,
+          "start": 2148.800000011921,
+          "responseStart": 2247,
+          "responseEnd": 2750.5
+        },
+        {
+          "path": "/assets/useResource-DQXfK5HQ.js",
+          "type": "script",
+          "encoded": 578,
+          "decoded": 1150,
+          "duration": 598.8999999761581,
+          "start": 2152.100000023842,
+          "responseStart": 2248.5,
+          "responseEnd": 2751
+        },
+        {
+          "path": "/assets/Footer-Bar0Uc0K.js",
+          "type": "script",
+          "encoded": 747,
+          "decoded": 1824,
+          "duration": 595.9000000059605,
+          "start": 2154.800000011921,
+          "responseStart": 2250.300000011921,
+          "responseEnd": 2750.7000000178814
+        },
+        {
+          "path": "/assets/ProductCard-D6gc6NCF.js",
+          "type": "script",
+          "encoded": 1991,
+          "decoded": 4545,
+          "duration": 818.4000000059605,
+          "start": 2157.9000000059605,
+          "responseStart": 2752.800000011921,
+          "responseEnd": 2976.300000011921
+        },
+        {
+          "path": "/assets/homeSelectionData-CqGV5PA5.js",
+          "type": "script",
+          "encoded": 833,
+          "decoded": 1411,
+          "duration": 770.5999999940395,
+          "start": 2160.300000011921,
+          "responseStart": 2754.100000023842,
+          "responseEnd": 2930.9000000059605
+        },
+        {
+          "path": "/assets/useComparison-r0oMF5iX.js",
+          "type": "script",
+          "encoded": 1003,
+          "decoded": 2179,
+          "duration": 778.0999999940395,
+          "start": 2162.4000000059605,
+          "responseStart": 2755.4000000059605,
+          "responseEnd": 2940.5
+        },
+        {
+          "path": "/assets/check-DeqQQm_o.js",
+          "type": "script",
+          "encoded": 137,
+          "decoded": 120,
+          "duration": 781.9000000059605,
+          "start": 2164.7000000178814,
+          "responseStart": 2757.300000011921,
+          "responseEnd": 2946.600000023842
+        },
+        {
+          "path": "/assets/useJourney-bwwqgJb0.js",
+          "type": "script",
+          "encoded": 488,
+          "decoded": 1005,
+          "duration": 795,
+          "start": 2166.800000011921,
+          "responseStart": 2758.2000000178814,
+          "responseEnd": 2961.800000011921
+        },
+        {
+          "path": "/logo-header-48.webp",
+          "type": "img",
+          "encoded": 2622,
+          "decoded": 2622,
+          "duration": 773.3000000119209,
+          "start": 2217.9000000059605,
+          "responseStart": 2760.300000011921,
+          "responseEnd": 2991.2000000178814
+        },
+        {
+          "path": "/api/parcours/disponibilite",
+          "type": "fetch",
+          "encoded": 35,
+          "decoded": 15,
+          "duration": 321.30000001192093,
+          "start": 2648.4000000059605,
+          "responseStart": 2764.4000000059605,
+          "responseEnd": 2969.7000000178814
+        },
+        {
+          "path": "/favicon-32.png",
+          "type": "other",
+          "encoded": 2939,
+          "decoded": 2939,
+          "duration": 425.7000000178814,
+          "start": 2675,
+          "responseStart": 2933.7000000178814,
+          "responseEnd": 3100.7000000178814
+        },
+        {
+          "path": "/dm4ij9sxg/image/upload/c_limit,w_240,h_240/q_auto/f_auto/v1790436147/produits/y18npddctyamfhnlwejf.webp",
+          "type": "img",
+          "encoded": 8289,
+          "decoded": 8289,
+          "duration": 444,
+          "start": 4459.9000000059605,
+          "responseStart": 4732.4000000059605,
+          "responseEnd": 4903.9000000059605
+        },
+        {
+          "path": "/dm4ij9sxg/image/upload/c_limit,w_240,h_240/q_auto/f_auto/v1790436150/produits/eib14wharcn9q4hzzzrr.webp",
+          "type": "img",
+          "encoded": 9723,
+          "decoded": 9723,
+          "duration": 463.59999999403954,
+          "start": 4461.100000023842,
+          "responseStart": 4732.600000023842,
+          "responseEnd": 4924.700000017881
+        },
+        {
+          "path": "/dm4ij9sxg/image/upload/c_limit,w_240,h_240/q_auto/f_auto/v1790436152/produits/sqtwtgdggmc42o4wbnnq.webp",
+          "type": "img",
+          "encoded": 3758,
+          "decoded": 3758,
+          "duration": 358.69999998807907,
+          "start": 4462.100000023842,
+          "responseStart": 4748.9000000059605,
+          "responseEnd": 4820.800000011921
+        },
+        {
+          "path": "/dm4ij9sxg/image/upload/c_limit,w_240,h_240/q_auto/f_auto/v1790434400/produits/pncbibztemlhdnvgjjfh.webp",
+          "type": "img",
+          "encoded": 2998,
+          "decoded": 2998,
+          "duration": 409.19999998807907,
+          "start": 4463.600000023842,
+          "responseStart": 4764.600000023842,
+          "responseEnd": 4872.800000011921
+        },
+        {
+          "path": "/product-images/inventory-transistor-6f0121e6eeba.webp",
+          "type": "img",
+          "encoded": 0,
+          "decoded": 0,
+          "duration": 513.6999999880791,
+          "start": 4465.700000017881,
+          "responseStart": 0,
+          "responseEnd": 4979.4000000059605
+        },
+        {
+          "path": "/dm4ij9sxg/image/upload/c_limit,w_240,h_240/q_auto/f_auto/v1790424279/produits/j3wf7eu6qsdegrh2wwjd.webp",
+          "type": "img",
+          "encoded": 3854,
+          "decoded": 3854,
+          "duration": 421.80000001192093,
+          "start": 4467,
+          "responseStart": 4749,
+          "responseEnd": 4888.800000011921
+        },
+        {
+          "path": "/dm4ij9sxg/image/upload/c_limit,w_240,h_240/q_auto/f_auto/v1790500509/produits/zqzquadjcuhhgf2ophma.webp",
+          "type": "img",
+          "encoded": 3634,
+          "decoded": 3634,
+          "duration": 420.69999998807907,
+          "start": 4468.300000011921,
+          "responseStart": 4764.800000011921,
+          "responseEnd": 4889
+        }
+      ],
+      "document": {
+        "responseStart": 18.900000005960464,
+        "domContentLoaded": 1857.300000011921,
+        "encoded": 2981,
+        "decoded": 7530
+      },
+      "overflow": false,
+      "scriptEncodedBytes": 197184,
+      "budgetPass": {
+        "lcp": false,
+        "cls": true,
+        "scriptBytes": true
+      }
+    },
+    {
+      "variant": "baseline",
+      "sample": 1,
+      "route": "/catalogue",
+      "lcpMs": 4756,
+      "cls": 0.004705356561783866,
+      "longTasks": [
+        {
+          "start": 999.2000000178814,
+          "duration": 194
+        },
+        {
+          "start": 1480.300000011921,
+          "duration": 220
+        },
+        {
+          "start": 1710.7000000178814,
+          "duration": 276
+        },
+        {
+          "start": 2450.2000000178814,
+          "duration": 68
+        },
+        {
+          "start": 3351,
+          "duration": 329
+        }
+      ],
+      "shifts": [
+        {
+          "time": 3947.100000023842,
+          "value": 0.004705356561783866,
+          "sources": [
+            {
+              "tag": "DIV",
+              "className": "e-product-grid e-catalog-grid ",
+              "previous": {
+                "x": 16,
+                "y": 431.0625,
+                "width": 358,
+                "height": 412.9375,
+                "top": 431.0625,
+                "right": 374,
+                "bottom": 844,
+                "left": 16
+              },
+              "current": {
+                "x": 5,
+                "y": 414.0625,
+                "width": 380,
+                "height": 429.9375,
+                "top": 414.0625,
+                "right": 385,
+                "bottom": 844,
+                "left": 5
+              }
+            }
+          ]
+        }
+      ],
+      "lcpRenderTime": 4756,
+      "lcpLoadTime": 4716.800000011921,
+      "lcpElement": "IMG",
+      "lcpPath": "/dm4ij9sxg/image/upload/c_limit,w_240,h_240/q_auto/f_auto/v1790436144/produits/wsmhmsfhizjnv4o4qjwo.webp",
+      "resources": [
+        {
+          "path": "/assets/polyfills-CyODn4CA.js",
+          "type": "script",
+          "encoded": 47290,
+          "decoded": 126037,
+          "duration": 766.5999999940395,
+          "start": 218.10000002384186,
+          "responseStart": 268.2000000178814,
+          "responseEnd": 984.7000000178814
+        },
+        {
+          "path": "/assets/index-ChIGG98j.js",
+          "type": "script",
+          "encoded": 140355,
+          "decoded": 420190,
+          "duration": 1230.2999999821186,
+          "start": 220.7000000178814,
+          "responseStart": 287.10000002384186,
+          "responseEnd": 1451
+        },
+        {
+          "path": "/assets/index-CoVQL5XR.css",
+          "type": "link",
+          "encoded": 16486,
+          "decoded": 81021,
+          "duration": 482.80000001192093,
+          "start": 221.90000000596046,
+          "responseStart": 292.7000000178814,
+          "responseEnd": 704.7000000178814
+        },
+        {
+          "path": "/assets/Catalogue-CJ3oAbRS.js",
+          "type": "script",
+          "encoded": 2637,
+          "decoded": 6519,
+          "duration": 554.4000000059605,
+          "start": 1924.2000000178814,
+          "responseStart": 2011.5,
+          "responseEnd": 2478.600000023842
+        },
+        {
+          "path": "/assets/EquivalenceEntry-DGZTGQ9y.js",
+          "type": "script",
+          "encoded": 669,
+          "decoded": 1216,
+          "duration": 547.9000000059605,
+          "start": 1926.4000000059605,
+          "responseStart": 2012.2000000178814,
+          "responseEnd": 2474.300000011921
+        },
+        {
+          "path": "/assets/arrow-left-right-D8jh0JDr.js",
+          "type": "script",
+          "encoded": 196,
+          "decoded": 249,
+          "duration": 546.5999999940395,
+          "start": 1927.9000000059605,
+          "responseStart": 2013.2000000178814,
+          "responseEnd": 2474.5
+        },
+        {
+          "path": "/assets/PageMeta-vBy4PvT5.js",
+          "type": "script",
+          "encoded": 260,
+          "decoded": 348,
+          "duration": 545.5,
+          "start": 1929.1000000238419,
+          "responseStart": 2015.1000000238419,
+          "responseEnd": 2474.600000023842
+        },
+        {
+          "path": "/assets/useResource-DQXfK5HQ.js",
+          "type": "script",
+          "encoded": 578,
+          "decoded": 1150,
+          "duration": 544.3000000119209,
+          "start": 1930.5,
+          "responseStart": 2015.6000000238419,
+          "responseEnd": 2474.800000011921
+        },
+        {
+          "path": "/assets/Footer-Bar0Uc0K.js",
+          "type": "script",
+          "encoded": 747,
+          "decoded": 1824,
+          "duration": 542.8999999761581,
+          "start": 1932.1000000238419,
+          "responseStart": 2016.7000000178814,
+          "responseEnd": 2475
+        },
+        {
+          "path": "/assets/ProductCard-D6gc6NCF.js",
+          "type": "script",
+          "encoded": 1991,
+          "decoded": 4545,
+          "duration": 763.2999999821186,
+          "start": 1933.6000000238419,
+          "responseStart": 2477.100000023842,
+          "responseEnd": 2696.9000000059605
+        },
+        {
+          "path": "/assets/homeSelectionData-CqGV5PA5.js",
+          "type": "script",
+          "encoded": 833,
+          "decoded": 1411,
+          "duration": 715.5,
+          "start": 1935.1000000238419,
+          "responseStart": 2478.9000000059605,
+          "responseEnd": 2650.600000023842
+        },
+        {
+          "path": "/assets/useComparison-r0oMF5iX.js",
+          "type": "script",
+          "encoded": 1003,
+          "decoded": 2179,
+          "duration": 715,
+          "start": 1936.9000000059605,
+          "responseStart": 2480.2000000178814,
+          "responseEnd": 2651.9000000059605
+        },
+        {
+          "path": "/assets/check-DeqQQm_o.js",
+          "type": "script",
+          "encoded": 137,
+          "decoded": 120,
+          "duration": 727.5,
+          "start": 1938.300000011921,
+          "responseStart": 2482.300000011921,
+          "responseEnd": 2665.800000011921
+        },
+        {
+          "path": "/assets/useJourney-bwwqgJb0.js",
+          "type": "script",
+          "encoded": 488,
+          "decoded": 1005,
+          "duration": 725.5,
+          "start": 1940.7000000178814,
+          "responseStart": 2483.100000023842,
+          "responseEnd": 2666.2000000178814
+        },
+        {
+          "path": "/logo-header-48.webp",
+          "type": "img",
+          "encoded": 2622,
+          "decoded": 2622,
+          "duration": 712.1999999880791,
+          "start": 1984.800000011921,
+          "responseStart": 2486.300000011921,
+          "responseEnd": 2697
+        },
+        {
+          "path": "/api/parcours/disponibilite",
+          "type": "fetch",
+          "encoded": 35,
+          "decoded": 15,
+          "duration": 334.40000000596046,
+          "start": 2347.300000011921,
+          "responseStart": 2493.100000023842,
+          "responseEnd": 2681.7000000178814
+        },
+        {
+          "path": "/favicon-32.png",
+          "type": "other",
+          "encoded": 2939,
+          "decoded": 2939,
+          "duration": 373.40000000596046,
+          "start": 2449.4000000059605,
+          "responseStart": 2653.4000000059605,
+          "responseEnd": 2822.800000011921
+        },
+        {
+          "path": "/api/produits",
+          "type": "xmlhttprequest",
+          "encoded": 2365,
+          "decoded": 23604,
+          "duration": 202.19999998807907,
+          "start": 3123.300000011921,
+          "responseStart": 3133.2000000178814,
+          "responseEnd": 3325.5
+        },
+        {
+          "path": "/api/categories",
+          "type": "xmlhttprequest",
+          "encoded": 1136,
+          "decoded": 3774,
+          "duration": 197.19999998807907,
+          "start": 3127.7000000178814,
+          "responseStart": 3134.100000023842,
+          "responseEnd": 3324.9000000059605
+        },
+        {
+          "path": "/dm4ij9sxg/image/upload/c_limit,w_240,h_240/q_auto/f_auto/v1790436144/produits/wsmhmsfhizjnv4o4qjwo.webp",
+          "type": "img",
+          "encoded": 9658,
+          "decoded": 9658,
+          "duration": 1031.9000000059605,
+          "start": 3670.300000011921,
+          "responseStart": 4505.800000011921,
+          "responseEnd": 4702.200000017881
+        },
+        {
+          "path": "/dm4ij9sxg/image/upload/c_limit,w_240,h_240/q_auto/f_auto/v1790436147/produits/y18npddctyamfhnlwejf.webp",
+          "type": "img",
+          "encoded": 8289,
+          "decoded": 8289,
+          "duration": 767.7999999821186,
+          "start": 3988.7000000178814,
+          "responseStart": 4606.300000011921,
+          "responseEnd": 4756.5
+        },
+        {
+          "path": "/dm4ij9sxg/image/upload/c_limit,w_240,h_240/q_auto/f_auto/v1790436150/produits/eib14wharcn9q4hzzzrr.webp",
+          "type": "img",
+          "encoded": 9723,
+          "decoded": 9723,
+          "duration": 747.7999999821186,
+          "start": 3990.600000023842,
+          "responseStart": 4541.700000017881,
+          "responseEnd": 4738.4000000059605
+        },
+        {
+          "path": "/dm4ij9sxg/image/upload/c_limit,w_240,h_240/q_auto/f_auto/v1790436152/produits/sqtwtgdggmc42o4wbnnq.webp",
+          "type": "img",
+          "encoded": 3758,
+          "decoded": 3758,
+          "duration": 701.4000000059605,
+          "start": 3991.800000011921,
+          "responseStart": 4586.100000023842,
+          "responseEnd": 4693.200000017881
+        },
+        {
+          "path": "/dm4ij9sxg/image/upload/c_limit,w_240,h_240/q_auto/f_auto/v1790434400/produits/pncbibztemlhdnvgjjfh.webp",
+          "type": "img",
+          "encoded": 2998,
+          "decoded": 2998,
+          "duration": 590.6000000238419,
+          "start": 3993,
+          "responseStart": 4509.800000011921,
+          "responseEnd": 4583.600000023842
+        },
+        {
+          "path": "/product-images/inventory-transistor-6f0121e6eeba.webp",
+          "type": "img",
+          "encoded": 0,
+          "decoded": 0,
+          "duration": 539.3000000119209,
+          "start": 3994.300000011921,
+          "responseStart": 0,
+          "responseEnd": 4533.600000023842
+        },
+        {
+          "path": "/dm4ij9sxg/image/upload/c_limit,w_240,h_240/q_auto/f_auto/v1790424279/produits/j3wf7eu6qsdegrh2wwjd.webp",
+          "type": "img",
+          "encoded": 3854,
+          "decoded": 3854,
+          "duration": 679.3000000119209,
+          "start": 3995.5,
+          "responseStart": 4548.700000017881,
+          "responseEnd": 4674.800000011921
+        },
+        {
+          "path": "/dm4ij9sxg/image/upload/c_limit,w_240,h_240/q_auto/f_auto/v1790500509/produits/zqzquadjcuhhgf2ophma.webp",
+          "type": "img",
+          "encoded": 3634,
+          "decoded": 3634,
+          "duration": 806.7999999821186,
+          "start": 3996.7000000178814,
+          "responseStart": 4777.5,
+          "responseEnd": 4803.5
+        }
+      ],
+      "document": {
+        "responseStart": 20,
+        "domContentLoaded": 1707.7000000178814,
+        "encoded": 1619,
+        "decoded": 4554
+      },
+      "overflow": false,
+      "scriptEncodedBytes": 197184,
+      "budgetPass": {
+        "lcp": false,
+        "cls": true,
+        "scriptBytes": true
+      }
+    },
+    {
+      "variant": "candidate",
+      "sample": 1,
+      "route": "/catalogue",
+      "lcpMs": 3956,
+      "cls": 0,
+      "longTasks": [
+        {
+          "start": 1040.699999988079,
+          "duration": 248
+        },
+        {
+          "start": 1556.5999999940395,
+          "duration": 255
+        },
+        {
+          "start": 1829.5,
+          "duration": 296
+        },
+        {
+          "start": 2636.2999999821186,
+          "duration": 69
+        },
+        {
+          "start": 2805.0999999940395,
+          "duration": 348
+        },
+        {
+          "start": 3153.2999999821186,
+          "duration": 692
+        }
+      ],
+      "shifts": [],
+      "lcpRenderTime": 3956,
+      "lcpLoadTime": 3208.7999999821186,
+      "lcpElement": "IMG",
+      "lcpPath": "/dm4ij9sxg/image/upload/c_limit,w_240,h_240/q_auto/f_auto/v1790436144/produits/wsmhmsfhizjnv4o4qjwo.webp",
+      "resources": [
+        {
+          "path": "/assets/polyfills-CyODn4CA.js",
+          "type": "script",
+          "encoded": 47290,
+          "decoded": 126037,
+          "duration": 793,
+          "start": 234.7999999821186,
+          "responseStart": 278.69999998807907,
+          "responseEnd": 1027.7999999821186
+        },
+        {
+          "path": "/assets/index-ChIGG98j.js",
+          "type": "script",
+          "encoded": 140355,
+          "decoded": 420190,
+          "duration": 1289.3999999761581,
+          "start": 239.90000000596046,
+          "responseStart": 297.69999998807907,
+          "responseEnd": 1529.2999999821186
+        },
+        {
+          "path": "/assets/index-CoVQL5XR.css",
+          "type": "link",
+          "encoded": 16486,
+          "decoded": 81021,
+          "duration": 471.7999999821186,
+          "start": 241,
+          "responseStart": 303.69999998807907,
+          "responseEnd": 712.7999999821186
+        },
+        {
+          "path": "/api/produits",
+          "type": "fetch",
+          "encoded": 2365,
+          "decoded": 23604,
+          "duration": 234.5,
+          "start": 762.4000000059605,
+          "responseStart": 771,
+          "responseEnd": 996.9000000059605
+        },
+        {
+          "path": "/api/categories",
+          "type": "fetch",
+          "encoded": 1136,
+          "decoded": 3774,
+          "duration": 216.80000001192093,
+          "start": 764.0999999940395,
+          "responseStart": 771.7999999821186,
+          "responseEnd": 980.9000000059605
+        },
+        {
+          "path": "/dm4ij9sxg/image/upload/c_limit,w_240,h_240/q_auto/f_auto/v1790436144/produits/wsmhmsfhizjnv4o4qjwo.webp",
+          "type": "link",
+          "encoded": 9658,
+          "decoded": 9658,
+          "duration": 736.2999999821186,
+          "start": 1008.4000000059605,
+          "responseStart": 1658,
+          "responseEnd": 1744.699999988079
+        },
+        {
+          "path": "/assets/Catalogue-CJ3oAbRS.js",
+          "type": "script",
+          "encoded": 2637,
+          "decoded": 6519,
+          "duration": 257.40000000596046,
+          "start": 2044.5,
+          "responseStart": 2134.5,
+          "responseEnd": 2301.9000000059605
+        },
+        {
+          "path": "/assets/EquivalenceEntry-DGZTGQ9y.js",
+          "type": "script",
+          "encoded": 669,
+          "decoded": 1216,
+          "duration": 271.5,
+          "start": 2046.5999999940395,
+          "responseStart": 2139,
+          "responseEnd": 2318.0999999940395
+        },
+        {
+          "path": "/assets/arrow-left-right-D8jh0JDr.js",
+          "type": "script",
+          "encoded": 196,
+          "decoded": 249,
+          "duration": 270.40000000596046,
+          "start": 2048.199999988079,
+          "responseStart": 2140.0999999940395,
+          "responseEnd": 2318.5999999940395
+        },
+        {
+          "path": "/assets/PageMeta-vBy4PvT5.js",
+          "type": "script",
+          "encoded": 260,
+          "decoded": 348,
+          "duration": 276.59999999403954,
+          "start": 2050,
+          "responseStart": 2143.699999988079,
+          "responseEnd": 2326.5999999940395
+        },
+        {
+          "path": "/assets/useResource-DQXfK5HQ.js",
+          "type": "script",
+          "encoded": 578,
+          "decoded": 1150,
+          "duration": 282.30000001192093,
+          "start": 2051.2999999821186,
+          "responseStart": 2145.2999999821186,
+          "responseEnd": 2333.5999999940395
+        },
+        {
+          "path": "/assets/Footer-Bar0Uc0K.js",
+          "type": "script",
+          "encoded": 747,
+          "decoded": 1824,
+          "duration": 295.90000000596046,
+          "start": 2052.699999988079,
+          "responseStart": 2146.5,
+          "responseEnd": 2348.5999999940395
+        },
+        {
+          "path": "/assets/ProductCard-D6gc6NCF.js",
+          "type": "script",
+          "encoded": 1991,
+          "decoded": 4545,
+          "duration": 410.30000001192093,
+          "start": 2054.2999999821186,
+          "responseStart": 2303.9000000059605,
+          "responseEnd": 2464.5999999940395
+        },
+        {
+          "path": "/assets/homeSelectionData-CqGV5PA5.js",
+          "type": "script",
+          "encoded": 833,
+          "decoded": 1411,
+          "duration": 431.40000000596046,
+          "start": 2055.7999999821186,
+          "responseStart": 2319.5999999940395,
+          "responseEnd": 2487.199999988079
+        },
+        {
+          "path": "/assets/useComparison-r0oMF5iX.js",
+          "type": "script",
+          "encoded": 1003,
+          "decoded": 2179,
+          "duration": 430.40000000596046,
+          "start": 2057.199999988079,
+          "responseStart": 2320.9000000059605,
+          "responseEnd": 2487.5999999940395
+        },
+        {
+          "path": "/assets/check-DeqQQm_o.js",
+          "type": "script",
+          "encoded": 137,
+          "decoded": 120,
+          "duration": 428.7000000178814,
+          "start": 2059.699999988079,
+          "responseStart": 2328,
+          "responseEnd": 2488.4000000059605
+        },
+        {
+          "path": "/assets/useJourney-bwwqgJb0.js",
+          "type": "script",
+          "encoded": 488,
+          "decoded": 1005,
+          "duration": 439.59999999403954,
+          "start": 2063.5,
+          "responseStart": 2335.199999988079,
+          "responseEnd": 2503.0999999940395
+        },
+        {
+          "path": "/logo-header-48.webp",
+          "type": "img",
+          "encoded": 2622,
+          "decoded": 2622,
+          "duration": 394.30000001192093,
+          "start": 2123.7999999821186,
+          "responseStart": 2351.699999988079,
+          "responseEnd": 2518.0999999940395
+        },
+        {
+          "path": "/api/parcours/disponibilite",
+          "type": "fetch",
+          "encoded": 35,
+          "decoded": 15,
+          "duration": 423.90000000596046,
+          "start": 2555.7999999821186,
+          "responseStart": 2564.699999988079,
+          "responseEnd": 2979.699999988079
+        },
+        {
+          "path": "/favicon-32.png",
+          "type": "other",
+          "encoded": 2939,
+          "decoded": 2939,
+          "duration": 527.1000000238419,
+          "start": 2635.2999999821186,
+          "responseStart": 2989.4000000059605,
+          "responseEnd": 3162.4000000059605
+        },
+        {
+          "path": "/dm4ij9sxg/image/upload/c_limit,w_240,h_240/q_auto/f_auto/v1790436147/produits/y18npddctyamfhnlwejf.webp",
+          "type": "img",
+          "encoded": 8289,
+          "decoded": 8289,
+          "duration": 342,
+          "start": 3833.4000000059605,
+          "responseStart": 3960.699999988079,
+          "responseEnd": 4175.4000000059605
+        },
+        {
+          "path": "/dm4ij9sxg/image/upload/c_limit,w_240,h_240/q_auto/f_auto/v1790436150/produits/eib14wharcn9q4hzzzrr.webp",
+          "type": "img",
+          "encoded": 9723,
+          "decoded": 9723,
+          "duration": 356.90000000596046,
+          "start": 3834.5999999940395,
+          "responseStart": 3981,
+          "responseEnd": 4191.5
+        },
+        {
+          "path": "/dm4ij9sxg/image/upload/c_limit,w_240,h_240/q_auto/f_auto/v1790436152/produits/sqtwtgdggmc42o4wbnnq.webp",
+          "type": "img",
+          "encoded": 3758,
+          "decoded": 3758,
+          "duration": 279.69999998807907,
+          "start": 3835.9000000059605,
+          "responseStart": 4014.0999999940395,
+          "responseEnd": 4115.5999999940395
+        },
+        {
+          "path": "/dm4ij9sxg/image/upload/c_limit,w_240,h_240/q_auto/f_auto/v1790434400/produits/pncbibztemlhdnvgjjfh.webp",
+          "type": "img",
+          "encoded": 2998,
+          "decoded": 2998,
+          "duration": 277.5,
+          "start": 3837.7999999821186,
+          "responseStart": 4001.9000000059605,
+          "responseEnd": 4115.299999982119
+        },
+        {
+          "path": "/product-images/inventory-transistor-6f0121e6eeba.webp",
+          "type": "img",
+          "encoded": 0,
+          "decoded": 0,
+          "duration": 430.10000002384186,
+          "start": 3840.2999999821186,
+          "responseStart": 0,
+          "responseEnd": 4270.4000000059605
+        },
+        {
+          "path": "/dm4ij9sxg/image/upload/c_limit,w_240,h_240/q_auto/f_auto/v1790424279/produits/j3wf7eu6qsdegrh2wwjd.webp",
+          "type": "img",
+          "encoded": 3854,
+          "decoded": 3854,
+          "duration": 310,
+          "start": 3844,
+          "responseStart": 4033.2999999821186,
+          "responseEnd": 4154
+        },
+        {
+          "path": "/dm4ij9sxg/image/upload/c_limit,w_240,h_240/q_auto/f_auto/v1790500509/produits/zqzquadjcuhhgf2ophma.webp",
+          "type": "img",
+          "encoded": 3634,
+          "decoded": 3634,
+          "duration": 299.59999999403954,
+          "start": 3845.699999988079,
+          "responseStart": 4017.4000000059605,
+          "responseEnd": 4145.299999982119
+        }
+      ],
+      "document": {
+        "responseStart": 20.19999998807907,
+        "domContentLoaded": 1825.199999988079,
+        "encoded": 2981,
+        "decoded": 7530
+      },
+      "overflow": false,
+      "scriptEncodedBytes": 197184,
+      "budgetPass": {
+        "lcp": false,
+        "cls": true,
+        "scriptBytes": true
+      }
+    }
+  ],
+  "limits": [
+    "Local document/Worker adapter, shared cached public GET snapshot, real CDN, three alternating cold-browser samples per variant",
+    "390x844, CPU x4, network 150 ms and 200000 bytes/s, fresh browser cache",
+    "First actual product required; no field CWV or physical-phone evidence; not hosted Railway SSR"
+  ]
+}

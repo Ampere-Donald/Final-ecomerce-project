@@ -1,6 +1,7 @@
 import { useContext, useEffect, useState } from "react";
 import apiClient from "../utils/apiClient";
 import { InitialResourceContext } from "./initialResourceContext";
+import { cataloguePrefetch } from "./cataloguePrefetch";
 
 export default function useResource(path) {
   const initial = useContext(InitialResourceContext);
@@ -17,10 +18,14 @@ export default function useResource(path) {
   useEffect(() => {
     if (attempt === 0 && initial?.resources?.[path] && Date.now() - initial.at < 15000) return;
     const controller = new AbortController();
-    apiClient
-      .get(path, { signal: controller.signal })
-      .then(({ data }) => {
-        if (!controller.signal.aborted) setState({ key, data, error: null, loading: false });
+    const early = attempt === 0 ? cataloguePrefetch(path) : null;
+    const request = early
+      ? early.then((result) => result || (controller.signal.aborted ? null :
+        apiClient.get(path, { signal: controller.signal })))
+      : apiClient.get(path, { signal: controller.signal });
+    request
+      .then((result) => {
+        if (!controller.signal.aborted && result) setState({ key, data: result.data, error: null, loading: false });
       })
       .catch((error) => {
         if (!controller.signal.aborted)

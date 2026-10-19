@@ -417,3 +417,8 @@ Pas de migration supplémentaire, fournisseur distant, article réel annoté ou 
 L’utilisateur demande une publication immédiate avec report des étapes métier 1 à 4. PR #10 fusionnée sur main def60d76 ; storefront/admin et backend Railway publiés et vérifiés. Quatre migrations appliquées, zéro en attente, contrat historique/structurel complet réussi ; sauvegarde réelle restaurée localement et données préservées. CI complète/trois images, seize ressources publiques identiques au build et huit groupes navigateur publics réussissent. [Version, preuves et limites](release-20261016/README.md).
 
 Les mentions précédentes « brouillon/non déployé » sont historiques. Validation des données et remplacements par Mr Jude Fogueng, projet pilote, fournisseurs email/SMS et recette opérateur restent reportés, pas acquis. Renderer catalogue, transports et collecteur restent désactivés ; aucun projet public. Préproduction différée et performance restent ouvertes. Incrément livré ; objectif A–Z actif.
+
+
+## Chargement initial catalogue — 19 octobre 2026
+
+Deux lectures publiques démarrent avant les scripts ; React réutilise les données et la photo responsive initiale. Pas de cookies/stockage persistant, pas de doublon à l’arrivée, retour à la lecture normale en cas d’erreur et reprise explicite fraîche. 131 tests, lint/builds, huit groupes navigateur moderne/legacy 390/768/1440, hydratation accueil et syntaxe ES2017 passent. Trois paires locales avec vrais produits : médiane LCP 5016 → 4148 ms, CLS maximal 0,00471 ; seuil 2500 ms toujours manqué, gain public non confirmé. [Preuves et limites](catalogue-prefetch-20261019/README.md). Candidat à livrer ; renderer Railway, étapes métier reportées et autres critères A–Z restent ouverts.
