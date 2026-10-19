@@ -1,0 +1,59 @@
+{
+  "checks": [
+    {
+      "legacy": false,
+      "width": 390,
+      "earlyReadsReused": true,
+      "imagePreloadReused": true,
+      "filterRefetched": true
+    },
+    {
+      "legacy": false,
+      "width": 768,
+      "earlyReadsReused": true,
+      "imagePreloadReused": true,
+      "filterRefetched": true
+    },
+    {
+      "legacy": false,
+      "width": 1440,
+      "earlyReadsReused": true,
+      "imagePreloadReused": true,
+      "filterRefetched": true
+    },
+    {
+      "legacy": true,
+      "width": 390,
+      "earlyReadsReused": true,
+      "imagePreloadReused": true,
+      "filterRefetched": true
+    },
+    {
+      "legacy": true,
+      "width": 768,
+      "earlyReadsReused": true,
+      "imagePreloadReused": true,
+      "filterRefetched": true
+    },
+    {
+      "legacy": true,
+      "width": 1440,
+      "earlyReadsReused": true,
+      "imagePreloadReused": true,
+      "filterRefetched": true
+    },
+    {
+      "failure": "unavailable",
+      "recovered": true,
+      "reads": 2
+    },
+    {
+      "failure": "malformed",
+      "recovered": true,
+      "reads": 2
+    }
+  ],
+  "errors": [],
+  "writes": [],
+  "fixtureOnly": true
+}

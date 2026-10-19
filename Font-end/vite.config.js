@@ -3,6 +3,7 @@ import react from '@vitejs/plugin-react'
 import legacy from '@vitejs/plugin-legacy'
 import prerenderHome from './tooling/prerenderHome.js'
 import buildCatalogueRenderer from './tooling/buildCatalogueRenderer.js'
+import prefetchCatalogue from './tooling/prefetchCatalogue.js'
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -16,6 +17,7 @@ export default defineConfig({
     }),
     prerenderHome(),
     buildCatalogueRenderer(),
+    prefetchCatalogue(),
   ],
   build: { manifest: true },
   server: {

@@ -410,3 +410,15 @@ Sources et verdicts synthétiques uniquement ; aucune décision réelle ni compt
 Lecture publique distincte du moteur : dossiers relus actuels retrouvés même lorsque la présélection lexicale omet la pièce, prix/stock et champs publics autoritaires, pagination bornée et continuation sur page invalidée. Référence complète conservée ; un autre montage ne reçoit pas automatiquement la décision. Quatre verdicts, usage/motif/limites, adaptations et document/date sont consultables en FR/EN. Recherche volontaire sur l’usage relu, annulation/retrait des résultats à la saisie et reprise après indisponibilité sans ancienne validation conservée. Défilement clavier adapté à la hauteur réelle du header. Builds/lint, 123 tests storefront et gardes passent ; SQL/HTTP et parcours du build moderne/legacy aux trois largeurs sont consignés dans [la recette et ses limites](replacement-client-20261013/README.md).
 
 Pas de migration supplémentaire, fournisseur distant, article réel annoté ou décision physique acceptée. L’administration et le parcours public sont préparés pour les données pilotes à relire par Mr Jude Fogueng ; critères métier des lots L1/L3 et autres critères A–Z toujours ouverts. Préproduction Railway différée, PR #10 en brouillon, incrément non déployé ; objectif actif.
+
+
+## Publication demandée — 16 octobre 2026
+
+L’utilisateur demande une publication immédiate avec report des étapes métier 1 à 4. PR #10 fusionnée sur main def60d76 ; storefront/admin et backend Railway publiés et vérifiés. Quatre migrations appliquées, zéro en attente, contrat historique/structurel complet réussi ; sauvegarde réelle restaurée localement et données préservées. CI complète/trois images, seize ressources publiques identiques au build et huit groupes navigateur publics réussissent. [Version, preuves et limites](release-20261016/README.md).
+
+Les mentions précédentes « brouillon/non déployé » sont historiques. Validation des données et remplacements par Mr Jude Fogueng, projet pilote, fournisseurs email/SMS et recette opérateur restent reportés, pas acquis. Renderer catalogue, transports et collecteur restent désactivés ; aucun projet public. Préproduction différée et performance restent ouvertes. Incrément livré ; objectif A–Z actif.
+
+
+## Chargement initial catalogue — 19 octobre 2026
+
+Deux lectures publiques démarrent avant les scripts ; React réutilise les données et la photo responsive initiale. Pas de cookies/stockage persistant, pas de doublon à l’arrivée, retour à la lecture normale en cas d’erreur et reprise explicite fraîche. 131 tests, lint/builds, huit groupes navigateur moderne/legacy 390/768/1440, hydratation accueil et syntaxe ES2017 passent. Trois paires locales avec vrais produits : médiane LCP 5016 → 4148 ms, CLS maximal 0,00471 ; seuil 2500 ms toujours manqué, gain public non confirmé. [Preuves et limites](catalogue-prefetch-20261019/README.md). Candidat à livrer ; renderer Railway, étapes métier reportées et autres critères A–Z restent ouverts.

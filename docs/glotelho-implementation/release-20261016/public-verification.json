@@ -1,0 +1,172 @@
+{
+  "date": "2026-10-16T18:14:58.771Z",
+  "sha": "def60d7654affff03cf7faaf9d59e01a552a5a29",
+  "assets": [
+    {
+      "origin": "https://newoteg.com",
+      "path": "/assets/polyfills-CyODn4CA.js",
+      "status": 200,
+      "sha256": "0ea173d6e43440b2f4d40922081655d02f0ac60fd6e8f80c7ab6219f582eb974",
+      "bytes": 126037
+    },
+    {
+      "origin": "https://newoteg.com",
+      "path": "/assets/index-CKtMkoNq.js",
+      "status": 200,
+      "sha256": "ade6ee459465a3400657bfc1f0ab82755ebf9651d893542e05a915bf883cfc03",
+      "bytes": 425734
+    },
+    {
+      "origin": "https://newoteg.com",
+      "path": "/assets/index-CpgJqDhq.css",
+      "status": 200,
+      "sha256": "1eda381a09f638bddf41e529ce9afc6317e053e7c1de76c9499d8502625326b4",
+      "bytes": 75536
+    },
+    {
+      "origin": "https://newoteg.com",
+      "path": "/assets/polyfills-legacy-Ar98EvWF.js",
+      "status": 200,
+      "sha256": "679cc48b7a4e9ddd498a8c71d639de9144c3c136fe1f7a55435ed259108106e4",
+      "bytes": 168499
+    },
+    {
+      "origin": "https://newoteg.com",
+      "path": "/assets/index-legacy-BftK6Tum.js",
+      "status": 200,
+      "sha256": "6592b128399f7fe404cae589e4b5801ae0538130490b3ca2088baa08ab0047fb",
+      "bytes": 526430
+    },
+    {
+      "origin": "https://newoteg.com",
+      "path": "/assets/Comparison-COI1unmq.js",
+      "status": 200,
+      "sha256": "afdf9a03cc15819bd167a1075a84eb8465c5ac05a520a91cd678c9f3bd3ceace",
+      "bytes": 11413
+    },
+    {
+      "origin": "https://newoteg.com",
+      "path": "/assets/Comparison-legacy-a8YhwGA5.js",
+      "status": 200,
+      "sha256": "aa8a7f6c8800c530b4e37b3eadc0db0fd1d0a46c4f8fff7bfb135759268b5dfd",
+      "bytes": 18271
+    },
+    {
+      "origin": "https://newoteg.com",
+      "path": "/assets/Equivalences-CtMNpi3Q.js",
+      "status": 200,
+      "sha256": "cfae82ef59495e52e7b82cbe96f8d4c8607687a3e65eb0414313e5d2347146ab",
+      "bytes": 19950
+    },
+    {
+      "origin": "https://newoteg.com",
+      "path": "/assets/Equivalences-legacy-BGssoG6X.js",
+      "status": 200,
+      "sha256": "5e8037d145ad234d120bf7488b62c8d1899e89df09d337fab73e4227a0be031a",
+      "bytes": 27089
+    },
+    {
+      "origin": "https://newoteg.com",
+      "path": "/assets/Product-CGNnSdAy.js",
+      "status": 200,
+      "sha256": "149570f313629d07ce5e1fb71e020b26aede7ffe89e24e85c1f4f3ed05b4c7ed",
+      "bytes": 14752
+    },
+    {
+      "origin": "https://newoteg.com",
+      "path": "/assets/Product-legacy-CO8vrS9y.js",
+      "status": 200,
+      "sha256": "55f931b380303959721aa3babbc2b013a8a157eaec984c36715ae4223dd7167d",
+      "bytes": 20900
+    },
+    {
+      "origin": "https://admin.newoteg.com",
+      "path": "/assets/polyfills-CMHhRGo8.js",
+      "status": 200,
+      "sha256": "5a31d2fdf7e8a2132495b89cb97b93974cc912ddd728da621d3835b5d420bcd4",
+      "bytes": 137010
+    },
+    {
+      "origin": "https://admin.newoteg.com",
+      "path": "/assets/index-aAtE33oX.js",
+      "status": 200,
+      "sha256": "896e2d57ec4ee737983a12ae07b8b58a971c63e0d2844652e54fcae826e36542",
+      "bytes": 551715
+    },
+    {
+      "origin": "https://admin.newoteg.com",
+      "path": "/assets/index-W72ztxhS.css",
+      "status": 200,
+      "sha256": "e440baeb96b4892ac7e32a6f6398f15ce9b6fab0f50be594fb855897f81a6062",
+      "bytes": 86716
+    },
+    {
+      "origin": "https://admin.newoteg.com",
+      "path": "/assets/polyfills-legacy-BZU-xuIA.js",
+      "status": 200,
+      "sha256": "d0231df9beddda67bc119f09c80fdc1a3e8681a1a2d4c7e63d250c4a22a03c13",
+      "bytes": 182766
+    },
+    {
+      "origin": "https://admin.newoteg.com",
+      "path": "/assets/index-legacy-Fd_JeMxU.js",
+      "status": 200,
+      "sha256": "b4556f4debac01aafd5458896389e8bb5dc52f52739f1ecf62a3bd3be26da10f",
+      "bytes": 681615
+    }
+  ],
+  "http": [
+    {
+      "path": "/",
+      "status": 200
+    },
+    {
+      "path": "/catalogue",
+      "status": 200
+    },
+    {
+      "path": "/equivalences",
+      "status": 200
+    },
+    {
+      "path": "/devis",
+      "status": 200
+    },
+    {
+      "path": "/panier",
+      "status": 200
+    },
+    {
+      "path": "/health",
+      "method": "GET",
+      "status": 200,
+      "cache": null,
+      "checks": {
+        "api": "ok",
+        "database": "ok",
+        "storage": "ok"
+      }
+    },
+    {
+      "path": "/equivalence/cas/rechercher",
+      "method": "POST",
+      "status": 201,
+      "cache": "no-store",
+      "dossiers": 0,
+      "nextPage": null
+    },
+    {
+      "path": "/equivalence/cas",
+      "method": "GET",
+      "status": 401,
+      "cache": null
+    },
+    {
+      "path": "/attributs/dictionnaire",
+      "method": "GET",
+      "status": 200,
+      "cache": null,
+      "entries": 3
+    }
+  ]
+}

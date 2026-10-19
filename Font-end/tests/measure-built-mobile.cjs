@@ -133,6 +133,11 @@ const results = [],
           timeout: 60000,
         });
         await page.locator("main h1").waitFor({ timeout: 30000 });
+        // An unavailable catalogue can paint a quick error message. It must not
+        // be mistaken for a faster, successfully loaded product catalogue.
+        if (route === "/catalogue")
+          await page.locator(".e-catalog-grid .e-product-card").first()
+            .waitFor({ state: "visible", timeout: 30000 });
         // Observe five seconds after network idle; final load candidate is retained.
         await page.waitForTimeout(5000);
         const measure = await page.evaluate(() => ({
