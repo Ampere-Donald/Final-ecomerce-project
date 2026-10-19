@@ -1,0 +1,97 @@
+{
+  "date": "2026-10-19T21:52:05.192Z",
+  "sha": "0492cc4b2ba3c806ef688cc8bc8608403e37563c",
+  "runs": [
+    {
+      "id": 39330293121,
+      "name": "Newoteg CI",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/Ampere-Donald/Final-ecomerce-project/actions/runs/39330293121"
+    },
+    {
+      "id": 39330293116,
+      "name": "Catalogue runtime contract",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/Ampere-Donald/Final-ecomerce-project/actions/runs/39330293116"
+    }
+  ],
+  "checks": [
+    {
+      "name": "Workers Builds: newoteg-admin",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://dash.cloudflare.com/9ed62064b8e7f85d554d0b9089c0f642/workers/services/view/newoteg-admin/production/builds/db08dabd-6723-4852-8288-b19c61ed34fe"
+    },
+    {
+      "name": "Workers Builds: newoteg-client",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://dash.cloudflare.com/9ed62064b8e7f85d554d0b9089c0f642/workers/services/view/newoteg-client/production/builds/a363cabe-cfc7-4311-b2d5-a1603e1aa177"
+    },
+    {
+      "name": "catalogue-runtime (https://api.newoteg.com)",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/Ampere-Donald/Final-ecomerce-project/actions/runs/39330293116/job/118326460683"
+    },
+    {
+      "name": "storefront",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/Ampere-Donald/Final-ecomerce-project/actions/runs/39330293121/job/118326460545"
+    },
+    {
+      "name": "catalogue-runtime (/api)",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/Ampere-Donald/Final-ecomerce-project/actions/runs/39330293116/job/118326460538"
+    },
+    {
+      "name": "workstation-tools",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/Ampere-Donald/Final-ecomerce-project/actions/runs/39330293121/job/118326460533"
+    },
+    {
+      "name": "admin",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/Ampere-Donald/Final-ecomerce-project/actions/runs/39330293121/job/118326460447"
+    },
+    {
+      "name": "backend",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/Ampere-Donald/Final-ecomerce-project/actions/runs/39330293121/job/118326460417"
+    },
+    {
+      "name": "preproduction-runtime",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/Ampere-Donald/Final-ecomerce-project/actions/runs/39330293116/job/118326460209"
+    },
+    {
+      "name": "android",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/Ampere-Donald/Final-ecomerce-project/actions/runs/39330293121/job/118326460137"
+    }
+  ],
+  "statuses": [
+    {
+      "context": "meticulous-perfection - Final-ecomerce-project",
+      "state": "success",
+      "url": "https://railway.com/project/a1483bed-b272-4b75-84ed-3989c888fc57/service/05d24047-d8c9-4899-8a4d-adc84682f824?id=1b3214ee-7a86-4e31-bb62-eb4a2ae0700e&environmentId=8706a3f1-a15a-4f2b-a79f-7eff04e451f6"
+    }
+  ],
+  "deployments": [
+    {
+      "id": 7185817128,
+      "environment": "meticulous-perfection / production",
+      "state": "success",
+      "url": "https://railway.com/project/a1483bed-b272-4b75-84ed-3989c888fc57?environmentId=8706a3f1-a15a-4f2b-a79f-7eff04e451f6"
+    }
+  ]
+}

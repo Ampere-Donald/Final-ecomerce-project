@@ -1,0 +1,27 @@
+{
+  "date": "2026-10-19T21:50:24.408Z",
+  "checks": [
+    {
+      "width": 390,
+      "earlyProductReads": 1,
+      "productReadsAfterMount": 1,
+      "rows": 24,
+      "imageHintExpected": true,
+      "imageRequestsForCurrentSource": 1,
+      "overflow": false
+    },
+    {
+      "width": 1440,
+      "earlyProductReads": 1,
+      "productReadsAfterMount": 1,
+      "rows": 24,
+      "imageHintExpected": true,
+      "imageRequestsForCurrentSource": 1,
+      "overflow": false
+    }
+  ],
+  "errors": [],
+  "writes": [],
+  "telemetryBlocked": 2,
+  "publicReadsOnly": true
+}

@@ -34,3 +34,14 @@ Gain médian synthétique 17,3 %. Le script inline ajoute du contenu au document
 - Un GET natif réel depuis l'origine newoteg.com vers l'API publique, credentials omit, retourne 200 et 24 produits : ce mode d'accès public est autorisé par CORS. Pas d'appel fournisseur ou écriture métier.
 
 Preuves : paired-result.json, browser-result.json, header-hydration.json et public-native-fetch.json. Captures inspectées dans le dossier local de recette. Publication de cet incrément à vérifier séparément ; aucun critère métier reporté n'est clôturé par ces tests.
+
+
+## Publication et mesure publique vérifiées
+
+PR #11 fusionnée sur main 0492cc4b2ba3c806ef688cc8bc8608403e37563c le 19 octobre. CI complète 39330293121 et trois images/contrats 39330293116 réussis. Cloudflare client e359b05e-73d8-4b4a-95c5-59edf08f5257 et administration 606baa9a-964b-4277-87ab-eb137e1970cd à 100 %. Backend Railway 1b3214ee-7a86-4e31-bb62-eb4a2ae0700e réussi ; API/base/stockage OK. Aucun changement de schéma dans cet incrément.
+
+Bootstrap inline et sept ressources modernes/legacy servis identiques au build public par SHA-256. Navigateur public à 390/1440 : vrais produits et photo demandés avant les scripts, une seule requête produits après montage, une seule requête de la photo sélectionnée, 24 produits, zéro écriture métier, erreur JavaScript ou débordement. RUM Cloudflare bloqué pendant les essais.
+
+Même profil public de trois passages, cache navigateur froid : avant 6124 / 5604 / 5176 ms, après 4916 / 4056 / 4704 ms. Médiane 5604 → 4704 ms, amélioration synthétique 16.1 %. CLS maximal 0,00471. Ces séries publiques sont distinctes de la comparaison locale alternée ; elles ne sont pas des mesures terrain et le seuil 2500 ms reste manqué.
+
+Le correctif final des URL relatives utilise le même résolveur de médias que les cartes, avec origine API relative ou absolue. 131 tests, lint, les deux builds et huit groupes navigateur repassent sur ce correctif. Le marqueur de catalogue initial est vérifié sur le vrai attribut du root, et non sur le texte du script de préchargement. Accueil initial conservé ; renderer catalogue, email/SMS et collecteur restent désactivés, aucun projet public. Étapes métier reportées, préproduction Railway et autres critères A–Z restent ouverts. Les serveurs de mesure locaux ont été arrêtés.
