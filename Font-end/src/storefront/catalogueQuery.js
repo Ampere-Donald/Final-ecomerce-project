@@ -3,7 +3,12 @@ export function catalogueQuery(params) {
   const query = params.get('search') || '';
   const category = params.get('category') || '';
   const inStock = params.get('instock') === 'true';
-  const sort = params.get('sort') || 'name-asc';
+  const searching = Boolean(query.trim());
+  const requestedSort = params.get('sort');
+  // Let the server put exact references first. Alphabetical ordering is still
+  // the unfiltered catalogue default and an explicit customer choice.
+  const sort = requestedSort === 'relevance' && !searching ? 'name-asc'
+    : requestedSort || (searching ? 'relevance' : 'name-asc');
   const page = Math.max(1, Number(params.get('page')) || 1);
   const apiParams = new URLSearchParams({ page: String(page), limit: '24', sort: sort.replace('-', '_') });
   if (query) apiParams.set('search', query);
@@ -20,7 +25,7 @@ export function canRenderCatalogue(url) {
   if ([...url.searchParams.keys()].some(key => !allowed.has(key))) return false;
   const { query, category, sort, page } = catalogueQuery(url.searchParams);
   if (query.length > 255 || category.length > 150 || !Number.isSafeInteger(page) || page > 1000000 ||
-      !['name-asc', 'name-desc', 'price-asc', 'price-desc'].includes(sort)) return false;
+      !['relevance', 'name-asc', 'name-desc', 'price-asc', 'price-desc'].includes(sort)) return false;
   return ['minPrice', 'maxPrice'].every(key => !url.searchParams.has(key) ||
     (Number.isFinite(Number(url.searchParams.get(key))) && Number(url.searchParams.get(key)) >= 0));
 }

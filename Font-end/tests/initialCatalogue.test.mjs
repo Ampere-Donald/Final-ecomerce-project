@@ -8,6 +8,29 @@ const product = { id: 'p1', nomProduit: 'Condensateur', code: 'C1', prixPublic: 
 const response = { data: [product], meta: { total: 1, lastPage: 1 } };
 const url = new URL('https://newoteg.com/catalogue?search=c%C3%A2ble&category=cat&instock=true&sort=price-desc&page=2&minPrice=1000&maxPrice=9000');
 
+test('search defaults to server relevance while unfiltered catalogue keeps alphabetical order', () => {
+  for(const search of ['NWT-741-P','NWT-741-PB','câble HDMI']) {
+    const url=new URL('https://newoteg.com/catalogue?search='+encodeURIComponent(search));
+    const query=catalogueQuery(url.searchParams);
+    assert.equal(query.sort,'relevance');
+    const api=new URLSearchParams(query.path.split('?')[1]);
+    assert.equal(api.get('sort'),'relevance');assert.equal(api.get('search'),search);
+    assert(canRenderCatalogue(url));
+  }
+  assert.equal(catalogueQuery(new URLSearchParams()).sort,'name-asc');
+  assert.equal(catalogueQuery(new URLSearchParams({search:'  ',sort:'relevance'})).sort,'name-asc');
+  assert.equal(catalogueQuery(new URLSearchParams({sort:'relevance'})).sort,'name-asc');
+});
+
+test('explicit sorting remains authoritative during search, including a return to relevance', () => {
+  for(const sort of ['name-asc','name-desc','price-asc','price-desc','relevance']) {
+    const params=new URLSearchParams({search:'NWT-741-P',sort,category:'cat',instock:'true',page:'2'});
+    const query=catalogueQuery(params),api=new URLSearchParams(query.path.split('?')[1]);
+    assert.equal(query.sort,sort);assert.equal(api.get('sort'),sort.replace('-','_'));
+    assert.equal(api.get('categoryId'),'cat');assert.equal(api.get('inStock'),'true');assert.equal(api.get('page'),'2');
+  }
+});
+
 test('server and browser catalogue queries keep filters, accents, sort and pagination identical', () => {
   const query = catalogueQuery(url.searchParams), api = new URLSearchParams(query.path.split('?')[1]);
   assert.equal(query.query, 'câble'); assert.equal(query.page, 2);

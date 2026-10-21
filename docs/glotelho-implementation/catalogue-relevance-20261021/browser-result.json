@@ -1,0 +1,128 @@
+{
+  "checks": [
+    {
+      "legacy": false,
+      "lang": "fr",
+      "width": 390,
+      "exactFirst": true,
+      "explicitSorts": true,
+      "stockFilter": true,
+      "suffixPreserved": true,
+      "clearRestoresAlphabetical": true
+    },
+    {
+      "legacy": false,
+      "lang": "fr",
+      "width": 768,
+      "exactFirst": true,
+      "explicitSorts": true,
+      "stockFilter": true,
+      "suffixPreserved": true,
+      "clearRestoresAlphabetical": true
+    },
+    {
+      "legacy": false,
+      "lang": "fr",
+      "width": 1440,
+      "exactFirst": true,
+      "explicitSorts": true,
+      "stockFilter": true,
+      "suffixPreserved": true,
+      "clearRestoresAlphabetical": true
+    },
+    {
+      "legacy": false,
+      "lang": "en",
+      "width": 390,
+      "exactFirst": true,
+      "explicitSorts": true,
+      "stockFilter": true,
+      "suffixPreserved": true,
+      "clearRestoresAlphabetical": true
+    },
+    {
+      "legacy": false,
+      "lang": "en",
+      "width": 768,
+      "exactFirst": true,
+      "explicitSorts": true,
+      "stockFilter": true,
+      "suffixPreserved": true,
+      "clearRestoresAlphabetical": true
+    },
+    {
+      "legacy": false,
+      "lang": "en",
+      "width": 1440,
+      "exactFirst": true,
+      "explicitSorts": true,
+      "stockFilter": true,
+      "suffixPreserved": true,
+      "clearRestoresAlphabetical": true
+    },
+    {
+      "legacy": true,
+      "lang": "fr",
+      "width": 390,
+      "exactFirst": true,
+      "explicitSorts": true,
+      "stockFilter": true,
+      "suffixPreserved": true,
+      "clearRestoresAlphabetical": true
+    },
+    {
+      "legacy": true,
+      "lang": "fr",
+      "width": 768,
+      "exactFirst": true,
+      "explicitSorts": true,
+      "stockFilter": true,
+      "suffixPreserved": true,
+      "clearRestoresAlphabetical": true
+    },
+    {
+      "legacy": true,
+      "lang": "fr",
+      "width": 1440,
+      "exactFirst": true,
+      "explicitSorts": true,
+      "stockFilter": true,
+      "suffixPreserved": true,
+      "clearRestoresAlphabetical": true
+    },
+    {
+      "legacy": true,
+      "lang": "en",
+      "width": 390,
+      "exactFirst": true,
+      "explicitSorts": true,
+      "stockFilter": true,
+      "suffixPreserved": true,
+      "clearRestoresAlphabetical": true
+    },
+    {
+      "legacy": true,
+      "lang": "en",
+      "width": 768,
+      "exactFirst": true,
+      "explicitSorts": true,
+      "stockFilter": true,
+      "suffixPreserved": true,
+      "clearRestoresAlphabetical": true
+    },
+    {
+      "legacy": true,
+      "lang": "en",
+      "width": 1440,
+      "exactFirst": true,
+      "explicitSorts": true,
+      "stockFilter": true,
+      "suffixPreserved": true,
+      "clearRestoresAlphabetical": true
+    }
+  ],
+  "errors": [],
+  "writes": [],
+  "realControllerAndSql": true,
+  "fixtureTransport": true
+}

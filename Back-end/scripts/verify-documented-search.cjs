@@ -27,6 +27,8 @@ module.exports = async ({ db, root, request, tokens, ok, base, output }) => {
   const ref = await annotate(exact, 'REFERENCE_FABRICANT', 'ZX-900-P');
   const synonym = await annotate(alias, 'ALIAS_RECHERCHE', 'ZX 900 P');
   await annotate(suffix, 'REFERENCE_FABRICANT', 'ZX-900-PB');
+  if (process.argv.includes('--relevance-browser'))
+    await require('./verify-catalogue-relevance-browser.cjs')({db,root,controller,annotate,ok,output});
   async function results(search, salesSearch = false, filters = {}) {
     return controller.findAll({}, undefined, '20', search, filters.categoryId, undefined, undefined, filters.minPrice?.toString(), filters.maxPrice?.toString(), filters.inStock ? 'true' : 'false', filters.sort, salesSearch ? 'true' : 'false');
   }

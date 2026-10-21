@@ -427,3 +427,8 @@ Deux lectures publiques démarrent avant les scripts ; React réutilise les donn
 ## Catalogue anticipé publié — 19 octobre 2026
 
 PR #11 fusionnée, main 0492cc4b ; les deux Workers et Railway sont publiés et vérifiés. Bootstrap/sept ressources exacts, API/base/stockage OK ; deux contrôles publics 390/1440 confirment données et photo avant les scripts, sans doublon ou écriture. Médiane LCP publique sous profil ralenti 5604 → 4704 ms, CLS maximal 0,00471 ; seuil 2500 ms encore manqué, pas de conclusion terrain. [Preuves et limites](catalogue-prefetch-20261019/README.md). Renderer catalogue, messages et collecteur désactivés, aucun projet public. Étapes métier reportées et objectif A–Z toujours ouverts.
+
+
+## Recherche pertinente — 21 octobre 2026
+
+Le serveur savait prioriser les identités exactes mais la page imposait A–Z. Le contrat partagé choisit maintenant Pertinence pour une recherche, conserve les tris explicites et rétablit A–Z hors recherche. 133 tests, lint/build et douze parcours moderne/legacy FR/EN 390/768/1440 passent avec vrai contrôleur/service/SQL sur fixtures isolées ; trente groupes réels réussis, bases retirées, aucun produit réel modifié. [Preuves et limites](catalogue-relevance-20261021/README.md). Publication à vérifier ; étapes métier reportées et objectif A–Z ouverts.

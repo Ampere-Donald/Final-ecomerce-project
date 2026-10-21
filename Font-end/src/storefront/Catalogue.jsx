@@ -177,6 +177,7 @@ export default function Catalogue() {
               onChange={(e) => change("sort", e.target.value)}
             >
               {[
+                ...(query.trim() ? [["relevance", "Pertinence", "Relevance"]] : []),
                 ["name-asc", "Nom A–Z", "Name A–Z"],
                 ["name-desc", "Nom Z–A", "Name Z–A"],
                 ["price-asc", "Prix croissant", "Price low to high"],
