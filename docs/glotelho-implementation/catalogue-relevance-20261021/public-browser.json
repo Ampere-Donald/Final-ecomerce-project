@@ -1,0 +1,38 @@
+{
+  "date": "2026-10-21T14:39:13.589Z",
+  "checks": [
+    {
+      "lang": "fr",
+      "width": 390,
+      "exactCode": "237091",
+      "defaultRelevance": true,
+      "manualSort": true,
+      "unfilteredAlphabetical": true,
+      "noDuplicateEarlyRead": true,
+      "adminPrivateGate": true
+    },
+    {
+      "lang": "fr",
+      "width": 1440,
+      "exactCode": "237091",
+      "defaultRelevance": true,
+      "manualSort": true,
+      "unfilteredAlphabetical": true,
+      "noDuplicateEarlyRead": true,
+      "adminPrivateGate": true
+    },
+    {
+      "lang": "en",
+      "width": 390,
+      "exactCode": "237091",
+      "defaultRelevance": true,
+      "manualSort": true,
+      "unfilteredAlphabetical": true,
+      "noDuplicateEarlyRead": true,
+      "adminPrivateGate": false
+    }
+  ],
+  "errors": [],
+  "writes": [],
+  "publicGetOnly": true
+}
