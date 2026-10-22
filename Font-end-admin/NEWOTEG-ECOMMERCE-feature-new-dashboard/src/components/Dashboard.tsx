@@ -36,6 +36,7 @@ import { useAdminAuth } from '../context/AdminAuthContext';
 import { can } from '../utils/permissions';
 import { listQueuedSales, OFFLINE_QUEUE_EVENT } from '../services/offlineSalesQueue';
 import { SellerHome } from './SellerHome';
+import { PricingProgressCard } from './PricingProgressCard';
 
 const fmtFCFA = (n: number | string | null | undefined): string => {
   const v = typeof n === 'string' ? parseFloat(n) : n ?? 0;
@@ -395,7 +396,7 @@ export const Dashboard = () => {
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="space-y-5 md:space-y-6"
+      className="admin-dashboard space-y-5 md:space-y-7"
     >
       <div className="flex items-start justify-between gap-3 border-b border-slate-200 pb-4 md:pb-5">
         <div>
@@ -407,7 +408,7 @@ export const Dashboard = () => {
               {new Intl.DateTimeFormat('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' }).format(new Date())}
             </span>
           </div>
-          <h1 className="text-xl font-bold tracking-tight text-slate-950 sm:text-2xl">
+          <h1 className="font-display text-2xl font-semibold tracking-tight text-slate-950 sm:text-3xl">
             {new Date().getHours() < 12 ? 'Bonjour' : new Date().getHours() < 18 ? 'Bon après-midi' : 'Bonsoir'}{' '}
             {admin?.nom || 'Administrateur'}
           </h1>
@@ -430,6 +431,8 @@ export const Dashboard = () => {
           </Link>
         )}
       </div>
+
+      <PricingProgressCard />
 
       {role === 'CAISSIER' && (
         <section aria-labelledby="cashier-primary-action" className="grid gap-3 sm:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)]">

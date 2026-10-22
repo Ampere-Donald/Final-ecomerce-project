@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAdminAuth } from '../context/AdminAuthContext';
+import { PricingProgressCard } from './PricingProgressCard';
 import { useAdminOperations } from '../context/AdminOperationsContext';
 
 const money = (value: number) => `${new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 }).format(value)} FCFA`;
@@ -220,6 +221,7 @@ const SuperAdminOverview = () => {
       />
       {operations.partialError && <p className="flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-800"><AlertTriangle size={17} /> Certaines données n’ont pas répondu. Les informations disponibles restent affichées.</p>}
 
+      <PricingProgressCard />
       <section aria-labelledby="super-decisions-title" className="space-y-3">
         <div className="flex items-center justify-between gap-3">
           <div><p className="font-mono text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400">Ordre de décision</p><h2 id="super-decisions-title" className="font-display text-xl font-bold text-[#0B1636]">À décider maintenant</h2></div>

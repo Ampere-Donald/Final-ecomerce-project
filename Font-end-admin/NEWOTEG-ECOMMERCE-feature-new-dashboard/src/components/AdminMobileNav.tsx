@@ -8,6 +8,7 @@ import {
   ReceiptText,
   ShoppingCart,
   WalletCards,
+  Tags,
   type LucideIcon,
 } from 'lucide-react';
 import { useAdminAuth } from '../context/AdminAuthContext';
@@ -45,6 +46,12 @@ const itemsByRole: Record<string, MobileNavItem[]> = {
     { label: 'Tickets', path: '/mes-tickets', icon: ReceiptText },
     { label: 'Produits', path: '/produits', icon: Package },
   ],
+  MANAGER: [
+    { label: 'Accueil', path: '/', icon: LayoutDashboard, end: true },
+    { label: 'Produits', path: '/produits', icon: Package },
+    { label: 'Prix', path: '/prix-a-renseigner', icon: Tags },
+    { label: 'Guide', path: '/guide', icon: FileText },
+  ],
 };
 
 const roleLabels: Record<string, string> = {
@@ -52,6 +59,7 @@ const roleLabels: Record<string, string> = {
   ADMIN: 'Administrateur',
   CAISSIER: 'Caissier',
   VENDEUR: 'Vendeur',
+  MANAGER: 'Responsable',
 };
 
 export const hasMobileNavigation = (role?: string | null) => Boolean(role && itemsByRole[role]);

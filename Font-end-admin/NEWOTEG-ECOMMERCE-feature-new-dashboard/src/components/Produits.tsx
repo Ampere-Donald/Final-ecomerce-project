@@ -7,6 +7,7 @@ import { can } from '../utils/permissions';
 import Papa from 'papaparse';
 import { BarcodeLabelFormat, exportProductBarcodeLabels } from '../utils/exportBarcodeLabels';
 import { localPromotionDate, promotionDatePayload } from '../utils/promotionForm';
+import { PricingProgressCard } from './PricingProgressCard';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface Categorie {
@@ -397,12 +398,12 @@ export const Produits = () => {
       {/* En-tête ──────────────────────────────────────────────────────────── */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Catalogue Produits</h1>
+          <h1 className="font-display text-3xl font-semibold tracking-tight text-slate-950">Catalogue produits</h1>
           <p className="text-sm text-slate-500 mt-1">
             Gérez vos produits de base et leurs marques principales.
           </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2">
           <button
             onClick={() => imprimerEtiquettes(produits, 'roll80')}
             disabled={loading || produits.length === 0}
@@ -511,6 +512,8 @@ export const Produits = () => {
           </button>
         </div>
       </div>
+
+      <PricingProgressCard />
 
       {isGlobalImporting && (
         <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="bg-blue-50 border border-blue-200 rounded-xl p-4 shadow-sm">

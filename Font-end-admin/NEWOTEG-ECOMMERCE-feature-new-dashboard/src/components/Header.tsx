@@ -1,11 +1,14 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Search, Bell, X, Check, CheckCheck, ShoppingCart, Package, Tags, TrendingUp, TrendingDown, AlertCircle, Menu, Loader2, UserCog, Factory, Wallet, Activity, WifiOff, Download } from 'lucide-react';
 import { notificationApi, searchApi, produitApi } from '../services/api';
 import { useAdminAuth } from '../context/AdminAuthContext';
 import { can } from '../utils/permissions';
 import { useOnlineStatus } from '../hooks/useOnlineStatus';
 import { useInstallPrompt } from '../hooks/useInstallPrompt';
+import { useCataloguePricing } from '../context/CataloguePricingContext';
+
+const pageNames: Record<string, string> = { '/': 'Vue d’ensemble', '/produits': 'Catalogue produits', '/prix-a-renseigner': 'Prix à renseigner', '/categories': 'Catégories', '/analyses': 'Analyses', '/ventes': 'Ventes boutique', '/orders': 'Commandes en ligne', '/clients': 'Clients', '/stock': 'Mouvements de stock', '/stock-alerts': 'Alertes de stock', '/inventaire': 'Inventaire', '/fournisseurs': 'Fournisseurs', '/achats': 'Réapprovisionnement', '/caisse': 'Trésorerie', '/caisse-jour': 'Caisse du jour', '/proformas': 'Devis et proformas', '/invoices': 'Factures', '/settings': 'Paramètres', '/paie': 'Paie', '/notifications': 'Notifications', '/coffres': 'Coffres', '/credits': 'Crédits clients', '/echeances': 'Échéances' };
 
 interface HeaderProps {
   onMenuClick: () => void;
@@ -64,6 +67,8 @@ function relativeTime(dateStr: string) {
 export const Header = ({ onMenuClick }: HeaderProps) => {
   const navigate = useNavigate();
   const { admin } = useAdminAuth();
+  const { pathname } = useLocation();
+  const { summary: pricingSummary } = useCataloguePricing();
   const isOnline = useOnlineStatus();
   const { canInstall, promptInstall } = useInstallPrompt();
 
@@ -206,7 +211,7 @@ export const Header = ({ onMenuClick }: HeaderProps) => {
            </div>
         </div>
       )}
-      <header className="h-16 border-b border-slate-200 bg-white flex items-center justify-between px-4 md:px-8 gap-2 shrink-0">
+      <header className="workspace-header">
       {/* ── Hamburger (mobile only) ───────────────────────────────── */}
       <button
         onClick={onMenuClick}
@@ -217,7 +222,8 @@ export const Header = ({ onMenuClick }: HeaderProps) => {
       </button>
 
       {/* ── Search ───────────────────────────────────────────────── */}
-      <div ref={searchRef} className="flex items-center gap-4 flex-1 max-w-xl relative">
+      <div className="mr-auto hidden min-w-0 xl:block"><p className="text-[10px] font-medium uppercase tracking-wider text-slate-400">Boutique / Espace de travail</p><p className="mt-1 truncate text-sm font-semibold text-slate-800">{pageNames[pathname] || 'Gestion de la boutique'}</p></div>
+      <div ref={searchRef} className="relative flex min-w-0 flex-1 items-center gap-4 xl:max-w-xs">
         <div className="relative w-full group">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors" size={18} />
           <input
@@ -225,7 +231,8 @@ export const Header = ({ onMenuClick }: HeaderProps) => {
             value={query}
             onChange={e => setQuery(e.target.value)}
             placeholder="Rechercher..."
-            className="w-full pl-10 pr-4 py-2 bg-slate-100 border-none rounded-lg focus:ring-2 focus:ring-primary/20 text-sm transition-all outline-none"
+            aria-label="Rechercher dans la boutique"
+            className="workspace-header-search w-full pl-10 pr-8 py-2 focus:ring-2 focus:ring-primary/20"
           />
           {query && (
             <button
@@ -267,6 +274,7 @@ export const Header = ({ onMenuClick }: HeaderProps) => {
         )}
       </div>
 
+      <Link to="/prix-a-renseigner" aria-label="Ouvrir les prix à renseigner" title="Prix à renseigner" className="inline-flex min-h-11 shrink-0 items-center gap-2 rounded-xl border border-indigo-100 bg-indigo-50/70 px-3 text-xs font-semibold text-primary hover:bg-indigo-100"><Tags size={17} /><span className="hidden lg:inline">Prix à renseigner</span>{pricingSummary && pricingSummary.missingCount > 0 && <span className="hidden rounded-md bg-white px-1.5 py-0.5 text-[10px] sm:block">{pricingSummary.missingCount.toLocaleString('fr-FR')}</span>}</Link>
       {/* ── Installer l'application ─────────────────────────────────── */}
       {canInstall && (
         <button
@@ -280,7 +288,7 @@ export const Header = ({ onMenuClick }: HeaderProps) => {
 
       {/* ── Bell ─────────────────────────────────────────────────── */}
       <div ref={bellRef} className="relative flex items-center">
-        <button onClick={openBell} className="p-2 text-slate-400 hover:text-primary relative transition-colors">
+        <button onClick={openBell} aria-label="Ouvrir les notifications" aria-expanded={bellOpen} className="relative flex h-11 w-11 items-center justify-center rounded-xl text-slate-500 transition-colors hover:bg-slate-50 hover:text-primary">
           <Bell size={20} />
           {unread > 0 && (
             <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] flex items-center justify-center bg-red-500 text-white text-[10px] font-bold rounded-full px-1 border-2 border-white">
