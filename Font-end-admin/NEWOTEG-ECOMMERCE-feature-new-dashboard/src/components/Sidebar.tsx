@@ -39,7 +39,6 @@ import { brand } from '../config/brand';
 import { can } from '../utils/permissions';
 import { bonVenteApi } from '../services/api';
 import { AdministrationSidebar } from './AdministrationSidebar';
-import { isAdministrationRole } from '../config/adminNavigation';
 
 interface SidebarProps {
   open: boolean;
@@ -77,7 +76,7 @@ export const Sidebar = ({ open, onClose, compact = false }: SidebarProps) => {
     .toUpperCase()
     .slice(0, 2);
 
-  if (isAdministrationRole(role) && !compact) {
+  if (role === 'SUPER_ADMIN' && !compact) {
     return <AdministrationSidebar open={open} onClose={onClose} />;
   }
 
@@ -128,7 +127,10 @@ export const Sidebar = ({ open, onClose, compact = false }: SidebarProps) => {
           path: '/file-caissier',
         }),
         ...add(can.accessPOSVendeur(role), { label: 'Vente en cours', icon: ShoppingBag, path: '/pos' }),
+        ...add(can.accessTicketsJour(role), { label: 'Ventes', icon: Receipt, path: '/ventes' }),
         ...add(can.accessMesTickets(role), { label: 'Mes tickets', icon: Receipt, path: '/mes-tickets' }),
+        ...add(can.voirProformas(role), { label: 'Devis et proformas', icon: BookOpen, path: '/proformas' }),
+        ...add(can.voirFactures(role), { label: 'Factures', icon: Receipt, path: '/invoices' }),
         ...add(can.voirPrimes(role), { label: 'Primes vendeurs', icon: Award, path: '/primes' }),
       ],
     },
@@ -186,7 +188,7 @@ export const Sidebar = ({ open, onClose, compact = false }: SidebarProps) => {
       end={item.path === '/'}
       onClick={onClose}
       className={({ isActive }) =>
-        `flex min-h-11 items-center gap-3 rounded-lg px-3 py-2 font-medium transition-colors md:min-h-14 md:flex-col md:justify-center md:gap-1 md:px-1 md:text-center md:text-[10px] ${compact ? 'min-[1200px]:mx-auto min-[1200px]:h-16 min-[1200px]:w-16 min-[1200px]:justify-center min-[1200px]:rounded-xl min-[1200px]:px-0' : 'min-[1200px]:min-h-11 min-[1200px]:flex-row min-[1200px]:justify-start min-[1200px]:gap-3 min-[1200px]:px-3 min-[1200px]:text-left min-[1200px]:text-base'} ${
+        `flex min-h-11 items-center gap-3 rounded-lg px-3 py-2 font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 ${role === 'ADMIN' && !compact ? 'md:min-h-11 md:flex-row md:justify-start md:text-left md:text-sm' : 'md:min-h-14 md:flex-col md:justify-center md:gap-1 md:px-1 md:text-center md:text-[10px]'} ${compact ? 'min-[1200px]:mx-auto min-[1200px]:h-16 min-[1200px]:w-16 min-[1200px]:justify-center min-[1200px]:rounded-xl min-[1200px]:px-0' : 'min-[1200px]:min-h-11 min-[1200px]:flex-row min-[1200px]:justify-start min-[1200px]:gap-3 min-[1200px]:px-3 min-[1200px]:text-left min-[1200px]:text-base'} ${
           isActive ? compact ? 'bg-primary text-white min-[1200px]:shadow-lg min-[1200px]:shadow-blue-950/30' : 'bg-primary/10 text-primary' : compact ? 'text-slate-600 hover:bg-slate-50 hover:text-primary min-[1200px]:text-white/80 min-[1200px]:hover:bg-white/10 min-[1200px]:hover:text-white' : 'text-slate-600 hover:bg-slate-50 hover:text-primary'
         }`
       }
@@ -204,11 +206,11 @@ export const Sidebar = ({ open, onClose, compact = false }: SidebarProps) => {
   return (
     <aside className={`
       fixed md:sticky top-0 left-0 z-40 h-screen
-      w-64 md:w-20 ${compact ? 'min-[1200px]:w-24 min-[1200px]:border-slate-900 min-[1200px]:bg-[#031d34]' : 'min-[1200px]:w-64'} flex-shrink-0 border-r border-slate-200 bg-white flex flex-col
+      w-64 ${role === 'ADMIN' && !compact ? 'md:w-64' : 'md:w-20'} ${compact ? 'min-[1200px]:w-24 min-[1200px]:border-slate-900 min-[1200px]:bg-[#031d34]' : 'min-[1200px]:w-64'} flex-shrink-0 border-r border-slate-200 bg-white flex flex-col
       transition-transform duration-300 ease-in-out
       ${open ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
     `}>
-      <div className={`flex items-center gap-3 border-b border-slate-100 p-6 md:justify-center md:p-3 ${compact ? 'min-[1200px]:justify-center min-[1200px]:border-white/10 min-[1200px]:p-3' : 'min-[1200px]:justify-start min-[1200px]:p-6'}`}>
+      <div className={`flex items-center gap-3 border-b border-slate-100 p-6 ${role === 'ADMIN' && !compact ? 'md:justify-start md:p-4' : 'md:justify-center md:p-3'} ${compact ? 'min-[1200px]:justify-center min-[1200px]:border-white/10 min-[1200px]:p-3' : 'min-[1200px]:justify-start min-[1200px]:p-6'}`}>
         <button
           type="button"
           onClick={onClose}
@@ -220,21 +222,24 @@ export const Sidebar = ({ open, onClose, compact = false }: SidebarProps) => {
         <div className="flex h-10 w-10 shrink-0 items-center justify-center">
           <img src="/logo.png" alt="Newoteg" className="w-full h-full object-contain drop-shadow-sm" />
         </div>
-        <div className={`min-w-0 md:hidden ${compact ? 'min-[1200px]:hidden' : 'min-[1200px]:block'}`}>
+        <div className={`min-w-0 ${role === 'ADMIN' && !compact ? 'md:block' : 'md:hidden'} ${compact ? 'min-[1200px]:hidden' : 'min-[1200px]:block'}`}>
           <h1 className="text-xl font-bold tracking-tight text-primary leading-tight">{brand.companyName}</h1>
           <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400">{brand.branchName}</p>
         </div>
       </div>
 
-      <nav className={`flex-1 space-y-6 overflow-y-auto p-4 md:px-2 md:py-4 ${compact ? 'min-[1200px]:space-y-2 min-[1200px]:px-2 min-[1200px]:py-5' : 'min-[1200px]:p-4'}`}>
-        {compact ? <div className="space-y-2">{compactItems.map(renderNavItem)}</div> : visibleGroups.map((g) => (
-          <div key={g.label}>
-            <p className="mb-2 px-3 text-xs font-bold uppercase tracking-wider text-slate-400 md:hidden min-[1200px]:block">
-              {g.label}
-            </p>
-            <div className="space-y-1">{g.items.map(renderNavItem)}</div>
-          </div>
-        ))}
+      <nav aria-label="Navigation principale" className={`flex-1 space-y-5 overflow-y-auto p-4 ${role === 'ADMIN' && !compact ? 'md:px-3 md:py-4' : 'md:px-2 md:py-4'} ${compact ? 'min-[1200px]:space-y-2 min-[1200px]:px-2 min-[1200px]:py-5' : 'min-[1200px]:p-4'}`}>
+        {compact && <div className={`space-y-2 ${role === 'ADMIN' ? 'hidden md:block' : ''}`}>{compactItems.map(renderNavItem)}</div>}
+        <div className={`space-y-5 ${compact ? role === 'ADMIN' ? 'md:hidden' : 'hidden' : ''}`}>
+          {visibleGroups.map((g) => (
+            <div key={g.label}>
+              <p className={`mb-2 px-3 text-xs font-bold uppercase tracking-wider text-slate-500 ${role === 'ADMIN' ? 'md:block' : 'md:hidden min-[1200px]:block'}`}>
+                {g.label}
+              </p>
+              <div className="space-y-1">{g.items.map(renderNavItem)}</div>
+            </div>
+          ))}
+        </div>
       </nav>
 
       <div className={`border-t border-slate-100 p-4 md:p-2 ${compact ? 'min-[1200px]:border-white/10 min-[1200px]:p-2' : 'min-[1200px]:p-4'}`}>
@@ -250,7 +255,7 @@ export const Sidebar = ({ open, onClose, compact = false }: SidebarProps) => {
               {initials}
             </div>
           )}
-          <div className={`min-w-0 flex-1 md:hidden ${compact ? 'min-[1200px]:hidden' : 'min-[1200px]:block'}`}>
+          <div className={`min-w-0 flex-1 ${role === 'ADMIN' && !compact ? 'md:block' : 'md:hidden'} ${compact ? 'min-[1200px]:hidden' : 'min-[1200px]:block'}`}>
             <p className="text-sm font-semibold truncate">{adminName}</p>
             <p className="text-xs text-slate-500">{role || 'Utilisateur'}</p>
           </div>
@@ -261,7 +266,7 @@ export const Sidebar = ({ open, onClose, compact = false }: SidebarProps) => {
             }}
             title="Se déconnecter"
             aria-label="Se déconnecter"
-            className={`flex h-10 w-10 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-red-50 hover:text-red-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500/30 ${compact ? 'md:flex' : 'md:hidden min-[1200px]:flex'}`}
+            className={`flex h-10 w-10 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-red-50 hover:text-red-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500/30 ${compact || role === 'ADMIN' ? 'md:flex' : 'md:hidden min-[1200px]:flex'}`}
           >
             <LogOut size={18} />
           </button>

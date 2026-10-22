@@ -24,16 +24,18 @@ describe('AdminMobileNav', () => {
     expect(screen.queryByText('Plus')).toBeNull();
   });
 
-  it('expose exactement les cinq destinations opérationnelles de l’administrateur', () => {
+  it('expose quatre accès rapides et ouvre toutes les rubriques administrateur', async () => {
     authState.role = 'ADMIN';
-    render(<MemoryRouter><AdminMobileNav onMenuClick={vi.fn()} /></MemoryRouter>);
+    const onMenuClick = vi.fn();
+    render(<MemoryRouter><AdminMobileNav onMenuClick={onMenuClick} /></MemoryRouter>);
     const navigation = screen.getByRole('navigation', { name: 'Navigation Administrateur mobile' });
-    expect(navigation.querySelectorAll('a')).toHaveLength(5);
-    expect(screen.getByRole('link', { name: "Aujourd'hui" }).getAttribute('href')).toBe('/');
-    expect(screen.getByRole('link', { name: 'Ventes' }).getAttribute('href')).toBe('/ventes-commandes');
-    expect(screen.getByRole('link', { name: 'Stock' }).getAttribute('href')).toBe('/stock-achats');
-    expect(screen.getByRole('link', { name: 'Clients' }).getAttribute('href')).toBe('/clients');
-    expect(screen.getByRole('link', { name: 'Caisse' }).getAttribute('href')).toBe('/caisse-admin');
+    expect(navigation.querySelectorAll('a')).toHaveLength(4);
+    expect(screen.getByRole('link', { name: 'Accueil' }).getAttribute('href')).toBe('/');
+    expect(screen.getByRole('link', { name: 'Ventes' }).getAttribute('href')).toBe('/ventes');
+    expect(screen.getByRole('link', { name: 'Stock' }).getAttribute('href')).toBe('/stock');
+    expect(screen.getByRole('link', { name: 'Caisse' }).getAttribute('href')).toBe('/caisse-jour');
+    await userEvent.click(screen.getByRole('button', { name: 'Ouvrir toutes les rubriques' }));
+    expect(onMenuClick).toHaveBeenCalledOnce();
   });
 
   it('donne au caissier un accès direct à tout son parcours', () => {

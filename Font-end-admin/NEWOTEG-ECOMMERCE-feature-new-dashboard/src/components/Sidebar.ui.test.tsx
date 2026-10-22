@@ -5,6 +5,7 @@ import { Sidebar } from './Sidebar';
 
 const authMocks = vi.hoisted(() => ({
   logout: vi.fn(),
+  role: 'CAISSIER',
 }));
 
 vi.mock('../context/AdminAuthContext', () => ({
@@ -13,7 +14,7 @@ vi.mock('../context/AdminAuthContext', () => ({
       id: 'cashier-test',
       nom: 'Caissier Test',
       username: 'caissier_test',
-      role: 'CAISSIER',
+      role: authMocks.role,
     },
     logout: authMocks.logout,
   }),
@@ -22,6 +23,7 @@ vi.mock('../context/AdminAuthContext', () => ({
 describe('Sidebar for a cashier', () => {
   beforeEach(() => {
     authMocks.logout.mockClear();
+    authMocks.role = 'CAISSIER';
   });
 
   it('makes checkout primary and clearly separates cash opening and closing', () => {
@@ -52,5 +54,24 @@ describe('Sidebar for a cashier', () => {
 
     expect(authMocks.logout).toHaveBeenCalledOnce();
     confirm.mockRestore();
+  });
+});
+
+describe('Sidebar for an administrator', () => {
+  it('restores the full operational menu while keeping superadmin-only access hidden', () => {
+    authMocks.role = 'ADMIN';
+    render(<MemoryRouter><Sidebar open onClose={vi.fn()} /></MemoryRouter>);
+
+    for (const [label, path] of [
+      ['Tableau de bord', '/'], ['Analyses', '/analyses'], ['Caisse globale', '/caisse'],
+      ['Ventes', '/ventes'], ['Devis et proformas', '/proformas'], ['Factures', '/invoices'],
+      ['Devis en ligne', '/demandes-devis'], ['Avis clients', '/avis'],
+      ['Mouvements stock', '/stock'], ['Inventaire', '/inventaire'], ['Fournisseurs', '/fournisseurs'],
+      ['Paie', '/paie'], ['Journal impressions', '/print-audit'],
+    ]) {
+      expect(screen.getByRole('link', { name: label }).getAttribute('href')).toBe(path);
+    }
+    expect(screen.queryByRole('link', { name: 'Rôles' })).toBeNull();
+    expect(screen.queryByRole('link', { name: 'Employés' })).toBeNull();
   });
 });

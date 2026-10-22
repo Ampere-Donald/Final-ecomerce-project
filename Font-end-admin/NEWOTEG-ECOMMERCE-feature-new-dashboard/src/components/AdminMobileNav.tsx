@@ -7,12 +7,11 @@ import {
   Package,
   ReceiptText,
   ShoppingCart,
-  Users,
   WalletCards,
   type LucideIcon,
 } from 'lucide-react';
 import { useAdminAuth } from '../context/AdminAuthContext';
-import { administrationNavigation, isAdministrationRole } from '../config/adminNavigation';
+import { administrationNavigation } from '../config/adminNavigation';
 
 interface AdminMobileNavProps {
   hidden?: boolean;
@@ -28,7 +27,12 @@ interface MobileNavItem {
 
 const itemsByRole: Record<string, MobileNavItem[]> = {
   SUPER_ADMIN: administrationNavigation.SUPER_ADMIN.map((item) => ({ ...item, label: item.shortLabel || item.label })),
-  ADMIN: administrationNavigation.ADMIN.map((item) => ({ ...item, label: item.shortLabel || item.label })),
+  ADMIN: [
+    { label: 'Accueil', path: '/', icon: LayoutDashboard, end: true },
+    { label: 'Ventes', path: '/ventes', icon: ReceiptText },
+    { label: 'Stock', path: '/stock', icon: Package },
+    { label: 'Caisse', path: '/caisse-jour', icon: WalletCards },
+  ],
   CAISSIER: [
     { label: 'Accueil', path: '/', icon: LayoutDashboard, end: true },
     { label: 'Encaisser', path: '/file-caissier', icon: CircleDollarSign },
@@ -84,7 +88,7 @@ export const AdminMobileNav = ({ hidden = false, onMenuClick }: AdminMobileNavPr
             )}
           </NavLink>
         ))}
-        {!isAdministrationRole(role) && (
+        {role !== 'SUPER_ADMIN' && (
           <button
             type="button"
             onClick={onMenuClick}
