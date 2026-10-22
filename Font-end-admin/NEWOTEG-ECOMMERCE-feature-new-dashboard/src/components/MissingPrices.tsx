@@ -289,13 +289,17 @@ export const MissingPrices = () => {
         if (page > 1 && !data.data.length) setPage((value) => value - 1);
       }
     } catch (err) {
-      if (!controller.signal.aborted)
+      if (!controller.signal.aborted) {
+        const status = (err as { response?: { status?: number } })?.response?.status;
         setError(
-          getApiErrorMessage(
-            err,
-            'La liste n’a pas pu être chargée. Vérifiez votre connexion.',
-          ),
+          status === 404 || (status !== undefined && status >= 500)
+            ? 'La rubrique des prix est temporairement indisponible. Réessayez dans quelques instants.'
+            : getApiErrorMessage(
+                err,
+                'La liste n’a pas pu être chargée. Vérifiez votre connexion.',
+              ),
         );
+      }
     } finally {
       if (!controller.signal.aborted) setLoading(false);
     }
@@ -412,7 +416,7 @@ export const MissingPrices = () => {
             className="h-2 overflow-hidden rounded-full bg-slate-100"
             role="progressbar"
             aria-label="Articles avec un prix"
-            aria-valuenow={percentage}
+            aria-valuenow={summary ? percentage : undefined}
             aria-valuemin={0}
             aria-valuemax={100}
           >
@@ -424,7 +428,7 @@ export const MissingPrices = () => {
           <p className="mt-2 text-xs text-slate-500">
             {summary
               ? `${summary.pricedCount.toLocaleString('fr-FR')} sur ${summary.totalCount.toLocaleString('fr-FR')} articles ont un prix détail`
-              : 'Chargement de la progression…'}
+              : loading ? 'Chargement de la progression…' : 'Progression indisponible'}
           </p>
         </div>
         <div className="hidden items-start gap-3 text-sm text-slate-600 sm:flex">
@@ -559,7 +563,7 @@ export const MissingPrices = () => {
             <p>
               {result
                 ? `${result.total.toLocaleString('fr-FR')} article${result.total === 1 ? '' : 's'}${filtered ? ' correspondant aux filtres' : ' à compléter'}`
-                : 'Chargement des articles…'}
+                : loading ? 'Chargement des articles…' : 'Liste indisponible'}
             </p>
             {loading && result && (
               <span className="flex items-center gap-1">
