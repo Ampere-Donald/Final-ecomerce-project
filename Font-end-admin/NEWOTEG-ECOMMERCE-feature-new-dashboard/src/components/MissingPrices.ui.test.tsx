@@ -79,6 +79,26 @@ describe('Prix à renseigner', () => {
     expect(toast.success).toHaveBeenCalled();
   });
 
+  it.each([404, 503])('explique une indisponibilité du serveur (%s) et permet de recharger', async (status) => {
+    const user = userEvent.setup();
+    vi.mocked(cataloguePricingApi.list).mockRejectedValueOnce({
+      response: { status, data: { message: 'Cannot GET /api/catalogue-pricing?page=1&limit=18' } },
+    });
+    render(<MissingPrices />);
+    const alert = await screen.findByRole('alert');
+    expect(alert.textContent).toContain('La rubrique des prix est temporairement indisponible.');
+    expect(screen.queryByText(/Cannot GET/)).toBeNull();
+    expect(screen.queryByText('Chargement des articles…')).toBeNull();
+    expect(screen.queryByText('Chargement de la progression…')).toBeNull();
+    expect(screen.getByText('Progression indisponible')).toBeTruthy();
+    expect(screen.getByRole('progressbar').getAttribute('aria-valuenow')).toBeNull();
+    expect(screen.queryByText('Tous les prix sont renseignés')).toBeNull();
+    await user.click(within(alert).getByRole('button', { name: 'Réessayer' }));
+    await screen.findByRole('article', { name: item.nomProduit });
+    expect(screen.queryByRole('alert')).toBeNull();
+    expect(screen.getByText('90 %')).toBeTruthy();
+  });
+
   it('permet une recherche et une catégorie sans perdre les choix affichés', async () => {
     const user = userEvent.setup();
     render(<MissingPrices />);
