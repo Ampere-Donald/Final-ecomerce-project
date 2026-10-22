@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { Header } from './Header';
@@ -9,11 +9,13 @@ import { FlowShellProvider, useFlowShell } from '../context/FlowShellContext';
 import { CashierDesktopTopBar } from '../features/cashier-pos/CashierDesktopShell';
 import { AdminOperationsProvider } from '../context/AdminOperationsContext';
 import { ShopHealthBar } from './ShopHealthBar';
+import { CataloguePricingProvider } from '../context/CataloguePricingContext';
 
 const CASHIER_WORKSPACE_PATHS = ['/file-caissier', '/caisse-jour', '/clients', '/print-audit', '/guide', '/settings'];
 
 const LayoutFrame = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const closeSidebar = useCallback(() => setSidebarOpen(false), []);
   const { admin } = useAdminAuth();
   const { focused } = useFlowShell();
   const location = useLocation();
@@ -26,8 +28,8 @@ const LayoutFrame = () => {
   const isPosRoute = location.pathname === '/pos' || isCashierWorkspace;
 
   return (
-    <div className="flex h-screen overflow-hidden bg-background-light">
-      <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} compact={isCashierWorkspace} />
+    <div className={`admin-workspace flex h-[100dvh] overflow-hidden bg-background-light ${isCashierWorkspace ? 'is-cashier-workspace' : ''}`}>
+      <Sidebar open={sidebarOpen} onClose={closeSidebar} compact={isCashierWorkspace} />
 
       {/* Overlay mobile pour fermer la sidebar */}
       {sidebarOpen && (
@@ -37,7 +39,7 @@ const LayoutFrame = () => {
         />
       )}
 
-      <main className="flex h-screen flex-1 flex-col min-w-0 overflow-hidden">
+      <main className="flex h-[100dvh] flex-1 flex-col min-w-0 overflow-hidden">
         <div className={isCashierWorkspace ? 'hidden' : isPosRoute ? 'min-[1200px]:block hidden' : 'block'}>
           <Header onMenuClick={() => setSidebarOpen(prev => !prev)} />
           <ShopHealthBar />
@@ -46,7 +48,7 @@ const LayoutFrame = () => {
           <OfflineSyncStatus />
         </div>
         {isGenericCashierWorkspace && <div className="hidden min-[1200px]:block"><CashierDesktopTopBar caisseStatus={undefined} /></div>}
-        <div className={`min-h-0 flex-1 overflow-y-auto ${isCashierRoute ? 'p-0' : isCashierSessionRoute ? 'px-3 py-4 sm:px-5 md:p-6 min-[1200px]:p-0' : isGenericCashierWorkspace ? 'px-3 py-4 sm:px-5 md:p-6 min-[1200px]:p-8' : isPosRoute ? 'p-0 md:p-3 min-[1200px]:p-8' : 'px-3 py-4 sm:px-5 md:p-6 min-[1200px]:p-8'} ${hasRoleMobileNav && !focused ? 'pb-24 md:pb-6 min-[1200px]:pb-0' : ''}`}>
+        <div id="workspace-content" className={`admin-content min-h-0 flex-1 overflow-y-auto ${isCashierRoute ? 'p-0' : isCashierSessionRoute ? 'px-3 py-4 sm:px-5 md:p-6 min-[1200px]:p-0' : isGenericCashierWorkspace ? 'px-3 py-4 sm:px-5 md:p-6 min-[1200px]:p-8' : isPosRoute ? 'p-0 md:p-3 min-[1200px]:p-8' : 'px-4 py-5 sm:px-6 md:p-7 min-[1200px]:p-9'} ${hasRoleMobileNav && !focused ? 'pb-24 md:pb-6 min-[1200px]:pb-9' : ''}`}>
           <div className={isCashierRoute ? 'w-full' : isCashierSessionRoute ? 'mx-auto max-w-7xl min-[1200px]:h-full min-[1200px]:max-w-none' : isPosRoute ? 'mx-auto max-w-[1680px]' : 'mx-auto max-w-7xl'}>
             <Outlet />
           </div>
@@ -60,7 +62,9 @@ const LayoutFrame = () => {
 export const Layout = () => (
   <FlowShellProvider>
     <AdminOperationsProvider>
+      <CataloguePricingProvider>
       <LayoutFrame />
+      </CataloguePricingProvider>
     </AdminOperationsProvider>
   </FlowShellProvider>
 );

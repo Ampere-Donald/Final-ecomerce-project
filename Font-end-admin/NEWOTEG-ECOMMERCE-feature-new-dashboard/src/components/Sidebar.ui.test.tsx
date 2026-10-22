@@ -58,6 +58,20 @@ describe('Sidebar for a cashier', () => {
 });
 
 describe('Sidebar for an administrator', () => {
+  it.each(['SUPER_ADMIN', 'ADMIN', 'VENDEUR', 'CAISSIER', 'MANAGER'])('rend les prix manquants accessibles à %s', role => {
+    authMocks.role = role;
+    render(<MemoryRouter><Sidebar open onClose={vi.fn()} /></MemoryRouter>);
+    expect(screen.getByRole('link', { name: 'Prix à renseigner' }).getAttribute('href')).toBe('/prix-a-renseigner');
+  });
+
+  it('retrouve une rubrique par son nom', () => {
+    authMocks.role = 'ADMIN';
+    render(<MemoryRouter><Sidebar open onClose={vi.fn()} /></MemoryRouter>);
+    fireEvent.change(screen.getByRole('textbox', { name: 'Trouver une rubrique' }), { target: { value: 'Factures' } });
+    expect(screen.getByRole('link', { name: 'Factures' })).toBeTruthy();
+    expect(screen.queryByRole('link', { name: 'Analyses' })).toBeNull();
+  });
+
   it('restores the full operational menu while keeping superadmin-only access hidden', () => {
     authMocks.role = 'ADMIN';
     render(<MemoryRouter><Sidebar open onClose={vi.fn()} /></MemoryRouter>);

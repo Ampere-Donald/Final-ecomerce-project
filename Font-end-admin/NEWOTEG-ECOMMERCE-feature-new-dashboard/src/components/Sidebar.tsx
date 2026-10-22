@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import {
   LayoutDashboard,
@@ -33,12 +33,13 @@ import {
   CloudOff,
   History,
   CreditCard,
+  Search,
 } from 'lucide-react';
 import { useAdminAuth } from '../context/AdminAuthContext';
 import { brand } from '../config/brand';
 import { can } from '../utils/permissions';
 import { bonVenteApi } from '../services/api';
-import { AdministrationSidebar } from './AdministrationSidebar';
+import { useCataloguePricing } from '../context/CataloguePricingContext';
 
 interface SidebarProps {
   open: boolean;
@@ -53,14 +54,61 @@ export const Sidebar = ({ open, onClose, compact = false }: SidebarProps) => {
   const { admin, logout } = useAdminAuth();
   const role = admin?.role;
   const [pendingCount, setPendingCount] = useState(0);
+  const [navigationQuery, setNavigationQuery] = useState('');
+  const { summary } = useCataloguePricing();
+  const asideRef = useRef<HTMLElement>(null);
+  const [mobile, setMobile] = useState(
+    () => window.matchMedia?.('(max-width: 767px)').matches ?? false,
+  );
+  useEffect(() => {
+    const media = window.matchMedia?.('(max-width: 767px)');
+    if (!media) return;
+    const update = () => setMobile(media.matches);
+    media.addEventListener('change', update);
+    return () => media.removeEventListener('change', update);
+  }, []);
+  useEffect(() => {
+    if (!mobile || !open) return;
+    const previous = document.activeElement as HTMLElement | null;
+    asideRef.current?.querySelector<HTMLInputElement>('input')?.focus();
+    const handleKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        onClose();
+      }
+      if (event.key !== 'Tab') return;
+      const elements = [
+        ...(asideRef.current?.querySelectorAll<HTMLElement>('a,button,input') ||
+          []),
+      ].filter((element) => !element.hasAttribute('disabled'));
+      const first = elements[0],
+        last = elements[elements.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last?.focus();
+      }
+      if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first?.focus();
+      }
+    };
+    document.addEventListener('keydown', handleKey);
+    return () => {
+      document.removeEventListener('keydown', handleKey);
+      previous?.focus();
+    };
+  }, [mobile, open, onClose]);
 
   // Badge "Mes tickets" : nombre de bons EN_ATTENTE du vendeur
   useEffect(() => {
     if (role !== 'VENDEUR') return;
     const load = () =>
-      bonVenteApi.mesBons()
+      bonVenteApi
+        .mesBons()
         .then((bons: any[]) =>
-          setPendingCount(bons.filter((b: any) => b.statut === 'EN_ATTENTE').length)
+          setPendingCount(
+            bons.filter((b: any) => b.statut === 'EN_ATTENTE').length,
+          ),
         )
         .catch(() => {});
     load();
@@ -75,10 +123,6 @@ export const Sidebar = ({ open, onClose, compact = false }: SidebarProps) => {
     .join('')
     .toUpperCase()
     .slice(0, 2);
-
-  if (role === 'SUPER_ADMIN' && !compact) {
-    return <AdministrationSidebar open={open} onClose={onClose} />;
-  }
 
   // Helper: ajoute un item si la permission est vraie
   const add = (cond: boolean, item: Item): Item[] => (cond ? [item] : []);
@@ -97,9 +141,26 @@ export const Sidebar = ({ open, onClose, compact = false }: SidebarProps) => {
     {
       label: 'Pilotage',
       items: [
-        ...add(can.accessDashboard(role), { label: 'Tableau de bord', icon: LayoutDashboard, path: '/' }),
-        ...add(can.accessAnalyses(role), { label: 'Analyses', icon: BarChart3, path: '/analyses' }),
-        ...add(can.accessNotificationsPage(role), { label: 'Notifications', icon: Bell, path: '/notifications' }),
+        ...add(can.accessDashboard(role), {
+          label: 'Tableau de bord',
+          icon: LayoutDashboard,
+          path: '/',
+        }),
+        ...add(can.accessAnalyses(role), {
+          label: 'Analyses',
+          icon: BarChart3,
+          path: '/analyses',
+        }),
+        ...add(can.accessNotificationsPage(role), {
+          label: 'Notifications',
+          icon: Bell,
+          path: '/notifications',
+        }),
+        ...add(role === 'SUPER_ADMIN', {
+          label: 'Validations',
+          icon: Shield,
+          path: '/a-valider',
+        }),
       ],
     },
     {
@@ -110,12 +171,36 @@ export const Sidebar = ({ open, onClose, compact = false }: SidebarProps) => {
           icon: Wallet,
           path: '/caisse-jour',
         }),
-        ...add(can.accessCaisseGlobale(role), { label: 'Caisse globale', icon: Landmark, path: '/caisse' }),
-        ...add(can.accessCoffres(role), { label: 'Coffres', icon: PiggyBank, path: '/coffres' }),
-        ...add(can.accessPaie(role), { label: 'Paie', icon: Banknote, path: '/paie' }),
-        ...add(can.accessCredits(role), { label: 'Crédits clients', icon: HandCoins, path: '/credits' }),
-        ...add(can.accessEcheances(role), { label: 'Échéances', icon: AlarmClock, path: '/echeances' }),
-        ...add(can.accessCmup(role), { label: 'CMUP & Valorisation', icon: Calculator, path: '/cmup' }),
+        ...add(can.accessCaisseGlobale(role), {
+          label: 'Caisse globale',
+          icon: Landmark,
+          path: '/caisse',
+        }),
+        ...add(can.accessCoffres(role), {
+          label: 'Coffres',
+          icon: PiggyBank,
+          path: '/coffres',
+        }),
+        ...add(can.accessPaie(role), {
+          label: 'Paie',
+          icon: Banknote,
+          path: '/paie',
+        }),
+        ...add(can.accessCredits(role), {
+          label: 'Crédits clients',
+          icon: HandCoins,
+          path: '/credits',
+        }),
+        ...add(can.accessEcheances(role), {
+          label: 'Échéances',
+          icon: AlarmClock,
+          path: '/echeances',
+        }),
+        ...add(can.accessCmup(role), {
+          label: 'CMUP & Valorisation',
+          icon: Calculator,
+          path: '/cmup',
+        }),
       ],
     },
     {
@@ -126,77 +211,248 @@ export const Sidebar = ({ open, onClose, compact = false }: SidebarProps) => {
           icon: CreditCard,
           path: '/file-caissier',
         }),
-        ...add(can.accessPOSVendeur(role), { label: 'Vente en cours', icon: ShoppingBag, path: '/pos' }),
-        ...add(can.accessTicketsJour(role), { label: 'Ventes', icon: Receipt, path: '/ventes' }),
-        ...add(can.accessMesTickets(role), { label: 'Mes tickets', icon: Receipt, path: '/mes-tickets' }),
-        ...add(can.voirProformas(role), { label: 'Devis et proformas', icon: BookOpen, path: '/proformas' }),
-        ...add(can.voirFactures(role), { label: 'Factures', icon: Receipt, path: '/invoices' }),
-        ...add(can.voirPrimes(role), { label: 'Primes vendeurs', icon: Award, path: '/primes' }),
+        ...add(can.accessPOSVendeur(role), {
+          label: 'Vente en cours',
+          icon: ShoppingBag,
+          path: '/pos',
+        }),
+        ...add(can.accessTicketsJour(role), {
+          label: 'Ventes',
+          icon: Receipt,
+          path: '/ventes',
+        }),
+        ...add(can.accessMesTickets(role), {
+          label: 'Mes tickets',
+          icon: Receipt,
+          path: '/mes-tickets',
+        }),
+        ...add(can.voirProformas(role), {
+          label: 'Devis et proformas',
+          icon: BookOpen,
+          path: '/proformas',
+        }),
+        ...add(can.voirFactures(role), {
+          label: 'Factures',
+          icon: Receipt,
+          path: '/invoices',
+        }),
+        ...add(can.voirPrimes(role), {
+          label: 'Primes vendeurs',
+          icon: Award,
+          path: '/primes',
+        }),
       ],
     },
     {
       label: 'E-commerce',
       items: [
-        ...add(can.accessCommandesEnLigne(role), { label: 'Commandes en ligne', icon: Globe, path: '/orders' }),
-        ...add(['SUPER_ADMIN', 'ADMIN', 'VENDEUR'].includes(role || ''), { label: 'Devis en ligne', icon: BookOpen, path: '/demandes-devis' }),
-        ...add(['SUPER_ADMIN', 'ADMIN'].includes(role || ''), { label: 'Avis clients', icon: BookOpen, path: '/avis' }),
+        ...add(can.accessCommandesEnLigne(role), {
+          label: 'Commandes en ligne',
+          icon: Globe,
+          path: '/orders',
+        }),
+        ...add(['SUPER_ADMIN', 'ADMIN', 'VENDEUR'].includes(role || ''), {
+          label: 'Devis en ligne',
+          icon: BookOpen,
+          path: '/demandes-devis',
+        }),
+        ...add(['SUPER_ADMIN', 'ADMIN'].includes(role || ''), {
+          label: 'Avis clients',
+          icon: BookOpen,
+          path: '/avis',
+        }),
       ],
     },
     {
       label: 'Catalogue',
       items: [
-        ...add(can.voirProduits(role), { label: 'Produits', icon: Package, path: '/produits' }),
-        ...add(can.accessScanCode(role), { label: 'Scanner un produit', icon: ScanBarcode, path: '/scan-code' }),
-        ...add(can.modifierProduits(role), { label: 'Catégories', icon: Tags, path: '/categories' }),
-        ...add(can.accessStock(role), { label: 'Mouvements stock', icon: Activity, path: '/stock' }),
-        ...add(can.accessInventaire(role), { label: 'Inventaire', icon: ClipboardList, path: '/inventaire' }),
-        ...add(can.accessStock(role), { label: 'Alertes stock', icon: AlertTriangle, path: '/stock-alerts' }),
-        ...add(can.accessCommandeFournisseur(role), { label: 'Bons de commande', icon: ShoppingBag, path: '/commandes-fournisseur' }),
-        ...add(can.accessAchats(role), { label: 'Achats (Réappro)', icon: Truck, path: '/achats' }),
+        ...add(can.renseignerPrixManquants(role), {
+          label: 'Prix à renseigner',
+          icon: Tags,
+          path: '/prix-a-renseigner',
+        }),
+        ...add(can.voirProduits(role), {
+          label: 'Produits',
+          icon: Package,
+          path: '/produits',
+        }),
+        ...add(can.accessScanCode(role), {
+          label: 'Scanner un produit',
+          icon: ScanBarcode,
+          path: '/scan-code',
+        }),
+        ...add(can.modifierProduits(role), {
+          label: 'Catégories',
+          icon: Tags,
+          path: '/categories',
+        }),
+        ...add(can.accessStock(role), {
+          label: 'Mouvements stock',
+          icon: Activity,
+          path: '/stock',
+        }),
+        ...add(can.accessInventaire(role), {
+          label: 'Inventaire',
+          icon: ClipboardList,
+          path: '/inventaire',
+        }),
+        ...add(can.accessStock(role), {
+          label: 'Alertes stock',
+          icon: AlertTriangle,
+          path: '/stock-alerts',
+        }),
+        ...add(can.accessCommandeFournisseur(role), {
+          label: 'Bons de commande',
+          icon: ShoppingBag,
+          path: '/commandes-fournisseur',
+        }),
+        ...add(can.accessAchats(role), {
+          label: 'Achats (Réappro)',
+          icon: Truck,
+          path: '/achats',
+        }),
       ],
     },
     {
       label: 'Relation',
       items: [
-        ...add(can.accessClients(role), { label: 'Clients', icon: Users, path: '/clients' }),
-        ...add(can.accessFournisseurs(role), { label: 'Fournisseurs', icon: Factory, path: '/fournisseurs' }),
-        ...add(can.accessEmployes(role), { label: 'Employés', icon: UserCog, path: '/employes' }),
-        ...add(can.accessRoles(role), { label: 'Rôles', icon: Shield, path: '/roles' }),
+        ...add(can.accessClients(role), {
+          label: 'Clients',
+          icon: Users,
+          path: '/clients',
+        }),
+        ...add(can.accessFournisseurs(role), {
+          label: 'Fournisseurs',
+          icon: Factory,
+          path: '/fournisseurs',
+        }),
+        ...add(can.accessEmployes(role), {
+          label: 'Employés',
+          icon: UserCog,
+          path: '/employes',
+        }),
+        ...add(can.accessRoles(role), {
+          label: 'Rôles',
+          icon: Shield,
+          path: '/roles',
+        }),
+        ...add(can.accessAccounts(role), {
+          label: 'Comptes et accès',
+          icon: UserCog,
+          path: '/comptes',
+        }),
       ],
     },
     {
       label: 'Système',
       items: [
-        ...add(can.accessPrintAudit(role), { label: 'Journal impressions', icon: History, path: '/print-audit' }),
-        ...add(Boolean(role), { label: 'Opérations hors ligne', icon: CloudOff, path: '/offline-queue' }),
-        ...add(can.accessGuide(role), { label: 'Guide utilisateur', icon: BookOpen, path: '/guide' }),
-        ...add(can.accessParametres(role), { label: 'Paramètres', icon: Settings, path: '/settings' }),
+        ...add(['SUPER_ADMIN', 'ADMIN'].includes(role || ''), {
+          label: 'Cas de remplacement',
+          icon: ClipboardList,
+          path: '/cas-remplacement',
+        }),
+        ...add(['SUPER_ADMIN', 'ADMIN'].includes(role || ''), {
+          label: 'Incompatibilités',
+          icon: AlertTriangle,
+          path: '/incompatibilites',
+        }),
+        ...add(['SUPER_ADMIN', 'ADMIN'].includes(role || ''), {
+          label: 'Parcours du site',
+          icon: BarChart3,
+          path: '/parcours',
+        }),
+        ...add(['SUPER_ADMIN', 'ADMIN'].includes(role || ''), {
+          label: 'Projets boutique',
+          icon: ClipboardList,
+          path: '/projets',
+        }),
+        ...add(can.accessPrintAudit(role), {
+          label: 'Journal impressions',
+          icon: History,
+          path: '/print-audit',
+        }),
+        ...add(Boolean(role), {
+          label: 'Opérations hors ligne',
+          icon: CloudOff,
+          path: '/offline-queue',
+        }),
+        ...add(can.accessGuide(role), {
+          label: 'Guide utilisateur',
+          icon: BookOpen,
+          path: '/guide',
+        }),
+        ...add(can.accessParametres(role), {
+          label: 'Paramètres',
+          icon: Settings,
+          path: '/settings',
+        }),
       ],
     },
   ];
 
-  const visibleGroups = groups.filter((g) => g.items.length > 0);
-  const compactPaths = ['/file-caissier', '/caisse-jour', '/clients', '/print-audit', '/guide', '/settings'];
-  const compactItems = visibleGroups.flatMap(group => group.items).filter(item => compactPaths.includes(item.path));
+  const normalizedQuery = navigationQuery.trim().toLocaleLowerCase('fr');
+  const visibleGroups = groups
+    .map((group) => ({
+      ...group,
+      items: group.items.filter(
+        (item) =>
+          !normalizedQuery ||
+          `${group.label} ${item.label}`
+            .toLocaleLowerCase('fr')
+            .includes(normalizedQuery),
+      ),
+    }))
+    .filter((group) => group.items.length);
+  const compactPaths = [
+    '/file-caissier',
+    '/caisse-jour',
+    '/prix-a-renseigner',
+    '/clients',
+    '/print-audit',
+    '/guide',
+    '/settings',
+  ];
+  const compactItems = groups
+    .flatMap((group) => group.items)
+    .filter((item) => compactPaths.includes(item.path));
+  const roleLabel =
+    (
+      {
+        SUPER_ADMIN: 'Propriétaire',
+        ADMIN: 'Administrateur',
+        CAISSIER: 'Caissier',
+        VENDEUR: 'Vendeur',
+        MANAGER: 'Responsable',
+      } as Record<string, string>
+    )[role || ''] || 'Équipe boutique';
 
-  const renderNavItem = (item: Item) => (
+  const renderNavItem = (item: Item, rail = false) => (
     <NavLink
       key={item.path}
       to={item.path}
-      title={compact ? item.label : undefined}
-      aria-label={compact ? item.label : undefined}
+      title={rail ? item.label : undefined}
+      aria-label={rail ? item.label : undefined}
       end={item.path === '/'}
-      onClick={onClose}
+      onClick={() => {
+        onClose();
+        setNavigationQuery('');
+      }}
       className={({ isActive }) =>
-        `flex min-h-11 items-center gap-3 rounded-lg px-3 py-2 font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 ${role === 'ADMIN' && !compact ? 'md:min-h-11 md:flex-row md:justify-start md:text-left md:text-sm' : 'md:min-h-14 md:flex-col md:justify-center md:gap-1 md:px-1 md:text-center md:text-[10px]'} ${compact ? 'min-[1200px]:mx-auto min-[1200px]:h-16 min-[1200px]:w-16 min-[1200px]:justify-center min-[1200px]:rounded-xl min-[1200px]:px-0' : 'min-[1200px]:min-h-11 min-[1200px]:flex-row min-[1200px]:justify-start min-[1200px]:gap-3 min-[1200px]:px-3 min-[1200px]:text-left min-[1200px]:text-base'} ${
-          isActive ? compact ? 'bg-primary text-white min-[1200px]:shadow-lg min-[1200px]:shadow-blue-950/30' : 'bg-primary/10 text-primary' : compact ? 'text-slate-600 hover:bg-slate-50 hover:text-primary min-[1200px]:text-white/80 min-[1200px]:hover:bg-white/10 min-[1200px]:hover:text-white' : 'text-slate-600 hover:bg-slate-50 hover:text-primary'
-        }`
+        `workspace-nav-link ${rail ? 'flex-col justify-center px-1 text-center text-[10px]' : ''} ${isActive ? 'is-active' : ''}`
       }
     >
-      <item.icon size={20} />
-      <span className={`flex-1 md:flex-none ${compact ? 'min-[1200px]:sr-only' : 'min-[1200px]:flex-1'}`}>{item.label}</span>
+      <item.icon size={18} strokeWidth={1.8} />
+      <span className={rail ? 'sr-only' : 'min-w-0 flex-1'}>{item.label}</span>
+      {item.path === '/prix-a-renseigner' &&
+        summary &&
+        summary.missingCount > 0 &&
+        !rail && (
+          <span className="rounded-md bg-amber-50 px-1.5 py-0.5 text-[10px] font-semibold text-amber-800">
+            {summary.missingCount.toLocaleString('fr-FR')}
+          </span>
+        )}
       {item.path === '/pos' && pendingCount > 0 && (
-        <span className="flex h-5 w-5 items-center justify-center rounded-full bg-amber-500 text-[10px] font-bold text-white">
+        <span className="rounded-full bg-amber-50 px-1.5 text-[10px] font-bold text-amber-800">
           {pendingCount}
         </span>
       )}
@@ -204,75 +460,113 @@ export const Sidebar = ({ open, onClose, compact = false }: SidebarProps) => {
   );
 
   return (
-    <aside className={`
-      fixed md:sticky top-0 left-0 z-40 h-screen
-      w-64 ${role === 'ADMIN' && !compact ? 'md:w-64' : 'md:w-20'} ${compact ? 'min-[1200px]:w-24 min-[1200px]:border-slate-900 min-[1200px]:bg-[#031d34]' : 'min-[1200px]:w-64'} flex-shrink-0 border-r border-slate-200 bg-white flex flex-col
-      transition-transform duration-300 ease-in-out
-      ${open ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
-    `}>
-      <div className={`flex items-center gap-3 border-b border-slate-100 p-6 ${role === 'ADMIN' && !compact ? 'md:justify-start md:p-4' : 'md:justify-center md:p-3'} ${compact ? 'min-[1200px]:justify-center min-[1200px]:border-white/10 min-[1200px]:p-3' : 'min-[1200px]:justify-start min-[1200px]:p-6'}`}>
+    <aside
+      ref={asideRef}
+      inert={mobile && !open}
+      aria-hidden={mobile && !open ? true : undefined}
+      aria-label="Menu de la boutique"
+      className={`workspace-sidebar fixed left-0 top-0 z-40 flex h-[100dvh] w-[272px] shrink-0 flex-col border-r bg-white transition-transform duration-200 md:sticky ${compact ? 'md:w-20' : 'md:w-[248px] min-[1440px]:w-[264px]'} ${open ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}
+    >
+      <div
+        className={`relative flex min-h-[76px] shrink-0 items-center gap-3 border-b border-slate-100 px-5 ${compact ? 'md:justify-center md:px-2' : ''}`}
+      >
         <button
           type="button"
           onClick={onClose}
           aria-label="Fermer le menu"
-          className="md:hidden absolute right-4 top-4 p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+          className="absolute right-3 top-4 rounded-lg p-2 text-slate-400 hover:bg-slate-100 md:hidden"
         >
-          <X size={20} />
+          <X size={18} />
         </button>
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center">
-          <img src="/logo.png" alt="Newoteg" className="w-full h-full object-contain drop-shadow-sm" />
-        </div>
-        <div className={`min-w-0 ${role === 'ADMIN' && !compact ? 'md:block' : 'md:hidden'} ${compact ? 'min-[1200px]:hidden' : 'min-[1200px]:block'}`}>
-          <h1 className="text-xl font-bold tracking-tight text-primary leading-tight">{brand.companyName}</h1>
-          <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400">{brand.branchName}</p>
+        <img
+          src="/logo.png"
+          alt="Newoteg"
+          className="h-10 w-10 shrink-0 object-contain"
+        />
+        <div className={`min-w-0 ${compact ? 'md:hidden' : ''}`}>
+          <p className="font-display text-lg font-bold tracking-tight text-slate-950">
+            {brand.companyName}
+          </p>
+          <p className="mt-0.5 text-[10px] font-medium tracking-[0.12em] text-slate-400">
+            ESPACE BOUTIQUE
+          </p>
         </div>
       </div>
-
-      <nav aria-label="Navigation principale" className={`flex-1 space-y-5 overflow-y-auto p-4 ${role === 'ADMIN' && !compact ? 'md:px-3 md:py-4' : 'md:px-2 md:py-4'} ${compact ? 'min-[1200px]:space-y-2 min-[1200px]:px-2 min-[1200px]:py-5' : 'min-[1200px]:p-4'}`}>
-        {compact && <div className={`space-y-2 ${role === 'ADMIN' ? 'hidden md:block' : ''}`}>{compactItems.map(renderNavItem)}</div>}
-        <div className={`space-y-5 ${compact ? role === 'ADMIN' ? 'md:hidden' : 'hidden' : ''}`}>
-          {visibleGroups.map((g) => (
-            <div key={g.label}>
-              <p className={`mb-2 px-3 text-xs font-bold uppercase tracking-wider text-slate-500 ${role === 'ADMIN' ? 'md:block' : 'md:hidden min-[1200px]:block'}`}>
-                {g.label}
-              </p>
-              <div className="space-y-1">{g.items.map(renderNavItem)}</div>
+      <div className={`px-4 pb-2 pt-4 ${compact ? 'md:hidden' : ''}`}>
+        <label className="relative block">
+          <Search
+            size={14}
+            className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400"
+          />
+          <input
+            aria-label="Trouver une rubrique"
+            placeholder="Trouver une rubrique…"
+            value={navigationQuery}
+            onChange={(event) => setNavigationQuery(event.target.value)}
+            className="min-h-10 w-full rounded-lg border border-slate-200 bg-slate-50 pl-8 pr-2 text-xs placeholder:text-slate-400"
+          />
+        </label>
+      </div>
+      <nav
+        aria-label="Navigation principale"
+        className="min-h-0 flex-1 overflow-y-auto px-3 py-4 [scrollbar-width:thin]"
+      >
+        {compact && (
+          <div className="hidden space-y-3 md:block">
+            {compactItems.map((item) => renderNavItem(item, true))}
+          </div>
+        )}
+        <div className={`space-y-6 ${compact ? 'md:hidden' : ''}`}>
+          {visibleGroups.map((group) => (
+            <div key={group.label}>
+              <p className="workspace-nav-label">{group.label}</p>
+              <div className="space-y-0.5">
+                {group.items.map((item) => renderNavItem(item))}
+              </div>
             </div>
           ))}
+          {visibleGroups.length === 0 && (
+            <p className="px-3 text-xs leading-relaxed text-slate-500">
+              Aucune rubrique. Essayez un autre mot.
+            </p>
+          )}
         </div>
       </nav>
-
-      <div className={`border-t border-slate-100 p-4 md:p-2 ${compact ? 'min-[1200px]:border-white/10 min-[1200px]:p-2' : 'min-[1200px]:p-4'}`}>
-        <div className={`flex items-center gap-3 rounded-lg border border-slate-100 bg-slate-50 p-2 md:justify-center ${compact ? 'md:flex-col min-[1200px]:justify-center min-[1200px]:border-transparent min-[1200px]:bg-transparent' : 'min-[1200px]:justify-start'}`}>
+      <div className="shrink-0 border-t border-slate-100 p-3">
+        <div
+          className={`flex items-center gap-2.5 rounded-xl bg-slate-50 p-2 ${compact ? 'md:flex-col' : ''}`}
+        >
           {admin?.photoUrl ? (
             <img
               src={admin.photoUrl}
-              alt={adminName}
-              className="w-10 h-10 rounded-full object-cover"
+              alt=""
+              className="h-9 w-9 shrink-0 rounded-lg object-cover"
             />
           ) : (
-            <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold text-sm">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-indigo-100 text-xs font-semibold text-primary">
               {initials}
             </div>
           )}
-          <div className={`min-w-0 flex-1 ${role === 'ADMIN' && !compact ? 'md:block' : 'md:hidden'} ${compact ? 'min-[1200px]:hidden' : 'min-[1200px]:block'}`}>
-            <p className="text-sm font-semibold truncate">{adminName}</p>
-            <p className="text-xs text-slate-500">{role || 'Utilisateur'}</p>
+          <div className={`min-w-0 flex-1 ${compact ? 'md:hidden' : ''}`}>
+            <p className="truncate text-xs font-semibold text-slate-800">
+              {adminName}
+            </p>
+            <p className="mt-0.5 text-[11px] text-slate-500">{roleLabel}</p>
           </div>
           <button
             type="button"
-            onClick={() => {
-              if (window.confirm('Voulez-vous vraiment vous déconnecter ?')) logout();
-            }}
             title="Se déconnecter"
             aria-label="Se déconnecter"
-            className={`flex h-10 w-10 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-red-50 hover:text-red-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500/30 ${compact || role === 'ADMIN' ? 'md:flex' : 'md:hidden min-[1200px]:flex'}`}
+            onClick={() => {
+              if (window.confirm('Voulez-vous vraiment vous déconnecter ?'))
+                logout();
+            }}
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-slate-400 hover:bg-red-50 hover:text-red-600"
           >
-            <LogOut size={18} />
+            <LogOut size={17} />
           </button>
         </div>
       </div>
     </aside>
   );
 };
-

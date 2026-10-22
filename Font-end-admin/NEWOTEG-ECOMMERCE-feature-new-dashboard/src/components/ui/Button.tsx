@@ -18,9 +18,9 @@ const baseClass =
 
 const variantClass: Record<Variant, string> = {
   primary:
-    'bg-primary text-white hover:bg-opacity-90 shadow-md shadow-primary/20',
+    'bg-primary text-white hover:bg-indigo-800 shadow-sm',
   secondary:
-    'bg-slate-100 text-slate-700 border border-slate-200 hover:bg-slate-200',
+    'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 shadow-sm',
   danger:
     'bg-red-600 text-white hover:bg-red-700 shadow-md shadow-red-600/20',
   success:
