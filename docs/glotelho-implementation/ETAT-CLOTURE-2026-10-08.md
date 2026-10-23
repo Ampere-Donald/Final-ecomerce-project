@@ -1,5 +1,7 @@
 # État de clôture du plan A–Z — 8 octobre 2026
 
+**Actualisation du 23 octobre :** [audit courant et conditions ouvertes](AUDIT-COURANT-2026-10-23.md). Quinze contrôles HTTP anonymes de production réussissent ; emails/SMS et collecte toujours désactivés, zéro projet public. Les preuves datées ci-dessous sont conservées comme historique et ne constituent pas une clôture générale.
+
 Ce point remplace les anciennes estimations générales d’avancement et les mentions « non publié » du bilan du 4 octobre. La publication a été explicitement autorisée ensuite et réalisée. Elle ne clôture pas les critères métier du plan.
 
 ## Preuves actuelles

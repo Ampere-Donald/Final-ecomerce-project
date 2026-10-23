@@ -1,6 +1,12 @@
 # Suivi d’exécution — NEWOTEG / X-Electronic
 
-Dernière mise à jour : 4 octobre 2026. Exécution des lots L0–L8 autorisée par l’utilisateur; L9 reste soumis à une autorisation distincte.
+État courant au 23 octobre 2026 : publication autorisée puis vérifiée ; les étapes métier 1 à 4 et la préproduction Railway sont reportées à la demande de l’utilisateur. L’objectif A–Z reste ouvert. Lire [l’audit courant](AUDIT-COURANT-2026-10-23.md) et les preuves de chaque livraison avant les entrées historiques ci-dessous.
+
+Les tableaux et mentions « non publié », « L9 non autorisé », « migrations non appliquées » ou pourcentages du journal décrivent leur date de rédaction, pas la situation actuelle. La publication ne vaut pas validation métier ni activation des fournisseurs de messages.
+
+## Journal historique — point du 4 octobre 2026
+
+Exécution des lots L0–L8 alors autorisée ; L9 était encore soumis à une autorisation distincte.
 
 ## Dernier correctif — routage des photos
 
