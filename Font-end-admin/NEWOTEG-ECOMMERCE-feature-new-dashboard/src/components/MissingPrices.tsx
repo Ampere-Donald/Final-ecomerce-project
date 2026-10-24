@@ -108,7 +108,7 @@ const PriceRow = ({
             {product.nomProduit}
           </h2>
           <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500">
-            <span className="font-mono">
+            <span className="break-all font-mono">
               {product.code || 'Sans référence'}
               {product.marque ? ` · ${product.marque}` : ''}
             </span>
@@ -169,12 +169,12 @@ const PriceRow = ({
             ) : (
               <Check size={17} />
             )}
-            <span>Enregistrer</span>
+            <span>Valider</span>
           </button>
         </div>
         <button
           type="button"
-          className="mt-2 flex min-h-8 items-center gap-1 text-xs font-medium text-slate-500 hover:text-primary"
+          className="mt-2 flex min-h-11 items-center gap-1 text-xs font-medium text-slate-500 hover:text-primary"
           onClick={() => setExpanded((value) => !value)}
           aria-expanded={expanded}
           aria-controls={`tiers-${product.id}`}
@@ -259,6 +259,7 @@ export const MissingPrices = () => {
     { refresh } = useCataloguePricing(),
     toast = useToast();
   const request = useRef<AbortController | null>(null);
+  const categoryNames = useRef(new Map<string, string>());
   const [drafts, setDrafts] = useState<Record<string, PriceDraft>>({});
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -285,6 +286,7 @@ export const MissingPrices = () => {
         controller.signal,
       );
       if (!controller.signal.aborted) {
+        data.categories.forEach(item => categoryNames.current.set(item.id, item.nom));
         setResult(data);
         if (page > 1 && !data.data.length) setPage((value) => value - 1);
       }
@@ -367,6 +369,11 @@ export const MissingPrices = () => {
       ? Math.round((summary.pricedCount / summary.totalCount) * 100)
       : 0;
   const filtered = Boolean(search || category || inStock);
+  const displayCategories = [...(result?.categories || [])];
+  // Keep the active filter visible when its last missing price has just been saved.
+  if (category && !displayCategories.some(item => item.id === category)) {
+    displayCategories.push({ id: category, nom: categoryNames.current.get(category) || 'Catégorie sélectionnée', count: 0 });
+  }
   return (
     <div className="pricing-workspace space-y-6">
       <header className="flex items-start justify-between gap-3">
@@ -495,7 +502,7 @@ export const MissingPrices = () => {
               <span>Toutes les catégories</span>
               <span>{summary?.missingCount ?? '—'}</span>
             </button>
-            {result?.categories.map((item) => (
+            {displayCategories.map((item) => (
               <button
                 key={item.id}
                 onClick={() => {
@@ -539,7 +546,7 @@ export const MissingPrices = () => {
                 }}
               >
                 <option value="">Toutes les catégories</option>
-                {result?.categories.map((item) => (
+                {displayCategories.map((item) => (
                   <option key={item.id} value={item.id}>
                     {item.nom} ({item.count})
                   </option>
@@ -648,7 +655,7 @@ export const MissingPrices = () => {
           )}
           {(result?.totalPages ?? 0) > 1 && (
             <nav
-              className="mt-5 flex items-center justify-between gap-3"
+              className="mt-5 flex flex-wrap items-center justify-between gap-2"
               aria-label="Pagination des articles"
             >
               <button

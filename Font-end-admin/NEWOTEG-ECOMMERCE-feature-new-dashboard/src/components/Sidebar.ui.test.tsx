@@ -88,4 +88,11 @@ describe('Sidebar for an administrator', () => {
     expect(screen.queryByRole('link', { name: 'Rôles' })).toBeNull();
     expect(screen.queryByRole('link', { name: 'Employés' })).toBeNull();
   });
+
+  it('ne propose pas au responsable les opérations hors ligne réservées au comptoir', () => {
+    authMocks.role = 'MANAGER';
+    render(<MemoryRouter><Sidebar open onClose={vi.fn()} /></MemoryRouter>);
+    expect(screen.queryByRole('link', { name: 'Opérations hors ligne' })).toBeNull();
+    expect(screen.getByRole('link', { name: 'Prix à renseigner' })).toBeTruthy();
+  });
 });

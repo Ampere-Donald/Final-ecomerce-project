@@ -53,7 +53,13 @@ export const WorkspaceTabs = ({ eyebrow, title, description, tabs, actions }: Wo
       </header>
 
       <div className="border-b border-slate-200">
-        <div className="scrollbar-hidden flex gap-1 overflow-x-auto" role="tablist" aria-label={`Rubriques ${title}`}>
+        <label className="block pb-3 sm:hidden">
+          <span className="mb-2 block text-xs font-semibold text-slate-600">Choisir une rubrique</span>
+          <select className="field" value={activeTab.id} onChange={event => selectTab(event.target.value)} aria-label={`Rubrique ${title}`}>
+            {tabs.map(tab => <option key={tab.id} value={tab.id}>{tab.label}</option>)}
+          </select>
+        </label>
+        <div className="scrollbar-hidden hidden gap-1 overflow-x-auto sm:flex" role="tablist" aria-label={`Rubriques ${title}`}>
           {tabs.map((tab, index) => {
             const Icon = tab.icon;
             const isActive = tab.id === activeTab.id;

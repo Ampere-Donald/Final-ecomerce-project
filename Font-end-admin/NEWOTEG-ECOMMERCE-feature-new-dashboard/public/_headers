@@ -1,0 +1,7 @@
+# Revalidate the APK/PWA entry points; hashed assets keep their normal cache policy.
+/index.html
+  Cache-Control: no-cache, must-revalidate
+/sw.js
+  Cache-Control: no-cache, must-revalidate
+/manifest.webmanifest
+  Cache-Control: no-cache, must-revalidate

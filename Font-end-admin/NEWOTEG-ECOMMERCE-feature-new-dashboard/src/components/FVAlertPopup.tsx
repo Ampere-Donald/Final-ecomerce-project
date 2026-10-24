@@ -62,7 +62,7 @@ export const FVAlertPopup: React.FC = () => {
   if (admin?.role !== 'SUPER_ADMIN' || alerts.length === 0) return null;
 
   return (
-    <div className="fixed bottom-6 right-6 z-[9999] flex flex-col gap-3 max-w-sm w-full pointer-events-none">
+    <div className="fixed bottom-24 inset-x-3 z-[55] flex flex-col gap-3 lg:bottom-6 lg:left-auto lg:right-6 lg:max-w-sm pointer-events-none">
       <AnimatePresence>
         {alerts.map((alert) => (
           <motion.div

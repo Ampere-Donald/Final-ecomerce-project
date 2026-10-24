@@ -57,6 +57,7 @@
   }
 
   .mobile-safe-bottom {
+    padding-bottom: 0.75rem;
     padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
   }
 
@@ -81,6 +82,13 @@
   }
 
   .admin-content { scrollbar-gutter: stable; }
+  /* WebView 60 does not understand dvh: retain a usable height there. */
+  .workspace-viewport { height: 100vh; height: var(--workspace-height, 100vh); }
+  .admin-content { overscroll-behavior-y: contain; -webkit-overflow-scrolling: touch; }
+  .admin-content > div { min-width: 0; }
+  .workspace-update { bottom: 1rem; }
+  .workspace-search { display: none; }
+  @media (min-width: 1024px) { .workspace-search { display: flex; } }
   .admin-content h1 { @apply font-display tracking-tight; }
   .admin-content :where(table) { @apply text-sm; font-variant-numeric: tabular-nums; }
   .admin-content :where(th) { @apply text-xs font-semibold tracking-wide text-slate-500; }
@@ -123,8 +131,49 @@
   .pricing-product-image img { @apply h-full w-full object-contain p-1.5 mix-blend-multiply; }
   .pricing-product-form { @apply min-w-0 2xl:w-[330px] 2xl:shrink-0; }
 
+  @media (max-width: 1023px) {
+    .workspace-sidebar[data-open='false'] { visibility: hidden; }
+    .workspace-sidebar { padding-top: env(safe-area-inset-top, 0px); }
+    .workspace-header { padding-top: env(safe-area-inset-top, 0px); }
+    .admin-content.has-mobile-navigation { padding-bottom: 88px; padding-bottom: calc(88px + env(safe-area-inset-bottom, 0px)); }
+    .workspace-viewport[data-keyboard-open='true'] .workspace-mobile-nav { display: none; }
+    .workspace-viewport[data-keyboard-open='true'] .admin-content.has-mobile-navigation { padding-bottom: 24px; }
+    .workspace-update { bottom: 84px; bottom: calc(84px + env(safe-area-inset-bottom, 0px)); }
+    .workspace-search.is-open { display: flex; position: absolute; top: 100%; left: 12px; right: 12px; padding: 12px; border: 1px solid #e2e8f0; border-radius: 0 0 16px 16px; background: white; box-shadow: 0 10px 20px rgb(15 23 42 / 0.08); }
+    .workspace-search.is-open > div:last-child:not(:first-child) { left: 0; width: 100%; }
+    .workspace-nav-link { min-height: 48px; font-size: 14px; }
+    .workspace-nav-label { font-size: 11px; }
+    .cash-session-actions > a, .cash-session-actions > button { min-height: 44px; }
+    /* A numeric/search keyboard must not cover the field being edited. */
+    .admin-content input, .admin-content select, .admin-content textarea { scroll-margin-block: 100px; }
+    .admin-workspace :where(input:not([type='checkbox']):not([type='radio']), select, textarea) { font-size: 16px; }
+  }
+
+  @media (max-width: 1023px) {
+    .responsive-records { display: block; min-width: 0; width: 100%; border-collapse: separate; }
+    .responsive-records > thead { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; }
+    .responsive-records > tbody { display: grid; width: 100%; }
+    .responsive-records > tbody > tr { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 12px 16px; padding: 16px; border-bottom: 1px solid #e2e8f0; }
+    .responsive-records > tbody > tr:last-child { border-bottom: 0; }
+    .responsive-records > tbody > tr > td { display: block; min-width: 0; padding: 0; border: 0; text-align: left; white-space: normal; overflow-wrap: anywhere; }
+    .responsive-records > tbody > tr > td::before { content: attr(data-label); display: block; margin-bottom: 4px; font-size: 11px; font-weight: 500; color: #64748b; }
+    .responsive-records > tbody > tr > td:first-child,
+    .responsive-records > tbody > tr > td:last-child,
+    .responsive-records > tbody > tr > td[data-wide='true'] { grid-column: 1 / -1; }
+    .responsive-records > tbody > tr > td[data-wide='true']::before { display: none; }
+    .responsive-records button { min-height: 44px; }
+
+  }
   @media (max-width: 639px) {
-    .workspace-header { min-height: 68px; }
+    .workspace-header { min-height: 64px; padding-left: 8px; padding-right: 12px; gap: 4px; }
+    .admin-content { scrollbar-gutter: auto; }
+    .admin-content h1 { overflow-wrap: anywhere; }
+    .pricing-invitation { gap: 12px; padding: 16px; }
+    .pricing-invitation h2 { font-size: 16px; }
+    .pricing-invitation > div > p:last-child { font-size: 12px; line-height: 1.5; }
+    .pricing-invitation > div > p:first-child { font-size: 10px; }
+    .pricing-invitation-icon { width: 40px; height: 40px; }
+    .pricing-invitation > div:nth-last-child(2) { display: none; }
     .pricing-product-image { @apply h-14 w-14; }
     .pricing-product-form .admin-button-primary { @apply px-3; }
     .pricing-workspace { @apply space-y-4; }
@@ -138,5 +187,18 @@
     .pricing-overview > :nth-child(2) > p { @apply text-[10px]; }
     .pricing-toolbar { @apply gap-2; }
     .pricing-toolbar > label:first-child { @apply basis-full; }
+    .pricing-product h2 { overflow-wrap: anywhere; }
+    .pricing-toolbar select { text-overflow: ellipsis; padding-right: 24px; }
+
+    /* Shared forms: every dialog can scroll above Android's keyboard. */
+    .admin-workspace .fixed.inset-0.z-50 { overflow-y: auto; overscroll-behavior: contain; padding: 12px; }
+    .admin-workspace .fixed.inset-0.z-50 > div { max-height: calc(100vh - 24px); overflow-y: auto; margin-top: auto; margin-bottom: auto; }
+    @supports (height: 100dvh) { .admin-workspace .fixed.inset-0.z-50 > div { max-height: calc(100dvh - 24px); } }
+    .admin-workspace .fixed.inset-0.z-50 button { min-height: 44px; }
+  }
+  @media (max-width: 359px) {
+    .pricing-product-form > div:first-child { flex-wrap: wrap; }
+    .pricing-product-form > div:first-child > label { flex-basis: 100%; }
+    .pricing-product-form .admin-button-primary { width: 100%; }
   }
 }

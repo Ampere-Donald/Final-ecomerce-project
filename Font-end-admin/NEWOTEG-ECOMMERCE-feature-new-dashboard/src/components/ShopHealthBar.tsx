@@ -68,7 +68,19 @@ export const ShopHealthBar = () => {
 
   return (
     <section aria-label="Santé de la boutique" className="border-b border-slate-200/70 bg-white/60 px-3 py-1">
-      <div className="scrollbar-hidden mx-auto flex max-w-7xl items-center gap-1 overflow-x-auto" role="status">
+      <details className="group lg:hidden">
+        <summary className="flex min-h-10 cursor-pointer list-none items-center justify-between gap-3 px-2 text-xs text-slate-600">
+          <span className="flex items-center gap-2"><span className={`h-2 w-2 rounded-full ${statusClass[syncStatus.status]}`} />{online ? 'Boutique connectée' : 'Boutique hors ligne'}</span>
+          <span className="font-semibold text-primary group-open:hidden">Voir les états</span><span className="hidden font-semibold text-primary group-open:inline">Masquer</span>
+        </summary>
+        <div className="grid grid-cols-2 gap-1 pb-2">
+          <HealthItem icon={WalletCards} label="Caisse" {...cashStatus} to="/caisse-jour" />
+          <HealthItem icon={RefreshCw} label="Synchro" {...syncStatus} to="/offline-queue" />
+          <HealthItem icon={Printer} label="Impression" {...printerStatus} to="/settings" />
+          <HealthItem icon={PackageSearch} label="Stock" value={`${operations.lowStockProducts.length} alerte(s)`} status={operations.lowStockProducts.length ? 'danger' : 'ok'} to="/stock-alerts" />
+        </div>
+      </details>
+      <div className="scrollbar-hidden mx-auto hidden max-w-7xl items-center gap-1 overflow-x-auto lg:flex" role="status">
         <div className="mr-1 hidden items-center gap-2 px-2 min-[1600px]:flex">
           <span className="font-display text-xs font-bold text-[#0B1636]">Santé boutique</span>
           <span className="h-4 w-px bg-slate-200" />

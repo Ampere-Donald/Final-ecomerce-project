@@ -19,7 +19,8 @@ export default defineConfig(({mode}) => {
       // PWA installable (icône écran d'accueil, plein écran, cache de consultation
       // hors-ligne en lecture seule). Doit rester APRÈS legacy() dans cet ordre.
       VitePWA({
-        registerType: 'autoUpdate',
+        registerType: 'prompt',
+        injectRegister: null,
         includeAssets: ['logo.png', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/icon-maskable-512.png'],
         manifest: {
           name: 'Newoteg Admin',

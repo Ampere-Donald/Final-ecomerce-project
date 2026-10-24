@@ -476,17 +476,17 @@ export const Dashboard = () => {
             <h2 id="admin-quick-actions" className="text-xs font-bold uppercase tracking-[0.14em] text-slate-400">
               Accès rapides
             </h2>
-            <span className="text-xs text-slate-400 lg:hidden">Balayer →</span>
+
             <span className="hidden text-xs text-slate-400 lg:inline">Gérer</span>
           </div>
-          <div className="scrollbar-hidden -mx-3 overflow-x-auto px-3 pb-1 lg:mx-0 lg:px-0">
-            <div className="flex min-w-max gap-2 lg:grid lg:min-w-0 lg:grid-cols-4">
+          <div className="pb-1">
+            <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
               {quickActions.map((action) => {
                 const Icon = action.icon;
                 return (
-                  <Link key={action.to} to={action.to} className="flex min-h-14 w-[160px] items-center gap-3 rounded-xl border border-slate-200 bg-white px-3.5 transition-colors hover:bg-slate-50 lg:w-auto">
+                  <Link key={action.to} to={action.to} className="flex min-h-20 min-w-0 items-center gap-3 rounded-xl border border-slate-200 bg-white px-3.5 transition-colors hover:bg-slate-50 lg:w-auto">
                     <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-700"><Icon size={17} /></span>
-                    <span className="min-w-0"><strong className="block text-sm text-slate-900">{action.label}</strong><span className="block truncate text-[11px] text-slate-400">{action.detail}</span></span>
+                    <span className="min-w-0"><strong className="block text-sm text-slate-900">{action.label}</strong><span className="block text-[11px] text-slate-400">{action.detail}</span></span>
                   </Link>
                 );
               })}

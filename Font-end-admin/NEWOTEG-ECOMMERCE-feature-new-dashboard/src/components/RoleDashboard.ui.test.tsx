@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { RoleDashboard } from './RoleDashboard';
+import { MemoryRouter } from 'react-router-dom';
 
 const authState = vi.hoisted(() => ({ role: 'ADMIN' }));
 
@@ -22,5 +23,13 @@ describe('RoleDashboard', () => {
     authState.role = 'SUPER_ADMIN';
     render(<RoleDashboard />);
     expect(screen.getByText('Vue superadministrateur')).toBeTruthy();
+  });
+
+  it('donne au responsable un accueil centré sur son catalogue', () => {
+    authState.role = 'MANAGER';
+    render(<MemoryRouter><RoleDashboard /></MemoryRouter>);
+    expect(screen.getByRole('link', { name: /Consulter le catalogue/ }).getAttribute('href')).toBe('/produits');
+    expect(screen.getByRole('link', { name: /Scanner un article/ }).getAttribute('href')).toBe('/scan-code');
+    expect(screen.queryByText('Tableau de bord historique')).toBeNull();
   });
 });

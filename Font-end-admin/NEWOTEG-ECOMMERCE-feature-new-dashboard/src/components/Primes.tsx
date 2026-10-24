@@ -1,3 +1,4 @@
+import { ResponsiveTable } from './ui/ResponsiveTable';
 import React, { useEffect, useState } from 'react';
 import { motion } from 'motion/react';
 import {
@@ -205,7 +206,7 @@ export const Primes = () => {
         </div>
       ) : (
         <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-          <table className="w-full text-sm">
+          <ResponsiveTable className="w-full text-sm">
             <thead className="border-b border-slate-100 bg-slate-50 text-xs uppercase tracking-wider text-slate-500">
               <tr>
                 <th className="px-4 py-3 text-left">Rang</th>
@@ -272,7 +273,7 @@ export const Primes = () => {
                 </tr>
               ))}
             </tbody>
-          </table>
+          </ResponsiveTable>
         </div>
       )}
 
