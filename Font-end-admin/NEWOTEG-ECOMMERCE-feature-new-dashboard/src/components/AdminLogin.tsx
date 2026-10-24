@@ -287,6 +287,9 @@ export const AdminLogin: React.FC = () => {
             <p className="mt-6 text-center text-xs text-slate-500">
               Accès réservé au personnel autorisé {brand.companyName}.
             </p>
+            <a href="/api/app-update" className="mt-3 flex min-h-11 items-center justify-center rounded-lg text-center text-sm font-semibold text-blue-700 underline underline-offset-4">
+              Ancien affichage ? Mettre l’application à jour
+            </a>
           </section>
         </section>
       </div>

@@ -8,6 +8,7 @@ import Papa from 'papaparse';
 import { BarcodeLabelFormat, exportProductBarcodeLabels } from '../utils/exportBarcodeLabels';
 import { localPromotionDate, promotionDatePayload } from '../utils/promotionForm';
 import { PricingProgressCard } from './PricingProgressCard';
+import { resolveProductImageUrl } from '../services/apiBaseUrl';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface Categorie {
@@ -61,10 +62,7 @@ const FORM_INITIAL = {
 
 // ─── Helper: resolve image URL (Cloudinary absolute or legacy /uploads/) ─────
 const resolveImgUrl = (raw: string | null | undefined): string | null => {
-  if (!raw) return null;
-  if (raw.startsWith('http://') || raw.startsWith('https://')) return raw;
-  const API_BASE = (import.meta.env.VITE_API_URL || 'http://localhost:3000/api').replace('/api', '');
-  return `${API_BASE}${raw.startsWith('/') ? '' : '/'}${raw}`;
+  return resolveProductImageUrl(raw, import.meta.env.VITE_API_URL, window.location.hostname);
 };
 
 // ─── Composant principal ──────────────────────────────────────────────────────
