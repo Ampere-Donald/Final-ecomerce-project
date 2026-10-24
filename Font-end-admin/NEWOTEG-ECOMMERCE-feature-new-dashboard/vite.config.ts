@@ -39,6 +39,9 @@ export default defineConfig(({mode}) => {
           ],
         },
         workbox: {
+          // Installed clients may retain an old HTTP-cached Workbox import.
+          // Keep the update worker self-contained so it can replace that cache.
+          inlineWorkboxRuntime: true,
           // Le HTML/JS/CSS buildés sont précachés (network falling back to cache).
           globPatterns: ['**/*.{js,css,html,svg,png,ico,woff2}'],
           globIgnores: [
