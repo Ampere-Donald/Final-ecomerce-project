@@ -1,4 +1,5 @@
 import { ChevronRight, Package, Plus, ReceiptText, ScanBarcode, ShoppingCart } from 'lucide-react';
+import { PricingProgressCard } from './PricingProgressCard';
 import { Link } from 'react-router-dom';
 
 interface SellerTicketSummary {
@@ -66,7 +67,9 @@ export function SellerHome({ name, pendingCount, offlineCount, loading, recentTi
         <ChevronRight size={22} className="text-white/70 transition-transform group-hover:translate-x-1" />
       </Link>
 
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-[minmax(0,1.25fr)_minmax(0,.75fr)]">
+      <PricingProgressCard />
+
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-[minmax(0,1.25fr)_minmax(0,.75fr)]">
         <section className="rounded-xl border border-slate-200 bg-white p-4 md:p-5" aria-labelledby="recent-tickets-title">
           <div className="flex items-center justify-between">
             <h2 id="recent-tickets-title" className="text-sm font-bold text-slate-900">Tickets récents</h2>

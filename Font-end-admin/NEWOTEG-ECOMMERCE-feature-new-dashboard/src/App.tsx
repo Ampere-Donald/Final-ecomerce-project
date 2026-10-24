@@ -4,6 +4,8 @@ import { AdminAuthProvider } from './context/AdminAuthContext';
 import { AdminProtectedRoute } from './components/AdminProtectedRoute';
 import { RoleProtectedRoute } from './components/RoleProtectedRoute';
 import { AdminLogin } from './components/AdminLogin';
+import { WorkspaceNotFound } from './components/WorkspaceScreen';
+import { AppUpdateNotice } from './components/AppUpdateNotice';
 import { Layout } from './components/Layout';
 import { ToastProvider } from './components/ui/Toast';
 import { FVAlertPopup } from './components/FVAlertPopup';
@@ -139,10 +141,12 @@ export default function App() {
             <Route path="offline-queue" element={<RoleProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN', 'CAISSIER', 'VENDEUR']}><OfflineQueuePage /></RoleProtectedRoute>} />
             <Route path="print-audit" element={<RoleProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN']}><PrintAuditPage /></RoleProtectedRoute>} />
             <Route path="settings" element={<Settings />} />
+            <Route path="*" element={<WorkspaceNotFound />} />
           </Route>
         </Routes>
         </Suspense>
         <FVAlertPopup />
+        <AppUpdateNotice />
         </ToastProvider>
       </AdminAuthProvider>
     </BrowserRouter>

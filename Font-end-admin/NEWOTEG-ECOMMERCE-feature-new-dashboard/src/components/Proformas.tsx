@@ -1,3 +1,4 @@
+import { ResponsiveTable } from './ui/ResponsiveTable';
 import React, { useEffect, useMemo, useState } from 'react';
 import { motion } from 'motion/react';
 import { AlertTriangle, FileText, Plus, Printer, RefreshCw, Send, Trash2, X } from 'lucide-react';
@@ -216,7 +217,7 @@ export const Proformas = () => {
       {error && <p className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</p>}
 
       <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-        <table className="w-full text-sm">
+        <ResponsiveTable className="w-full text-sm">
           <thead className="bg-slate-50 text-xs uppercase tracking-wider text-slate-500">
             <tr>
               <th className="px-4 py-3 text-left">Numero</th>
@@ -281,7 +282,7 @@ export const Proformas = () => {
               </tr>
             )}
           </tbody>
-        </table>
+        </ResponsiveTable>
       </div>
 
       {showCreate && canManage && (
@@ -343,7 +344,7 @@ export const Proformas = () => {
             {/* Lignes ajoutées */}
             <div className="space-y-2">
               {lignes.length > 0 && (
-                <div className="grid grid-cols-12 gap-2 px-1">
+                <div className="hidden grid-cols-12 gap-2 px-1 sm:grid">
                   <span className="col-span-6 text-xs text-slate-400 font-medium">Produit</span>
                   <span className="col-span-2 text-xs text-slate-400 font-medium">Qté</span>
                   <span className="col-span-3 text-xs text-slate-400 font-medium">Prix unit.</span>
@@ -359,8 +360,8 @@ export const Proformas = () => {
                 const grosDejaApplique = eligibleGros && line.prixUnitaire === prixGros;
                 return (
                   <div key={index} className={`grid grid-cols-12 gap-2 rounded-lg p-2 ${enRupture ? 'bg-orange-50 border border-orange-200' : 'bg-slate-50'}`}>
-                    <div className="col-span-6">
-                      <p className="text-sm font-medium text-slate-800 truncate">{p?.nomProduit ?? '—'}</p>
+                    <div className="col-span-12 sm:col-span-6">
+                      <p className="text-sm font-medium text-slate-800 break-words">{p?.nomProduit ?? '—'}</p>
                       {enRupture && (
                         <p className="flex items-center gap-1 text-xs text-orange-600">
                           <AlertTriangle size={11} />
@@ -383,16 +384,19 @@ export const Proformas = () => {
                     <input
                       type="number" min={1} value={line.quantite}
                       onChange={(e) => updateLine(index, { quantite: Number(e.target.value) })}
-                      className="col-span-2 rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-sm"
+                      aria-label={`Quantité ligne ${index + 1}`}
+                      className="col-span-5 min-w-0 sm:col-span-2 rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-sm"
                     />
                     <input
                       type="number" min={0} value={line.prixUnitaire}
                       onChange={(e) => updateLine(index, { prixUnitaire: Number(e.target.value) })}
-                      className="col-span-3 rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-sm"
+                      aria-label={`Prix unitaire ligne ${index + 1}`}
+                      className="col-span-5 min-w-0 sm:col-span-3 rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-sm"
                     />
                     <button
                       onClick={() => setLignes((prev) => prev.filter((_, i) => i !== index))}
-                      className="col-span-1 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 flex items-center justify-center"
+                      aria-label={`Retirer la ligne ${index + 1}`}
+                      className="col-span-2 min-h-11 sm:col-span-1 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 flex items-center justify-center"
                     >
                       <X size={14} />
                     </button>

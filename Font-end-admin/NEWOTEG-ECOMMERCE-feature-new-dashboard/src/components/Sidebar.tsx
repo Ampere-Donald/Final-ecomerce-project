@@ -58,19 +58,23 @@ export const Sidebar = ({ open, onClose, compact = false }: SidebarProps) => {
   const { summary } = useCataloguePricing();
   const asideRef = useRef<HTMLElement>(null);
   const [mobile, setMobile] = useState(
-    () => window.matchMedia?.('(max-width: 767px)').matches ?? false,
+    () => window.matchMedia?.('(max-width: 1023px)').matches ?? false,
   );
   useEffect(() => {
-    const media = window.matchMedia?.('(max-width: 767px)');
+    const media = window.matchMedia?.('(max-width: 1023px)');
     if (!media) return;
-    const update = () => setMobile(media.matches);
-    media.addEventListener('change', update);
-    return () => media.removeEventListener('change', update);
-  }, []);
+    const update = () => { setMobile(media.matches); if (!media.matches) onClose(); };
+    if (media.addEventListener) media.addEventListener('change', update);
+    else media.addListener(update);
+    return () => {
+      if (media.removeEventListener) media.removeEventListener('change', update);
+      else media.removeListener(update);
+    };
+  }, [onClose]);
   useEffect(() => {
     if (!mobile || !open) return;
     const previous = document.activeElement as HTMLElement | null;
-    asideRef.current?.querySelector<HTMLInputElement>('input')?.focus();
+    asideRef.current?.querySelector<HTMLButtonElement>('[aria-label="Fermer le menu"]')?.focus({ preventScroll: true });
     const handleKey = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         event.preventDefault();
@@ -95,7 +99,8 @@ export const Sidebar = ({ open, onClose, compact = false }: SidebarProps) => {
     document.addEventListener('keydown', handleKey);
     return () => {
       document.removeEventListener('keydown', handleKey);
-      previous?.focus();
+      const target = previous?.isConnected ? previous : document.querySelector<HTMLButtonElement>('[aria-label="Ouvrir toutes les rubriques"]');
+      target?.focus({ preventScroll: true });
     };
   }, [mobile, open, onClose]);
 
@@ -371,7 +376,7 @@ export const Sidebar = ({ open, onClose, compact = false }: SidebarProps) => {
           icon: History,
           path: '/print-audit',
         }),
-        ...add(Boolean(role), {
+        ...add(['SUPER_ADMIN', 'ADMIN', 'VENDEUR', 'CAISSIER'].includes(role || ''), {
           label: 'Opérations hors ligne',
           icon: CloudOff,
           path: '/offline-queue',
@@ -461,20 +466,24 @@ export const Sidebar = ({ open, onClose, compact = false }: SidebarProps) => {
 
   return (
     <aside
+      id="workspace-menu"
       ref={asideRef}
+      data-open={open}
+      role={mobile && open ? "dialog" : undefined}
+      aria-modal={mobile && open ? true : undefined}
       inert={mobile && !open}
       aria-hidden={mobile && !open ? true : undefined}
       aria-label="Menu de la boutique"
-      className={`workspace-sidebar fixed left-0 top-0 z-40 flex h-[100dvh] w-[272px] shrink-0 flex-col border-r bg-white transition-transform duration-200 md:sticky ${compact ? 'md:w-20' : 'md:w-[248px] min-[1440px]:w-[264px]'} ${open ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}
+      className={`workspace-sidebar fixed left-0 top-0 z-[70] flex h-full w-[340px] max-w-[calc(100vw-24px)] shrink-0 flex-col border-r bg-white transition-transform duration-200 lg:sticky lg:z-10 ${compact ? 'lg:w-20' : 'lg:w-[248px] min-[1440px]:w-[264px]'} ${open ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}
     >
       <div
-        className={`relative flex min-h-[76px] shrink-0 items-center gap-3 border-b border-slate-100 px-5 ${compact ? 'md:justify-center md:px-2' : ''}`}
+        className={`relative flex min-h-[76px] shrink-0 items-center gap-3 border-b border-slate-100 px-5 ${compact ? 'lg:justify-center lg:px-2' : ''}`}
       >
         <button
           type="button"
           onClick={onClose}
           aria-label="Fermer le menu"
-          className="absolute right-3 top-4 rounded-lg p-2 text-slate-400 hover:bg-slate-100 md:hidden"
+          className="absolute right-3 top-4 flex h-11 w-11 items-center justify-center rounded-lg p-2 text-slate-400 hover:bg-slate-100 lg:hidden"
         >
           <X size={18} />
         </button>
@@ -483,7 +492,7 @@ export const Sidebar = ({ open, onClose, compact = false }: SidebarProps) => {
           alt="Newoteg"
           className="h-10 w-10 shrink-0 object-contain"
         />
-        <div className={`min-w-0 ${compact ? 'md:hidden' : ''}`}>
+        <div className={`min-w-0 ${compact ? 'lg:hidden' : ''}`}>
           <p className="font-display text-lg font-bold tracking-tight text-slate-950">
             {brand.companyName}
           </p>
@@ -492,7 +501,7 @@ export const Sidebar = ({ open, onClose, compact = false }: SidebarProps) => {
           </p>
         </div>
       </div>
-      <div className={`px-4 pb-2 pt-4 ${compact ? 'md:hidden' : ''}`}>
+      <div className={`px-4 pb-2 pt-4 ${compact ? 'lg:hidden' : ''}`}>
         <label className="relative block">
           <Search
             size={14}
@@ -512,11 +521,11 @@ export const Sidebar = ({ open, onClose, compact = false }: SidebarProps) => {
         className="min-h-0 flex-1 overflow-y-auto px-3 py-4 [scrollbar-width:thin]"
       >
         {compact && (
-          <div className="hidden space-y-3 md:block">
+          <div className="hidden space-y-3 lg:block">
             {compactItems.map((item) => renderNavItem(item, true))}
           </div>
         )}
-        <div className={`space-y-6 ${compact ? 'md:hidden' : ''}`}>
+        <div className={`space-y-6 ${compact ? 'lg:hidden' : ''}`}>
           {visibleGroups.map((group) => (
             <div key={group.label}>
               <p className="workspace-nav-label">{group.label}</p>
@@ -532,9 +541,9 @@ export const Sidebar = ({ open, onClose, compact = false }: SidebarProps) => {
           )}
         </div>
       </nav>
-      <div className="shrink-0 border-t border-slate-100 p-3">
+      <div className="mobile-safe-bottom shrink-0 border-t border-slate-100 p-3">
         <div
-          className={`flex items-center gap-2.5 rounded-xl bg-slate-50 p-2 ${compact ? 'md:flex-col' : ''}`}
+          className={`flex items-center gap-2.5 rounded-xl bg-slate-50 p-2 ${compact ? 'lg:flex-col' : ''}`}
         >
           {admin?.photoUrl ? (
             <img
@@ -547,7 +556,7 @@ export const Sidebar = ({ open, onClose, compact = false }: SidebarProps) => {
               {initials}
             </div>
           )}
-          <div className={`min-w-0 flex-1 ${compact ? 'md:hidden' : ''}`}>
+          <div className={`min-w-0 flex-1 ${compact ? 'lg:hidden' : ''}`}>
             <p className="truncate text-xs font-semibold text-slate-800">
               {adminName}
             </p>

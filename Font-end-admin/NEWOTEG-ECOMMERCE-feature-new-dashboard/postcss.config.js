@@ -12,6 +12,8 @@ const legacyCompat = {
   OnceExit(root) {
     const rgbRe = /\brgb\((\d+)[ ]+(\d+)[ ]+(\d+)[ ]*\/[ ]*(var\([^)]*\)|[\d.]+%?)\)/g;
     root.walkDecls((decl) => {
+      // Android WebView < 108 ignores dynamic viewport units entirely.
+      if (decl.value.includes('dvh')) decl.cloneBefore({ value: decl.value.replace(/dvh/g, 'vh') });
       if (decl.value.includes('rgb(')) {
         decl.value = decl.value.replace(rgbRe, 'rgba($1, $2, $3, $4)');
       }

@@ -8,10 +8,11 @@ import { useOnlineStatus } from '../hooks/useOnlineStatus';
 import { useInstallPrompt } from '../hooks/useInstallPrompt';
 import { useCataloguePricing } from '../context/CataloguePricingContext';
 
-const pageNames: Record<string, string> = { '/': 'Vue d’ensemble', '/produits': 'Catalogue produits', '/prix-a-renseigner': 'Prix à renseigner', '/categories': 'Catégories', '/analyses': 'Analyses', '/ventes': 'Ventes boutique', '/orders': 'Commandes en ligne', '/clients': 'Clients', '/stock': 'Mouvements de stock', '/stock-alerts': 'Alertes de stock', '/inventaire': 'Inventaire', '/fournisseurs': 'Fournisseurs', '/achats': 'Réapprovisionnement', '/caisse': 'Trésorerie', '/caisse-jour': 'Caisse du jour', '/proformas': 'Devis et proformas', '/invoices': 'Factures', '/settings': 'Paramètres', '/paie': 'Paie', '/notifications': 'Notifications', '/coffres': 'Coffres', '/credits': 'Crédits clients', '/echeances': 'Échéances' };
+const pageNames: Record<string, string> = { '/employes': 'Employés', '/comptes': 'Comptes et accès', '/roles': 'Rôles', '/guide': 'Guide utilisateur', '/pos': 'Vente en cours', '/file-caissier': 'Encaissement', '/mes-tickets': 'Mes tickets', '/finance': 'Finance', '/stock-achats': 'Stock & achats', '/equipe-acces': 'Équipe & accès', '/ventes-commandes': 'Ventes & commandes', '/caisse-admin': 'Caisse', '/cmup': 'CMUP & valorisation', '/primes': 'Primes vendeurs', '/a-valider': 'Validations', '/demandes-devis': 'Devis en ligne', '/avis': 'Avis clients', '/cas-remplacement': 'Cas de remplacement', '/incompatibilites': 'Incompatibilités', '/projets': 'Projets boutique', '/parcours': 'Parcours du site', '/commandes-fournisseur': 'Bons fournisseurs', '/scan-code': 'Scanner un produit', '/print-audit': 'Journal impressions', '/offline-queue': 'Opérations hors ligne', '/': 'Vue d’ensemble', '/produits': 'Catalogue produits', '/prix-a-renseigner': 'Prix à renseigner', '/categories': 'Catégories', '/analyses': 'Analyses', '/ventes': 'Ventes boutique', '/orders': 'Commandes en ligne', '/clients': 'Clients', '/stock': 'Mouvements de stock', '/stock-alerts': 'Alertes de stock', '/inventaire': 'Inventaire', '/fournisseurs': 'Fournisseurs', '/achats': 'Réapprovisionnement', '/caisse': 'Trésorerie', '/caisse-jour': 'Caisse du jour', '/proformas': 'Devis et proformas', '/invoices': 'Factures', '/settings': 'Paramètres', '/paie': 'Paie', '/notifications': 'Notifications', '/coffres': 'Coffres', '/credits': 'Crédits clients', '/echeances': 'Échéances' };
 
 interface HeaderProps {
   onMenuClick: () => void;
+  menuOpen?: boolean;
 }
 
 /* ── Type map for notification icons ────────────────────────────── */
@@ -64,13 +65,17 @@ function relativeTime(dateStr: string) {
   return `il y a ${Math.floor(hrs / 24)}j`;
 }
 
-export const Header = ({ onMenuClick }: HeaderProps) => {
+export const Header = ({ onMenuClick, menuOpen = false }: HeaderProps) => {
   const navigate = useNavigate();
   const { admin } = useAdminAuth();
   const { pathname } = useLocation();
   const { summary: pricingSummary } = useCataloguePricing();
   const isOnline = useOnlineStatus();
   const { canInstall, promptInstall } = useInstallPrompt();
+
+  const [mobileSearch, setMobileSearch] = useState(false);
+  const notificationsAllowed = can.accessNotificationsPage(admin?.role);
+  useEffect(() => { setMobileSearch(false); setBellOpen(false); setSearchOpen(false); }, [pathname]);
 
   /* ── Import Status ────────────────────────────────────────────── */
   const [importStatus, setImportStatus] = useState<{ isImporting: boolean; progress: number; message: string; error: string | null } | null>(null);
@@ -105,6 +110,7 @@ export const Header = ({ onMenuClick }: HeaderProps) => {
   }, []);
 
   useEffect(() => {
+    if (!notificationsAllowed) return;
     fetchUnread();
     const iv = setInterval(fetchUnread, 30000);
 
@@ -125,7 +131,7 @@ export const Header = ({ onMenuClick }: HeaderProps) => {
       clearInterval(iv);
       clearInterval(ivImport);
     };
-  }, [fetchUnread]);
+  }, [fetchUnread, notificationsAllowed]);
 
   const openBell = async () => {
     setBellOpen(prev => !prev);
@@ -186,7 +192,7 @@ export const Header = ({ onMenuClick }: HeaderProps) => {
   };
 
   return (
-    <div className="flex flex-col sticky top-0 z-50 w-full shrink-0">
+    <div className="flex flex-col sticky top-0 z-40 w-full shrink-0">
       {!isOnline && (
         <div className="bg-amber-50 border-b border-amber-100 flex items-center justify-center gap-2 px-4 py-1.5 shrink-0 z-20 text-xs font-bold text-amber-800">
           <WifiOff size={13} />
@@ -215,15 +221,22 @@ export const Header = ({ onMenuClick }: HeaderProps) => {
       {/* ── Hamburger (mobile only) ───────────────────────────────── */}
       <button
         onClick={onMenuClick}
-        className="md:hidden p-2 text-slate-500 hover:text-primary hover:bg-slate-100 rounded-lg transition-colors flex-shrink-0"
+        className="lg:hidden h-11 w-11 p-2 text-slate-500 hover:text-primary hover:bg-slate-100 rounded-lg transition-colors flex-shrink-0"
         aria-label="Menu"
+        aria-expanded={menuOpen}
+        aria-controls="workspace-menu"
       >
         <Menu size={22} />
       </button>
 
+      <div className="min-w-0 flex-1 lg:hidden">
+        <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-500">NEWOTEG</p>
+        <p className="truncate text-sm font-semibold text-slate-900">{pageNames[pathname] || 'Espace boutique'}</p>
+      </div>
+      <button type="button" aria-label="Rechercher" aria-expanded={mobileSearch} onClick={() => setMobileSearch(value => !value)} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-slate-600 hover:bg-slate-50 lg:hidden">{mobileSearch ? <X size={20} /> : <Search size={20} />}</button>
       {/* ── Search ───────────────────────────────────────────────── */}
       <div className="mr-auto hidden min-w-0 xl:block"><p className="text-[10px] font-medium uppercase tracking-wider text-slate-400">Boutique / Espace de travail</p><p className="mt-1 truncate text-sm font-semibold text-slate-800">{pageNames[pathname] || 'Gestion de la boutique'}</p></div>
-      <div ref={searchRef} className="relative flex min-w-0 flex-1 items-center gap-4 xl:max-w-xs">
+      <div ref={searchRef} className={`workspace-search ${mobileSearch ? "is-open" : ""} relative min-w-0 flex-1 items-center gap-4 lg:flex xl:max-w-xs`}>
         <div className="relative w-full group">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors" size={18} />
           <input
@@ -274,12 +287,12 @@ export const Header = ({ onMenuClick }: HeaderProps) => {
         )}
       </div>
 
-      <Link to="/prix-a-renseigner" aria-label="Ouvrir les prix à renseigner" title="Prix à renseigner" className="inline-flex min-h-11 shrink-0 items-center gap-2 rounded-xl border border-indigo-100 bg-indigo-50/70 px-3 text-xs font-semibold text-primary hover:bg-indigo-100"><Tags size={17} /><span className="hidden lg:inline">Prix à renseigner</span>{pricingSummary && pricingSummary.missingCount > 0 && <span className="hidden rounded-md bg-white px-1.5 py-0.5 text-[10px] sm:block">{pricingSummary.missingCount.toLocaleString('fr-FR')}</span>}</Link>
+      <Link to="/prix-a-renseigner" aria-label="Ouvrir les prix à renseigner" title="Prix à renseigner" className="hidden min-h-11 shrink-0 items-center gap-2 rounded-xl border border-indigo-100 lg:inline-flex bg-indigo-50/70 px-3 text-xs font-semibold text-primary hover:bg-indigo-100"><Tags size={17} /><span className="hidden lg:inline">Prix à renseigner</span>{pricingSummary && pricingSummary.missingCount > 0 && <span className="hidden rounded-md bg-white px-1.5 py-0.5 text-[10px] sm:block">{pricingSummary.missingCount.toLocaleString('fr-FR')}</span>}</Link>
       {/* ── Installer l'application ─────────────────────────────────── */}
       {canInstall && (
         <button
           onClick={promptInstall}
-          className="hidden sm:flex items-center gap-1.5 rounded-lg border border-primary/20 bg-primary/5 px-3 py-2 text-xs font-bold text-primary hover:bg-primary/10 transition-colors flex-shrink-0"
+          className="hidden min-[1440px]:flex items-center gap-1.5 rounded-lg border border-primary/20 bg-primary/5 px-3 py-2 text-xs font-bold text-primary hover:bg-primary/10 transition-colors flex-shrink-0"
         >
           <Download size={14} />
           Installer l'application
@@ -287,7 +300,7 @@ export const Header = ({ onMenuClick }: HeaderProps) => {
       )}
 
       {/* ── Bell ─────────────────────────────────────────────────── */}
-      <div ref={bellRef} className="relative flex items-center">
+      {notificationsAllowed && <div ref={bellRef} className="relative flex items-center">
         <button onClick={openBell} aria-label="Ouvrir les notifications" aria-expanded={bellOpen} className="relative flex h-11 w-11 items-center justify-center rounded-xl text-slate-500 transition-colors hover:bg-slate-50 hover:text-primary">
           <Bell size={20} />
           {unread > 0 && (
@@ -350,7 +363,7 @@ export const Header = ({ onMenuClick }: HeaderProps) => {
             )}
           </div>
         )}
-      </div>
+      </div>}
     </header>
     </div>
   );

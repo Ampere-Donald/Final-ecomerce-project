@@ -1,3 +1,4 @@
+import { ResponsiveTable } from './ui/ResponsiveTable';
 import React, { useEffect, useMemo, useState } from 'react';
 import { motion } from 'motion/react';
 import {
@@ -204,7 +205,7 @@ export const CommandeFournisseur = () => {
         </div>
 
         <div className="bg-white rounded-2xl border border-slate-200 overflow-x-auto">
-          <table className="w-full text-sm min-w-[640px]">
+          <ResponsiveTable className="w-full text-sm lg:min-w-[640px]">
             <thead className="bg-slate-50 text-slate-500 text-xs uppercase">
               <tr>
                 <th className="text-left px-4 py-3 font-semibold">Désignation</th>
@@ -247,7 +248,7 @@ export const CommandeFournisseur = () => {
                 </tr>
               )}
             </tfoot>
-          </table>
+          </ResponsiveTable>
         </div>
 
         <ConfirmDialog open={confirmConvert} onClose={() => setConfirmConvert(false)} onConfirm={convertir}

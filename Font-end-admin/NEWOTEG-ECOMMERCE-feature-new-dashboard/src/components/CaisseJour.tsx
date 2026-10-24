@@ -339,7 +339,7 @@ export const CaisseJour = () => {
             </p>
           )}
         </div>
-        <div className="flex items-center gap-2">
+        <div className="cash-session-actions flex w-full flex-wrap items-center gap-2 lg:w-auto">
           {isCashier && (
             <Link
               to="/file-caissier"
@@ -414,7 +414,7 @@ export const CaisseJour = () => {
           <button
             key={key}
             onClick={() => setActiveTab(key)}
-            className={`rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${
+            className={`min-h-11 rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${
               activeTab === key ? 'bg-primary text-white' : 'text-slate-600 hover:bg-slate-100'
             }`}
           >
@@ -423,8 +423,8 @@ export const CaisseJour = () => {
         ))}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-white p-5 rounded-2xl border border-slate-200">
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-3 sm:gap-4">
+        <div className="col-span-2 md:col-span-1 bg-white p-5 rounded-2xl border border-slate-200">
           <div className="flex items-center gap-2 text-sm text-slate-500 mb-2">
             <Wallet size={16} className="text-primary" />
             Solde courant
@@ -436,14 +436,14 @@ export const CaisseJour = () => {
             <ArrowUpRight size={16} className="text-emerald-600" />
             Entrées du jour
           </div>
-          <p className="text-2xl font-bold text-emerald-600">+{fmtFCFA(entrees)}</p>
+          <p className="break-words text-xl sm:text-2xl font-bold text-emerald-600">+{fmtFCFA(entrees)}</p>
         </div>
         <div className="bg-white p-5 rounded-2xl border border-slate-200">
           <div className="flex items-center gap-2 text-sm text-slate-500 mb-2">
             <ArrowDownRight size={16} className="text-red-600" />
             Sorties du jour
           </div>
-          <p className="text-2xl font-bold text-red-600">−{fmtFCFA(sorties)}</p>
+          <p className="break-words text-xl sm:text-2xl font-bold text-red-600">−{fmtFCFA(sorties)}</p>
         </div>
       </div>
 

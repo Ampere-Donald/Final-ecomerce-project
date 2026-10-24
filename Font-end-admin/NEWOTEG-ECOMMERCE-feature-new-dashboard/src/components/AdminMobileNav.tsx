@@ -12,7 +12,6 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { useAdminAuth } from '../context/AdminAuthContext';
-import { administrationNavigation } from '../config/adminNavigation';
 
 interface AdminMobileNavProps {
   hidden?: boolean;
@@ -27,24 +26,29 @@ interface MobileNavItem {
 }
 
 const itemsByRole: Record<string, MobileNavItem[]> = {
-  SUPER_ADMIN: administrationNavigation.SUPER_ADMIN.map((item) => ({ ...item, label: item.shortLabel || item.label })),
+  SUPER_ADMIN: [
+    { label: 'Accueil', path: '/', icon: LayoutDashboard, end: true },
+    { label: 'Produits', path: '/produits', icon: Package },
+    { label: 'Prix', path: '/prix-a-renseigner', icon: Tags },
+    { label: 'À valider', path: '/a-valider', icon: FileText },
+  ],
   ADMIN: [
     { label: 'Accueil', path: '/', icon: LayoutDashboard, end: true },
     { label: 'Ventes', path: '/ventes', icon: ReceiptText },
+    { label: 'Prix', path: '/prix-a-renseigner', icon: Tags },
     { label: 'Stock', path: '/stock', icon: Package },
-    { label: 'Caisse', path: '/caisse-jour', icon: WalletCards },
   ],
   CAISSIER: [
     { label: 'Accueil', path: '/', icon: LayoutDashboard, end: true },
     { label: 'Encaisser', path: '/file-caissier', icon: CircleDollarSign },
     { label: 'Caisse', path: '/caisse-jour', icon: WalletCards },
-    { label: 'Factures', path: '/invoices', icon: FileText },
+    { label: 'Prix', path: '/prix-a-renseigner', icon: Tags },
   ],
   VENDEUR: [
     { label: 'Accueil', path: '/', icon: LayoutDashboard, end: true },
     { label: 'Vendre', path: '/pos', icon: ShoppingCart },
     { label: 'Tickets', path: '/mes-tickets', icon: ReceiptText },
-    { label: 'Produits', path: '/produits', icon: Package },
+    { label: 'Prix', path: '/prix-a-renseigner', icon: Tags },
   ],
   MANAGER: [
     { label: 'Accueil', path: '/', icon: LayoutDashboard, end: true },
@@ -73,7 +77,7 @@ export const AdminMobileNav = ({ hidden = false, onMenuClick }: AdminMobileNavPr
   return (
     <nav
       aria-label={`Navigation ${roleLabels[role]} mobile`}
-      className="mobile-safe-bottom fixed inset-x-0 bottom-0 z-50 border-t border-slate-200 bg-white px-2 pt-1.5 shadow-[0_-8px_24px_rgba(15,23,42,0.08)] md:hidden"
+      className="workspace-mobile-nav mobile-safe-bottom fixed inset-x-0 bottom-0 z-30 border-t border-slate-200 bg-white px-2 pt-1.5 shadow-[0_-8px_24px_rgba(15,23,42,0.06)] lg:hidden"
     >
       <div className="mx-auto grid max-w-lg grid-cols-5">
         {items.map(({ label, path, icon: Icon, end }) => (
@@ -82,7 +86,7 @@ export const AdminMobileNav = ({ hidden = false, onMenuClick }: AdminMobileNavPr
             to={path}
             end={end}
             className={({ isActive }) =>
-              `relative flex min-h-14 touch-manipulation flex-col items-center justify-center gap-1 rounded-lg text-[10px] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 ${
+              `relative flex min-h-14 touch-manipulation flex-col items-center justify-center gap-1 rounded-lg text-[11px] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 ${
                 isActive ? 'text-primary' : 'text-slate-500 active:bg-slate-100'
               }`
             }
@@ -96,17 +100,16 @@ export const AdminMobileNav = ({ hidden = false, onMenuClick }: AdminMobileNavPr
             )}
           </NavLink>
         ))}
-        {role !== 'SUPER_ADMIN' && (
           <button
             type="button"
             onClick={onMenuClick}
-            className="flex min-h-14 touch-manipulation flex-col items-center justify-center gap-1 rounded-lg text-[10px] font-semibold text-slate-500 transition-colors active:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+            className="flex min-h-14 touch-manipulation flex-col items-center justify-center gap-1 rounded-lg text-[11px] font-semibold text-slate-600 transition-colors active:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
             aria-label="Ouvrir toutes les rubriques"
+            aria-controls="workspace-menu"
           >
             <Menu size={19} />
-            <span>Plus</span>
+            <span>Menu</span>
           </button>
-        )}
       </div>
     </nav>
   );

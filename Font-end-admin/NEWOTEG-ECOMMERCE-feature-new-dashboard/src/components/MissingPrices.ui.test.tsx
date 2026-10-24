@@ -79,6 +79,22 @@ describe('Prix à renseigner', () => {
     expect(toast.success).toHaveBeenCalled();
   });
 
+  it('garde la catégorie choisie visible quand son dernier article reçoit un prix', async () => {
+    const user = userEvent.setup();
+    render(<MissingPrices />);
+    await screen.findByRole('article', { name: item.nomProduit });
+    await user.selectOptions(screen.getByRole('combobox', { name: 'Filtrer par catégorie' }), 'c1');
+    await user.type(screen.getByLabelText(/Prix détail/), '1500');
+    vi.mocked(cataloguePricingApi.complete).mockImplementationOnce(async () => {
+      result = { ...result, data: [], total: 0, categories: [] };
+      return { prixDetail: 1500 };
+    });
+    await user.click(screen.getByRole('button', { name: `Enregistrer le prix de ${item.nomProduit}` }));
+    await screen.findByText('Aucun article pour ces filtres');
+    expect((screen.getByRole('combobox', { name: 'Filtrer par catégorie' }) as HTMLSelectElement).value).toBe('c1');
+    expect(screen.getByRole('option', { name: 'Condensateurs (0)' })).toBeTruthy();
+  });
+
   it.each([404, 503])('explique une indisponibilité du serveur (%s) et permet de recharger', async (status) => {
     const user = userEvent.setup();
     vi.mocked(cataloguePricingApi.list).mockRejectedValueOnce({
