@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { RefreshCw } from 'lucide-react';
 import { registerSW } from 'virtual:pwa-register';
+import { activateAppUpdate } from '../services/appUpdate';
 
 /** Keep the current worker while a sale/form is open. The user chooses when to reload. */
 export function AppUpdateNotice() {
@@ -18,12 +19,15 @@ export function AppUpdateNotice() {
       lastCheck = Date.now();
       void registration?.update().catch(() => {});
     };
-    const update = registerSW({
+    registerSW({
       immediate: true,
       onNeedRefresh() { if (active) setAvailable(true); },
       onRegisteredSW(_url, value) { registration = value; check(); },
     });
-    setApply(() => () => update(true));
+    setApply(() => async () => {
+      const current = registration || await navigator.serviceWorker.getRegistration();
+      await activateAppUpdate(current, () => window.location.reload());
+    });
     window.addEventListener('focus', check);
     window.addEventListener('online', check);
     document.addEventListener('visibilitychange', check);
@@ -46,8 +50,6 @@ export function AppUpdateNotice() {
         setUpdating(true); setError(false);
         try {
           await apply?.();
-          // No reload can occur if the worker disappeared while the app was suspended.
-          window.setTimeout(() => { setError(true); setUpdating(false); }, 10_000);
         } catch { setError(true); setUpdating(false); }
       }}><RefreshCw size={16} className={updating ? 'animate-spin' : ''} />{updating ? 'Actualisation…' : 'Actualiser l’application'}</button>
       <button type="button" className="mt-1 min-h-11 w-full text-sm font-medium text-slate-600" disabled={updating} onClick={() => setDismissed(true)}>Plus tard</button>
