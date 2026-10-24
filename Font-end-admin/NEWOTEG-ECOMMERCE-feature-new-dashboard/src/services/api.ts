@@ -1,12 +1,9 @@
 import axios from 'axios';
 import { createClientId } from '../utils/clientId';
 import { clearAdminSession, getAdminToken, storeAdminSession } from './adminSession';
+import { resolveApiBaseUrl } from './apiBaseUrl';
 
-// En production, VITE_API_URL pointe vers le backend (ex: https://api.newoteg.com)
-// En dev local, le proxy Vite redirige /api vers localhost:3000
-// On s'assure que le préfixe /api est toujours présent
-const rawUrl = import.meta.env.VITE_API_URL || '/api';
-const BASE_URL = rawUrl.endsWith('/api') ? rawUrl : `${rawUrl}/api`;
+const BASE_URL = resolveApiBaseUrl(import.meta.env.VITE_API_URL, window.location.hostname);
 
 const api = axios.create({
   baseURL: BASE_URL,

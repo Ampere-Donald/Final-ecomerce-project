@@ -10,6 +10,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { bonVenteApi, categorieApi, clientApi, produitApi, ticketApi, equivalenceApi, proformaApi, factureVirtuelleApi, getApiErrorMessage } from '../services/api';
 import { useAdminAuth } from '../context/AdminAuthContext';
+import { resolveProductImageUrl } from '../services/apiBaseUrl';
 import { can } from '../utils/permissions';
 import { ReceiptGenerator } from './ReceiptGenerator';
 import { useToast } from './ui/Toast';
@@ -132,12 +133,8 @@ const fmtFCFA = formatFcfa;
 const stockDisponibleVente = (produit: Pick<Produit, 'quantiteStock' | 'quantiteDisponibleVente'>) =>
   Math.max(0, Number(produit.quantiteDisponibleVente ?? produit.quantiteStock ?? 0));
 
-const resolveImgUrl = (raw?: string | null): string | null => {
-  if (!raw) return null;
-  if (raw.startsWith('http://') || raw.startsWith('https://')) return raw;
-  const base = (import.meta.env.VITE_API_URL || 'http://localhost:3000/api').replace('/api', '');
-  return `${base}${raw.startsWith('/') ? '' : '/'}${raw}`;
-};
+const resolveImgUrl = (raw?: string | null): string | null =>
+  resolveProductImageUrl(raw, import.meta.env.VITE_API_URL, window.location.hostname);
 
 const optimizedProductImageUrl = (raw?: string | null, size = 320): string | null => {
   const resolved = resolveImgUrl(raw);

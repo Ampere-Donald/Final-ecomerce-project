@@ -39,6 +39,12 @@ export default defineConfig(({mode}) => {
           ],
         },
         workbox: {
+          // The legacy HTML has no update prompt. Activate this migration once,
+          // while leaving its running pages and their cached chunks intact.
+          importScripts: ['/sw-transition-20261024.js'],
+          cacheId: 'newoteg-admin-ui-v3',
+          cleanupOutdatedCaches: false,
+          clientsClaim: false,
           // Installed clients may retain an old HTTP-cached Workbox import.
           // Keep the update worker self-contained so it can replace that cache.
           inlineWorkboxRuntime: true,

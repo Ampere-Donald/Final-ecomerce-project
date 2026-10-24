@@ -1,63 +1,53 @@
-# APK Newoteg Admin (coquille Capacitor) — build différé
+# Installer et mettre à jour Newoteg sur Android
 
-Ce dossier contient un projet **Capacitor** déjà scaffoldé (`android/`) qui sert de
-coquille native : la WebView charge directement `PRODUCTION_URL` défini dans
-`capacitor.config.ts`. L'APK ne contient donc pas le code de l'application — les
-mises à jour restent automatiques, exactement comme pour la PWA (Phase 1).
+## Installation proposée sur le site
 
-## ⚠️ Un point à vérifier avant de construire l'APK
+Le bouton **Installer l’application sur cet appareil** utilise l’installation web
+de Chrome (`beforeinstallprompt`). Il installe une PWA, avec une icône Android.
+Il ne distribue pas un fichier APK Capacitor à télécharger. La PWA partage le
+service worker et les fichiers d’affichage du profil Chrome qui l’a installée.
 
-**Couverture Android réelle de cet APK : Android 7.0 (API 24) et plus.**
-   Capacitor 8 fixe `minSdkVersion = 24` par défaut (`android/variables.gradle`)
-   et ses bibliothèques (androidx) ne garantissent pas un fonctionnement fiable
-   en dessous. **Ne descendez pas ce chiffre sans test réel sur un appareil
-   Android 5/6** — un plantage silencieux au démarrage serait pire qu'une
-   absence d'APK.
-   → **Pour les appareils Android 5/6 de la boutique, la voie fiable reste la
-   PWA installée depuis Chrome (Phase 1)**, dont la compatibilité descend
-   volontairement plus bas (`vite.config.ts` : `android >= 5`). Cet APK est un
-   filet de secours pour les appareils Android 7+ sans Play Store activé, pas
-   un remplacement universel.
+## Ancienne interface ou connexion AUTH_NETWORK
 
-## Pourquoi aucun `.apk` n'est fourni ici
+1. Enregistrer les saisies ouvertes, puis fermer les autres onglets Newoteg.
+2. Dans Chrome, ouvrir `https://admin.newoteg.com/api/app-update`.
+3. Choisir **Charger la nouvelle version**, puis rouvrir l’icône de l’application.
 
-Cette machine ne dispose ni de JDK, ni d'Android SDK, ni de Gradle
-(`JAVA_HOME`/`ANDROID_HOME` vides). Le scaffold (`npx cap add android`) ne
-nécessite pas ces outils, mais la compilation/signature de l'APK en a besoin.
+Cette page ne dépend pas du bundle React ni du cache de navigation hérité. Elle
+vérifie le serveur avant de désinscrire le service worker de la racine et de
+supprimer uniquement les caches de fichiers d’affichage Newoteg. Elle ne touche
+ni aux sessions, ni à localStorage, ni à IndexedDB (ventes en attente et paniers).
+Elle ne remplace pas le mot de passe ou le PIN.
 
-## Marche à suivre (sur une machine avec Android Studio installé)
+Le nouveau service worker active une seule fois la migration des anciennes
+installations sans recharger leurs pages ouvertes ni effacer leurs fichiers.
+Une nouvelle navigation charge la nouvelle interface. Les mises à jour suivantes
+conservent le bouton de confirmation, pour enregistrer les saisies en cours.
 
-1. Installer **Android Studio** (inclut JDK 17 et l'Android SDK).
-2. Cloner/copier ce dossier `Font-end-admin/NEWOTEG-ECOMMERCE-feature-new-dashboard`.
-3. `npm install`
-4. `npm run build` (régénère `dist/`, utilisé uniquement comme copie de secours
-   par Capacitor — le contenu réellement affiché vient de `server.url`,
-   déjà réglé sur `https://admin.newoteg.com`).
-5. `npx cap sync android` (synchronise les assets et plugins natifs).
-6. Ouvrir `android/` dans Android Studio :
-   - **Build → Generate Signed Bundle / APK** pour un APK signé, distribuable
-     par WhatsApp/USB (garder le fichier de clé de signature en lieu sûr —
-     nécessaire pour toute future mise à jour de l'app elle-même, rare
-     puisque le contenu se met à jour via le site).
-   - Ou en ligne de commande : `cd android && ./gradlew assembleRelease`
-     (nécessite un `keystore` configuré dans `android/app/build.gradle`).
+La connexion et les flux temps réel passent par `/api` sur le domaine admin,
+même si une ancienne variable de compilation indique directement le backend.
+Les images `/uploads` utilisent également le relais HTTPS du domaine admin.
 
-## Distribution aux employés
+## APK Capacitor distinct
 
-1. Partager le fichier `.apk` par WhatsApp ou clé USB (pas de Play Store).
-2. Sur le téléphone : **Paramètres → Sécurité → Autoriser l'installation
-   depuis des sources inconnues** (le libellé exact varie selon Android/marque).
-3. Ouvrir le fichier `.apk` reçu pour l'installer.
-4. Se connecter avec les identifiants habituels (PIN pour vendeur/caissier,
-   mot de passe pour admin).
+Le projet `android/` permet aussi de compiler une application native distincte.
+Sa configuration actuelle charge `https://admin.newoteg.com` dans une WebView.
+Le projet utilise Capacitor 7, `minSdkVersion = 23` et un WebView minimal de 60.
+Ces réglages ne constituent pas une validation sur chaque appareil Huawei/Pixel.
 
-## Icônes
+La CI compile un **APK de test**, disponible dans l’artefact
+`newoteg-admin-debug-apk`. Cet artefact n’est pas le bouton d’installation du site.
 
-Les icônes de l'app (`public/icons/icon-192.png`, `icon-512.png`,
-`icon-maskable-512.png`, générées par `scripts/generate-pwa-icons.mjs`) peuvent
-être reprises pour l'icône native via `@capacitor/assets` :
+Pour compiler :
+
+```sh
+npm ci
+npm run build
+npx cap sync android
+./android/gradlew -p android assembleDebug
 ```
-npx @capacitor/assets generate --android --iconBackgroundColor "#1c19a3" --iconBackgroundColorDark "#1c19a3"
-```
-(commande à lancer sur la machine avec Android Studio, après avoir placé un
-logo source carré dans `assets/icon.png` — voir la doc `@capacitor/assets`).
+
+Une publication native exige une clé de signature conservée et un numéro de
+version croissant. Vérifier le certificat d’un APK déjà distribué avant de
+préparer sa mise à jour. Ne pas demander la désinstallation ou l’effacement des
+données pour corriger l’affichage : cela peut supprimer des ventes hors ligne.

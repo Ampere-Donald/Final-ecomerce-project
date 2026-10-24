@@ -2,6 +2,7 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { AlertTriangle, Search, Package, Filter, Edit2, Check, X, RefreshCw } from 'lucide-react';
 import { motion } from 'motion/react';
 import { produitApi, categorieApi } from '../services/api';
+import { resolveProductImageUrl } from '../services/apiBaseUrl';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface Categorie {
@@ -24,10 +25,7 @@ type StatusFilter = 'all' | 'rupture' | 'critique';
 
 // ─── Helper: resolve image URL (Cloudinary absolute or legacy /uploads/) ─────
 const resolveImgUrl = (raw: string | null | undefined): string | null => {
-  if (!raw) return null;
-  if (raw.startsWith('http://') || raw.startsWith('https://')) return raw;
-  const API_BASE = (import.meta.env.VITE_API_URL || 'http://localhost:3000/api').replace('/api', '');
-  return `${API_BASE}${raw.startsWith('/') ? '' : '/'}${raw}`;
+  return resolveProductImageUrl(raw, import.meta.env.VITE_API_URL, window.location.hostname);
 };
 
 // ─── Composant principal ──────────────────────────────────────────────────────

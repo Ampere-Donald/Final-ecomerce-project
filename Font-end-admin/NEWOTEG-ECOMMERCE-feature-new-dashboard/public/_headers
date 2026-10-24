@@ -5,5 +5,7 @@
   Cache-Control: no-cache, must-revalidate
 /registerSW.js
   Cache-Control: no-cache, must-revalidate
+/sw-transition-20261024.js
+  Cache-Control: no-cache, must-revalidate
 /manifest.webmanifest
   Cache-Control: no-cache, must-revalidate
