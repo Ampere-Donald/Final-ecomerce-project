@@ -20,9 +20,10 @@ export default function Catalogue() {
   const [list, setList] = useState(false);
   const { lang } = useI18n();
   const ready = useBrowserReady();
-  const { query, category, inStock, sort, page, path } = catalogueQuery(params);
-  const resource = useResource(path);
+  const { query, category, subcategory, inStock, sort, page, path } = catalogueQuery(params);
+  const resource = useResource(path, true);
   const categories = useResource("/categories");
+  const hierarchy = useResource("/categories?includeSousCategories=true");
   let result = { rows: [], total: 0, pages: 1 },
     parseError = null;
   try {
@@ -50,14 +51,15 @@ export default function Catalogue() {
     ]),
     lang,
   );
-  const cats = Array.isArray(categories.data)
-    ? categories.data
-    : categories.data?.data || [];
+  const categoryData = hierarchy.data || categories.data;
+  const cats = Array.isArray(categoryData) ? categoryData : categoryData?.data || [];
+  const children = cats.find((c) => c.id === category)?.sousCategories || [];
   const change = (key, value) => {
     setParams((previous) => {
       const next = new URLSearchParams(previous);
       if (value) next.set(key, value);
       else next.delete(key);
+      if (key === "category") next.delete("sub");
       if (key !== "page") next.delete("page");
       return next;
     });
@@ -79,6 +81,14 @@ export default function Catalogue() {
               {c.nom}
             </option>
           ))}
+        </select>
+      </label>
+      <label className="e-field">
+        <Copy fr="Sous-catégorie" en="Subcategory" />
+        <select disabled={!ready || !category} value={subcategory}
+          onChange={(e) => change("sub", e.target.value)}>
+          <option value="">{lang === "fr" ? "Toutes les sous-catégories" : "All subcategories"}</option>
+          {children.map((child) => <option key={child.id} value={child.id}>{child.nom} ({child._count?.produits ?? 0})</option>)}
         </select>
       </label>
       {categories.error && (
@@ -194,6 +204,7 @@ export default function Catalogue() {
           {[
             ["search", query],
             ["category", cats.find((c) => c.id === category)?.nom || category],
+            ["sub", children.find((c) => c.id === subcategory)?.nom || subcategory],
             [
               "instock",
               inStock ? (lang === "fr" ? "En stock" : "In stock") : "",

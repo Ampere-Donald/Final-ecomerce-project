@@ -63,7 +63,8 @@ const quickLinks = [
 
 export default function CatalogueMenu({ onNavigate }) {
   const resource = useResource("/categories");
-  const families = catalogueFamilies(resource.data);
+  const hierarchy = useResource("/categories?includeSousCategories=true");
+  const families = catalogueFamilies(hierarchy.data || resource.data);
   const [selected, setSelected] = useState("");
   const family = families.find((f) => f.key === selected) || families.find(f => f.key === "components") || families[0];
   const { lang } = useI18n();
@@ -144,6 +145,13 @@ export default function CatalogueMenu({ onNavigate }) {
             </Link>
           ))}
         </div>
+        <nav className="e-catalogue-subfamilies" aria-label={lang === "en" ? "Subcategories" : "Sous-catégories"}>
+          {family?.categories.flatMap((category) => (category.sousCategories || []).map((child) => (
+            <Link key={child.id} to={`${categoryDestination(category.id)}&sub=${encodeURIComponent(child.id)}`} onClick={onNavigate}>
+              {child.nom} ({child._count?.produits ?? 0})
+            </Link>
+          )))}
+        </nav>
         {familySearches(family).length > 0 && <nav className="e-catalogue-subfamilies" aria-label={lang === "en" ? "Explore this family" : "Explorer cette famille"}>
           {familySearches(family).map(item => <Link to={item.href} onClick={onNavigate} key={item.href}>{label(item)}<ChevronRight size={14} aria-hidden="true" /></Link>)}
         </nav>}

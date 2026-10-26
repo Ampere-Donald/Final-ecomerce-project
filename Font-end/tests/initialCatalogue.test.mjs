@@ -3,6 +3,18 @@ import assert from 'node:assert/strict';
 import { catalogueQuery, canRenderCatalogue } from '../src/storefront/catalogueQuery.js';
 import { catalogueSnapshot, publicCatalogueData, catalogueBootJSON, readCatalogueBoot, injectInitialCatalogue } from '../src/storefront/initialCatalogue.js';
 
+test('subcategory filter is identical for browser, server rendering and public API', () => {
+  const url = new URL('https://newoteg.com/catalogue?category=components&sub=capacitors&page=2');
+  const query = catalogueQuery(url.searchParams);
+  const api = new URLSearchParams(query.path.split('?')[1]);
+  assert.equal(query.subcategory, 'capacitors');
+  assert.equal(api.get('categoryId'), 'components');
+  assert.equal(api.get('sousCategorieId'), 'capacitors');
+  assert.equal(api.get('page'), '2');
+  assert(canRenderCatalogue(url));
+  assert.equal(canRenderCatalogue(new URL('https://newoteg.com/catalogue?sub=' + 'x'.repeat(151))), false);
+});
+
 const product = { id: 'p1', nomProduit: 'Condensateur', code: 'C1', prixPublic: null, quantiteStock: 0,
   estActif: true, coutRevient: 999, categorie: { id: 'cat', nom: 'Composants', margeInterne: 20 } };
 const response = { data: [product], meta: { total: 1, lastPage: 1 } };
