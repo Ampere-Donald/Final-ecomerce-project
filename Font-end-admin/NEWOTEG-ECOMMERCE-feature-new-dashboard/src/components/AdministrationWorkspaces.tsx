@@ -93,7 +93,7 @@ export const StockPurchasingWorkspace = () => {
       title="Stock & achats"
       description="Un parcours continu, de l’alerte de rupture jusqu’à l’achat et au fournisseur, sans changer de section principale."
       tabs={tabs}
-      actions={<><TopAction to="/stock">Mouvements de stock</TopAction><TopAction to="/achats" primary>Nouvel achat</TopAction></>}
+      actions={<><TopAction to="/revision-catalogue">Réviser le catalogue</TopAction><TopAction to="/stock">Mouvements de stock</TopAction><TopAction to="/achats" primary>Nouvel achat</TopAction></>}
     />
   );
 };

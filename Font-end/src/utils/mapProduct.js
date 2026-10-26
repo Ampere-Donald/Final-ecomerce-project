@@ -49,6 +49,8 @@ export function mapProduct(p) {
         description: p.description,
         categoryName: p.categorie?.nom || 'DIVERS',
         categoryId: p.categorie?.id || '',
+        subcategoryName: p.sousCategorie?.nom || '',
+        subcategoryId: p.sousCategorieId || '',
         categorySlug: p.categorie?.id || 'divers',
         retailPrice: parseFloat(p.prixPublic === undefined ? p.prixDetail : p.prixPublic) || 0,
         wholesalePrice: parseFloat(p.prixGros) || 0,

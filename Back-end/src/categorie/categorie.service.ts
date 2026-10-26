@@ -21,9 +21,10 @@ export class CategorieService {
     return cat;
   }
 
-  async findAll() {
+  async findAll(includeSousCategories = false) {
     return await this.db.categorie.findMany({
       include: {
+        ...(includeSousCategories && { sousCategories: { orderBy: { nom: 'asc' as const }, include: { _count: { select: { produits: { where: { estActif: true } } } } } } }),
         _count: {
           select: { produits: { where: { estActif: true } } },
         },
@@ -35,7 +36,7 @@ export class CategorieService {
   async findOne(id: string) {
     const categorie = await this.db.categorie.findUnique({
       where: { id },
-      include: { produits: { where: { estActif: true } } },
+      include: { produits: { where: { estActif: true }, select: { id: true, nomProduit: true, marque: true, imageUrl: true, prixDetail: true, prixGros: true, quantiteStock: true, categorieId: true, sousCategorieId: true } } },
     });
     if (!categorie) {
       throw new NotFoundException(`Catégorie avec l'id ${id} non trouvée`);

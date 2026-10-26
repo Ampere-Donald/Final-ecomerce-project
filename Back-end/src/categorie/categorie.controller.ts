@@ -11,6 +11,7 @@ import {
   UploadedFile,
   UseGuards,
   Request,
+  Query,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
@@ -40,8 +41,8 @@ export class CategorieController {
   }
 
   @Get()
-  findAll() {
-    return this.categorieService.findAll();
+  findAll(@Query('includeSousCategories') include?: string) {
+    return this.categorieService.findAll(include === 'true');
   }
 
   @Get(':id')

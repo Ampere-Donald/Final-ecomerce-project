@@ -14,6 +14,7 @@ import { resolveProductImageUrl } from '../services/apiBaseUrl';
 interface Categorie {
   id: string;
   nom: string;
+  sousCategories?: { id: string; nom: string }[];
 }
 
 interface Produit {
@@ -35,6 +36,9 @@ interface Produit {
   isPopulaire?: boolean;
   estActif?: boolean;
   categorie?: Categorie;
+  sousCategorieId?: string | null;
+  prixRevision?: number;
+  classementRevision?: number;
   codeFamille?: string | null;
   code?: string | null;
 }
@@ -47,6 +51,7 @@ const FORM_INITIAL = {
   code: '',
   codeFamille: '',
   categorieId: '',
+  sousCategorieId: '',
   description: '',
   prixDetail: '',
   prixDemiGros: '',
@@ -78,6 +83,7 @@ export const Produits = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
+  const [subCategoryFilter, setSubCategoryFilter] = useState('');
   const [sortOrder, setSortOrder] = useState('newest');
   const [codeFamilleFilter, setCodeFamilleFilter] = useState('');
   const [codeFilter, setCodeFilter] = useState('');
@@ -99,6 +105,7 @@ export const Produits = () => {
         limit: itemsPerPage,
         search: searchTerm.trim() || undefined,
         categoryId: categoryFilter || undefined,
+        sousCategorieId: subCategoryFilter || undefined,
         codeFamille: codeFamilleFilter.trim() || undefined,
         code: codeFilter.trim() || undefined,
         includeInactive: true,
@@ -117,7 +124,7 @@ export const Produits = () => {
     } finally {
       if (requestId === productRequestRef.current) setLoading(false);
     }
-  }, [categoryFilter, codeFamilleFilter, codeFilter, currentPage, searchTerm, sortOrder]);
+  }, [categoryFilter, subCategoryFilter, codeFamilleFilter, codeFilter, currentPage, searchTerm, sortOrder]);
 
   useEffect(() => {
     let timeoutId: NodeJS.Timeout | null = null;
@@ -213,7 +220,7 @@ export const Produits = () => {
 
   // ─── Chargement initial unique ([] strict) ────────────────────────────────
   useEffect(() => {
-    categorieApi.getAll()
+    categorieApi.getAll(true)
       .then(setCategories)
       .catch((error) => console.error('Erreur chargement catégories :', error));
   }, []); // ← TABLEAU VIDE STRICT : un seul appel au montage
@@ -225,7 +232,7 @@ export const Produits = () => {
   }, [loadProducts]);
 
   // ─── Pagination ──────────────────────────────────────────────────────────
-  useEffect(() => { setCurrentPage(1); }, [searchTerm, categoryFilter, sortOrder, codeFamilleFilter, codeFilter]);
+  useEffect(() => { setCurrentPage(1); }, [searchTerm, categoryFilter, subCategoryFilter, sortOrder, codeFamilleFilter, codeFilter]);
   const totalPages = Math.max(1, Math.ceil(totalProducts / itemsPerPage));
   const paginatedProduits = produits;
 
@@ -251,6 +258,7 @@ export const Produits = () => {
       code: prod.code ?? '',
       codeFamille: prod.codeFamille ?? '',
       categorieId: prod.categorie?.id ?? '',
+      sousCategorieId: prod.sousCategorieId ?? '',
       description: prod.description ?? '',
       prixDetail: prod.prixDetail != null ? String(prod.prixDetail) : '',
       prixDemiGros: prod.prixDemiGros != null ? String(prod.prixDemiGros) : '',
@@ -313,6 +321,9 @@ export const Produits = () => {
       if (formData.code.trim()) dataToSend.append('code', formData.code.trim());
       if (formData.codeFamille.trim()) dataToSend.append('codeFamille', formData.codeFamille.trim());
       dataToSend.append('categorieId', formData.categorieId);
+      dataToSend.append('sousCategorieId', formData.sousCategorieId);
+      if (editingProduit?.prixRevision) dataToSend.append('prixRevisionAttendue', String(editingProduit.prixRevision));
+      if (editingProduit?.classementRevision) dataToSend.append('classementRevisionAttendue', String(editingProduit.classementRevision));
       if (formData.description) dataToSend.append('description', formData.description);
       if (formData.prixDetail) dataToSend.append('prixDetail', formData.prixDetail);
       if (formData.prixDemiGros) dataToSend.append('prixDemiGros', formData.prixDemiGros);
@@ -399,6 +410,7 @@ export const Produits = () => {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h1 className="font-display text-3xl font-semibold tracking-tight text-slate-950">Catalogue produits</h1>
+          <a href="/revision-catalogue" className="inline-flex min-h-11 items-center text-sm font-bold text-primary">Vérifier les prix et le classement →</a>
           <p className="text-sm text-slate-500 mt-1">
             {canManageProducts ? 'Gérez les articles, leurs références et leurs marques.' : 'Retrouvez les articles, leurs prix et leur disponibilité.'}
           </p>
@@ -883,7 +895,7 @@ export const Produits = () => {
                     <select
                       required
                       value={formData.categorieId}
-                      onChange={(e) => setFormData((f) => ({ ...f, categorieId: e.target.value }))}
+                      onChange={(e) => setFormData((f) => ({ ...f, categorieId: e.target.value, sousCategorieId: '' }))}
                       className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary/20 outline-none transition-all"
                     >
                       <option value="">Sélectionner...</option>
@@ -902,6 +914,13 @@ export const Produits = () => {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-slate-700 mb-1">
+                      Sous-catégorie
+                    </label>
+                    <select value={formData.sousCategorieId} onChange={e => setFormData(f => ({ ...f, sousCategorieId: e.target.value }))} className="min-h-11 w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg">
+                      <option value="">Sans sous-catégorie</option>
+                      {(categories.find(c => c.id === formData.categorieId)?.sousCategories || []).map(sub => <option value={sub.id} key={sub.id}>{sub.nom}</option>)}
+                    </select>
+                    <label className="block text-sm font-medium text-slate-700 mb-1 mt-4">
                       Marque *
                     </label>
                     <input
@@ -947,7 +966,7 @@ export const Produits = () => {
                 {/* Prix & Stock */}
                 {!canEditPrices && (
                   <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
-                    🔒 Seul le super admin peut modifier les prix. Les champs prix sont en lecture seule.
+                    🔒 Les administrateurs peuvent modifier les prix. Proposez une correction depuis Révision du catalogue.
                   </p>
                 )}
                 <div className="grid grid-cols-3 gap-4">
@@ -1146,7 +1165,7 @@ export const Produits = () => {
             </div>
             <select
               value={categoryFilter}
-              onChange={(e) => setCategoryFilter(e.target.value)}
+              onChange={(e) => { setCategoryFilter(e.target.value); setSubCategoryFilter(''); }}
               className="px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-primary/20 text-slate-600 transition-all font-medium"
             >
               <option value="">Toutes les catégories</option>
@@ -1160,6 +1179,10 @@ export const Produits = () => {
               <option value="newest">Les plus récents</option>
               <option value="az">Alphabétique (A-Z)</option>
               <option value="za">Alphabétique (Z-A)</option>
+            </select>
+            <select aria-label="Filtrer par sous-catégorie" value={subCategoryFilter} onChange={e => setSubCategoryFilter(e.target.value)} className="min-h-11 px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm">
+              <option value="">Toutes les sous-catégories</option>
+              {(categories.find(c => c.id === categoryFilter)?.sousCategories || []).map(sub => <option value={sub.id} key={sub.id}>{sub.nom}</option>)}
             </select>
           </div>
 

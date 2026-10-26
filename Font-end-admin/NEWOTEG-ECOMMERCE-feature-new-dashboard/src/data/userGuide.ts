@@ -402,6 +402,7 @@ export const troubleshootingItems: TroubleshootingItem[] = [
 ];
 
 export const menuMatrix = [
+  { menu: 'Révision du catalogue', roles: ['SUPER_ADMIN', 'ADMIN', 'VENDEUR', 'CAISSIER', 'MANAGER'] },
   { menu: 'Tableau de bord', roles: ['SUPER_ADMIN', 'ADMIN'] },
   { menu: 'Analyses', roles: ['SUPER_ADMIN', 'ADMIN'] },
   { menu: 'Caisse du jour', roles: ['SUPER_ADMIN', 'ADMIN', 'CAISSIER'] },
@@ -417,4 +418,22 @@ export const menuMatrix = [
   { menu: 'Roles', roles: ['SUPER_ADMIN'] },
   { menu: 'Parametres', roles: ['SUPER_ADMIN'] },
 ];
+
+for (const role of guideRoleOrder) {
+  const guide = roleGuideContent[role];
+  const validator = role === 'ADMIN' || role === 'SUPER_ADMIN';
+  guide.mainMenus.push('Révision du catalogue');
+  guide.workflows.push({
+    title: 'Réviser le catalogue sur téléphone',
+    steps: [
+      'Ouvrir Révision du catalogue, choisir une catégorie puis Commencer la vérification.',
+      'Vérifier les prix actuels, les tarifs de gros, la promotion et les propositions de l’équipe.',
+      validator ? 'Corriger puis Valider et suivant, ou accepter une proposition. La décision est définitive.' : 'Confirmer les prix ou proposer une correction puis Envoyer et suivant. Un administrateur prendra la décision.',
+      'Utiliser Classement pour corriger la catégorie et la sous-catégorie indépendamment des prix.',
+      'Signaler un article arrêté. Un administrateur doit confirmer son archivage.',
+    ],
+    note: 'Sans Internet, la saisie reste en brouillon sur cet appareil et dans ce compte. Elle n’est jamais envoyée automatiquement. Un conflit conserve votre saisie pour comparaison.',
+  });
+  guide.canDo.push(validator ? 'Corriger les prix produit, valider les propositions et gérer les sous-catégories.' : 'Proposer des corrections de prix ou de classement et signaler les articles abandonnés.');
+}
 
