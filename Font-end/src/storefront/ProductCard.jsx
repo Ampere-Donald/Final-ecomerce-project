@@ -1,6 +1,6 @@
 import "./home-selection.css";
 import "./product-card.css";
-import { useContext, useEffect, useState } from "react";
+import { memo, useContext, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Heart, ShoppingCart, ArrowRight, Search } from "lucide-react";
 import { useI18n } from "../context/I18nContext";
@@ -11,7 +11,7 @@ import { selectionAction, selectionPrice } from "./homeSelectionData";
 import ComparisonAction from "./ComparisonAction";
 import { formatFCFA } from "../utils/formatFCFA";
 import { InitialResourceContext } from "./initialResourceContext";
-export default function ProductCard({ product, eager = false, compare = true, imageSizes }) {
+function ProductCard({ product, eager = false, compare = true, imageSizes }) {
   const { lang } = useI18n();
   const { toggleFavorite, isFavorite } = useFavorites();
   const name = lang === "en" && product.englishName ? product.englishName : product.model;
@@ -46,3 +46,7 @@ export default function ProductCard({ product, eager = false, compare = true, im
     </div>
   </article>;
 }
+
+// Filter-panel and category-tree updates do not change these cards. Context
+// updates (language, favourites) and fresh product objects still render normally.
+export default memo(ProductCard);

@@ -25,10 +25,18 @@ const boot = JSON.parse(html.match(/id="initial-catalogue-data">([\s\S]*)<\/scri
 const product = boot.resources[parsed.path].data[0];
 assert.equal(product.prixPublic, null); assert.equal(product.quantiteStock, 0);
 assert.equal(product.nomProduit, products.data[0].nomProduit);
+const fullPage = { data: Array.from({ length: 24 }, (_, index) => ({
+  ...products.data[0], id: 'full-' + index, nomProduit: 'Complete server product ' + index,
+})), meta: { total: 24, lastPage: 1 } };
+const completeHTML = runtime.renderCatalogueResponse('/catalogue', fullPage, [], Date.now());
+assert.equal((completeHTML.match(/<article class="[^"]*e-product-card/g) || []).length, 24,
+  'Progressive client rendering must never truncate the server document');
+assert(completeHTML.includes('Complete server product 23'));
 assert.throws(() => runtime.renderCatalogueResponse('/catalogue', { unexpected: [] }, [], Date.now()));
 const manifest = JSON.parse(fs.readFileSync(path.join(root, 'Font-end/.catalogue-backend/manifest.json'), 'utf8'));
 assert.equal(runtime.rendererId, manifest.rendererId, 'Independent package and frontend build must select the same renderer');
 console.log(JSON.stringify({ status: 'passed', rendererId: runtime.rendererId,
   checks: ['real compiled CJS package loaded with verified hash', 'canonical URL/filter contract',
     'anonymous allowlist and script escaping', 'zero stock and missing price preserved',
-    'malformed API response rejected', 'independent builds produce identical renderer identity'] }));
+    'malformed API response rejected', 'all 24 server cards present before JavaScript',
+    'independent builds produce identical renderer identity'] }));

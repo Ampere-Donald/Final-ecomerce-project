@@ -5,7 +5,7 @@ const fs=require('node:fs'),assert=require('node:assert/strict');
 const base=process.env.PREFETCH_TEST_BASE||'http://127.0.0.1:5237';
 assert.equal(new URL(base).hostname,'127.0.0.1');
 const out=process.env.PREFETCH_TEST_OUTPUT;assert(out);fs.mkdirSync(out,{recursive:true});
-const row=(name)=>({id:'11111111-1111-4111-8111-111111111111',nomProduit:name,code:'TEST',estActif:true,categorieId:'test',categorie:{id:'test',nom:'Fixture'},prixPublic:3500,quantiteStock:3,imageUrl:'https://res.cloudinary.com/dm4ij9sxg/image/upload/v123/produits/prefetch-fixture.webp'});
+const row=(name)=>({id:'11111111-1111-4111-8111-111111111111',nomProduit:name,designationEn:'English '+name,code:'TEST',estActif:true,categorieId:'test',categorie:{id:'test',nom:'Fixture'},prixPublic:name==='B fixture'?7500:3500,quantiteStock:name==='B fixture'?0:3,imageUrl:'https://res.cloudinary.com/dm4ij9sxg/image/upload/v123/produits/prefetch-fixture.webp'});
 (async()=>{
  const browser=await chromium.launch({headless:true,executablePath:'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe'});
  const report={checks:[],errors:[],writes:[],fixtureOnly:true};
@@ -21,6 +21,10 @@ const row=(name)=>({id:'11111111-1111-4111-8111-111111111111',nomProduit:name,co
      if(lead){window.firstCatalogueLead=lead.textContent;observer.disconnect();}
     });
     observer.observe(document,{childList:true,subtree:true});
+   });
+   if(legacy)await ctx.addInitScript(()=>{
+    const supports=DOMTokenList.prototype.supports;
+    DOMTokenList.prototype.supports=function(token){return token==='modulepreload'?false:supports.call(this,token)};
    });
    let release,releaseStyles;const gate=new Promise(resolve=>{release=resolve});
    const stylesGate=new Promise(resolve=>{releaseStyles=resolve});
@@ -47,10 +51,20 @@ const row=(name)=>({id:'11111111-1111-4111-8111-111111111111',nomProduit:name,co
     return r.fallback();
    });
    const page=await ctx.newPage();page.on('pageerror',e=>report.errors.push(e.message));
+   const earlyModules=[];
+   page.on('request',request=>{const u=new URL(request.url());if(/^\/assets\/Catalogue-[\w-]+\.js$/.test(u.pathname)&&!u.pathname.includes('legacy'))earlyModules.push(u.pathname)});
    await page.goto(base+'/catalogue?search=NE555',{waitUntil:'commit'});
    await expect.poll(()=>productReads).toBe(1);await expect.poll(()=>categoryReads).toBe(1);
    await expect.poll(()=>imageReads).toBe(1);
    assert.equal(await page.locator('#root').innerHTML(),'');
+   if(!legacy)await expect.poll(()=>earlyModules.length).toBe(1);
+   const moduleHints=await page.locator('link[data-catalogue-module]').evaluateAll(nodes=>nodes.map(n=>n.getAttribute('href')));
+   if(legacy)assert.deepEqual(moduleHints,[]);
+   else {
+    assert(moduleHints.some(path=>/^\/assets\/Catalogue-/.test(path)));
+    assert(!moduleHints.some(path=>/legacy|Checkout|GuestTracking|Account|Auth|Devis/.test(path)),
+     'The public catalogue must not preload unrelated or private pages');
+   }
    assert.equal(await page.evaluate(()=>localStorage.getItem('__newotegCataloguePrefetch')),null);
    releaseStyles();
    release();await expect(page.locator('.e-product-card').first()).toContainText('A fixture');
@@ -64,8 +78,57 @@ const row=(name)=>({id:'11111111-1111-4111-8111-111111111111',nomProduit:name,co
    assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
    await page.getByRole('combobox',{name:'Trier les produits'}).selectOption('name-desc');
    await expect(page.locator('.e-product-card').first()).toContainText('B fixture');assert.equal(productReads,2);
+   const card=page.locator('.e-product-card').first();
+   await expect(card.locator('.e-price')).toHaveText(/7\s*500\s*FCFA/);
+   await expect(card.locator('.e-home-stock')).toHaveText('Rupture de stock');
+   await expect(card.locator('.e-home-product-cta')).toContainText('Voir les équivalents');
+   if(width===390){
+    const favorite=card.locator('.e-home-product-heart');
+    await favorite.click();await expect(favorite).toHaveAttribute('aria-pressed','true');
+    await page.getByRole('button',{name:'Ouvrir le menu',exact:true}).click();
+    await page.getByRole('dialog',{name:'X-Electronic',exact:true}).getByRole('button',{name:'English',exact:true}).click();await page.keyboard.press('Escape');
+    await expect(card.locator('h3')).toHaveText('English B fixture');
+    await expect(card.locator('.e-home-product-cta')).toContainText('View alternatives');
+    await expect(favorite).toHaveAttribute('aria-pressed','true');
+    await favorite.click();await expect(favorite).toHaveAttribute('aria-pressed','false');
+    await page.getByRole('button',{name:'Open menu',exact:true}).click();
+    await page.getByRole('dialog',{name:'X-Electronic',exact:true}).getByRole('button',{name:'Français',exact:true}).click();await page.keyboard.press('Escape');
+    await expect(card.locator('h3')).toHaveText('B fixture');
+   }
    await page.screenshot({path:out+'/'+(legacy?'legacy':'modern')+'-'+width+'.png',fullPage:false});
-   report.checks.push({legacy,width,readsBeforeStyles:true,readyDataOnFirstRender:true,earlyReadsReused:true,imagePreloadReused:true,filterRefetched:true});await ctx.close();
+   report.checks.push({legacy,width,readsBeforeStyles:true,nativeModuleHint:!legacy,readyDataOnFirstRender:true,earlyReadsReused:true,imagePreloadReused:true,filterRefetched:true,priceAndStockUpdated:true,...(width===390?{favoritesAndLanguageUpdated:true}:{})});await ctx.close();
+  }
+  for(const legacy of [false,true])for(const width of [390,768,1440]){
+   const ctx=await browser.newContext({viewport:{width,height:950}});
+   await ctx.addInitScript(()=>{
+    localStorage.setItem('appLang','fr');window.firstCatalogueCount=null;
+    const observer=new MutationObserver(()=>{
+     const cards=document.querySelectorAll('.e-catalog-grid .e-product-card');
+     if(cards.length){window.firstCatalogueCount=cards.length;window.originalFirstCard=cards[0];observer.disconnect();}
+    });observer.observe(document,{childList:true,subtree:true});
+   });
+   await ctx.route('**/*',async r=>{
+    const u=new URL(r.request().url());
+    if(r.request().method()!=='GET'){report.writes.push(u.pathname);return r.abort()}
+    if(u.pathname.startsWith('/api/')){
+     if(u.pathname==='/api/produits')return r.fulfill({json:{data:Array.from({length:24},(_,i)=>({...row('Product '+i),id:'fixture-'+i})),meta:{total:24,lastPage:1}}});
+     return r.fulfill({json:u.pathname==='/api/categories'?[]:{actif:false}});
+    }
+    if(u.hostname==='res.cloudinary.com')return r.fulfill({contentType:'image/webp',body:fs.readFileSync(__dirname+'/../public/design-e/hero-scene-v2-960.webp')});
+    if(legacy&&r.request().resourceType()==='document'){
+     const response=await r.fetch();return r.fulfill({response,body:(await response.text()).replace(/<script\b[^>]*type="module"[^>]*>[\s\S]*?<\/script>/g,'').replace(/\snomodule/g,'')});
+    }
+    return r.continue();
+   });
+   const page=await ctx.newPage();page.on('pageerror',e=>report.errors.push(e.message));
+   await page.goto(base+'/catalogue');
+   await expect(page.locator('.e-catalog-grid .e-product-card')).toHaveCount(24);
+   assert.equal(await page.evaluate(()=>window.firstCatalogueCount),width<=760?4:width<=1100?6:8);
+   assert.equal(await page.evaluate(()=>window.originalFirstCard===document.querySelector('.e-catalog-grid .e-product-card')),true);
+   await expect(page.locator('.e-product-card').last()).toContainText('Product 23');
+   assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
+   report.checks.push({legacy,width,priorityRows:true,all24ProductsPresent:true,firstCardNodePreserved:true});
+   await ctx.close();
   }
   {
    const ctx=await browser.newContext({viewport:{width:390,height:844}});
