@@ -8,11 +8,11 @@ export default function MotionProvider({ children }) {
   useEffect(() => {
     const media = window.matchMedia('(prefers-reduced-motion: reduce)');
     function update() {
-      let paused = false;
+      let paused = null;
       try { paused = localStorage.getItem(storageKey) === 'true'; } catch { /* Session still works. */ }
       // Let pending Suspense boundaries hydrate their existing HTML before a
       // preference update changes shared context. CSS honors the system now.
-      startTransition(() => setPreferences({ ready: true, reduced: media.matches, paused }));
+      startTransition(() => setPreferences(previous => ({ ready: true, reduced: media.matches, paused: paused ?? previous.paused })));
     }
     update();
     if (media.addEventListener) media.addEventListener('change', update); else media.addListener(update);

@@ -118,6 +118,16 @@ async function geometry(page, track) {
         await page.keyboard.press('Escape'); await expect(page.locator('dialog[open]')).toHaveCount(0);
         await expect(page.locator('.e-menu')).toBeFocused();
         pass('Live reduced-motion change, manual controls, persisted global pause, no running scene and modal focus');
+        await page.locator('footer .e-motion-toggle').click();
+        const banner = page.locator('.e-banner-rotator').first();
+        await banner.scrollIntoViewIfNeeded();
+        await banner.getByRole('button', { name: 'Suspendre les bannières', exact: true }).click();
+        await expect(banner).toHaveAttribute('data-rotation', 'paused');
+        assert.equal(await banner.locator('.e-banner-slide').first().evaluate(n => getComputedStyle(n).transitionDuration), '0s');
+        await banner.getByRole('button', { name: 'Bannière suivante', exact: true }).click();
+        await expect(banner.locator('.e-banner-slide.is-active')).toHaveCount(1);
+        await expect(banner.locator('.e-banner-slide:not(.is-active)')).toHaveAttribute('inert', '');
+        pass('Banner pause stops its transition; manual selection and inactive focus exclusion remain usable');
       }
       for (const route of ['/catalogue', '/equivalences', '/panier', '/devis', '/contact', '/login']) {
         await page.goto(base + route); await expect(page.locator('main h1')).toBeVisible();
@@ -135,6 +145,23 @@ async function geometry(page, track) {
     await expect(rail.locator('[data-rail-play]')).toHaveCount(0);
     pass('Reduced motion from initial load: two products available, no autoplay');
     await context.close();
+    const blocked = await contextFor({ width: 390 });
+    await blocked.context.addInitScript(() => {
+      Storage.prototype.getItem = () => { throw Error('Storage unavailable'); };
+      Storage.prototype.setItem = () => { throw Error('Storage unavailable'); };
+    });
+    await blocked.page.goto(base + '/');
+    await expect(blocked.page.locator('.e-home-selection .e-selection-card')).toHaveCount(10);
+    const pause = blocked.page.locator('footer .e-motion-toggle');
+    await expect(pause).toBeEnabled(); await pause.click();
+    await expect(pause).toHaveAttribute('aria-pressed', 'true');
+    await blocked.page.emulateMedia({ reducedMotion: 'reduce' });
+    await expect(pause).toBeDisabled();
+    await blocked.page.emulateMedia({ reducedMotion: 'no-preference' });
+    await expect(pause).toBeEnabled(); await expect(pause).toHaveAttribute('aria-pressed', 'true');
+    await expect(blocked.page.locator('html')).toHaveAttribute('data-motion', 'reduced');
+    pass('Storage unavailable: session pause survives system preference changes');
+    await blocked.context.close();
     assert.deepEqual(report.errors, []); assert.deepEqual(report.writes, []);
     report.status = 'passed';
   } catch (error) { report.status = 'failed'; report.failure = error.message; throw error; }

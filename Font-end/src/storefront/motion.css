@@ -25,6 +25,7 @@
 .e-motion-toggle{display:inline-flex;align-items:center;gap:8px;min-height:44px;text-align:left;font:inherit;cursor:pointer}
 .e-motion-toggle svg{flex:none}
 .e-motion-toggle:disabled{cursor:default;opacity:.8}
+.e-banner-rotator[data-rotation=paused] .e-banner-slide,.e-banner-rotator[data-rotation=paused] .e-banner-dots span{transition:none}
 @keyframes e-route-arrive{from{transform:translateY(5px)}to{transform:translateY(0)}}
 @keyframes e-layer-arrive{from{opacity:.85;transform:translateY(10px) scale(.99)}to{opacity:1;transform:translateY(0) scale(1)}}
 @keyframes e-backdrop-arrive{from{opacity:0}to{opacity:1}}
