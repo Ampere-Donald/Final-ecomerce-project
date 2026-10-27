@@ -13,6 +13,9 @@ import { injectInitialHome } from './src/storefront/initialHome.js';
 import { catalogueSnapshot, injectInitialCatalogue } from './src/storefront/initialCatalogue.js';
 import { catalogueBackendFragment, injectBackendCatalogue } from './src/storefront/backendCatalogue.js';
 import { seoFamily } from './src/storefront/seoFamilies.js';
+import { productBackendFragment } from './src/storefront/backendProduct.js';
+import { injectProductFragment } from './src/storefront/initialProduct.js';
+import { sitemapResponse } from './src/storefront/publicSitemap.js';
 
 function privateResponse(response) {
   const headers = new Headers(response.headers);
@@ -25,6 +28,8 @@ function privateResponse(response) {
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
+    if (url.pathname === '/sitemap.xml' && ['GET', 'HEAD'].includes(request.method) && env.backendCatalogue)
+      return sitemapResponse(request, env.backendCatalogue);
     if (url.pathname.startsWith('/api/') || url.pathname.startsWith('/uploads/')) {
       const target = new URL(url.pathname + url.search, BACKEND);
       const response = await fetch(new Request(target, request));
@@ -49,7 +54,14 @@ export default {
       headers.set('Cache-Control', 'no-store');
       headers.set('X-Robots-Tag', resolved.metadata.robots);
       if (resolved.status === 503) headers.set('Retry-After', '60');
-      return new Response(request.method === 'HEAD' ? null : renderFallbackMetadata(await response.text(), resolved.metadata),
+      let html = request.method === 'HEAD' ? null : renderFallbackMetadata(await response.text(), resolved.metadata);
+      if (html && record.type === 'product' && resolved.status === 200 && env.backendCatalogue) {
+        try {
+          const fragment = await productBackendFragment(url, env.backendCatalogue);
+          if (fragment) html = injectProductFragment(html, fragment, env.catalogueStyles);
+        } catch (error) { env.reportCatalogueFailure?.(error); }
+      }
+      return new Response(html,
         { status: resolved.status, headers });
     }
     // The asset SPA fallback serves index.html with 200 even for unknown URLs.

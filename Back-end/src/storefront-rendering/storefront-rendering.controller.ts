@@ -18,4 +18,24 @@ export class StorefrontRenderingController {
     response.setHeader('X-Catalogue-Renderer', result.rendererId);
     return result.html;
   }
+
+  @Get('product')
+  @Header('Cache-Control', 'no-store')
+  @Header('X-Robots-Tag', 'noindex, nofollow')
+  async product(@Query('url') url: unknown, @Query('renderer') renderer: unknown,
+    @Res({ passthrough: true }) response: Response) {
+    const result = await this.rendering.product(url, renderer);
+    response.setHeader('Content-Type', 'text/html; charset=utf-8');
+    response.setHeader('X-Catalogue-Renderer', result.rendererId);
+    return result.html;
+  }
+
+  @Get('sitemap.xml')
+  @Header('Cache-Control', 'public, max-age=300')
+  async sitemap(@Query('renderer') renderer: unknown, @Res({ passthrough: true }) response: Response) {
+    const result = await this.rendering.sitemap(renderer);
+    response.setHeader('Content-Type', 'application/xml; charset=utf-8');
+    response.setHeader('X-Catalogue-Renderer', result.rendererId);
+    return result.xml;
+  }
 }

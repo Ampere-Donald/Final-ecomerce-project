@@ -20,13 +20,13 @@ Plan validé par l’utilisateur le 27 octobre 2026. Objectif complet conservé 
 | SEO-04 | Sélection provisoire préparée | 20 produits disponibles avec image et 5 sous-catégories réelles ; ajuster selon ventes et demandes |
 | SEO-05 | À faire | Constituer et dédupliquer le panier des 100 recherches candidates |
 | SEO-06 | En cours | Rendu catalogue partagé étendu aux routes de familles ; activation de production et budget runtime restent à vérifier |
-| SEO-07 | À faire | Rendu principal des fiches produit |
-| SEO-08 | À faire | Compléter la recette de rupture, suppression et panne API |
+| SEO-07 | Développé et testé localement | Rendu partagé, paquet compilé, transport backend et hydratation des fiches ; activation de production restante |
+| SEO-08 | En cours | Contrats testés pour rupture, référence inactive/absente et panne API ; contrôle après déploiement restant |
 | SEO-09 | À faire | Politique de fraîcheur et mesures de charge |
 | SEO-10 | Développé et testé localement | Cinq routes de familles, sélection API, métadonnées, navigation et pagination développées ; publication avec la livraison A restante |
 | SEO-11 | En cours | Métadonnées des familles et de leurs filtres testées ; audit complet de la politique restant |
-| SEO-12 | À faire | Sitemap des URL publiques admissibles |
-| SEO-13 | À faire | Données structurées produit et boutique |
+| SEO-12 | Développé et testé localement | Sitemap dynamique et projection SQL limitée ; XML d’acceptation de 1 951 URL pour 1 932 produits et 5 familles ; activation restante |
+| SEO-13 | En cours | Product/Offer/BreadcrumbList partagés avec le rendu, sans offre si prix ou stock inconnus ; informations boutique et validation externe restantes |
 | SEO-14 | À faire | Enrichissement sourcé des 20 fiches pilotes |
 | SEO-15 | En cours | Présentation concise des cinq familles intégrée ; compléter les aides de choix après recherche |
 | SEO-16 | En cours | Liens vers familles et pagination HTML intégrés ; compléter accueil et fiches |
@@ -60,6 +60,11 @@ Plan validé par l’utilisateur le 27 octobre 2026. Objectif complet conservé 
 - Le rendu React partagé a été exécuté avec les données publiques réelles des cinq familles : 24/24/24/8/4 produits dans le HTML des premières pages, pour des totaux de 93/95/185/8/4. Preuves dans `family-render/render-report.json` et les cinq fichiers HTML associés. Cette vérification ne prouve pas encore l’activation du rendu en production.
 - Le navigateur local confirme 24 produits sur Condensateurs, le passage à la page 2 et sa canonical propre. À 390 px, aucun débordement du document ; la navigation de familles occupe 48 px après ajustement. Capture dans `family-render/condensateurs-mobile.png`.
 - Lint, compilation et build du storefront réussis. Dernier journal de build dans `build.log`.
-- Le CLI GitHub installé n’a pas de session authentifiée ; les outils GitHub connectés ont répondu avec une erreur de liaison des arguments lors des premières tentatives. Aucune publication effectuée.
+- Le CLI GitHub installé n’a pas de session authentifiée. L’outil GitHub connecté a ensuite été rétabli avec ses arguments documentés : accès au dépôt confirmé. Railway est également accessible en lecture.
+- Vingt fiches pilotes ont été rendues avec leurs données publiques réelles ; preuve dans `product-render/report.json` et les vingt HTML associés. Les prix inconnus restent à confirmer, sans offre chiffrée inventée.
+- La recette navigateur couvre une fiche de chacune des cinq familles avec et sans JavaScript, la cohérence prix/balisage, la canonical, l’absence de débordement à 390 px, le dialogue de conseil et l’ajout local au panier. Onze vérifications réussies, aucune erreur d’hydratation et aucune écriture réseau ; `product-browser/hydration-report.json` et captures à 390/1440 px.
+- Le paquet CJS réel a été chargé par le vérificateur backend avec contrôle de checksum ; rendu catalogue, produit, scripts JSON échappés et sitemap vérifiés. Le build du backend et 15 tests de ses contrats SEO passent.
+- Le sitemap d’acceptation, généré par le paquet compilé à partir de quatre pages de lecture de l’API publique, contient 1 951 URL (1 932 produits, 5 familles et 14 pages stables). Validation XML réussie, aucune route privée et aucune date de modification inventée ; `sitemap/report.json` et `sitemap-preview.xml`.
+- Configuration Railway observée : service `Final-ecomerce-project` du projet `meticulous-perfection`, source `/Back-end` avec Nixpacks ; la variable d’activation du rendu ne figure pas dans les noms de variables du service. Cette configuration n’embarque pas encore le paquet de rendu. Une livraison compatible devra préparer ce changement avant l’activation.
 
-Prochaine étape : terminer la recette du rendu partagé et des parcours de familles, puis développer le rendu des fiches et le sitemap. Le périmètre global reste en cours.
+Prochaine étape : intégrer la dernière amélioration du catalogue publiée sur `main`, refaire la recette sur la version combinée et préparer la livraison compatible du backend. Le périmètre global reste en cours ; aucune de ces nouvelles fonctionnalités n’a encore été activée en production.

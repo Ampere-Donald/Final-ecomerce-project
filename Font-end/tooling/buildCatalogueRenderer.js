@@ -28,7 +28,14 @@ export default function buildCatalogueRenderer() {
         for (const css of manifest[key].css || []) styles.add('/' + css);
         for (const child of manifest[key].imports || []) visit(child);
       }
-      visit('index.html'); visit('src/storefront/Catalogue.jsx');
+      visit('index.html');
+      for (const name of ['Catalogue', 'Product']) {
+        const source = `src/storefront/${name}.jsx`;
+        const candidates = manifest[source] ? [source] : [...new Set(manifest['index.html']?.dynamicImports || [])]
+          .filter(key => manifest[key]?.name === name && manifest[key]?.isDynamicEntry);
+        if (candidates.length !== 1) throw Error(`Missing unique ${name} manifest entry`);
+        visit(candidates[0]);
+      }
       await writeFile(resolve(output, 'styles.js'), `export const catalogueStyles = ${JSON.stringify([...styles])};\n`);
       await buildCataloguePackage(config.root, config.env, resolve(config.root, '.catalogue-backend'));
     },

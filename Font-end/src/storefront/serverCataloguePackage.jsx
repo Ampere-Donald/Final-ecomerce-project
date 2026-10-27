@@ -1,6 +1,8 @@
 import { renderCatalogue } from './serverCatalogue';
 import { catalogueQuery, canRenderCatalogue } from './catalogueQuery';
 import { publicCatalogueData, publicCategories, catalogueBootJSON } from './initialCatalogue';
+export { parseProductRequest, renderProductResponse } from './serverProduct';
+export { renderSitemapResponse } from './publicSitemap';
 
 export function parseCatalogueRequest(text) {
   if (typeof text !== 'string' || text.length > 2200 || !/^\/catalogue(?:\/[a-z-]+)?(?:\?.*)?$/.test(text)) throw Error('Invalid catalogue URL');

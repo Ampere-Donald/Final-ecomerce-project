@@ -26,6 +26,8 @@ import OfferDetails from "./OfferDetails";
 import ProductReviews from "./ProductReviews";
 import TechnicalSource from "./TechnicalSource";
 import { useJourneyObservation } from "./useJourney.js";
+import { productSchemaJSON } from './productSchema.js';
+import { seoFamilies, familyPath } from './seoFamilies.js';
 const ProductViewer = lazy(() => import("./ProductViewer"));
 
 function Detail({ product }) {
@@ -51,6 +53,7 @@ function Detail({ product }) {
   const name =
     lang === "en" && product.englishName ? product.englishName : product.model;
   const chosen = { ...product, image: product.images[active] || product.image };
+  const family = seoFamilies.find(f => f.category === product.categoryId && f.subcategory === product.subcategoryId);
   const purchase = (
     <>
       {buy ? (
@@ -83,6 +86,7 @@ function Detail({ product }) {
   return (
     <>
       <PageMeta title={`${name} — X-Electronic`} description={product.description?.slice(0, 155) || `${name} — X-Electronic, la boutique électronique de NEWOTEG.`} />
+      <script type="application/ld+json" data-product-schema="true" dangerouslySetInnerHTML={{ __html: productSchemaJSON(product, lang) }} />
       <div className="e-wrap e-product-page">
         <Crumbs title={name} />
         <div className="e-product-layout">
@@ -134,7 +138,7 @@ function Detail({ product }) {
             )}
             {product.categoryId && <nav className="e-catalogue-subfamilies" aria-label={lang === "fr" ? "Classement du produit" : "Product categories"}>
               <Link to={`/catalogue?category=${encodeURIComponent(product.categoryId)}`}>{product.categoryName}</Link>
-              {product.subcategoryId && <Link to={`/catalogue?category=${encodeURIComponent(product.categoryId)}&sub=${encodeURIComponent(product.subcategoryId)}`}>{product.subcategoryName}</Link>}
+              {product.subcategoryId && <Link to={family ? familyPath(family) : `/catalogue?category=${encodeURIComponent(product.categoryId)}&sub=${encodeURIComponent(product.subcategoryId)}`}>{product.subcategoryName}</Link>}
             </nav>}
             <section className="e-specs">
               <h2>
