@@ -15,6 +15,14 @@
 .e-catalog-grid.e-list .e-home-product-cta{max-width:320px}
 .e-catalog-grid.e-list .e-product-card h3{height:auto;font-size:17px}
 .e-commercial-grid .e-product-card{height:100%}
+@media(max-width:760px){
+ .e-product-grid:not(.e-catalog-grid) .e-home-product-photo{height:145px;padding:8px}
+ .e-product-grid:not(.e-catalog-grid) .e-home-product-body{padding:9px}
+ .e-product-grid:not(.e-catalog-grid) .e-product-card h3{font-size:14px;line-height:1.3;height:55px;-webkit-line-clamp:3}
+ .e-product-grid:not(.e-catalog-grid) .e-product-card .e-price{font-size:18px;overflow-wrap:anywhere}
+ .e-product-grid:not(.e-catalog-grid) .e-home-product-cta{font-size:12px;min-height:46px;padding:7px 6px;gap:4px}
+ .e-product-grid:not(.e-catalog-grid) .e-home-product-cta>svg:first-child{display:none}
+}
 .e-product-card .e-home-product-heart{width:44px;height:44px}
 @media(min-width:761px) and (max-width:1100px){.e-catalog-grid.e-product-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.e-catalog-grid.e-list{grid-template-columns:1fr}}
 @media(max-width:760px){

@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { useI18n } from "../context/I18nContext";
 import { Copy } from "./Elements";
+import MotionToggle from './MotionToggle';
 export default function Footer() {
   const { lang, toggleLang } = useI18n();
   return (
@@ -68,6 +69,7 @@ export default function Footer() {
           <button onClick={toggleLang}>
             {lang === "fr" ? "English" : "Français"}
           </button>
+          <MotionToggle />
         </nav>
         <small>© {new Date().getFullYear()} NEWOTEG · X-Electronic</small>
       </div>

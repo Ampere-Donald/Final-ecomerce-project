@@ -28,7 +28,7 @@ export default function HomeProductCard({ product }) {
   const offer = product.offer && price === product.offer.price && Date.parse(product.offer.end) > now && product.offer.cataloguePrice > price ? product.offer : null;
   return <article className="e-selection-card">
     <div className="e-selection-photo">
-      <Link to={"/product/" + product.id} aria-label={name}><Photo product={product} thumbnail sizes="(max-width: 760px) 80vw, (max-width: 1199px) 32vw, 260px" /></Link>
+      <Link to={"/product/" + product.id} aria-label={name}><Photo product={product} thumbnail sizes="(max-width: 760px) 45vw, (max-width: 1199px) 30vw, 260px" /></Link>
       <button className="e-selection-heart" aria-label={(lang === "fr" ? "Favoris : " : "Favourite: ") + name} aria-pressed={isFavorite(product.code)} onClick={() => toggleFavorite(product)}><Heart size={18} fill={isFavorite(product.code) ? "currentColor" : "none"} /></button>
     </div>
     <div className="e-selection-body">

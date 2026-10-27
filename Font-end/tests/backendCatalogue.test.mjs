@@ -19,8 +19,9 @@ test('backend transport uses only a fixed public GET and keeps accents and match
     return response();
   });
   assert.equal(result, fragment);
-  const html = injectBackendCatalogue('<html><head></head><body><div id="root"></div></body></html>', result, ['/assets/Catalogue.css']);
+  const html = injectBackendCatalogue('<html><head><script data-catalogue-prefetch="">earlyPublicReads()</script><script>keepOtherScript()</script></head><body><div id="root"></div></body></html>', result, ['/assets/Catalogue.css']);
   assert(html.includes('câble $&')); assert(html.includes('href="/assets/Catalogue.css"'));
+  assert(!html.includes('earlyPublicReads')); assert(html.includes('keepOtherScript()'));
 });
 test('mismatch, redirect, oversized HTML, injected executable script and timeouts are rejected', async () => {
   for (const fetcher of [() => response(fragment, { 'X-Catalogue-Renderer': 'b'.repeat(64) }),

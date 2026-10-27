@@ -21,10 +21,11 @@ export default function prefetchCatalogue() {
         const source = `(function(){var catalogueQuery=${catalogueQuery.toString()};var canRenderCatalogue=${canRenderCatalogue.toString()};var cardImage=${cardImage.toString()};var productImageUrl=${productImageUrl.toString()};var productMediaBase=${productMediaBase.toString()};var catalogueLeadImage=${catalogueLeadImage.toString()};(${startCataloguePrefetch.toString()})(window,${JSON.stringify(base)},catalogueQuery,canRenderCatalogue,catalogueLeadImage);})();`;
         const { code } = await transformWithEsbuild(source, 'catalogue-prefetch.js',
           { minify: true, target: 'es2017' });
-        // Before parser-blocking legacy scripts, after the root so the SSR
-        // marker is available. Deferred modern scripts have not run yet.
-        return html.replace('<div id="root"></div>',
-          `<div id="root"></div><script data-catalogue-prefetch>${code}</script>`);
+        // A classic script placed after a stylesheet waits for that stylesheet.
+        // Start public reads in the head before CSS/network can hold it up.
+        // Successful SSR injection removes this hint before serving the document.
+        return html.replace(/<meta\s+charset=["']utf-8["']\s*\/?>/i,
+          tag => `${tag}<script data-catalogue-prefetch>${code}</script>`);
       },
     },
   };

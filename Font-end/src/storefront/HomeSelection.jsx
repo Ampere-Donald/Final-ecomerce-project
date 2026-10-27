@@ -8,6 +8,7 @@ import { adaptProduct } from "./productData";
 import { resolveImageUrl } from "../utils/mapProduct";
 import { selectionPaths, selectionRows } from "./homeSelectionData";
 import HomeProductCard from "./HomeProductCard";
+import ProductRail from './ProductRail';
 import { useI18n } from "../context/I18nContext";
 import useBrowserReady from "./useBrowserReady";
 import "./home-selection.css";
@@ -25,9 +26,9 @@ export default function HomeSelection() {
     if (filter && !filterCategories) return;
     const controller = new AbortController();
     Promise.resolve()
-      .then(() => selectionPaths(filter, filterCategories, 5))
+      .then(() => selectionPaths(filter, filterCategories, 10))
       .then((paths) => Promise.all(paths.map((path) => publicCollectionGet(path))))
-      .then((responses) => { if (!controller.signal.aborted) setState({ key, rows: selectionRows(responses, 5).map((p) => adaptProduct(p, resolveImageUrl)), loading: false }); })
+      .then((responses) => { if (!controller.signal.aborted) setState({ key, rows: selectionRows(responses, 10).map((p) => adaptProduct(p, resolveImageUrl)), loading: false }); })
       .catch((error) => { if (!controller.signal.aborted) setState({ key, rows: [], error, loading: false }); });
     return () => controller.abort();
   }, [key, filter, filterCategories]);
@@ -36,13 +37,7 @@ export default function HomeSelection() {
     <div className="e-section-head"><div><h2 id="home-selection-title"><Copy fr="Notre sélection" en="Our selection" /></h2><p><Copy fr="Une sélection de composants et accessoires à découvrir." en="A selection of components and accessories to discover." /></p></div><Link to="/catalogue"><Copy fr="Tout le catalogue" en="All products" /><ArrowRight size={17} /></Link></div>
     <div className="e-home-selection-filters" aria-label="Filtres / Filters">{[["", "Tous", "All"], ["connect", "Connecter", "Connect"], ["power", "Alimenter", "Power"], ["tools", "Mesurer & assembler", "Measure & assemble"], ["repair", "Réparer", "Repair"]].map(([value, fr, en]) => <button key={value} disabled={!ready} aria-pressed={filter === value} onClick={() => setFilter(value)}><Copy fr={fr} en={en} /></button>)}</div>
     <State loading={current.loading && !(filter && categories.error)} error={current.error || (filter && categories.error)} retry={() => { setAttempt((a) => a + 1); if (categories.error) categories.retry(); }}>
-      {current.rows.length ? <div className="e-selection-track" role="region" aria-label={lang === "fr" ? "Notre sélection de produits" : "Our product selection"} tabIndex={0} onKeyDown={event => {
-        if (event.target !== event.currentTarget || !["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
-        event.preventDefault();
-        const node = event.currentTarget;
-        if (event.key === "Home" || event.key === "End") node.scrollTo({ left: event.key === "Home" ? 0 : node.scrollWidth, behavior: "auto" });
-        else node.scrollBy({ left: (event.key === "ArrowRight" ? 1 : -1) * (node.firstElementChild.getBoundingClientRect().width + 12), behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
-      }}>{current.rows.map(product => <HomeProductCard key={product.id} product={product} />)}</div> : <p className="e-note"><Copy fr="Aucune référence dans cette sélection. Consultez le catalogue ou demandez conseil." en="No products in this selection. Browse the catalogue or ask for advice." /></p>}
+      {current.rows.length ? <ProductRail key={filter} label={lang === "fr" ? "Notre sélection de produits" : "Our product selection"} trackClass="e-selection-track">{current.rows.map(product => <HomeProductCard key={product.id} product={product} />)}</ProductRail> : <p className="e-note"><Copy fr="Aucune référence dans cette sélection. Consultez le catalogue ou demandez conseil." en="No products in this selection. Browse the catalogue or ask for advice." /></p>}
     </State>
   </section>;
 }

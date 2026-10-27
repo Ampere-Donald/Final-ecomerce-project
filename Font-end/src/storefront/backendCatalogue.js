@@ -42,5 +42,6 @@ export function injectBackendCatalogue(document, fragment, css) {
       !document.includes('<div id="root"></div>')) throw Error('Invalid catalogue document');
   const styles = css.filter(path => !document.includes(`href="${path}"`))
     .map(path => `<link rel="stylesheet" href="${path}" />`).join('');
-  return document.replace('</head>', styles + '</head>').replace('<div id="root"></div>', () => fragment);
+  return document.replace(/<script data-catalogue-prefetch(?:="")?>[\s\S]*?<\/script>/g, '')
+    .replace('</head>', styles + '</head>').replace('<div id="root"></div>', () => fragment);
 }

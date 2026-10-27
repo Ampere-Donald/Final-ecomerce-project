@@ -4,6 +4,7 @@ import App from "./App.jsx";
 import "./storefront/storefront.css";
 import StorefrontProviders from "./StorefrontProviders.jsx";
 import "./storefront/refinement.css";
+import './storefront/motion.css';
 import { captureGuestFragment } from "./storefront/guestAccess";
 import { readCatalogueBoot } from "./storefront/initialCatalogue";
 
@@ -27,7 +28,7 @@ async function startStorefront() {
     <App initialHome={Home} initialCatalogue={Catalogue} snapshot={snapshot} />
   </StorefrontProviders>;
   if (initial) hydrateRoot(root, app, {
-    onRecoverableError(error) { console.error('Storefront hydration failed', error); },
+    onRecoverableError(error, info) { console.error('Storefront hydration failed', error, info.componentStack); },
   });
   else createRoot(root).render(app);
 }

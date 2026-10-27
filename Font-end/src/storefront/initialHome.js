@@ -22,6 +22,12 @@ export function initialHomeStyles(manifest) {
     for (const key of entry.imports || []) visit(key);
   }
   visit('index.html');
-  visit('src/storefront/Home.jsx');
+  // Rollup may name a shared dynamic home chunk by its hash instead of source
+  // when the home and a lazy shelf share modules. Follow the entry's real edge.
+  const home = manifest['src/storefront/Home.jsx'] ? 'src/storefront/Home.jsx' :
+    [...new Set(manifest['index.html']?.dynamicImports || [])]
+      .filter(key => manifest[key]?.name === 'Home' && manifest[key]?.isDynamicEntry);
+  if (Array.isArray(home) && home.length !== 1) throw new Error('Missing client manifest entry: unique Home');
+  visit(Array.isArray(home) ? home[0] : home);
   return [...css];
 }
