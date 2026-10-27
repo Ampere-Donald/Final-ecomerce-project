@@ -10,6 +10,7 @@ import StorefrontFrame from "./storefront/StorefrontFrame";
 import InitialResources from "./storefront/InitialResources";
 import { startJourney, leaveCheckout } from "./storefront/journey.js";
 import PageMetadataProvider from "./storefront/PageMetadataProvider";
+import { seoFamilies, familyPath, seoFamily } from './storefront/seoFamilies.js';
 
 const Home = lazy(() => import("./storefront/Home"));
 const Catalogue = lazy(() => import("./storefront/Catalogue"));
@@ -63,11 +64,12 @@ function AppContent({ initialHome, initialCatalogue }) {
   }, [location.pathname]);
 
   return (
-    <StorefrontFrame path={location.pathname} initial={Boolean((initialHome && location.pathname === '/') || (initialCatalogue && location.pathname === '/catalogue'))}>
+    <StorefrontFrame path={location.pathname} initial={Boolean((initialHome && location.pathname === '/') || (initialCatalogue && (location.pathname === '/catalogue' || seoFamily(location.pathname))))}>
       <Suspense fallback={<PageFallback />}>
         <Routes location={location}>
           <Route path="/" element={<HomeRoute />} />
           <Route path="/catalogue" element={<CatalogueRoute />} />
+          {seoFamilies.map(family => <Route key={family.slug} path={familyPath(family)} element={<CatalogueRoute />} />)}
           <Route path="/comparer" element={<Comparison />} />
           <Route path="/projets" element={<Projects />} />
           <Route path="/offres" element={<Commercial />} />

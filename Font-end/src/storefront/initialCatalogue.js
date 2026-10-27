@@ -69,7 +69,7 @@ export async function catalogueSnapshot(url, fetcher = fetch, timeoutMs = 2000) 
   if (!canRenderCatalogue(url)) return null;
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
-  const path = catalogueQuery(url.searchParams).path;
+  const path = catalogueQuery(url.searchParams, url.pathname).path;
   // Only public reads. Incoming cookies, auth headers and unrelated parameters
   // never cross this boundary, even for a signed-in browser.
   const read = async (route, max) => readJSON(await fetcher(new Request('https://api.newoteg.com/api' + route,
@@ -92,7 +92,7 @@ export function readCatalogueBoot(text, url) {
     const snapshot = JSON.parse(text);
     if (!canRenderCatalogue(url) || snapshot?.version !== 1 || snapshot.url !== url.pathname + url.search ||
         !Number.isSafeInteger(snapshot.at) || snapshot.at < 0 || snapshot.at > Date.now() + 60000) return null;
-    const path = catalogueQuery(url.searchParams).path;
+    const path = catalogueQuery(url.searchParams, url.pathname).path;
     return { version: 1, url: snapshot.url, at: snapshot.at, resources: {
       [path]: publicCatalogueData(snapshot.resources[path]), '/categories': publicCategories(snapshot.resources['/categories']),
     } };

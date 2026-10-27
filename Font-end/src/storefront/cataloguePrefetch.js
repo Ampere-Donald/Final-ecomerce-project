@@ -8,7 +8,7 @@ export function startCataloguePrefetch(win, apiBase, queryFor, canRender, leadIm
   var root = win.document.getElementById("root");
   // A server-rendered catalogue already carries these exact resources.
   if (root && root.getAttribute("data-initial-catalogue")) return;
-  var path = queryFor(url.searchParams).path;
+  var path = queryFor(url.searchParams, url.pathname).path;
   var base = apiBase.endsWith("/api") ? apiBase : apiBase + "/api";
   var origin = new win.URL(base, win.location.origin);
   if (origin.protocol !== "https:" && origin.protocol !== "http:") return;

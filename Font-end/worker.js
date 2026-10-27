@@ -12,6 +12,7 @@ import { publicRecord, recordMetadata } from './src/storefront/recordMetadata.js
 import { injectInitialHome } from './src/storefront/initialHome.js';
 import { catalogueSnapshot, injectInitialCatalogue } from './src/storefront/initialCatalogue.js';
 import { catalogueBackendFragment, injectBackendCatalogue } from './src/storefront/backendCatalogue.js';
+import { seoFamily } from './src/storefront/seoFamilies.js';
 
 function privateResponse(response) {
   const headers = new Headers(response.headers);
@@ -76,7 +77,8 @@ export default {
         headers.delete('Content-Encoding');
         headers.set('Cache-Control', 'public, max-age=0, must-revalidate');
         let html = renderFallbackMetadata(await response.text(), metadata);
-        if (url.pathname === '/catalogue' && env.backendCatalogue) {
+        const cataloguePage = url.pathname === '/catalogue' || Boolean(seoFamily(url.pathname));
+        if (cataloguePage && env.backendCatalogue) {
           try {
             const fragment = await catalogueBackendFragment(url, env.backendCatalogue);
             if (fragment) {
@@ -84,7 +86,7 @@ export default {
               headers.set('Cache-Control', 'no-store');
             }
           } catch (error) { env.reportCatalogueFailure?.(error); }
-        } else if (url.pathname === '/catalogue' && typeof env.renderCatalogue === 'function') {
+        } else if (cataloguePage && typeof env.renderCatalogue === 'function') {
           try {
             const snapshot = await catalogueSnapshot(url);
             if (snapshot) {

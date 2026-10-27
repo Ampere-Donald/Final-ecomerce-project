@@ -1,6 +1,7 @@
 import EquivalenceEntry from "./EquivalenceEntry";
 import { useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useSearchParams, useLocation, useNavigate } from "react-router-dom";
+import { seoFamilies, seoFamily, familyPath, familyParameters } from './seoFamilies.js';
 import PageMeta from "./PageMeta";
 import { SlidersHorizontal, X, ArrowRight } from "lucide-react";
 import { useI18n } from "../context/I18nContext";
@@ -16,11 +17,15 @@ import useBrowserReady from "./useBrowserReady";
 
 export default function Catalogue() {
   const [params, setParams] = useSearchParams();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const family = seoFamily(location.pathname);
+  const effectiveParams = familyParameters(params, family);
   const [open, setOpen] = useState(false);
   const [list, setList] = useState(false);
   const { lang } = useI18n();
   const ready = useBrowserReady();
-  const { query, category, subcategory, inStock, sort, page, path } = catalogueQuery(params);
+  const { query, category, subcategory, inStock, sort, page, path } = catalogueQuery(effectiveParams);
   const resource = useResource(path, true);
   const categories = useResource("/categories");
   const hierarchy = useResource("/categories?includeSousCategories=true");
@@ -55,6 +60,14 @@ export default function Catalogue() {
   const cats = Array.isArray(categoryData) ? categoryData : categoryData?.data || [];
   const children = cats.find((c) => c.id === category)?.sousCategories || [];
   const change = (key, value) => {
+    if (family && ['category', 'sub'].includes(key)) {
+      const next = new URLSearchParams(effectiveParams);
+      if (value) next.set(key, value); else next.delete(key);
+      if (key === 'category') next.delete('sub');
+      next.delete('page');
+      navigate('/catalogue' + (next.size ? '?' + next : ''));
+      return;
+    }
     setParams((previous) => {
       const next = new URLSearchParams(previous);
       if (value) next.set(key, value);
@@ -63,6 +76,11 @@ export default function Catalogue() {
       if (key !== "page") next.delete("page");
       return next;
     });
+  };
+  const pageLink = number => {
+    const next = new URLSearchParams(params);
+    if (number > 1) next.set('page', String(number)); else next.delete('page');
+    return location.pathname + (next.size ? '?' + next.toString() : '');
   };
   const filters = (
     <>
@@ -139,7 +157,7 @@ export default function Catalogue() {
     <>
       <PageMeta title={query ? `${query} — Catalogue — X-Electronic` : undefined} />
       <div className="e-wrap e-catalogue">
-        <Crumbs title={lang === "fr" ? "Catalogue" : "Catalogue"} />
+        <Crumbs title={family ? (lang === 'en' ? family.en : family.fr) : 'Catalogue'} />
         <div className="e-page-lead">
           <h1>
             {query ? (
@@ -149,9 +167,10 @@ export default function Catalogue() {
                 `Results for “${query}”`
               )
             ) : (
-              <Copy fr="Produits électroniques" en="Electronic products" />
+              family ? (lang === 'en' ? family.en : family.fr) : <Copy fr="Produits électroniques" en="Electronic products" />
             )}
           </h1>
+          {family && <p>{lang === 'en' ? family.descriptionEn : family.descriptionFr}</p>}
           <p aria-live="polite">
             {resource.loading ? (
               <Copy fr="Recherche en cours…" en="Searching…" />
@@ -162,6 +181,10 @@ export default function Catalogue() {
             )}
           </p>
         </div>
+        <nav className="e-chips e-family-links" aria-label={lang === 'en' ? 'Specialist categories' : 'Familles spécialisées'}>
+          {seoFamilies.map(item => <Link key={item.slug} to={familyPath(item)} aria-current={item === family ? 'page' : undefined}>{lang === 'en' ? item.en : item.fr}</Link>)}
+          {family && <Link to="/catalogue"><Copy fr="Tout le catalogue" en="All products" /></Link>}
+        </nav>
         <div className="e-tools">
           <button className="e-btn e-secondary" disabled={!ready} onClick={() => setOpen(true)}>
             <SlidersHorizontal size={18} />
@@ -274,21 +297,11 @@ export default function Catalogue() {
         </State>
         {!resource.error && result.pages > 1 && (
           <nav className="e-pagination" aria-label="Pagination">
-            <button
-              disabled={!ready || page <= 1}
-              onClick={() => change("page", String(page - 1))}
-            >
-              <Copy fr="Précédent" en="Previous" />
-            </button>
+            {page > 1 ? <Link to={pageLink(page - 1)} rel="prev"><Copy fr="Précédent" en="Previous" /></Link> : <span aria-disabled="true"><Copy fr="Précédent" en="Previous" /></span>}
             <span>
               {page} / {result.pages}
             </span>
-            <button
-              disabled={!ready || page >= result.pages}
-              onClick={() => change("page", String(page + 1))}
-            >
-              <Copy fr="Suivant" en="Next" />
-            </button>
+            {page < result.pages ? <Link to={pageLink(page + 1)} rel="next"><Copy fr="Suivant" en="Next" /></Link> : <span aria-disabled="true"><Copy fr="Suivant" en="Next" /></span>}
           </nav>
         )}
         {query && <EquivalenceEntry query={query} />}
