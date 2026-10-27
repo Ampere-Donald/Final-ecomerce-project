@@ -1,0 +1,107 @@
+{
+  "checkedAt": "2026-10-27T03:41:21.669Z",
+  "origin": "https://newoteg.com",
+  "scope": "Anonymous public GET checks only; no commerce acceptance, field performance or business validation.",
+  "checks": [
+    {
+      "name": "API, database and storage health",
+      "path": "/api/health",
+      "status": "passed",
+      "httpStatus": 200
+    },
+    {
+      "name": "Declared guest delivery channels",
+      "path": "/api/commandes/guest/channels",
+      "status": "passed",
+      "httpStatus": 200
+    },
+    {
+      "name": "Declared journey collection",
+      "path": "/api/parcours/disponibilite",
+      "status": "passed",
+      "httpStatus": 200
+    },
+    {
+      "name": "Published projects availability",
+      "path": "/api/projets?page=1&limit=1",
+      "status": "passed",
+      "httpStatus": 200
+    },
+    {
+      "name": "Private document headers",
+      "path": "/panier",
+      "status": "passed",
+      "httpStatus": 200
+    },
+    {
+      "name": "Private document headers",
+      "path": "/checkout",
+      "status": "passed",
+      "httpStatus": 200
+    },
+    {
+      "name": "Private document headers",
+      "path": "/suivi-invite",
+      "status": "passed",
+      "httpStatus": 200
+    },
+    {
+      "name": "Private document headers",
+      "path": "/mes-devis",
+      "status": "passed",
+      "httpStatus": 200
+    },
+    {
+      "name": "Private document headers",
+      "path": "/commandes",
+      "status": "passed",
+      "httpStatus": 200
+    },
+    {
+      "name": "Private document headers",
+      "path": "/profile",
+      "status": "passed",
+      "httpStatus": 200
+    },
+    {
+      "name": "Private document headers",
+      "path": "/login",
+      "status": "passed",
+      "httpStatus": 200
+    },
+    {
+      "name": "Public initial metadata",
+      "path": "/",
+      "status": "passed",
+      "httpStatus": 200
+    },
+    {
+      "name": "Public initial metadata",
+      "path": "/catalogue",
+      "status": "passed",
+      "httpStatus": 200
+    },
+    {
+      "name": "Public initial metadata",
+      "path": "/equivalences",
+      "status": "passed",
+      "httpStatus": 200
+    },
+    {
+      "name": "Unknown document HTTP status",
+      "path": "/__newoteg_readiness_not_found__",
+      "status": "passed",
+      "httpStatus": 404
+    }
+  ],
+  "capabilities": {
+    "guestMessages": {
+      "email": false,
+      "sms": false
+    },
+    "journeyCollection": false,
+    "publishedProjects": 0
+  },
+  "status": "passed",
+  "finishedAt": "2026-10-27T03:41:25.359Z"
+}

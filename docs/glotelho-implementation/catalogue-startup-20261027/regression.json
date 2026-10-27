@@ -1,0 +1,8 @@
+{
+  "baseline": "dist-discovery; resources verified against production dc6ebc2f",
+  "assertion": "Completed prefetch data must appear on the first catalogue render, without a loading flash",
+  "baselineResult": "failed",
+  "baselineActual": "Recherche en cours…",
+  "expected": "1 référence(s)",
+  "candidate": "9 browser groups passed"
+}

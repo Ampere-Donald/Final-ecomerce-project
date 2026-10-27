@@ -1,0 +1,80 @@
+{
+  "date": "2026-10-27T03:38:29.210Z",
+  "bootstrapSha256": "038319b1482a00ef80bbf598efd29119dea608e6c4bbdc514854b7604c66b8cf",
+  "assets": [
+    {
+      "path": "/assets/polyfills-CLGHwdbR.js",
+      "status": 200,
+      "bytes": 126262,
+      "sha256": "b0a90a13cf1a4c0efd7c9bc4b8b0dbc5ca983a9837bb86a3361ba16b740a1b51"
+    },
+    {
+      "path": "/assets/index-BB4338in.js",
+      "status": 200,
+      "bytes": 423830,
+      "sha256": "30d1a3754393768c86444167d0101362e2d17a6de9376852f244265abb330242"
+    },
+    {
+      "path": "/assets/index-Bk3iShxe.css",
+      "status": 200,
+      "bytes": 85716,
+      "sha256": "fed69783f15262eb04929b85d5b85e6e255b38a63f8c1cbcc602a462713ac871"
+    },
+    {
+      "path": "/assets/polyfills-legacy-D7HW1wNR.js",
+      "status": 200,
+      "bytes": 168724,
+      "sha256": "b168c560e4e7c18f552129fab6b3853b3647f83c835e9171a53ec3a4c7a9d470"
+    },
+    {
+      "path": "/assets/index-legacy-DmgtvYZM.js",
+      "status": 200,
+      "bytes": 534968,
+      "sha256": "0f50097e2c55b51bc69a70ee529716b727b4769e7f761a0f2778513f2f719c28"
+    },
+    {
+      "path": "/assets/Catalogue-A7d99SBH.js",
+      "status": 200,
+      "bytes": 7218,
+      "sha256": "4002727fc4e47a35a012548f5df451dafc365ab81e022f2103bf2c050476699a"
+    },
+    {
+      "path": "/assets/Catalogue-legacy-DxOxl2KW.js",
+      "status": 200,
+      "bytes": 10862,
+      "sha256": "da43d4d941bbffe72210e8b5989286adb82a75f265f9302384d5f0e783b20c76"
+    },
+    {
+      "path": "/assets/Home-BBqL7Y5E.js",
+      "status": 200,
+      "bytes": 30894,
+      "sha256": "e967f8e6265eec1a13eb42bfc85161f829619ccc24d6fa826602936d0a9c322f"
+    },
+    {
+      "path": "/assets/Home-legacy-Jrudbtwt.js",
+      "status": 200,
+      "bytes": 58504,
+      "sha256": "bf261ed07b50d9ed796ad3222cf02c448c73c78173a188348628401592f4c585"
+    },
+    {
+      "path": "/assets/ProductCarousel-DljKywqg.js",
+      "status": 200,
+      "bytes": 1172,
+      "sha256": "f854b50b247972c04907ec947405d9baaddc7d043b4ec68df4ea30a255bf99b2"
+    },
+    {
+      "path": "/assets/ProductCarousel-legacy-KzrQsg_T.js",
+      "status": 200,
+      "bytes": 1400,
+      "sha256": "3973dcf4096b646ead0f1b0c17661de1c1c1df344ec4def630b0d73d751efaa7"
+    }
+  ],
+  "health": {
+    "status": "ok",
+    "checks": {
+      "api": "ok",
+      "database": "ok",
+      "storage": "ok"
+    }
+  }
+}

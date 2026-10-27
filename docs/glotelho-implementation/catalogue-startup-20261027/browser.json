@@ -1,0 +1,77 @@
+{
+  "checks": [
+    {
+      "legacy": false,
+      "width": 390,
+      "readsBeforeStyles": true,
+      "readyDataOnFirstRender": true,
+      "earlyReadsReused": true,
+      "imagePreloadReused": true,
+      "filterRefetched": true
+    },
+    {
+      "legacy": false,
+      "width": 768,
+      "readsBeforeStyles": true,
+      "readyDataOnFirstRender": true,
+      "earlyReadsReused": true,
+      "imagePreloadReused": true,
+      "filterRefetched": true
+    },
+    {
+      "legacy": false,
+      "width": 1440,
+      "readsBeforeStyles": true,
+      "readyDataOnFirstRender": true,
+      "earlyReadsReused": true,
+      "imagePreloadReused": true,
+      "filterRefetched": true
+    },
+    {
+      "legacy": true,
+      "width": 390,
+      "readsBeforeStyles": true,
+      "readyDataOnFirstRender": true,
+      "earlyReadsReused": true,
+      "imagePreloadReused": true,
+      "filterRefetched": true
+    },
+    {
+      "legacy": true,
+      "width": 768,
+      "readsBeforeStyles": true,
+      "readyDataOnFirstRender": true,
+      "earlyReadsReused": true,
+      "imagePreloadReused": true,
+      "filterRefetched": true
+    },
+    {
+      "legacy": true,
+      "width": 1440,
+      "readsBeforeStyles": true,
+      "readyDataOnFirstRender": true,
+      "earlyReadsReused": true,
+      "imagePreloadReused": true,
+      "filterRefetched": true
+    },
+    {
+      "slowPrefetch": true,
+      "loadingVisible": true,
+      "reusedPendingRead": true,
+      "returnRefetched": true
+    },
+    {
+      "failure": "unavailable",
+      "recovered": true,
+      "reads": 2
+    },
+    {
+      "failure": "malformed",
+      "recovered": true,
+      "reads": 2
+    }
+  ],
+  "errors": [],
+  "writes": [],
+  "fixtureOnly": true
+}

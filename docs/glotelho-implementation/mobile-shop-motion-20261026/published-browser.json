@@ -1,0 +1,23 @@
+{
+  "date": "2026-10-27T03:38:55.597Z",
+  "base": "https://newoteg.com",
+  "cases": [
+    {
+      "width": 390,
+      "fullProducts": 2,
+      "products": 6,
+      "categoryRows": 1
+    },
+    {
+      "width": 1440,
+      "fullProducts": 5,
+      "products": 6,
+      "categoryRows": 1
+    }
+  ],
+  "errors": [],
+  "writes": [],
+  "fixtureOnly": false,
+  "transport": "Real public HTTPS and native CORS",
+  "status": "passed"
+}

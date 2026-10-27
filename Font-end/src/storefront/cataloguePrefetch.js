@@ -12,7 +12,7 @@ export function startCataloguePrefetch(win, apiBase, queryFor, canRender, leadIm
   var base = apiBase.endsWith("/api") ? apiBase : apiBase + "/api";
   var origin = new win.URL(base, win.location.origin);
   if (origin.protocol !== "https:" && origin.protocol !== "http:") return;
-  var state = { at: Date.now(), resources: {} };
+  var state = { at: Date.now(), resources: {}, resolved: {} };
   win.__newotegCataloguePrefetch = state;
   [path, "/categories"].forEach(function (key) {
     var controller = new win.AbortController();
@@ -56,7 +56,9 @@ export function startCataloguePrefetch(win, apiBase, queryFor, canRender, leadIm
           void error;
         }
       }
-      return { data: data };
+      var result = { data: data };
+      state.resolved[key] = result;
+      return result;
     }, function () {
       win.clearTimeout(timer);
       // Resolve failed prefetches: no unhandled rejection before React starts.
@@ -69,10 +71,22 @@ export function startCataloguePrefetch(win, apiBase, queryFor, canRender, leadIm
   }, 15000);
 }
 
-export function cataloguePrefetch(path, win = globalThis.window) {
+function currentPrefetch(win) {
   const state = win?.__newotegCataloguePrefetch;
   if (!state || !Number.isFinite(state.at) || Date.now() - state.at < 0 ||
       Date.now() - state.at >= 15000) return null;
+  return state;
+}
+
+// Only already completed public reads can seed the first client render. This
+// never waits for the network and does not replace an explicit SSR snapshot.
+export function resolvedCataloguePrefetch(path, win = globalThis.window) {
+  return currentPrefetch(win)?.resolved?.[path] || null;
+}
+
+export function cataloguePrefetch(path, win = globalThis.window) {
+  const state = currentPrefetch(win);
+  if (!state) return null;
   const resource = state.resources?.[path];
   return resource && typeof resource.then === "function" ? resource : null;
 }
