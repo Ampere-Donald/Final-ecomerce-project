@@ -14,6 +14,7 @@ export interface PublicCatalogueParams {
   limit?: number;
   search?: string;
   categoryId?: string;
+  sousCategorieId?: string;
   codeFamille?: string;
   code?: string;
   minPrice?: number;
@@ -55,6 +56,8 @@ export async function publicCatalogue(
   const conditions: Prisma.Sql[] = [Prisma.sql`p.est_actif = TRUE`];
   if (params.categoryId)
     conditions.push(Prisma.sql`p.id_categorie = ${params.categoryId}`);
+  if (params.sousCategorieId)
+    conditions.push(Prisma.sql`p.sous_categorie_id = ${params.sousCategorieId}`);
   for (const [field, value] of [
     [Prisma.sql`p.code_famille`, params.codeFamille],
     [Prisma.sql`p.code`, params.code],
@@ -158,6 +161,7 @@ export async function publicCatalogue(
             where: { id: { in: ids } },
             include: {
               categorie: true,
+              sousCategorie: true,
               attributs: includeTechnicalSources
                 ? technicalAttributesSelection
                 : true,

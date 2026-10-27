@@ -264,6 +264,23 @@ async function main() {
     );
     assert.equal((await service.list({ sousCategorieId: sub.id })).total, 1);
   });
+  await test('public pricing SQL filters subcategories and keeps the parent category inclusive', async () => {
+    const { publicCatalogue } = require('../dist/src/produit/public-catalogue');
+    const p = await read();
+    const sibling = await db.produit.create({ data: { categorieId: category.id, nomProduit: 'Autre composant de test', prixDetail: 2000 } });
+    try {
+      const filtered = await publicCatalogue(db, { categoryId: category.id, sousCategorieId: p.sousCategorieId }, new Date());
+      assert.equal(filtered.meta.total, 1);
+      assert.deepEqual(filtered.data.map(row => row.id), [p.id]);
+      assert.equal(filtered.data[0].sousCategorie.nom, 'Condensateurs');
+      const parent = await publicCatalogue(db, { categoryId: category.id }, new Date());
+      assert.equal(parent.meta.total, 2);
+      const wrongCandidate = await publicCatalogue(db, { sousCategorieId: p.sousCategorieId }, new Date(), [sibling.id]);
+      assert.equal(wrongCandidate.meta.total, 0);
+    } finally {
+      await db.produit.delete({ where: { id: sibling.id } });
+    }
+  });
   await test('batch reports per-row conflict and validates successful row only', async () => {
     const p = await read();
     const items = [
