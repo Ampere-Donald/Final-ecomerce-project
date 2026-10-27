@@ -1,0 +1,23 @@
+{
+  "checks": [
+    "fr 360 modern: 2 full products, prices/stock, controls and keyboard",
+    "Visible rail advances at real speed; Pause stops both timer and active scroll",
+    "Live reduced-motion change, manual controls, persisted global pause, no running scene and modal focus",
+    "Banner pause stops its transition; manual selection and inactive focus exclusion remain usable",
+    "360: catalogue, equivalences, cart, quote, contact and login remain usable",
+    "en 390 modern: 2 full products, prices/stock, controls and keyboard",
+    "390: catalogue, equivalences, cart, quote, contact and login remain usable",
+    "fr 768 modern: 3 full products, prices/stock, controls and keyboard",
+    "768: catalogue, equivalences, cart, quote, contact and login remain usable",
+    "fr 1440 modern: 5 full products, prices/stock, controls and keyboard",
+    "1440: catalogue, equivalences, cart, quote, contact and login remain usable",
+    "fr 390 legacy: 2 full products, prices/stock, controls and keyboard",
+    "390: catalogue, equivalences, cart, quote, contact and login remain usable",
+    "Reduced motion from initial load: two products available, no autoplay",
+    "Storage unavailable: session pause survives system preference changes"
+  ],
+  "errors": [],
+  "writes": [],
+  "fixtureOnly": true,
+  "status": "passed"
+}
