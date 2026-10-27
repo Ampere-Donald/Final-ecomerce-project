@@ -16,7 +16,7 @@ const row=(name)=>({id:'11111111-1111-4111-8111-111111111111',nomProduit:name,co
    let release,releaseStyles;const gate=new Promise(resolve=>{release=resolve});
    const stylesGate=new Promise(resolve=>{releaseStyles=resolve});
    releases.push(release,releaseStyles);
-   let productReads=0,categoryReads=0,imageReads=0;
+   let productReads=0,categoryReads=0,hierarchyReads=0,imageReads=0;
    await ctx.route('**/assets/*.js',async r=>{await gate;await r.continue()});
    await ctx.route('**/assets/*.css',async r=>{await stylesGate;await r.continue()});
    await ctx.route('https://res.cloudinary.com/**',r=>{
@@ -29,7 +29,7 @@ const row=(name)=>({id:'11111111-1111-4111-8111-111111111111',nomProduit:name,co
      if(u.pathname==='/api/produits'){
       productReads++;return r.fulfill({json:{data:[row(u.searchParams.get('sort')==='name_desc'?'B fixture':'A fixture')],meta:{total:1,lastPage:1}}});
      }
-     if(u.pathname==='/api/categories'){categoryReads++;return r.fulfill({json:[{id:'test',nom:'Fixture'}]})}
+     if(u.pathname==='/api/categories'){if(u.searchParams.get('includeSousCategories')==='true')hierarchyReads++;else categoryReads++;return r.fulfill({json:[{id:'test',nom:'Fixture'}]})}
      return r.fulfill({json:u.pathname==='/api/parcours/disponibilite'?{actif:false}:[]});
     }
     if(legacy&&req.resourceType()==='document'){
@@ -47,6 +47,7 @@ const row=(name)=>({id:'11111111-1111-4111-8111-111111111111',nomProduit:name,co
    release();await expect(page.locator('.e-product-card').first()).toContainText('A fixture');
    assert.equal(productReads,1,'React must reuse the early product read');
    assert.equal(categoryReads,1,'React must reuse the early category read');
+   await expect.poll(()=>hierarchyReads).toBe(1);
    await page.locator('.e-product-card img').first().evaluate(img=>img.decode());
    assert.equal(imageReads,1,'The card must reuse the exact responsive image preload');
    assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
