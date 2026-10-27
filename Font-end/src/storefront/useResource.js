@@ -1,17 +1,17 @@
 import { useContext, useEffect, useState } from "react";
 import apiClient from "../utils/apiClient";
 import { InitialResourceContext } from "./initialResourceContext";
-import { cataloguePrefetch } from "./cataloguePrefetch";
+import { cataloguePrefetch, resolvedCataloguePrefetch } from "./cataloguePrefetch";
 
 export default function useResource(path, refreshOnReturn = false) {
   const initial = useContext(InitialResourceContext);
-  const [state, setState] = useState(() => initial?.resources?.[path] ? {
-    key: `${path}:0`, data: initial.resources[path], error: null, loading: false,
-  } : {
-    key: "",
-    data: null,
-    error: null,
-    loading: true,
+  const [state, setState] = useState(() => {
+    const data = initial?.resources?.[path] || (!initial && resolvedCataloguePrefetch(path)?.data);
+    return data ? {
+      key: `${path}:0`, data, error: null, loading: false,
+    } : {
+      key: "", data: null, error: null, loading: true,
+    };
   });
   const [attempt, setAttempt] = useState(0);
   useEffect(() => {
@@ -41,7 +41,9 @@ export default function useResource(path, refreshOnReturn = false) {
       : apiClient.get(path, { signal: controller.signal });
     request
       .then((result) => {
-        if (!controller.signal.aborted && result) setState({ key, data: result.data, error: null, loading: false });
+        if (!controller.signal.aborted && result) setState(previous =>
+          previous.key === key && previous.data === result.data && !previous.loading && !previous.error
+            ? previous : { key, data: result.data, error: null, loading: false });
       })
       .catch((error) => {
         if (!controller.signal.aborted)

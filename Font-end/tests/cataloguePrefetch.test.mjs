@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { startCataloguePrefetch, cataloguePrefetch } from '../src/storefront/cataloguePrefetch.js';
+import { startCataloguePrefetch, cataloguePrefetch, resolvedCataloguePrefetch } from '../src/storefront/cataloguePrefetch.js';
 import { catalogueQuery, canRenderCatalogue } from '../src/storefront/catalogueQuery.js';
 import { catalogueLeadImage } from '../src/storefront/catalogueLeadImage.js';
 import { cardImage } from '../src/storefront/cardImage.js';
@@ -22,6 +22,21 @@ function browser(path = '/catalogue', { server = false, fetcher } = {}) {
   return { win, timers, calls };
 }
 const start = win => startCataloguePrefetch(win, 'https://api.newoteg.com', catalogueQuery, canRenderCatalogue);
+
+test('completed public reads can seed a client render without waiting or extending freshness', async () => {
+  const { win } = browser();
+  const path = catalogueQuery(win.location.searchParams).path;
+  start(win);
+  assert.equal(resolvedCataloguePrefetch(path, win), null, 'Pending data must not block initial rendering');
+  const result = await cataloguePrefetch(path, win);
+  assert.equal(resolvedCataloguePrefetch(path, win), result, 'Keep the data identity to avoid rendering it twice');
+  assert.equal(resolvedCataloguePrefetch('/produits?other=true', win), null);
+  win.__newotegCataloguePrefetch.at = Date.now() - 15001;
+  assert.equal(resolvedCataloguePrefetch(path, win), null, 'Expired reads cannot seed a new mount');
+  win.__newotegCataloguePrefetch.at = Date.now() + 10000;
+  assert.equal(resolvedCataloguePrefetch(path, win), null);
+  assert.equal(resolvedCataloguePrefetch(path, undefined), null, 'No browser globals needed on the server');
+});
 
 test('only supported public catalogue URLs start credential-free GETs with identical filters', async () => {
   const { win, calls } = browser('/catalogue?search=c%C3%A2ble+HDMI&sort=price-asc&instock=true&page=2&minPrice=500');
@@ -57,6 +72,7 @@ test('failed or malformed responses resolve without an unhandled rejection and p
   ]) {
     const { win, timers } = browser('/catalogue', { fetcher }); start(win);
     assert.equal(await cataloguePrefetch(catalogueQuery(win.location.searchParams).path, win), null);
+    assert.equal(resolvedCataloguePrefetch(catalogueQuery(win.location.searchParams).path, win), null);
     assert.equal([...timers.values()].filter(t => t.delay === 8000).length, 0);
   }
 });

@@ -34,7 +34,7 @@ Le contrôle global arrête CSS, WAAPI et rotations ; les commandes manuelles re
 
 ## Vérifications et portée
 
-134 tests Node réussis ; build moderne/legacy et lint ciblé réussis. Recette `Font-end/tests/verify-motion-discovery.cjs` : produits/états réels de l’interface avec API fictive strictement locale, 360/390/768/1440, FR/EN, chemin legacy, défilement à vitesse réelle, arrêt du déplacement, clavier, réduction initiale et en cours, pause globale persistante, focus du dialogue et six routes publiques. Aucun appel d’écriture ou fournisseur.
+135 tests Node réussis ; build moderne/legacy et lint ciblé réussis. Recette `Font-end/tests/verify-motion-discovery.cjs` : produits/états réels de l’interface avec API fictive strictement locale, 360/390/768/1440, FR/EN, chemin legacy, défilement à vitesse réelle, arrêt du déplacement, clavier, réduction initiale et en cours, pause globale persistante, focus du dialogue et six routes publiques. Aucun appel d’écriture ou fournisseur.
 
 La première vérification de réduction du mouvement exigeait exactement zéro pixel de scroll : l’ancrage natif produit un arrondi de 1 px. La tolérance finale est inférieure à 2 px, sans changement du comportement produit. Un défaut distinct d’hydratation a été reproduit et corrigé par la transition du contexte ; le test de recherche avant hydratation passe ensuite, avec champ/nœud/focus conservés. Les contrôles finaux surveillent aussi les erreurs de console de cette phase, et pas seulement les exceptions de page.
 
@@ -50,4 +50,11 @@ Les mesures de chargement, vérifications du catalogue réel, version publiée e
 
 Le premier pilote local direct avait donc échoué sur l’origine du port ; la configuration de production n’a pas été élargie. Un arrêt du pilote lors du nettoyage des requêtes a également été corrigé dans son transport isolé ; aucun incident de commande ni de données boutique. Ces tentatives ne sont pas annoncées comme recettes réussies.
 
-[Mesure publique avant livraison](performance-before.json), profil inchangé 390 px / réseau 1,6 Mbit/s / CPU ×4 / cache froid : LCP 4 484 / 5 112 / 6 464 ms, médiane 5 112 ms ; CLS maximal 0,00471 et JS transféré environ 203 ko. C’est une référence synthétique, pas un p75 de clients. Le budget LCP 2 500 ms reste ouvert ; aucun gain après livraison n’est encore annoncé ici. Les quatre bundles communs inspectés gagnent environ 1,7 ko gzip au total malgré l’ajout de mouvement, sans nouvelle dépendance ; ce relevé de fichiers n’est pas une mesure réseau complète.
+[Mesure publique avant livraison](performance-before.json), profil inchangé 390 px / réseau 1,6 Mbit/s / CPU ×4 / cache froid : LCP 4 484 / 5 112 / 6 464 ms, médiane 5 112 ms ; CLS maximal 0,00471 et JS transféré environ 203 ko. C’est une référence synthétique, pas un p75 de clients. Le budget LCP 2 500 ms reste ouvert ; aucun gain après livraison n’est encore annoncé ici. Les quatre bundles communs inspectés ajoutent environ 1,7 ko gzip au total malgré l’ajout de mouvement, sans nouvelle dépendance ; ce relevé de fichiers n’est pas une mesure réseau complète.
+
+
+## Publication vérifiée le 27 octobre
+
+PR #21 fusionnée en dc6ebc2f5b0a0250696c9b8686ac1008e9df80d5. Les travaux de taxonomie PR #20 ont été intégrés et la recette rejouée après assemblage. [Contrôles CI et hébergeurs](published-status.json) réussis ; [onze ressources publiques](published-assets.json) identiques au build testé par SHA-256. [Navigateur public](published-browser.json) : deux produits complets à 390 px et cinq à 1 440 px, vraie API HTTPS avec CORS natif, défilement/pause fonctionnels, aucune erreur ou écriture. [Quinze contrôles GET publics](published-readiness.json) réussis, canaux et observation toujours désactivés, zéro projet public.
+
+Mesure publique après publication, même profil : LCP 4 844 / 4 780 / 5 248 ms, médiane 4 844 ms ; CLS maximal 0,00471, environ 205 ko de JavaScript transféré. Objectif 2 500 ms toujours non atteint. La variation face à la référence ne prouve pas un effet causal : les sous-catégories et leur chargement ont aussi changé entre les versions. La suite technique est suivie dans [catalogue-startup-20261027](../catalogue-startup-20261027/README.md).

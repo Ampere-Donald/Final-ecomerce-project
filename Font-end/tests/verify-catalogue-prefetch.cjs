@@ -13,6 +13,15 @@ const row=(name)=>({id:'11111111-1111-4111-8111-111111111111',nomProduit:name,co
  try{
   for(const legacy of [false,true])for(const width of [390,768,1440]){
    const ctx=await browser.newContext({viewport:{width,height:1000}});
+   await ctx.addInitScript(()=>{
+    localStorage.setItem('appLang','fr');
+    window.firstCatalogueLead=null;
+    const observer=new MutationObserver(()=>{
+     const lead=document.querySelector('.e-page-lead p');
+     if(lead){window.firstCatalogueLead=lead.textContent;observer.disconnect();}
+    });
+    observer.observe(document,{childList:true,subtree:true});
+   });
    let release,releaseStyles;const gate=new Promise(resolve=>{release=resolve});
    const stylesGate=new Promise(resolve=>{releaseStyles=resolve});
    releases.push(release,releaseStyles);
@@ -45,6 +54,8 @@ const row=(name)=>({id:'11111111-1111-4111-8111-111111111111',nomProduit:name,co
    assert.equal(await page.evaluate(()=>localStorage.getItem('__newotegCataloguePrefetch')),null);
    releaseStyles();
    release();await expect(page.locator('.e-product-card').first()).toContainText('A fixture');
+   assert.equal(await page.evaluate(()=>window.firstCatalogueLead),'1 référence(s)',
+    'Completed prefetch data must appear on the first catalogue render, without a loading flash');
    assert.equal(productReads,1,'React must reuse the early product read');
    assert.equal(categoryReads,1,'React must reuse the early category read');
    await expect.poll(()=>hierarchyReads).toBe(1);
@@ -54,7 +65,32 @@ const row=(name)=>({id:'11111111-1111-4111-8111-111111111111',nomProduit:name,co
    await page.getByRole('combobox',{name:'Trier les produits'}).selectOption('name-desc');
    await expect(page.locator('.e-product-card').first()).toContainText('B fixture');assert.equal(productReads,2);
    await page.screenshot({path:out+'/'+(legacy?'legacy':'modern')+'-'+width+'.png',fullPage:false});
-   report.checks.push({legacy,width,readsBeforeStyles:true,earlyReadsReused:true,imagePreloadReused:true,filterRefetched:true});await ctx.close();
+   report.checks.push({legacy,width,readsBeforeStyles:true,readyDataOnFirstRender:true,earlyReadsReused:true,imagePreloadReused:true,filterRefetched:true});await ctx.close();
+  }
+  {
+   const ctx=await browser.newContext({viewport:{width:390,height:844}});
+   await ctx.addInitScript(()=>localStorage.setItem('appLang','fr'));
+   let release,reads=0;
+   const gate=new Promise(resolve=>{release=resolve});releases.push(release);
+   await ctx.route('**/api/**',async r=>{
+    const u=new URL(r.request().url());
+    if(r.request().method()!=='GET'){report.writes.push(u.pathname);return r.abort()}
+    if(u.pathname==='/api/produits'){
+     reads++;if(reads===1)await gate;
+     return r.fulfill({json:{data:[row(reads===1?'Delayed fixture':'Refreshed fixture')],meta:{total:1,lastPage:1}}});
+    }
+    return r.fulfill({json:u.pathname==='/api/categories'?[]:{actif:false}});
+   });
+   const page=await ctx.newPage();page.on('pageerror',e=>report.errors.push(e.message));
+   await page.goto(base+'/catalogue');
+   await expect(page.locator('.e-page-lead p')).toHaveText('Recherche en cours…');
+   release();await expect(page.locator('.e-product-card').first()).toContainText('Delayed fixture');
+   assert.equal(reads,1,'Pending prefetch is shared without another request');
+   await page.evaluate(()=>window.dispatchEvent(new Event('focus')));
+   await expect(page.locator('.e-product-card').first()).toContainText('Refreshed fixture');
+   assert.equal(reads,2,'Returning to the tab must still request fresh data');
+   report.checks.push({slowPrefetch:true,loadingVisible:true,reusedPendingRead:true,returnRefetched:true});
+   await ctx.close();
   }
   for(const failure of ['unavailable','malformed']){
    const ctx=await browser.newContext();let reads=0;
