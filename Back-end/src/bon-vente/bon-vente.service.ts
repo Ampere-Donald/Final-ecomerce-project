@@ -67,7 +67,7 @@ export class BonVenteService {
     // Charger les produits et calculer les prix depuis la base
     const produitIds = dto.lignes.map((l) => l.produitId);
     const produits = await this.db.produit.findMany({
-      where: { id: { in: produitIds } },
+      where: { id: { in: produitIds }, estActif: true },
     });
     if (produits.length !== produitIds.length) {
       throw new NotFoundException('Au moins un produit est introuvable');

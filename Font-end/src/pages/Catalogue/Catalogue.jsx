@@ -19,6 +19,13 @@ const ITEMS_PER_PAGE = 24;
 
 const Catalogue = () => {
     const { t } = useI18n();
+    const [refreshVersion, setRefreshVersion] = useState(0);
+    useEffect(() => {
+        const refresh = () => { if (!document.hidden) setRefreshVersion(value => value + 1); };
+        window.addEventListener('focus', refresh);
+        document.addEventListener('visibilitychange', refresh);
+        return () => { window.removeEventListener('focus', refresh); document.removeEventListener('visibilitychange', refresh); };
+    }, []);
     const [searchParams, setSearchParams] = useSearchParams();
 
     // ── State ──────────────────────────────────────────────
@@ -103,7 +110,7 @@ const Catalogue = () => {
         const fetchInitialMeta = async () => {
             try {
                 const [catRes, metaRes] = await Promise.all([
-                    apiClient.get('/categories'),
+                    apiClient.get('/categories?includeSousCategories=true'),
                     apiClient.get('/produits/metadata')
                 ]);
                 const apiCategories = Array.isArray(catRes.data) ? catRes.data : (catRes.data?.data || []);
@@ -111,7 +118,7 @@ const Catalogue = () => {
                     name: cat.nom,
                     slug: cat.id, 
                     count: cat._count?.produits || cat.produits?.length || 0,
-                    subcategories: []
+                    subcategories: (cat.sousCategories || []).map(sub => ({ name: sub.nom, slug: sub.id, count: sub._count?.produits || 0 }))
                 }));
                 setDynamicCategories(sidebarCategories);
 
@@ -142,6 +149,7 @@ const Catalogue = () => {
                 params.append('limit', 24);
                 if (debouncedSearch) params.append('search', debouncedSearch);
                 if (selectedCategory) params.append('categoryId', selectedCategory);
+                if (selectedSubCategory) params.append('sousCategorieId', selectedSubCategory);
                 if (debouncedPrice[0] > globalMinPrice) params.append('minPrice', debouncedPrice[0]);
                 if (debouncedPrice[1] && debouncedPrice[1] < globalMaxPrice) params.append('maxPrice', debouncedPrice[1]);
                 if (inStockOnly) params.append('inStock', 'true');
@@ -165,6 +173,8 @@ const Catalogue = () => {
                     categoryName: p.categorie?.nom || 'DIVERS',
                     categoryId: p.categorie?.id || '',
                     categorySlug: p.categorie?.id || 'divers',
+                    subcategoryName: p.sousCategorie?.nom || '',
+                    subcategoryId: p.sousCategorieId || '',
                     retailPrice: p.prixDetail ?? 0,
                     wholesalePrice: p.prixGros ?? 0,
                     stock: p.quantiteStock ?? 0,
@@ -184,7 +194,7 @@ const Catalogue = () => {
             }
         };
         fetchData();
-    }, [currentPage, debouncedSearch, selectedCategory, debouncedPrice, inStockOnly, sortBy, globalMinPrice, globalMaxPrice]);
+    }, [currentPage, debouncedSearch, selectedCategory, selectedSubCategory, debouncedPrice, inStockOnly, sortBy, globalMinPrice, globalMaxPrice, refreshVersion]);
 
     // Update local state if URL changes externally (e.g., via <Link> clicks)
     useEffect(() => {

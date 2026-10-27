@@ -21,6 +21,7 @@ const Incompatibilites = lazy(() => import('./components/Incompatibilites').then
 const Parcours = lazy(() => import('./components/Parcours').then((m) => ({ default: m.Parcours })));
 const Settings = lazy(() => import('./components/Settings').then((m) => ({ default: m.Settings })));
 const Produits = lazy(() => import('./components/Produits').then((m) => ({ default: m.Produits })));
+const CatalogueRevision = lazy(() => import('./components/CatalogueRevision').then((m) => ({ default: m.CatalogueRevision })));
 const Categories = lazy(() => import('./components/Categories').then((m) => ({ default: m.Categories })));
 const Ventes = lazy(() => import('./components/Ventes').then((m) => ({ default: m.Ventes })));
 const Achats = lazy(() => import('./components/Achats').then((m) => ({ default: m.Achats })));
@@ -100,6 +101,7 @@ export default function App() {
 
             {/* Nouveaux écrans connectés au backend */}
             <Route path="produits" element={<Produits />} />
+            <Route path="revision-catalogue" element={<RoleProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN', 'VENDEUR', 'CAISSIER', 'MANAGER']}><CatalogueRevision /></RoleProtectedRoute>} />
             <Route path="categories" element={<Categories />} />
 
             <Route path="stock" element={<MouvementsStock />} />

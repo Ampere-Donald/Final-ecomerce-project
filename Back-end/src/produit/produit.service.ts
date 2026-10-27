@@ -176,13 +176,13 @@ export class ProduitService {
   }
 
   /**
-   * Seul le SUPER_ADMIN peut définir/modifier les prix.
+   * ADMIN et SUPER_ADMIN peuvent définir/modifier les prix.
    * Pour tout autre acteur humain (admin, vendeur…), on retire les champs prix.
    * Les flux internes (achat, import) écrivent directement en base et passent ici
    * sans `actor` → les prix sont conservés.
    */
   private retirerPrixSiNonSuperAdmin(data: any, actor?: NotificationActor) {
-    if (!actor || actor.role === 'SUPER_ADMIN') return;
+    if (!actor || ['SUPER_ADMIN', 'ADMIN'].includes(actor.role)) return;
     for (const f of ['prixDetail', 'prixGros', 'prixDemiGros', 'prixPromo', 'finPromo']) {
       delete data[f];
     }
@@ -223,12 +223,18 @@ export class ProduitService {
   }
 
   async create(createProduitDto: CreateProduitDto, actor?: NotificationActor) {
-    const { categorieId, ...rest } = createProduitDto;
+    const { categorieId, prixRevisionAttendue: _prixRevision, classementRevisionAttendue: _classementRevision, ...rest } = createProduitDto;
 
     const data: any = { ...rest };
     if (data.code !== undefined) data.code = data.code.trim() || null;
     if (data.codeFamille !== undefined) data.codeFamille = data.codeFamille.trim() || null;
     this.retirerPrixSiNonSuperAdmin(data, actor);
+    if (data.sousCategorieId) {
+      const sub = await this.db.sousCategorie.findUnique({ where: { id: data.sousCategorieId } });
+      if (!sub || sub.categorieId !== categorieId) throw new BadRequestException('La sous-catégorie ne correspond pas à la catégorie.');
+      data.sousCategorie = { connect: { id: data.sousCategorieId } };
+    }
+    delete data.sousCategorieId;
 
     if (data.finPromo) {
       data.finPromo = new Date(data.finPromo);
@@ -333,6 +339,7 @@ export class ProduitService {
     limit?: number;
     search?: string;
     categoryId?: string;
+    sousCategorieId?: string;
     codeFamille?: string;
     code?: string;
     minPrice?: number;
@@ -355,6 +362,7 @@ export class ProduitService {
       limit = 50,
       search,
       categoryId,
+      sousCategorieId,
       codeFamille,
       code,
       minPrice,
@@ -369,6 +377,7 @@ export class ProduitService {
     const skip = (safePage - 1) * safeLimit;
 
     const where: any = includeInactive ? {} : { estActif: true };
+    if (sousCategorieId) where.sousCategorieId = sousCategorieId;
 
     const trimmedSearch = String(search || '').trim().slice(0, 120);
     if (trimmedSearch) {
@@ -461,7 +470,7 @@ export class ProduitService {
         categorie: { select: { id: true, nom: true } },
       };
     } else {
-      findArgs.include = { categorie: true, attributs: true };
+      findArgs.include = { categorie: true, sousCategorie: true, attributs: true };
     }
 
     const [data, total] = salesSearch
@@ -513,6 +522,7 @@ export class ProduitService {
       where: { id },
       include: {
         categorie: true,
+        sousCategorie: true,
         attributs: { include: { valeurs: { include: { documentation: true } } } },
       },
     });
@@ -590,7 +600,18 @@ export class ProduitService {
   async update(id: string, updateProduitDto: UpdateProduitDto, actor?: NotificationActor) {
     const existing = await this.findOne(id);
 
-    const { categorieId, ...rest } = updateProduitDto;
+    const { categorieId, prixRevisionAttendue, classementRevisionAttendue, ...rest } = updateProduitDto;
+    const where: any = { id };
+    if (actor && ['ADMIN', 'SUPER_ADMIN'].includes(actor.role)) {
+      if (['prixDetail', 'prixDemiGros', 'prixGros', 'prixPromo', 'finPromo', 'quantiteGros'].some(key => rest[key] !== undefined)) {
+        if (prixRevisionAttendue === undefined) throw new ConflictException('Rechargez la fiche avant de modifier les prix.');
+        where.prixRevision = prixRevisionAttendue;
+      }
+      if (categorieId !== undefined || rest.sousCategorieId !== undefined) {
+        if (classementRevisionAttendue === undefined) throw new ConflictException('Rechargez la fiche avant de modifier son classement.');
+        where.classementRevision = classementRevisionAttendue;
+      }
+    }
 
     const updateData: any = {
       ...rest,
@@ -599,6 +620,10 @@ export class ProduitService {
     if (updateData.code !== undefined) updateData.code = updateData.code.trim() || null;
     if (updateData.codeFamille !== undefined) updateData.codeFamille = updateData.codeFamille.trim() || null;
     this.retirerPrixSiNonSuperAdmin(updateData, actor);
+    if (categorieId && rest.sousCategorieId === undefined) {
+      const old = await this.db.produit.findUnique({ where: { id }, select: { categorieId: true } });
+      if (old?.categorieId !== categorieId) updateData.sousCategorieId = null;
+    }
     // Le stock ne se modifie JAMAIS par l'édition produit : seulement via
     // réapprovisionnement, vente, ou inventaire/ajustement tracé.
     delete updateData.quantiteStock;
@@ -612,10 +637,19 @@ export class ProduitService {
     if (categorieId) {
       updateData.categorie = { connect: { id: categorieId } };
     }
+    if (updateData.sousCategorieId !== undefined) {
+      if (updateData.sousCategorieId) {
+        const sub = await this.db.sousCategorie.findUnique({ where: { id: updateData.sousCategorieId } });
+        const parentId = categorieId || (await this.db.produit.findUnique({ where: { id }, select: { categorieId: true } }))?.categorieId;
+        if (!sub || sub.categorieId !== parentId) throw new BadRequestException('La sous-catégorie ne correspond pas à la catégorie.');
+        updateData.sousCategorie = { connect: { id: sub.id } };
+      } else updateData.sousCategorie = { disconnect: true };
+      delete updateData.sousCategorieId;
+    }
 
     try {
       const produit = await this.db.produit.update({
-        where: { id, version: existing.version },
+        where: { ...where, version: existing.version },
         data: updateData,
         include: { categorie: true },
       });

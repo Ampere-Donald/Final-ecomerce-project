@@ -88,7 +88,7 @@ describe('Public merchandising boundaries', () => {
       finPromo: null,
     });
   });
-  it('prevents an ADMIN changing the promotion amount or validity via product editing', async () => {
+  it('prevents an employee changing the promotion amount or validity via product editing', async () => {
     const db: any = { produit: { update: jest.fn().mockResolvedValue(raw) } };
     const service = new ProduitService(
       db,
@@ -105,7 +105,7 @@ describe('Public merchandising boundaries', () => {
         quantiteStock: 100,
         nomProduit: 'Correction',
       },
-      { id: 'a', role: 'ADMIN', nom: 'Fictif' },
+      { id: 'a', role: 'VENDEUR', nom: 'Fictif' },
     );
     const data = db.produit.update.mock.calls[0][0].data;
     expect(data).not.toHaveProperty('prixPromo');
@@ -115,7 +115,7 @@ describe('Public merchandising boundaries', () => {
     await expect(
       service.update(
         'p',
-        { prixPromo: 4000 },
+        { prixPromo: 4000, prixRevisionAttendue: 1 },
         { id: 's', role: 'SUPER_ADMIN', nom: 'Fictif' },
       ),
     ).rejects.toThrow();
@@ -132,13 +132,14 @@ describe('Public merchandising boundaries', () => {
     await expect(
       service.update(
         'p',
-        { prixPromo: 2500 },
+        { prixPromo: 2500, prixRevisionAttendue: 1 },
         { id: 's', role: 'SUPER_ADMIN', nom: 'Fictif' },
       ),
     ).rejects.toThrow('produit a changé');
     expect(db.produit.update.mock.calls[0][0].where).toEqual({
       id: 'p',
       version: 4,
+      prixRevision: 1,
     });
   });
   it('dates arrivals from validated purchases, deduplicates receipts and omits fully reserved stock', async () => {

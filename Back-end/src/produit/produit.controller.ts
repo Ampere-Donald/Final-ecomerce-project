@@ -122,6 +122,7 @@ export class ProduitController {
     @Query('limit') limit?: string,
     @Query('search') search?: string,
     @Query('categoryId') categoryId?: string,
+    @Query('sousCategorieId') sousCategorieId?: string,
     @Query('codeFamille') codeFamille?: string,
     @Query('code') code?: string,
     @Query('minPrice') minPrice?: string,
@@ -138,6 +139,7 @@ export class ProduitController {
       limit: limit ? parseInt(limit, 10) : 50,
       search,
       categoryId,
+      sousCategorieId,
       codeFamille,
       code,
       minPrice: minPrice ? Number(minPrice) : undefined,
@@ -342,7 +344,7 @@ export class ProduitController {
     if (updateProduitDto.prixGros != null) updateProduitDto.prixGros = parseFloat(String(updateProduitDto.prixGros));
     if (updateProduitDto.quantiteGros != null && String(updateProduitDto.quantiteGros) !== '') {
       updateProduitDto.quantiteGros = parseInt(String(updateProduitDto.quantiteGros), 10);
-    } else if (String(updateProduitDto.quantiteGros ?? '') === '') {
+    } else if (updateProduitDto.quantiteGros !== undefined && String(updateProduitDto.quantiteGros ?? '') === '') {
       (updateProduitDto as any).quantiteGros = null;
     }
     if (updateProduitDto.prixDemiGros != null) updateProduitDto.prixDemiGros = parseFloat(String(updateProduitDto.prixDemiGros));

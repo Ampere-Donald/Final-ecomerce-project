@@ -88,7 +88,7 @@ const Sidebar = ({
                                     {cat.name}
                                     <span className="catalogue-sidebar__cat-count">{cat.count}</span>
                                 </button>
-                                {cat.subcategories.length > 1 && (
+                                {cat.subcategories.length > 0 && (
                                     <button
                                         className={`catalogue-sidebar__cat-toggle ${expandedCategories[cat.slug] ? 'catalogue-sidebar__cat-toggle--open' : ''}`}
                                         onClick={() => toggleCategory(cat.slug)}
@@ -97,7 +97,7 @@ const Sidebar = ({
                                     </button>
                                 )}
                             </div>
-                            {expandedCategories[cat.slug] && cat.subcategories.length > 1 && (
+                            {(expandedCategories[cat.slug] || selectedCategory === cat.slug) && cat.subcategories.length > 0 && (
                                 <ul className="catalogue-sidebar__subcats">
                                     {cat.subcategories.map(sub => (
                                         <li key={sub.slug}>

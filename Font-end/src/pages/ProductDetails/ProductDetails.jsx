@@ -13,6 +13,12 @@ import './ProductDetails.scss';
 
 const ProductDetails = () => {
     const { t } = useI18n();
+    const [refreshVersion, setRefreshVersion] = useState(0);
+    useEffect(() => {
+        const refresh = () => { if (!document.hidden) setRefreshVersion(value => value + 1); };
+        window.addEventListener('focus', refresh); document.addEventListener('visibilitychange', refresh);
+        return () => { window.removeEventListener('focus', refresh); document.removeEventListener('visibilitychange', refresh); };
+    }, []);
     const { id } = useParams();
     const { addToCart } = useCart();
     const { toggleFavorite, isFavorite } = useFavorites();
@@ -61,7 +67,7 @@ const ProductDetails = () => {
             }
         };
         fetchProduct();
-    }, [id]);
+    }, [id, refreshVersion]);
 
     // Rupture de stock → proposer des équivalents (IA)
     useEffect(() => {
@@ -174,6 +180,7 @@ const ProductDetails = () => {
                         <Link to="/catalogue">{t('catalogue.catalogueBreadcrumb')}</Link>
                         <ChevronRight size={14} />
                         <Link to={`/catalogue?category=${product.categorySlug}`}>{product.categoryName}</Link>
+                        {product.subcategoryId && <><ChevronRight size={14} /><Link to={`/catalogue?category=${product.categoryId}&sub=${product.subcategoryId}`}>{product.subcategoryName}</Link></>}
                         <ChevronRight size={14} />
                         <span>{product.model}</span>
                     </nav>

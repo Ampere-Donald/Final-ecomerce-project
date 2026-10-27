@@ -43,6 +43,11 @@ describe('anonymous catalogue rendering', () => {
     expect(p).not.toHaveProperty('quantiteReservee');
     expect(at).toBe(products.findAll.mock.calls[0][0].publicPricingAt.getTime());
   });
+  it('passes the subcategory selected in the shared renderer query to the product service', async () => {
+    parse.mockImplementation(() => ({ url: '/catalogue?category=cat&sub=child', path: '/produits?page=1&limit=24&categoryId=cat&sousCategorieId=child' }));
+    await instance().catalogue('/catalogue?category=cat&sub=child', id);
+    expect(products.findAll).toHaveBeenCalledWith(expect.objectContaining({ categoryId: 'cat', sousCategorieId: 'child', includeInactive: false }));
+  });
   it('normalizes Decimal/Date like the JSON API and does not fabricate an empty result on outage', async () => {
     products.findAll.mockResolvedValue({ data: [{ id: 'p1', prixDetail: { toJSON: () => '125.50' },
       quantiteStock: 1 }], meta: { total: 1, lastPage: 1 } });

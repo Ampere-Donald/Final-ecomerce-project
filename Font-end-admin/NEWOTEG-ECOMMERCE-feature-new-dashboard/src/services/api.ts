@@ -190,6 +190,7 @@ export const produitApi = {
     limit?: number;
     search?: string;
     categoryId?: string;
+    sousCategorieId?: string;
     codeFamille?: string;
     code?: string;
     sort?: string;
@@ -267,7 +268,7 @@ export const commandeFournisseurApi = {
 
 // Catégories
 export const categorieApi = {
-  getAll: () => api.get('/categories').then(toArray),
+  getAll: (includeSousCategories = false) => api.get('/categories', { params: includeSousCategories ? { includeSousCategories: true } : undefined }).then(toArray),
   getOne: (id: string) => api.get(`/categories/${id}`).then(res => res.data),
   create: (data: any) => api.post('/categories', data).then(res => res.data),
   update: (id: string, data: any) => api.patch(`/categories/${id}`, data).then(res => res.data),

@@ -14,6 +14,7 @@ model Categorie {
   quantiteGros Int?      @map("quantite_gros")
   version      Int       @default(1)
   produits     Produit[]
+  sousCategories SousCategorie[]
 
   @@map("categorie")
 }
@@ -21,6 +22,16 @@ model Categorie {
 model Produit {
   id                   String           @id @default(uuid())
   categorieId          String           @map("id_categorie")
+  sousCategorieId      String?          @map("sous_categorie_id")
+  prixRevision         Int              @default(1) @map("prix_revision")
+  classementRevision   Int              @default(1) @map("classement_revision")
+  commercialRevision   Int              @default(1) @map("commercial_revision")
+  prixVerifieRevision  Int?             @map("prix_verifie_revision")
+  prixVerifieAt        DateTime?        @map("prix_verifie_at")
+  prixVerifiePar       String?          @map("prix_verifie_par")
+  classementVerifieRevision Int?        @map("classement_verifie_revision")
+  classementVerifieAt  DateTime?        @map("classement_verifie_at")
+  classementVerifiePar String?          @map("classement_verifie_par")
   nomProduit           String           @map("nom_produit") @db.VarChar(150)
   designationEn        String?          @map("designation_en") @db.VarChar(200)
   marque               String?          @db.VarChar(100)
@@ -63,13 +74,67 @@ model Produit {
   mouvementsStock      MouvementStock[]
   mouvementsCmup       MouvementCmup[]
   categorie            Categorie        @relation(fields: [categorieId], references: [id])
+  sousCategorie        SousCategorie?   @relation(fields: [sousCategorieId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  propositionsCatalogue CatalogueProposition[]
+  evenementsCatalogue CatalogueEvenement[]
 
   @@unique([marque, nomProduit], name: "unique_produit")
   @@unique([codeFamille, code], name: "unique_code_produit")
   @@index([code], name: "idx_produit_code")
   @@index([codeFamille], name: "idx_produit_code_famille")
   @@index([estActif], name: "idx_produit_est_actif")
+  @@index([sousCategorieId])
   @@map("produit")
+}
+
+model SousCategorie {
+  id String @id @default(uuid())
+  categorieId String @map("categorie_id")
+  nom String @db.VarChar(100)
+  categorie Categorie @relation(fields: [categorieId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  produits Produit[]
+  @@unique([categorieId, nom])
+  @@map("sous_categorie")
+}
+
+model CatalogueProposition {
+  id String @id @default(uuid())
+  produitId String @map("produit_id")
+  auteurId String @map("auteur_id")
+  auteurNom String @map("auteur_nom")
+  sujet String @db.VarChar(20)
+  type String @db.VarChar(20)
+  statut String @default("EN_ATTENTE") @db.VarChar(20)
+  commentaire String? @db.VarChar(1000)
+  observe Json
+  changements Json
+  prixRevision Int @map("prix_revision")
+  classementRevision Int @map("classement_revision")
+  commercialRevision Int @map("commercial_revision")
+  createdAt DateTime @default(now()) @map("created_at")
+  traiteAt DateTime? @map("traite_at")
+  traitePar String? @map("traite_par")
+  produit Produit @relation(fields: [produitId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  @@index([produitId, statut])
+  @@index([auteurId, statut])
+  @@map("catalogue_proposition")
+}
+
+model CatalogueEvenement {
+  id String @id @default(uuid())
+  operationId String @unique @map("operation_id")
+  requeteHash String @map("requete_hash")
+  produitId String @map("produit_id")
+  acteurId String @map("acteur_id")
+  acteurNom String @map("acteur_nom")
+  action String @db.VarChar(50)
+  avant Json
+  apres Json
+  resultat Json
+  createdAt DateTime @default(now()) @map("created_at")
+  produit Produit @relation(fields: [produitId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  @@index([produitId, createdAt])
+  @@map("catalogue_evenement")
 }
 
 model Attribut {
