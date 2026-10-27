@@ -74,7 +74,9 @@ test('family server snapshot and browser boot read the identical subcategory wit
 test('the actual emitted inline prefetch runs without module imports on dedicated families', async () => {
   const plugin = prefetchCatalogue();
   plugin.configResolved({ env: { VITE_API_URL: '/api' } });
-  const html = await plugin.transformIndexHtml.handler('<html><head><meta charset="utf-8"></head></html>');
+  const html = await plugin.transformIndexHtml.handler('<html><head><meta charset="utf-8"></head></html>', {
+    bundle: { 'assets/Catalogue.js': { type: 'chunk', isDynamicEntry: true, facadeModuleId: '/src/storefront/Catalogue.jsx', fileName: 'assets/Catalogue.js', imports: [], isEntry: false } },
+  });
   const code = html.match(/<script data-catalogue-prefetch>([\s\S]*?)<\/script>/)[1];
   const calls = [];
   const window = { URL, URLSearchParams, AbortController,

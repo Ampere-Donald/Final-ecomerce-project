@@ -1,0 +1,210 @@
+{
+  "before": {
+    "profile": {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "latencyMs": 150,
+      "downstreamBytesPerSecond": 200000,
+      "upstreamBytesPerSecond": 93750,
+      "cpuSlowdown": 4,
+      "coldCache": true,
+      "samplesPerRoute": 3
+    },
+    "status": "budgets-missed",
+    "budgets": {
+      "lcpMs": 2500,
+      "cls": 0.1,
+      "scriptEncodedBytes": 225280
+    },
+    "results": [
+      {
+        "sample": 1,
+        "lcpMs": 4408,
+        "cls": 0,
+        "scriptEncodedBytes": 199054,
+        "catalogueModuleStart": 2026.3999999985099,
+        "overflow": false,
+        "budgetPass": {
+          "lcp": false,
+          "cls": true,
+          "scriptBytes": true
+        }
+      },
+      {
+        "sample": 2,
+        "lcpMs": 4072,
+        "cls": 0,
+        "scriptEncodedBytes": 199054,
+        "catalogueModuleStart": 2020.6000000014901,
+        "overflow": false,
+        "budgetPass": {
+          "lcp": false,
+          "cls": true,
+          "scriptBytes": true
+        }
+      },
+      {
+        "sample": 3,
+        "lcpMs": 4340,
+        "cls": 0,
+        "scriptEncodedBytes": 199054,
+        "catalogueModuleStart": 2066,
+        "overflow": false,
+        "budgetPass": {
+          "lcp": false,
+          "cls": true,
+          "scriptBytes": true
+        }
+      }
+    ],
+    "errors": [],
+    "forbidden": [],
+    "limits": [
+      "Synthetic desktop Edge viewport/CPU/network, not a physical mobile device",
+      "Local production build and live catalogue/CDN; document transport differs from public HTTPS",
+      "Load LCP/CLS observed for 5s after network idle, not field percentiles or INP",
+      "Modern browser path only; legacy build not exercised"
+    ]
+  },
+  "modulesAndMemoOnly": {
+    "profile": {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "latencyMs": 150,
+      "downstreamBytesPerSecond": 200000,
+      "upstreamBytesPerSecond": 93750,
+      "cpuSlowdown": 4,
+      "coldCache": true,
+      "samplesPerRoute": 3
+    },
+    "status": "budgets-missed",
+    "budgets": {
+      "lcpMs": 2500,
+      "cls": 0.1,
+      "scriptEncodedBytes": 225280
+    },
+    "results": [
+      {
+        "sample": 1,
+        "lcpMs": 4144,
+        "cls": 0,
+        "scriptEncodedBytes": 197462,
+        "catalogueModuleStart": 311.69999999552965,
+        "overflow": false,
+        "budgetPass": {
+          "lcp": false,
+          "cls": true,
+          "scriptBytes": true
+        }
+      },
+      {
+        "sample": 2,
+        "lcpMs": 4596,
+        "cls": 0,
+        "scriptEncodedBytes": 197462,
+        "catalogueModuleStart": 297.30000000447035,
+        "overflow": false,
+        "budgetPass": {
+          "lcp": false,
+          "cls": true,
+          "scriptBytes": true
+        }
+      },
+      {
+        "sample": 3,
+        "lcpMs": 4552,
+        "cls": 0,
+        "scriptEncodedBytes": 197462,
+        "catalogueModuleStart": 290.20000000298023,
+        "overflow": false,
+        "budgetPass": {
+          "lcp": false,
+          "cls": true,
+          "scriptBytes": true
+        }
+      }
+    ],
+    "errors": [],
+    "forbidden": [],
+    "limits": [
+      "Synthetic desktop Edge viewport/CPU/network, not a physical mobile device",
+      "Local production build and live catalogue/CDN; document transport differs from public HTTPS",
+      "Load LCP/CLS observed for 5s after network idle, not field percentiles or INP",
+      "Modern browser path only; legacy build not exercised"
+    ]
+  },
+  "finalCandidate": {
+    "profile": {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "latencyMs": 150,
+      "downstreamBytesPerSecond": 200000,
+      "upstreamBytesPerSecond": 93750,
+      "cpuSlowdown": 4,
+      "coldCache": true,
+      "samplesPerRoute": 3
+    },
+    "status": "budgets-missed",
+    "budgets": {
+      "lcpMs": 2500,
+      "cls": 0.1,
+      "scriptEncodedBytes": 225280
+    },
+    "results": [
+      {
+        "sample": 1,
+        "lcpMs": 3912,
+        "cls": 0,
+        "scriptEncodedBytes": 197687,
+        "catalogueModuleStart": 297,
+        "overflow": false,
+        "budgetPass": {
+          "lcp": false,
+          "cls": true,
+          "scriptBytes": true
+        }
+      },
+      {
+        "sample": 2,
+        "lcpMs": 3916,
+        "cls": 0,
+        "scriptEncodedBytes": 197687,
+        "catalogueModuleStart": 279.8999999985099,
+        "overflow": false,
+        "budgetPass": {
+          "lcp": false,
+          "cls": true,
+          "scriptBytes": true
+        }
+      },
+      {
+        "sample": 3,
+        "lcpMs": 5284,
+        "cls": 0,
+        "scriptEncodedBytes": 197687,
+        "catalogueModuleStart": 337,
+        "overflow": false,
+        "budgetPass": {
+          "lcp": false,
+          "cls": true,
+          "scriptBytes": true
+        }
+      }
+    ],
+    "errors": [],
+    "forbidden": [],
+    "limits": [
+      "Synthetic desktop Edge viewport/CPU/network, not a physical mobile device",
+      "Local production build and live catalogue/CDN; document transport differs from public HTTPS",
+      "Load LCP/CLS observed for 5s after network idle, not field percentiles or INP",
+      "Modern browser path only; legacy build not exercised"
+    ]
+  },
+  "excluded": "The earlier before/after folders overlapped an active build and are not used as performance evidence."
+}

@@ -5,6 +5,7 @@ import {
   useState,
   useEffect,
   useCallback,
+  useMemo,
 } from "react";
 import { refreshSavedProducts } from "../utils/refreshSavedProducts";
 
@@ -21,7 +22,7 @@ export function FavoritesProvider({ children }) {
     let active = true;
     refreshSavedProducts(STORAGE_KEY).then(({ products, complete }) => {
       if (active) {
-        setFavorites(products);
+        setFavorites(previous => !previous.length && !products.length ? previous : products);
         setCacheChecked(complete);
       }
     });
@@ -69,10 +70,12 @@ export function FavoritesProvider({ children }) {
   );
 
   const favoritesCount = favorites.length;
+  const value = useMemo(() => ({ favorites, toggleFavorite, isFavorite, favoritesCount }),
+    [favorites, toggleFavorite, isFavorite, favoritesCount]);
 
   return (
     <FavoritesContext.Provider
-      value={{ favorites, toggleFavorite, isFavorite, favoritesCount }}
+      value={value}
     >
       {children}
     </FavoritesContext.Provider>

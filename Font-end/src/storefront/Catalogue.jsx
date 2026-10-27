@@ -1,5 +1,5 @@
 import EquivalenceEntry from "./EquivalenceEntry";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Link, useSearchParams, useLocation, useNavigate } from "react-router-dom";
 import { seoFamilies, seoFamily, familyPath, familyParameters } from './seoFamilies.js';
 import PageMeta from "./PageMeta";
@@ -8,7 +8,8 @@ import { useI18n } from "../context/I18nContext";
 import { resolveImageUrl } from "../utils/mapProduct";
 import useResource from "./useResource";
 import { adaptProduct, resultPage } from "./productData";
-import { Copy, Card, Crumbs, State, Modal } from "./Elements";
+import { Copy, Crumbs, State, Modal } from "./Elements";
+import CatalogueGrid from './CatalogueGrid';
 import Footer from "./Footer";
 import { ComparisonLink } from "./ComparisonAction";
 import { useJourneyObservation } from "./useJourney.js";
@@ -29,13 +30,14 @@ export default function Catalogue() {
   const resource = useResource(path, true);
   const categories = useResource("/categories");
   const hierarchy = useResource("/categories?includeSousCategories=true");
-  let result = { rows: [], total: 0, pages: 1 },
-    parseError = null;
-  try {
-    if (resource.data) result = resultPage(resource.data);
-  } catch (e) {
-    parseError = e;
-  }
+  const { result, parseError } = useMemo(() => {
+    try {
+      const result = resource.data ? resultPage(resource.data) : { rows: [], total: 0, pages: 1 };
+      return { result: { ...result, rows: result.rows.map(raw => adaptProduct(raw, resolveImageUrl)) }, parseError: null };
+    } catch (parseError) {
+      return { result: { rows: [], total: 0, pages: 1 }, parseError };
+    }
+  }, [resource.data]);
   useJourneyObservation(
     "RECHERCHE_VIDE",
     Boolean(
@@ -261,17 +263,7 @@ export default function Catalogue() {
         </div>
         <State {...resource} error={resource.error || parseError}>
           {result.rows.length ? (
-            <div
-              className={`e-product-grid e-catalog-grid ${list ? "e-list" : ""}`}
-            >
-              {result.rows.map((raw, index) => (
-                <Card
-                  eager={index === 0}
-                  key={raw.id}
-                  product={adaptProduct(raw, resolveImageUrl)}
-                />
-              ))}
-            </div>
+            <CatalogueGrid products={result.rows} list={list} />
           ) : (
             <div className="e-state">
               <h2>
