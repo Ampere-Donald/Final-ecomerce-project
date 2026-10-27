@@ -4,6 +4,14 @@ import { Type, Transform } from 'class-transformer';
 export class CreateProduitDto {
   @IsUUID()
   categorieId: string;
+  @IsOptional()
+  @Transform(({ value }) => value === '' ? null : value)
+  @IsUUID()
+  sousCategorieId?: string | null;
+  @IsOptional() @IsInt() @Min(1) @Type(() => Number)
+  prixRevisionAttendue?: number;
+  @IsOptional() @IsInt() @Min(1) @Type(() => Number)
+  classementRevisionAttendue?: number;
 
   @IsString()
   @MaxLength(150)
@@ -52,24 +60,28 @@ export class CreateProduitDto {
   @IsNumber()
   @Min(0)
   @Type(() => Number)
+  @Transform(({ value, obj, key }) => obj[key] === '' ? null : value)
   prixGros?: number;
 
   @IsOptional()
   @IsInt()
   @Min(0)
   @Type(() => Number)
+  @Transform(({ value, obj, key }) => obj[key] === '' ? null : value)
   quantiteGros?: number;
 
   @IsOptional()
   @IsNumber()
   @Min(0)
   @Type(() => Number)
+  @Transform(({ value, obj, key }) => obj[key] === '' ? null : value)
   prixDemiGros?: number;
 
   @IsOptional()
   @IsNumber()
   @Min(0)
   @Type(() => Number)
+  @Transform(({ value, obj, key }) => obj[key] === '' ? null : value)
   prixDetail?: number;
 
   @IsOptional()
@@ -92,6 +104,7 @@ export class CreateProduitDto {
   @IsNumber()
   @Min(0)
   @Type(() => Number)
+  @Transform(({ value, obj, key }) => obj[key] === '' ? null : value)
   prixPromo?: number;
 
   @IsOptional()

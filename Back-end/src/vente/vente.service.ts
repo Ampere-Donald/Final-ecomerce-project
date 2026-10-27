@@ -49,6 +49,7 @@ export class VenteService {
             `Produit ${ligne.produitId} non trouvée`,
           );
         }
+        if (variante.estActif === false) throw new BadRequestException('Cet article est archivé et ne peut plus être vendu.');
         if (variante.quantiteStock < ligne.quantite) {
           throw new BadRequestException(
             `Stock insuffisant pour ${variante.nomProduit}. Disponible: ${variante.quantiteStock}, Demandé: ${ligne.quantite}`,
@@ -104,7 +105,7 @@ export class VenteService {
       // Décrémenter le stock de façon atomique (interdit stock négatif)
       for (const ligne of lignesVente) {
         const updated = await tx.produit.updateMany({
-          where: { id: ligne.produitId, quantiteStock: { gte: ligne.quantite } },
+          where: { id: ligne.produitId, estActif: true, quantiteStock: { gte: ligne.quantite } },
           data: {
             quantiteStock: { decrement: ligne.quantite },
             version: { increment: 1 },

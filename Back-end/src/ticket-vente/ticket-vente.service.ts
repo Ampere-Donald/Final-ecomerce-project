@@ -89,7 +89,7 @@ export class TicketVenteService {
 
     const produitIds = dto.lignes.map((l) => l.produitId);
     const produits = await this.db.produit.findMany({
-      where: { id: { in: produitIds } },
+      where: { id: { in: produitIds }, estActif: true },
     });
     if (produits.length !== produitIds.length) {
       throw new NotFoundException('Au moins un produit est introuvable.');
@@ -419,7 +419,7 @@ export class TicketVenteService {
       const stockResults = await Promise.all(
         ticket.lignes.map((l) =>
           tx.produit.updateMany({
-            where: { id: l.produitId, quantiteStock: { gte: l.quantite } },
+            where: { id: l.produitId, estActif: true, quantiteStock: { gte: l.quantite } },
             data: { quantiteStock: { decrement: l.quantite } },
           }),
         ),

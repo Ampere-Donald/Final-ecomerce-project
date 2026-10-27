@@ -132,6 +132,10 @@ function Detail({ product }) {
             {product.description && (
               <p className="e-description">{product.description}</p>
             )}
+            {product.categoryId && <nav className="e-catalogue-subfamilies" aria-label={lang === "fr" ? "Classement du produit" : "Product categories"}>
+              <Link to={`/catalogue?category=${encodeURIComponent(product.categoryId)}`}>{product.categoryName}</Link>
+              {product.subcategoryId && <Link to={`/catalogue?category=${encodeURIComponent(product.categoryId)}&sub=${encodeURIComponent(product.subcategoryId)}`}>{product.subcategoryName}</Link>}
+            </nav>}
             <section className="e-specs">
               <h2>
                 <Copy fr="Les repères essentiels" en="Key specifications" />
@@ -265,7 +269,7 @@ function Detail({ product }) {
 export default function Product() {
   const { id } = useParams();
   const { lang } = useI18n();
-  const resource = useResource("/produits/" + encodeURIComponent(id));
+  const resource = useResource("/produits/" + encodeURIComponent(id), true);
   const missing = resource.error?.response?.status === 404;
   return missing ? (
     <>

@@ -7,6 +7,7 @@ import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
 import { AllExceptionsFilter } from './common/filters/http-exception.filter';
 import { AuditLogInterceptor } from './common/interceptors/audit-log.interceptor';
+import { CataloguePrivacyInterceptor } from './catalogue-revisions/catalogue-privacy.interceptor';
 import 'dotenv/config';
 import { correlationIdMiddleware } from './common/middleware/correlation-id.middleware';
 import { guestPrivateHeadersMiddleware } from './common/middleware/guest-private-headers.middleware';
@@ -47,7 +48,7 @@ async function bootstrap() {
     whitelist: true,
   }));
   app.useGlobalFilters(new AllExceptionsFilter());
-  app.useGlobalInterceptors(new AuditLogInterceptor());
+  app.useGlobalInterceptors(new AuditLogInterceptor(), new CataloguePrivacyInterceptor());
 
   app.useStaticAssets(join(process.cwd(), 'uploads'), {
     prefix: '/uploads/',

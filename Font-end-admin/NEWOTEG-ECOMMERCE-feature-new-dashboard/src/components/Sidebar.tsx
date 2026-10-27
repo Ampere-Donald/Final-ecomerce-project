@@ -272,6 +272,11 @@ export const Sidebar = ({ open, onClose, compact = false }: SidebarProps) => {
       label: 'Catalogue',
       items: [
         ...add(can.renseignerPrixManquants(role), {
+          label: 'Révision du catalogue',
+          icon: Tags,
+          path: '/revision-catalogue',
+        }),
+        ...add(can.renseignerPrixManquants(role), {
           label: 'Prix à renseigner',
           icon: Tags,
           path: '/prix-a-renseigner',
@@ -412,6 +417,7 @@ export const Sidebar = ({ open, onClose, compact = false }: SidebarProps) => {
     '/file-caissier',
     '/caisse-jour',
     '/prix-a-renseigner',
+    '/revision-catalogue',
     '/clients',
     '/print-audit',
     '/guide',

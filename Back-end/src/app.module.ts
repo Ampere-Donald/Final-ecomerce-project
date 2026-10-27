@@ -52,6 +52,7 @@ import { AvisModule } from './avis/avis.module';
 import { ParcoursModule } from './parcours/parcours.module';
 import { IncompatibilitesModule } from './incompatibilites/incompatibilites.module';
 import { StorefrontRenderingModule } from './storefront-rendering/storefront-rendering.module';
+import { CatalogueRevisionsModule } from './catalogue-revisions/catalogue-revisions.module';
 
 @Module({
   imports: [
@@ -66,6 +67,7 @@ import { StorefrontRenderingModule } from './storefront-rendering/storefront-ren
       serveRoot: '/uploads',
     }),
     CategorieModule,
+    CatalogueRevisionsModule,
     ProduitModule,
     AttributModule,
     ValeurAttributModule,

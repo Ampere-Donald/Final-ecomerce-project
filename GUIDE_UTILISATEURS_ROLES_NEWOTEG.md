@@ -1,5 +1,7 @@
 # Guide utilisateurs et roles - NEWOTEG / X-electronic
 
+> Mise à jour catalogue : ADMIN et SUPER_ADMIN peuvent désormais corriger les prix produit et décider des propositions de l’équipe. VENDEUR, CAISSIER et MANAGER accèdent à Révision du catalogue pour proposer ou confirmer. Le parcours mobile, les sous-catégories et les règles d’archivage sont décrits dans [le guide de révision](docs/REVISION_CATALOGUE.md). Les anciennes mentions « prix produit réservés au super admin » ci-dessous sont remplacées par cette règle ; les autorisations de remise en vente restent distinctes.
+
 Derniere mise a jour : 2026-06-29  
 Projet : NEWOTEG, branche boutique X-electronic  
 Application concernee : dashboard admin local et production

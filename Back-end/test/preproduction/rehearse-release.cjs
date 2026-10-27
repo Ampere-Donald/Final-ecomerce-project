@@ -84,7 +84,7 @@ async function digestRows(db) {
     assert.match(tablename, /^[a-zA-Z_][a-zA-Z0-9_]*$/);
     const rows = (
       await db.query(
-        `SELECT to_jsonb(t) AS value FROM public."${tablename}" t ORDER BY to_jsonb(t)::text`,
+        `SELECT to_jsonb(t) - CASE WHEN '${tablename}' = 'produit' THEN ARRAY['sous_categorie_id','prix_revision','classement_revision','commercial_revision','prix_verifie_revision','prix_verifie_at','prix_verifie_par','classement_verifie_revision','classement_verifie_at','classement_verifie_par']::text[] ELSE ARRAY[]::text[] END AS value FROM public."${tablename}" t ORDER BY (to_jsonb(t) - CASE WHEN '${tablename}' = 'produit' THEN ARRAY['sous_categorie_id','prix_revision','classement_revision','commercial_revision','prix_verifie_revision','prix_verifie_at','prix_verifie_par','classement_verifie_revision','classement_verifie_at','classement_verifie_par']::text[] ELSE ARRAY[]::text[] END)::text`,
       )
     ).rows;
     values.push({
@@ -107,7 +107,7 @@ async function main() {
   );
   assert.equal(
     migrations.length,
-    12,
+    18,
     'Review the rehearsal scope when new migrations are added.',
   );
   try {
@@ -198,7 +198,7 @@ async function main() {
       before,
     );
     checks.push(
-      'Twelve additive migrations preserve every pre-existing synthetic row and stock value',
+      'Eighteen additive migrations preserve every pre-existing synthetic row and stock value',
     );
     // Check the new migration result against a separately generated current datamodel.
     const diff = spawnSync(
@@ -259,7 +259,7 @@ async function main() {
           );
         else
           assert.deepEqual(await verifyMigrationHistory(db, true), {
-            pending: 12,
+            pending: 18,
           });
         checks.push(label);
       } finally {
@@ -267,7 +267,7 @@ async function main() {
       }
     }
     await historyCase(
-      'Pending twelve-migration suffix accepted by pre-migration history guard',
+      'Pending eighteen-migration suffix accepted by pre-migration history guard',
       `DELETE FROM _prisma_migrations WHERE migration_name >= '20260929113000_quote_requests'`,
     );
     await historyCase(

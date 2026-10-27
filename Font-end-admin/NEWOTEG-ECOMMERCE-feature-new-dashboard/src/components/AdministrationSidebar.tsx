@@ -76,6 +76,7 @@ export const AdministrationSidebar = ({ open, onClose }: AdministrationSidebarPr
       </nav>
 
       <div className="space-y-3 border-t border-white/10 p-3 md:px-2 min-[1200px]:p-3">
+        <NavLink to="/revision-catalogue" onClick={onClose} title="Révision du catalogue" className="flex min-h-12 items-center justify-center gap-2 rounded-xl px-3 text-sm font-semibold text-slate-200 hover:bg-white/10"><ClipboardList size={19} /><span className="md:hidden min-[1200px]:inline">Révision du catalogue</span></NavLink>
         <NavLink to="/cas-remplacement" onClick={onClose} title="Cas de remplacement" className="flex min-h-12 items-center justify-center gap-2 rounded-xl px-3 text-sm font-semibold text-slate-200 hover:bg-white/10"><ClipboardList size={19} /><span className="md:hidden min-[1200px]:inline">Cas de remplacement</span></NavLink>
         <NavLink to="/incompatibilites" onClick={onClose} title="Incompatibilités" className="flex min-h-12 items-center justify-center gap-2 rounded-xl px-3 text-sm font-semibold text-slate-200 hover:bg-white/10"><ClipboardList size={19} /><span className="md:hidden min-[1200px]:inline">Incompatibilités</span></NavLink>
         <NavLink to="/parcours" onClick={onClose} title="Parcours du site" className="flex min-h-12 items-center justify-center gap-2 rounded-xl px-3 text-sm font-semibold text-slate-200 hover:bg-white/10">

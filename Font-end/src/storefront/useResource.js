@@ -3,7 +3,7 @@ import apiClient from "../utils/apiClient";
 import { InitialResourceContext } from "./initialResourceContext";
 import { cataloguePrefetch } from "./cataloguePrefetch";
 
-export default function useResource(path) {
+export default function useResource(path, refreshOnReturn = false) {
   const initial = useContext(InitialResourceContext);
   const [state, setState] = useState(() => initial?.resources?.[path] ? {
     key: `${path}:0`, data: initial.resources[path], error: null, loading: false,
@@ -14,6 +14,22 @@ export default function useResource(path) {
     loading: true,
   });
   const [attempt, setAttempt] = useState(0);
+  useEffect(() => {
+    if (!refreshOnReturn) return;
+    let lastRefresh = 0;
+    const refresh = () => {
+      if (!document.hidden && Date.now() - lastRefresh > 1000) {
+        lastRefresh = Date.now();
+        setAttempt((n) => n + 1);
+      }
+    };
+    window.addEventListener('focus', refresh);
+    document.addEventListener('visibilitychange', refresh);
+    return () => {
+      window.removeEventListener('focus', refresh);
+      document.removeEventListener('visibilitychange', refresh);
+    };
+  }, [refreshOnReturn]);
   const key = `${path}:${attempt}`;
   useEffect(() => {
     if (attempt === 0 && initial?.resources?.[path] && Date.now() - initial.at < 15000) return;

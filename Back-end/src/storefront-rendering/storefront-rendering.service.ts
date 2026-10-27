@@ -29,6 +29,7 @@ export class StorefrontRenderingService {
     const [products, categories] = await Promise.all([
       this.produits.findAll({ publicPricingAt: now, page: Number(params.get('page')), limit: 24,
         search: params.get('search') || undefined, categoryId: params.get('categoryId') || undefined,
+        sousCategorieId: params.get('sousCategorieId') || undefined,
         inStock: params.get('inStock') === 'true', sort: params.get('sort') || undefined,
         minPrice: params.has('minPrice') ? Number(params.get('minPrice')) : undefined,
         maxPrice: params.has('maxPrice') ? Number(params.get('maxPrice')) : undefined,

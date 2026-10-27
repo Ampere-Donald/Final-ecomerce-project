@@ -43,6 +43,8 @@ export function adaptProduct(raw, resolveImage) {
     description: raw.description,
     categoryName: raw.categorie?.nom || "",
     categoryId: raw.categorieId || raw.categorie?.id || "",
+    subcategoryName: raw.sousCategorie?.nom || "",
+    subcategoryId: raw.sousCategorieId || raw.sousCategorie?.id || "",
     retailPrice: positive(
       raw.prixPublic === undefined ? raw.prixDetail : raw.prixPublic,
     ),
