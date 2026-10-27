@@ -1,3 +1,5 @@
+import { mobileRecoveryResponse } from './mobile-recovery.js';
+
 // Worker Cloudflare : sert les assets du site et proxifie l'API.
 //
 // Les appels /api/* et /uploads/* sont relayés côté serveur vers le backend
@@ -159,6 +161,10 @@ export default {
     if (url.protocol === 'http:') {
       url.protocol = 'https:';
       return Response.redirect(url.toString(), 308);
+    }
+
+    if (url.pathname === '/api/app-update' && (request.method === 'GET' || request.method === 'HEAD')) {
+      return mobileRecoveryResponse(request.method);
     }
 
     if (url.pathname === '/api/qz/sign') {

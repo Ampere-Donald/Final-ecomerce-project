@@ -1,3 +1,4 @@
+import { ResponsiveTable } from './ui/ResponsiveTable';
 import React, { useEffect, useMemo, useState } from 'react';
 import { motion } from 'motion/react';
 import {
@@ -176,7 +177,7 @@ export const Inventaire = () => {
         </div>
 
         <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-          <table className="w-full text-sm">
+          <ResponsiveTable className="w-full text-sm">
             <thead className="bg-slate-50 text-slate-500 text-xs uppercase">
               <tr>
                 <th className="text-left px-4 py-3 font-semibold">Produit</th>
@@ -198,7 +199,7 @@ export const Inventaire = () => {
                     <td className="px-3 py-2 text-center font-semibold">{l.stockSysteme}</td>
                     <td className="px-3 py-2 text-center">
                       {enCours ? (
-                        <input type="number" min={0} value={compte ?? ''}
+                        <input type="number" min={0} value={compte ?? ''} aria-label={`Stock compté de ${l.nomProduit}`} inputMode="numeric"
                           onChange={(e) => setComptes((c) => ({ ...c, [l.id]: e.target.value }))}
                           className="w-20 px-2 py-1 text-center border border-slate-200 rounded-lg outline-none focus:border-primary" />
                       ) : (l.stockCompte ?? '—')}
@@ -210,7 +211,7 @@ export const Inventaire = () => {
                 );
               })}
             </tbody>
-          </table>
+          </ResponsiveTable>
         </div>
 
         <ConfirmDialog open={confirmValider} onClose={() => setConfirmValider(false)} onConfirm={valider}
@@ -244,7 +245,7 @@ export const Inventaire = () => {
         </div>
       ) : (
         <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-          <table className="w-full text-sm">
+          <ResponsiveTable className="w-full text-sm">
             <thead className="bg-slate-50 text-slate-500 text-xs uppercase">
               <tr>
                 <th className="text-left px-4 py-3 font-semibold">Référence</th>
@@ -268,7 +269,7 @@ export const Inventaire = () => {
                 </tr>
               ))}
             </tbody>
-          </table>
+          </ResponsiveTable>
         </div>
       )}
 

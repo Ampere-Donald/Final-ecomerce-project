@@ -4,12 +4,15 @@ import { AdminAuthProvider } from './context/AdminAuthContext';
 import { AdminProtectedRoute } from './components/AdminProtectedRoute';
 import { RoleProtectedRoute } from './components/RoleProtectedRoute';
 import { AdminLogin } from './components/AdminLogin';
+import { WorkspaceNotFound } from './components/WorkspaceScreen';
+import { AppUpdateNotice } from './components/AppUpdateNotice';
 import { Layout } from './components/Layout';
 import { ToastProvider } from './components/ui/Toast';
 import { FVAlertPopup } from './components/FVAlertPopup';
 import { AppErrorBoundary } from './components/AppErrorBoundary';
 
 const Dashboard = lazy(() => import('./components/RoleDashboard').then((m) => ({ default: m.RoleDashboard })));
+const MissingPrices = lazy(() => import('./components/MissingPrices').then((m) => ({ default: m.MissingPrices })));
 const Orders = lazy(() => import('./components/Orders').then((m) => ({ default: m.Orders })));
 const DemandesDevis = lazy(() => import('./components/DemandesDevis').then((m) => ({ default: m.DemandesDevis })));
 const Projets = lazy(() => import('./components/Projets').then((m) => ({ default: m.Projets })));
@@ -79,6 +82,7 @@ export default function App() {
           {ResponsivePOSFixturePage && <Route path="/__visual-pos" element={<ResponsivePOSFixturePage />} />}
           <Route path="/" element={<AdminProtectedRoute><Layout /></AdminProtectedRoute>}>
             <Route index element={<Dashboard />} />
+            <Route path="prix-a-renseigner" element={<RoleProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'VENDEUR', 'CAISSIER']}><MissingPrices /></RoleProtectedRoute>} />
             {/* Parcours d'administration simplifiés — les routes historiques ci-dessous restent compatibles. */}
             <Route path="a-valider" element={<RoleProtectedRoute allowedRoles={['SUPER_ADMIN']}><ApprovalCenter /></RoleProtectedRoute>} />
             <Route path="finance" element={<RoleProtectedRoute allowedRoles={['SUPER_ADMIN']}><FinanceWorkspace /></RoleProtectedRoute>} />
@@ -137,10 +141,12 @@ export default function App() {
             <Route path="offline-queue" element={<RoleProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN', 'CAISSIER', 'VENDEUR']}><OfflineQueuePage /></RoleProtectedRoute>} />
             <Route path="print-audit" element={<RoleProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN']}><PrintAuditPage /></RoleProtectedRoute>} />
             <Route path="settings" element={<Settings />} />
+            <Route path="*" element={<WorkspaceNotFound />} />
           </Route>
         </Routes>
         </Suspense>
         <FVAlertPopup />
+        <AppUpdateNotice />
         </ToastProvider>
       </AdminAuthProvider>
     </BrowserRouter>

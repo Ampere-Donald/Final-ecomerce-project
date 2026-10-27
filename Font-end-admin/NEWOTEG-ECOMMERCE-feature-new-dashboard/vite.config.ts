@@ -19,7 +19,8 @@ export default defineConfig(({mode}) => {
       // PWA installable (icône écran d'accueil, plein écran, cache de consultation
       // hors-ligne en lecture seule). Doit rester APRÈS legacy() dans cet ordre.
       VitePWA({
-        registerType: 'autoUpdate',
+        registerType: 'prompt',
+        injectRegister: null,
         includeAssets: ['logo.png', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/icon-maskable-512.png'],
         manifest: {
           name: 'Newoteg Admin',
@@ -38,6 +39,15 @@ export default defineConfig(({mode}) => {
           ],
         },
         workbox: {
+          // The legacy HTML has no update prompt. Activate this migration once,
+          // while leaving its running pages and their cached chunks intact.
+          importScripts: ['/sw-transition-20261024.js'],
+          cacheId: 'newoteg-admin-ui-v3',
+          cleanupOutdatedCaches: false,
+          clientsClaim: false,
+          // Installed clients may retain an old HTTP-cached Workbox import.
+          // Keep the update worker self-contained so it can replace that cache.
+          inlineWorkboxRuntime: true,
           // Le HTML/JS/CSS buildés sont précachés (network falling back to cache).
           globPatterns: ['**/*.{js,css,html,svg,png,ico,woff2}'],
           globIgnores: [
@@ -88,7 +98,7 @@ export default defineConfig(({mode}) => {
       // Proxy setting for the backend API
       proxy: {
         '/api': {
-          target: 'http://localhost:3000',
+          target: process.env.NEWOTEG_DEV_API_TARGET || 'http://localhost:3000',
           changeOrigin: true,
         },
       },

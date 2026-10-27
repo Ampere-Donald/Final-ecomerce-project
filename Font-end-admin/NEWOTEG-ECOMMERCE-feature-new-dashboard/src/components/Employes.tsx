@@ -1,3 +1,4 @@
+import { ResponsiveTable } from './ui/ResponsiveTable';
 import React, { useEffect, useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
@@ -72,7 +73,7 @@ const ROLE_META: Record<Role, { label: string; icon: any; color: string }> = {
   ADMIN: { label: 'Admin', icon: UsersIcon, color: 'bg-blue-100 text-blue-800' },
   CAISSIER: { label: 'Caissier', icon: Wallet, color: 'bg-amber-100 text-amber-800' },
   VENDEUR: { label: 'Vendeur', icon: ShoppingBag, color: 'bg-emerald-100 text-emerald-800' },
-  MANAGER: { label: 'Manager (legacy)', icon: UsersIcon, color: 'bg-slate-100 text-slate-700' },
+  MANAGER: { label: 'Responsable', icon: UsersIcon, color: 'bg-slate-100 text-slate-700' },
 };
 
 const ROLES_DISPONIBLES: Role[] = ['SUPER_ADMIN', 'ADMIN', 'CAISSIER', 'VENDEUR'];
@@ -208,7 +209,7 @@ export const Employes = () => {
         />
       ) : (
         <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-          <table className="w-full text-left border-collapse">
+          <ResponsiveTable className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-slate-50 text-slate-500 text-xs font-bold uppercase tracking-wider">
                 <th className="px-6 py-3">Employé</th>
@@ -300,7 +301,7 @@ export const Employes = () => {
                 );
               })}
             </tbody>
-          </table>
+          </ResponsiveTable>
         </div>
       )}
 

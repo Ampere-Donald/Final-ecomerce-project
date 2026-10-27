@@ -1,9 +1,9 @@
 import { getAdminToken } from './adminSession';
+import { resolveApiBaseUrl } from './apiBaseUrl';
 
 type SseErrorHandler = (error: unknown) => void;
 
-const rawUrl = import.meta.env.VITE_API_URL || '/api';
-const API_BASE_URL = rawUrl.endsWith('/api') ? rawUrl : `${rawUrl}/api`;
+const API_BASE_URL = resolveApiBaseUrl(import.meta.env.VITE_API_URL, window.location.hostname);
 
 function dispatchEventData<T>(block: string, onMessage: (data: T) => void): void {
   const payload = block

@@ -42,6 +42,7 @@ export const can = {
   voirProduits: (_r?: string) => true,
   voirPrixAchat: (r?: string) => isAdmin(r),
   modifierProduits: (r?: string) => isAdmin(r),
+  renseignerPrixManquants: (r?: string) => ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'VENDEUR', 'CAISSIER'].includes(r || ''),
   supprimerProduits: (r?: string) => isSuper(r),
   accessStock: (r?: string) => isAdmin(r),
   accessInventaire: (r?: string) => isAdmin(r),

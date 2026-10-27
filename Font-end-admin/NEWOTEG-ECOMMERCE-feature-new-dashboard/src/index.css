@@ -9,7 +9,7 @@
     --color-success: 21 152 108;
     --color-warning: 230 154 38;
     --color-danger: 185 28 28;
-    --radius-control: 0.75rem;
+    --radius-control: 0.625rem;
     --radius-surface: 1rem;
   }
 
@@ -57,6 +57,7 @@
   }
 
   .mobile-safe-bottom {
+    padding-bottom: 0.75rem;
     padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
   }
 
@@ -71,5 +72,133 @@
 
   .skeleton {
     @apply animate-pulse rounded-lg bg-slate-200;
+  }
+
+  .admin-workspace {
+    --admin-ink: #18243b;
+    --admin-muted: #64748b;
+    background: #f4f6fa;
+    font-feature-settings: 'cv11', 'ss01';
+  }
+
+  .admin-content { scrollbar-gutter: stable; }
+  /* WebView 60 does not understand dvh: retain a usable height there. */
+  .workspace-viewport { height: 100vh; height: var(--workspace-height, 100vh); }
+  .admin-content { overscroll-behavior-y: contain; -webkit-overflow-scrolling: touch; }
+  .admin-content > div { min-width: 0; }
+  .workspace-update { bottom: 1rem; }
+  .workspace-search { display: none; }
+  @media (min-width: 1024px) { .workspace-search { display: flex; } }
+  .admin-content h1 { @apply font-display tracking-tight; }
+  .admin-content :where(table) { @apply text-sm; font-variant-numeric: tabular-nums; }
+  .admin-content :where(th) { @apply text-xs font-semibold tracking-wide text-slate-500; }
+  .admin-content :where(tbody tr) { @apply transition-colors; }
+  .admin-content :where(tbody tr:hover) { background-color: #f8fafc; }
+  .admin-content :where(input:not([type='checkbox']):not([type='radio']), select, textarea) { border-radius: var(--radius-control); }
+  .admin-content :where(button:disabled) { cursor: not-allowed; }
+
+  .admin-eyebrow { @apply flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500; }
+  .admin-page-title { @apply mt-2 font-display text-3xl font-semibold tracking-tight text-slate-950 sm:text-4xl; }
+  .admin-button-primary { @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-indigo-800 disabled:opacity-50; }
+  .admin-button-secondary { @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition-colors hover:bg-slate-50 disabled:opacity-50; }
+
+  .workspace-sidebar { @apply border-slate-200/80; box-shadow: 2px 0 16px rgb(15 23 42 / 0.015); }
+  .workspace-nav-link { @apply relative flex min-h-11 items-center gap-3 rounded-lg px-3 py-2.5 text-[13px] font-medium text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-950; }
+  .workspace-nav-link.is-active { @apply bg-indigo-50 font-semibold text-primary; }
+  .workspace-nav-link.is-active::before { content: ''; @apply absolute -left-3 h-5 w-[3px] rounded-r bg-primary; }
+  .workspace-nav-link svg { @apply shrink-0; }
+  .workspace-nav-label { @apply mb-2 px-3 text-[10px] font-semibold uppercase tracking-[0.13em] text-slate-400; }
+  .workspace-header { @apply relative z-20 flex min-h-[76px] shrink-0 items-center justify-between gap-3 border-b border-slate-200/70 bg-white px-4 sm:px-6 lg:px-8; }
+  .workspace-header-search { @apply min-h-11 rounded-xl border border-slate-200 bg-slate-50 text-sm placeholder:text-slate-400; }
+
+  .pricing-invitation { @apply flex flex-wrap items-center gap-4 rounded-2xl border border-indigo-100 bg-white p-5 transition-colors hover:border-indigo-300 sm:flex-nowrap sm:p-6; background-image: linear-gradient(105deg, #f1f2ff 0%, #fff 65%); }
+  .pricing-invitation-icon { @apply flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white text-primary shadow-sm ring-1 ring-indigo-100; }
+  .pricing-overview { @apply grid gap-6 rounded-2xl border border-slate-200 bg-white p-5 sm:p-6 lg:grid-cols-[1fr_1.1fr_1fr] lg:items-center lg:gap-8; }
+  .pricing-columns { @apply grid gap-5 xl:grid-cols-[220px_minmax(0,1fr)] xl:gap-7; }
+  .pricing-categories { @apply min-w-0; }
+  .pricing-category-list { @apply flex max-h-[500px] gap-2 overflow-auto pb-2 xl:flex-col xl:gap-1 xl:pr-2; scrollbar-width: thin; }
+  .pricing-category { @apply flex min-h-10 shrink-0 items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2 text-left text-xs font-medium text-slate-600 transition-colors hover:border-indigo-200 hover:text-primary xl:shrink; }
+  .pricing-category > span:first-child { @apply min-w-0 xl:break-words; }
+  .pricing-category > span:last-child { @apply rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-500; }
+  .pricing-category.is-selected { @apply border-indigo-200 bg-indigo-50 text-primary; }
+  .pricing-category.is-selected > span:last-child { @apply bg-white text-primary; }
+  .pricing-toolbar { @apply flex flex-wrap items-center gap-4 rounded-xl border border-slate-200 bg-white p-3; }
+  .pricing-toolbar > label:first-child { @apply basis-48; }
+  .pricing-products { @apply space-y-3; }
+  .pricing-product { @apply flex flex-col gap-4 rounded-xl border border-slate-200 bg-white p-4 transition-colors focus-within:border-indigo-300 sm:p-5 2xl:flex-row 2xl:items-start 2xl:gap-6; }
+  .pricing-product-identity { @apply flex min-w-0 flex-1 items-start gap-3; }
+  .pricing-product-image { @apply flex h-[72px] w-[72px] shrink-0 items-center justify-center overflow-hidden rounded-lg border border-slate-100 bg-slate-50; }
+  .pricing-product-image img { @apply h-full w-full object-contain p-1.5 mix-blend-multiply; }
+  .pricing-product-form { @apply min-w-0 2xl:w-[330px] 2xl:shrink-0; }
+
+  @media (max-width: 1023px) {
+    .workspace-sidebar[data-open='false'] { visibility: hidden; }
+    .workspace-sidebar { padding-top: env(safe-area-inset-top, 0px); }
+    .workspace-header { padding-top: env(safe-area-inset-top, 0px); }
+    .admin-content.has-mobile-navigation { padding-bottom: 88px; padding-bottom: calc(88px + env(safe-area-inset-bottom, 0px)); }
+    .workspace-viewport[data-keyboard-open='true'] .workspace-mobile-nav { display: none; }
+    .workspace-viewport[data-keyboard-open='true'] .admin-content.has-mobile-navigation { padding-bottom: 24px; }
+    .workspace-update { bottom: 84px; bottom: calc(84px + env(safe-area-inset-bottom, 0px)); }
+    .workspace-search.is-open { display: flex; position: absolute; top: 100%; left: 12px; right: 12px; padding: 12px; border: 1px solid #e2e8f0; border-radius: 0 0 16px 16px; background: white; box-shadow: 0 10px 20px rgb(15 23 42 / 0.08); }
+    .workspace-search.is-open > div:last-child:not(:first-child) { left: 0; width: 100%; }
+    .workspace-nav-link { min-height: 48px; font-size: 14px; }
+    .workspace-nav-label { font-size: 11px; }
+    .cash-session-actions > a, .cash-session-actions > button { min-height: 44px; }
+    /* A numeric/search keyboard must not cover the field being edited. */
+    .admin-content input, .admin-content select, .admin-content textarea { scroll-margin-block: 100px; }
+    .admin-workspace :where(input:not([type='checkbox']):not([type='radio']), select, textarea) { font-size: 16px; }
+  }
+
+  @media (max-width: 1023px) {
+    .responsive-records { display: block; min-width: 0; width: 100%; border-collapse: separate; }
+    .responsive-records > thead { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; }
+    .responsive-records > tbody { display: grid; width: 100%; }
+    .responsive-records > tbody > tr { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 12px 16px; padding: 16px; border-bottom: 1px solid #e2e8f0; }
+    .responsive-records > tbody > tr:last-child { border-bottom: 0; }
+    .responsive-records > tbody > tr > td { display: block; min-width: 0; padding: 0; border: 0; text-align: left; white-space: normal; overflow-wrap: anywhere; }
+    .responsive-records > tbody > tr > td::before { content: attr(data-label); display: block; margin-bottom: 4px; font-size: 11px; font-weight: 500; color: #64748b; }
+    .responsive-records > tbody > tr > td:first-child,
+    .responsive-records > tbody > tr > td:last-child,
+    .responsive-records > tbody > tr > td[data-wide='true'] { grid-column: 1 / -1; }
+    .responsive-records > tbody > tr > td[data-wide='true']::before { display: none; }
+    .responsive-records button { min-height: 44px; }
+
+  }
+  @media (max-width: 639px) {
+    .workspace-header { min-height: 64px; padding-left: 8px; padding-right: 12px; gap: 4px; }
+    .admin-content { scrollbar-gutter: auto; }
+    .admin-content h1 { overflow-wrap: anywhere; }
+    .pricing-invitation { gap: 12px; padding: 16px; }
+    .pricing-invitation h2 { font-size: 16px; }
+    .pricing-invitation > div > p:last-child { font-size: 12px; line-height: 1.5; }
+    .pricing-invitation > div > p:first-child { font-size: 10px; }
+    .pricing-invitation-icon { width: 40px; height: 40px; }
+    .pricing-invitation > div:nth-last-child(2) { display: none; }
+    .pricing-product-image { @apply h-14 w-14; }
+    .pricing-product-form .admin-button-primary { @apply px-3; }
+    .pricing-workspace { @apply space-y-4; }
+    .admin-page-title { @apply text-2xl; }
+    .pricing-overview { @apply grid-cols-2 gap-4 p-4; }
+    .pricing-overview > :first-child > p:last-child { @apply text-3xl; }
+    .pricing-overview > :first-child > p:last-child > span { @apply ml-0 mt-1 block text-xs; }
+    .pricing-overview > :nth-child(2) { @apply self-center; }
+    .pricing-overview > :nth-child(2) > div:first-child { @apply gap-2 text-xs; }
+    .pricing-overview > :nth-child(2) > div:first-child > span:last-child { @apply whitespace-nowrap; }
+    .pricing-overview > :nth-child(2) > p { @apply text-[10px]; }
+    .pricing-toolbar { @apply gap-2; }
+    .pricing-toolbar > label:first-child { @apply basis-full; }
+    .pricing-product h2 { overflow-wrap: anywhere; }
+    .pricing-toolbar select { text-overflow: ellipsis; padding-right: 24px; }
+
+    /* Shared forms: every dialog can scroll above Android's keyboard. */
+    .admin-workspace .fixed.inset-0.z-50 { overflow-y: auto; overscroll-behavior: contain; padding: 12px; }
+    .admin-workspace .fixed.inset-0.z-50 > div { max-height: calc(100vh - 24px); overflow-y: auto; margin-top: auto; margin-bottom: auto; }
+    @supports (height: 100dvh) { .admin-workspace .fixed.inset-0.z-50 > div { max-height: calc(100dvh - 24px); } }
+    .admin-workspace .fixed.inset-0.z-50 button { min-height: 44px; }
+  }
+  @media (max-width: 359px) {
+    .pricing-product-form > div:first-child { flex-wrap: wrap; }
+    .pricing-product-form > div:first-child > label { flex-basis: 100%; }
+    .pricing-product-form .admin-button-primary { width: 100%; }
   }
 }

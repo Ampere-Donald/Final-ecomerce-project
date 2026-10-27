@@ -27,14 +27,14 @@ const HealthItem = ({
   const content = (
     <>
       <span className={`h-2 w-2 shrink-0 rounded-full ${statusClass[status]}`} />
-      <Icon size={15} className="shrink-0 text-slate-500" />
-      <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-400">{label}</span>
-      <span className="whitespace-nowrap text-xs font-bold text-slate-800">{value}</span>
+      <Icon size={14} className="hidden shrink-0 text-slate-400 min-[1440px]:block" />
+      <span className="whitespace-nowrap text-[11px] font-medium text-slate-500">{label}</span>
+      <span className="whitespace-nowrap text-[11px] font-semibold text-slate-700">{value}</span>
     </>
   );
 
   return to ? (
-    <Link to={to} className="flex min-h-10 items-center gap-2 rounded-lg px-2.5 hover:bg-slate-100 focus-visible:ring-offset-slate-50">
+    <Link to={to} className="flex min-h-9 shrink-0 items-center gap-2 rounded-lg px-2.5 hover:bg-slate-100 focus-visible:ring-offset-slate-50">
       {content}
     </Link>
   ) : (
@@ -67,9 +67,21 @@ export const ShopHealthBar = () => {
       : { value: 'Non configurée', status: 'neutral' as const };
 
   return (
-    <section aria-label="Santé de la boutique" className="border-b border-slate-200 bg-slate-50/95 px-3 py-1.5">
-      <div className="scrollbar-hidden mx-auto flex max-w-7xl items-center gap-1 overflow-x-auto" role="status" aria-live="polite">
-        <div className="mr-1 hidden items-center gap-2 px-2 min-[1200px]:flex">
+    <section aria-label="Santé de la boutique" className="border-b border-slate-200/70 bg-white/60 px-3 py-1">
+      <details className="group lg:hidden">
+        <summary className="flex min-h-10 cursor-pointer list-none items-center justify-between gap-3 px-2 text-xs text-slate-600">
+          <span className="flex items-center gap-2"><span className={`h-2 w-2 rounded-full ${statusClass[syncStatus.status]}`} />{online ? 'Boutique connectée' : 'Boutique hors ligne'}</span>
+          <span className="font-semibold text-primary group-open:hidden">Voir les états</span><span className="hidden font-semibold text-primary group-open:inline">Masquer</span>
+        </summary>
+        <div className="grid grid-cols-2 gap-1 pb-2">
+          <HealthItem icon={WalletCards} label="Caisse" {...cashStatus} to="/caisse-jour" />
+          <HealthItem icon={RefreshCw} label="Synchro" {...syncStatus} to="/offline-queue" />
+          <HealthItem icon={Printer} label="Impression" {...printerStatus} to="/settings" />
+          <HealthItem icon={PackageSearch} label="Stock" value={`${operations.lowStockProducts.length} alerte(s)`} status={operations.lowStockProducts.length ? 'danger' : 'ok'} to="/stock-alerts" />
+        </div>
+      </details>
+      <div className="scrollbar-hidden mx-auto hidden max-w-7xl items-center gap-1 overflow-x-auto lg:flex" role="status">
+        <div className="mr-1 hidden items-center gap-2 px-2 min-[1600px]:flex">
           <span className="font-display text-xs font-bold text-[#0B1636]">Santé boutique</span>
           <span className="h-4 w-px bg-slate-200" />
         </div>
@@ -78,7 +90,7 @@ export const ShopHealthBar = () => {
           label="Caisse"
           value={cashStatus.value}
           status={cashStatus.status}
-          to={admin.role === 'SUPER_ADMIN' ? '/finance?tab=caisse-jour' : '/caisse-admin'}
+          to={admin.role === 'SUPER_ADMIN' ? '/finance?tab=caisse-jour' : '/caisse-jour'}
         />
         <HealthItem icon={online ? RefreshCw : CloudOff} label="Synchro" value={syncStatus.value} status={syncStatus.status} to="/offline-queue" />
         <HealthItem icon={Printer} label="Impression" value={printerStatus.value} status={printerStatus.status} to="/settings" />
@@ -87,7 +99,7 @@ export const ShopHealthBar = () => {
           label="Stock"
           value={operations.lowStockProducts.length ? `${operations.lowStockProducts.length} alerte${operations.lowStockProducts.length > 1 ? 's' : ''}` : 'Sain'}
           status={operations.lowStockProducts.length ? 'danger' : 'ok'}
-          to="/stock-achats"
+          to="/stock-alerts"
         />
         <HealthItem
           icon={admin.role === 'SUPER_ADMIN' ? AlertTriangle : CheckCircle2}
