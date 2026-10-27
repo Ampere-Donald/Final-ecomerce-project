@@ -1,6 +1,12 @@
 # Suivi d’exécution — NEWOTEG / X-Electronic
 
-Dernière mise à jour : 4 octobre 2026. Exécution des lots L0–L8 autorisée par l’utilisateur; L9 reste soumis à une autorisation distincte.
+État courant au 23 octobre 2026 : publication autorisée puis vérifiée ; les étapes métier 1 à 4 et la préproduction Railway sont reportées à la demande de l’utilisateur. L’objectif A–Z reste ouvert. Lire [l’audit courant](AUDIT-COURANT-2026-10-23.md) et les preuves de chaque livraison avant les entrées historiques ci-dessous.
+
+Les tableaux et mentions « non publié », « L9 non autorisé », « migrations non appliquées » ou pourcentages du journal décrivent leur date de rédaction, pas la situation actuelle. La publication ne vaut pas validation métier ni activation des fournisseurs de messages.
+
+## Journal historique — point du 4 octobre 2026
+
+Exécution des lots L0–L8 alors autorisée ; L9 était encore soumis à une autorisation distincte.
 
 ## Dernier correctif — routage des photos
 
@@ -432,3 +438,8 @@ PR #11 fusionnée, main 0492cc4b ; les deux Workers et Railway sont publiés et 
 ## Recherche pertinente — 21 octobre 2026
 
 Le serveur savait prioriser les identités exactes mais la page imposait A–Z. Le contrat partagé choisit maintenant Pertinence pour une recherche, conserve les tris explicites et rétablit A–Z hors recherche. 133 tests, lint/build et douze parcours moderne/legacy FR/EN 390/768/1440 passent avec vrai contrôleur/service/SQL sur fixtures isolées ; trente groupes réels réussis, bases retirées, aucun produit réel modifié. [Preuves et limites](catalogue-relevance-20261021/README.md). Publication à vérifier ; étapes métier reportées et objectif A–Z ouverts.
+
+
+## Recherche pertinente publiée — 21 octobre
+
+PR #12 fusionnée sur main b623518c, huit jobs CI et deux builds Cloudflare réussis. Bootstrap/sept ressources identiques au build propre ; trois contrôles publics FR/EN passent (code exact, choix de tri, catalogue A–Z, aucun doublon), accès privé admin conservé, API/base/stockage OK. Correctifs follow-redirects 1.16.1 et Vite admin 6.4.5 après refus des audits initiaux ; aucun contrôle supprimé. [Preuves et limites](catalogue-relevance-20261021/README.md). Aucun schéma ou article réel modifié ; étapes métier reportées, performance et objectif A–Z restent ouverts.

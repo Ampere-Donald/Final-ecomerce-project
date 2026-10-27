@@ -105,7 +105,8 @@ export function injectInitialCatalogue(document, html, snapshot, css) {
       !document.includes('<div id="root"></div>')) throw Error('Invalid catalogue document');
   const styles = css.filter(path => !document.includes(`href="${path}"`))
     .map(path => `<link rel="stylesheet" href="${path}" />`).join('');
-  return document.replace('</head>', styles + '</head>')
+  return document.replace(/<script data-catalogue-prefetch(?:="")?>[\s\S]*?<\/script>/g, '')
+    .replace('</head>', styles + '</head>')
     .replace('<div id="root"></div>', `<div id="root" data-initial-catalogue="fr">${html}</div>`)
     .replace('</body>', `<script type="application/json" id="initial-catalogue-data">${catalogueBootJSON(snapshot)}</script></body>`);
 }

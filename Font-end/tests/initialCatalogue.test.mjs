@@ -92,8 +92,9 @@ test('snapshot JSON cannot terminate its script or hydrate another document', ()
   assert(!json.includes('</script>')); assert(!json.includes('\u2028'));
   assert.equal(readCatalogueBoot(json, url).resources[path].data[0].nomProduit, snapshot.resources[path].data[0].nomProduit);
   assert.equal(readCatalogueBoot('{', url), null);
-  const document = '<html><head></head><body><div id="root"></div></body></html>';
+  const document = '<html><head><script data-catalogue-prefetch>earlyPublicReads()</script><script>keepOtherScript()</script></head><body><div id="root"></div></body></html>';
   const html = injectInitialCatalogue(document, '<div class="app"><p>Product</p></div>', snapshot, ['/assets/Catalogue.css']);
   assert(html.includes('data-initial-catalogue="fr"')); assert(html.includes('id="initial-catalogue-data"'));
+  assert(!html.includes('earlyPublicReads')); assert(html.includes('keepOtherScript()'));
   assert.throws(() => injectInitialCatalogue(document, '<div class="app"><script>attack</script></div>', snapshot, ['/assets/Catalogue.css']));
 });

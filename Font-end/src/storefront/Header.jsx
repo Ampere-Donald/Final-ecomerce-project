@@ -23,6 +23,7 @@ import HeaderSearch from "./HeaderSearch";
 const CatalogueMenu = lazy(() => import("./CatalogueMenu"));
 import { shopContact } from "./shopContact";
 import useBrowserReady from "./useBrowserReady";
+import MotionToggle from './MotionToggle';
 
 export default function Header() {
   const ready = useBrowserReady();
@@ -170,7 +171,7 @@ export default function Header() {
               <span>
                 <Copy fr="Panier" en="Cart" />
               </span>
-              {cartCount > 0 && <b className="e-count">{cartCount}</b>}
+              {cartCount > 0 && <b key={cartCount} className="e-count">{cartCount}</b>}
             </Link>
           </div>
         </div>
@@ -248,6 +249,7 @@ export default function Header() {
             <Globe size={18} />
             {lang === "fr" ? "English" : "Français"}
           </button>
+          <MotionToggle />
           {isAuthenticated && (
             <button
               onClick={() => {

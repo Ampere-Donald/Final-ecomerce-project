@@ -28,6 +28,17 @@ test('CSS follows static client imports only and fails for a stale manifest', ()
   assert.throws(() => initialHomeStyles({}), /Missing client manifest entry/);
 });
 
+test('shared hashed home chunk keeps its styles without loading unrelated routes', () => {
+  const manifest = {
+    'index.html': { css: ['assets/main.css'], dynamicImports: ['_Home-x.js', '_Home-x.js', 'private'] },
+    '_Home-x.js': { name: 'Home', isDynamicEntry: true, css: ['assets/home.css'], imports: ['shared'] },
+    shared: { css: ['assets/rail.css'] },
+    private: { name: 'Account', isDynamicEntry: true, css: ['assets/private.css'] },
+  };
+  assert.deepEqual(initialHomeStyles(manifest), ['/assets/main.css', '/assets/home.css', '/assets/rail.css']);
+  assert.throws(() => initialHomeStyles({ 'index.html': { dynamicImports: ['private'] }, private: manifest.private }), /unique Home/);
+});
+
 test('worker injects only the home GET and never forwards identity to the snapshot asset', async () => {
   const reads = [];
   const env = { ASSETS: { async fetch(request) {

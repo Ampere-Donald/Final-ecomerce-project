@@ -72,3 +72,12 @@
 .e-home .e-equivalence-illustrated .e-btn.e-secondary, .e-home .e-hero-actions .e-btn.e-secondary { color:#0759f5 !important; }
 
 .e-home .e-equivalence-illustrated p { max-width:none; }
+
+/* Reach actual shop shelves sooner on a phone; all categories stay reachable. */
+@media(max-width:760px){
+ .e-home .e-visual-families{display:flex;overflow-x:auto;gap:8px;scroll-snap-type:x mandatory;overscroll-behavior-x:contain;scrollbar-width:thin;padding-bottom:12px}
+ .e-home .e-visual-family{flex:0 0 calc((100% - 8px)/2);scroll-snap-align:start;min-height:88px;padding:8px;gap:7px}
+ .e-home .e-visual-family img{width:40px;height:48px}
+ .e-home .e-visual-family small{font-size:11px}
+ .e-home .e-visual-family>svg{display:none}
+}

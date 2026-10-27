@@ -1,0 +1,72 @@
+/* NEWOTEG: precise feedback, short distances, native scrolling and quiet forms. */
+:root{--motion-feedback:140ms;--motion-layer:220ms;--motion-ease:cubic-bezier(.2,.7,.2,1)}
+.app .e-btn,
+.app .e-icon,
+.app .e-selection-cta,
+.app .e-home-product-cta,
+.app .e-rail-controls button,
+.app .e-home-selection-filters button{transition:background-color var(--motion-feedback) ease,border-color var(--motion-feedback) ease,box-shadow var(--motion-feedback) ease,transform var(--motion-feedback) var(--motion-ease)}
+.app .e-btn:not(:disabled):active,
+.app .e-icon:not(:disabled):active,
+.app .e-selection-cta:not(:disabled):active,
+.app .e-home-product-cta:not(:disabled):active,
+.app .e-rail-controls button:not(:disabled):active{transform:scale(.98)}
+.app input,
+.app textarea,
+.app select{transition:border-color var(--motion-feedback) ease,box-shadow var(--motion-feedback) ease}
+.app a:focus-visible,
+.app button:focus-visible,
+.app input:focus-visible,
+.app textarea:focus-visible,
+.app select:focus-visible{outline:3px solid #075bb9;outline-offset:3px}
+.app .page-enter:not(.initial-home){animation:e-route-arrive 200ms var(--motion-ease) both}
+.app .e-modal[open]{animation:e-layer-arrive var(--motion-layer) var(--motion-ease) both}
+.app .e-modal[open]::backdrop{animation:e-backdrop-arrive 180ms ease both}
+.e-motion-toggle{display:inline-flex;align-items:center;gap:8px;min-height:44px;text-align:left;font:inherit;cursor:pointer}
+.e-motion-toggle svg{flex:none}
+.e-motion-toggle:disabled{cursor:default;opacity:.8}
+.e-banner-rotator[data-rotation=paused] .e-banner-slide,.e-banner-rotator[data-rotation=paused] .e-banner-dots span{transition:none}
+@keyframes e-route-arrive{from{transform:translateY(5px)}to{transform:translateY(0)}}
+@keyframes e-layer-arrive{from{opacity:.85;transform:translateY(10px) scale(.99)}to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes e-backdrop-arrive{from{opacity:0}to{opacity:1}}
+@keyframes e-favorite-feedback{0%,100%{transform:scale(1)}45%{transform:scale(1.14)}}
+@keyframes e-basket-feedback{0%,100%{transform:scale(1)}45%{transform:scale(1.12)}}
+@media(hover:hover) and (prefers-reduced-motion:no-preference){
+ .app .e-selection-card,
+ .app .e-product-card{transition:border-color 180ms ease,box-shadow 180ms ease}
+ .app .e-selection-card:hover,
+ .app .e-product-card:hover{border-color:#b7cddd;box-shadow:0 5px 18px #163e5610}
+ .app .e-selection-photo img,
+ .app .e-home-product-photo img{transition:transform 240ms var(--motion-ease)}
+ .app .e-selection-card:hover img,
+ .app .e-product-card:hover img{transform:scale(1.035)}
+ .app .e-visual-family,
+ .app .e-hero-float{transition:transform 200ms var(--motion-ease),border-color 160ms ease}
+ .app .e-visual-family:hover,
+ .app .e-hero-float:hover{transform:translateY(-2px);border-color:#b7cddd}
+ .app .e-btn>svg:last-child,
+ .app .e-selection-cta>svg:last-child,
+ .app .e-home-product-cta>svg:last-child{transition:transform 180ms var(--motion-ease)}
+ .app .e-btn:hover>svg:last-child,
+ .app .e-selection-cta:hover>svg:last-child,
+ .app .e-home-product-cta:hover>svg:last-child{transform:translateX(2px)}
+}
+@media(prefers-reduced-motion:no-preference){
+ .app .e-selection-heart[aria-pressed=true] svg,
+ .app .e-home-product-heart[aria-pressed=true] svg{animation:e-favorite-feedback 240ms var(--motion-ease)}
+ .app .e-count{animation:e-basket-feedback 240ms var(--motion-ease)}
+}
+html[data-motion=reduced] .app *,html[data-motion=reduced] .app *::before,html[data-motion=reduced] .app *::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}
+html[data-motion=reduced] .app .e-modal::backdrop{animation:none!important;transition:none!important}
+html[data-motion=reduced] .app .e-selection-card:hover img,html[data-motion=reduced] .app .e-visual-family:hover,
+html[data-motion=reduced] .app .e-selection-card:hover img,html[data-motion=reduced] .app .e-hero-float:hover,
+html[data-motion=reduced] .app .e-product-card:hover img,html[data-motion=reduced] .app .e-visual-family:hover,
+html[data-motion=reduced] .app .e-product-card:hover img,html[data-motion=reduced] .app .e-hero-float:hover{transform:none}
+@media(prefers-reduced-motion:reduce){
+ .app *, .app *::before, .app *::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}
+ .app .e-modal::backdrop{animation:none!important;transition:none!important}
+ .app .e-selection-card:hover img,.app .e-visual-family:hover,
+ .app .e-selection-card:hover img,.app .e-hero-float:hover,
+ .app .e-product-card:hover img,.app .e-visual-family:hover,
+ .app .e-product-card:hover img,.app .e-hero-float:hover{transform:none}
+}

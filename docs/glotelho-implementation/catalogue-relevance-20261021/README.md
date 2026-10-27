@@ -13,3 +13,14 @@ Le jeu contient code exact, référence fabricant documentée, nom exact, alias,
 La recette complète donne trente groupes PostgreSQL/HTTP/contrôleur réussis et supprime ses trois bases temporaires. Elle reprend les quatre migrations déjà publiées sur des fixtures ; cet incrément n'ajoute aucune migration. Les preuves ne constituent pas une validation métier de remplacements physiques, une préproduction Railway ou une recette sur téléphone réel.
 
 Publication de cet incrément à vérifier. Étapes métier 1 à 4 reportées, renderer catalogue, messages et collecteur désactivés, performance et objectif A–Z toujours ouverts.
+
+
+## Publication vérifiée le 21 octobre
+
+PR #12 fusionnée sur main b623518cf0d452b3028ab1b0f8334a652722293b. Les changements main postérieurs observés concernent uniquement des images produit et conservent cet incrément. Les deux builds Cloudflare et les huit jobs CI du commit fusionné passent : CI 39616329774 et contrats/images 39616329719. API/base/stockage existants OK ; aucune nouvelle migration ni fonctionnalité backend de production ajoutée. Aucun déploiement Railway supplémentaire n’est attesté par les statuts GitHub de ce commit, et aucun accès de gestion Railway n’a été requis.
+
+Bootstrap et sept ressources publiques modernes/legacy identiques par SHA-256 au build issu d’un export Git et d’une installation npm ci propres. Trois contrôles publics FR 390/1440 et EN 390 : vrai code 237091 en tête, Pertinence par défaut, tri manuel prix conservé, retour A–Z hors recherche et lecture anticipée unique. Deux accès privés admin renvoient la connexion, sans débordement. Aucune écriture métier ni erreur JavaScript ; RUM bloqué pendant les essais.
+
+La CI avait initialement refusé deux nouvelles alertes de dépendances. Correctifs compatibles appliqués : follow-redirects 1.16.1 dans les deux interfaces, Vite admin 6.4.5. Audits de production sans alerte haute/critique ; une alerte esbuild faible préexistante reste explicitement connue côté admin. Les audits de développement ne sont pas déclarés exempts d’alertes. La CI n’a été ni désactivée ni assouplie.
+
+L’incrément est publié. Dictionnaire et cas réels à relire par Mr Jude Fogueng, projet pilote, transports email/SMS, recette équipe et autres critères A–Z restent reportés ou ouverts. Cette recherche ne valide pas la compatibilité physique de deux références.
