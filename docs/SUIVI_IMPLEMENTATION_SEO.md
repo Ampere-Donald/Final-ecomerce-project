@@ -27,8 +27,8 @@ Plan validé par l’utilisateur le 27 octobre 2026. Objectif complet conservé 
 | SEO-11 | En cours | Métadonnées des familles et de leurs filtres testées ; audit complet de la politique restant |
 | SEO-12 | Publié et contrôlé | Sitemap public de 1 951 URL, dont 1 932 produits correspondant au total API ; cinq familles, URL uniques et absence de routes privées contrôlées ; soumission Search Console restante |
 | SEO-13 | En cours | Product/Offer/BreadcrumbList partagés avec le rendu, sans offre si prix ou stock inconnus ; informations boutique et validation externe restantes |
-| SEO-14 | Vérification documentaire engagée | Registre des 20 fiches dans REGISTRE_ENRICHISSEMENT_PILOTE_SEO.md ; photos examinées et points non établis conservés, sans inventer de caractéristiques |
-| SEO-15 | Aides au choix préparées et testées | Trois repères par famille, sources primaires, FR/EN ; présents après les produits dans le rendu HTML. Titre audio élargi à audio et TV selon le contenu réel. Publication en attente du correctif de configuration automatique |
+| SEO-14 | Vingt enrichissements intégrés, recette en cours | Notes individuelles FR, sources et limites dans productEditorialData.js ; retrait automatique sur changement d’identité ou nouvel attribut technique. Dimensions, notices et vérifications physiques manquantes restent non établies ; publication à confirmer |
+| SEO-15 | Aides au choix publiées et contrôlées | Trois repères sourcés par famille, FR/EN, après les produits dans le HTML. Titre audio élargi à audio et TV selon le contenu réel. Maillage vers les futurs guides à compléter |
 | SEO-16 | En cours | Liens vers familles et pagination HTML intégrés ; compléter accueil et fiches |
 | SEO-17 | À faire | Examiner et étendre les événements de parcours existants |
 | SEO-18 | À faire | Tableau de suivi et attribution |
@@ -106,3 +106,24 @@ Prochaine étape : intégrer la configuration durable de publication après ses 
 - Vérification locale : 151 tests réussis, rendu des cinq familles avec contenu éditorial après les cartes ; Edge à 390/1440 px pour les familles circuits et multimètres, aucun débordement ni erreur JavaScript. Preuves : `family-guidance-render` et `family-guidance-browser`. L’enrichissement individuel des vingt fiches reste à faire, avec les preuves et confirmations nécessaires.
 
 Prochaine action : publier le correctif de configuration et les aides au choix après réussite de leur matrice CI, puis recontrôler les deux déploiements réels. La production reste sur la version restaurée pendant cette préparation.
+
+## Livraison des aides au choix et correction du profil — résultat
+
+- PR #28 fusionnée après CI générale #351 et contrat runtime #75 réussis sur `3fa357fe`. Merge `a2fe401afb07d10173cbd818c022c26933c22f10`. La modification admin de la PR #27 (`dbae0eac`) a été conservée.
+- Backend `d684cd48-21cd-4cad-a2bc-372756acb348` : SUCCESS ; aucun changement staged/applying au contrôle. Worker automatique actif `01c8b828-6c72-4629-b174-0e850baeee3d`, publié le 28 octobre à 14:12 UTC. Son paquet contient désormais le rendererId attendu `46daa88d5b0626f2dd3a8f1f4e11e4b432a7b16315eac0ed9e4cf8ec1c71f70e`.
+- Deux premières recettes publiques après publication ont encore rencontré un repli sans HTML ; les logs backend contenaient des refus 409. Ces échecs sont conservés dans `production-guidance-2026-10-28` et `production-guidance-confirmed`, sans les présenter comme des réussites.
+- Recette complète suivante réussie, commencée à 14:19:58 UTC : santé backend, cinq familles avec HTML, cinq produits avec canonical/JSON-LD et sitemap de 1 951 URL pour 1 932 produits. Preuve : `production-guidance-final/report.json` et sitemap associé. Quatre lectures consécutives de Condensateurs ont également livré le HTML et les nouveaux conseils. Cette recette ne remplace pas une mesure de fiabilité prolongée ni les Core Web Vitals.
+- Le propriétaire ne peut pas confirmer les caractéristiques manquantes et demande de poursuivre par recherche et photographies. Cette contribution n’est donc plus attendue comme préalable. Recherche enregistrée dans `recherche-identification-produits.json` : modèle DT-830D lu sur la photo, référence AWX-FS12V20A et mentions de boîte relevées, document officiel ST du 2N3773 trouvé et lu. Aucune notice d’un autre fournisseur n’a été assimilée à une certification des exemplaires vendus.
+
+Prochaine étape : enrichir les fiches avec les faits photographiques et documentaires disponibles, conserver les caractéristiques non établies comme telles, puis poursuivre attribution, performance et bibliothèque technique. Les vingt fiches enrichies et la livraison commerciale A complète restent à réaliser.
+
+## Vingt notes individuelles — recette locale
+
+- Vingt enrichissements français intégrés : distinctions des quatre formats de condensateurs, références et suffixes des transistors, contexte documentaire des circuits, repères des alimentations et identification des multimètres. Les notices ou dimensions encore absentes ne deviennent pas des caractéristiques garanties.
+- Publication structurée versionnée, validation des sources et de la présence des cinq photos d’archive au build ; retrait d’une note sur changement de nom, image, description, marque, lien documentaire ou nouveaux attributs. Aucune copie du prix ou du stock dans le texte éditorial.
+- 156 tests frontend, lint, build et contrat du paquet compilé réussis. Identité compilée commune : `7377fb4b187d166084c8facad81291cfc19a0195f1d77fe9d98649d74455d7cd`.
+- Le premier build a échoué sur une résolution de nom de fichier Windows ; import JSX explicite corrigé avant le build réussi. Le premier contrôle navigateur a échoué sur les doubles espaces d’un nom commercial comparé au texte visuellement normalisé ; seul le banc de comparaison a été ajusté.
+- Rendu source des vingt produits réels réussi avec notes avant JavaScript et prix JSON-LD conformes à l’API : `pilot-editorial-render/report.json`. Recette Edge réussie sur sept fiches avec et sans JavaScript, liens photographiques, libellé EPICA, canonical, dialogue conseil et panier local : 15 contrôles, aucune erreur JavaScript ni écriture réseau ; `pilot-editorial-browser-confirmed/hydration-report.json`. Captures à 390 et 1440 px ; aucune mesure Core Web Vitals déduite de cette recette.
+- PR #30 ouverte en brouillon pour les contrôles CI. Ce résultat est local ; la présence des notes et des photos en production reste à vérifier après livraison commune backend/Worker.
+
+Le pilote éditorial est intégré, mais la livraison commerciale A n’est pas déclarée complète : attribution, performance, contrôles publics et documentation technique restant à établir doivent être poursuivis.

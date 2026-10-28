@@ -30,8 +30,10 @@ try {
     assert(!/cmupActuel|dernierFournisseurId|quantiteReservee/.test(fragment));
     const html = injectProductFragment('<html><head></head><body><div id="root"></div></body></html>', fragment, ['/assets/Product.css']);
     assert(html.includes('<h1>'));
+    assert(html.includes('id="product-editorial-title"'), 'Pilot review must be present before JavaScript: ' + candidate.id);
+    assert(html.indexOf('id="product-editorial-title"') > html.indexOf('class="e-product-price"'), 'Purchase information must precede the review');
     await writeFile(output + '/' + candidate.id + '.html', html);
-    report.checks.push({ id: candidate.id, name: raw.nomProduit, schemaPrice: schema['@graph'][0].offers?.price ?? null, status: 'passed' });
+    report.checks.push({ id: candidate.id, name: raw.nomProduit, editorialBeforeJavaScript: true, schemaPrice: schema['@graph'][0].offers?.price ?? null, status: 'passed' });
   }
   report.status = 'passed';
 } catch (error) { report.status = 'failed'; report.error = error.stack; process.exitCode = 1; }

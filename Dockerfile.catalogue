@@ -8,6 +8,9 @@ COPY Font-end/package.json Font-end/package-lock.json ./
 RUN npm ci --no-audit --no-fund
 COPY Font-end/src ./src
 COPY Font-end/tooling ./tooling
+# The editorial publication check verifies these original evidence files too.
+# They are build inputs; the frontend serves them as static assets.
+COPY Font-end/public/product-reference-images ./public/product-reference-images
 # Public build configuration must match the storefront, not the backend's
 # runtime URL. This argument contains no credential and is build-stage only.
 ARG VITE_API_URL=/api
