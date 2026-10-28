@@ -16,7 +16,9 @@ const { catalogueStyles } = await import('../.catalogue-ssr/styles.js');
 const port = Number(process.env.SEO_PREVIEW_PORT || 5228);
 const types = { '.html': 'text/html; charset=utf-8', '.js': 'application/javascript', '.css': 'text/css', '.json': 'application/json', '.svg': 'image/svg+xml', '.webp': 'image/webp', '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.woff2': 'font/woff2' };
 async function publicAPI(path) {
-  return fetch('https://api.newoteg.com' + path, { headers: { Accept: 'application/json' }, redirect: 'manual', signal: AbortSignal.timeout(15000) });
+  // Exercise the same public gateway as a customer. Production Worker-to-API
+  // transport is verified separately; this local preview never needs sessions.
+  return fetch('https://newoteg.com' + path, { headers: { Accept: 'application/json' }, redirect: 'manual', signal: AbortSignal.timeout(15000) });
 }
 const server = createServer(async (request, response) => {
   const send = (status, type, body) => { response.writeHead(status, { 'content-type': type, 'cache-control': 'no-store', 'x-robots-tag': 'noindex, nofollow' }); response.end(request.method === 'HEAD' ? undefined : body); };
@@ -40,7 +42,10 @@ const server = createServer(async (request, response) => {
         html = injectProductFragment(html, fragment, catalogueStyles);
         html = renderFallbackMetadata(html, { title: product.nomProduit + ' — X-Electronic', description: product.description || product.nomProduit, canonical: 'https://newoteg.com/product/' + id, robots: 'noindex, follow' });
       } else if (catalogue) {
-        const snapshot = await catalogueSnapshot(url, fetch, 15000);
+        const snapshot = await catalogueSnapshot(url, request => {
+          const upstream = new URL(request.url);
+          return publicAPI(upstream.pathname + upstream.search);
+        }, 15000);
         html = injectInitialCatalogue(html, renderCatalogue(snapshot), snapshot, catalogueStyles);
         html = renderFallbackMetadata(html, staticPublicMetadata(url));
       }

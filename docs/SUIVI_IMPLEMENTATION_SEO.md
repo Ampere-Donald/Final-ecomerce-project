@@ -18,7 +18,7 @@ Plan validé par l’utilisateur le 27 octobre 2026. Objectif complet conservé 
 | SEO-02 | En cours | Contrôle initial de 24 URL dans `baseline/baseline.json` ; compléter les routes privées, pagination et rendu navigateur |
 | SEO-03 | À faire | Accès Search Console à rechercher ; aucun chiffre de trafic ou position inventé |
 | SEO-04 | Sélection provisoire préparée | 20 produits disponibles avec image et 5 sous-catégories réelles ; ajuster selon ventes et demandes |
-| SEO-05 | À faire | Constituer et dédupliquer le panier des 100 recherches candidates |
+| SEO-05 | Matrice préparée | 100 formulations distinctes réparties 50/20/15/10/5, reliées à une cible ; docs/MATRICE_RECHERCHES_SEO_NEWOTEG.md. Priorisation quantitative en attente des données Google et commerciales |
 | SEO-06 | En cours | Rendu catalogue partagé étendu aux routes de familles ; activation de production et budget runtime restent à vérifier |
 | SEO-07 | Développé et testé localement | Rendu partagé, paquet compilé, transport backend et hydratation des fiches ; activation de production restante |
 | SEO-08 | En cours | Contrats testés pour rupture, référence inactive/absente et panne API ; contrôle après déploiement restant |
@@ -67,4 +67,14 @@ Plan validé par l’utilisateur le 27 octobre 2026. Objectif complet conservé 
 - Le sitemap d’acceptation, généré par le paquet compilé à partir de quatre pages de lecture de l’API publique, contient 1 951 URL (1 932 produits, 5 familles et 14 pages stables). Validation XML réussie, aucune route privée et aucune date de modification inventée ; `sitemap/report.json` et `sitemap-preview.xml`.
 - Configuration Railway observée : service `Final-ecomerce-project` du projet `meticulous-perfection`, source `/Back-end` avec Nixpacks ; la variable d’activation du rendu ne figure pas dans les noms de variables du service. Cette configuration n’embarque pas encore le paquet de rendu. Une livraison compatible devra préparer ce changement avant l’activation.
 
-Prochaine étape : intégrer la dernière amélioration du catalogue publiée sur `main`, refaire la recette sur la version combinée et préparer la livraison compatible du backend. Le périmètre global reste en cours ; aucune de ces nouvelles fonctionnalités n’a encore été activée en production.
+## Recette de la version combinée — 28 octobre 2026
+
+- L’amélioration des premières rangées du catalogue (`fa2b0b5f`, PR #24) a été intégrée dans la branche SEO ; commit combiné `c0ae6ae8`.
+- PR de préparation ouverte en brouillon : https://github.com/Ampere-Donald/Final-ecomerce-project/pull/25. Aucun déploiement SEO de production effectué à ce stade.
+- Suites de la version combinée : 151 tests frontend et 503 tests backend réussis ; builds frontend/backend et contrat du paquet compilé réussis. Journaux dans le dossier de preuves.
+- Après des interruptions du réseau vers le domaine API direct, la recette locale utilise le point d’entrée public `newoteg.com` pour les lectures anonymes. Cela ne prouve pas le transport Worker/backend de production, vérifié séparément par les contrats.
+- Nouvelle recette complète réussie : `family-render-2026-10-28/render-report.json` contrôle les cinq familles et leurs liens de pagination ; `product-browser-2026-10-28/hydration-report.json` contrôle cinq fiches avec et sans JavaScript et une interaction conseil/panier, soit 11 contrôles, zéro erreur et zéro écriture réseau. Les anciens rapports sans date de dossier ne constituent plus la dernière preuve.
+- Le contrôle navigateur attend désormais un bouton effectivement activé après hydratation. Captures actualisées à 390 et 1440 px dans le dossier daté.
+- Matrice des 100 recherches candidates préparée, sans volumes ni positions supposés. Les cibles éditoriales proposées restent à créer et ne sont pas soumises au sitemap.
+
+Prochaine étape : préparer et vérifier la livraison compatible du backend, puis poursuivre l’enrichissement sourcé des 20 fiches et des cinq familles, la mesure et les contenus du plan. Le périmètre global reste en cours ; les lots éditoriaux, locaux et internationaux ne sont pas terminés.

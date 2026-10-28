@@ -45,7 +45,8 @@ const ids = ['02d5805f-7f51-4574-938d-d8cfe8c09487', '0f776e03-7dd5-4346-97f0-28
     for (const id of ids) {
       await hydrated.goto(base + '/product/' + id);
       await hydrated.locator('.e-product-info h1').waitFor();
-      await hydrated.getByRole('button', { name: 'Choisir la réception : Retrait à Akwa', exact: true }).first().waitFor({ state: 'visible' });
+      await hydrated.waitForFunction(() => Array.from(document.querySelectorAll('button')).some(button =>
+        button.getAttribute('aria-label') === 'Choisir la réception : Retrait à Akwa' && !button.disabled));
       assert.equal(await hydrated.locator('script[data-product-schema]').count(), 1);
       assert.equal(await hydrated.locator('link[rel="canonical"]').count(), 1);
       assert.equal(await hydrated.locator('link[rel="canonical"]').getAttribute('href'), 'https://newoteg.com/product/' + id);
@@ -59,6 +60,8 @@ const ids = ['02d5805f-7f51-4574-938d-d8cfe8c09487', '0f776e03-7dd5-4346-97f0-28
     await hydrated.locator('.e-product-info button.e-btn').filter({ hasText: 'Ajouter au panier' }).click();
     await hydrated.waitForFunction(() => JSON.parse(localStorage.getItem('newoteg_cart') || '[]').some(p => p.id === '0f776e03-7dd5-4346-97f0-2881154110bd'));
     report.checks.push({ action: 'hydrated advice dialog and local cart addition', status: 'passed' });
+    await hydrated.locator('.toast').waitFor({ state: 'hidden' });
+    await hydrated.locator('.e-product-info h1').click();
     for (const width of [390, 1440]) {
       await hydrated.setViewportSize({ width, height: 950 });
       assert.equal(await hydrated.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);

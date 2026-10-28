@@ -16,7 +16,11 @@ try {
   const { renderCatalogueResponse } = await server.ssrLoadModule('/src/storefront/serverCataloguePackage.jsx');
   for (const family of seoFamilies) {
     const url = new URL('https://newoteg.com' + familyPath(family));
-    const snapshot = await catalogueSnapshot(url, fetch, 15000);
+    const snapshot = await catalogueSnapshot(url, request => {
+      const route = new URL(request.url);
+      return fetch('https://newoteg.com' + route.pathname + route.search,
+        { headers: { Accept: 'application/json' }, redirect: 'manual', signal: request.signal });
+    }, 15000);
     const productKey = Object.keys(snapshot.resources).find(key => key.startsWith('/produits?'));
     const rows = snapshot.resources[productKey];
     assert(rows.data.length > 0);
@@ -33,3 +37,4 @@ try {
   report.status = 'passed';
 } catch (error) { report.status = 'failed'; report.error = error.stack; process.exitCode = 1; }
 finally { await server.close(); await writeFile(output + '/render-report.json', JSON.stringify(report, null, 2)); console.log(JSON.stringify(report)); }
+process.exit(process.exitCode || 0);
