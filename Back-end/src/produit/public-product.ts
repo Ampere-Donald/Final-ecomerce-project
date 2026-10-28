@@ -37,6 +37,13 @@ export function masquerCouts(p: any, now = new Date(), publicView = true): any {
   ])
     delete copie[field];
   if (publicView) {
+    for (const prefix of ['prix', 'classement', 'identification', 'photo']) {
+      for (const suffix of ['Revision', 'VerifieRevision', 'VerifieAt', 'VerifiePar'])
+        delete copie[`${prefix}${suffix}`];
+    }
+    delete copie.commercialRevision;
+    delete copie.propositionsCatalogue;
+    delete copie.presence;
     if (copie.quantiteDisponibleVente !== undefined)
       copie.quantiteStock = copie.quantiteDisponibleVente;
     delete copie.quantiteReservee;
