@@ -25,6 +25,8 @@ import ComparisonAction, { ComparisonLink } from "./ComparisonAction";
 import OfferDetails from "./OfferDetails";
 import ProductReviews from "./ProductReviews";
 import TechnicalSource from "./TechnicalSource";
+import ProductEditorial from './ProductEditorial.jsx';
+import { isWebsiteHomepage } from './productEditorial.js';
 import { useJourneyObservation } from "./useJourney.js";
 import { productSchemaJSON } from './productSchema.js';
 import { seoFamilies, familyPath } from './seoFamilies.js';
@@ -230,11 +232,14 @@ function Detail({ product }) {
                 rel="noreferrer"
               >
                 <FileText size={20} />
-                <Copy fr="Voir la fiche technique" en="View datasheet" />
+                {isWebsiteHomepage(product.urlDatasheet)
+                  ? <Copy fr="Consulter le site indiqué" en="Open listed website" />
+                  : <Copy fr="Voir la fiche technique" en="View datasheet" />}
               </a>
             )}
           </section>
         </div>
+        <ProductEditorial product={product} />
         <EquivalenceEntry query={name} productId={product.id} />
         <ProductReviews key={product.id} productId={product.id} />
         {relatedRows.length > 0 && (

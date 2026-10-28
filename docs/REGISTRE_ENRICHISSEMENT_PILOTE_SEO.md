@@ -45,3 +45,23 @@ Dans le dossier local `C:/Users/pc/Documents/Newoteg/image-produit`, cinq photog
 - La photographie des condensateurs montre plusieurs pièces et des températures de marquage différentes. Une température unique ne peut pas être attribuée à toute la fiche à partir de ce lot photographié.
 - Les boîtes des alimentations portent respectivement les mentions 12V/20A/250W et 12V/5A/60W, avec des références AWX-FS12V20A et AWX-FS12V5A. La photographie seule ne tranche pas la première incohérence ni les conditions de puissance. Aucun indice IP lisible n’a été établi.
 - Les nombres de pièces présents dans les noms de fichiers sont historiques et ne remplacent jamais le stock commercial courant.
+
+## Recherches poursuivies à la demande du propriétaire
+
+Le propriétaire ne dispose pas de précisions supplémentaires et demande de poursuivre à partir des références et des photos. Les éléments suivants remplacent les demandes de confirmation correspondantes, sans transformer les incertitudes en caractéristiques publiées :
+
+- Sur `Multimetre digital dt83 series.jpg`, la boîte affiche « DT83 series » et la façade « DT-830D ». Le modèle peut être documenté comme observation photographique. Deux catalogues commerciaux DT-830D ont été lus : [SNG](https://sngchina.com/Home%20Page/multimeter.pdf) et [document CH FUKE hébergé par Katranji](https://cms.katranji.com/web/content/698259). Leur correspondance fabricant/version avec le stock n’est pas établie ; ne pas reprendre automatiquement précision, protections ou certification.
+- La boîte photographiée de l’alimentation porte AWX-FS12V20A et les mentions 12V/20A/250W. Les recherches exactes et variantes n’ont pas fourni de notice primaire attribuable avec certitude. L’incohérence arithmétique et l’absence d’indice IP établi restent explicites ; les inscriptions de boîte ne prouvent pas les performances continues.
+- Le [document officiel ST 2N3773, octobre 2008, rév. 2](https://www.st.com/resource/en/datasheet/2n3773.pdf) a été trouvé et lu après observation du logo ST sur l’archive photo. Il décrit un transistor NPN en boîtier TO-3. Il constitue une source de référence plus adaptée que le seul document onsemi pour ce rapprochement, sans prouver authenticité ni état électrique de l’exemplaire.
+
+Le relevé structuré des sources et des limites est conservé dans `output/seo-implementation/recherche-identification-produits.json`. Ce registre n’est pas une déclaration de vérification physique des produits.
+
+## Intégration des vingt enrichissements
+
+Les vingt fiches disposent désormais d’un texte individuel français dans `Font-end/src/storefront/productEditorialData.js` : identification, repères de choix, limites établies et sources. Le contenu est placé après les informations d’achat ; prix et stock continuent de provenir de l’API. La publication est encore soumise à la recette et au déploiement. Les états « À enrichir » du tableau initial décrivent l’état de départ ; les preuves techniques manquantes restent ouvertes même après cet ajout éditorial.
+
+Sources supplémentaires effectivement lues : [DC Components, 2N2955](https://www.dccomponents.com/products/Transistors/Bipolar/TO-3/2n2955.pdf), [Good-Ark, 2N2907 / 2N2907A](https://goodarksemi.com/docs/datasheets/transistors/2N2907-2N2907A.pdf) et [AVT5745, application de réglage audio utilisant AN5836](https://serwis.avt.pl/manuals/AVT5745.pdf). Les documents des transistors décrivent leurs versions fabricant et ne prouvent pas l’origine du stock. La tension d’entrée du kit AVT n’est pas reprise comme tension admissible directement sur AN5836.
+
+Le document TI 2N2217 repéré par recherche n’a pas été suffisamment vérifié en lecture primaire : aucune caractéristique électrique issue de ce résultat n’a été publiée. Les fonctions non établies de AN5150N et AN5635N restent explicites. Pour le multimètre à aiguille, la photo montre YX-360TR et « samwa » ; aucune attribution à Sanwa ni reprise de sa notice.
+
+Les cinq photos d’archives servant aux observations sont accessibles depuis les sources des fiches. Leur provenance et leur rapprochement avec les identifiants catalogue sont consignés dans [PROVENANCE_PHOTOS_PILOTE_SEO.md](PROVENANCE_PHOTOS_PILOTE_SEO.md).
