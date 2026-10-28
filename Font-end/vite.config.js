@@ -4,6 +4,9 @@ import legacy from '@vitejs/plugin-legacy'
 import prerenderHome from './tooling/prerenderHome.js'
 import buildCatalogueRenderer from './tooling/buildCatalogueRenderer.js'
 import prefetchCatalogue from './tooling/prefetchCatalogue.js'
+import { applyHostedProductionDefaults } from './tooling/hostedProduction.js'
+
+applyHostedProductionDefaults()
 
 // https://vite.dev/config/
 export default defineConfig({

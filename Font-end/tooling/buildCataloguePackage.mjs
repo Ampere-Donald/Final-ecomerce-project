@@ -2,6 +2,8 @@ import { loadEnv } from 'vite';
 import { fileURLToPath } from 'node:url';
 import { resolve } from 'node:path';
 import { buildCataloguePackage } from './cataloguePackage.js';
+import { applyHostedProductionDefaults } from './hostedProduction.js';
+applyHostedProductionDefaults();
 const root = fileURLToPath(new URL('../', import.meta.url));
 const args = process.argv.slice(2);
 if (args.length && (args.length !== 2 || args[0] !== '--output')) throw Error('Usage: node tooling/buildCataloguePackage.mjs [--output directory]');
