@@ -41,3 +41,9 @@
 @media(max-width:760px){.e-catalogue .e-tools{display:grid;grid-template-columns:auto 1fr auto;gap:8px}.e-catalogue .e-sort{grid-column:2;grid-row:1}.e-catalogue .e-view{grid-column:3;grid-row:1;padding:8px;font-size:12px}.e-catalogue .e-tools>.e-compare-link{grid-column:1/-1;min-height:36px;padding:0 4px;justify-self:start}.e-catalogue .e-tools>.e-btn{padding:10px;min-height:46px;font-size:13px}.e-catalogue .e-chips{margin-bottom:10px}.e-catalogue .e-crumbs{padding:10px 0 8px}.e-catalogue .e-page-lead{margin:4px 0 12px}.e-catalogue .e-page-lead h1{font-size:25px}.e-catalogue .e-catalogue-hint{padding:14px}.e-catalogue .e-catalogue-hint a{margin-top:8px;min-height:44px}}
 @media(prefers-reduced-motion:no-preference){.e-search-panel,.e-catalogue-panel{animation:e-panel-open .15s ease-out}@keyframes e-panel-open{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}}
 @media(prefers-reduced-motion:reduce){.e-header .e-search{transition:none}}
+.e-family-guidance{margin:28px 0 20px;padding-top:24px;border-top:1px solid var(--e-line);max-width:76ch;line-height:1.65}
+.e-family-guidance h2{font-size:1.25rem;margin:0 0 12px}
+.e-family-guidance ul{margin:0 0 12px;padding-left:22px}
+.e-family-guidance li+li{margin-top:8px}
+.e-family-guidance p{font-size:.875rem;color:var(--e-muted)}
+.e-family-guidance a{overflow-wrap:anywhere;text-decoration:underline;text-underline-offset:3px}
