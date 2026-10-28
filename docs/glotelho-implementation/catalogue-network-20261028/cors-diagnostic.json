@@ -1,0 +1,23 @@
+{
+  "at": "2026-10-28T13:49:06.207Z",
+  "cases": [
+    {
+      "proxy": false,
+      "status": 200,
+      "rows": 24,
+      "methods": [
+        "GET",
+        "OPTIONS"
+      ]
+    },
+    {
+      "proxy": true,
+      "status": 200,
+      "rows": 24,
+      "methods": [
+        "GET"
+      ]
+    }
+  ],
+  "scope": "Native CDP observation of public GET and CORS OPTIONS; no shop writes"
+}

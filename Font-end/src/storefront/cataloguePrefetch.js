@@ -1,6 +1,6 @@
 // This function is also emitted in the document before the application runs.
 // Keep it self-contained and compatible with the legacy browser baseline.
-export function startCataloguePrefetch(win, apiBase, queryFor, canRender, leadImage) {
+export function startCataloguePrefetch(win, apiBase, queryFor, canRender, leadImage, transportBase) {
   if (!win.fetch || !win.AbortController || !win.URL || !win.URLSearchParams)
     return;
   var url = new win.URL(win.location.href);
@@ -8,8 +8,17 @@ export function startCataloguePrefetch(win, apiBase, queryFor, canRender, leadIm
   var root = win.document.getElementById("root");
   // A server-rendered catalogue already carries these exact resources.
   if (root && root.getAttribute("data-initial-catalogue")) return;
+  try {
+    // The first image URL arrives with the API data. Warm its existing CDN
+    // connection in parallel, without requesting or guessing a product image.
+    var connection = win.document.createElement("link");
+    connection.rel = "preconnect";
+    connection.href = "https://res.cloudinary.com";
+    win.document.head.appendChild(connection);
+  } catch (error) { void error; }
   var path = queryFor(url.searchParams, url.pathname).path;
   var base = apiBase.endsWith("/api") ? apiBase : apiBase + "/api";
+  if (transportBase) base = transportBase(base, win.location);
   var origin = new win.URL(base, win.location.origin);
   if (origin.protocol !== "https:" && origin.protocol !== "http:") return;
   var state = { at: Date.now(), resources: {}, resolved: {} };
