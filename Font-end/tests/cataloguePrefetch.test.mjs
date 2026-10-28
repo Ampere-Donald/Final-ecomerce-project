@@ -4,6 +4,7 @@ import { startCataloguePrefetch, cataloguePrefetch, resolvedCataloguePrefetch } 
 import { catalogueQuery, canRenderCatalogue } from '../src/storefront/catalogueQuery.js';
 import { catalogueLeadImage } from '../src/storefront/catalogueLeadImage.js';
 import { cardImage } from '../src/storefront/cardImage.js';
+import { catalogueTransportBase } from '../src/utils/catalogueTransport.js';
 
 function browser(path = '/catalogue', { server = false, fetcher } = {}) {
   const timers = new Map(), calls = [];
@@ -22,6 +23,32 @@ function browser(path = '/catalogue', { server = false, fetcher } = {}) {
   return { win, timers, calls };
 }
 const start = win => startCataloguePrefetch(win, 'https://api.newoteg.com', catalogueQuery, canRenderCatalogue);
+
+test('production prefetch and React share the same proxy path while image URLs keep their configured media origin', async () => {
+  const data={data:[{imageUrl:'/product-images/fixture.webp'}]};
+  const {win,calls}=browser('/catalogue',{fetcher:async()=>({ok:true,json:async()=>data})});
+  const links=[];
+  win.document.head={appendChild:link=>links.push(link)};
+  win.document.createElement=()=>({setAttribute(){}});
+  startCataloguePrefetch(win,'https://api.newoteg.com',catalogueQuery,canRenderCatalogue,catalogueLeadImage,catalogueTransportBase);
+  assert.equal(calls[0].url,'/api'+catalogueQuery(win.location.searchParams).path);
+  assert.equal(calls[1].url,'/api/categories');
+  assert.deepEqual(await cataloguePrefetch(catalogueQuery(win.location.searchParams).path,win),{data});
+  assert.equal(links.find(link=>link.rel==='preload').href,'https://api.newoteg.com/product-images/fixture.webp');
+  assert(calls.every(call=>call.options.credentials==='omit'&&call.options.cache==='no-store'));
+});
+
+test('only a valid catalogue warms the existing image CDN before data arrives, without downloading a guessed image', () => {
+  for(const path of ['/catalogue','/','/suivi-invite','/catalogue?token=private']) {
+    const {win,calls}=browser(path,{fetcher:()=>new Promise(()=>{})});const links=[];
+    win.document.createElement=()=>({});win.document.head={appendChild:link=>links.push(link)};
+    start(win);
+    if(path==='/catalogue'){
+      assert.equal(calls.length,2);
+      assert.deepEqual(links,[{rel:'preconnect',href:'https://res.cloudinary.com'}]);
+    }else assert.deepEqual(links,[]);
+  }
+});
 
 test('completed public reads can seed a client render without waiting or extending freshness', async () => {
   const { win } = browser();
@@ -110,7 +137,7 @@ test('optional image hints preserve data, skip unsupported responsive preloads a
   for(const mode of ['supported','unsupported','dom-error','navigated']) {
     const {win}=browser('/catalogue',{fetcher:async()=>({ok:true,json:async()=>data})});
     const links=[];
-    win.document.head={appendChild:link=>links.push(link)};
+    win.document.head={appendChild:link=>{if(link.rel==='preload')links.push(link)}};
     win.document.createElement=()=>{
       if(mode==='dom-error')throw new Error('Optional DOM hint unavailable');
       return mode==='unsupported'?{}:{imageSrcset:'',setAttribute(){}};

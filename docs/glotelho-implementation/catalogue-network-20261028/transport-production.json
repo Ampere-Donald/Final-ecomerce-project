@@ -1,0 +1,353 @@
+{
+  "cases": [
+    {
+      "origin": "https://newoteg.com",
+      "width": 390,
+      "proxy": true,
+      "catalogueRequests": [
+        {
+          "origin": "https://newoteg.com",
+          "path": "/api/produits",
+          "query": "?page=1&limit=24&sort=name_asc",
+          "requestId": false
+        },
+        {
+          "origin": "https://newoteg.com",
+          "path": "/api/categories",
+          "query": "",
+          "requestId": false
+        },
+        {
+          "origin": "https://newoteg.com",
+          "path": "/api/categories",
+          "query": "?includeSousCategories=true",
+          "requestId": true
+        },
+        {
+          "origin": "https://newoteg.com",
+          "path": "/api/produits",
+          "query": "?page=1&limit=24&sort=name_desc",
+          "requestId": true
+        },
+        {
+          "origin": "https://newoteg.com",
+          "path": "/api/produits",
+          "query": "?page=1&limit=24&sort=name_desc",
+          "requestId": false
+        },
+        {
+          "origin": "https://newoteg.com",
+          "path": "/api/categories",
+          "query": "",
+          "requestId": false
+        },
+        {
+          "origin": "https://newoteg.com",
+          "path": "/api/produits/11111111-1111-4111-8111-111111111111",
+          "query": "",
+          "requestId": true
+        },
+        {
+          "origin": "https://newoteg.com",
+          "path": "/api/categories",
+          "query": "?includeSousCategories=true",
+          "requestId": true
+        }
+      ],
+      "preflights": [],
+      "sortAndFreshPrices": true,
+      "favouritesRestored": true,
+      "mediaOriginPreserved": true
+    },
+    {
+      "origin": "https://www.newoteg.com",
+      "width": 1440,
+      "proxy": true,
+      "catalogueRequests": [
+        {
+          "origin": "https://www.newoteg.com",
+          "path": "/api/produits",
+          "query": "?page=1&limit=24&sort=name_asc",
+          "requestId": false
+        },
+        {
+          "origin": "https://www.newoteg.com",
+          "path": "/api/categories",
+          "query": "",
+          "requestId": false
+        },
+        {
+          "origin": "https://www.newoteg.com",
+          "path": "/api/categories",
+          "query": "?includeSousCategories=true",
+          "requestId": true
+        },
+        {
+          "origin": "https://www.newoteg.com",
+          "path": "/api/produits",
+          "query": "?page=1&limit=24&sort=name_desc",
+          "requestId": true
+        },
+        {
+          "origin": "https://www.newoteg.com",
+          "path": "/api/produits",
+          "query": "?page=1&limit=24&sort=name_desc",
+          "requestId": false
+        },
+        {
+          "origin": "https://www.newoteg.com",
+          "path": "/api/categories",
+          "query": "",
+          "requestId": false
+        },
+        {
+          "origin": "https://www.newoteg.com",
+          "path": "/api/produits/11111111-1111-4111-8111-111111111111",
+          "query": "",
+          "requestId": true
+        },
+        {
+          "origin": "https://www.newoteg.com",
+          "path": "/api/categories",
+          "query": "?includeSousCategories=true",
+          "requestId": true
+        }
+      ],
+      "preflights": [],
+      "sortAndFreshPrices": true,
+      "favouritesRestored": true,
+      "mediaOriginPreserved": true
+    },
+    {
+      "origin": "https://newoteg.com",
+      "width": 390,
+      "legacy": true,
+      "proxy": true,
+      "catalogueRequests": [
+        {
+          "origin": "https://newoteg.com",
+          "path": "/api/produits",
+          "query": "?page=1&limit=24&sort=name_asc",
+          "requestId": false
+        },
+        {
+          "origin": "https://newoteg.com",
+          "path": "/api/categories",
+          "query": "",
+          "requestId": false
+        },
+        {
+          "origin": "https://newoteg.com",
+          "path": "/api/categories",
+          "query": "?includeSousCategories=true",
+          "requestId": true
+        },
+        {
+          "origin": "https://newoteg.com",
+          "path": "/api/produits",
+          "query": "?page=1&limit=24&sort=name_desc",
+          "requestId": true
+        },
+        {
+          "origin": "https://newoteg.com",
+          "path": "/api/produits",
+          "query": "?page=1&limit=24&sort=name_desc",
+          "requestId": false
+        },
+        {
+          "origin": "https://newoteg.com",
+          "path": "/api/categories",
+          "query": "",
+          "requestId": false
+        },
+        {
+          "origin": "https://newoteg.com",
+          "path": "/api/produits/11111111-1111-4111-8111-111111111111",
+          "query": "",
+          "requestId": true
+        },
+        {
+          "origin": "https://newoteg.com",
+          "path": "/api/categories",
+          "query": "?includeSousCategories=true",
+          "requestId": true
+        }
+      ],
+      "preflights": [],
+      "sortAndFreshPrices": true,
+      "favouritesRestored": true,
+      "mediaOriginPreserved": true
+    },
+    {
+      "origin": "https://newoteg.com",
+      "width": 390,
+      "path": "/catalogue/condensateurs",
+      "proxy": true,
+      "catalogueRequests": [
+        {
+          "origin": "https://newoteg.com",
+          "path": "/api/produits",
+          "query": "?page=1&limit=24&sort=name_asc&categoryId=4412d73b-1cbd-4996-a5ad-993101657e74&sousCategorieId=66b0437b-5863-4527-8088-6b4833fdc033",
+          "requestId": false
+        },
+        {
+          "origin": "https://newoteg.com",
+          "path": "/api/categories",
+          "query": "",
+          "requestId": false
+        },
+        {
+          "origin": "https://newoteg.com",
+          "path": "/api/categories",
+          "query": "?includeSousCategories=true",
+          "requestId": true
+        },
+        {
+          "origin": "https://newoteg.com",
+          "path": "/api/produits",
+          "query": "?page=1&limit=24&sort=name_desc&categoryId=4412d73b-1cbd-4996-a5ad-993101657e74&sousCategorieId=66b0437b-5863-4527-8088-6b4833fdc033",
+          "requestId": true
+        },
+        {
+          "origin": "https://newoteg.com",
+          "path": "/api/produits",
+          "query": "?page=1&limit=24&sort=name_desc&categoryId=4412d73b-1cbd-4996-a5ad-993101657e74&sousCategorieId=66b0437b-5863-4527-8088-6b4833fdc033",
+          "requestId": false
+        },
+        {
+          "origin": "https://newoteg.com",
+          "path": "/api/categories",
+          "query": "",
+          "requestId": false
+        },
+        {
+          "origin": "https://newoteg.com",
+          "path": "/api/produits/11111111-1111-4111-8111-111111111111",
+          "query": "",
+          "requestId": true
+        },
+        {
+          "origin": "https://newoteg.com",
+          "path": "/api/categories",
+          "query": "?includeSousCategories=true",
+          "requestId": true
+        }
+      ],
+      "preflights": [],
+      "sortAndFreshPrices": true,
+      "favouritesRestored": true,
+      "mediaOriginPreserved": true
+    },
+    {
+      "origin": "https://newoteg.com",
+      "width": 390,
+      "ssr": true,
+      "proxy": true,
+      "catalogueRequests": [
+        {
+          "origin": "https://newoteg.com",
+          "path": "/api/categories",
+          "query": "?includeSousCategories=true",
+          "requestId": true
+        },
+        {
+          "origin": "https://newoteg.com",
+          "path": "/api/produits",
+          "query": "?page=1&limit=24&sort=name_desc",
+          "requestId": true
+        },
+        {
+          "origin": "https://newoteg.com",
+          "path": "/api/categories",
+          "query": "",
+          "requestId": true
+        },
+        {
+          "origin": "https://newoteg.com",
+          "path": "/api/categories",
+          "query": "?includeSousCategories=true",
+          "requestId": true
+        },
+        {
+          "origin": "https://newoteg.com",
+          "path": "/api/produits/11111111-1111-4111-8111-111111111111",
+          "query": "",
+          "requestId": true
+        },
+        {
+          "origin": "https://newoteg.com",
+          "path": "/api/categories",
+          "query": "?includeSousCategories=true",
+          "requestId": true
+        }
+      ],
+      "preflights": [],
+      "sortAndFreshPrices": true,
+      "favouritesRestored": true,
+      "mediaOriginPreserved": true
+    },
+    {
+      "origin": "http://127.0.0.1:5254",
+      "width": 390,
+      "proxy": false,
+      "catalogueRequests": [
+        {
+          "origin": "http://127.0.0.1:5254",
+          "path": "/api/produits",
+          "query": "?page=1&limit=24&sort=name_asc",
+          "requestId": false
+        },
+        {
+          "origin": "http://127.0.0.1:5254",
+          "path": "/api/categories",
+          "query": "",
+          "requestId": false
+        },
+        {
+          "origin": "http://127.0.0.1:5254",
+          "path": "/api/categories",
+          "query": "?includeSousCategories=true",
+          "requestId": true
+        },
+        {
+          "origin": "http://127.0.0.1:5254",
+          "path": "/api/produits",
+          "query": "?page=1&limit=24&sort=name_desc",
+          "requestId": true
+        },
+        {
+          "origin": "http://127.0.0.1:5254",
+          "path": "/api/produits",
+          "query": "?page=1&limit=24&sort=name_desc",
+          "requestId": false
+        },
+        {
+          "origin": "http://127.0.0.1:5254",
+          "path": "/api/categories",
+          "query": "",
+          "requestId": false
+        },
+        {
+          "origin": "http://127.0.0.1:5254",
+          "path": "/api/produits/11111111-1111-4111-8111-111111111111",
+          "query": "",
+          "requestId": true
+        },
+        {
+          "origin": "http://127.0.0.1:5254",
+          "path": "/api/categories",
+          "query": "?includeSousCategories=true",
+          "requestId": true
+        }
+      ],
+      "preflights": [],
+      "sortAndFreshPrices": true,
+      "favouritesRestored": true,
+      "mediaOriginPreserved": true
+    }
+  ],
+  "errors": [],
+  "writes": [],
+  "fixtureOnly": true,
+  "status": "passed"
+}

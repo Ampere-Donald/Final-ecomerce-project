@@ -1,0 +1,107 @@
+{
+  "at": "2026-10-28T13:18:43.587Z",
+  "scope": "Read-only native browser HTTP transport diagnostic, no storefront JS; not LCP or field performance",
+  "results": [
+    {
+      "sample": 1,
+      "proxy": false,
+      "requestId": false,
+      "status": 200,
+      "ms": 2357,
+      "rows": 24
+    },
+    {
+      "sample": 1,
+      "proxy": true,
+      "requestId": false,
+      "status": 200,
+      "ms": 676,
+      "rows": 24
+    },
+    {
+      "sample": 1,
+      "proxy": false,
+      "requestId": true,
+      "status": 200,
+      "ms": 1052,
+      "rows": 24
+    },
+    {
+      "sample": 1,
+      "proxy": true,
+      "requestId": true,
+      "status": 200,
+      "ms": 573,
+      "rows": 24
+    },
+    {
+      "sample": 2,
+      "proxy": true,
+      "requestId": false,
+      "status": 200,
+      "ms": 384,
+      "rows": 24
+    },
+    {
+      "sample": 2,
+      "proxy": false,
+      "requestId": false,
+      "status": 200,
+      "ms": 878,
+      "rows": 24
+    },
+    {
+      "sample": 2,
+      "proxy": true,
+      "requestId": true,
+      "status": 200,
+      "ms": 391,
+      "rows": 24
+    },
+    {
+      "sample": 2,
+      "proxy": false,
+      "requestId": true,
+      "status": 200,
+      "ms": 823,
+      "rows": 24
+    },
+    {
+      "sample": 3,
+      "proxy": false,
+      "requestId": false,
+      "status": 200,
+      "ms": 1668,
+      "rows": 24
+    },
+    {
+      "sample": 3,
+      "proxy": true,
+      "requestId": false,
+      "status": 200,
+      "ms": 1764,
+      "rows": 24
+    },
+    {
+      "sample": 3,
+      "proxy": false,
+      "requestId": true,
+      "status": 200,
+      "ms": 2413,
+      "rows": 24
+    },
+    {
+      "sample": 3,
+      "proxy": true,
+      "requestId": true,
+      "status": 200,
+      "ms": 2172,
+      "rows": 24
+    }
+  ],
+  "limits": [
+    "Three repetitions per transport/header case; timings fluctuate and are not catalogue LCP",
+    "The early Playwright page events did not expose CORS preflights: use the separate native CDP diagnostic instead",
+    "Cross-origin Content-Encoding is not exposed to browser JS; curl confirmed gzip separately on both paths"
+  ]
+}
