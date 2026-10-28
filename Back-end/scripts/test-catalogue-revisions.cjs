@@ -97,6 +97,8 @@ async function main() {
   );
   await pool.query(migration);
   await pool.query(migration); // startup fallback is repeatable
+  const workflow = fs.readFileSync(path.join(root, 'prisma/migrations/20261028150000_catalogue_review_workflow/migration.sql'), 'utf8');
+  await pool.query(workflow); await pool.query(workflow);
   db = new PrismaClient({ adapter: new PrismaPg(pool) });
   const service = new CatalogueRevisionsService(db);
   const category = await db.categorie.create({
@@ -124,6 +126,7 @@ async function main() {
     prixRevision: p.prixRevision,
     classementRevision: p.classementRevision,
     commercialRevision: p.commercialRevision,
+    identificationRevision: p.identificationRevision, photoRevision: p.photoRevision,
     ...extra,
   });
   const results = [];
@@ -162,7 +165,7 @@ async function main() {
       service.mutate(p.id, { ...op, changements: { prixDetail: 1300 } }, actor),
       (e) => e.getStatus() === 409,
     );
-    assert.equal((await service.list({ etat: 'VERIFIES' })).total, 1);
+    assert.equal((await service.list({ etat: 'VERIFIES' })).total, 0); // prices alone do not complete the sheet
   });
   await test('stock change does not conflict with price review; two price corrections cannot overwrite', async () => {
     const p = await read();
@@ -337,6 +340,7 @@ async function main() {
       imports: [PassportModule.register({})],
       controllers: [CatalogueRevisionsController],
       providers: [
+        { provide: require('../dist/src/cloudinary/cloudinary.service').CloudinaryService, useValue: { uploadBuffer: async () => 'https://example.com/uploaded.jpg' } },
         CatalogueRevisionsService,
         AdminJwtStrategy,
         { provide: DatabaseService, useValue: db },
@@ -420,6 +424,67 @@ async function main() {
       regular.update(p.id, { prixDetail: 1300 }, actor),
       (e) => e.getStatus() === 409,
     );
+  });
+  await test('name proposals preserve price validation, acceptance is durable and retry-safe', async () => {
+    const p = await read();
+    const proposal = await service.mutate(p.id, req(p, 'PROPOSER', { sujet: 'IDENTIFICATION', changements: { nomProduit: 'Condensateur corrigé 1000 µF', referenceFabricant: '1000UF-25V' } }), employee);
+    assert.equal((await read()).nomProduit, p.nomProduit);
+    const operation = req(p, 'ACCEPTER', { sujet: 'IDENTIFICATION', propositionId: proposal.propositionId });
+    await service.mutate(p.id, operation, actor); await service.mutate(p.id, operation, actor);
+    const after = await read();
+    assert.equal(after.nomProduit, 'Condensateur corrigé 1000 µF');
+    assert.equal(after.identificationVerifieRevision, after.identificationRevision);
+    assert.equal(after.prixVerifieRevision, p.prixVerifieRevision);
+    assert.equal(after.prixRevision, p.prixRevision);
+    const history = await service.detail(p.id);
+    assert(history.historique.some(event => event.avant.nomProduit === p.nomProduit && event.apres.nomProduit === after.nomProduit));
+  });
+  await test('two name corrections conflict; stock and price changes do not conflict with identification', async () => {
+    const p = await read();
+    await pool.query('UPDATE produit SET quantite_stock=quantite_stock, prix_detail=prix_detail+1 WHERE id=$1', [p.id]);
+    await service.mutate(p.id, req(p, 'VALIDER', { sujet: 'IDENTIFICATION', changements: { nomProduit: 'Nom actualisé' } }), actor);
+    await assert.rejects(service.mutate(p.id, req(p, 'VALIDER', { sujet: 'IDENTIFICATION', changements: { nomProduit: 'Nom dépassé' } }), actor), error => error.getStatus() === 409);
+    assert.equal((await read()).nomProduit, 'Nom actualisé');
+  });
+  await test('full review validates four subjects, photos remain proposals until accepted', async () => {
+    let p = await read();
+    const proposal = await service.mutate(p.id, req(p, 'PROPOSER', { sujet: 'PHOTO', changements: { imageUrl: 'https://example.com/replacement.jpg' } }), employee);
+    assert.notEqual((await read()).imageUrl, 'https://example.com/replacement.jpg');
+    await service.mutate(p.id, req(p, 'ACCEPTER', { sujet: 'PHOTO', propositionId: proposal.propositionId }), actor);
+    p = await read();
+    await service.mutate(p.id, req(p, 'VALIDER', { sujet: 'COMPLET' }), actor);
+    const complete = await read();
+    for (const prefix of ['prix', 'classement', 'identification', 'photo']) assert.equal(complete[prefix+'VerifieRevision'], complete[prefix+'Revision']);
+    assert.equal((await service.list({ etat: 'VERIFIES' })).total, 1);
+    const summary = await service.overview();
+    assert.equal(summary.total.complete, 1);
+    assert.equal(summary['categorie:'+category.id].complete, 1);
+    assert.equal(summary['sous:'+complete.sousCategorieId+':'+category.id].total, 1);
+    assert.equal((await service.list({ etat: 'TOUS' })).total, 1);
+    await service.presence(p.id, employee);
+    assert.equal((await service.detail(p.id)).presence[0].auteurId, employee.id);
+    await service.presence(p.id, employee, true);
+    assert.equal((await service.detail(p.id)).presence.length, 0);
+  });
+  await test('external identification and photo changes invalidate only concerned controls', async () => {
+    const p = await read();
+    await service.mutate(p.id, req(p, 'PROPOSER', { sujet: 'COMPLET' }), employee);
+    await service.mutate(p.id, req(p, 'VALIDER'), actor); // unchanged prices do not dismiss a full proposal
+    assert.equal(await db.catalogueProposition.count({ where: { produitId: p.id, sujet: 'COMPLET', statut: 'EN_ATTENTE' } }), 1);
+    await pool.query('UPDATE produit SET nom_produit=$2 WHERE id=$1', [p.id, 'Correction externe']);
+    let changed = await read();
+    assert.equal(changed.identificationVerifieRevision, null);
+    assert.equal(changed.prixVerifieRevision, p.prixVerifieRevision);
+    assert.equal(changed.photoVerifieRevision, p.photoVerifieRevision);
+    assert.equal(await db.catalogueProposition.count({ where: { produitId: p.id, sujet: 'COMPLET', statut: 'EN_ATTENTE' } }), 0);
+    await pool.query('UPDATE produit SET image_url=$2 WHERE id=$1', [p.id, 'https://example.com/external.jpg']);
+    changed = await read();
+    assert.equal(changed.photoVerifieRevision, null);
+    assert.equal(changed.classementVerifieRevision, p.classementVerifieRevision);
+    assert.equal((await service.list({ etat: 'A_VERIFIER' })).total, 1);
+    const rejected = await service.mutate(p.id, req(changed, 'PROPOSER', { sujet: 'IDENTIFICATION', changements: { nomProduit: 'Nom refusé' } }), employee);
+    await service.mutate(p.id, req(changed, 'REFUSER', { sujet: 'IDENTIFICATION', propositionId: rejected.propositionId }), actor);
+    assert.equal((await read()).nomProduit, 'Correction externe');
   });
   await test('archiving preserves stock and product history and blocks further reviews', async () => {
     const p = await read();

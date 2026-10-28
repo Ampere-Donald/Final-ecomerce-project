@@ -1,7 +1,7 @@
 {
   "version": 1,
   "sources": {
-    "schemaSha256": "6a531c2d8a017dbc32b8d5c4cb4a3b1c07a449df98e20583bf3be6863c594db5",
+    "schemaSha256": "0d0afb2bf5519247b15e6ee8cd7c28aa4f2ba29058e57dddbc7227120e84b280",
     "migrations": [
       {
         "name": "20260303155632_init",
@@ -258,6 +258,10 @@
       {
         "name": "20261024120000_catalogue_revision",
         "sha256": "6d5ad49d212bf18e0241eb5af11a60e6de48eb7e696ad70ba6d790e3859e0996"
+      },
+      {
+        "name": "20261028150000_catalogue_review_workflow",
+        "sha256": "0fc2605627a4f24ab4a60a444b696dccbccbacb3733ee516e38668de451cd6dd"
       }
     ]
   },
@@ -2700,6 +2704,54 @@
         "datetime_precision": null
       },
       {
+        "table_name": "catalogue_presence",
+        "column_name": "auteur_id",
+        "type": "text",
+        "type_schema": "pg_catalog",
+        "is_nullable": "NO",
+        "column_default": null,
+        "character_maximum_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "datetime_precision": null
+      },
+      {
+        "table_name": "catalogue_presence",
+        "column_name": "auteur_nom",
+        "type": "text",
+        "type_schema": "pg_catalog",
+        "is_nullable": "NO",
+        "column_default": null,
+        "character_maximum_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "datetime_precision": null
+      },
+      {
+        "table_name": "catalogue_presence",
+        "column_name": "expire_at",
+        "type": "timestamp",
+        "type_schema": "pg_catalog",
+        "is_nullable": "NO",
+        "column_default": null,
+        "character_maximum_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "datetime_precision": 3
+      },
+      {
+        "table_name": "catalogue_presence",
+        "column_name": "produit_id",
+        "type": "text",
+        "type_schema": "pg_catalog",
+        "is_nullable": "NO",
+        "column_default": null,
+        "character_maximum_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "datetime_precision": null
+      },
+      {
         "table_name": "catalogue_proposition",
         "column_name": "auteur_id",
         "type": "text",
@@ -2797,6 +2849,18 @@
       },
       {
         "table_name": "catalogue_proposition",
+        "column_name": "identification_revision",
+        "type": "int4",
+        "type_schema": "pg_catalog",
+        "is_nullable": "NO",
+        "column_default": "1",
+        "character_maximum_length": null,
+        "numeric_precision": 32,
+        "numeric_scale": 0,
+        "datetime_precision": null
+      },
+      {
+        "table_name": "catalogue_proposition",
         "column_name": "observe",
         "type": "jsonb",
         "type_schema": "pg_catalog",
@@ -2805,6 +2869,18 @@
         "character_maximum_length": null,
         "numeric_precision": null,
         "numeric_scale": null,
+        "datetime_precision": null
+      },
+      {
+        "table_name": "catalogue_proposition",
+        "column_name": "photo_revision",
+        "type": "int4",
+        "type_schema": "pg_catalog",
+        "is_nullable": "NO",
+        "column_default": "1",
+        "character_maximum_length": null,
+        "numeric_precision": 32,
+        "numeric_scale": 0,
         "datetime_precision": null
       },
       {
@@ -8365,6 +8441,54 @@
       },
       {
         "table_name": "produit",
+        "column_name": "identification_revision",
+        "type": "int4",
+        "type_schema": "pg_catalog",
+        "is_nullable": "NO",
+        "column_default": "1",
+        "character_maximum_length": null,
+        "numeric_precision": 32,
+        "numeric_scale": 0,
+        "datetime_precision": null
+      },
+      {
+        "table_name": "produit",
+        "column_name": "identification_verifie_at",
+        "type": "timestamp",
+        "type_schema": "pg_catalog",
+        "is_nullable": "YES",
+        "column_default": null,
+        "character_maximum_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "datetime_precision": 3
+      },
+      {
+        "table_name": "produit",
+        "column_name": "identification_verifie_par",
+        "type": "text",
+        "type_schema": "pg_catalog",
+        "is_nullable": "YES",
+        "column_default": null,
+        "character_maximum_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "datetime_precision": null
+      },
+      {
+        "table_name": "produit",
+        "column_name": "identification_verifie_revision",
+        "type": "int4",
+        "type_schema": "pg_catalog",
+        "is_nullable": "YES",
+        "column_default": null,
+        "character_maximum_length": null,
+        "numeric_precision": 32,
+        "numeric_scale": 0,
+        "datetime_precision": null
+      },
+      {
+        "table_name": "produit",
         "column_name": "image_url",
         "type": "text",
         "type_schema": "pg_catalog",
@@ -8433,6 +8557,54 @@
         "character_maximum_length": 150,
         "numeric_precision": null,
         "numeric_scale": null,
+        "datetime_precision": null
+      },
+      {
+        "table_name": "produit",
+        "column_name": "photo_revision",
+        "type": "int4",
+        "type_schema": "pg_catalog",
+        "is_nullable": "NO",
+        "column_default": "1",
+        "character_maximum_length": null,
+        "numeric_precision": 32,
+        "numeric_scale": 0,
+        "datetime_precision": null
+      },
+      {
+        "table_name": "produit",
+        "column_name": "photo_verifie_at",
+        "type": "timestamp",
+        "type_schema": "pg_catalog",
+        "is_nullable": "YES",
+        "column_default": null,
+        "character_maximum_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "datetime_precision": 3
+      },
+      {
+        "table_name": "produit",
+        "column_name": "photo_verifie_par",
+        "type": "text",
+        "type_schema": "pg_catalog",
+        "is_nullable": "YES",
+        "column_default": null,
+        "character_maximum_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "datetime_precision": null
+      },
+      {
+        "table_name": "produit",
+        "column_name": "photo_verifie_revision",
+        "type": "int4",
+        "type_schema": "pg_catalog",
+        "is_nullable": "YES",
+        "column_default": null,
+        "character_maximum_length": null,
+        "numeric_precision": 32,
+        "numeric_scale": 0,
         "datetime_precision": null
       },
       {
@@ -8565,6 +8737,18 @@
         "character_maximum_length": null,
         "numeric_precision": 32,
         "numeric_scale": 0,
+        "datetime_precision": null
+      },
+      {
+        "table_name": "produit",
+        "column_name": "reference_fabricant",
+        "type": "varchar",
+        "type_schema": "pg_catalog",
+        "is_nullable": "YES",
+        "column_default": null,
+        "character_maximum_length": 150,
+        "numeric_precision": null,
+        "numeric_scale": null,
         "datetime_precision": null
       },
       {
@@ -11141,6 +11325,15 @@
         "deferred": false
       },
       {
+        "table_name": "catalogue_presence",
+        "name": "catalogue_presence_pkey",
+        "type": "p",
+        "definition": "PRIMARY KEY (auteur_id)",
+        "validated": true,
+        "deferrable": false,
+        "deferred": false
+      },
+      {
         "table_name": "catalogue_proposition",
         "name": "catalogue_proposition_pkey",
         "type": "p",
@@ -11171,7 +11364,7 @@
         "table_name": "catalogue_proposition",
         "name": "catalogue_proposition_sujet_check",
         "type": "c",
-        "definition": "CHECK (((sujet)::text = ANY ((ARRAY['PRIX'::character varying, 'CLASSEMENT'::character varying, 'ARCHIVAGE'::character varying])::text[])))",
+        "definition": "CHECK (((sujet)::text = ANY ((ARRAY['PRIX'::character varying, 'CLASSEMENT'::character varying, 'IDENTIFICATION'::character varying, 'PHOTO'::character varying, 'COMPLET'::character varying, 'ARCHIVAGE'::character varying])::text[])))",
         "validated": true,
         "deferrable": false,
         "deferred": false
@@ -12739,6 +12932,20 @@
         "ready": true
       },
       {
+        "table_name": "catalogue_presence",
+        "name": "catalogue_presence_pkey",
+        "definition": "CREATE UNIQUE INDEX catalogue_presence_pkey ON public.catalogue_presence USING btree (auteur_id)",
+        "valid": true,
+        "ready": true
+      },
+      {
+        "table_name": "catalogue_presence",
+        "name": "catalogue_presence_produit_id_expire_at_idx",
+        "definition": "CREATE INDEX catalogue_presence_produit_id_expire_at_idx ON public.catalogue_presence USING btree (produit_id, expire_at)",
+        "valid": true,
+        "ready": true
+      },
+      {
         "table_name": "catalogue_proposition",
         "name": "catalogue_proposition_auteur_id_statut_idx",
         "definition": "CREATE INDEX catalogue_proposition_auteur_id_statut_idx ON public.catalogue_proposition USING btree (auteur_id, statut)",
@@ -13900,7 +14107,7 @@
     ],
     "checkRestoreDefinitions": {
       "catalogue_proposition.catalogue_proposition_statut_check": "CHECK (((statut)::text = ANY (ARRAY[('EN_ATTENTE'::character varying)::text, ('ACCEPTEE'::character varying)::text, ('REFUSEE'::character varying)::text, ('OBSOLETE'::character varying)::text])))",
-      "catalogue_proposition.catalogue_proposition_sujet_check": "CHECK (((sujet)::text = ANY (ARRAY[('PRIX'::character varying)::text, ('CLASSEMENT'::character varying)::text, ('ARCHIVAGE'::character varying)::text])))",
+      "catalogue_proposition.catalogue_proposition_sujet_check": "CHECK (((sujet)::text = ANY (ARRAY[('PRIX'::character varying)::text, ('CLASSEMENT'::character varying)::text, ('IDENTIFICATION'::character varying)::text, ('PHOTO'::character varying)::text, ('COMPLET'::character varying)::text, ('ARCHIVAGE'::character varying)::text])))",
       "catalogue_proposition.catalogue_proposition_type_check": "CHECK (((type)::text = ANY (ARRAY[('CONFIRMATION'::character varying)::text, ('CORRECTION'::character varying)::text, ('DISCUSSION'::character varying)::text])))",
       "dossier_incompatibilite.incompatibilite_motif_closed": "CHECK (((motif)::text = ANY (ARRAY[('TENSION'::character varying)::text, ('BROCHAGE'::character varying)::text, ('FORMAT'::character varying)::text, ('FONCTION'::character varying)::text, ('AUTRE'::character varying)::text])))",
       "dossier_incompatibilite.incompatibilite_quantite_bounds": "CHECK (((quantite >= 1) AND (quantite <= 1000000) AND (version > 0)))",

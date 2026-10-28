@@ -1,5 +1,45 @@
 import api from "../../services/api";
-export type Subject = "PRIX" | "CLASSEMENT" | "ARCHIVAGE";
+export type Subject =
+  | "PRIX"
+  | "CLASSEMENT"
+  | "IDENTIFICATION"
+  | "PHOTO"
+  | "COMPLET"
+  | "ARCHIVAGE";
+export const subjectLabels: Record<Subject, string> = {
+  PRIX: "Prix",
+  CLASSEMENT: "Classement",
+  IDENTIFICATION: "Identification",
+  PHOTO: "Photo",
+  COMPLET: "Fiche complète",
+  ARCHIVAGE: "Article arrêté",
+};
+export const reviewSubjects: Subject[] = [
+  "IDENTIFICATION",
+  "PRIX",
+  "CLASSEMENT",
+  "PHOTO",
+];
+export const subjectPrefix = {
+  PRIX: "prix",
+  CLASSEMENT: "classement",
+  IDENTIFICATION: "identification",
+  PHOTO: "photo",
+};
+export const isVerified = (p: Product, subject: Subject) => {
+  const prefix = subjectPrefix[subject];
+  return (
+    p[`${prefix}VerifieRevision`] != null &&
+    p[`${prefix}VerifieRevision`] === p[`${prefix}Revision`]
+  );
+};
+export interface Progress {
+  total: number;
+  remaining: number;
+  pending: number;
+  discussion: number;
+  complete: number;
+}
 export interface Category {
   id: string;
   nom: string;
@@ -8,6 +48,12 @@ export interface Category {
 export interface Product {
   id: string;
   nomProduit: string;
+  marque?: string | null;
+  referenceFabricant?: string | null;
+  identificationRevision: number;
+  photoRevision: number;
+  identificationVerifieRevision: number | null;
+  photoVerifieRevision: number | null;
   code?: string;
   imageUrl?: string;
   quantiteStock: number;
@@ -43,6 +89,7 @@ export interface Proposal {
   observe: Product;
 }
 export interface Detail {
+  presence?: { auteurId: string; auteurNom: string }[];
   produit: Product;
   propositions: Proposal[];
   historique: {
@@ -63,10 +110,13 @@ export interface Mutation {
   prixRevision: number;
   classementRevision: number;
   commercialRevision: number;
+  identificationRevision?: number;
+  photoRevision?: number;
   commentaire?: string;
   changements?: Record<string, unknown>;
 }
 export interface Listing {
+  catalogueTotal?: number;
   data: Product[];
   total: number;
   page: number;
@@ -74,6 +124,21 @@ export interface Listing {
   counts: Record<string, number>;
 }
 export const revisionApi = {
+  overview: () =>
+    api
+      .get<Record<string, Progress>>("/catalogue-revisions/progression")
+      .then((r) => r.data),
+  presence: (id: string) =>
+    api.post(`/catalogue-revisions/produits/${id}/presence`),
+  releasePresence: (id: string) =>
+    api.delete(`/catalogue-revisions/produits/${id}/presence`),
+  photo: (file: Blob) => {
+    const data = new FormData();
+    data.append("file", file, "photo.jpg");
+    return api
+      .post<{ imageUrl: string }>("/catalogue-revisions/photos", data)
+      .then((r) => r.data);
+  },
   list: (params: Record<string, string>) =>
     api.get<Listing>("/catalogue-revisions", { params }).then((r) => r.data),
   detail: (id: string) =>
@@ -111,6 +176,10 @@ export const money = (value: unknown) =>
     ? "Non renseigné"
     : `${Number(value).toLocaleString("fr-FR")} FCFA`;
 export const fieldLabels: Record<string, string> = {
+  nomProduit: "Nom de l’article",
+  marque: "Marque",
+  referenceFabricant: "Référence fabricant",
+  imageUrl: "Photo principale",
   prixDetail: "Prix détail",
   prixDemiGros: "Prix demi-gros",
   prixGros: "Prix gros",
@@ -124,5 +193,7 @@ export const expected = (p: Product) => ({
   prixRevision: p.prixRevision,
   classementRevision: p.classementRevision,
   commercialRevision: p.commercialRevision,
+  identificationRevision: p.identificationRevision,
+  photoRevision: p.photoRevision,
 });
 export const dateLabel = (s: string) => new Date(s).toLocaleString("fr-FR");
