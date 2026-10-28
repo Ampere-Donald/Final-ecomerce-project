@@ -15,9 +15,9 @@ export const seoFamilies = [
   },
   {
     slug: 'circuits-integres-audio', category: '69e8ab9e-bf6a-41de-9093-028170405f55', subcategory: '4aab0f26-c07a-4102-bc78-82fe24ba5e02',
-    fr: 'Circuits intégrés audio', en: 'Audio integrated circuits',
-    descriptionFr: 'Explorez les circuits intégrés audio de X-Electronic au Cameroun. Comparez les références exactes, caractéristiques et disponibilités pour votre projet.',
-    descriptionEn: 'Explore audio integrated circuits at X-Electronic in Cameroon. Compare exact references, specifications and availability for your project.',
+    fr: 'Circuits intégrés audio et TV', en: 'Audio and TV integrated circuits',
+    descriptionFr: 'Retrouvez les circuits intégrés audio et TV de X-Electronic au Cameroun. Identifiez la fonction et la référence complète de chaque circuit avant de comparer ses caractéristiques.',
+    descriptionEn: 'Find audio and TV integrated circuits at X-Electronic in Cameroon. Identify each circuit’s function and complete reference before comparing its specifications.',
   },
   {
     slug: 'alimentations-stabilisees', category: 'e8df4ded-9ae1-47ce-b733-41c2dda3158c', subcategory: 'dbf79a9a-4474-4de8-81ce-753f9937452b',

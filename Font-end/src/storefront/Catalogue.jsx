@@ -15,6 +15,7 @@ import { ComparisonLink } from "./ComparisonAction";
 import { useJourneyObservation } from "./useJourney.js";
 import { catalogueQuery } from "./catalogueQuery";
 import useBrowserReady from "./useBrowserReady";
+import { familyGuidance } from './familyGuidance.js';
 
 export default function Catalogue() {
   const [params, setParams] = useSearchParams();
@@ -296,6 +297,11 @@ export default function Catalogue() {
             {page < result.pages ? <Link to={pageLink(page + 1)} rel="next"><Copy fr="Suivant" en="Next" /></Link> : <span aria-disabled="true"><Copy fr="Suivant" en="Next" /></span>}
           </nav>
         )}
+        {family && familyGuidance[family.slug] && <section className="e-family-guidance" aria-labelledby="family-guidance-title">
+          <h2 id="family-guidance-title"><Copy fr="Les repères pour choisir" en="What to check before choosing" /></h2>
+          <ul>{familyGuidance[family.slug][lang === 'en' ? 'en' : 'fr'].map(point => <li key={point}>{point}</li>)}</ul>
+          <p><Copy fr="Repères généraux : " en="General guidance: " /><a href={familyGuidance[family.slug].source[1]} target="_blank" rel="noopener noreferrer">{familyGuidance[family.slug].source[0]}</a></p>
+        </section>}
         {query && <EquivalenceEntry query={query} />}
         <div className="e-catalogue-hint">
           <span><Copy fr="Une référence ou un besoin précis ?" en="A reference or a specific need?" /></span>

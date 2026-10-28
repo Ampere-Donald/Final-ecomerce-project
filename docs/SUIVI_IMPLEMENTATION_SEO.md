@@ -27,8 +27,8 @@ Plan validé par l’utilisateur le 27 octobre 2026. Objectif complet conservé 
 | SEO-11 | En cours | Métadonnées des familles et de leurs filtres testées ; audit complet de la politique restant |
 | SEO-12 | Publié et contrôlé | Sitemap public de 1 951 URL, dont 1 932 produits correspondant au total API ; cinq familles, URL uniques et absence de routes privées contrôlées ; soumission Search Console restante |
 | SEO-13 | En cours | Product/Offer/BreadcrumbList partagés avec le rendu, sans offre si prix ou stock inconnus ; informations boutique et validation externe restantes |
-| SEO-14 | À faire | Enrichissement sourcé des 20 fiches pilotes |
-| SEO-15 | En cours | Présentation concise des cinq familles intégrée ; compléter les aides de choix après recherche |
+| SEO-14 | Vérification documentaire engagée | Registre des 20 fiches dans REGISTRE_ENRICHISSEMENT_PILOTE_SEO.md ; photos examinées et points non établis conservés, sans inventer de caractéristiques |
+| SEO-15 | Aides au choix préparées et testées | Trois repères par famille, sources primaires, FR/EN ; présents après les produits dans le rendu HTML. Titre audio élargi à audio et TV selon le contenu réel. Publication en attente du correctif de configuration automatique |
 | SEO-16 | En cours | Liens vers familles et pagination HTML intégrés ; compléter accueil et fiches |
 | SEO-17 | À faire | Examiner et étendre les événements de parcours existants |
 | SEO-18 | À faire | Tableau de suivi et attribution |
@@ -94,3 +94,15 @@ Les étapes de livraison du backend et du Worker réalisées ensuite sont détai
 - Banc Miniflare/workerd avec l’entrée de production : 11 documents privés protégés, aucun appel au renderer pour ces documents, métadonnées publiques conservées lorsque le renderer est indisponible, requête anonyme au catalogue et image statique inchangée. Le banc a été adapté à l’appel serveur désormais attendu ; preuve dans `production-worker-private-assets/private-assets-result.json`.
 
 Prochaine étape : intégrer la configuration durable de publication après ses contrôles, compléter la recette publique de pagination/erreurs, puis poursuivre les fiches sourcées, les familles et la mesure. La livraison commerciale A complète n’est pas terminée : 20 fiches enrichies, attribution et performance restent notamment à réaliser.
+
+## Configuration automatique et préparation éditoriale — 28 octobre 2026
+
+- PR #26 fusionnée après CI #347 et contrat Docker #73 réussis sur `4572ab69` ; merge `e607c01a`. Backend automatique `11a80c8e-d402-4e8d-baf9-9e22e22c97ac`, SUCCESS.
+- Le contrôle après ce déploiement a détecté une absence de HTML de catalogue/produit et un sitemap 503. La version Cloudflare automatique `a64ff910-a7e8-442f-b426-a66427f7c3b4` a été retirée au profit de la version validée `89e28bce-3f26-45ea-88d1-e07857d7c044`. Le retour arrière est confirmé ; catalogue, produit et sitemap sont rétablis (`post-rollback-public.json`).
+- Diagnostic : le Worker construit automatiquement porte le rendererId `19ad716c361a1dcf0f747e2718ad7940ef69589511d24ac6562aec4ebc1aaec8`, correspondant exactement à la variante API directe du contrat Docker #73. Le backend expose `456f3b2f…`, variante `/api`. Le refus des versions différentes fonctionne, mais révélait la divergence de configuration de construction. Le contenu du dernier script téléversé et les logs du pipeline ont été utilisés ; aucun secret enregistré dans les preuves.
+- La modification des paramètres Workers Builds via l’API a été refusée en 403 avec la session disponible. Le correctif est donc porté par le dépôt : le profil documenté `WORKERS_CI=1`, branche `main`, fixe explicitement l’API publique à `/api` avant le chargement Vite, pour les deux constructions. Les autres profils conservent leurs variantes explicites. La matrice CI ajoute ce cas réel et vérifie l’identité avec l’image Docker construite pour `/api`.
+- Reproduction locale avec la variable héritée `VITE_API_URL=https://api.newoteg.com` et le profil Cloudflare production : build et contrat compilé réussis, identité `46daa88d…`, identique au nouveau contenu construit normalement pour `/api`. Les nouveaux conseils changent le paquet ; ils ne doivent pas être publiés avec l’ancien backend.
+- Préparation du contenu : cinq aides au choix sourcées, sous les produits ; sources Nichicon, onsemi, Panasonic archivé, MEAN WELL et Fluke. Aucun document général ne certifie les produits en stock. Le registre de vingt fiches relève notamment un mélange audio/TV, les suffixes non confirmés, les températures hétérogènes d’une photo de condensateurs, une incohérence de puissance et des modèles de multimètres imprécis.
+- Vérification locale : 151 tests réussis, rendu des cinq familles avec contenu éditorial après les cartes ; Edge à 390/1440 px pour les familles circuits et multimètres, aucun débordement ni erreur JavaScript. Preuves : `family-guidance-render` et `family-guidance-browser`. L’enrichissement individuel des vingt fiches reste à faire, avec les preuves et confirmations nécessaires.
+
+Prochaine action : publier le correctif de configuration et les aides au choix après réussite de leur matrice CI, puis recontrôler les deux déploiements réels. La production reste sur la version restaurée pendant cette préparation.

@@ -26,6 +26,8 @@ try {
     assert(rows.data.length > 0);
     const html = renderCatalogueResponse(snapshot.url, rows, snapshot.resources['/categories'], snapshot.at);
     assert(html.includes('<h1>' + family.fr + '</h1>'));
+    assert(html.includes('id="family-guidance-title"'), 'Selection guidance must be present before JavaScript');
+    assert(html.indexOf('id="family-guidance-title"') > html.lastIndexOf('</article>'), 'Products must remain before editorial guidance');
     assert(html.includes('data-initial-catalogue="fr"'));
     assert(!html.includes('<!--$!-->'), 'React server rendering must not suspend');
     assert(!/coutRevient|margeInterne|privateNote/.test(html));
