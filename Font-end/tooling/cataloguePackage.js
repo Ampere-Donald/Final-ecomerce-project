@@ -3,11 +3,21 @@ import react from '@vitejs/plugin-react';
 import { createHash } from 'node:crypto';
 import { resolve } from 'node:path';
 import { readFile, writeFile } from 'node:fs/promises';
+import { validateProductEditorial } from '../src/storefront/productEditorial.js';
+import { productEditorialEntries } from '../src/storefront/productEditorialData.js';
 
 // Reproducible Node runtime for the existing React catalogue. It is built from
 // source, never downloaded or evaluated from a visitor's requested URL.
 export async function buildCataloguePackage(root, env, outDir) {
+  validateProductEditorial();
   root = resolve(root); outDir = resolve(outDir);
+  for (const entry of productEditorialEntries.filter(item => item.status === 'published')) {
+    for (const lang of ['fr', 'en']) {
+      for (const source of entry[lang]?.sources || []) {
+        if (source.url.startsWith('/product-reference-images/')) await readFile(resolve(root, 'public', source.url.slice(1)));
+      }
+    }
+  }
   // Vite empties this directory. Only our two generated workspace targets may
   // be used; a mistyped --output must never erase another directory.
   if (![resolve(root, '.catalogue-backend'), resolve(root, '../Back-end/.storefront-renderer')].includes(outDir))

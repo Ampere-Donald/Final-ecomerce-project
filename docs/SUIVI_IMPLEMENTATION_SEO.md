@@ -27,7 +27,7 @@ Plan validé par l’utilisateur le 27 octobre 2026. Objectif complet conservé 
 | SEO-11 | En cours | Métadonnées des familles et de leurs filtres testées ; audit complet de la politique restant |
 | SEO-12 | Publié et contrôlé | Sitemap public de 1 951 URL, dont 1 932 produits correspondant au total API ; cinq familles, URL uniques et absence de routes privées contrôlées ; soumission Search Console restante |
 | SEO-13 | En cours | Product/Offer/BreadcrumbList partagés avec le rendu, sans offre si prix ou stock inconnus ; informations boutique et validation externe restantes |
-| SEO-14 | Vérification documentaire engagée | Registre des 20 fiches dans REGISTRE_ENRICHISSEMENT_PILOTE_SEO.md ; photos examinées et points non établis conservés, sans inventer de caractéristiques |
+| SEO-14 | Vingt enrichissements intégrés, recette en cours | Notes individuelles FR, sources et limites dans productEditorialData.js ; retrait automatique sur changement d’identité ou nouvel attribut technique. Dimensions, notices et vérifications physiques manquantes restent non établies ; publication à confirmer |
 | SEO-15 | Aides au choix publiées et contrôlées | Trois repères sourcés par famille, FR/EN, après les produits dans le HTML. Titre audio élargi à audio et TV selon le contenu réel. Maillage vers les futurs guides à compléter |
 | SEO-16 | En cours | Liens vers familles et pagination HTML intégrés ; compléter accueil et fiches |
 | SEO-17 | À faire | Examiner et étendre les événements de parcours existants |
