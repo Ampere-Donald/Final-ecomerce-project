@@ -1,14 +1,24 @@
-import { ArrowUpRight, Tags } from 'lucide-react';
+import { ArrowUpRight, ClipboardCheck, Tags } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useCataloguePricing } from '../context/CataloguePricingContext';
 
 export const PricingProgressCard = () => {
   const { summary } = useCataloguePricing();
-  if (!summary || summary.missingCount === 0) return null;
-  const progress = summary.totalCount
+  const progress = summary?.totalCount
     ? Math.round((summary.pricedCount / summary.totalCount) * 100)
     : 0;
   return (
+    <section className="space-y-3" aria-label="Contrôle du catalogue">
+      <Link to="/revision-catalogue" className="flex min-h-28 flex-col gap-4 rounded-2xl border border-primary/20 bg-white p-5 transition-colors hover:border-primary/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary sm:flex-row sm:items-center sm:p-6">
+        <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary"><ClipboardCheck size={24} aria-hidden="true" /></span>
+        <div className="min-w-0 flex-1">
+          <p className="text-xs font-semibold uppercase tracking-wider text-primary">Révision générale du catalogue</p>
+          <h2 className="mt-1 font-display text-lg font-semibold text-slate-950">Vérifier les prix et le classement</h2>
+          <p className="mt-1 text-sm leading-6 text-slate-600">Contrôlez les articles déjà tarifés, proposez des corrections et retrouvez les contributions de l’équipe.</p>
+        </div>
+        <span className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-bold text-white">Vérifier le catalogue <ArrowUpRight size={18} aria-hidden="true" /></span>
+      </Link>
+      {summary && summary.missingCount > 0 && (
     <Link to="/prix-a-renseigner" className="pricing-invitation group">
       <span className="pricing-invitation-icon">
         <Tags size={23} />
@@ -43,5 +53,7 @@ export const PricingProgressCard = () => {
         size={22}
       />
     </Link>
+      )}
+    </section>
   );
 };
