@@ -47,3 +47,11 @@
 .e-family-guidance li+li{margin-top:8px}
 .e-family-guidance p{font-size:.875rem;color:var(--e-muted)}
 .e-family-guidance a{overflow-wrap:anywhere;text-decoration:underline;text-underline-offset:3px}
+.e-product-editorial{max-width:76ch;margin:32px 0;padding-top:24px;border-top:1px solid var(--e-line);line-height:1.65}
+.e-product-editorial h2{font-size:1.25rem;margin:0 0 12px}
+.e-product-editorial h3{font-size:1rem;margin:18px 0 8px}
+.e-product-editorial ul{padding-left:22px;margin:8px 0 16px}
+.e-product-editorial li+li{margin-top:8px}
+.e-product-editorial a{overflow-wrap:anywhere;text-decoration:underline;text-underline-offset:3px}
+.e-product-editorial summary{cursor:pointer;min-height:44px;align-content:center;color:var(--e-muted)}
+.e-product-editorial details p,.e-product-editorial details ul{font-size:.875rem;color:var(--e-muted)}
