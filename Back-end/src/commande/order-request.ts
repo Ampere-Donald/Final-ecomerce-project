@@ -1,6 +1,7 @@
 import { ConflictException } from '@nestjs/common';
 import { createHmac } from 'crypto';
 import { CreateCommandeDto } from './dto/create-commande.dto';
+import { acquisitionChannel } from '../parcours/acquisition';
 
 /** All SQL runs inside the order transaction. The unique insert serializes retries. */
 export async function previousOrder(
@@ -8,6 +9,7 @@ export async function previousOrder(
   dto: CreateCommandeDto,
   kind: 'standard' | 'checkout',
 ) {
+  const canalEntree = acquisitionChannel(dto.canalEntree);
   if (!dto.requestId) return null; // Preserve legacy clients; the new checkout always sends a key.
   const secret = process.env.JWT_SECRET;
   if (!secret) throw new Error('Order request signing secret unavailable');
@@ -15,6 +17,7 @@ export async function previousOrder(
     .update(
       JSON.stringify({
         kind,
+        ...(canalEntree ? { canalEntree } : {}),
         ...(dto.guestAccessKey !== undefined
           ? {
               guestAccessKey: dto.guestAccessKey,

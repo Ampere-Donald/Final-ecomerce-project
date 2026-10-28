@@ -39,6 +39,7 @@ function setup() {
     version: 2,
     offre: snapshotProforma(proforma),
     nomClient: "Client",
+    canalEntree: 'RECHERCHE_NATURELLE',
     telephone: "+237600000000",
     modeReception: "LIVRAISON",
     destination: "Douala",
@@ -107,6 +108,7 @@ describe("Accepting an owned commercial quote", () => {
     expect(tx.commande.create.mock.calls[0][0]).toEqual({
       data: expect.objectContaining({
         clientId: "client",
+        canalEntree: 'RECHERCHE_NATURELLE',
         montantTotal: 3000,
         statut: "EN_ATTENTE",
         modeReception: "LIVRAISON",

@@ -19,7 +19,8 @@ import { defaultPeriod, type Period } from '../services/parcours';
 function response(range: Period, count = 3) {
   return {
     data: {
-      ...range,
+      debut: range.debut,
+      fin: range.fin,
       actif: false,
       fuseau: 'Africa/Douala',
       jourEnCours: false,
@@ -97,15 +98,17 @@ it('compare les retours réels mais n’invente aucune comparaison si un registr
   await screen.findByText(/Retours pour incompatibilité : non mesurables/);
   expect(screen.queryByRole('row', { name: /Pièces retournées confirmées/ })).toBeNull();
 });
-it('lit seulement deux périodes authentifiées et distingue résultats, observations désactivées et registre absent', async () => {
+it('lit deux périodes authentifiées et la répartition séparée sans casser les résultats historiques', async () => {
   render(<Parcours />);
   await screen.findByRole('table', {
     name: 'Comparaison des résultats métier',
   });
-  expect(mocks.get).toHaveBeenCalledTimes(2);
-  for (const call of mocks.get.mock.calls) {
+  expect(mocks.get).toHaveBeenCalledTimes(3);
+  expect(mocks.get.mock.calls.filter(call => call[0] === '/parcours/acquisition')).toHaveLength(1);
+  for (const call of mocks.get.mock.calls.filter(call => call[0] === '/parcours/rapport')) {
     expect(call[0]).toBe('/parcours/rapport');
-    expect(Object.keys(call[1].params).sort()).toEqual(['debut', 'fin']);
+    expect(Object.keys(call[1].params).sort()).toEqual(['debut', 'fin', 'version']);
+    expect(call[1].params.version).toBe('2');
     expect(call[1].signal).toBeInstanceOf(AbortSignal);
   }
   expect(screen.getByText(/Collecte actuellement désactivée/)).toBeTruthy();

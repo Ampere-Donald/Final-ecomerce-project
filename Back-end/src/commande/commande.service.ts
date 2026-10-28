@@ -19,6 +19,7 @@ import * as bcrypt from 'bcrypt';
 import { previousOrder, completeOrderRequest } from './order-request';
 import { attachGuestAccess, validateGuestAccessRequest } from './guest-access';
 import { cancelOrder, receiveOrder } from './order-transitions';
+import { acquisitionChannel } from '../parcours/acquisition';
 
 @Injectable()
 export class CommandeService {
@@ -48,6 +49,7 @@ export class CommandeService {
   }
 
   async createWithAccount(dto: CreateCommandeDto) {
+    const canalEntree = acquisitionChannel(dto.canalEntree);
     validateGuestAccessRequest(dto);
     const { lignes, email, motDePasse, ...commandeData } = dto;
 
@@ -143,6 +145,7 @@ export class CommandeService {
         const commande = await tx.commande.create({
           data: {
             numeroSuivi: this.generateNumeroSuivi(),
+            canalEntree,
             nomClient: commandeData.nomClient,
             telephone: commandeData.telephone,
             adresseLivraison: commandeData.adresseLivraison,
@@ -233,6 +236,7 @@ export class CommandeService {
    * Standard order creation (for authenticated users or legacy calls).
    */
   async create(dto: CreateCommandeDto) {
+    const canalEntree = acquisitionChannel(dto.canalEntree);
     validateGuestAccessRequest(dto);
     const { lignes, email, motDePasse, ...commandeData } = dto;
     void email;
@@ -259,6 +263,7 @@ export class CommandeService {
       const commande = await tx.commande.create({
         data: {
           numeroSuivi: this.generateNumeroSuivi(),
+          canalEntree,
           nomClient: commandeData.nomClient,
           telephone: commandeData.telephone,
           adresseLivraison: commandeData.adresseLivraison,

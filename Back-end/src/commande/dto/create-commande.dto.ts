@@ -1,5 +1,6 @@
 import {
   IsString,
+  IsIn,
   IsNumber,
   IsUUID,
   IsArray,
@@ -14,6 +15,8 @@ import {
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ModeReception } from '@prisma/client';
+import { ACQUISITION_CHANNELS } from '../../parcours/acquisition';
+import type { AcquisitionChannel } from '../../parcours/acquisition';
 
 export class LigneCommandeDto {
   @IsUUID()
@@ -33,6 +36,9 @@ export class LigneCommandeDto {
 }
 
 export class CreateCommandeDto {
+  @IsOptional()
+  @IsIn(ACQUISITION_CHANNELS)
+  canalEntree?: AcquisitionChannel;
   @IsOptional()
   @IsUUID('4')
   requestId?: string;

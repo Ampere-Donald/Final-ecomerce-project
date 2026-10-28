@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { createHash } from 'node:crypto';
+import { acquisitionChannel } from '../parcours/acquisition';
 import { DatabaseService } from '../database/database.service';
 import { ProformaService } from '../proforma/proforma.service';
 import { snapshotProforma } from './devis-offer';
@@ -160,6 +161,7 @@ export class DevisService {
   async create(clientId: string, dto: CreateDemandeDevisDto) {
     this.validateLines(dto);
     const input = {
+      ...(acquisitionChannel(dto.canalEntree) ? { canalEntree: dto.canalEntree } : {}),
       clientId,
       telephone: dto.telephone.trim(),
       modeReception: dto.modeReception,
@@ -221,6 +223,7 @@ export class DevisService {
           const row = await tx.demandeDevis.create({
             data: {
               requestId: dto.requestId,
+              canalEntree: input.canalEntree,
               fingerprint,
               clientId,
               nomClient: [client.nom, client.prenom]

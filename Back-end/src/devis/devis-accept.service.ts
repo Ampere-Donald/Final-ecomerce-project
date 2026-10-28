@@ -167,6 +167,7 @@ export class DevisAcceptService {
                 numeroSuivi: `CMD-${new Date().toISOString().slice(0, 10).replace(/-/g, "")}-${randomUUID().replace(/-/g, "").slice(0, 12).toUpperCase()}`,
                 clientId,
                 nomClient: demande.nomClient,
+                canalEntree: demande.canalEntree,
                 telephone: demande.telephone,
                 modeReception: demande.modeReception,
                 adresseLivraison:

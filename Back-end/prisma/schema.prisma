@@ -577,6 +577,7 @@ model ProformaLigne {
 }
 
 model DemandeDevis {
+  canalEntree     String?            @map("canal_entree") @db.VarChar(24)
   id              String             @id @default(uuid())
   requestId       String             @unique @map("request_id") @db.Uuid
   fingerprint     String             @db.VarChar(64)
@@ -1009,6 +1010,20 @@ model ParcoursJour {
   @@map("parcours_jour")
 }
 
+// Source category only; historical aggregates remain unchanged.
+model ParcoursAcquisitionJour {
+  jour DateTime @db.Date
+  evenement String @db.VarChar(40)
+  langue String @db.VarChar(2)
+  appareil String @db.VarChar(10)
+  reception String @db.VarChar(25)
+  canalEntree String @map("canal_entree") @db.VarChar(24)
+  nombre Int @default(1)
+
+  @@id([jour, evenement, langue, appareil, reception, canalEntree])
+  @@map("parcours_acquisition_jour")
+}
+
 // Short-lived deduplication keys identify an observation, never a visitor.
 model ParcoursRecu {
   id String @id @db.Uuid
@@ -1020,6 +1035,7 @@ model ParcoursRecu {
 }
 
 model Commande {
+  canalEntree      String?         @map("canal_entree") @db.VarChar(24)
   guestAccess      CommandeGuestAccess?
   demandeDevis     DemandeDevis?
   requests         CommandeRequest[]

@@ -8,6 +8,8 @@ export const events = [
   'SORTIE_APRES_FRAIS',
   'REACHAT_AJOUTE',
   'WHATSAPP_OUVERT',
+  'CONSEIL_OUVERT',
+  'DEVIS_COMMENCE',
 ] as const;
 export type Event = (typeof events)[number];
 export type Reception = 'GENERAL' | 'RETRAIT' | 'LIVRAISON_A_CONFIRMER' | 'LIVRAISON_CALCULEE';
@@ -239,7 +241,7 @@ export async function loadComparison(period: Period, signal: AbortSignal) {
   const periods = comparablePeriods(period);
   const read = async (range: Period) => {
     const response = await api.get('/parcours/rapport', {
-      params: range,
+      params: { ...range, version: '2' },
       signal,
       timeout: 15000,
     });

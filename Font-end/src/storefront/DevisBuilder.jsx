@@ -3,6 +3,8 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useI18n } from "../context/I18nContext";
 import apiClient from "../utils/apiClient";
+import { recordQuoteStart } from './journey.js';
+import { entryChannel } from './acquisition.js';
 import { apiMessage } from "./orderData";
 import {
   parseReferenceList,
@@ -48,6 +50,9 @@ export default function DevisBuilder({ existing, onSaved }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const lock = useRef(false);
+  function observeStart() {
+    if (!existing) recordQuoteStart(lang);
+  }
   const outputRef = useRef(null);
   const matchLabel = (match) =>
     match === "unknown"
@@ -161,6 +166,7 @@ export default function DevisBuilder({ existing, onSaved }) {
       ownerId,
       id: existing?.id || null,
       payload: {
+        ...(!existing ? { canalEntree: entryChannel() } : {}),
         requestId: crypto.randomUUID(),
         telephone: contact.telephone.trim(),
         modeReception: contact.modeReception,
@@ -279,6 +285,7 @@ export default function DevisBuilder({ existing, onSaved }) {
               aria-describedby="devis-list-help"
               placeholder={"LM358N; 10\nCâble HDMI 5 m; 2"}
               onChange={(e) => {
+                if (e.target.value.trim()) observeStart();
                 setText(e.target.value);
                 setRows(null);
                 setError("");

@@ -212,6 +212,15 @@ describe("Customer quote requests", () => {
     ).rejects.toBeInstanceOf(ConflictException);
   });
 
+  it('keeps the acquisition source immutable across request retries', async () => {
+    const { tx, service } = harness();
+    const input = { ...dto(), canalEntree: 'RECHERCHE_NATURELLE' as const };
+    await service.create('client', input);
+    await service.create('client', input);
+    expect(tx.demandeDevis.create).toHaveBeenCalledTimes(1);
+    expect(tx.demandeDevis.create.mock.calls[0][0].data.canalEntree).toBe('RECHERCHE_NATURELLE');
+    await expect(service.create('client', { ...input, canalEntree: 'SOCIAL' })).rejects.toBeInstanceOf(ConflictException);
+  });
   it("fails instead of binding a chosen reference that was removed from the catalogue", async () => {
     const { tx, service } = harness();
     tx.produit.findMany.mockResolvedValue([]);
