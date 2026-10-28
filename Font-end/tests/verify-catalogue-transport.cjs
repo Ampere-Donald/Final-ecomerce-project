@@ -5,6 +5,8 @@ const {expect}=require('C:/Users/pc/.cache/codex-runtimes/codex-primary-runtime/
 const fs=require('node:fs'),assert=require('node:assert/strict');
 const path=require('node:path'),{pathToFileURL}=require('node:url');
 const local=process.env.CATALOGUE_TRANSPORT_BASE;
+const configuredAPI=process.env.CATALOGUE_TRANSPORT_API_BASE||'https://api.newoteg.com';
+assert(['/api','https://api.newoteg.com'].includes(configuredAPI));
 assert.equal(new URL(local).hostname,'127.0.0.1');
 const out=process.env.CATALOGUE_TRANSPORT_OUTPUT;assert(out);fs.mkdirSync(out,{recursive:true});
 const report={cases:[],errors:[],writes:[],fixtureOnly:true};
@@ -81,7 +83,7 @@ const releases=[];
     assert(await page.evaluate(()=>window.initialTransportCard===document.querySelector('.e-product-card')));
     assert(!catalogueRequests.some(request=>request.path==='/api/produits'),'Fresh server products must not be fetched again');
    }
-   await expect(card.locator('img')).toHaveAttribute('src','https://api.newoteg.com/product-images/fixture.webp');
+   await expect(card.locator('img')).toHaveAttribute('src',(configuredAPI==='/api'?'':'https://api.newoteg.com')+'/product-images/fixture.webp');
    await page.getByRole('combobox',{name:'Trier les produits',exact:true}).selectOption('name-desc');
    await expect(card).toContainText('Updated fixture');
    await expect(card.locator('.e-price')).toHaveText(/7\s*500\s*FCFA/);
@@ -89,7 +91,7 @@ const releases=[];
    await card.locator('.e-home-product-heart').click();
    await expect(card.locator('.e-home-product-heart')).toHaveAttribute('aria-pressed','true');
    await page.reload();await expect(card.locator('.e-home-product-heart')).toHaveAttribute('aria-pressed','true');
-   const expected=mode.origin===local?'https://api.newoteg.com':mode.origin;
+   const expected=mode.origin===local&&configuredAPI!=='/api'?'https://api.newoteg.com':mode.origin;
    assert(catalogueRequests.length>=(mode.ssr?4:5));
    assert(catalogueRequests.every(request=>request.origin===expected),JSON.stringify(catalogueRequests));
    assert(catalogueRequests.some(request=>request.requestId),'Axios must still emit request identifiers');

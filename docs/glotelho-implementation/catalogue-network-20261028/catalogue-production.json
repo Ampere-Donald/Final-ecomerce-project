@@ -1,0 +1,133 @@
+{
+  "checks": [
+    {
+      "legacy": false,
+      "width": 390,
+      "readsBeforeStyles": true,
+      "nativeModuleHint": true,
+      "readyDataOnFirstRender": true,
+      "earlyReadsReused": true,
+      "imagePreloadReused": true,
+      "filterRefetched": true,
+      "priceAndStockUpdated": true,
+      "favoritesAndLanguageUpdated": true
+    },
+    {
+      "legacy": false,
+      "width": 768,
+      "readsBeforeStyles": true,
+      "nativeModuleHint": true,
+      "readyDataOnFirstRender": true,
+      "earlyReadsReused": true,
+      "imagePreloadReused": true,
+      "filterRefetched": true,
+      "priceAndStockUpdated": true
+    },
+    {
+      "legacy": false,
+      "width": 1440,
+      "readsBeforeStyles": true,
+      "nativeModuleHint": true,
+      "readyDataOnFirstRender": true,
+      "earlyReadsReused": true,
+      "imagePreloadReused": true,
+      "filterRefetched": true,
+      "priceAndStockUpdated": true
+    },
+    {
+      "legacy": true,
+      "width": 390,
+      "readsBeforeStyles": true,
+      "nativeModuleHint": false,
+      "readyDataOnFirstRender": true,
+      "earlyReadsReused": true,
+      "imagePreloadReused": true,
+      "filterRefetched": true,
+      "priceAndStockUpdated": true,
+      "favoritesAndLanguageUpdated": true
+    },
+    {
+      "legacy": true,
+      "width": 768,
+      "readsBeforeStyles": true,
+      "nativeModuleHint": false,
+      "readyDataOnFirstRender": true,
+      "earlyReadsReused": true,
+      "imagePreloadReused": true,
+      "filterRefetched": true,
+      "priceAndStockUpdated": true
+    },
+    {
+      "legacy": true,
+      "width": 1440,
+      "readsBeforeStyles": true,
+      "nativeModuleHint": false,
+      "readyDataOnFirstRender": true,
+      "earlyReadsReused": true,
+      "imagePreloadReused": true,
+      "filterRefetched": true,
+      "priceAndStockUpdated": true
+    },
+    {
+      "legacy": false,
+      "width": 390,
+      "priorityRows": true,
+      "all24ProductsPresent": true,
+      "firstCardNodePreserved": true
+    },
+    {
+      "legacy": false,
+      "width": 768,
+      "priorityRows": true,
+      "all24ProductsPresent": true,
+      "firstCardNodePreserved": true
+    },
+    {
+      "legacy": false,
+      "width": 1440,
+      "priorityRows": true,
+      "all24ProductsPresent": true,
+      "firstCardNodePreserved": true
+    },
+    {
+      "legacy": true,
+      "width": 390,
+      "priorityRows": true,
+      "all24ProductsPresent": true,
+      "firstCardNodePreserved": true
+    },
+    {
+      "legacy": true,
+      "width": 768,
+      "priorityRows": true,
+      "all24ProductsPresent": true,
+      "firstCardNodePreserved": true
+    },
+    {
+      "legacy": true,
+      "width": 1440,
+      "priorityRows": true,
+      "all24ProductsPresent": true,
+      "firstCardNodePreserved": true
+    },
+    {
+      "slowPrefetch": true,
+      "loadingVisible": true,
+      "reusedPendingRead": true,
+      "returnRefetched": true
+    },
+    {
+      "failure": "unavailable",
+      "recovered": true,
+      "reads": 2
+    },
+    {
+      "failure": "malformed",
+      "recovered": true,
+      "reads": 2
+    }
+  ],
+  "errors": [],
+  "writes": [],
+  "fixtureOnly": true
+}
