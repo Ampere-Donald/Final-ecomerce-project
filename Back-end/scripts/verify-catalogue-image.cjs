@@ -18,6 +18,34 @@ const boot = JSON.parse(html.match(/id="initial-catalogue-data">([\s\S]*)<\/scri
 const page = Object.values(boot.resources).find(value => value?.meta);
 assert.equal(page.data[0].nomProduit, product.nomProduit);
 assert.equal(page.data[0].quantiteStock, 0); assert.equal(page.data[0].prixPublic, null);
+// Verify the new SEO entry points inside the shipped image too. A passing
+// catalogue render alone does not prove that product/sitemap exports survived
+// packaging or that the product schema preserves the public data boundary.
+const productId = '13d2ff99-cd90-430d-b713-be98828f51cd';
+assert.equal(runtime.parseProductRequest('/product/' + productId).id, productId);
+assert.throws(() => runtime.parseProductRequest('/product/' + productId + '?token=private'));
+const detail = runtime.renderProductResponse('/product/' + productId,
+  { ...product, id: productId, prixPublic: 1500, fournisseur: { nom: 'Private supplier' } }, Date.now());
+assert(detail.startsWith('<div id="root" data-initial-product="fr"><div class="app">'));
+assert.equal((detail.match(/<script\b/gi) || []).length, 2);
+assert(!detail.includes('cmupActuel'));
+assert(!detail.includes('Private supplier'));
+const schema = JSON.parse(detail.match(/data-product-schema="true">([\s\S]*?)<\/script>/)[1]);
+assert.equal(schema['@graph'][0].name, product.nomProduit);
+assert.equal(schema['@graph'][0].offers.price, 1500);
+assert.equal(schema['@graph'][0].offers.priceCurrency, 'XAF');
+assert.equal(schema['@graph'][0].offers.availability, 'https://schema.org/OutOfStock');
+const missingPrice = runtime.renderProductResponse('/product/' + productId,
+  { ...product, id: productId }, Date.now());
+const noOffer = JSON.parse(missingPrice.match(/data-product-schema="true">([\s\S]*?)<\/script>/)[1]);
+assert.equal(noOffer['@graph'][0].offers, undefined);
+const sitemap = runtime.renderSitemapResponse([{ id: productId, nomProduit: product.nomProduit }]);
+assert(sitemap.includes('https://newoteg.com/product/' + productId));
+assert(!sitemap.includes('/mes-devis'));
+assert(!sitemap.includes('<lastmod>'));
 console.log(JSON.stringify({ status: 'passed', rendererId: runtime.rendererId, checks: [
   'Compiled runtime hash and frontend identity', 'Real React render with escaped text',
-  'Public fields only, zero stock and missing price preserved', 'No database, network or migrations required' ] }));
+  'Public fields only, zero stock and missing price preserved',
+  'Packaged product renderer, escaped JSON-LD and no offer for missing price',
+  'Packaged sitemap with real product URL and no invented modification date',
+  'No database, network or migrations required' ] }));

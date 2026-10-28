@@ -35,8 +35,23 @@ assert(completeHTML.includes('Complete server product 23'));
 assert.throws(() => runtime.renderCatalogueResponse('/catalogue', { unexpected: [] }, [], Date.now()));
 const manifest = JSON.parse(fs.readFileSync(path.join(root, 'Font-end/.catalogue-backend/manifest.json'), 'utf8'));
 assert.equal(runtime.rendererId, manifest.rendererId, 'Independent package and frontend build must select the same renderer');
+const productId = '13d2ff99-cd90-430d-b713-be98828f51cd';
+assert.equal(runtime.parseProductRequest('/product/' + productId).id, productId);
+for (const invalid of ['/product/not-an-id', '/product/' + productId + '/extra', 'https://other.example/product/' + productId])
+  assert.throws(() => runtime.parseProductRequest(invalid));
+const detail = runtime.renderProductResponse('/product/' + productId,
+  { ...products.data[0], id: productId, description: 'Public detail', prixPublic: 1500 }, Date.now());
+assert(detail.startsWith('<div id="root" data-initial-product="fr"><div class="app">'));
+assert.equal((detail.match(/<script\b/g) || []).length, 2);
+assert(!detail.includes('<script>attack</script>')); assert(!detail.includes('coutRevient'));
+const structured = JSON.parse(detail.match(/data-product-schema="true">([\s\S]*?)<\/script>/)[1]);
+assert.equal(structured['@graph'][0].offers.price, 1500);
+assert.equal(structured['@graph'][0].offers.availability, 'https://schema.org/OutOfStock');
+const sitemap = runtime.renderSitemapResponse([{ id: productId, nomProduit: 'Public' }]);
+assert(sitemap.includes('https://newoteg.com/product/' + productId));
+assert(!sitemap.includes('/mes-devis')); assert(!sitemap.includes('<lastmod>'));
 console.log(JSON.stringify({ status: 'passed', rendererId: runtime.rendererId,
   checks: ['real compiled CJS package loaded with verified hash', 'canonical URL/filter contract',
     'anonymous allowlist and script escaping', 'zero stock and missing price preserved',
-    'malformed API response rejected', 'all 24 server cards present before JavaScript',
-    'independent builds produce identical renderer identity'] }));
+    'malformed API response rejected', 'all 24 server cards present before JavaScript', 'independent builds produce identical renderer identity',
+    'compiled product rendering, anonymous boot, safe JSON-LD and public sitemap'] }));

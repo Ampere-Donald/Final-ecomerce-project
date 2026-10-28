@@ -1,4 +1,5 @@
 import { pageMetadata, SITE_ORIGIN } from './routeMetadata.js';
+import { seoFamily } from './seoFamilies.js';
 
 const publicPages = new Set(['/', '/catalogue', '/comparer', '/projets', '/offres',
   '/arrivages', '/equivalences', '/guides', '/faq', '/livraison', '/about',
@@ -11,7 +12,7 @@ export function staticPublicMetadata(url) {
   let path = url.pathname.toLowerCase().replace(/\/+$/, '') || '/';
   if (path === '/index.html') path = '/';
   // No session, language cookie, private document or unverified dynamic record.
-  return publicPages.has(path) ? pageMetadata(path, url.search, 'fr') : null;
+  return publicPages.has(path) || seoFamily(path) ? pageMetadata(path, url.search, 'fr') : null;
 }
 
 export function renderFallbackMetadata(html, meta) {

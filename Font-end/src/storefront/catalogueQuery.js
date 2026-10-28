@@ -1,5 +1,7 @@
+import { seoFamily, familyParameters } from './seoFamilies.js';
 // Shared URL contract: the server render and the browser use the same filters.
-export function catalogueQuery(params) {
+export function catalogueQuery(params, pathname = '/catalogue') {
+  params = familyParameters(params, seoFamily(pathname));
   const query = params.get('search') || '';
   const category = params.get('category') || '';
   const subcategory = params.get('sub') || '';
@@ -22,10 +24,10 @@ export function catalogueQuery(params) {
 }
 
 export function canRenderCatalogue(url) {
-  if (url.pathname !== '/catalogue' || url.search.length > 2048) return false;
+  if ((url.pathname !== '/catalogue' && !seoFamily(url.pathname)) || url.search.length > 2048) return false;
   const allowed = new Set(['search', 'category', 'sub', 'instock', 'sort', 'page', 'minPrice', 'maxPrice']);
   if ([...url.searchParams.keys()].some(key => !allowed.has(key))) return false;
-  const { query, category, subcategory, sort, page } = catalogueQuery(url.searchParams);
+  const { query, category, subcategory, sort, page } = catalogueQuery(url.searchParams, url.pathname);
   if (query.length > 255 || category.length > 150 || subcategory.length > 150 || !Number.isSafeInteger(page) || page > 1000000 ||
       !['relevance', 'name-asc', 'name-desc', 'price-asc', 'price-desc'].includes(sort)) return false;
   return ['minPrice', 'maxPrice'].every(key => !url.searchParams.has(key) ||

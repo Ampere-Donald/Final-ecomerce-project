@@ -2040,7 +2040,7 @@ button:disabled {
   align-items: center;
   margin-top: 30px;
 }
-.e-pagination button {
+.e-pagination button, .e-pagination a {
   background: white;
   border: 1px solid var(--e-line);
   border-radius: 5px;
@@ -2048,6 +2048,12 @@ button:disabled {
   min-height: 44px;
   cursor: pointer;
 }
+.e-pagination a { text-decoration: none; }
+.e-pagination [aria-disabled="true"] { opacity: .55; }
+.e-chips > a { padding: 8px 12px; border: 1px solid #dce4eb; border-radius: 6px; color: inherit; text-decoration: none; }
+.e-chips > a[aria-current="page"] { font-weight: 700; border-color: currentColor; }
+.e-family-links { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 6px; }
+.e-family-links > a { flex: 0 0 auto; white-space: nowrap; }
 .e-list {
   grid-template-columns: 1fr;
 }

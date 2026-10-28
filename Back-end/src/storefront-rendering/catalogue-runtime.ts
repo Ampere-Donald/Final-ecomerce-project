@@ -7,6 +7,9 @@ export interface CatalogueRuntime {
   rendererId: string;
   parseCatalogueRequest(url: string): { url: string; path: string };
   renderCatalogueResponse(url: string, products: unknown, categories: unknown, at: number): string;
+  parseProductRequest?(url: string): { id: string };
+  renderProductResponse?(url: string, product: unknown, at: number): string;
+  renderSitemapResponse?(products: unknown[]): string;
 }
 
 // Loads a release-owned package, never code or a path from an HTTP request.

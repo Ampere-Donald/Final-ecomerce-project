@@ -10,6 +10,7 @@ import StorefrontFrame from "./storefront/StorefrontFrame";
 import InitialResources from "./storefront/InitialResources";
 import { startJourney, leaveCheckout } from "./storefront/journey.js";
 import PageMetadataProvider from "./storefront/PageMetadataProvider";
+import { seoFamilies, familyPath, seoFamily } from './storefront/seoFamilies.js';
 
 const Home = lazy(() => import("./storefront/Home"));
 const Catalogue = lazy(() => import("./storefront/Catalogue"));
@@ -50,9 +51,10 @@ const PageFallback = () => (
   </div>
 );
 
-function AppContent({ initialHome, initialCatalogue }) {
+function AppContent({ initialHome, initialCatalogue, initialProduct }) {
   const HomeRoute = initialHome || Home;
   const CatalogueRoute = initialCatalogue || Catalogue;
+  const ProductRoute = initialProduct || ProductDetails;
   const location = useLocation();
   useEffect(() => {
     startJourney();
@@ -63,17 +65,18 @@ function AppContent({ initialHome, initialCatalogue }) {
   }, [location.pathname]);
 
   return (
-    <StorefrontFrame path={location.pathname} initial={Boolean((initialHome && location.pathname === '/') || (initialCatalogue && location.pathname === '/catalogue'))}>
+    <StorefrontFrame path={location.pathname} initial={Boolean((initialHome && location.pathname === '/') || (initialCatalogue && (location.pathname === '/catalogue' || seoFamily(location.pathname))) || (initialProduct && /^\/product\/[^/]+$/.test(location.pathname)))}>
       <Suspense fallback={<PageFallback />}>
         <Routes location={location}>
           <Route path="/" element={<HomeRoute />} />
           <Route path="/catalogue" element={<CatalogueRoute />} />
+          {seoFamilies.map(family => <Route key={family.slug} path={familyPath(family)} element={<CatalogueRoute />} />)}
           <Route path="/comparer" element={<Comparison />} />
           <Route path="/projets" element={<Projects />} />
           <Route path="/offres" element={<Commercial />} />
           <Route path="/arrivages" element={<Commercial />} />
           <Route path="/projets/:slug" element={<Projects />} />
-          <Route path="/product/:id" element={<ProductDetails />} />
+          <Route path="/product/:id" element={<ProductRoute />} />
           <Route path="/panier" element={<Cart />} />
           <Route path="/equivalences" element={<Equivalences />} />
           <Route path="/guides" element={<Editorial />} />
@@ -158,11 +161,11 @@ function AppContent({ initialHome, initialCatalogue }) {
   );
 }
 
-function App({ initialHome, initialCatalogue, snapshot, router }) {
+function App({ initialHome, initialCatalogue, initialProduct, snapshot, router }) {
   const RouterComponent = router || Router;
   return (
     <RouterComponent>
-      <InitialResources snapshot={snapshot}><PageMetadataProvider><AppContent initialHome={initialHome} initialCatalogue={initialCatalogue} /></PageMetadataProvider></InitialResources>
+      <InitialResources snapshot={snapshot}><PageMetadataProvider><AppContent initialHome={initialHome} initialCatalogue={initialCatalogue} initialProduct={initialProduct} /></PageMetadataProvider></InitialResources>
     </RouterComponent>
   );
 }
