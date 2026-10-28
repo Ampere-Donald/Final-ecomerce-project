@@ -116,3 +116,14 @@ Prochaine action : publier le correctif de configuration et les aides au choix a
 - Le propriétaire ne peut pas confirmer les caractéristiques manquantes et demande de poursuivre par recherche et photographies. Cette contribution n’est donc plus attendue comme préalable. Recherche enregistrée dans `recherche-identification-produits.json` : modèle DT-830D lu sur la photo, référence AWX-FS12V20A et mentions de boîte relevées, document officiel ST du 2N3773 trouvé et lu. Aucune notice d’un autre fournisseur n’a été assimilée à une certification des exemplaires vendus.
 
 Prochaine étape : enrichir les fiches avec les faits photographiques et documentaires disponibles, conserver les caractéristiques non établies comme telles, puis poursuivre attribution, performance et bibliothèque technique. Les vingt fiches enrichies et la livraison commerciale A complète restent à réaliser.
+
+## Vingt notes individuelles — recette locale
+
+- Vingt enrichissements français intégrés : distinctions des quatre formats de condensateurs, références et suffixes des transistors, contexte documentaire des circuits, repères des alimentations et identification des multimètres. Les notices ou dimensions encore absentes ne deviennent pas des caractéristiques garanties.
+- Publication structurée versionnée, validation des sources et de la présence des cinq photos d’archive au build ; retrait d’une note sur changement de nom, image, description, marque, lien documentaire ou nouveaux attributs. Aucune copie du prix ou du stock dans le texte éditorial.
+- 156 tests frontend, lint, build et contrat du paquet compilé réussis. Identité compilée commune : `7377fb4b187d166084c8facad81291cfc19a0195f1d77fe9d98649d74455d7cd`.
+- Le premier build a échoué sur une résolution de nom de fichier Windows ; import JSX explicite corrigé avant le build réussi. Le premier contrôle navigateur a échoué sur les doubles espaces d’un nom commercial comparé au texte visuellement normalisé ; seul le banc de comparaison a été ajusté.
+- Rendu source des vingt produits réels réussi avec notes avant JavaScript et prix JSON-LD conformes à l’API : `pilot-editorial-render/report.json`. Recette Edge réussie sur sept fiches avec et sans JavaScript, liens photographiques, libellé EPICA, canonical, dialogue conseil et panier local : 15 contrôles, aucune erreur JavaScript ni écriture réseau ; `pilot-editorial-browser-confirmed/hydration-report.json`. Captures à 390 et 1440 px ; aucune mesure Core Web Vitals déduite de cette recette.
+- PR #30 ouverte en brouillon pour les contrôles CI. Ce résultat est local ; la présence des notes et des photos en production reste à vérifier après livraison commune backend/Worker.
+
+Le pilote éditorial est intégré, mais la livraison commerciale A n’est pas déclarée complète : attribution, performance, contrôles publics et documentation technique restant à établir doivent être poursuivis.

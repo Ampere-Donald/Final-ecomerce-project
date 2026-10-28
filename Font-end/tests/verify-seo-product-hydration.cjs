@@ -35,7 +35,7 @@ const ids = ['02d5805f-7f51-4574-938d-d8cfe8c09487', '0f776e03-7dd5-4346-97f0-28
       assert.equal(await page.locator('#product-editorial-title').count(), 1);
       const heading = await page.locator('h1').innerText();
       const data = JSON.parse(await page.locator('script[data-product-schema]').textContent())['@graph'][0];
-      assert.equal(data.name, heading);
+      assert.equal(data.name.replace(/\s+/g, ' ').trim(), heading.replace(/\s+/g, ' ').trim());
       assert.equal((await page.locator('.e-product-info .e-product-price .e-price').innerText()).replace(/\s/g, ' '),
         data.offers ? (new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 }).format(Math.round(data.offers.price)) + ' FCFA').replace(/\s/g, ' ') : 'Prix à confirmer');
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
