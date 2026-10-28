@@ -1,5 +1,5 @@
-// Candidate entry only. Production remains worker.js until the Railway package
-// and the Free-plan CPU budget have both been verified.
+// Production entry. The matching release-owned Railway package renders React;
+// the Worker only fetches and injects its anonymous, versioned HTML fragments.
 import worker from './worker.js';
 import manifest from './.catalogue-backend/manifest.json' with { type: 'json' };
 import { catalogueStyles } from './.catalogue-ssr/styles.js';

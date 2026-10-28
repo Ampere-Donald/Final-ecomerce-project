@@ -34,3 +34,11 @@ En cas de régression commerciale, exposition de données ou panne de rendu, ré
 ## Éléments restant à prouver
 
 La construction Docker en CI n’est pas une activation de production. Restent notamment : configuration de construction Railway, concordance des deux versions effectivement livrées, recette publique, accès Search Console, performance en conditions réelles et enrichissement commercial du pilote. Le suivi global demeure dans `SUIVI_IMPLEMENTATION_SEO.md`.
+
+## Première activation effectuée
+
+PR #25 fusionnée dans `8c5c1022` après CI générale et Docker réussies sur sa tête exacte `8e2fa687`. Le 28 octobre, Railway a livré le paquet depuis la racine (`Dockerfile.catalogue`) puis activé le rendu ; déploiement final `ce5e1c96-c2f6-4d4f-9d51-af81eaa5df94` en SUCCESS. Worker `89e28bce-3f26-45ea-88d1-e07857d7c044`, version précédente `a5dbf7a4-1076-46ac-8fbe-a1c994a88a42`.
+
+Les endpoints vérifiés partagent le rendererId `456f3b2f3d34583071d32f117d4101313e6897a53a51283bad5e17dd3694b983`. La recette publique couvre les cinq familles, cinq fiches et le sitemap de 1 951 URL. Les preuves détaillées et les limites sont consignées dans le suivi. Ces éléments remplacent les mentions préparatoires ci-dessus pour cette première activation ; les prochains déploiements doivent refaire les contrôles sur leurs propres versions.
+
+La configuration durable utilise l’entrée `catalogue-backend-worker.js`. Un build frontend normal génère désormais son manifeste de version et ses styles, sans dépendre de `VITE_CATALOGUE_SSR_BUILD`. Le paquet backend doit toujours être construit avec la même configuration API publique. Le chemin Docker Railway est conservé via `RAILWAY_DOCKERFILE_PATH=Dockerfile.catalogue` ; l’option de rendu doit valoir exactement `true` pour l’activer. Les autres variables et la commande de démarrage existante n’ont pas été remplacées.

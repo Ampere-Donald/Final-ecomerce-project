@@ -14,18 +14,18 @@ Plan validé par l’utilisateur le 27 octobre 2026. Objectif complet conservé 
 
 | Tâche | État | Preuve ou prochaine action |
 |---|---|---|
-| SEO-01 | En cours | Branche isolée créée depuis la version distante récente ; version effectivement déployée à confirmer |
+| SEO-01 | Version identifiée et intégrée | PR #25 fusionnée dans main : 8c5c1022 ; backend et Worker livrés, identifiants ci-dessous |
 | SEO-02 | En cours | Contrôle initial de 24 URL dans `baseline/baseline.json` ; compléter les routes privées, pagination et rendu navigateur |
 | SEO-03 | À faire | Accès Search Console à rechercher ; aucun chiffre de trafic ou position inventé |
 | SEO-04 | Sélection provisoire préparée | 20 produits disponibles avec image et 5 sous-catégories réelles ; ajuster selon ventes et demandes |
 | SEO-05 | Matrice préparée | 100 formulations distinctes réparties 50/20/15/10/5, reliées à une cible ; docs/MATRICE_RECHERCHES_SEO_NEWOTEG.md. Priorisation quantitative en attente des données Google et commerciales |
-| SEO-06 | En cours | Rendu catalogue partagé étendu aux routes de familles ; activation de production et budget runtime restent à vérifier |
-| SEO-07 | Développé et testé localement | Rendu partagé, paquet compilé, transport backend et hydratation des fiches ; activation de production restante |
+| SEO-06 | Activé et contrôlé en production | Cinq familles avec cartes en HTML ; mesures de charge et CPU réelles à compléter |
+| SEO-07 | Activé et contrôlé en production | HTML et JSON-LD sur cinq fiches représentatives ; concordance de version backend/frontend vérifiée ; hydratation mobile contrôlée sur une fiche |
 | SEO-08 | En cours | Contrats testés pour rupture, référence inactive/absente et panne API ; contrôle après déploiement restant |
 | SEO-09 | À faire | Politique de fraîcheur et mesures de charge |
-| SEO-10 | Développé et testé localement | Cinq routes de familles, sélection API, métadonnées, navigation et pagination développées ; publication avec la livraison A restante |
+| SEO-10 | Publié et contrôlé | Cinq routes de familles, métadonnées et cartes HTML vérifiées publiquement ; page 2 de Condensateurs rendue avec canonical propre |
 | SEO-11 | En cours | Métadonnées des familles et de leurs filtres testées ; audit complet de la politique restant |
-| SEO-12 | Développé et testé localement | Sitemap dynamique et projection SQL limitée ; XML d’acceptation de 1 951 URL pour 1 932 produits et 5 familles ; activation restante |
+| SEO-12 | Publié et contrôlé | Sitemap public de 1 951 URL, dont 1 932 produits correspondant au total API ; cinq familles, URL uniques et absence de routes privées contrôlées ; soumission Search Console restante |
 | SEO-13 | En cours | Product/Offer/BreadcrumbList partagés avec le rendu, sans offre si prix ou stock inconnus ; informations boutique et validation externe restantes |
 | SEO-14 | À faire | Enrichissement sourcé des 20 fiches pilotes |
 | SEO-15 | En cours | Présentation concise des cinq familles intégrée ; compléter les aides de choix après recherche |
@@ -77,4 +77,20 @@ Plan validé par l’utilisateur le 27 octobre 2026. Objectif complet conservé 
 - Le contrôle navigateur attend désormais un bouton effectivement activé après hydratation. Captures actualisées à 390 et 1440 px dans le dossier daté.
 - Matrice des 100 recherches candidates préparée, sans volumes ni positions supposés. Les cibles éditoriales proposées restent à créer et ne sont pas soumises au sitemap.
 
-Prochaine étape : préparer et vérifier la livraison compatible du backend, puis poursuivre l’enrichissement sourcé des 20 fiches et des cinq familles, la mesure et les contenus du plan. Le périmètre global reste en cours ; les lots éditoriaux, locaux et internationaux ne sont pas terminés.
+Les étapes de livraison du backend et du Worker réalisées ensuite sont détaillées ci-dessous. Les lots éditoriaux, locaux et internationaux restent en cours ou à réaliser.
+
+## Activation publique — 28 octobre 2026
+
+- PR #25 fusionnée après succès de la CI générale #345 et du contrat runtime #71 sur `8e2fa687`. Merge `8c5c1022cb4adb2910f42e7584c133c67da5236d`.
+- Premier déploiement automatique backend `ac1ae1ce-120e-4221-af0f-2f950dbbb56a` : SUCCESS. Configuration de construction ensuite passée de `/Back-end` à `/`, avec `Dockerfile.catalogue`. Les variables existantes sont conservées ; ajout du chemin Docker et de l’option de rendu.
+- Image avec paquet de rendu et option désactivée : déploiement `7db50dfd-e3f0-41d9-9182-7868e0e1b10b`, SUCCESS. Copie de `.storefront-renderer` confirmée dans les logs du build.
+- Activation `STOREFRONT_CATALOGUE_RENDERING=true` : déploiement `ce5e1c96-c2f6-4d4f-9d51-af81eaa5df94`, SUCCESS. Pas de travail staged/applying au dernier contrôle.
+- Endpoints produit, catalogue et sitemap publics : HTTP 200 avec rendererId `456f3b2f3d34583071d32f117d4101313e6897a53a51283bad5e17dd3694b983`. Version incompatible refusée avec HTTP 409. Preuve : `backend-production-runtime.json`.
+- Worker actif `89e28bce-3f26-45ea-88d1-e07857d7c044`. Une première tentative a expiré côté réseau ; l’historique a confirmé l’absence de publication avant la nouvelle tentative réussie. Version précédente immédiatement observée : `a5dbf7a4-1076-46ac-8fbe-a1c994a88a42` (déploiement automatique du merge).
+- Recette HTTP sans JavaScript : 12 contrôles réussis, incluant santé backend, cinq familles, cinq produits avec canonical/balisage et sitemap ; `production-2026-10-28/report.json`. Sitemap public enregistré dans le même dossier.
+- Recette Edge à 390 px : famille et fiche transistor hydratées, canonical correcte, aucun débordement horizontal ni erreur JavaScript. Captures et `browser-report.json` dans le même dossier. Deux tentatives de télémétrie Cloudflare bloquées par le banc de recette ; aucune écriture réseau exécutée. Cette recette ne mesure pas encore les Core Web Vitals ni le chargement complet des images.
+- La configuration durable du prochain déploiement doit employer `catalogue-backend-worker.js` et générer ses artefacts à chaque build normal ; modification préparée et build sans option spéciale vérifié. Ne pas revenir silencieusement à l’entrée sans rendu lors d’un prochain déploiement automatique.
+- Contrôles publics complémentaires réussis : pagination et canonical de page 2, famille et produit inexistants en 404, filtre en noindex, document privé en noindex ; `production-2026-10-28/routes-report.json`.
+- Banc Miniflare/workerd avec l’entrée de production : 11 documents privés protégés, aucun appel au renderer pour ces documents, métadonnées publiques conservées lorsque le renderer est indisponible, requête anonyme au catalogue et image statique inchangée. Le banc a été adapté à l’appel serveur désormais attendu ; preuve dans `production-worker-private-assets/private-assets-result.json`.
+
+Prochaine étape : intégrer la configuration durable de publication après ses contrôles, compléter la recette publique de pagination/erreurs, puis poursuivre les fiches sourcées, les familles et la mesure. La livraison commerciale A complète n’est pas terminée : 20 fiches enrichies, attribution et performance restent notamment à réaliser.

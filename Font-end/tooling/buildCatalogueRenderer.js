@@ -10,7 +10,10 @@ export default function buildCatalogueRenderer() {
     name: 'newoteg-catalogue-renderer', apply: 'build',
     configResolved(value) { config = value; },
     async closeBundle() {
-      if (!config.build.write || config.env.VITE_CATALOGUE_SSR_BUILD !== 'true') return;
+      // Production's Worker imports the renderer identity and stylesheet list.
+      // Every normal build must regenerate them: an optional environment flag
+      // would let a future clean deployment omit or reuse stale artifacts.
+      if (!config.build.write) return;
       const output = resolve(config.root, '.catalogue-ssr');
       await build({ configFile: false, root: config.root, plugins: [react()],
         define: Object.fromEntries(Object.entries(config.env).filter(([key]) => key.startsWith('VITE_'))

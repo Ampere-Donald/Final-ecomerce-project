@@ -1,6 +1,6 @@
 # Plan d’implémentation SEO — NEWOTEG / X-Electronic
 
-Version 1 — 27 octobre 2026 — **Prêt à valider ; implémentation non commencée.**
+Version 1 — 27 octobre 2026 — **Plan validé ; implémentation en cours.** État et preuves de livraison dans [le suivi d’implémentation](SUIVI_IMPLEMENTATION_SEO.md).
 
 Document d’exécution issu de la [stratégie SEO Afrique](STRATEGIE_SEO_AFRIQUE_NEWOTEG_2026-10-27.md). L’objectif est de rendre le catalogue visible, développer les recherches commerciales au Cameroun et construire une expertise technique reconnue au-delà de ce marché.
 
