@@ -50,8 +50,9 @@ const ok = (name) => {
       modules: true,
       script: bundle.outputFiles[0].text,
       compatibilityDate: config.compatibility_date,
-      outboundService: () => {
-        outbound.push("outbound attempted");
+      outboundService: (request) => {
+        outbound.push({ url: request.url, method: request.method,
+          cookie: request.headers.get('cookie'), authorization: request.headers.get('authorization') });
         throw Error("Outbound disabled for local asset test");
       },
       assets: {
@@ -118,6 +119,7 @@ const ok = (name) => {
     ok(
       "Worker-first protects 11 actual private SPA documents before JavaScript",
     );
+    assert.deepEqual(outbound, [], 'Private documents must never call the public renderer');
     for (const route of [
       "/",
       "/catalogue",
@@ -148,7 +150,18 @@ const ok = (name) => {
       ),
       0,
     );
-    assert.deepEqual(outbound, []);
+    // The production entry now intentionally attempts anonymous catalogue SSR.
+    // Its unavailable backend must preserve the useful metadata/client fallback;
+    // private documents and assets above must never cause this request.
+    assert.equal(outbound.length, 1);
+    const rendererRequest = new URL(outbound[0].url);
+    assert.equal(rendererRequest.origin, 'https://api.newoteg.com');
+    assert.equal(rendererRequest.pathname, '/api/storefront/catalogue');
+    assert.equal(rendererRequest.searchParams.get('url'), '/catalogue');
+    assert.match(rendererRequest.searchParams.get('renderer'), /^[a-f0-9]{64}$/);
+    assert.equal(outbound[0].method, 'GET');
+    assert.equal(outbound[0].cookie, null);
+    assert.equal(outbound[0].authorization, null);
     for (const route of ['/suivi-invite-extra', '/page-inexistante', '/product/a/b']) {
       const missing = await document(route);
       assert.equal(missing.status, 404);
@@ -158,7 +171,7 @@ const ok = (name) => {
     }
     ok('Unknown document URLs return real 404 with noindex and retain the application error page');
     ok(
-      "Public metadata is present before JavaScript; marketing image byte-identical; no outbound request",
+      "Public metadata survives unavailable anonymous renderer; marketing image byte-identical; no real outbound network",
     );
     fs.mkdirSync(output, { recursive: true });
     fs.writeFileSync(
