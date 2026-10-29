@@ -81,8 +81,8 @@ export class ProductPricingService {
         take: limit,
       }),
       this.db.produit.count({ where }),
-      this.db.produit.count(),
-      this.db.produit.count({ where: missingPrice }),
+      this.db.produit.count({ where: { estActif: true } }),
+      this.db.produit.count({ where: { AND: [missingPrice, { estActif: true }] } }),
       this.db.produit.groupBy({
         by: ['categorieId'],
         where: missingPrice,

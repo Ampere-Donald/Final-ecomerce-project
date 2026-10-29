@@ -17,6 +17,15 @@ import {
 export const catalogueSelect = {
   id: true,
   nomProduit: true,
+  referenceFabricant: true,
+  identificationRevision: true,
+  photoRevision: true,
+  identificationVerifieRevision: true,
+  identificationVerifieAt: true,
+  identificationVerifiePar: true,
+  photoVerifieRevision: true,
+  photoVerifieAt: true,
+  photoVerifiePar: true,
   marque: true,
   code: true,
   codeFamille: true,
@@ -43,6 +52,37 @@ export const catalogueSelect = {
   categorie: { select: { id: true, nom: true } },
   sousCategorie: { select: { id: true, nom: true } },
 } as const;
+export const reviewSubjects = [
+  'PRIX',
+  'CLASSEMENT',
+  'IDENTIFICATION',
+  'PHOTO',
+] as const;
+const prefixes = {
+  PRIX: 'prix',
+  CLASSEMENT: 'classement',
+  IDENTIFICATION: 'identification',
+  PHOTO: 'photo',
+};
+const subjectKeys = {
+  PRIX: [
+    'prixDetail',
+    'prixDemiGros',
+    'prixGros',
+    'prixPromo',
+    'finPromo',
+    'quantiteGros',
+  ],
+  CLASSEMENT: ['categorieId', 'sousCategorieId'],
+  IDENTIFICATION: ['nomProduit', 'marque', 'referenceFabricant'],
+  PHOTO: ['imageUrl'],
+};
+const subjectsFor = (subject: string): readonly string[] =>
+  subject === 'COMPLET'
+    ? reviewSubjects
+    : subject === 'ARCHIVAGE'
+      ? []
+      : [subject];
 const json = (value: any) => JSON.parse(JSON.stringify(value));
 const stable = (value: any): any =>
   Array.isArray(value)
@@ -98,6 +138,14 @@ export function validateCataloguePrices(p: any) {
 export class CatalogueRevisionsService {
   constructor(private readonly db: DatabaseService) {}
 
+  private verified(subject: string) {
+    const prefix = prefixes[subject];
+    return {
+      [`${prefix}VerifieRevision`]: {
+        equals: this.db.produit.fields[`${prefix}Revision`],
+      },
+    };
+  }
   private stateWhere(state: string) {
     const pending = {
       propositionsCatalogue: { some: { statut: 'EN_ATTENTE' } },
@@ -110,34 +158,23 @@ export class CatalogueRevisionsService {
         some: { statut: 'EN_ATTENTE', type: 'DISCUSSION' },
       },
     };
+    if (state === 'TOUS') return {};
     if (state === 'A_DISCUTER') return discussion;
     if (state === 'PROPOSITIONS')
       return { AND: [pending, { NOT: discussion }] };
-    if (state === 'VERIFIES')
-      return {
-        AND: [
-          noPending,
-          {
-            prixVerifieRevision: {
-              equals: this.db.produit.fields.prixRevision,
-            },
-          },
-        ],
-      };
+    const complete = {
+      AND: reviewSubjects.map((subject) => this.verified(subject)),
+    };
+    if (state === 'VERIFIES') return { AND: [noPending, complete] };
+    // NOT alone excludes NULL in SQL; explicitly include unreviewed subjects.
     return {
       AND: [
         noPending,
         {
-          OR: [
-            { prixVerifieRevision: null },
-            {
-              NOT: {
-                prixVerifieRevision: {
-                  equals: this.db.produit.fields.prixRevision,
-                },
-              },
-            },
-          ],
+          OR: reviewSubjects.flatMap((subject) => [
+            { [`${prefixes[subject]}VerifieRevision`]: null },
+            { NOT: this.verified(subject) },
+          ]),
         },
       ],
     };
@@ -161,7 +198,9 @@ export class CatalogueRevisionsService {
         },
       }));
     if (query.categorieId) base.categorieId = query.categorieId;
-    if (query.sousCategorieId) base.sousCategorieId = query.sousCategorieId;
+    if (query.sousCategorieId === 'sans') base.sousCategorieId = null;
+    else if (query.sousCategorieId)
+      base.sousCategorieId = query.sousCategorieId;
     if (query.auteurId)
       base.propositionsCatalogue = { some: { auteurId: query.auteurId } };
     if (query.classement === 'a-verifier')
@@ -179,8 +218,14 @@ export class CatalogueRevisionsService {
           ],
         },
       ];
-    const where = { AND: [base, this.stateWhere(query.etat || 'A_VERIFIER')] };
-    const states = ['A_VERIFIER', 'PROPOSITIONS', 'A_DISCUTER', 'VERIFIES'];
+    const where = { AND: [base, this.stateWhere(query.etat || 'TOUS')] };
+    const states = [
+      'TOUS',
+      'A_VERIFIER',
+      'PROPOSITIONS',
+      'A_DISCUTER',
+      'VERIFIES',
+    ];
     const [data, total, counts] = await Promise.all([
       this.db.produit.findMany({
         where,
@@ -211,6 +256,9 @@ export class CatalogueRevisionsService {
       page,
       lastPage: Math.max(1, Math.ceil(total / limit)),
       counts: Object.fromEntries(states.map((key, i) => [key, counts[i]])),
+      catalogueTotal: await this.db.produit.count({
+        where: { estActif: true },
+      }),
     };
   }
 
@@ -220,6 +268,101 @@ export class CatalogueRevisionsService {
       select: { id: true, nom: true, role: true },
       orderBy: { nom: 'asc' },
     });
+  }
+
+  async overview() {
+    const products = await this.db.produit.findMany({
+      where: { estActif: true },
+      select: {
+        categorieId: true,
+        sousCategorieId: true,
+        prixRevision: true,
+        prixVerifieRevision: true,
+        classementRevision: true,
+        classementVerifieRevision: true,
+        identificationRevision: true,
+        identificationVerifieRevision: true,
+        photoRevision: true,
+        photoVerifieRevision: true,
+        propositionsCatalogue: {
+          where: { statut: 'EN_ATTENTE' },
+          select: { type: true },
+        },
+      },
+    });
+    const groups: Record<
+      string,
+      {
+        total: number;
+        remaining: number;
+        pending: number;
+        discussion: number;
+        complete: number;
+      }
+    > = {};
+    for (const p of products) {
+      const pending = p.propositionsCatalogue.length > 0;
+      const discussion = p.propositionsCatalogue.some(
+        (proposal) => proposal.type === 'DISCUSSION',
+      );
+      const complete =
+        !pending &&
+        reviewSubjects.every(
+          (subject) =>
+            p[`${prefixes[subject]}VerifieRevision`] ===
+            p[`${prefixes[subject]}Revision`],
+        );
+      for (const key of [
+        'total',
+        `categorie:${p.categorieId}`,
+        `sous:${p.sousCategorieId || 'sans'}:${p.categorieId}`,
+      ]) {
+        const group = (groups[key] ||= {
+          total: 0,
+          remaining: 0,
+          pending: 0,
+          discussion: 0,
+          complete: 0,
+        });
+        group.total++;
+        if (complete) group.complete++;
+        else if (discussion) group.discussion++;
+        else if (pending) group.pending++;
+        else group.remaining++;
+      }
+    }
+    return groups;
+  }
+
+  async presence(id: string, actor: any, release = false) {
+    if (release) {
+      await this.db.cataloguePresence.deleteMany({
+        where: { auteurId: actor.id, produitId: id },
+      });
+    } else {
+      if (
+        !(await this.db.produit.findUnique({
+          where: { id },
+          select: { id: true },
+        }))
+      )
+        throw new NotFoundException('Article introuvable.');
+      await this.db.cataloguePresence.upsert({
+        where: { auteurId: actor.id },
+        create: {
+          auteurId: actor.id,
+          auteurNom: actor.nom || actor.username || actor.id,
+          produitId: id,
+          expireAt: new Date(Date.now() + 45000),
+        },
+        update: {
+          auteurNom: actor.nom || actor.username || actor.id,
+          produitId: id,
+          expireAt: new Date(Date.now() + 45000),
+        },
+      });
+    }
+    return { ok: true };
   }
 
   async detail(id: string, db: any = this.db) {
@@ -248,7 +391,11 @@ export class CatalogueRevisionsService {
         take: 50,
       }),
     ]);
-    return { produit, propositions, historique };
+    const presence = await db.cataloguePresence.findMany({
+      where: { produitId: id, expireAt: { gt: new Date() } },
+      select: { auteurId: true, auteurNom: true },
+    });
+    return { produit, propositions, historique, presence };
   }
 
   async mutate(id: string, dto: CatalogueMutationDto, actor: any) {
@@ -284,15 +431,13 @@ export class CatalogueRevisionsService {
         select: catalogueSelect,
       });
       if (!before) throw new NotFoundException('Article introuvable.');
-      const subjectRevision =
-        dto.sujet === 'PRIX'
-          ? 'prixRevision'
-          : dto.sujet === 'CLASSEMENT'
-            ? 'classementRevision'
-            : 'commercialRevision';
+      const subjects = subjectsFor(dto.sujet);
+      const revisionKeys = subjects.map(
+        (subject) => `${prefixes[subject]}Revision`,
+      );
       if (
-        before[subjectRevision] !== dto[subjectRevision] ||
-        before.commercialRevision !== dto.commercialRevision
+        before.commercialRevision !== dto.commercialRevision ||
+        revisionKeys.some((key) => before[key] !== dto[key])
       ) {
         throw new ConflictException({
           message:
@@ -320,7 +465,7 @@ export class CatalogueRevisionsService {
       }
       if (
         dto.action === 'ACCEPTER' &&
-        (proposition[subjectRevision] !== before[subjectRevision] ||
+        (revisionKeys.some((key) => proposition[key] !== before[key]) ||
           proposition.commercialRevision !== before.commercialRevision)
       ) {
         throw new ConflictException(
@@ -341,12 +486,15 @@ export class CatalogueRevisionsService {
         dto.changements ??
         (dto.action === 'ACCEPTER' ? proposition.changements : {});
       const data: any = this.onlySubject(dto.sujet, changes);
-      if (dto.sujet === 'CLASSEMENT' && dto.action !== 'REFUSER')
+      if (subjects.includes('CLASSEMENT') && dto.action !== 'REFUSER')
         await this.validateClassification(tx, { ...before, ...data });
       if (
-        dto.sujet === 'PRIX' &&
+        subjects.includes('PRIX') &&
         dto.action !== 'REFUSER' &&
-        !(isProposal && (dto.action === 'DISCUTER' || dto.type === 'DISCUSSION'))
+        !(
+          isProposal &&
+          (dto.action === 'DISCUTER' || dto.type === 'DISCUSSION')
+        )
       )
         validateCataloguePrices({ ...before, ...data });
       if (
@@ -354,6 +502,28 @@ export class CatalogueRevisionsService {
         !dto.commentaire?.trim()
       )
         throw new BadRequestException('Indiquez le point à discuter.');
+      if (
+        dto.action !== 'REFUSER' &&
+        !(
+          isProposal &&
+          (dto.action === 'DISCUTER' || dto.type === 'DISCUSSION')
+        )
+      ) {
+        if (
+          subjects.includes('IDENTIFICATION') &&
+          (data.nomProduit === null ||
+            !String(data.nomProduit ?? before.nomProduit).trim())
+        )
+          throw new BadRequestException('Le nom de l’article est obligatoire.');
+        if (subjects.includes('PHOTO')) {
+          const image =
+            data.imageUrl === undefined ? before.imageUrl : data.imageUrl;
+          if (!image || !/^(https:\/\/[^\s]+|\/uploads\/[^\s]+)$/.test(image))
+            throw new BadRequestException(
+              'Ajoutez une photo valide avant de la confirmer.',
+            );
+        }
+      }
       let proposalId: string | undefined;
       if (isProposal) {
         const created = await tx.catalogueProposition.create({
@@ -373,6 +543,8 @@ export class CatalogueRevisionsService {
             prixRevision: before.prixRevision,
             classementRevision: before.classementRevision,
             commercialRevision: before.commercialRevision,
+            identificationRevision: before.identificationRevision,
+            photoRevision: before.photoRevision,
           },
         });
         proposalId = created.id;
@@ -385,22 +557,17 @@ export class CatalogueRevisionsService {
             traitePar: actor.id,
           },
         });
-        if (dto.sujet !== 'ARCHIVAGE')
+        for (const subject of subjects) {
+          const prefix = prefixes[subject];
           await tx.produit.update({
             where: { id },
-            data:
-              dto.sujet === 'PRIX'
-                ? {
-                    prixVerifieRevision: null,
-                    prixVerifieAt: null,
-                    prixVerifiePar: null,
-                  }
-                : {
-                    classementVerifieRevision: null,
-                    classementVerifieAt: null,
-                    classementVerifiePar: null,
-                  },
+            data: {
+              [`${prefix}VerifieRevision`]: null,
+              [`${prefix}VerifieAt`]: null,
+              [`${prefix}VerifiePar`]: null,
+            },
           });
+        }
       } else {
         if (dto.sujet === 'ARCHIVAGE') {
           if (!['ARCHIVER', 'ACCEPTER'].includes(dto.action))
@@ -416,26 +583,28 @@ export class CatalogueRevisionsService {
           where: { id },
           select: catalogueSelect,
         });
-        if (dto.sujet === 'PRIX')
+        for (const subject of subjects) {
+          const prefix = prefixes[subject];
           await tx.produit.update({
             where: { id },
             data: {
-              prixVerifieRevision: updated.prixRevision,
-              prixVerifieAt: new Date(),
-              prixVerifiePar: actor.nom || actor.id,
+              [`${prefix}VerifieRevision`]: updated[`${prefix}Revision`],
+              [`${prefix}VerifieAt`]: new Date(),
+              [`${prefix}VerifiePar`]: actor.nom || actor.id,
             },
           });
-        if (dto.sujet === 'CLASSEMENT')
-          await tx.produit.update({
-            where: { id },
-            data: {
-              classementVerifieRevision: updated.classementRevision,
-              classementVerifieAt: new Date(),
-              classementVerifiePar: actor.nom || actor.id,
-            },
-          });
+        }
         await tx.catalogueProposition.updateMany({
-          where: { produitId: id, sujet: dto.sujet, statut: 'EN_ATTENTE' },
+          where: {
+            produitId: id,
+            sujet: {
+              in:
+                dto.sujet === 'COMPLET'
+                  ? [...reviewSubjects, 'COMPLET']
+                  : [dto.sujet],
+            },
+            statut: 'EN_ATTENTE',
+          },
           data: {
             statut: 'OBSOLETE',
             traiteAt: new Date(),
@@ -484,12 +653,9 @@ export class CatalogueRevisionsService {
   }
 
   private onlySubject(sujet: string, changes: CatalogueChangesDto) {
-    const keys =
-      sujet === 'PRIX'
-        ? priceKeys
-        : sujet === 'CLASSEMENT'
-          ? ['categorieId', 'sousCategorieId']
-          : [];
+    const keys: string[] = subjectsFor(sujet).flatMap(
+      (subject) => subjectKeys[subject],
+    );
     for (const key of Object.keys(changes))
       if (!keys.includes(key))
         throw new BadRequestException(
@@ -500,6 +666,8 @@ export class CatalogueRevisionsService {
         .filter((key) => changes[key] !== undefined)
         .map((key) => [key, changes[key]]),
     );
+    for (const key of ['nomProduit', 'marque', 'referenceFabricant'])
+      if (typeof data[key] === 'string') data[key] = data[key].trim();
     if (data.finPromo) data.finPromo = new Date(data.finPromo);
     return data;
   }

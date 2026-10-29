@@ -22,10 +22,37 @@ import {
   revisionApi,
   Subject,
   dateLabel,
+  subjectLabels,
+  subjectPrefix,
+  reviewSubjects,
+  isVerified,
 } from "./api";
 import { readDraft, removeDraft, saveDraft } from "./drafts";
 import "./revision.css";
 
+import { photoDraft } from "./photoDraft";
+import { PhotoZoom } from "./PhotoZoom";
+import { DuplicateCompare } from "./DuplicateCompare";
+
+const identificationFields = ["nomProduit", "marque", "referenceFabricant"];
+const classificationFields = ["categorieId", "sousCategorieId"];
+const keysFor = (subject: Subject) =>
+  subject === "COMPLET"
+    ? [
+        ...identificationFields,
+        ...priceFields,
+        ...classificationFields,
+        "imageUrl",
+      ]
+    : subject === "IDENTIFICATION"
+      ? identificationFields
+      : subject === "PRIX"
+        ? priceFields
+        : subject === "CLASSEMENT"
+          ? classificationFields
+          : subject === "PHOTO"
+            ? ["imageUrl"]
+            : [];
 type Form = Record<string, string>;
 interface Draft {
   form: Form;
@@ -33,6 +60,7 @@ interface Draft {
   subject: Subject;
   commentaire: string;
   proposalId?: string;
+  reason?: string;
   pending?: { signature: string; payload: Mutation };
 }
 const priceFields = [
@@ -45,7 +73,12 @@ const priceFields = [
 ];
 function toForm(p: Product): Form {
   return Object.fromEntries(
-    [...priceFields, "categorieId", "sousCategorieId"].map((key) => [
+    [
+      ...priceFields,
+      ...identificationFields,
+      ...classificationFields,
+      "imageUrl",
+    ].map((key) => [
       key,
       key === "finPromo"
         ? (p.finPromo || "").slice(0, 10)
@@ -56,11 +89,16 @@ function toForm(p: Product): Form {
 function revisionChanged(current: Product, base: Product, subject: Subject) {
   return (
     current.commercialRevision !== base.commercialRevision ||
-    (subject === "PRIX"
-      ? current.prixRevision !== base.prixRevision
-      : subject === "CLASSEMENT"
-        ? current.classementRevision !== base.classementRevision
-        : false)
+    (subject === "COMPLET"
+      ? reviewSubjects
+      : subject === "ARCHIVAGE"
+        ? []
+        : [subject]
+    ).some(
+      (topic) =>
+        current[`${subjectPrefix[topic]}Revision`] !==
+        base[`${subjectPrefix[topic]}Revision`],
+    )
   );
 }
 
@@ -86,9 +124,9 @@ export function RevisionEditor({
   const [latest, setLatest] = useState(initial);
   const [base, setBase] = useState(saved?.base || initial.produit);
   const [form, setForm] = useState<Form>(
-    saved?.form || toForm(initial.produit),
+    { ...toForm(initial.produit), ...saved?.form },
   );
-  const [subject, setSubject] = useState<Subject>(saved?.subject || "PRIX");
+  const [subject, setSubject] = useState<Subject>(saved?.subject || "COMPLET");
   const [commentaire, setCommentaire] = useState(saved?.commentaire || "");
   const [proposalId, setProposalId] = useState(saved?.proposalId);
   const pending = useRef(saved?.pending);
@@ -101,6 +139,12 @@ export function RevisionEditor({
   const [online, setOnline] = useState(navigator.onLine);
   const [dirty, setDirty] = useState(!!saved);
   const [persistent, setPersistent] = useState(true);
+  const [zoom, setZoom] = useState('');
+  const [compare, setCompare] = useState(false);
+  const [localPhoto, setLocalPhoto] = useState<Blob | null>(null);
+  const [photoPreview, setPhotoPreview] = useState("");
+  const [photoStored, setPhotoStored] = useState(true);
+  const [reason, setReason] = useState(saved?.reason || "");
   const [archiveConfirm, setArchiveConfirm] = useState(false);
   const [footerOffset, setFooterOffset] = useState(0);
   const titleRef = useRef<HTMLHeadingElement>(null);
@@ -109,6 +153,43 @@ export function RevisionEditor({
   const skipPersist = useRef(false);
   const p = latest.produit;
   const conflict = revisionChanged(p, base, subject);
+  useEffect(() => {
+    let active = true;
+    photoDraft(userId, p.id)
+      .then((blob) => {
+        if (active && blob) {
+          setLocalPhoto(blob);
+          setDirty(true);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, [userId, p.id]);
+  useEffect(() => {
+    if (!localPhoto) {
+      setPhotoPreview("");
+      return;
+    }
+    const url = URL.createObjectURL(localPhoto);
+    setPhotoPreview(url);
+    return () => URL.revokeObjectURL(url);
+  }, [localPhoto]);
+  useEffect(() => {
+    const ping = () => {
+      if (!document.hidden && navigator.onLine)
+        void revisionApi.presence(p.id).catch(() => {});
+    };
+    ping();
+    const interval = setInterval(ping, 20000);
+    document.addEventListener("visibilitychange", ping);
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener("visibilitychange", ping);
+      void revisionApi.releasePresence(p.id).catch(() => {});
+    };
+  }, [p.id]);
   const canRetry = !!pending.current && !!error;
   useEffect(() => {
     if (error) errorRef.current?.scrollIntoView?.({ block: "nearest" });
@@ -185,11 +266,22 @@ export function RevisionEditor({
           base,
           subject,
           commentaire,
+          reason,
           proposalId,
           pending: pending.current,
         }),
       );
-  }, [dirty, form, base, subject, commentaire, proposalId, p.id, userId]);
+  }, [
+    dirty,
+    form,
+    base,
+    subject,
+    commentaire,
+    reason,
+    proposalId,
+    p.id,
+    userId,
+  ]);
 
   const change = (key: string, value: string) => {
     pending.current = undefined;
@@ -220,23 +312,22 @@ export function RevisionEditor({
     pending.current = undefined;
     setArchiveConfirm(false);
   };
-  const changes = () => {
+  const changes = (currentForm = form) => {
     if (subject === "ARCHIVAGE") return {};
-    const keys =
-      subject === "PRIX" ? priceFields : ["categorieId", "sousCategorieId"];
+    const keys = keysFor(subject);
     const original = toForm(base);
     return Object.fromEntries(
       keys
-        .filter((key) => form[key] !== original[key])
+        .filter((key) => currentForm[key] !== original[key])
         .map((key) => [
           key,
-          form[key] === ""
+          currentForm[key] === ""
             ? null
             : key.startsWith("prix") || key === "quantiteGros"
-              ? Number(form[key].replace(/\s/g, "").replace(",", "."))
+              ? Number(currentForm[key].replace(/\s/g, "").replace(",", "."))
               : key === "finPromo"
-                ? new Date(`${form[key]}T23:59:59`).toISOString()
-                : form[key],
+                ? new Date(`${currentForm[key]}T23:59:59`).toISOString()
+                : currentForm[key],
         ]),
     );
   };
@@ -257,13 +348,39 @@ export function RevisionEditor({
       return;
     }
     setError("");
-    const data = action === "REFUSER" || action === "DISCUTER" ? {} : changes();
+    let currentForm = form;
+    if (
+      localPhoto &&
+      ["PHOTO", "COMPLET"].includes(subject) &&
+      !["REFUSER", "DISCUTER"].includes(action)
+    ) {
+      setBusy(true);
+      try {
+        const uploaded = await revisionApi.photo(localPhoto);
+        currentForm = { ...form, imageUrl: uploaded.imageUrl };
+        setForm(currentForm);
+        setLocalPhoto(null);
+        await photoDraft(userId, p.id, null);
+      } catch (err) {
+        setError(
+          getApiErrorMessage(
+            err,
+            "Envoi de la photo impossible. Votre photo reste en brouillon sur cet appareil.",
+          ),
+        );
+        setBusy(false);
+        return;
+      }
+    }
+    const data =
+      action === "REFUSER" || action === "DISCUTER" ? {} : changes(currentForm);
     if (
       Object.values(data).some(
         (value) => typeof value === "number" && !Number.isFinite(value),
       )
     ) {
       setError("Vérifiez les montants saisis.");
+      setBusy(false);
       return;
     }
     const effectiveAction =
@@ -275,7 +392,8 @@ export function RevisionEditor({
       propositionId: ["ACCEPTER", "REFUSER"].includes(action)
         ? proposalId
         : undefined,
-      commentaire: commentaire.trim() || undefined,
+      commentaire:
+        [reason, commentaire.trim()].filter(Boolean).join(" — ") || undefined,
       changements: data,
       type: Object.keys(data).length ? "CORRECTION" : "CONFIRMATION",
     };
@@ -287,19 +405,44 @@ export function RevisionEditor({
       };
     setPersistent(
       saveDraft(userId, p.id, {
-        form,
+        form: currentForm,
         base,
         subject,
         commentaire,
+        reason,
         proposalId,
         pending: pending.current,
       }),
     );
     setBusy(true);
     try {
-      await revisionApi.action(p.id, pending.current.payload);
+      const result = await revisionApi.action(p.id, pending.current.payload);
       skipPersist.current = true;
-      removeDraft(userId, p.id);
+      // Preserve edits prepared in another section when saving a partial review.
+      const applied = ["REFUSER", "DISCUTER"].includes(action)
+        ? []
+        : keysFor(subject);
+      const newBase = result?.produit || p;
+      const original = toForm(base);
+      const remaining = Object.fromEntries(
+        Object.keys(currentForm)
+          .filter(
+            (key) =>
+              !applied.includes(key) && currentForm[key] !== original[key],
+          )
+          .map((key) => [key, currentForm[key]]),
+      );
+      if (
+        Object.keys(remaining).length ||
+        (localPhoto && !["PHOTO", "COMPLET"].includes(subject))
+      ) {
+        saveDraft(userId, p.id, {
+          form: { ...toForm(newBase), ...remaining },
+          base: newBase,
+          subject: "COMPLET",
+          commentaire: "",
+        });
+      } else removeDraft(userId, p.id);
       pending.current = undefined;
       if (next) await onDone();
       else {
@@ -312,10 +455,11 @@ export function RevisionEditor({
         pending.current = undefined;
       setPersistent(
         saveDraft(userId, p.id, {
-          form,
+          form: currentForm,
           base,
           subject,
           commentaire,
+          reason,
           proposalId,
           pending: pending.current,
         }),
@@ -353,7 +497,9 @@ export function RevisionEditor({
     ? selectedProposal?.statut === "EN_ATTENTE" &&
       selectedProposal.type !== "DISCUSSION"
       ? "Accepter et suivant"
-      : "Valider et suivant"
+      : subject === "COMPLET"
+        ? "Tout valider et suivant"
+        : "Valider et suivant"
     : "Envoyer et suivant";
 
   return (
@@ -375,7 +521,14 @@ export function RevisionEditor({
       </header>
       <div className="revision-product-heading">
         {p.imageUrl ? (
-          <img src={p.imageUrl} alt="" width="88" height="88" />
+          <button
+            className="revision-photo-trigger"
+            onClick={() => setZoom(p.imageUrl)}
+            aria-label="Agrandir la photo"
+          >
+            <img src={p.imageUrl} alt="" width="88" height="88" />
+            <span>Agrandir</span>
+          </button>
         ) : (
           <Package size={48} aria-hidden="true" />
         )}
@@ -396,22 +549,74 @@ export function RevisionEditor({
           </p>
         </div>
       </div>
-      <div className="revision-subjects" role="group" aria-label="Sujet de vérification">
-        {(["PRIX", "CLASSEMENT", "ARCHIVAGE"] as Subject[]).map((s) => (
-          <button
-            key={s}
-            aria-pressed={subject === s}
-            onClick={() => switchSubject(s)}
+      <div className="revision-panel space-y-3">
+        <p className="text-sm font-semibold">État de la fiche</p>
+        <div className="revision-status-grid">
+          {reviewSubjects.map((topic) => (
+            <span
+              key={topic}
+              className={isVerified(p, topic) ? "verified" : ""}
+            >
+              {isVerified(p, topic) ? "✓" : "○"} {subjectLabels[topic]}{" "}
+              {isVerified(p, topic) ? topic === 'PRIX' ? 'vérifiés' : topic === 'CLASSEMENT' ? 'vérifié' : 'vérifiée' : "à vérifier"}
+            </span>
+          ))}
+        </div>
+        <label className="revision-field">
+          <span>Contrôle à enregistrer</span>
+          <select
+            value={subject}
+            onChange={(e) => switchSubject(e.target.value as Subject)}
             disabled={busy}
           >
-            {s === "PRIX"
-              ? "Prix"
-              : s === "CLASSEMENT"
-                ? "Classement"
-                : "Article arrêté"}
-          </button>
-        ))}
+            {(["COMPLET", ...reviewSubjects, "ARCHIVAGE"] as Subject[]).map(
+              (topic) => (
+                <option value={topic} key={topic}>
+                  {subjectLabels[topic]}
+                </option>
+              ),
+            )}
+          </select>
+        </label>
+        <p className="text-sm text-slate-600">
+          {subject === "COMPLET"
+            ? "La validation confirmera ensemble l’identification, les prix, le classement et la photo."
+            : `Seul le contrôle « ${subjectLabels[subject]} » sera enregistré. Les autres corrections restent en brouillon.`}
+        </p>
       </div>
+      {!!latest.presence?.filter((member) => member.auteurId !== userId)
+        .length && (
+        <p className="revision-notice">
+          Également en cours de vérification par{" "}
+          {latest.presence
+            .filter((member) => member.auteurId !== userId)
+            .map((member) => member.auteurNom)
+            .join(", ")}
+          .
+        </p>
+      )}
+      {zoom && (
+        <PhotoZoom
+          src={zoom}
+          name={p.nomProduit}
+          onClose={() => setZoom('')}
+        />
+      )}
+      {compare && (
+        <DuplicateCompare
+          product={p}
+          onClose={() => setCompare(false)}
+          onReport={(other) => {
+            setReason("Doublon possible");
+            setCommentaire(
+              `À comparer avec ${other.nomProduit} · code ${other.code || "non renseigné"} · identifiant ${other.id}.`,
+            );
+            setDirty(true);
+            setCompare(false);
+            pending.current = undefined;
+          }}
+        />
+      )}
       {!online && (
         <p className="revision-notice">
           <WifiOff size={18} /> Hors ligne. Vous pouvez préparer votre
@@ -420,7 +625,7 @@ export function RevisionEditor({
       )}
       {dirty && (
         <p className="text-xs text-slate-500" role="status">
-          {persistent
+          {persistent && photoStored
             ? "Brouillon sur cet appareil · visible uniquement dans votre compte"
             : "Stockage indisponible : gardez cet écran ouvert, la saisie est conservée en mémoire."}
         </p>
@@ -467,23 +672,18 @@ export function RevisionEditor({
                 onClick={() => chooseProposal(item)}
               >
                 <span className="font-semibold">
-                  {item.auteurNom} ·{" "}
-                  {item.sujet === "PRIX"
-                    ? "Prix"
-                    : item.sujet === "CLASSEMENT"
-                      ? "Classement"
-                      : "Article arrêté"}
+                  {item.auteurNom} · {subjectLabels[item.sujet] || item.sujet}
                 </span>
                 <span className="text-xs text-slate-500">
                   {dateLabel(item.createdAt)} ·{" "}
                   {item.type === "CONFIRMATION"
-                    ? "Prix / classement confirmés"
+                    ? "Contrôle confirmé"
                     : item.type === "DISCUSSION"
                       ? "À discuter"
                       : "Correction proposée"}
                 </span>
                 {Object.entries(item.changements).map(([key, value]) => (
-                  <span key={key} className="text-sm">
+                  key === 'imageUrl' ? <span key={key} className="revision-image-comparison"><span>Actuelle{item.observe.imageUrl && <img src={item.observe.imageUrl} alt="Photo actuelle" />}</span><span>Proposée{typeof value === 'string' && <img src={value} alt="Photo proposée" />}</span></span> : <span key={key} className="text-sm">
                     {fieldLabels[key]} :{" "}
                     {fieldDisplay(key, item.observe[key as keyof Product])} →{" "}
                     <strong>{fieldDisplay(key, value)}</strong>
@@ -497,7 +697,32 @@ export function RevisionEditor({
         </section>
       )}
       <section className="revision-panel space-y-4">
-        {subject === "PRIX" ? (
+        {["IDENTIFICATION", "COMPLET"].includes(subject) && (
+          <div className="space-y-4">
+            <h2 className="font-bold">Identification de l’article</h2>
+            {identificationFields.map((key) => (
+              <label className="revision-field" key={key}>
+                <span>
+                  {fieldLabels[key]}
+                  {key !== "nomProduit" ? " (facultatif)" : ""}
+                </span>
+                <input
+                  aria-label={fieldLabels[key]}
+                  value={form[key] || ""}
+                  maxLength={key === "marque" ? 100 : 150}
+                  onChange={(e) => change(key, e.target.value)}
+                  disabled={busy}
+                />
+                <small>Actuel : {fieldDisplay(key, p[key])}</small>
+              </label>
+            ))}
+            <p className="text-sm text-slate-600">
+              Code interne conservé : {p.code || "Sans code"}. Vérifiez chaque
+              lettre et caractéristique de la référence fabricant.
+            </p>
+          </div>
+        )}
+        {["PRIX", "COMPLET"].includes(subject) && (
           <>
             <h2 className="font-bold">Tarifs de vente · FCFA</h2>
             {priceFields.map((key) => (
@@ -526,7 +751,8 @@ export function RevisionEditor({
               </p>
             )}
           </>
-        ) : subject === "CLASSEMENT" ? (
+        )}
+        {["CLASSEMENT", "COMPLET"].includes(subject) && (
           <>
             <h2 className="font-bold">Ranger cet article</h2>
             <label className="revision-field">
@@ -561,7 +787,59 @@ export function RevisionEditor({
               {p.sousCategorie?.nom || "Sans sous-catégorie"}
             </p>
           </>
-        ) : (
+        )}
+        {["PHOTO", "COMPLET"].includes(subject) && (
+          <div className="space-y-3">
+            <h2 className="font-bold">Photo de l’article</h2>
+            {(photoPreview || form.imageUrl) && (
+              <button type="button" onClick={() => setZoom(photoPreview || form.imageUrl)} aria-label="Agrandir la photo à vérifier"><img className="revision-photo-preview" src={photoPreview || form.imageUrl} alt="Photo à vérifier" /></button>
+            )}
+            <label className="revision-field">
+              <span>
+                Proposer une nouvelle photo · JPG, PNG ou WebP · 5 Mo max.
+              </span>
+              <input
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                disabled={busy}
+                onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  e.target.value = "";
+                  if (!file) return;
+                  if (file.size > 5 * 1024 * 1024) {
+                    setError("La photo dépasse 5 Mo.");
+                    return;
+                  }
+                  if (!/^image\/(jpeg|png|webp)$/.test(file.type)) {
+                    setError("Choisissez une image JPG, PNG ou WebP.");
+                    return;
+                  }
+                  setLocalPhoto(file);
+                  setPhotoStored(false);
+                  setBusy(true);
+                  setDirty(true);
+                  pending.current = undefined;
+                  try {
+                    await photoDraft(userId, p.id, file);
+                    setError("");
+                    setPhotoStored(true);
+                  } catch {
+                    setError(
+                      "La photo reste en mémoire : stockage indisponible. Gardez cet écran ouvert.",
+                    );
+                  } finally { setBusy(false); }
+                }}
+              />
+            </label>
+            {localPhoto && (
+              <p className="text-sm text-slate-600">
+                Photo en brouillon sur cet appareil. Elle sera envoyée lors de
+                l’enregistrement.
+              </p>
+            )}
+          </div>
+        )}
+        {subject === "ARCHIVAGE" && (
           <>
             <h2 className="font-bold">Cet article n’est plus vendu</h2>
             <p className="text-sm leading-6 text-slate-600">
@@ -576,6 +854,29 @@ export function RevisionEditor({
             )}
           </>
         )}
+        <label className="revision-field">
+          <span>Motif du signalement (facultatif)</span>
+          <select
+            value={reason}
+            onChange={(e) => {
+              setReason(e.target.value);
+              setDirty(true);
+              pending.current = undefined;
+            }}
+          >
+            <option value="">Choisir un motif</option>
+            {[
+              "Référence incertaine",
+              "Photo incorrecte",
+              "Prix inconnu",
+              "Mauvais classement",
+              "Doublon possible",
+              "Autre point à discuter",
+            ].map((value) => (
+              <option key={value}>{value}</option>
+            ))}
+          </select>
+        </label>
         <label className="revision-field">
           <span>
             Commentaire {subject === "ARCHIVAGE" ? "/ motif" : "(facultatif)"}
@@ -593,6 +894,13 @@ export function RevisionEditor({
           />
         </label>
         <div className="flex flex-wrap gap-2">
+          <button
+            className="revision-button secondary"
+            onClick={() => setCompare(true)}
+            disabled={busy}
+          >
+            Comparer un doublon
+          </button>
           <button
             className="revision-button secondary"
             disabled={busy || !online || conflict}
@@ -628,7 +936,12 @@ export function RevisionEditor({
               <p className="text-xs text-slate-500">
                 {dateLabel(event.createdAt)}
               </p>
-              {priceFields
+              {[
+                ...priceFields,
+                ...identificationFields,
+                ...classificationFields,
+                "imageUrl",
+              ]
                 .filter(
                   (key) =>
                     event.avant[key as keyof Product] !==

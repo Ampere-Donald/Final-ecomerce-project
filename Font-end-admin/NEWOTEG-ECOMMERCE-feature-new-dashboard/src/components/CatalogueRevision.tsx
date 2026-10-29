@@ -20,16 +20,27 @@ import {
   Mutation,
   Product,
   revisionApi,
+  Progress,
+  reviewSubjects,
+  isVerified,
+  subjectLabels,
 } from "../features/catalogue-revision/api";
 import { RevisionEditor } from "../features/catalogue-revision/RevisionEditor";
 import { Subcategories } from "../features/catalogue-revision/Subcategories";
 import "../features/catalogue-revision/revision.css";
 
+import { CategoryChooser } from "../features/catalogue-revision/CategoryChooser";
+import {
+  readSession,
+  saveSession,
+} from "../features/catalogue-revision/session";
+
 const views = [
+  ["TOUS", "Tous"],
   ["A_VERIFIER", "À vérifier"],
   ["PROPOSITIONS", "Propositions"],
   ["A_DISCUTER", "À discuter"],
-  ["VERIFIES", "Vérifiés"],
+  ["VERIFIES", "Entièrement vérifiés"],
 ];
 const fields = ["prixDetail", "prixDemiGros", "prixGros"] as const;
 const empty: Listing = { data: [], total: 0, page: 1, lastPage: 1, counts: {} };
@@ -105,9 +116,9 @@ function DesktopRow({
           ))
         ) : (
           <span className="text-slate-500 text-xs">
-            {p.prixVerifieRevision === p.prixRevision
-              ? "Prix vérifiés"
-              : "À vérifier"}
+            {reviewSubjects.every((subject) => isVerified(p, subject))
+              ? "Fiche entièrement vérifiée"
+              : "Contrôles à terminer"}
           </span>
         )}
         <button onClick={onOpen} className="revision-button secondary">
@@ -131,6 +142,9 @@ export function CatalogueRevision() {
   const scrollKey = `catalogue-scroll:${userId}:${filterKey}`;
   const filterRef = useRef(filterKey);
   filterRef.current = filterKey;
+  const [chooser, setChooser] = useState(false);
+  const [progress, setProgress] = useState<Record<string, Progress>>({});
+  const [resume, setResume] = useState(() => readSession(userId));
   const [listing, setListing] = useState<Listing>(empty);
   const [categories, setCategories] = useState<Category[]>([]);
   const [team, setTeam] = useState<{ id: string; nom: string }[]>([]);
@@ -153,10 +167,19 @@ export function CatalogueRevision() {
   const prefetched = useRef<Detail | null>(null);
   const restoreScroll = useRef<number | null>(null);
   const previewRef = useRef<HTMLDivElement>(null);
-  const state = params.get("etat") || "A_VERIFIER";
+  const state = params.get("etat") || "TOUS";
   const categoryId = params.get("categorieId") || "";
   const subcats =
     categories.find((c) => c.id === categoryId)?.sousCategories || [];
+  const category = categories.find((c) => c.id === categoryId);
+  const subcategoryId = params.get("sousCategorieId") || "";
+  const categoryLabel = category
+    ? `${category.nom}${subcategoryId === "sans" ? " / Sans sous-catégorie" : subcategoryId ? " / " + (subcats.find((c) => c.id === subcategoryId)?.nom || "") : ""}`
+    : "Tout le catalogue";
+  const sessionLabel = detail?.produit.nomProduit || categoryLabel;
+  useEffect(() => {
+    if (params.toString()) saveSession(userId, params.toString(), sessionLabel);
+  }, [userId, params, sessionLabel]);
   const updateFilters = useCallback(
     (changes: Record<string, string>) => {
       setParams(
@@ -176,9 +199,11 @@ export function CatalogueRevision() {
   );
   const load = useCallback(async () => {
     const key = filterRef.current;
-    const response = await revisionApi.list(
-      Object.fromEntries(new URLSearchParams(key)),
-    );
+    const [response, overview] = await Promise.all([
+      revisionApi.list(Object.fromEntries(new URLSearchParams(key))),
+      revisionApi.overview(),
+    ]);
+    if (key === filterRef.current) setProgress(overview);
     if (key === filterRef.current) {
       setListing(response);
       setError("");
@@ -412,10 +437,11 @@ export function CatalogueRevision() {
           { replace: true },
         );
       } catch {
-        setError("La page suivante est indisponible. Votre saisie est conservée ; réessayez au retour du réseau.");
+        setError(
+          "La page suivante est indisponible. Votre saisie est conservée ; réessayez au retour du réseau.",
+        );
       }
-    }
-    else {
+    } else {
       back();
       if (!done)
         setNotice(
@@ -507,7 +533,7 @@ export function CatalogueRevision() {
 
   return (
     <section className="catalogue-revision space-y-5">
-      <header className="flex flex-wrap items-start justify-between gap-3">
+      <header className="flex items-start justify-between gap-3">
         <div>
           <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
             Catalogue · travail en équipe
@@ -516,7 +542,7 @@ export function CatalogueRevision() {
           <p className="mt-2 text-sm text-slate-500">
             {canValidate
               ? "Vérifiez, corrigez et validez les articles de la boutique."
-              : "Confirmez les prix ou proposez une correction à un administrateur."}
+              : "Vérifiez les fiches et proposez vos corrections à un administrateur."}
           </p>
         </div>
         <button
@@ -531,6 +557,109 @@ export function CatalogueRevision() {
           <RefreshCw size={18} />
         </button>
       </header>
+      <div className="revision-panel space-y-3">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+              Catalogue publié
+            </p>
+            <p className="text-2xl font-bold">
+              {(
+                listing.catalogueTotal ?? progress.total?.total
+              )?.toLocaleString("fr-FR") ?? "—"}{" "}
+              articles
+            </p>
+          </div>
+          <label className="revision-field">
+            <span>Afficher</span>
+            <select
+              value={params.get("archives") || "false"}
+              onChange={(e) => updateFilters({ archives: e.target.value })}
+            >
+              <option value="false">Articles publiés</option>
+              <option value="true">Articles archivés</option>
+            </select>
+          </label>
+        </div>
+        <details className="text-sm text-slate-600"><summary className="cursor-pointer min-h-11 flex items-center">Quand une fiche est-elle entièrement vérifiée ?</summary><p>Identification, prix, classement et photo contrôlés, sans proposition en attente.</p></details>
+      </div>
+      {resume && !params.toString() && (
+        <div className="revision-panel flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <p className="font-semibold">Reprendre ma vérification</p>
+            <p className="text-sm text-slate-600 break-words">{resume.label}</p>
+          </div>
+          <button
+            className="revision-button primary"
+            onClick={() => {
+              setParams(resume.query);
+              setResume(null);
+            }}
+          >
+            Reprendre
+          </button>
+        </div>
+      )}
+      <div className="revision-panel space-y-3">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+              Mon espace de vérification
+            </p>
+            <p className="font-bold break-words mt-1">{categoryLabel}</p>
+          </div>
+          <button
+            className="revision-button primary"
+            onClick={() => setChooser(true)}
+          >
+            <Filter size={17} />{" "}
+            {categoryId ? "Changer de catégorie" : "Choisir une catégorie"}
+          </button>
+        </div>
+        {params.get('archives') !== 'true' && progress[
+          categoryId
+            ? subcategoryId
+              ? `sous:${subcategoryId}:${categoryId}`
+              : `categorie:${categoryId}`
+            : "total"
+        ] &&
+          (() => {
+            const current =
+              progress[
+                categoryId
+                  ? subcategoryId
+                    ? `sous:${subcategoryId}:${categoryId}`
+                    : `categorie:${categoryId}`
+                  : "total"
+              ];
+            return (
+              <div>
+                <p className="text-sm text-slate-600">
+                  {current.complete} terminés · {current.remaining} à contrôler
+                  · {current.pending} en attente · {current.discussion} à
+                  discuter
+                </p>
+                <progress
+                  className="revision-progress"
+                  value={current.complete}
+                  max={current.total || 1}
+                  aria-label="Progression de la catégorie"
+                />
+              </div>
+            );
+          })()}
+      </div>
+      {chooser && (
+        <CategoryChooser
+          categories={categories}
+          progress={progress}
+          onClose={() => setChooser(false)}
+          onChoose={(categorieId, sousCategorieId) => {
+            updateFilters({ categorieId, sousCategorieId });
+            setChooser(false);
+          }}
+        />
+      )}
       {notice && (
         <p role="status" className="text-sm text-emerald-700">
           {notice}
@@ -541,6 +670,7 @@ export function CatalogueRevision() {
           {error}
         </p>
       )}
+      <label className="revision-field sm:hidden"><span>Vue de travail</span><select value={state} onChange={e => updateFilters({ etat: e.target.value })}>{views.map(([key, label]) => <option value={key} key={key}>{label} ({listing.counts[key] ?? '—'})</option>)}</select></label>
       <div className="revision-tabs">
         {views.map(([key, label]) => (
           <button
@@ -567,44 +697,9 @@ export function CatalogueRevision() {
         </label>
         <details>
           <summary className="min-h-11 cursor-pointer flex gap-2 items-center text-sm font-semibold">
-            <Filter size={16} /> Catégories et filtres
+            <Filter size={16} /> Autres filtres
           </summary>
           <div className="grid sm:grid-cols-2 gap-3 mt-3">
-            <label className="revision-field">
-              <span>Catégorie</span>
-              <select
-                value={categoryId}
-                onChange={(e) =>
-                  updateFilters({
-                    categorieId: e.target.value,
-                    sousCategorieId: "",
-                  })
-                }
-              >
-                <option value="">Toutes les catégories</option>
-                {categories.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.nom}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="revision-field">
-              <span>Sous-catégorie</span>
-              <select
-                value={params.get("sousCategorieId") || ""}
-                onChange={(e) =>
-                  updateFilters({ sousCategorieId: e.target.value })
-                }
-              >
-                <option value="">Toutes les sous-catégories</option>
-                {subcats.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.nom}
-                  </option>
-                ))}
-              </select>
-            </label>
             <label className="revision-field">
               <span>Propositions de</span>
               <select
@@ -634,13 +729,58 @@ export function CatalogueRevision() {
           </div>
         </details>
       </div>
+      {(categoryId ||
+        search ||
+        params.get("auteurId") ||
+        params.get("classement")) && (
+        <div className="flex flex-wrap items-center gap-2 text-sm">
+          <span className="font-semibold">Filtres actifs :</span>
+          {categoryId && (
+            <span className="revision-filter-chip">{categoryLabel}</span>
+          )}
+          {search && (
+            <span className="revision-filter-chip">Recherche : {search}</span>
+          )}
+          {params.get("auteurId") && (
+            <span className="revision-filter-chip">
+              Propositions :{" "}
+              {team.find((m) => m.id === params.get("auteurId"))?.nom ||
+                "Employé"}
+            </span>
+          )}
+          {params.get("classement") && (
+            <span className="revision-filter-chip">Classement à vérifier</span>
+          )}
+          <button
+            className="revision-button secondary"
+            onClick={() =>
+              updateFilters({
+                categorieId: "",
+                sousCategorieId: "",
+                search: "",
+                auteurId: "",
+                classement: "",
+              })
+            }
+          >
+            Effacer les filtres
+          </button>
+        </div>
+      )}
       <div className="flex justify-between flex-wrap gap-2 items-center">
         <p className="text-sm text-slate-500">
-          {listing.total} article(s) · actualisation toutes les 10 s
+          {listing.total
+            ? `Articles ${(listing.page - 1) * 24 + 1} à ${(listing.page - 1) * 24 + listing.data.length} sur ${listing.total}`
+            : "0 article"}{" "}
+          ·{" "}
+          {params.get("archives") === "true"
+            ? "archives"
+            : views.find(([key]) => key === state)?.[1]}{" "}
+          · actualisation toutes les 10 s
         </p>
         <button
           className="revision-button primary"
-          disabled={!listing.data.length}
+          disabled={!listing.data.length || params.get("archives") === "true"}
           onClick={() => open(listing.data[0].id)}
         >
           <Check size={18} /> Commencer la vérification
@@ -682,17 +822,22 @@ export function CatalogueRevision() {
               <span className="block font-semibold text-indigo-900 mt-1">
                 {money(p.prixDetail)}
               </span>
-              <span className="block text-xs text-slate-500 mt-1">
-                {p.propositionsCatalogue?.length
-                  ? `${p.propositionsCatalogue.length} proposition(s)`
-                  : p.prixVerifieRevision === p.prixRevision
-                    ? "Prix vérifiés"
-                    : "Prix à vérifier"}{" "}
-                ·{" "}
-                {p.classementVerifieRevision === p.classementRevision
-                  ? "Classement vérifié"
-                  : "Classement à vérifier"}
+              <span className="revision-status-grid mt-2">
+                {reviewSubjects.map((subject) => (
+                  <span
+                    key={subject}
+                    className={isVerified(p, subject) ? "verified" : ""}
+                  >
+                    {isVerified(p, subject) ? "✓" : "○"}{" "}
+                    {subjectLabels[subject]}
+                  </span>
+                ))}
               </span>
+              {!!p.propositionsCatalogue?.length && (
+                <span className="block text-xs mt-2">
+                  {p.propositionsCatalogue.length} proposition(s) en attente
+                </span>
+              )}
             </span>
             <ChevronRight size={18} className="shrink-0" />
           </button>
@@ -700,6 +845,7 @@ export function CatalogueRevision() {
       </div>
       {canValidate && listing.data.length > 0 && (
         <div className="revision-desktop revision-panel">
+          <p className="text-sm text-slate-600 mb-3">La validation d’une sélection confirme uniquement les prix. Ouvrez un article pour contrôler sa fiche complète.</p>
           <table className="revision-table">
             <thead>
               <tr>

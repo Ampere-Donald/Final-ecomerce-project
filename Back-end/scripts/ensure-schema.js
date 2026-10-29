@@ -515,7 +515,8 @@ async function main() {
     // Apply the additive review schema atomically, including its invalidation trigger.
     const catalogueSql = require('node:fs').readFileSync(require('node:path').join(__dirname, '../prisma/migrations/20261024120000_catalogue_revision/migration.sql'), 'utf8');
     await client.query('BEGIN');
-    try { await client.query(catalogueSql); await client.query('COMMIT'); }
+    const workflowSql = require('node:fs').readFileSync(require('node:path').join(__dirname, '../prisma/migrations/20261028150000_catalogue_review_workflow/migration.sql'), 'utf8');
+    try { await client.query(catalogueSql); await client.query(workflowSql); await client.query('COMMIT'); }
     catch (error) { await client.query('ROLLBACK'); throw error; }
     console.log('[ensure-schema] Schema check complete.');
   } catch (err) {

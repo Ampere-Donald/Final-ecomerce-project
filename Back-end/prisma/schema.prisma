@@ -32,6 +32,15 @@ model Produit {
   classementVerifieRevision Int?        @map("classement_verifie_revision")
   classementVerifieAt  DateTime?        @map("classement_verifie_at")
   classementVerifiePar String?          @map("classement_verifie_par")
+  identificationRevision Int @default(1) @map("identification_revision")
+  photoRevision Int @default(1) @map("photo_revision")
+  identificationVerifieRevision Int? @map("identification_verifie_revision")
+  identificationVerifieAt DateTime? @map("identification_verifie_at")
+  identificationVerifiePar String? @map("identification_verifie_par")
+  photoVerifieRevision Int? @map("photo_verifie_revision")
+  photoVerifieAt DateTime? @map("photo_verifie_at")
+  photoVerifiePar String? @map("photo_verifie_par")
+  referenceFabricant String? @map("reference_fabricant") @db.VarChar(150)
   nomProduit           String           @map("nom_produit") @db.VarChar(150)
   designationEn        String?          @map("designation_en") @db.VarChar(200)
   marque               String?          @db.VarChar(100)
@@ -111,6 +120,8 @@ model CatalogueProposition {
   prixRevision Int @map("prix_revision")
   classementRevision Int @map("classement_revision")
   commercialRevision Int @map("commercial_revision")
+  identificationRevision Int @default(1) @map("identification_revision")
+  photoRevision Int @default(1) @map("photo_revision")
   createdAt DateTime @default(now()) @map("created_at")
   traiteAt DateTime? @map("traite_at")
   traitePar String? @map("traite_par")
@@ -1860,4 +1871,13 @@ enum StatutBulletin {
 enum TypeLigneBulletin {
   GAIN
   RETENUE
+}
+
+model CataloguePresence {
+  auteurId String @id @map("auteur_id")
+  auteurNom String @map("auteur_nom")
+  produitId String @map("produit_id")
+  expireAt DateTime @map("expire_at")
+  @@index([produitId, expireAt])
+  @@map("catalogue_presence")
 }

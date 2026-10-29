@@ -1,5 +1,7 @@
 # Révision collaborative du catalogue
 
+Le parcours actuel est décrit dans [Révision des fiches catalogue — 28 octobre 2026](REVISION_CATALOGUE_PARCOURS_2026-10-28.md) : vue de tous les articles, sélection visible des catégories, corrections de nom et de photo, contrôles séparés et reprise de session. Les sections datées ci-dessous retracent les livraisons précédentes.
+
 ## Utilisation en boutique
 
 Ouvrir **Révision du catalogue** depuis Produits ou Stock & achats. Sur téléphone, choisir **Commencer la vérification** : chaque article présente sa référence, sa photo, ses prix et les propositions de l’équipe. Les onglets **À vérifier**, **Propositions**, **À discuter** et **Vérifiés** indiquent l’avancement pour les filtres sélectionnés.

@@ -11,7 +11,13 @@ import {
   Query,
   Request,
   UseGuards,
+  UseInterceptors,
+  UploadedFile,
+  BadRequestException,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { memoryStorage } from 'multer';
+import { CloudinaryService } from '../cloudinary/cloudinary.service';
 import { AdminAuthGuard } from '../admin-auth/admin-auth.guard';
 import { RolesGuard } from '../admin-auth/roles.guard';
 import { Roles } from '../admin-auth/roles.decorator';
@@ -26,7 +32,45 @@ import { CatalogueRevisionsService } from './catalogue-revisions.service';
 @UseGuards(AdminAuthGuard, RolesGuard)
 @Roles('ADMIN', 'SUPER_ADMIN', 'VENDEUR', 'CAISSIER', 'MANAGER')
 export class CatalogueRevisionsController {
-  constructor(private readonly service: CatalogueRevisionsService) {}
+  constructor(
+    private readonly service: CatalogueRevisionsService,
+    private readonly cloudinary: CloudinaryService,
+  ) {}
+  @Header('Cache-Control', 'no-store') @Get('progression') overview() {
+    return this.service.overview();
+  }
+  @Post('produits/:id/presence') presence(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Request() req: any,
+  ) {
+    return this.service.presence(id, req.user);
+  }
+  @Delete('produits/:id/presence') releasePresence(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Request() req: any,
+  ) {
+    return this.service.presence(id, req.user, true);
+  }
+  @Post('photos')
+  @UseInterceptors(
+    FileInterceptor('file', {
+      storage: memoryStorage(),
+      limits: { fileSize: 5 * 1024 * 1024 },
+      fileFilter: (_req, file, cb) =>
+        cb(null, /^image\/(jpeg|png|webp)$/.test(file.mimetype)),
+    }),
+  )
+  async photo(@UploadedFile() file?: Express.Multer.File) {
+    if (!file)
+      throw new BadRequestException(
+        'Choisissez une image JPG, PNG ou WebP de 5 Mo maximum.',
+      );
+    return {
+      imageUrl: await this.cloudinary.uploadBuffer(file.buffer, {
+        folder: 'catalogue-revisions',
+      }),
+    };
+  }
   @Header('Cache-Control', 'no-store') @Get() list(
     @Query() query: Record<string, string>,
   ) {
