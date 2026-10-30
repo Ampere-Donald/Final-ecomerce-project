@@ -30,8 +30,8 @@ Plan validé par l’utilisateur le 27 octobre 2026. Objectif complet conservé 
 | SEO-14 | Vingt enrichissements publiés et contrôlés | Notes individuelles FR, sources et limites dans productEditorialData.js ; 20 notes et 5 photos originales vérifiées publiquement. Retrait sur changement d’identité ou nouvel attribut. Dimensions, notices et vérifications physiques manquantes restent non établies |
 | SEO-15 | Aides au choix publiées et contrôlées | Trois repères sourcés par famille, FR/EN, après les produits dans le HTML. Titre audio élargi à audio et TV selon le contenu réel. Maillage vers les futurs guides à compléter |
 | SEO-16 | En cours | Liens vers familles et pagination HTML intégrés ; compléter accueil et fiches |
-| SEO-17 | Examen réalisé, extension à faire | Carte des événements et règles de déduplication dans CONTRAT_MESURE_SEO.md ; consultation et WhatsApp déjà instrumentés, conseil et début de devis à compléter |
-| SEO-18 | Contrat proposé, attribution à développer | Rapport métier existant sans source d’acquisition ; collecteur public observé désactivé le 28 octobre à 15:05 UTC ; proposition de migration additive et séparation des observations/ventes dans CONTRAT_MESURE_SEO.md |
+| SEO-17 | Extension développée, recette locale réussie | Conseil et début de devis ajoutés, reprise réseau dédupliquée en vraie transaction PostgreSQL ; publication et activation encore à effectuer |
+| SEO-18 | Attribution et tableau développés, non publiés | Contrat fermé, migration additive répétée localement, catégories d’origine et lignes historiques inconnues ; tableau testé à 390/1440 px. Contrat et ordre de livraison dans LIVRAISON_MESURE_SEO.md |
 | SEO-19 | À faire | Mesures mobile avant/après et recette visuelle |
 | SEO-20 | À faire | Modèle éditorial versionné et validation au build |
 | SEO-21 | À faire | Pages de guides et dossiers, rendu et indexation |

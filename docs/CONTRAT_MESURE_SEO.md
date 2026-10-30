@@ -1,6 +1,6 @@
 # Mesure du parcours et attribution SEO
 
-État constaté dans le code le 28 octobre 2026. Ce document prépare SEO-17 et SEO-18 ; les extensions ci-dessous ne sont pas encore implémentées.
+État initial constaté le 28 octobre 2026 ; implémentation préparée et testée localement le 30 octobre. Les paragraphes de proposition ci-dessous conservent leur contexte initial ; l’état livré est précisé en fin de document. Cette extension n’est pas encore publiée.
 
 ## Ce qui existe
 
@@ -43,3 +43,17 @@ Pour ventiler les observations, ajouter un agrégat séparé par canal plutôt q
 - Aucun identifiant privé ou détail client dans les payloads d’observation, HTML public, JSON-LD, sitemap ou journaux de recette.
 
 Le tableau initial doit afficher les volumes disponibles et « source inconnue » tant que l’attribution n’est pas opérationnelle. Les positions, impressions et clics Search Console restent un ensemble distinct, à importer lorsqu’un accès autorisé est disponible. Cette proposition n’annonce aucune donnée de trafic ou amélioration de classement.
+
+## Implémentation du 30 octobre 2026
+
+- CONSEIL_OUVERT est émis lors de l’ouverture du dialogue ; DEVIS_COMMENCE au premier texte non vide d’une nouvelle demande, une seule fois par document, même après remontage du formulaire. Le message, les références saisies et le produit ne sont pas inclus dans ces observations.
+- `acquisition.js` classe localement l’origine parmi les cinq valeurs fermées. Les indicateurs payants priment ; les domaines référents sont comparés exactement ou comme sous-domaines, jamais par simple présence de « google ». La liste de moteurs est explicite : les domaines non reconnus restent SITE_REFERENT, et non arbitrairement SEO.
+- La mémoire du document et un stockage de session facultatif conservent seulement la catégorie et un horodatage, valable au plus trente minutes lors du prochain document. Un refus de stockage n’empêche pas les achats. Il s’agit de la première origine retenue dans cette fenêtre, pas d’une attribution multicanal ni d’une identification de personne.
+- Le canal optionnel est figé dans la tentative durable de commande ou de devis. Il entre dans l’empreinte uniquement lorsqu’il est renseigné : les anciennes tentatives restent compatibles. Une reprise avec un autre canal est un conflit, pas une modification de la source. L’acceptation d’un devis reprend la source de la demande côté serveur.
+- La migration `20261028170000_add_acquisition_channels` ajoute deux colonnes nullables et `parcours_acquisition_jour`. Elle conserve toutes les lignes et contraintes antérieures. Les nouveaux événements sont stockés dans la nouvelle table, ce qui conserve la liste fermée de l’ancienne table. NON_RENSEIGNEE est réservé à la représentation interne d’un événement ajouté sans canal ; ce n’est pas une valeur acceptée du client public.
+- Le reçu de déduplication et les incréments des deux agrégats partagent la même transaction. L’ancien rapport reste inchangé ; `?version=2` ajoute les nouveaux événements en regroupant leurs canaux. L’endpoint `/parcours/acquisition`, réservé ADMIN/SUPER_ADMIN et sans cache, distingue les devis, commandes enregistrées et commandes actuellement reçues, par canal. Les origines historiques nulles ont leur propre ligne.
+- Le tableau d’administration charge la répartition séparément : une erreur de ce chargement ne masque pas les autres chiffres. Les deux périodes du rapport historique restent consultables. Aucun taux de conversion individuel n’est calculé à partir des observations.
+
+Essai de migration : PostgreSQL 18 local isolé, schéma projeté de `56ed92a0` et contraintes du contrat de livraison reconstituées, puis véritable `prisma migrate deploy`, vérificateur de schéma/historique, transactions concurrentes et contrôles de conservation. Ce n’est pas une restauration des données de production ni une preuve de passage de tout l’historique sur base vide. L’essai de cet historique a échoué en juin sur une table `prime_vendeur` absente ; aucune réparation de production n’a été tentée. La répétition finale fixe explicitement les dates des données synthétiques pour ne pas dépendre du jour d’exécution.
+
+Preuve finale : `output/seo-implementation/acquisition-final-rehearsal-2026-10-30/upgrade-report.json`. Recette navigateur avec collecteur simulé : une observation de conseil, un début de devis malgré plusieurs saisies et origine naturelle conservée pendant la navigation, sans transmettre références ni recherche. Les lectures API réelles du catalogue restent anonymes ; aucune observation, commande ou demande de test n’est envoyée en production.

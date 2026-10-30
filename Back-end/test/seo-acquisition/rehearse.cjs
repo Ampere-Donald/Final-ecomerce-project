@@ -53,9 +53,9 @@ async function main() {
     await db.query("INSERT INTO categorie(id,nom) VALUES('seo-category','Synthetic')");
     await db.query("INSERT INTO produit(id,id_categorie,nom_produit,quantite_stock,prix_detail) VALUES('seo-product','seo-category','Synthetic',9,1234)");
     await db.query("INSERT INTO client(id,nom) VALUES('seo-client','Synthetic')");
-    await db.query("INSERT INTO commande(id,numero_suivi,nom_client,telephone,adresse_livraison,montant_total) VALUES('seo-order','SEO-FIXTURE','Synthetic','000000','Fixture',0)");
+    await db.query("INSERT INTO commande(id,numero_suivi,nom_client,telephone,adresse_livraison,montant_total,date_commande) VALUES('seo-order','SEO-FIXTURE','Synthetic','000000','Fixture',0,'2026-10-28T12:00:00Z')");
     await db.query("INSERT INTO commande_request(request_id,fingerprint,commande_id) VALUES('00000000-0000-4000-8000-000000000010',repeat('0',64),'seo-order')");
-    await db.query("INSERT INTO demande_devis(id,request_id,fingerprint,client_id,nom_client,telephone,mode_reception,updated_at) VALUES('seo-devis','00000000-0000-4000-8000-000000000011',repeat('0',64),'seo-client','Synthetic','000000','RETRAIT_MAGASIN',now())");
+    await db.query("INSERT INTO demande_devis(id,request_id,fingerprint,client_id,nom_client,telephone,mode_reception,created_at,updated_at) VALUES('seo-devis','00000000-0000-4000-8000-000000000011',repeat('0',64),'seo-client','Synthetic','000000','RETRAIT_MAGASIN','2026-10-28T12:00:00Z','2026-10-28T12:00:00Z')");
     const stockBefore = (await db.query("SELECT quantite_stock,prix_detail FROM produit WHERE id='seo-product'")).rows;
     // This ledger belongs only to the synthetic projected baseline. No existing
     // database history is repaired or rewritten, and no migrate resolve is used.
