@@ -32,7 +32,7 @@ Plan validé par l’utilisateur le 27 octobre 2026. Objectif complet conservé 
 | SEO-16 | En cours | Liens vers familles et pagination HTML intégrés ; compléter accueil et fiches |
 | SEO-17 | Extension développée, recette locale réussie | Conseil et début de devis ajoutés, reprise réseau dédupliquée en vraie transaction PostgreSQL ; publication et activation encore à effectuer |
 | SEO-18 | Attribution et tableau développés, non publiés | Contrat fermé, migration additive répétée localement, catégories d’origine et lignes historiques inconnues ; tableau testé à 390/1440 px. Contrat et ordre de livraison dans LIVRAISON_MESURE_SEO.md |
-| SEO-19 | À faire | Mesures mobile avant/après et recette visuelle |
+| SEO-19 | État initial mesuré, optimisation à poursuivre | Neuf passages de laboratoire sur trois pages ; LCP médian proche de 3 s, CLS 0 à 0,076. Aucun INP terrain supposé. 29 visuels absents du checkout rétablis dans la livraison préparée ; rapport PERFORMANCE_MOBILE_SEO_2026-10-30.md |
 | SEO-20 | À faire | Modèle éditorial versionné et validation au build |
 | SEO-21 | À faire | Pages de guides et dossiers, rendu et indexation |
 | SEO-22 | À faire | Quatre guides pilotes documentés |
