@@ -10,7 +10,8 @@ export async function verifyEditorial({ write = false } = {}) {
   const entries = JSON.parse(await readFile(input, 'utf8'));
   const published = compileEditorial(entries, seoFamilies.map(family => family.slug));
   const expected = editorialModule(published);
-  const index = published.map(({ id, slug, language, type, title, summary, reviewedAt, families }) => ({ id, slug, language, type, title, summary, reviewedAt, families }));
+  const index = published.map(({ id, slug, language, type, title, summary, reviewedAt, families, products }) =>
+    ({ id, slug, language, type, title, summary, reviewedAt, families, productIds: products.map(product => product.id) }));
   const indexFile = new URL('../src/storefront/editorialIndex.generated.js', import.meta.url);
   const indexText = '// Generated publication index; bodies stay in the lazy editorial chunk.\n' + `export const editorialIndex = ${JSON.stringify(index, null, 2)};\n`;
   for (const [file, content] of [[output, expected], [indexFile, indexText]]) {

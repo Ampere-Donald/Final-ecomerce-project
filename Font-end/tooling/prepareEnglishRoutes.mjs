@@ -9,7 +9,7 @@ export async function verifyEnglishRoutes({ write = false } = {}) {
   const guides = await verifyGuideTranslations({ write });
   const text = '// Generated from reviewed translations; do not edit.\n' +
     `export const englishProductIds = ${JSON.stringify(products.map(entry => entry.id))};\n` +
-    `export const englishGuideIndex = ${JSON.stringify(guides.map(({ id, sourceId, slug, language, type, title, summary, families }) => ({ id, sourceId, slug, language, type, title, summary, families })))};\n`;
+    `export const englishGuideIndex = ${JSON.stringify(guides.map(({ id, sourceId, slug, language, type, title, summary, families, products }) => ({ id, sourceId, slug, language, type, title, summary, families, productIds: products.map(product => product.id) })))};\n`;
   const path = new URL('../src/storefront/englishRoutes.generated.js', import.meta.url);
   if (write) await writeFile(path, text);
   else if ((await readFile(path, 'utf8')).replace(/\r\n/g, '\n') !== text) throw Error('English route index is stale');

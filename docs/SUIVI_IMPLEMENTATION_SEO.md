@@ -4,7 +4,7 @@ Plan validé par l’utilisateur le 27 octobre 2026. Objectif complet conservé 
 
 ## Base de travail
 
-- Branche : `codex/seo-foundations`.
+- Branche courante de préparation : `codex/seo-languages` ; préparation française séparée dans la PR #34 sur `codex/seo-foundations`.
 - Checkout : `C:/Users/pc/.codex/worktrees/newoteg-seo/Newoteg`.
 - Base vérifiée : `dd4e6aaf`, amélioration du démarrage du catalogue intégrée à `origin/main` lors de la préparation.
 - Plan de référence : `C:/Users/pc/Documents/Newoteg/docs/PLAN_IMPLEMENTATION_SEO_NEWOTEG_2026-10-27.md`.
@@ -29,7 +29,7 @@ Plan validé par l’utilisateur le 27 octobre 2026. Objectif complet conservé 
 | SEO-13 | En cours | Product/Offer/BreadcrumbList partagés avec le rendu, sans offre si prix ou stock inconnus ; informations boutique et validation externe restantes |
 | SEO-14 | Vingt enrichissements publiés et contrôlés | Notes individuelles FR, sources et limites dans productEditorialData.js ; 20 notes et 5 photos originales vérifiées publiquement. Retrait sur changement d’identité ou nouvel attribut. Dimensions, notices et vérifications physiques manquantes restent non établies |
 | SEO-15 | Aides au choix publiées et contrôlées | Trois repères sourcés par famille, FR/EN, après les produits dans le HTML. Titre audio élargi à audio et TV selon le contenu réel. Maillage vers les futurs guides à compléter |
-| SEO-16 | En cours | Liens vers familles et pagination HTML intégrés ; compléter accueil et fiches |
+| SEO-16 | Maillage du pilote préparé et vérifié localement | Accueil vers cinq familles et quatre guides ; fiches vers guides pertinents ; pied de page vers index. Graphe compilé : 31/31 destinations atteignables par langue et découverte en page 2 vérifiée. MAILLAGE_SEO_PILOTE.md ; recette visuelle et publication restantes |
 | SEO-17 | Publié et activé | PR #32, migration et démarrage validés ; capacité publique active. Déduplication vérifiée en PostgreSQL local ; aucune fausse observation écrite en production |
 | SEO-18 | Publié, lecture réelle à vérifier | Attribution persistante et tableau livrés ; deux rapports protégés contre accès anonyme. Tableau testé avec données synthétiques à 390/1440 px ; lecture authentifiée réelle restante. LIVRAISON_MESURE_SEO.md |
 | SEO-19 | Optimisation publiée, mesure à compléter | 29 images réparées ; deux séries complètes et une troisième incomplète. PR #33 publiée : lectures produit simultanées, 165 tests et 12 contrôles publics réussis ; aucune amélioration de vitesse encore démontrée |
@@ -174,3 +174,11 @@ Le dossier SEO-33 compare RCA, Gabon, Congo/Brazzaville, Tchad, Côte d’Ivoire
 La lecture actuelle des vingt produits publics répond 200 pour tous, avec vingt stocks positifs mais quatre prix publics non renseignés. Poids et volumes valent null sur les vingt fiches ; les mesures de colis et les devis restent à établir. Les sources BEAC/BCEAO, douane gabonaise, DHL Cameroun et Google ne remplacent pas une cotation ou une validation commerciale.
 
 Décision d’étape : consolider le Cameroun et développer l’audience technique FR/EN ; aucune offre pays n’est sélectionnée pour publication aujourd’hui. Une fiche de préparation/cotation et un relevé des vingt références réelles permettent la suite opérationnelle. Aucune promesse export, page pays, campagne, réservation, paiement ou sollicitation externe n’a été exécuté.
+
+## Maillage accueil, fiches et guides — complément préparé
+
+L’accueil expose les cinq familles dédiées et les quatre guides dans le HTML. Les fiches revues relient les guides associés par famille réelle ou par sélection produit explicite ; aucun guide artificiel n’est ajouté aux alimentations. Le pied de page conserve un accès à la bibliothèque. Les corps éditoriaux restent chargés à la demande.
+
+186 tests frontend, lint, build et contrat CJS réussis. Le graphe du HTML compilé atteint 31 destinations du pilote dans chaque langue ; un scénario force une référence en page 2 et confirme sa découverte par la pagination HTML. Contrôle des artefacts : quatre brouillons exclus, corps des guides hors graphe initial. Recette détaillée dans MAILLAGE_SEO_PILOTE.md ; aucune publication encore effectuée.
+
+L’accès GitHub connecté a été rétabli pendant ce travail. L’ouverture de la PR et les contrôles distants peuvent reprendre ; la recette navigateur reste interrompue par sa désactivation dans Work.

@@ -2,6 +2,7 @@ import EquivalenceEntry from "./EquivalenceEntry";
 import HomeMerchandising from "./HomeMerchandising";
 import "./home-hero.css";
 import HomeSelection from "./HomeSelection";
+import HomeGuides from './HomeGuides';
 import { Link } from "./LocaleRouter";
 import PageMeta from "./PageMeta";
 import {
@@ -60,6 +61,7 @@ export default function Home() {
         <EquivalenceEntry illustrated />
         <HomeSelection />
         <HomeMerchandising />
+        <HomeGuides />
         <section className="e-advice-ribbon">
           <MessageCircle size={30} />
           <div>

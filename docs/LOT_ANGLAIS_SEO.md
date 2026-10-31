@@ -47,3 +47,10 @@ La branche distante conserve le travail sans modifier la production. L’outil G
 Avant publication : finir la recette interactive, ouvrir la PR et obtenir les contrôles CI/runtime des trois profils, préparer une livraison coordonnée backend/Worker avec la même identité et le retour arrière, puis vérifier les URL publiques et leur sitemap. Ne pas publier le Worker anglais avec le moteur backend actuellement en production : le contrat refuse volontairement les versions différentes. Aucun retour arrière de base de données n’est nécessaire pour ce lot sans migration.
 
 Identité du moteur préparé vérifiée après les dernières corrections : `22932018c51fb99e7870521a8785212e42924b087eca56b9fe5a237e6baa94fe`. Les constructions indépendantes frontend/backend sont identiques. Cette identité ne désigne pas le moteur actuellement déployé.
+
+
+## Complément de maillage et reprise de GitHub
+
+L’accueil et les fiches relient maintenant les guides sélectionnés dans leur langue. Les index transportent aussi les identifiants des références explicitement liées, sans les corps de contenu. Le graphe HTML compilé atteint les 31 destinations du pilote par langue ; le scénario de pagination vérifie une fiche en page 2. Voir MAILLAGE_SEO_PILOTE.md. Dernière identité préparée après ce complément : `4074a51a91537a23a44776f3f2ed382cce7346e6e98748bc1c451bf323874b17` ; 186 tests frontend réussis.
+
+GitHub connecté a été rétabli après le constat d’indisponibilité ci-dessus. La création de PR et la CI peuvent donc reprendre. Le contrôle du navigateur reste désactivé au dernier essai ; aucune recette visuelle finale n’est déclarée complète.

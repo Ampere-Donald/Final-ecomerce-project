@@ -11,6 +11,9 @@ export const editorialIndex = [
     "families": [
       "transistors",
       "circuits-integres-audio"
+    ],
+    "productIds": [
+      "12cd34b9-bec9-4a1a-a67a-179ecb13b8b2"
     ]
   },
   {
@@ -23,6 +26,9 @@ export const editorialIndex = [
     "reviewedAt": "2026-10-31",
     "families": [
       "condensateurs"
+    ],
+    "productIds": [
+      "02d5805f-7f51-4574-938d-d8cfe8c09487"
     ]
   },
   {
@@ -35,7 +41,8 @@ export const editorialIndex = [
     "reviewedAt": "2026-10-31",
     "families": [
       "multimetres"
-    ]
+    ],
+    "productIds": []
   },
   {
     "id": "guide-connecteur-01",
@@ -45,6 +52,7 @@ export const editorialIndex = [
     "title": "Identifier un connecteur avant de chercher une pièce correspondante",
     "summary": "Nombre de contacts, pas, orientation et détrompage : réunissez les indices qui permettent de comparer deux connecteurs au-delà de leur apparence.",
     "reviewedAt": "2026-10-31",
-    "families": []
+    "families": [],
+    "productIds": []
   }
 ];
