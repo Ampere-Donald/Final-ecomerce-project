@@ -46,7 +46,7 @@ Plan validé par l’utilisateur le 27 octobre 2026. Objectif complet conservé 
 | SEO-30 | Routage localisé intégré, recette partielle | Langue déterminée par l’URL, sélecteur avec vrais liens, basename anglais, snapshots et rendu serveur cohérents. 184 tests ; recette interactive finale encore à faire. Non publié |
 | SEO-31 | Vingt fiches et quatre guides intégrés en anglais, non publiés | HTML anglais compilé sous /en/, cinq familles et accueil, retrait sur changement d’identité. 32 contrôles Worker locaux ; détails dans LOT_ANGLAIS_SEO.md |
 | SEO-32 | Annotations intégrées et testées localement | Canonical propres, hreflang réciproques, sitemap conditionné aux identités revues, protections privées. Publication et recette publique restantes ; accès navigateur interrompu et GitHub connecté indisponible |
-| SEO-33 | À faire | Évaluation commerciale du pays pilote |
+| SEO-33 | Dossier de décision produit, offre pays différée | Sept destinations comparées à partir du ZIP Search Console et de sources primaires. Contrôle actuel des vingt produits : poids/volumes null, quatre prix manquants ; transport, paiement, retours et marge non établis. Décision : audience technique FR/EN et consolidation Cameroun avant offre export. DECISION_PAYS_PILOTE_SEO_2026-10-31.md |
 | SEO-34 | À faire | Extension vers 50 puis jusqu’à 100 fiches selon vérification |
 | SEO-35 | À faire | Extension vers 8–12 familles, 8 guides et 8 dossiers |
 | SEO-36 | À faire | Bilans à 30, 60 et 90 jours sur données accumulées |
@@ -166,3 +166,11 @@ Les vingt traductions produit et quatre guides sont maintenant reliés aux URL `
 Recette détaillée et limites dans LOT_ANGLAIS_SEO.md. Les contrôles du moteur compilé utilisent des fixtures déclarées et refusent les écritures. Le navigateur a confirmé une partie du guide condensateur sur mobile puis le changement de langue ; une interaction après Retour n’a pas été confirmée. Work a ensuite désactivé le contrôle. Les corrections d’ancres et la recette complète sur mobile/bureau restent à vérifier visuellement.
 
 Le lot n’est pas publié. GitHub connecté a été revérifié et reste indisponible pour la création de PR. La production ne change pas ; le plan complet reste en cours.
+
+## Marché extérieur — dossier de décision et relevé des colis
+
+Le dossier SEO-33 compare RCA, Gabon, Congo/Brazzaville, Tchad, Côte d’Ivoire, Sénégal et Bénin avec le Cameroun comme référence. Les chiffres sont relus depuis le ZIP natif Search Console ; une ligne pays absente reste inconnue. Aucune demande qualifiée n’est déduite d’un clic.
+
+La lecture actuelle des vingt produits publics répond 200 pour tous, avec vingt stocks positifs mais quatre prix publics non renseignés. Poids et volumes valent null sur les vingt fiches ; les mesures de colis et les devis restent à établir. Les sources BEAC/BCEAO, douane gabonaise, DHL Cameroun et Google ne remplacent pas une cotation ou une validation commerciale.
+
+Décision d’étape : consolider le Cameroun et développer l’audience technique FR/EN ; aucune offre pays n’est sélectionnée pour publication aujourd’hui. Une fiche de préparation/cotation et un relevé des vingt références réelles permettent la suite opérationnelle. Aucune promesse export, page pays, campagne, réservation, paiement ou sollicitation externe n’a été exécuté.

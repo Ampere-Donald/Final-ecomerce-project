@@ -73,3 +73,10 @@ Répertoire local : `C:/Users/pc/Documents/Newoteg/output/seo-implementation/sea
 - `sitemap-submitted.png` et `sitemap-confirmed.png` : confirmation de l'action et état final visible.
 
 Les exports bruts restent dans le dossier de preuves local, hors Git. Ce document ne prétend pas établir un retour commercial ni le classement de NEWOTEG en Afrique.
+
+
+## Complément : rapport Core Web Vitals consulté
+
+Lors du rétablissement temporaire de Chrome le 31 octobre, le rapport Core Web Vitals de la propriété a été lu. Dernière mise à jour affichée : 29 octobre 2026. Google indiquait une quantité insuffisante de données d’utilisation sur les 90 derniers jours pour mobile et pour ordinateur ; les boutons de rapport étaient désactivés. Il n’y a donc pas de métriques terrain LCP/INP/CLS à extraire de cet écran pour NEWOTEG à ce stade. Cela ne valide pas les performances du site et ne remplace pas les mesures de laboratoire.
+
+La lecture du rapport Performances dans son autre onglet expirait à l’attachement, tandis que Core Web Vitals était accessible. Le contrôle navigateur a de nouveau été désactivé dans Work ensuite. L’inspection d’URL reste à compléter. Aucun nouvel export de performances n’est affirmé.
