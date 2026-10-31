@@ -15,7 +15,7 @@ Plan validé par l’utilisateur le 27 octobre 2026. Objectif complet conservé 
 | Tâche | État | Preuve ou prochaine action |
 |---|---|---|
 | SEO-01 | Version identifiée et intégrée | PR #25 fusionnée dans main : 8c5c1022 ; backend et Worker livrés, identifiants ci-dessous |
-| SEO-02 | En cours | Contrôle initial de 24 URL dans `baseline/baseline.json` ; compléter les routes privées, pagination et rendu navigateur |
+| SEO-02 | Audit HTTP étendu effectué, recette navigateur restante | Audit courant de 24 cas : pagination, filtres, comptes, erreurs, HTTP/www et HEAD. Redirections publiques corrigées par PR #36 et treize contrôles après publication réussis. REDIRECTIONS_ORIGINE_SEO_2026-10-31.md |
 | SEO-03 | Mesure initiale obtenue, inspection à compléter | Export natif Search Console du 30 juillet au 29 octobre : 58 clics, 405 impressions ; indexation datée du 23 octobre et 122 noindex analysés. ETAT_SEARCH_CONSOLE_2026-10-31.md ; inspection d'URL et données terrain restantes |
 | SEO-04 | Sélection provisoire préparée | 20 produits disponibles avec image et 5 sous-catégories réelles ; ajuster selon ventes et demandes |
 | SEO-05 | Matrice préparée | 100 formulations distinctes réparties 50/20/15/10/5, reliées à une cible ; docs/MATRICE_RECHERCHES_SEO_NEWOTEG.md. Priorisation quantitative en attente des données Google et commerciales |
@@ -182,3 +182,11 @@ L’accueil expose les cinq familles dédiées et les quatre guides dans le HTML
 186 tests frontend, lint, build et contrat CJS réussis. Le graphe du HTML compilé atteint 31 destinations du pilote dans chaque langue ; un scénario force une référence en page 2 et confirme sa découverte par la pagination HTML. Contrôle des artefacts : quatre brouillons exclus, corps des guides hors graphe initial. Recette détaillée dans MAILLAGE_SEO_PILOTE.md ; aucune publication encore effectuée.
 
 L’accès GitHub connecté a été rétabli pendant ce travail. L’ouverture de la PR et les contrôles distants peuvent reprendre ; la recette navigateur reste interrompue par sa désactivation dans Work.
+
+## Consolidation d’origine publiée — PR #36
+
+L’audit Node natif a confirmé les variantes HTTP/www en 200 sans redirection, malgré leurs canonical déjà correctes. Une correction isolée issue de main a été publiée après 169 tests frontend, lint, build, CI #375 et runtime #99 réussis. Merge `a4de2bb8`, Worker `4794fe2c-bcaa-4296-8cb9-f984558a74d1`, moteur conservé `2038804f…`.
+
+La recette publique passe : neuf redirections permanentes en un saut avec leurs destinations 200, rendus et canonical, trois parcours privés préservés et HEAD sans corps. Aucune donnée commerciale ni migration modifiée. Détails et retour arrière dans REDIRECTIONS_ORIGINE_SEO_2026-10-31.md.
+
+La PR #35 a obtenu la CI #374 et runtime #98 entièrement réussis sur `f0041948`. Elle reste en brouillon pour la recette interactive. La correction d’origine publiée est réintégrée dans sa branche, avec un test des routes anglaises publiques et privées ; ses contrôles distants doivent être actualisés sur le nouvel état après synchronisation.

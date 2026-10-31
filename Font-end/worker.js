@@ -5,6 +5,7 @@
 // Cloudflare reconnu par les anciens Android, contrairement au certificat
 // Let's Encrypt de Railway, rejeté avant Android 7.1.1). Résout aussi CORS.
 const BACKEND = 'https://api.newoteg.com';
+import { canonicalDocumentRedirect } from './src/storefront/canonicalOrigin.js';
 import { isPrivateDocument, pageMetadata } from './src/storefront/routeMetadata.js';
 import { basePath, pathLanguage } from './src/storefront/localePath.js';
 import { hasEnglishRoute } from './src/storefront/localeRoutes.js';
@@ -31,6 +32,8 @@ function privateResponse(response) {
 
 export default {
   async fetch(request, env) {
+    const originRedirect = canonicalDocumentRedirect(request);
+    if (originRedirect) return originRedirect;
     const url = new URL(request.url);
     if (/^\/en(?:\/|$)/i.test(url.pathname) && !isPrivateDocument(url.pathname) && ['GET', 'HEAD'].includes(request.method)) {
       const normalized = url.pathname.toLowerCase().replace(/\/+$/, '') || '/';

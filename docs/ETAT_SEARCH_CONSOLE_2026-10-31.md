@@ -80,3 +80,10 @@ Les exports bruts restent dans le dossier de preuves local, hors Git. Ce documen
 Lors du rétablissement temporaire de Chrome le 31 octobre, le rapport Core Web Vitals de la propriété a été lu. Dernière mise à jour affichée : 29 octobre 2026. Google indiquait une quantité insuffisante de données d’utilisation sur les 90 derniers jours pour mobile et pour ordinateur ; les boutons de rapport étaient désactivés. Il n’y a donc pas de métriques terrain LCP/INP/CLS à extraire de cet écran pour NEWOTEG à ce stade. Cela ne valide pas les performances du site et ne remplace pas les mesures de laboratoire.
 
 La lecture du rapport Performances dans son autre onglet expirait à l’attachement, tandis que Core Web Vitals était accessible. Le contrôle navigateur a de nouveau été désactivé dans Work ensuite. L’inspection d’URL reste à compléter. Aucun nouvel export de performances n’est affirmé.
+
+
+## Complément : variantes HTTP/www résolues
+
+Le contrôle Node natif ultérieur a obtenu des réponses exploitables sur les variantes qui expiraient précédemment. Elles servaient l’accueil et une fiche en 200 sans redirection, avec la canonical HTTPS sans www. La PR #36 a ajouté une redirection 308 pour les seuls documents publics GET/HEAD vers cette origine préférée.
+
+Après publication, les neuf variantes testées redirigent directement vers leur destination 200 et leur canonical exacte ; les rendus produit/catalogue sont conservés. Les contrôles privés et HEAD passent également. Preuves dans `origin-production/report.json` et REDIRECTIONS_ORIGINE_SEO_2026-10-31.md. Ce contrôle du serveur ne remplace pas une nouvelle inspection dans Search Console et n’établit pas encore le choix canonique de Google.

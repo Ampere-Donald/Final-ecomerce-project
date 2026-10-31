@@ -54,3 +54,10 @@ Identité du moteur préparé vérifiée après les dernières corrections : `22
 L’accueil et les fiches relient maintenant les guides sélectionnés dans leur langue. Les index transportent aussi les identifiants des références explicitement liées, sans les corps de contenu. Le graphe HTML compilé atteint les 31 destinations du pilote par langue ; le scénario de pagination vérifie une fiche en page 2. Voir MAILLAGE_SEO_PILOTE.md. Dernière identité préparée après ce complément : `4074a51a91537a23a44776f3f2ed382cce7346e6e98748bc1c451bf323874b17` ; 186 tests frontend réussis.
 
 GitHub connecté a été rétabli après le constat d’indisponibilité ci-dessus. La création de PR et la CI peuvent donc reprendre. Le contrôle du navigateur reste désactivé au dernier essai ; aucune recette visuelle finale n’est déclarée complète.
+
+
+## CI obtenue et synchronisation de la correction d’origine
+
+La PR #35 est ouverte : https://github.com/Ampere-Donald/Final-ecomerce-project/pull/35. Sur `f004194838f59de8774f89d69fbc4dfb0aac767f`, CI générale #374 et runtime #98 entièrement réussis, y compris les trois profils Docker. Le lot reste en brouillon pour la recette visuelle/interactive.
+
+La PR #36, indépendante, a depuis publié les redirections des variantes HTTP/www sur les pages publiques françaises. Sa correction est réintégrée dans la branche bilingue ; les nouvelles routes /en/ et les protections privées font partie de ses tests. Les contrôles distants du nouvel état doivent être relevés avant toute publication du lot anglais. La publication des redirections ne publie pas les guides ou les URL anglaises.
