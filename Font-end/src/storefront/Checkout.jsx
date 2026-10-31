@@ -20,6 +20,7 @@ import {
 import Cart from "./Cart";
 import Footer from "./Footer";
 import { newFeeObservation } from "./journey.js";
+import { entryChannel } from './acquisition.js';
 import { useVisibleFees } from "./useJourney.js";
 import useReception, {
   setReception,
@@ -252,6 +253,7 @@ function CheckoutForm() {
     event.preventDefault();
     if (lock.current || !accepted || !reviewing || uncertain) return;
     const payload = {
+      canalEntree: entryChannel(),
       nomClient: form.nom.trim(),
       telephone: form.telephone.trim(),
       modeReception: form.mode,

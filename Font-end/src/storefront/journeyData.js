@@ -1,4 +1,5 @@
 // Closed observations only. No search, URL, product, order or visitor identifier.
+import { acquisitionChannels } from './acquisition.js';
 const events = new Set([
   "RECHERCHE_VIDE",
   "FICHE_OUVERTE",
@@ -7,6 +8,8 @@ const events = new Set([
   "SORTIE_APRES_FRAIS",
   "REACHAT_AJOUTE",
   "WHATSAPP_OUVERT",
+  'CONSEIL_OUVERT',
+  'DEVIS_COMMENCE',
 ]);
 const receptions = new Set([
   "GENERAL",
@@ -16,10 +19,11 @@ const receptions = new Set([
 ]);
 export function observation(
   event,
-  { lang, width, now, uuid, reception = "GENERAL" },
+  { lang, width, now, uuid, reception = "GENERAL", canalEntree },
 ) {
   if (
     !events.has(event) ||
+    (canalEntree !== undefined && !acquisitionChannels.includes(canalEntree)) ||
     !receptions.has(reception) ||
     (["FRAIS_VUS", "SORTIE_APRES_FRAIS"].includes(event)
       ? reception === "GENERAL"
@@ -42,6 +46,7 @@ export function observation(
       appareil:
         width < 768 ? "mobile" : width < 1100 ? "tablette" : "ordinateur",
       reception,
+      ...(canalEntree ? { canalEntree } : {}),
     });
   } catch {
     return null;
@@ -51,8 +56,7 @@ export function observation(
 export function validObservation(value) {
   if (
     !value ||
-    Object.keys(value).sort().join(",") !==
-      "appareil,evenement,id,jour,langue,reception"
+    !['appareil,evenement,id,jour,langue,reception', 'appareil,canalEntree,evenement,id,jour,langue,reception'].includes(Object.keys(value).sort().join(','))
   )
     return false;
   if (
@@ -66,6 +70,7 @@ export function validObservation(value) {
     width: { mobile: 390, tablette: 900, ordinateur: 1440 }[value.appareil],
     now: new Date(value.jour + "T00:00:00Z"),
     reception: value.reception,
+    canalEntree: value.canalEntree,
   });
   return Boolean(rebuilt && rebuilt.jour === value.jour);
 }

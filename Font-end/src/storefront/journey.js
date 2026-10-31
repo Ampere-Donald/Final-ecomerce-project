@@ -4,6 +4,7 @@ import {
   observation,
 } from "./journeyData.js";
 import { newRequestId } from "./orderAttempt.js";
+import { entryChannel } from './acquisition.js';
 
 const raw = import.meta.env.VITE_API_URL || "http://localhost:3000/api";
 const base = (raw.endsWith("/api") ? raw : `${raw}/api`) + "/parcours";
@@ -47,6 +48,7 @@ const collector = createJourneyCollector({
 });
 export function prepareObservation(event, lang, reception = "GENERAL") {
   return observation(event, {
+    canalEntree: entryChannel(),
     lang,
     reception,
     width: window.innerWidth,
@@ -65,6 +67,12 @@ export function recordObservation(
 ) {
   collector.push(prepareObservation(event, lang, reception));
 }
+let quoteStarted = false;
+export function recordQuoteStart(lang) {
+  if (quoteStarted) return;
+  quoteStarted = true;
+  recordObservation('DEVIS_COMMENCE', lang);
+}
 let fees;
 export function newFeeObservation() {
   return createFeeObservation(recordObservation);
@@ -77,6 +85,7 @@ export function leaveCheckout() {
   fees = null;
 }
 export function startJourney() {
+  entryChannel();
   void collector.start();
 }
 

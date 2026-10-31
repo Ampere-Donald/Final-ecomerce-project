@@ -27,12 +27,12 @@ Plan validé par l’utilisateur le 27 octobre 2026. Objectif complet conservé 
 | SEO-11 | En cours | Métadonnées des familles et de leurs filtres testées ; audit complet de la politique restant |
 | SEO-12 | Publié et contrôlé | Sitemap public de 1 951 URL, dont 1 932 produits correspondant au total API ; cinq familles, URL uniques et absence de routes privées contrôlées ; soumission Search Console restante |
 | SEO-13 | En cours | Product/Offer/BreadcrumbList partagés avec le rendu, sans offre si prix ou stock inconnus ; informations boutique et validation externe restantes |
-| SEO-14 | Vingt enrichissements intégrés, recette en cours | Notes individuelles FR, sources et limites dans productEditorialData.js ; retrait automatique sur changement d’identité ou nouvel attribut technique. Dimensions, notices et vérifications physiques manquantes restent non établies ; publication à confirmer |
+| SEO-14 | Vingt enrichissements publiés et contrôlés | Notes individuelles FR, sources et limites dans productEditorialData.js ; 20 notes et 5 photos originales vérifiées publiquement. Retrait sur changement d’identité ou nouvel attribut. Dimensions, notices et vérifications physiques manquantes restent non établies |
 | SEO-15 | Aides au choix publiées et contrôlées | Trois repères sourcés par famille, FR/EN, après les produits dans le HTML. Titre audio élargi à audio et TV selon le contenu réel. Maillage vers les futurs guides à compléter |
 | SEO-16 | En cours | Liens vers familles et pagination HTML intégrés ; compléter accueil et fiches |
-| SEO-17 | À faire | Examiner et étendre les événements de parcours existants |
-| SEO-18 | À faire | Tableau de suivi et attribution |
-| SEO-19 | À faire | Mesures mobile avant/après et recette visuelle |
+| SEO-17 | Extension développée, recette locale réussie | Conseil et début de devis ajoutés, reprise réseau dédupliquée en vraie transaction PostgreSQL ; publication et activation encore à effectuer |
+| SEO-18 | Attribution et tableau développés, non publiés | Contrat fermé, migration additive répétée localement, catégories d’origine et lignes historiques inconnues ; tableau testé à 390/1440 px. Contrat et ordre de livraison dans LIVRAISON_MESURE_SEO.md |
+| SEO-19 | État initial mesuré, optimisation à poursuivre | Neuf passages de laboratoire sur trois pages ; LCP médian proche de 3 s, CLS 0 à 0,076. Aucun INP terrain supposé. 29 visuels absents du checkout rétablis dans la livraison préparée ; rapport PERFORMANCE_MOBILE_SEO_2026-10-30.md |
 | SEO-20 | À faire | Modèle éditorial versionné et validation au build |
 | SEO-21 | À faire | Pages de guides et dossiers, rendu et indexation |
 | SEO-22 | À faire | Quatre guides pilotes documentés |
@@ -127,3 +127,18 @@ Prochaine étape : enrichir les fiches avec les faits photographiques et documen
 - PR #30 ouverte en brouillon pour les contrôles CI. Ce résultat est local ; la présence des notes et des photos en production reste à vérifier après livraison commune backend/Worker.
 
 Le pilote éditorial est intégré, mais la livraison commerciale A n’est pas déclarée complète : attribution, performance, contrôles publics et documentation technique restant à établir doivent être poursuivis.
+
+## Livraison du pilote éditorial — résultat
+
+- Le contrat Docker #80 a détecté l’absence des photos parmi les entrées de construction de l’image serveur. Copie des cinq preuves ajoutée dans l’étape storefront-builder ; pas de suppression du contrôle documentaire pour contourner l’échec.
+- CI générale #357 et contrat runtime #81 entièrement réussis sur `c76c557e`, dont les trois profils de la matrice et leurs images réelles. PR #30 fusionnée : `7672559419ba01ed834d16bce2a4ab353a5f9e3c`.
+- Statut GitHub Railway du merge : success, déploiement `0a606ef5-2428-48e6-8331-8eb451f2ee73`. Lecture du point d’entrée produit à 15:12:12 UTC : HTTP 200 et rendererId `7377fb4b…` attendu.
+- À 15:13:53 UTC, Cloudflare exposait encore la version précédente `01c8b828…`. Le contrôle public précédent avait rencontré un sitemap HTTP 503 ; aucune réussite complète déclarée pendant cette transition. Publication du frontend compilé engagée pour rétablir l’identité partagée. Recette publique complète encore à effectuer.
+- Examen de mesure consigné dans CONTRAT_MESURE_SEO.md : collecteur public désactivé au contrôle de 15:05:57 UTC ; aucune attribution SEO existante déduite du rapport métier. Extension et migration additive préparées comme contrat, non implémentées.
+
+- Publication Wrangler réussie : Worker `500ae2d1-ec05-4791-b528-bb3863379a66`, message « Twenty sourced pilot product reviews; CI 357 and runtime 81; renderer 7377fb4b ». L’envoi des fichiers statiques a nécessité des reprises réseau intégrées au même processus ; aucune seconde publication lancée pour contourner un délai d’observation.
+- Recette publique commencée à 15:17:25 UTC : vingt notes exactes dans le HTML sans JavaScript, leurs liens de sources et cinq fichiers photographiques JPEG identiques aux originaux par SHA-256 ; 25 contrôles réussis dans `pilot-editorial-production/report.json`.
+- Recette des fondations réussie au même passage : santé backend, cinq familles, cinq fiches avec canonical/JSON-LD et sitemap de 1 951 URL dont 1 932 produits, cohérent avec le total API ; 12 contrôles dans `pilot-editorial-production-foundations/report.json`. Le sitemap 503 de la transition n’est plus présent lors de cette recette. La fiabilité prolongée et les performances restent à mesurer.
+- Navigateur public : sept fiches sans JavaScript et sept fiches hydratées passent ; aucune erreur JavaScript. Le script complet a ensuite échoué en attendant le dialogue de conseil, après un clic effectué immédiatement après une nouvelle navigation. Rapport d’échec conservé dans `pilot-editorial-production-browser/hydration-report.json`. Le banc attend désormais l’hydratation après cette navigation aussi. Contrôle ciblé indépendant à 15:23:36 UTC : dialogue de conseil ouvert, fermeture et ajout au panier local réussis, enrichissement présent et aucun débordement à 390 px ; `pilot-editorial-production-interaction/report.json`. Les tentatives Cloudflare `/cdn-cgi/rum` ont été bloquées, aucune écriture réseau exécutée. Les 14 premiers contrôles et ce contrôle ciblé ne sont pas présentés comme une réussite intégrale du script initial qui a échoué.
+
+Prochaine étape : implémenter le contrat de mesure avec ses tests, compléter la politique de fraîcheur et les mesures de performance, puis poursuivre la bibliothèque technique. Le plan complet reste actif ; cette livraison ne prouve ni un classement Google ni un résultat commercial.

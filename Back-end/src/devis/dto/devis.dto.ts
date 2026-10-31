@@ -20,6 +20,8 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { ModeReception } from '@prisma/client';
+import { ACQUISITION_CHANNELS } from '../../parcours/acquisition';
+import type { AcquisitionChannel } from '../../parcours/acquisition';
 
 export class ReferenceDevisDto {
   @IsString()
@@ -48,6 +50,9 @@ export class ResolveDevisDto {
 }
 
 export class CreateDemandeDevisDto extends ResolveDevisDto {
+  @IsOptional()
+  @IsIn(ACQUISITION_CHANNELS)
+  canalEntree?: AcquisitionChannel;
   @IsUUID()
   requestId: string;
 

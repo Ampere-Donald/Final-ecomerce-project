@@ -10,8 +10,10 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import { Prisma } from '@prisma/client';
 import { DatabaseService } from '../database/database.service';
 import { ParcoursBatchDto, PARCOURS_EVENTS } from './parcours.dto';
+import { acquisitionChannel, ACQUISITION_CHANNELS } from './acquisition';
 
 const dayMs = 86400000;
+const extendedEvents = ['CONSEIL_OUVERT', 'DEVIS_COMMENCE'];
 const zoneOffset = 3600000;
 const day = (now: Date) =>
   new Date(
@@ -95,7 +97,7 @@ export class ParcoursService {
         throw new BadRequestException('Observation invalide.');
       const keys = Object.keys(e).sort().join(',');
       if (
-        keys !== 'appareil,evenement,id,jour,langue,reception' ||
+        !['appareil,evenement,id,jour,langue,reception', 'appareil,canalEntree,evenement,id,jour,langue,reception'].includes(keys) ||
         !PARCOURS_EVENTS.includes(e.evenement) ||
         !['fr', 'en'].includes(e.langue) ||
         !['mobile', 'tablette', 'ordinateur'].includes(e.appareil) ||
@@ -116,10 +118,13 @@ export class ParcoursService {
       const observationDay = period(e.jour, e.jour, now).startDay;
       if (observationDay.getTime() < today.getTime() - dayMs)
         throw new BadRequestException('Observation expirée.');
-      const { id, jour: date, ...dimensions } = e;
+      const canalEntree = acquisitionChannel(e.canalEntree);
+      const { id, jour: date, canalEntree: _channel, ...dimensions } = e;
+      void _channel;
       return {
         id: id.toLowerCase(),
         dimensions,
+        canalEntree,
         observationDay,
         empreinte: createHash('sha256')
           .update(
@@ -129,6 +134,7 @@ export class ParcoursService {
               e.langue,
               e.appareil,
               e.reception,
+              ...(canalEntree ? [canalEntree] : []),
             ]),
           )
           .digest('hex'),
@@ -149,6 +155,7 @@ export class ParcoursService {
             count: number;
           }
         >();
+        const sourceIncrements = new Map<string, { key: { jour: Date; evenement: string; langue: string; appareil: string; reception: string; canalEntree: string }; count: number }>();
         // Stable lock order for simultaneous overlapping batches.
         for (const e of entries.sort((a, b) => a.id.localeCompare(b.id))) {
           const inserted = await tx.parcoursRecu.createMany({
@@ -180,9 +187,18 @@ export class ParcoursService {
             key.appareil,
             key.reception,
           ].join(':');
-          const cell = increments.get(sortKey);
-          if (cell) cell.count++;
-          else increments.set(sortKey, { key, count: 1 });
+          if (!extendedEvents.includes(key.evenement)) {
+            const cell = increments.get(sortKey);
+            if (cell) cell.count++;
+            else increments.set(sortKey, { key, count: 1 });
+          }
+          if (e.canalEntree || extendedEvents.includes(key.evenement)) {
+            const channel = e.canalEntree || 'NON_RENSEIGNEE';
+            const sourceKey = sortKey + ':' + channel;
+            const sourceCell = sourceIncrements.get(sourceKey);
+            if (sourceCell) sourceCell.count++;
+            else sourceIncrements.set(sourceKey, { key: { ...key, canalEntree: channel }, count: 1 });
+          }
         }
         // Receipts first, then aggregate cells in a stable order across batches.
         for (const [, { key, count }] of [...increments].sort(([a], [b]) =>
@@ -192,6 +208,12 @@ export class ParcoursService {
             where: { jour_evenement_langue_appareil_reception: key },
             create: { ...key, nombre: count },
             update: { nombre: { increment: count } },
+          });
+        }
+        for (const [, { key, count }] of [...sourceIncrements].sort(([a], [b]) => a.localeCompare(b))) {
+          await tx.parcoursAcquisitionJour.upsert({
+            where: { jour_evenement_langue_appareil_reception_canalEntree: key },
+            create: { ...key, nombre: count }, update: { nombre: { increment: count } },
           });
         }
       });
@@ -204,7 +226,27 @@ export class ParcoursService {
     }
     return { actif: true, enregistre: true };
   }
-  async report(from: string, to: string, now = new Date()) {
+  async acquisitionReport(from: string, to: string, now = new Date()) {
+    const p = period(from, to, now), range = { gte: p.start, lt: p.end };
+    const web: Prisma.CommandeWhereInput = { OR: [{ requests: { some: {} } }, { demandeDevis: { isNot: null } }] };
+    return this.db.$transaction(async tx => {
+      const observations = await tx.parcoursAcquisitionJour.findMany({
+        where: { jour: { gte: p.startDay, lte: p.endDay } },
+        orderBy: [{ jour: 'asc' }, { evenement: 'asc' }, { langue: 'asc' }, { appareil: 'asc' }, { reception: 'asc' }, { canalEntree: 'asc' }],
+      });
+      const commandes = await tx.commande.groupBy({ by: ['canalEntree'], where: { ...web, dateCommande: range }, _count: { _all: true } });
+      const recues = await tx.commande.groupBy({ by: ['canalEntree'], where: { ...web, dateCommande: range, statut: 'LIVREE', dateLivraison: { not: null } }, _count: { _all: true } });
+      const devis = await tx.demandeDevis.groupBy({ by: ['canalEntree'], where: { createdAt: range }, _count: { _all: true } });
+      const count = (rows: { canalEntree: string | null; _count: { _all: number } }[], channel: string | null) => rows.find(row => row.canalEntree === channel)?._count._all ?? 0;
+      return { debut: from, fin: to, fuseau: 'Africa/Douala',
+        observations: observations.map(row => ({ ...row, jour: dateOnly(row.jour) })),
+        canaux: [...ACQUISITION_CHANNELS, null].map(canalEntree => ({ canalEntree,
+          devisDemandes: count(devis, canalEntree), commandesEnregistrees: count(commandes, canalEntree), commandesRecues: count(recues, canalEntree),
+        })),
+      };
+    }, { isolationLevel: Prisma.TransactionIsolationLevel.RepeatableRead });
+  }
+  async report(from: string, to: string, now = new Date(), extended = false) {
     const p = period(from, to, now),
       range = { gte: p.start, lt: p.end },
       web: Prisma.CommandeWhereInput = {
@@ -223,6 +265,15 @@ export class ParcoursService {
             { reception: 'asc' },
           ],
         });
+        if (extended) {
+          const added = await tx.parcoursAcquisitionJour.groupBy({
+            by: ['jour', 'evenement', 'langue', 'appareil', 'reception'],
+            where: { jour: { gte: p.startDay, lte: p.endDay }, evenement: { in: extendedEvents } },
+            _sum: { nombre: true },
+          });
+          observations.push(...added.map(({ _sum, ...row }) => ({ ...row, nombre: _sum.nombre ?? 0 })));
+          observations.sort((a, b) => a.jour.getTime() - b.jour.getTime() || [a.evenement, a.langue, a.appareil, a.reception].join(':').localeCompare([b.evenement, b.langue, b.appareil, b.reception].join(':')));
+        }
         const commandesEnregistrees = await tx.commande.count({
           where: { ...web, dateCommande: range },
         });

@@ -64,6 +64,16 @@ function fixture() {
   return { tx, db, service };
 }
 describe('Checkout transaction and ownership', () => {
+  it('persists only a valid entry channel on the original transaction', async () => {
+    for (const method of ['create', 'createWithAccount'] as const) {
+      const { service, tx } = fixture();
+      await service[method]({ ...dto, canalEntree: 'RECHERCHE_NATURELLE' });
+      expect(tx.commande.create.mock.calls[0][0].data.canalEntree).toBe('RECHERCHE_NATURELLE');
+      const invalid = fixture();
+      await expect(invalid.service[method]({ ...dto, canalEntree: 'https://private.invalid' } as never)).rejects.toThrow();
+      expect(invalid.db.$transaction).not.toHaveBeenCalled();
+    }
+  });
   it('creates the account inside the transaction after price acceptance and uses canonical values', async () => {
     const { service, tx } = fixture();
     const result = await service.createWithAccount(dto);

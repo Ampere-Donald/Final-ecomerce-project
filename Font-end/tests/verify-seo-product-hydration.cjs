@@ -68,6 +68,8 @@ const ids = ['02d5805f-7f51-4574-938d-d8cfe8c09487', '0f776e03-7dd5-4346-97f0-28
       report.checks.push({ id, mode: 'hydrated', status: 'passed' });
     }
     await hydrated.goto(base + '/product/' + ids[1]);
+    await hydrated.waitForFunction(() => Array.from(document.querySelectorAll('button')).some(button =>
+      button.getAttribute('aria-label') === 'Choisir la réception : Retrait à Akwa' && !button.disabled));
     await hydrated.locator('.e-product-info button.e-help-product').click();
     await hydrated.getByRole('dialog').waitFor();
     await hydrated.getByRole('button', { name: 'Fermer / Close', exact: true }).click();

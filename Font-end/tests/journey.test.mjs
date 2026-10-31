@@ -40,6 +40,12 @@ function collector(options = {}) {
 }
 
 test("Closed observations use Douala days and screen classes without adding personal data", () => {
+  for (const name of ['CONSEIL_OUVERT', 'DEVIS_COMMENCE']) {
+    const value = event(name, { canalEntree: 'RECHERCHE_NATURELLE' });
+    assert(validObservation(value));
+    assert.equal(value.canalEntree, 'RECHERCHE_NATURELLE');
+    assert.equal(event(name, { canalEntree: 'https://private.invalid' }), null);
+  }
   assert.equal(
     event("FICHE_OUVERTE", { now: new Date("2026-10-03T23:30:00Z") }).jour,
     "2026-10-04",

@@ -1,7 +1,7 @@
 {
   "version": 1,
   "sources": {
-    "schemaSha256": "0d0afb2bf5519247b15e6ee8cd7c28aa4f2ba29058e57dddbc7227120e84b280",
+    "schemaSha256": "bf77242930d658f31b40aeacede63f2e35630e6728805019bef204140ade670a",
     "migrations": [
       {
         "name": "20260303155632_init",
@@ -262,6 +262,10 @@
       {
         "name": "20261028150000_catalogue_review_workflow",
         "sha256": "0fc2605627a4f24ab4a60a444b696dccbccbacb3733ee516e38668de451cd6dd"
+      },
+      {
+        "name": "20261028170000_add_acquisition_channels",
+        "sha256": "3a897f70c2ee89c75a7af047c7ba8a8a9237461a3b154c45603e45c8e1d2a434"
       }
     ]
   },
@@ -10970,6 +10974,114 @@
         "numeric_precision": 32,
         "numeric_scale": 0,
         "datetime_precision": null
+      },
+      {
+        "table_name": "commande",
+        "column_name": "canal_entree",
+        "type": "varchar",
+        "type_schema": "pg_catalog",
+        "is_nullable": "YES",
+        "column_default": null,
+        "character_maximum_length": 24,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "datetime_precision": null
+      },
+      {
+        "table_name": "demande_devis",
+        "column_name": "canal_entree",
+        "type": "varchar",
+        "type_schema": "pg_catalog",
+        "is_nullable": "YES",
+        "column_default": null,
+        "character_maximum_length": 24,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "datetime_precision": null
+      },
+      {
+        "table_name": "parcours_acquisition_jour",
+        "column_name": "appareil",
+        "type": "varchar",
+        "type_schema": "pg_catalog",
+        "is_nullable": "NO",
+        "column_default": null,
+        "character_maximum_length": 10,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "datetime_precision": null
+      },
+      {
+        "table_name": "parcours_acquisition_jour",
+        "column_name": "canal_entree",
+        "type": "varchar",
+        "type_schema": "pg_catalog",
+        "is_nullable": "NO",
+        "column_default": null,
+        "character_maximum_length": 24,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "datetime_precision": null
+      },
+      {
+        "table_name": "parcours_acquisition_jour",
+        "column_name": "evenement",
+        "type": "varchar",
+        "type_schema": "pg_catalog",
+        "is_nullable": "NO",
+        "column_default": null,
+        "character_maximum_length": 40,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "datetime_precision": null
+      },
+      {
+        "table_name": "parcours_acquisition_jour",
+        "column_name": "jour",
+        "type": "date",
+        "type_schema": "pg_catalog",
+        "is_nullable": "NO",
+        "column_default": null,
+        "character_maximum_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "datetime_precision": 0
+      },
+      {
+        "table_name": "parcours_acquisition_jour",
+        "column_name": "langue",
+        "type": "varchar",
+        "type_schema": "pg_catalog",
+        "is_nullable": "NO",
+        "column_default": null,
+        "character_maximum_length": 2,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "datetime_precision": null
+      },
+      {
+        "table_name": "parcours_acquisition_jour",
+        "column_name": "nombre",
+        "type": "int4",
+        "type_schema": "pg_catalog",
+        "is_nullable": "NO",
+        "column_default": "1",
+        "character_maximum_length": null,
+        "numeric_precision": 32,
+        "numeric_scale": 0,
+        "datetime_precision": null
+      },
+      {
+        "table_name": "parcours_acquisition_jour",
+        "column_name": "reception",
+        "type": "varchar",
+        "type_schema": "pg_catalog",
+        "is_nullable": "NO",
+        "column_default": null,
+        "character_maximum_length": 25,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "datetime_precision": null
       }
     ],
     "constraints": [
@@ -12592,6 +12704,51 @@
         "validated": true,
         "deferrable": false,
         "deferred": false
+      },
+      {
+        "table_name": "commande",
+        "name": "commande_canal_entree_check",
+        "type": "c",
+        "definition": "CHECK (((canal_entree)::text = ANY ((ARRAY['RECHERCHE_NATURELLE'::character varying, 'CAMPAGNE_PAYANTE'::character varying, 'SOCIAL'::character varying, 'SITE_REFERENT'::character varying, 'DIRECT_OU_INCONNU'::character varying])::text[])))",
+        "validated": true,
+        "deferrable": false,
+        "deferred": false
+      },
+      {
+        "table_name": "demande_devis",
+        "name": "demande_devis_canal_entree_check",
+        "type": "c",
+        "definition": "CHECK (((canal_entree)::text = ANY ((ARRAY['RECHERCHE_NATURELLE'::character varying, 'CAMPAGNE_PAYANTE'::character varying, 'SOCIAL'::character varying, 'SITE_REFERENT'::character varying, 'DIRECT_OU_INCONNU'::character varying])::text[])))",
+        "validated": true,
+        "deferrable": false,
+        "deferred": false
+      },
+      {
+        "table_name": "parcours_acquisition_jour",
+        "name": "parcours_acquisition_jour_canal_check",
+        "type": "c",
+        "definition": "CHECK (((canal_entree)::text = ANY ((ARRAY['RECHERCHE_NATURELLE'::character varying, 'CAMPAGNE_PAYANTE'::character varying, 'SOCIAL'::character varying, 'SITE_REFERENT'::character varying, 'DIRECT_OU_INCONNU'::character varying, 'NON_RENSEIGNEE'::character varying])::text[])))",
+        "validated": true,
+        "deferrable": false,
+        "deferred": false
+      },
+      {
+        "table_name": "parcours_acquisition_jour",
+        "name": "parcours_acquisition_jour_dimensions",
+        "type": "c",
+        "definition": "CHECK ((((evenement)::text = ANY ((ARRAY['RECHERCHE_VIDE'::character varying, 'FICHE_OUVERTE'::character varying, 'AJOUT_PANIER'::character varying, 'FRAIS_VUS'::character varying, 'SORTIE_APRES_FRAIS'::character varying, 'REACHAT_AJOUTE'::character varying, 'WHATSAPP_OUVERT'::character varying, 'CONSEIL_OUVERT'::character varying, 'DEVIS_COMMENCE'::character varying])::text[])) AND ((langue)::text = ANY ((ARRAY['fr'::character varying, 'en'::character varying])::text[])) AND ((appareil)::text = ANY ((ARRAY['mobile'::character varying, 'tablette'::character varying, 'ordinateur'::character varying])::text[])) AND ((reception)::text = ANY ((ARRAY['GENERAL'::character varying, 'RETRAIT'::character varying, 'LIVRAISON_A_CONFIRMER'::character varying, 'LIVRAISON_CALCULEE'::character varying])::text[])) AND\nCASE\n    WHEN ((evenement)::text = ANY ((ARRAY['FRAIS_VUS'::character varying, 'SORTIE_APRES_FRAIS'::character varying])::text[])) THEN ((reception)::text <> 'GENERAL'::text)\n    ELSE ((reception)::text = 'GENERAL'::text)\nEND AND (nombre > 0)))",
+        "validated": true,
+        "deferrable": false,
+        "deferred": false
+      },
+      {
+        "table_name": "parcours_acquisition_jour",
+        "name": "parcours_acquisition_jour_pkey",
+        "type": "p",
+        "definition": "PRIMARY KEY (jour, evenement, langue, appareil, reception, canal_entree)",
+        "validated": true,
+        "deferrable": false,
+        "deferred": false
       }
     ],
     "indexes": [
@@ -13943,6 +14100,13 @@
         "table_name": "vente",
         "name": "vente_pkey",
         "definition": "CREATE UNIQUE INDEX vente_pkey ON public.vente USING btree (id)",
+        "valid": true,
+        "ready": true
+      },
+      {
+        "table_name": "parcours_acquisition_jour",
+        "name": "parcours_acquisition_jour_pkey",
+        "definition": "CREATE UNIQUE INDEX parcours_acquisition_jour_pkey ON public.parcours_acquisition_jour USING btree (jour, evenement, langue, appareil, reception, canal_entree)",
         "valid": true,
         "ready": true
       }

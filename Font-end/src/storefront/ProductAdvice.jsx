@@ -11,6 +11,7 @@ export default function ProductAdvice({ product, quantity }) {
   const [message, setMessage] = useState("");
   const href = adviceHref(message);
   function show() {
+    if (!open) recordObservation('CONSEIL_OUVERT', lang);
     setMessage(adviceMessage(product, quantity, lang, window.location.origin));
     setOpen(true);
   }

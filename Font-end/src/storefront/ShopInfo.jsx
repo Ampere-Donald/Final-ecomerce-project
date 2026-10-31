@@ -576,6 +576,11 @@ function LegalPage({ privacy }) {
             </Link>
           </nav>
           <article className="e-legal-text">
+            {privacy && <section id="privacy-measurement">
+              <h2>{tr('Mesure du parcours et origine des demandes', 'Journey measurement and request origin')}</h2>
+              <p>{tr('Lorsque la collecte est activée, des compteurs regroupent les actions par jour, langue, type d’écran et mode de réception. Leur catégorie d’origine est déterminée dans le navigateur : recherche naturelle, campagne payante, réseau social, site référent, ou origine directe/inconnue. Les URL référentes, recherches et messages ne sont pas transmis dans ces observations.', 'When collection is enabled, counters group actions by day, language, screen type and reception method. Their source category is classified in your browser: organic search, paid campaign, social network, referring site, or direct/unknown. Referring URLs, searches and messages are not sent in these observations.')}</p>
+              <p>{tr('Seules cette catégorie et sa date sont conservées temporairement dans le stockage de session, avec une fenêtre maximale de trente minutes lors du prochain chargement. Le site reste utilisable si ce stockage est refusé. Lors de la création d’un devis ou d’une commande, la catégorie peut être enregistrée avec cette demande pour comprendre son origine. Un clic de conseil ou de WhatsApp ne constitue pas une vente.', 'Only this category and its timestamp are temporarily kept in session storage, with a maximum thirty-minute window on the next page load. The site remains usable when storage is unavailable. When you create a quote request or an order, the category may be recorded with that request to understand its origin. An advice or WhatsApp click is not treated as a sale.')}</p>
+            </section>}
             {sections.map((i) => (
               <section id={`${prefix}-${i}`} key={i}>
                 <h2>{t(`${prefix}.s${i}Title`)}</h2>

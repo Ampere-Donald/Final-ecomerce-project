@@ -1,5 +1,6 @@
 import {
   Body,
+  BadRequestException,
   Controller,
   Get,
   Header,
@@ -50,7 +51,18 @@ export class ParcoursController {
   @Header('Cache-Control', 'private, no-store')
   @Header('X-Robots-Tag', 'noindex, nofollow')
   @Header('Referrer-Policy', 'no-referrer')
-  report(@Query('debut') debut: string, @Query('fin') fin: string) {
-    return this.service.report(debut, fin);
+  report(@Query('debut') debut: string, @Query('fin') fin: string, @Query('version') version?: string) {
+    if (version !== undefined && version !== '2') throw new BadRequestException('Version de rapport invalide.');
+    return this.service.report(debut, fin, new Date(), version === '2');
+  }
+
+  @Get('acquisition')
+  @UseGuards(AdminAuthGuard, RolesGuard)
+  @Roles('ADMIN', 'SUPER_ADMIN')
+  @Header('Cache-Control', 'private, no-store')
+  @Header('X-Robots-Tag', 'noindex, nofollow')
+  @Header('Referrer-Policy', 'no-referrer')
+  acquisition(@Query('debut') debut: string, @Query('fin') fin: string) {
+    return this.service.acquisitionReport(debut, fin);
   }
 }

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { RefreshCw } from 'lucide-react';
+import AcquisitionPanel from './AcquisitionPanel';
 import { useAdminAuth } from '../context/AdminAuthContext';
 import { getAdminToken } from '../services/adminSession';
 import {
@@ -22,6 +23,8 @@ const names: Record<Event, string> = {
   SORTIE_APRES_FRAIS: 'Sorties après conditions vues',
   REACHAT_AJOUTE: 'Réachats ajoutés au panier',
   WHATSAPP_OUVERT: 'Ouvertures de WhatsApp',
+  CONSEIL_OUVERT: 'Conseils sur une pièce ouverts',
+  DEVIS_COMMENCE: 'Devis commencés',
 };
 const receptions = {
   GENERAL: 'Général',
@@ -280,6 +283,7 @@ function Results({ comparison }: { comparison: Comparison }) {
           {number.format(selected.activite.commandesSansProvenance)} dans la choisie.
         </div>
       </section>
+      <AcquisitionPanel period={selected} />
       <section aria-labelledby="cohort-title">
         <h2 id="cohort-title" className="font-display text-lg font-semibold">
           Que sont devenues les commandes créées ?
