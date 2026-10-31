@@ -1,6 +1,7 @@
 import { stockState } from './productData.js';
 import { seoFamilies, familyPath } from './seoFamilies.js';
 import { catalogueBootJSON } from './initialCatalogue.js';
+import { productText } from './productTranslation.js';
 
 const origin = 'https://newoteg.com';
 function publicImage(value) {
@@ -13,10 +14,10 @@ function publicImage(value) {
 
 export function productSchema(product, lang = 'fr') {
   const url = origin + '/product/' + encodeURIComponent(product.id);
-  const name = lang === 'en' && product.englishName ? product.englishName : product.model;
+  const { name, description } = productText(product, lang);
   const image = [...new Set((product.images || []).map(publicImage).filter(Boolean))];
   const item = { '@type': 'Product', '@id': url + '#product', url, name,
-    ...(product.description ? { description: product.description } : {}),
+    ...(description ? { description } : {}),
     ...(image.length ? { image } : {}),
     ...(product.reference ? { sku: product.reference } : {}),
     ...(product.brand ? { brand: { '@type': 'Brand', name: product.brand } } : {}),

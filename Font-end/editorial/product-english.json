@@ -1,0 +1,340 @@
+[
+  {
+    "id": "02d5805f-7f51-4574-938d-d8cfe8c09487",
+    "reviewedAt": "2026-10-31",
+    "name": "4700 µF 63 V electrolytic capacitor, medium diameter, short body",
+    "description": "4700 µF / 63 V electrolytic capacitor listed as medium diameter with a short body. Check the value, connections and suitability for your application before ordering.",
+    "title": "4700 µF / 63 V: medium diameter, short body",
+    "summary": "The catalogue describes this variant as a 4700 µF / 63 V electrolytic capacitor with a medium diameter and a short body. These relative size descriptions do not specify a diameter or height in millimetres.",
+    "checks": [
+      "Compare diameter, height and lead spacing with the available space. The other three catalogue formats are not interchangeable solely because they also state 4700 µF / 63 V.",
+      "Observe the circuit polarity. The series, tolerance, ESR and temperature rating of this variant have not been established. Nichicon explains selection criteria without identifying this stock."
+    ],
+    "sourceLabels": [
+      "Image currently associated with the catalogue",
+      "Nichicon — general guide to aluminium electrolytic capacitors"
+    ],
+    "sourceSha256": "e1d3d10f96ee9237b05b767e6025de23d80ebbe36cf7d4cce80435764aa607b2"
+  },
+  {
+    "id": "23bfb861-c3de-4e7f-afcd-ab8b87185af4",
+    "reviewedAt": "2026-10-31",
+    "name": "4700 µF 63 V electrolytic capacitor, small diameter, short body",
+    "description": "4700 µF / 63 V electrolytic capacitor listed as small diameter with a short body. Check the value, connections and suitability for your application before ordering.",
+    "title": "4700 µF / 63 V: small diameter, short body",
+    "summary": "The catalogue name distinguishes a small diameter and a short body among the 4700 µF / 63 V capacitors. It identifies the listed variant but does not replace measured dimensions.",
+    "checks": [
+      "If width is limited, compare the actual diameter and lead spacing with your board. The words ‘small diameter’ do not guarantee a particular size.",
+      "Check height and polarity too. Tolerance and thermal characteristics have not been established for the item offered; no 85 °C or 105 °C rating is assigned here."
+    ],
+    "sourceLabels": [
+      "Image currently associated with the catalogue",
+      "Nichicon — general guide to aluminium electrolytic capacitors"
+    ],
+    "sourceSha256": "5dfd683b666b31d40a55e5ebe24841283c55f4204932a102074b44954e6b1eb3"
+  },
+  {
+    "id": "5e58447a-93c5-4f13-95a1-f243d065e51e",
+    "reviewedAt": "2026-10-31",
+    "name": "4700 µF 63 V electrolytic capacitor, medium diameter, long body",
+    "description": "4700 µF / 63 V electrolytic capacitor listed as medium diameter with a long body. Check the value, connections and suitability for your application before ordering.",
+    "title": "4700 µF / 63 V: medium diameter, long body",
+    "summary": "This page describes the catalogue’s medium-diameter, long-body 4700 µF / 63 V variant. Distinguish it from the short-body version before choosing a part for enclosed equipment.",
+    "checks": [
+      "Compare the height available under the cover, diameter and lead spacing. No numerical dimensions have been established for this variant.",
+      "The nominal value alone does not establish a replacement. Check polarity, series and circuit requirements. ESR, ripple current and temperature rating of this stock remain undocumented."
+    ],
+    "sourceLabels": [
+      "Image currently associated with the catalogue",
+      "Nichicon — general guide to aluminium electrolytic capacitors"
+    ],
+    "sourceSha256": "a1f1972e33e0b73fc60c38a442b3b51b40340e80b6d828ca6bd808fa4fa256c4"
+  },
+  {
+    "id": "567751d1-b08e-445d-aa91-fa694894ce13",
+    "reviewedAt": "2026-10-31",
+    "name": "4700 µF 63 V electrolytic capacitor, small diameter, long body",
+    "description": "4700 µF / 63 V electrolytic capacitor listed as small diameter with a long body. Check the value, connections and suitability for your application before ordering.",
+    "title": "4700 µF / 63 V: small diameter, long body",
+    "summary": "This variant combines the catalogue descriptions ‘small diameter’ and ‘long body’. It remains distinct from the small-diameter short-body and medium-diameter long-body variants even though their names also state 4700 µF / 63 V.",
+    "checks": [
+      "Record the diameter, height and lead spacing of your original part and compare them with the requested variant. No standard metric size is inferred from this name.",
+      "Check polarity and the board’s electrical requirements. The item’s manufacturer, series, tolerance and temperature rating are not confirmed by this description."
+    ],
+    "sourceLabels": [
+      "Image currently associated with the catalogue",
+      "Nichicon — general guide to aluminium electrolytic capacitors"
+    ],
+    "sourceSha256": "c95ebde209598eb5159323e89261de49e22df9a3c5d22c8a14261f0c652df852"
+  },
+  {
+    "id": "0f776e03-7dd5-4346-97f0-2881154110bd",
+    "reviewedAt": "2026-10-31",
+    "name": "2N2955 transistor — catalogue label ORG",
+    "description": "Reference listed as 2N 2955 ORG. Check the complete marking, package and documentation for the item offered before choosing a replacement.",
+    "title": "Identifying the 2N2955 transistor",
+    "summary": "The catalogue offers this reference under the name ‘2N 2955 ORG’. DC Components describes its 2N2955 as a PNP power transistor in a TO-3 package. That document provides context for the reference without identifying the manufacturer of the item sold.",
+    "checks": [
+      "Compare the complete marking, package and pinout with the original part and its circuit diagram. Limits for the DC Components version are not automatically attributed to this stock.",
+      "The commercial label ‘ORG’ is not proof of manufacturer origin. This page certifies no gain, electrical condition or compatible replacement."
+    ],
+    "sourceLabels": [
+      "Image currently associated with the catalogue",
+      "DC Components — manufacturer documentation for 2N2955"
+    ],
+    "sourceSha256": "09ec9c945bd3cd6cb846cd10e8917b3b7e82597659c66f23d3f4f9cbd08a588a"
+  },
+  {
+    "id": "33b53f01-68fe-40c3-aa98-7a7ceb908def",
+    "reviewedAt": "2026-10-31",
+    "name": "2N2217 transistor",
+    "description": "Catalogue reference 2N2217. Keep the full number and check the marking, package and documentation before ordering.",
+    "title": "Finding the exact 2N2217 reference",
+    "summary": "The reference offered is 2N2217. Keep the complete number when searching or contacting the shop. Similarity to the name 2N2222 does not establish equivalence.",
+    "checks": [
+      "Compare the readable marking, package and connection layout with the part being replaced. The catalogue does not confirm the manufacturer of this item.",
+      "The pinout and electrical limits of this version remain to be documented. A photograph helps identify a part but provides neither measured dimensions nor electrical gain."
+    ],
+    "sourceLabels": [
+      "Image currently associated with the catalogue"
+    ],
+    "sourceSha256": "70860fa8a3cfa084becacfe62beb25269a0a2ba310bd6243c003590947337bcd"
+  },
+  {
+    "id": "6f706117-6176-497c-9614-9cba75d0665b",
+    "reviewedAt": "2026-10-31",
+    "name": "2N2907 transistor, without A suffix",
+    "description": "Catalogue reference 2N2907, without an A suffix. Check the full marking, manufacturer and package before using a datasheet or choosing a replacement.",
+    "title": "2N2907: preserve the exact suffix",
+    "summary": "This page is labelled 2N2907, without an A suffix. Good-Ark’s manufacturer document distinguishes 2N2907 and 2N2907A within a family of PNP switching transistors; the two designations must not be merged.",
+    "checks": [
+      "Compare the full reference and manufacturer with your original part before using a datasheet. The documented Good-Ark version does not identify the manufacturer of the stock offered.",
+      "Check the package, pinout and circuit requirements before replacement. Limits for 2N2907A are not presented here as guaranteed specifications of the 2N2907 sold."
+    ],
+    "sourceLabels": [
+      "Image currently associated with the catalogue",
+      "Good-Ark — manufacturer document for 2N2907 / 2N2907A"
+    ],
+    "sourceSha256": "b04beb5b4baa860d5978ebc67728457acf7dcd209f581e537c4a26e8fe8376c6"
+  },
+  {
+    "id": "12cd34b9-bec9-4a1a-a67a-179ecb13b8b2",
+    "reviewedAt": "2026-10-31",
+    "name": "2N3773 transistor",
+    "description": "Catalogue reference 2N3773. An archive photograph shows the marking and an ST logo; authenticity and electrical condition have not been tested.",
+    "title": "2N3773: power-device documentation and package",
+    "summary": "The archive photograph associated with this reference shows a 2N3773 marking and an ST logo. ST describes its 2N3773 as an NPN power transistor in a metal TO-3 package, intended for applications including linear amplification and inductive-load switching.",
+    "checks": [
+      "Compare the package, connections and mounting with your circuit. Consult ST’s document for the electrical and thermal conditions of that version.",
+      "The photographed logo is not an authenticity check or an electrical test. A document’s power limits do not describe usable power in every circuit."
+    ],
+    "sourceLabels": [
+      "Shop archive photograph",
+      "STMicroelectronics — 2N3773, revision 2, October 2008"
+    ],
+    "sourceSha256": "68b0f5efe2daf49e8e9636ce295b7283e6ee081eae20b76c97b913fb3f18d9ea"
+  },
+  {
+    "id": "e2eb7c63-9e35-4888-bd3f-cb940fbd8c0c",
+    "reviewedAt": "2026-10-31",
+    "name": "AN5150N integrated circuit, catalogue description: 28 pins",
+    "description": "Integrated circuit marked AN5150N, described in the catalogue as a 28-pin package. The published image has reconstructed obscured areas and is not a dimensional drawing. Authenticity and electrical condition are untested.",
+    "title": "AN5150N: compare the full reference and package",
+    "summary": "The catalogue identifies this part as AN5150N and describes a 28-pin package. Some areas in the published image have been reconstructed; it helps with identification but is not a dimensioned drawing.",
+    "checks": [
+      "Compare AN5150N, its N suffix, the pin count and orientation with the original part.",
+      "The detailed function, pinout and supply requirements have not been established from fully verified primary documentation. Placement in an audio and TV family does not establish its role on your board."
+    ],
+    "sourceLabels": [
+      "Image currently associated with the catalogue"
+    ],
+    "sourceSha256": "e395eff29ccaaa22073476620894959528ce0a4f11d87131d60d3537a0bc2a93"
+  },
+  {
+    "id": "d388cf5f-f188-4a93-a0b8-a702daeaae5e",
+    "reviewedAt": "2026-10-31",
+    "name": "AN5635N integrated circuit, catalogue description: 24 pins",
+    "description": "Integrated circuit marked AN5635N, described in the catalogue as a 24-pin package. Partly obscured ends were reconstructed in the published image. Check the full reference and package; authenticity and electrical condition are untested.",
+    "title": "AN5635N: check the suffix and layout",
+    "summary": "This page identifies AN5635N; the catalogue description states 24 pins. The partly obscured ends of the original photograph were reconstructed in the published image. Its proportions are not measured dimensions.",
+    "checks": [
+      "Keep the N suffix and compare the layout with the original circuit, including mounting orientation.",
+      "No audio function, supply voltage or equivalence is inferred from the AN prefix alone. Documentation for this version remains to be established before a pinout or electrical limits can be published."
+    ],
+    "sourceLabels": [
+      "Image currently associated with the catalogue"
+    ],
+    "sourceSha256": "bef63eebda6350e05039d5ab1df157b7b87c2dfb9514297e1fe08c7c562248a6"
+  },
+  {
+    "id": "db791e1d-c3be-4ff9-b7f6-bb3a0a162ea4",
+    "reviewedAt": "2026-10-31",
+    "name": "AN5836 integrated circuit",
+    "description": "Integrated circuit marked AN5836, described in the catalogue with a single row of twelve pins. Check the complete reference and package. Authenticity and electrical condition have not been tested.",
+    "title": "AN5836: a documented audio-control application",
+    "summary": "The AVT5745 kit manual describes a preamplifier using AN5836 for tone, balance and volume control. This example provides application context for the AN5836 reference in the catalogue.",
+    "checks": [
+      "Consult the AVT manual to understand the complete application. Its input voltage applies to the kit with its regulator, not to an admissible supply voltage applied directly to the chip.",
+      "Before replacement, compare the reference, package and pinout with the original circuit. This application example certifies neither the manufacturer nor the electrical condition of the item offered."
+    ],
+    "sourceLabels": [
+      "Image currently associated with the catalogue",
+      "AVT — original AVT5745 preamplifier manual using AN5836"
+    ],
+    "sourceSha256": "04fff0cb05cb751399a5f38b93a583b2f04a99ff6764b8034eb5b6508dd412cc"
+  },
+  {
+    "id": "8ef6882a-2edb-41ba-8d38-ba25eb3757d5",
+    "reviewedAt": "2026-10-31",
+    "name": "AN5071 integrated circuit",
+    "description": "Catalogue reference AN5071. Check the complete reference and package before ordering; consult the product page for current commercial information.",
+    "title": "AN5071: TV tuner circuit",
+    "summary": "Panasonic’s AN5071 document describes a TV tuner band-switching circuit with voltage regulation. This clarifies the reference’s application context; it does not make it an audio amplifier.",
+    "checks": [
+      "The document is a manufacturer archive hosted by a third party. Compare its reference and package with your part before using the pinout.",
+      "The regulated voltage discussed in the document must not be confused with the supply voltage to apply. Read the manufacturer’s conditions and circuit diagram together before any intervention."
+    ],
+    "sourceLabels": [
+      "Image currently associated with the catalogue",
+      "Panasonic — original AN5071 document, archive hosted by Pilianidis"
+    ],
+    "sourceSha256": "91a3c8a19bc44a6c99a0da0340d38a6a694378c6328f5e2d281e7b570f1a420b"
+  },
+  {
+    "id": "7a4a260b-35bd-40ce-b246-d548a553432f",
+    "reviewedAt": "2026-10-31",
+    "name": "12 V / 20 A regulated power supply — catalogue label 250 W",
+    "description": "Power supply listed as 12 V / 20 A (250 W). The photographed box identifies AWX-FS12V20A. Continuous rated power and an IP protection rating have not been established.",
+    "title": "AWX-FS12V20A: understanding the box markings",
+    "summary": "The photographed box states AWX-FS12V20A, 12 V, 20 A and 250 W. Multiplying 12 V by 20 A gives 240 W, so the 250 W inscription alone does not establish the continuous power available.",
+    "checks": [
+      "The catalogue uses the word ‘waterproof’, but no IP rating has been established from the evidence examined. The photograph shows openings in the enclosure; select the installation using documented protection information.",
+      "The exact manual has not been identified with certainty. Before sizing a load, have the mains input, connections and admissible continuous current checked. The MEAN WELL guide is general guidance, not this model’s manual."
+    ],
+    "sourceLabels": [
+      "Shop archive photograph",
+      "MEAN WELL — general power-supply selection FAQ"
+    ],
+    "sourceSha256": "fb254afb77809b4a5bf186d6d7279b49da55d3cda8b55538a26fdf7f36562e9f"
+  },
+  {
+    "id": "0992ba3a-ea7f-4264-81ce-0d07b7d6f847",
+    "reviewedAt": "2026-10-31",
+    "name": "12 V / 5 A regulated power supply — catalogue label 60 W",
+    "description": "Power supply listed as 12 V / 5 A (60 W). The photographed box identifies AWX-FS12V5A. Continuous operating conditions and an IP protection rating remain to be documented.",
+    "title": "AWX-FS12V5A: identifying the 12 V / 5 A version",
+    "summary": "The photographed box states AWX-FS12V5A, 12 V, 5 A and 60 W. The numbers are arithmetically consistent but do not replace verification of continuous operating conditions.",
+    "checks": [
+      "This reference is distinct from AWX-FS12V20A. Compare the current required by your load and any startup requirements.",
+      "The word ‘waterproof’ in the catalogue does not provide an IP rating. The item’s mains input, protections and water protection level remain to be documented."
+    ],
+    "sourceLabels": [
+      "Shop archive photograph",
+      "MEAN WELL — general power-supply selection FAQ"
+    ],
+    "sourceSha256": "71878608464e8ef269fb09f68c1b52a2dc5783d299bceb24cd352ea827da8d1c"
+  },
+  {
+    "id": "775ecd46-e394-46da-af16-6831744010da",
+    "reviewedAt": "2026-10-31",
+    "name": "12 V / 10 A regulated power supply",
+    "description": "Regulated power supply listed as 12 V / 10 A. Check the exact model’s label, connections and operating conditions before selecting it for a load.",
+    "title": "Choosing the 12 V / 10 A variant",
+    "summary": "The catalogue name states a 12 V / 10 A regulated power supply. Multiplying 12 by 10 gives 120 W. This is a calculation from the name, not certified continuous power for the model offered.",
+    "checks": [
+      "Compare your equipment’s voltage and current requirements with the model’s rating plate. The 10 A label alone does not describe startup behaviour.",
+      "The manufacturer reference, mains input, connections and cooling conditions remain to be documented. No particular protection or outdoor suitability is assumed."
+    ],
+    "sourceLabels": [
+      "Image currently associated with the catalogue",
+      "MEAN WELL — general power-supply selection FAQ"
+    ],
+    "sourceSha256": "673653c6e8b3dd4032002aec9f72f77d4889ae081d7bf12ee03912c793d85214"
+  },
+  {
+    "id": "d5d81f44-abc7-45ba-85d7-337115138ef1",
+    "reviewedAt": "2026-10-31",
+    "name": "12 V / 15 A regulated power supply",
+    "description": "Regulated power supply listed as 12 V / 15 A. Check the exact model’s label, connections and operating conditions before selecting it for a load.",
+    "title": "Choosing the 12 V / 15 A variant",
+    "summary": "The catalogue lists this variant as 12 V / 15 A. Multiplying these values gives 180 W. This arithmetic does not replace a manufacturer-specified continuous power rating and its operating conditions.",
+    "checks": [
+      "Distinguish this version from the 12 V / 10 A and 12 V / 20 A variants. Check the rating plate of the version requested and your load’s requirements.",
+      "The mains input, connections and required ventilation have not been established from an exact manual. The ability to start a motor or another demanding load is not inferred from the stated current alone."
+    ],
+    "sourceLabels": [
+      "Image currently associated with the catalogue",
+      "MEAN WELL — general power-supply selection FAQ"
+    ],
+    "sourceSha256": "12e92e460138d3e494c6466e77229ece3375b9242d7b615bf4f909fce5d0e205"
+  },
+  {
+    "id": "01c4196c-5e44-47bf-8061-cdc06ef6ae9b",
+    "reviewedAt": "2026-10-31",
+    "name": "EPICA EP-60551 multimeter",
+    "description": "Multimeter listed as EPICA EP-60551. The catalogue link leads to EPICA’s general website, not a verified manual for this exact model.",
+    "title": "EPICA EP-60551: identifying the correct manual",
+    "summary": "The catalogue identifies this multimeter as EPICA EP-60551. The supplied link leads to EPICA’s general website; it is not a verified EP-60551 manual.",
+    "checks": [
+      "Keep the full model EP-60551 when looking for functions or ranges. A manual for another EPICA multimeter is insufficient.",
+      "Accuracy, protections, supplied test leads and measurement categories for this version remain to be established. Fluke’s guide explains safety markings without assigning this instrument a CAT rating."
+    ],
+    "sourceLabels": [
+      "Image currently associated with the catalogue",
+      "EPICA — general website linked in the catalogue",
+      "Fluke — general multimeter safety guide"
+    ],
+    "sourceSha256": "25886c129dcf4f9d1a4bb362728fd890bc8d9fb1d90285339850d9a480731d81"
+  },
+  {
+    "id": "aa053538-7dda-4ece-8410-f2c72678cfca",
+    "reviewedAt": "2026-10-31",
+    "name": "SD9206A digital multimeter",
+    "description": "Digital multimeter listed as SD9206A. Check the exact version, required measurement ranges and applicable manual before ordering; its measurement category is not established here.",
+    "title": "SD9206A: compare the full model",
+    "summary": "The catalogue identifies the digital multimeter as SD9206A. Keep both the SD prefix and A suffix when comparing instruments and looking for corresponding documentation.",
+    "checks": [
+      "Do not infer functions or ranges from another 9206 series. Compare the selector markings, terminals and full reference with your requirements.",
+      "The exact manufacturer manual has not been established. Accuracy, protections and measurement category remain undocumented for this item. Supplied leads and accessories are not inferred from the name alone."
+    ],
+    "sourceLabels": [
+      "Image currently associated with the catalogue",
+      "Fluke — general multimeter safety guide"
+    ],
+    "sourceSha256": "d937b689c22868a0d3e405fe34f2c5640898af011614abccec4666da17953dc3"
+  },
+  {
+    "id": "8a3e12dd-f05d-4c32-a264-5569e068a561",
+    "reviewedAt": "2026-10-31",
+    "name": "Analogue multimeter — catalogue YX 360, photograph YX-360TR",
+    "description": "Analogue multimeter listed under YX 360. The archive photograph shows YX-360TR and ‘samwa’. The exact manual, measurement category and supplied accessories remain to be established.",
+    "title": "YX-360TR: reading the instrument marking",
+    "summary": "The archive photograph shows a needle-display multimeter marked ‘YX-360TR’ and ‘samwa’. The commercial name ‘YX 360 TRES MOY’ is less precise. The photograph helps identify the item without assigning another brand by resemblance.",
+    "checks": [
+      "Compare the needle display, scale markings and model with the instrument you need. A manual for an instrument named Sanwa is not automatically attributed to this item.",
+      "Protections claimed on the box have not been tested. Measurement category, accuracy, fuses and package contents remain to be documented for this version."
+    ],
+    "sourceLabels": [
+      "Shop archive photograph",
+      "Fluke — general multimeter safety guide"
+    ],
+    "sourceSha256": "3c83270645f1834d1c17309714c9738f5ad8405b570da3fa4e30772189e2e20a"
+  },
+  {
+    "id": "3adebd14-a588-4b3a-b82a-26a95b3e7067",
+    "reviewedAt": "2026-10-31",
+    "name": "DT83 series multimeter — photographed model DT-830D",
+    "description": "Multimeter listed as DT83 series. The archive photograph shows DT-830D on the front panel. Accuracy, fuses, measurement category and supplied accessories are not confirmed by this photograph.",
+    "title": "DT83 series: DT-830D visible on the front panel",
+    "summary": "The box in the archive photograph states ‘DT83 series’, while the front of the multimeter is marked ‘DT-830D’. The more specific marking helps identify the photographed instrument within the stated series.",
+    "checks": [
+      "Compare DT-830D, the terminals and selector positions with the required model. DT-830D documents exist from several suppliers; none has been reliably linked to this item’s manufacturer.",
+      "Accuracy, fuses, measurement category and supplied accessories are not confirmed by this photograph. Specifications of another DT830D version are therefore not presented as guarantees."
+    ],
+    "sourceLabels": [
+      "Shop archive photograph",
+      "Fluke — general multimeter safety guide"
+    ],
+    "sourceSha256": "76b3ca1d23678a86a67ac560a122960a9fb69019c0fbeb2e26e25af4775b1f03"
+  }
+]

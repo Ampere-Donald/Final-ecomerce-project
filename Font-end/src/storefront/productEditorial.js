@@ -1,4 +1,5 @@
 import { productEditorialEntries } from './productEditorialData.js';
+import { getProductTranslation } from './productTranslation.js';
 
 export function validEditorialSource(source) {
   if (!source || typeof source.label !== 'string' || !source.label.trim()) return false;
@@ -13,12 +14,13 @@ export function validEditorialSource(source) {
 // Do not keep displaying a review against a different product or new evidence.
 export function getProductEditorial(product, lang = 'fr', entries = productEditorialEntries) {
   const entry = entries.find(item => item.id === product.id);
-  if (!entry || entry.status !== 'published' || !entry[lang]) return null;
+  const translated = lang === 'en' && entries === productEditorialEntries ? getProductTranslation(product) : null;
+  if (!entry || entry.status !== 'published' || (!entry[lang] && !translated)) return null;
   const expected = entry.expected;
   if (!expected || ['model', 'image', 'description', 'brand', 'urlDatasheet'].some(key =>
     (product[key] || '') !== (expected[key] || ''))) return null;
   if (product.technicalAttributes?.length || product.attributes?.length) return null;
-  return entry;
+  return translated ? {...entry, reviewedAt:translated.reviewedAt, en:translated.en} : entry;
 }
 
 export function validateProductEditorial(entries = productEditorialEntries) {

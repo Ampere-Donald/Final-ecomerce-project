@@ -43,9 +43,9 @@ Plan validé par l’utilisateur le 27 octobre 2026. Objectif complet conservé 
 | SEO-27 | Quatre scripts et dispositif d'avis préparés | AVIS_ET_VIDEOS_SEO_NEWOTEG.md ; message neutre, réponses et scripts de 25–40 s. Prises de vue et lien d'avis restant à obtenir ; aucun message envoyé ni compte externe modifié |
 | SEO-28 | Dix pistes et messages préparés | Sources primaires, points d'entrée publics, ressource associée et dix brouillons personnalisés dans PARTENAIRES_EDITORIAUX_SEO_NEWOTEG.md ; fiche de préparation rédigée. Contacts à revalider avant envoi autorisé, aucun message envoyé |
 | SEO-29 | Étude documentaire effectuée, compte à vérifier | Cameroun absent des listes de fiches locales gratuites et des pays classiques consultées, présent pour les annonces locales ; sources non homogènes, éligibilité réelle du compte non établie. MERCHANT_CENTER_DECISION_2026-10-31.md ; aucun flux ou campagne créé |
-| SEO-30 | À faire | Langue déterminée par l’URL |
-| SEO-31 | À faire | Traduction du périmètre pilote |
-| SEO-32 | À faire | Annotations linguistiques et recette FR/EN |
+| SEO-30 | Diagnostic et raccordement à faire | Préférence locale réappliquée après rendu initial sur la même URL ; comportement non encore corrigé. LOT_ANGLAIS_SEO.md décrit les points de raccordement nécessaires |
+| SEO-31 | Vingt fiches et quatre guides traduits, non publiés | Copies anglaises complètes liées par empreinte aux sources FR ; composant/balisage produit raccordés, 20 rendus de composants réussis. Cinq familles déjà bilingues ; URL anglaises et parcours restant à livrer |
+| SEO-32 | À faire | Canonical propres, hreflang réciproques, sitemap et recette de langue avant/après hydratation ; aucune nouvelle URL anglaise déclarée publiée |
 | SEO-33 | À faire | Évaluation commerciale du pays pilote |
 | SEO-34 | À faire | Extension vers 50 puis jusqu’à 100 fiches selon vérification |
 | SEO-35 | À faire | Extension vers 8–12 familles, 8 guides et 8 dossiers |

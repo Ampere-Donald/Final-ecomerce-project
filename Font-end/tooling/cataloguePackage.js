@@ -6,12 +6,16 @@ import { readFile, writeFile } from 'node:fs/promises';
 import { validateProductEditorial } from '../src/storefront/productEditorial.js';
 import { productEditorialEntries } from '../src/storefront/productEditorialData.js';
 import { verifyEditorial } from './prepareEditorial.mjs';
+import { verifyProductTranslations } from './prepareProductTranslations.mjs';
+import { verifyGuideTranslations } from './prepareGuideTranslations.mjs';
 
 // Reproducible Node runtime for the existing React catalogue. It is built from
 // source, never downloaded or evaluated from a visitor's requested URL.
 export async function buildCataloguePackage(root, env, outDir) {
   validateProductEditorial();
   await verifyEditorial();
+  await verifyProductTranslations();
+  await verifyGuideTranslations();
   root = resolve(root); outDir = resolve(outDir);
   for (const entry of productEditorialEntries.filter(item => item.status === 'published')) {
     for (const lang of ['fr', 'en']) {

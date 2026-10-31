@@ -30,6 +30,7 @@ import { isWebsiteHomepage } from './productEditorial.js';
 import { useJourneyObservation } from "./useJourney.js";
 import { productSchemaJSON } from './productSchema.js';
 import { seoFamilies, familyPath } from './seoFamilies.js';
+import { productText } from './productTranslation.js';
 const ProductViewer = lazy(() => import("./ProductViewer"));
 
 function Detail({ product }) {
@@ -52,8 +53,7 @@ function Detail({ product }) {
     .slice(0, 4);
   const buy = canBuy(product);
   const stock = stockState(product);
-  const name =
-    lang === "en" && product.englishName ? product.englishName : product.model;
+  const { name, description } = productText(product, lang);
   const chosen = { ...product, image: product.images[active] || product.image };
   const family = seoFamilies.find(f => f.category === product.categoryId && f.subcategory === product.subcategoryId);
   const purchase = (
@@ -87,7 +87,7 @@ function Detail({ product }) {
   );
   return (
     <>
-      <PageMeta title={`${name} — X-Electronic`} description={product.description?.slice(0, 155) || `${name} — X-Electronic, la boutique électronique de NEWOTEG.`} />
+      <PageMeta title={`${name} — X-Electronic`} description={description?.slice(0, 155) || `${name} — X-Electronic, ${lang === 'en' ? 'the NEWOTEG electronics shop.' : 'la boutique électronique de NEWOTEG.'}`} />
       <script type="application/ld+json" data-product-schema="true" dangerouslySetInnerHTML={{ __html: productSchemaJSON(product, lang) }} />
       <div className="e-wrap e-product-page">
         <Crumbs title={name} />
@@ -104,7 +104,7 @@ function Detail({ product }) {
                 lang === "fr" ? "Agrandir le visuel" : "Enlarge image"
               }
             >
-              <Photo product={chosen} eager thumbnail detail sizes="(max-width: 760px) 95vw, 600px" />
+              <Photo product={{...chosen,model:name}} eager thumbnail detail sizes="(max-width: 760px) 95vw, 600px" />
               {chosen.image && (
                 <span>
                   <ZoomIn size={17} />
@@ -121,7 +121,7 @@ function Detail({ product }) {
                     aria-pressed={active === i}
                     onClick={() => setActive(i)}
                   >
-                    <Photo product={{ ...product, image }} thumbnail sizes="64px" />
+                    <Photo product={{ ...product, model:name, image }} thumbnail sizes="64px" />
                   </button>
                 ))}
               </div>
@@ -135,8 +135,8 @@ function Detail({ product }) {
                 ? `${lang === "fr" ? "Référence" : "Reference"} : ${product.reference}`
                 : product.brand || product.categoryName}
             </p>
-            {product.description && (
-              <p className="e-description">{product.description}</p>
+            {description && (
+              <p className="e-description">{description}</p>
             )}
             {product.categoryId && <nav className="e-catalogue-subfamilies" aria-label={lang === "fr" ? "Classement du produit" : "Product categories"}>
               <Link to={`/catalogue?category=${encodeURIComponent(product.categoryId)}`}>{product.categoryName}</Link>
