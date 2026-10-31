@@ -7,6 +7,7 @@ import prefetchCatalogue from './tooling/prefetchCatalogue.js'
 import { applyHostedProductionDefaults } from './tooling/hostedProduction.js'
 import { verifyEditorial } from './tooling/prepareEditorial.mjs'
 import { verifyEnglishRoutes } from './tooling/prepareEnglishRoutes.mjs'
+import organizationSchema from './tooling/organizationSchema.js'
 
 applyHostedProductionDefaults()
 await verifyEditorial()
@@ -25,6 +26,7 @@ export default defineConfig({
     prerenderHome(),
     buildCatalogueRenderer(),
     prefetchCatalogue(),
+    organizationSchema(),
   ],
   build: { manifest: true },
   server: {

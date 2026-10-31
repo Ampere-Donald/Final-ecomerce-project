@@ -61,3 +61,9 @@ GitHub connecté a été rétabli après le constat d’indisponibilité ci-dess
 La PR #35 est ouverte : https://github.com/Ampere-Donald/Final-ecomerce-project/pull/35. Sur `f004194838f59de8774f89d69fbc4dfb0aac767f`, CI générale #374 et runtime #98 entièrement réussis, y compris les trois profils Docker. Le lot reste en brouillon pour la recette visuelle/interactive.
 
 La PR #36, indépendante, a depuis publié les redirections des variantes HTTP/www sur les pages publiques françaises. Sa correction est réintégrée dans la branche bilingue ; les nouvelles routes /en/ et les protections privées font partie de ses tests. Les contrôles distants du nouvel état doivent être relevés avant toute publication du lot anglais. La publication des redirections ne publie pas les guides ou les URL anglaises.
+
+## Synchronisation des publications du 31 octobre
+
+Sur `c352405971f3111e9ae2c02555652099285f5c93`, après intégration des redirections, les 190 tests frontend et la CI générale #377/runtime #101 ont réussi intégralement. Ces résultats décrivent cet état précis.
+
+La PR #37 a ensuite publié le graphe Organization commun, avec sept contrôles publics réussis. Son intégration dans la branche bilingue conserve les validations des contenus FR/EN et ajoute le générateur et son contrôle du véritable HTML en CI. Le conflit d’import du fichier Vite est résolu en conservant ces deux ensembles. La nouvelle suite comporte 194 tests réussis ; la CI du nouveau commit est à relever séparément. La recette interactive finale reste bloquée par l’accès au navigateur local désactivé dans Work ; la PR #35 reste donc en brouillon.
