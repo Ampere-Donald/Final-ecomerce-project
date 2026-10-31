@@ -1,10 +1,11 @@
+import { basePath } from './localePath.js';
 import { publicCatalogueData, catalogueBootJSON } from './initialCatalogue.js';
 import { readTechnicalSource } from './technicalProvenance.js';
 
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const scalarText = value => typeof value === 'string' ? value : null;
 export function productDocumentId(pathname) {
-  const match = /^\/product\/([^/]+)\/?$/.exec(pathname);
+  const match = /^\/product\/([^/]+)\/?$/.exec(basePath(pathname));
   return match && uuid.test(match[1]) ? match[1] : null;
 }
 
@@ -63,8 +64,8 @@ export function readProductBoot(text, url) {
   } catch { return null; }
 }
 
-export function injectProductFragment(document, fragment, css) {
-  if (!fragment.startsWith('<div id="root" data-initial-product="fr"><div class="app">') ||
+export function injectProductFragment(document, fragment, css, lang = 'fr') {
+  if (!fragment.startsWith(`<div id="root" data-initial-product="${lang}"><div class="app">`) ||
       !fragment.includes('</div><script type="application/json" id="initial-product-data">') || !fragment.endsWith('</script>') ||
       (fragment.match(/<script\b/gi) || []).length !== 2 ||
       !fragment.includes('<script type="application/ld+json" data-product-schema="true">') ||

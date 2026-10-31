@@ -4,7 +4,7 @@ import {
   useLocation,
   useNavigate,
   useSearchParams,
-} from "react-router-dom";
+} from "./LocaleRouter";
 import { Eye, EyeOff, ArrowRight } from "lucide-react";
 import { GoogleLogin, GoogleOAuthProvider } from "@react-oauth/google";
 import { useAuth } from "../context/AuthContext";

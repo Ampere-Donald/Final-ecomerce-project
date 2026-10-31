@@ -1,3 +1,4 @@
+import { basePath, localizedPath } from './localePath.js';
 // Public category identifiers verified against the catalogue on 2026-10-27.
 // Slugs are stable editorial destinations; prices and stock remain API data.
 export const seoFamilies = [
@@ -36,7 +37,7 @@ export const seoFamilies = [
 export const familyPath = family => `/catalogue/${family.slug}`;
 
 export function seoFamily(pathname) {
-  const normalized = String(pathname).toLowerCase().replace(/\/+$/, '');
+  const normalized = basePath(String(pathname)).toLowerCase().replace(/\/+$/, '');
   return seoFamilies.find(family => familyPath(family) === normalized) || null;
 }
 
@@ -63,7 +64,7 @@ export function familyMetadata(family, search = '', lang = 'fr') {
   return {
     title: `${lang === 'en' ? family.en : family.fr} — X-Electronic`,
     description: lang === 'en' ? family.descriptionEn : family.descriptionFr,
-    canonical: 'https://newoteg.com' + familyPath(family) + (!filtered && page > 1 ? `?page=${page}` : ''),
+    canonical: 'https://newoteg.com' + localizedPath(familyPath(family), lang) + (!filtered && page > 1 ? `?page=${page}` : ''),
     robots: filtered ? 'noindex, follow' : 'index, follow', private: false,
   };
 }

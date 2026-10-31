@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "./LocaleRouter";
 import PageMeta from "./PageMeta";
+import { basePath } from './localePath.js';
 import { RefreshCw, ArrowRight } from "lucide-react";
 import { useI18n } from "../context/I18nContext";
 import apiClient from "../utils/apiClient";
@@ -141,7 +142,7 @@ export default function GuestTracking() {
       const url = new URL(form.link.trim());
       if (
         url.origin !== window.location.origin ||
-        url.pathname !== "/suivi-invite"
+        basePath(url.pathname) !== "/suivi-invite"
       )
         throw new Error();
       const value = new URLSearchParams(url.hash.slice(1)).get("acces");

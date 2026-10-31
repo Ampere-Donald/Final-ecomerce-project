@@ -4,7 +4,7 @@ Plan validé par l’utilisateur le 27 octobre 2026. Objectif complet conservé 
 
 ## Base de travail
 
-- Branche : `codex/seo-foundations`.
+- Branche courante de préparation : `codex/seo-languages` ; préparation française séparée dans la PR #34 sur `codex/seo-foundations`.
 - Checkout : `C:/Users/pc/.codex/worktrees/newoteg-seo/Newoteg`.
 - Base vérifiée : `dd4e6aaf`, amélioration du démarrage du catalogue intégrée à `origin/main` lors de la préparation.
 - Plan de référence : `C:/Users/pc/Documents/Newoteg/docs/PLAN_IMPLEMENTATION_SEO_NEWOTEG_2026-10-27.md`.
@@ -16,7 +16,7 @@ Plan validé par l’utilisateur le 27 octobre 2026. Objectif complet conservé 
 |---|---|---|
 | SEO-01 | Version identifiée et intégrée | PR #25 fusionnée dans main : 8c5c1022 ; backend et Worker livrés, identifiants ci-dessous |
 | SEO-02 | En cours | Contrôle initial de 24 URL dans `baseline/baseline.json` ; compléter les routes privées, pagination et rendu navigateur |
-| SEO-03 | Export demandé | Propriété existante confirmée par le propriétaire ; session inaccessible, export des performances sur trois mois demandé ; aucun chiffre inventé |
+| SEO-03 | Mesure initiale obtenue, inspection à compléter | Export natif Search Console du 30 juillet au 29 octobre : 58 clics, 405 impressions ; indexation datée du 23 octobre et 122 noindex analysés. ETAT_SEARCH_CONSOLE_2026-10-31.md ; inspection d'URL et données terrain restantes |
 | SEO-04 | Sélection provisoire préparée | 20 produits disponibles avec image et 5 sous-catégories réelles ; ajuster selon ventes et demandes |
 | SEO-05 | Matrice préparée | 100 formulations distinctes réparties 50/20/15/10/5, reliées à une cible ; docs/MATRICE_RECHERCHES_SEO_NEWOTEG.md. Priorisation quantitative en attente des données Google et commerciales |
 | SEO-06 | Activé et contrôlé en production | Cinq familles avec cartes en HTML ; mesures de charge et CPU réelles à compléter |
@@ -25,28 +25,28 @@ Plan validé par l’utilisateur le 27 octobre 2026. Objectif complet conservé 
 | SEO-09 | Contrat de fraîcheur documenté | FRAICHEUR_DONNEES_SEO.md : HTML commercial no-store, reprise initiale 15 s au montage, actualisation au retour de focus, sitemap 300 s ; charge soutenue restant à mesurer |
 | SEO-10 | Publié et contrôlé | Cinq routes de familles, métadonnées et cartes HTML vérifiées publiquement ; page 2 de Condensateurs rendue avec canonical propre |
 | SEO-11 | En cours | Métadonnées des familles et de leurs filtres testées ; audit complet de la politique restant |
-| SEO-12 | Publié et contrôlé | Au 31 octobre : sitemap de 1 952 URL dont 1 933 produits correspondant au total API ; cinq familles, URL uniques et absence de routes privées contrôlées ; soumission Search Console restante |
+| SEO-12 | Publié, soumis et lu par Google | Au 31 octobre : 1 952 URL dont 1 933 produits cohérentes avec l'API ; URL uniques et absence de routes privées contrôlées. Search Console : soumis et lu le 31 octobre, Success, 1 952 pages découvertes ; ce chiffre n'est pas un total indexé |
 | SEO-13 | En cours | Product/Offer/BreadcrumbList partagés avec le rendu, sans offre si prix ou stock inconnus ; informations boutique et validation externe restantes |
 | SEO-14 | Vingt enrichissements publiés et contrôlés | Notes individuelles FR, sources et limites dans productEditorialData.js ; 20 notes et 5 photos originales vérifiées publiquement. Retrait sur changement d’identité ou nouvel attribut. Dimensions, notices et vérifications physiques manquantes restent non établies |
 | SEO-15 | Aides au choix publiées et contrôlées | Trois repères sourcés par famille, FR/EN, après les produits dans le HTML. Titre audio élargi à audio et TV selon le contenu réel. Maillage vers les futurs guides à compléter |
-| SEO-16 | En cours | Liens vers familles et pagination HTML intégrés ; compléter accueil et fiches |
+| SEO-16 | Maillage du pilote préparé et vérifié localement | Accueil vers cinq familles et quatre guides ; fiches vers guides pertinents ; pied de page vers index. Graphe compilé : 31/31 destinations atteignables par langue et découverte en page 2 vérifiée. MAILLAGE_SEO_PILOTE.md ; recette visuelle et publication restantes |
 | SEO-17 | Publié et activé | PR #32, migration et démarrage validés ; capacité publique active. Déduplication vérifiée en PostgreSQL local ; aucune fausse observation écrite en production |
 | SEO-18 | Publié, lecture réelle à vérifier | Attribution persistante et tableau livrés ; deux rapports protégés contre accès anonyme. Tableau testé avec données synthétiques à 390/1440 px ; lecture authentifiée réelle restante. LIVRAISON_MESURE_SEO.md |
-| SEO-19 | Deux séries mesurées, optimisation en cours | 29 images réparées ; nouvelle série moins rapide avec attente serveur variable, commencée pendant le redéploiement. Parallélisation des lectures produit préparée ; aucune amélioration de vitesse encore affirmée |
-| SEO-20 | À faire | Modèle éditorial versionné et validation au build |
-| SEO-21 | À faire | Pages de guides et dossiers, rendu et indexation |
-| SEO-22 | À faire | Quatre guides pilotes documentés |
-| SEO-23 | À faire | Quatre dossiers de remplacement vérifiés |
-| SEO-24 | À faire | Maintenance éditoriale et sources |
-| SEO-25 | À faire | Vérification des faits commerciaux et informations locales |
-| SEO-26 | À faire | Audit Business Profile accessible et corrections proposées |
-| SEO-27 | À faire | Scripts vidéo et dispositif d’avis |
-| SEO-28 | À faire | Dix partenaires et messages préparés ; aucun envoi sans instruction explicite |
-| SEO-29 | À faire | Vérification de l’éligibilité Merchant Center |
-| SEO-30 | À faire | Langue déterminée par l’URL |
-| SEO-31 | À faire | Traduction du périmètre pilote |
-| SEO-32 | À faire | Annotations linguistiques et recette FR/EN |
-| SEO-33 | À faire | Évaluation commerciale du pays pilote |
+| SEO-19 | Optimisation publiée, mesure à compléter | 29 images réparées ; deux séries complètes et une troisième incomplète. PR #33 publiée : lectures produit simultanées, 165 tests et 12 contrôles publics réussis ; aucune amélioration de vitesse encore démontrée |
+| SEO-20 | Développé et testé localement | Registre unique, états, validation et projections publiques ; brouillons exclus des artefacts livrables. BIBLIOTHEQUE_TECHNIQUE_SEO.md |
+| SEO-21 | Développé, CI réussie, recette visuelle restante | PR #34 en brouillon ; CI #373 et runtime #97 entièrement réussis sur 1906f54e. Listes/détails, HTML initial, métadonnées, liens et sitemap ; 10 contrôles HTTP locaux réussis. Non publié |
+| SEO-22 | Quatre guides rédigés et sourcés | Marquage, condensateur, multimètre, connecteur ; documents fabricants relus le 31 octobre. Textes français sélectionnés dans la version préparée, non encore en production |
+| SEO-23 | Quatre brouillons préparés | Paires et usages issus du catalogue ; notices, contexte ou validation métier manquants. Aucune équivalence inventée, aucun dossier public |
+| SEO-24 | Procédure documentée | Déclencheurs de revue, retrait, preuve métier, régénération et recette dans BIBLIOTHEQUE_TECHNIQUE_SEO.md ; première livraison encore à terminer |
+| SEO-25 | Registre initial préparé | Coordonnées et horaires effectivement trouvés dans les modules publics ; enseigne observée sur la photo. Horaires opérationnels, point exact et relation des lieux encore à confirmer. IDENTITE_LOCALE_SEO_2026-10-31.md |
+| SEO-26 | Propositions préparées, fiche à identifier | Lien Maps actuel = recherche de quartier ; aucune fiche Business identifiée sans ambiguïté. Nom/description et corrections proposés, aucune modification de compte |
+| SEO-27 | Quatre scripts et dispositif d'avis préparés | AVIS_ET_VIDEOS_SEO_NEWOTEG.md ; message neutre, réponses et scripts de 25–40 s. Prises de vue et lien d'avis restant à obtenir ; aucun message envoyé ni compte externe modifié |
+| SEO-28 | Dix pistes et messages préparés | Sources primaires, points d'entrée publics, ressource associée et dix brouillons personnalisés dans PARTENAIRES_EDITORIAUX_SEO_NEWOTEG.md ; fiche de préparation rédigée. Contacts à revalider avant envoi autorisé, aucun message envoyé |
+| SEO-29 | Étude documentaire effectuée, compte à vérifier | Cameroun absent des listes de fiches locales gratuites et des pays classiques consultées, présent pour les annonces locales ; sources non homogènes, éligibilité réelle du compte non établie. MERCHANT_CENTER_DECISION_2026-10-31.md ; aucun flux ou campagne créé |
+| SEO-30 | Routage localisé intégré, recette partielle | Langue déterminée par l’URL, sélecteur avec vrais liens, basename anglais, snapshots et rendu serveur cohérents. 184 tests ; recette interactive finale encore à faire. Non publié |
+| SEO-31 | Vingt fiches et quatre guides intégrés en anglais, non publiés | HTML anglais compilé sous /en/, cinq familles et accueil, retrait sur changement d’identité. 32 contrôles Worker locaux ; détails dans LOT_ANGLAIS_SEO.md |
+| SEO-32 | Annotations intégrées et testées localement | Canonical propres, hreflang réciproques, sitemap conditionné aux identités revues, protections privées. Publication et recette publique restantes ; accès navigateur interrompu et GitHub connecté indisponible |
+| SEO-33 | Dossier de décision produit, offre pays différée | Sept destinations comparées à partir du ZIP Search Console et de sources primaires. Contrôle actuel des vingt produits : poids/volumes null, quatre prix manquants ; transport, paiement, retours et marge non établis. Décision : audience technique FR/EN et consolidation Cameroun avant offre export. DECISION_PAYS_PILOTE_SEO_2026-10-31.md |
 | SEO-34 | À faire | Extension vers 50 puis jusqu’à 100 fiches selon vérification |
 | SEO-35 | À faire | Extension vers 8–12 familles, 8 guides et 8 dossiers |
 | SEO-36 | À faire | Bilans à 30, 60 et 90 jours sur données accumulées |
@@ -141,4 +141,44 @@ Le pilote éditorial est intégré, mais la livraison commerciale A n’est pas 
 - Recette des fondations réussie au même passage : santé backend, cinq familles, cinq fiches avec canonical/JSON-LD et sitemap de 1 951 URL dont 1 932 produits, cohérent avec le total API ; 12 contrôles dans `pilot-editorial-production-foundations/report.json`. Le sitemap 503 de la transition n’est plus présent lors de cette recette. La fiabilité prolongée et les performances restent à mesurer.
 - Navigateur public : sept fiches sans JavaScript et sept fiches hydratées passent ; aucune erreur JavaScript. Le script complet a ensuite échoué en attendant le dialogue de conseil, après un clic effectué immédiatement après une nouvelle navigation. Rapport d’échec conservé dans `pilot-editorial-production-browser/hydration-report.json`. Le banc attend désormais l’hydratation après cette navigation aussi. Contrôle ciblé indépendant à 15:23:36 UTC : dialogue de conseil ouvert, fermeture et ajout au panier local réussis, enrichissement présent et aucun débordement à 390 px ; `pilot-editorial-production-interaction/report.json`. Les tentatives Cloudflare `/cdn-cgi/rum` ont été bloquées, aucune écriture réseau exécutée. Les 14 premiers contrôles et ce contrôle ciblé ne sont pas présentés comme une réussite intégrale du script initial qui a échoué.
 
-Prochaine étape : implémenter le contrat de mesure avec ses tests, compléter la politique de fraîcheur et les mesures de performance, puis poursuivre la bibliothèque technique. Le plan complet reste actif ; cette livraison ne prouve ni un classement Google ni un résultat commercial.
+Les travaux de mesure, de fraîcheur et de performance ont ensuite avancé ; leur état actuel figure dans le tableau et les rapports associés. Le plan complet reste actif ; cette livraison ne prouve ni un classement Google ni un résultat commercial.
+
+## Livraison des lectures simultanées — 31 octobre 2026
+
+- PR #33 fusionnée après succès de la CI générale #370 et du contrat runtime #94 sur `78b3631f36986c1b4aaf5576c09e31d2ff4f4867` ; merge `f065c4ae226e9aed167ea0479083969230f1296f`.
+- Les métadonnées et le fragment produit démarrent simultanément. Les métadonnées déterminent toujours les statuts 404/503 ; un fragment spéculatif ne rend pas une fiche invalide publique. Les erreurs de rendu sont capturées immédiatement et HEAD ne déclenche pas ce rendu. 165 tests frontend, lint et build réussis.
+- Backend `72421e71-9b3f-4a2b-a6e3-bb8867054dd1` en SUCCESS ; Worker `a8a17247-3aeb-43be-96f1-323f39d6d823`. Code téléversé et identité du paquet vérifiés. Les deux images ajoutées indépendamment en amont ont été conservées.
+- Recette publique complète : 12 contrôles réussis, cinq familles, cinq produits et sitemap de 1 952 URL dont 1 933 produits. Preuves : `parallel-production-release.json` et `parallel-production-confirmed/report.json`.
+- La troisième série mobile est incomplète, quatre passages sur neuf et aucune fiche mesurée ; aucun gain de vitesse n'est affirmé. Détails dans PERFORMANCE_MOBILE_SEO_2026-10-30.md.
+
+## Search Console — données obtenues et sitemap soumis
+
+Lecture authentifiée et deux exports natifs effectués dans Chrome le 31 octobre. Sur les trois mois disponibles, 58 clics et 405 impressions ; sur les 28 derniers jours, 28 clics contre 6 sur les 28 précédents. Volumes faibles et période trop précoce pour attribuer cette évolution aux livraisons. Les clics se concentrent sur l'accueil, le Cameroun et le mobile.
+
+Google a confirmé le sitemap soumis et lu le 31 octobre, en Success, avec 1 952 pages découvertes. Le rapport d'indexation est antérieur aux livraisons : dernière actualisation le 23 octobre. Les 122 noindex exportés correspondent à des recherches, filtres et pages de compte ; aucune suppression de ces protections ni validation globale de correction.
+
+Analyse et prochaines vérifications dans ETAT_SEARCH_CONSOLE_2026-10-31.md. Le contrôle de Chrome a ensuite été désactivé dans les paramètres Work ; l'inspection d'URL et la lecture des données terrain ne sont pas déclarées terminées. La bibliothèque technique peut avancer indépendamment de cet accès.
+
+## Lot anglais — raccordement localisé préparé
+
+Les vingt traductions produit et quatre guides sont maintenant reliés aux URL `/en/`, au moteur serveur, aux données d’hydratation, à la canonical et aux hreflang. L’accueil possède deux rendus séparés ; les pages privées conservent leurs protections dans les deux langues. Le sitemap retire une version anglaise dont l’identité revue a changé. Les nouveaux attributs, même encore vides, retirent les textes revus des deux langues jusqu’à relecture.
+
+Recette détaillée et limites dans LOT_ANGLAIS_SEO.md. Les contrôles du moteur compilé utilisent des fixtures déclarées et refusent les écritures. Le navigateur a confirmé une partie du guide condensateur sur mobile puis le changement de langue ; une interaction après Retour n’a pas été confirmée. Work a ensuite désactivé le contrôle. Les corrections d’ancres et la recette complète sur mobile/bureau restent à vérifier visuellement.
+
+Le lot n’est pas publié. GitHub connecté a été revérifié et reste indisponible pour la création de PR. La production ne change pas ; le plan complet reste en cours.
+
+## Marché extérieur — dossier de décision et relevé des colis
+
+Le dossier SEO-33 compare RCA, Gabon, Congo/Brazzaville, Tchad, Côte d’Ivoire, Sénégal et Bénin avec le Cameroun comme référence. Les chiffres sont relus depuis le ZIP natif Search Console ; une ligne pays absente reste inconnue. Aucune demande qualifiée n’est déduite d’un clic.
+
+La lecture actuelle des vingt produits publics répond 200 pour tous, avec vingt stocks positifs mais quatre prix publics non renseignés. Poids et volumes valent null sur les vingt fiches ; les mesures de colis et les devis restent à établir. Les sources BEAC/BCEAO, douane gabonaise, DHL Cameroun et Google ne remplacent pas une cotation ou une validation commerciale.
+
+Décision d’étape : consolider le Cameroun et développer l’audience technique FR/EN ; aucune offre pays n’est sélectionnée pour publication aujourd’hui. Une fiche de préparation/cotation et un relevé des vingt références réelles permettent la suite opérationnelle. Aucune promesse export, page pays, campagne, réservation, paiement ou sollicitation externe n’a été exécuté.
+
+## Maillage accueil, fiches et guides — complément préparé
+
+L’accueil expose les cinq familles dédiées et les quatre guides dans le HTML. Les fiches revues relient les guides associés par famille réelle ou par sélection produit explicite ; aucun guide artificiel n’est ajouté aux alimentations. Le pied de page conserve un accès à la bibliothèque. Les corps éditoriaux restent chargés à la demande.
+
+186 tests frontend, lint, build et contrat CJS réussis. Le graphe du HTML compilé atteint 31 destinations du pilote dans chaque langue ; un scénario force une référence en page 2 et confirme sa découverte par la pagination HTML. Contrôle des artefacts : quatre brouillons exclus, corps des guides hors graphe initial. Recette détaillée dans MAILLAGE_SEO_PILOTE.md ; aucune publication encore effectuée.
+
+L’accès GitHub connecté a été rétabli pendant ce travail. L’ouverture de la PR et les contrôles distants peuvent reprendre ; la recette navigateur reste interrompue par sa désactivation dans Work.

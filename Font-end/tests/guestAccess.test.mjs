@@ -11,8 +11,10 @@ test('CSPRNG keys are 256-bit and survive the exact saved order attempt',()=>{
 });
 test('Private fragments are removed from location before rendering and kept only in session',()=>{
   const key=newGuestKey();let replaced;
-  globalThis.window={location:{pathname:'/suivi-invite',hash:'#acces='+key},history:{state:{},replaceState:(_state,_title,url)=>{replaced=url;}}};
-  captureGuestFragment();assert.equal(replaced,'/suivi-invite');assert.equal(readGuestKey(),key);
+  for (const path of ['/suivi-invite', '/en/suivi-invite']) {
+    globalThis.window={location:{pathname:path,hash:'#acces='+key},history:{state:{},replaceState:(_state,_title,url)=>{replaced=url;}}};
+    captureGuestFragment();assert.equal(replaced,path);assert.equal(readGuestKey(),key);
+  }
   assert.throws(()=>rememberGuestKey('bad'));
   forgetGuestKey();assert.equal(readGuestKey(),'');
 });
