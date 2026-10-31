@@ -16,7 +16,7 @@ Plan validé par l’utilisateur le 27 octobre 2026. Objectif complet conservé 
 |---|---|---|
 | SEO-01 | Version identifiée et intégrée | PR #25 fusionnée dans main : 8c5c1022 ; backend et Worker livrés, identifiants ci-dessous |
 | SEO-02 | En cours | Contrôle initial de 24 URL dans `baseline/baseline.json` ; compléter les routes privées, pagination et rendu navigateur |
-| SEO-03 | Export demandé | Propriété existante confirmée par le propriétaire ; session inaccessible, export des performances sur trois mois demandé ; aucun chiffre inventé |
+| SEO-03 | Mesure initiale obtenue, inspection à compléter | Export natif Search Console du 30 juillet au 29 octobre : 58 clics, 405 impressions ; indexation datée du 23 octobre et 122 noindex analysés. ETAT_SEARCH_CONSOLE_2026-10-31.md ; inspection d'URL et données terrain restantes |
 | SEO-04 | Sélection provisoire préparée | 20 produits disponibles avec image et 5 sous-catégories réelles ; ajuster selon ventes et demandes |
 | SEO-05 | Matrice préparée | 100 formulations distinctes réparties 50/20/15/10/5, reliées à une cible ; docs/MATRICE_RECHERCHES_SEO_NEWOTEG.md. Priorisation quantitative en attente des données Google et commerciales |
 | SEO-06 | Activé et contrôlé en production | Cinq familles avec cartes en HTML ; mesures de charge et CPU réelles à compléter |
@@ -25,14 +25,14 @@ Plan validé par l’utilisateur le 27 octobre 2026. Objectif complet conservé 
 | SEO-09 | Contrat de fraîcheur documenté | FRAICHEUR_DONNEES_SEO.md : HTML commercial no-store, reprise initiale 15 s au montage, actualisation au retour de focus, sitemap 300 s ; charge soutenue restant à mesurer |
 | SEO-10 | Publié et contrôlé | Cinq routes de familles, métadonnées et cartes HTML vérifiées publiquement ; page 2 de Condensateurs rendue avec canonical propre |
 | SEO-11 | En cours | Métadonnées des familles et de leurs filtres testées ; audit complet de la politique restant |
-| SEO-12 | Publié et contrôlé | Au 31 octobre : sitemap de 1 952 URL dont 1 933 produits correspondant au total API ; cinq familles, URL uniques et absence de routes privées contrôlées ; soumission Search Console restante |
+| SEO-12 | Publié, soumis et lu par Google | Au 31 octobre : 1 952 URL dont 1 933 produits cohérentes avec l'API ; URL uniques et absence de routes privées contrôlées. Search Console : soumis et lu le 31 octobre, Success, 1 952 pages découvertes ; ce chiffre n'est pas un total indexé |
 | SEO-13 | En cours | Product/Offer/BreadcrumbList partagés avec le rendu, sans offre si prix ou stock inconnus ; informations boutique et validation externe restantes |
 | SEO-14 | Vingt enrichissements publiés et contrôlés | Notes individuelles FR, sources et limites dans productEditorialData.js ; 20 notes et 5 photos originales vérifiées publiquement. Retrait sur changement d’identité ou nouvel attribut. Dimensions, notices et vérifications physiques manquantes restent non établies |
 | SEO-15 | Aides au choix publiées et contrôlées | Trois repères sourcés par famille, FR/EN, après les produits dans le HTML. Titre audio élargi à audio et TV selon le contenu réel. Maillage vers les futurs guides à compléter |
 | SEO-16 | En cours | Liens vers familles et pagination HTML intégrés ; compléter accueil et fiches |
 | SEO-17 | Publié et activé | PR #32, migration et démarrage validés ; capacité publique active. Déduplication vérifiée en PostgreSQL local ; aucune fausse observation écrite en production |
 | SEO-18 | Publié, lecture réelle à vérifier | Attribution persistante et tableau livrés ; deux rapports protégés contre accès anonyme. Tableau testé avec données synthétiques à 390/1440 px ; lecture authentifiée réelle restante. LIVRAISON_MESURE_SEO.md |
-| SEO-19 | Deux séries mesurées, optimisation en cours | 29 images réparées ; nouvelle série moins rapide avec attente serveur variable, commencée pendant le redéploiement. Parallélisation des lectures produit préparée ; aucune amélioration de vitesse encore affirmée |
+| SEO-19 | Optimisation publiée, mesure à compléter | 29 images réparées ; deux séries complètes et une troisième incomplète. PR #33 publiée : lectures produit simultanées, 165 tests et 12 contrôles publics réussis ; aucune amélioration de vitesse encore démontrée |
 | SEO-20 | À faire | Modèle éditorial versionné et validation au build |
 | SEO-21 | À faire | Pages de guides et dossiers, rendu et indexation |
 | SEO-22 | À faire | Quatre guides pilotes documentés |
@@ -141,4 +141,20 @@ Le pilote éditorial est intégré, mais la livraison commerciale A n’est pas 
 - Recette des fondations réussie au même passage : santé backend, cinq familles, cinq fiches avec canonical/JSON-LD et sitemap de 1 951 URL dont 1 932 produits, cohérent avec le total API ; 12 contrôles dans `pilot-editorial-production-foundations/report.json`. Le sitemap 503 de la transition n’est plus présent lors de cette recette. La fiabilité prolongée et les performances restent à mesurer.
 - Navigateur public : sept fiches sans JavaScript et sept fiches hydratées passent ; aucune erreur JavaScript. Le script complet a ensuite échoué en attendant le dialogue de conseil, après un clic effectué immédiatement après une nouvelle navigation. Rapport d’échec conservé dans `pilot-editorial-production-browser/hydration-report.json`. Le banc attend désormais l’hydratation après cette navigation aussi. Contrôle ciblé indépendant à 15:23:36 UTC : dialogue de conseil ouvert, fermeture et ajout au panier local réussis, enrichissement présent et aucun débordement à 390 px ; `pilot-editorial-production-interaction/report.json`. Les tentatives Cloudflare `/cdn-cgi/rum` ont été bloquées, aucune écriture réseau exécutée. Les 14 premiers contrôles et ce contrôle ciblé ne sont pas présentés comme une réussite intégrale du script initial qui a échoué.
 
-Prochaine étape : implémenter le contrat de mesure avec ses tests, compléter la politique de fraîcheur et les mesures de performance, puis poursuivre la bibliothèque technique. Le plan complet reste actif ; cette livraison ne prouve ni un classement Google ni un résultat commercial.
+Les travaux de mesure, de fraîcheur et de performance ont ensuite avancé ; leur état actuel figure dans le tableau et les rapports associés. Le plan complet reste actif ; cette livraison ne prouve ni un classement Google ni un résultat commercial.
+
+## Livraison des lectures simultanées — 31 octobre 2026
+
+- PR #33 fusionnée après succès de la CI générale #370 et du contrat runtime #94 sur `78b3631f36986c1b4aaf5576c09e31d2ff4f4867` ; merge `f065c4ae226e9aed167ea0479083969230f1296f`.
+- Les métadonnées et le fragment produit démarrent simultanément. Les métadonnées déterminent toujours les statuts 404/503 ; un fragment spéculatif ne rend pas une fiche invalide publique. Les erreurs de rendu sont capturées immédiatement et HEAD ne déclenche pas ce rendu. 165 tests frontend, lint et build réussis.
+- Backend `72421e71-9b3f-4a2b-a6e3-bb8867054dd1` en SUCCESS ; Worker `a8a17247-3aeb-43be-96f1-323f39d6d823`. Code téléversé et identité du paquet vérifiés. Les deux images ajoutées indépendamment en amont ont été conservées.
+- Recette publique complète : 12 contrôles réussis, cinq familles, cinq produits et sitemap de 1 952 URL dont 1 933 produits. Preuves : `parallel-production-release.json` et `parallel-production-confirmed/report.json`.
+- La troisième série mobile est incomplète, quatre passages sur neuf et aucune fiche mesurée ; aucun gain de vitesse n'est affirmé. Détails dans PERFORMANCE_MOBILE_SEO_2026-10-30.md.
+
+## Search Console — données obtenues et sitemap soumis
+
+Lecture authentifiée et deux exports natifs effectués dans Chrome le 31 octobre. Sur les trois mois disponibles, 58 clics et 405 impressions ; sur les 28 derniers jours, 28 clics contre 6 sur les 28 précédents. Volumes faibles et période trop précoce pour attribuer cette évolution aux livraisons. Les clics se concentrent sur l'accueil, le Cameroun et le mobile.
+
+Google a confirmé le sitemap soumis et lu le 31 octobre, en Success, avec 1 952 pages découvertes. Le rapport d'indexation est antérieur aux livraisons : dernière actualisation le 23 octobre. Les 122 noindex exportés correspondent à des recherches, filtres et pages de compte ; aucune suppression de ces protections ni validation globale de correction.
+
+Analyse et prochaines vérifications dans ETAT_SEARCH_CONSOLE_2026-10-31.md. Le contrôle de Chrome a ensuite été désactivé dans les paramètres Work ; l'inspection d'URL et la lecture des données terrain ne sont pas déclarées terminées. La bibliothèque technique peut avancer indépendamment de cet accès.
