@@ -5,6 +5,7 @@ import prerenderHome from './tooling/prerenderHome.js'
 import buildCatalogueRenderer from './tooling/buildCatalogueRenderer.js'
 import prefetchCatalogue from './tooling/prefetchCatalogue.js'
 import { applyHostedProductionDefaults } from './tooling/hostedProduction.js'
+import organizationSchema from './tooling/organizationSchema.js'
 
 applyHostedProductionDefaults()
 
@@ -21,6 +22,7 @@ export default defineConfig({
     prerenderHome(),
     buildCatalogueRenderer(),
     prefetchCatalogue(),
+    organizationSchema(),
   ],
   build: { manifest: true },
   server: {
