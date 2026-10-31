@@ -34,13 +34,13 @@ Plan validé par l’utilisateur le 27 octobre 2026. Objectif complet conservé 
 | SEO-18 | Publié, lecture réelle à vérifier | Attribution persistante et tableau livrés ; deux rapports protégés contre accès anonyme. Tableau testé avec données synthétiques à 390/1440 px ; lecture authentifiée réelle restante. LIVRAISON_MESURE_SEO.md |
 | SEO-19 | Optimisation publiée, mesure à compléter | 29 images réparées ; deux séries complètes et une troisième incomplète. PR #33 publiée : lectures produit simultanées, 165 tests et 12 contrôles publics réussis ; aucune amélioration de vitesse encore démontrée |
 | SEO-20 | Développé et testé localement | Registre unique, états, validation et projections publiques ; brouillons exclus des artefacts livrables. BIBLIOTHEQUE_TECHNIQUE_SEO.md |
-| SEO-21 | Développé, recette visuelle restante | Listes/détails, HTML initial statique, métadonnées, liens et sitemap ; 10 contrôles HTTP locaux réussis. Non publié |
+| SEO-21 | Développé, CI réussie, recette visuelle restante | PR #34 en brouillon ; CI #373 et runtime #97 entièrement réussis sur 1906f54e. Listes/détails, HTML initial, métadonnées, liens et sitemap ; 10 contrôles HTTP locaux réussis. Non publié |
 | SEO-22 | Quatre guides rédigés et sourcés | Marquage, condensateur, multimètre, connecteur ; documents fabricants relus le 31 octobre. Textes français sélectionnés dans la version préparée, non encore en production |
 | SEO-23 | Quatre brouillons préparés | Paires et usages issus du catalogue ; notices, contexte ou validation métier manquants. Aucune équivalence inventée, aucun dossier public |
 | SEO-24 | Procédure documentée | Déclencheurs de revue, retrait, preuve métier, régénération et recette dans BIBLIOTHEQUE_TECHNIQUE_SEO.md ; première livraison encore à terminer |
-| SEO-25 | À faire | Vérification des faits commerciaux et informations locales |
-| SEO-26 | À faire | Audit Business Profile accessible et corrections proposées |
-| SEO-27 | À faire | Scripts vidéo et dispositif d’avis |
+| SEO-25 | Registre initial préparé | Coordonnées et horaires effectivement trouvés dans les modules publics ; enseigne observée sur la photo. Horaires opérationnels, point exact et relation des lieux encore à confirmer. IDENTITE_LOCALE_SEO_2026-10-31.md |
+| SEO-26 | Propositions préparées, fiche à identifier | Lien Maps actuel = recherche de quartier ; aucune fiche Business identifiée sans ambiguïté. Nom/description et corrections proposés, aucune modification de compte |
+| SEO-27 | Quatre scripts et dispositif d'avis préparés | AVIS_ET_VIDEOS_SEO_NEWOTEG.md ; message neutre, réponses et scripts de 25–40 s. Prises de vue et lien d'avis restant à obtenir ; aucun message envoyé ni compte externe modifié |
 | SEO-28 | À faire | Dix partenaires et messages préparés ; aucun envoi sans instruction explicite |
 | SEO-29 | À faire | Vérification de l’éligibilité Merchant Center |
 | SEO-30 | À faire | Langue déterminée par l’URL |
