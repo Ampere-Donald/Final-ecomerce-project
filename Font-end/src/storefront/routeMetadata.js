@@ -1,4 +1,5 @@
 import { seoFamily, familyMetadata } from './seoFamilies.js';
+import { editorialMetadata } from './editorialRoutes.js';
 export const SITE_ORIGIN = "https://newoteg.com";
 const privatePath =
   /^\/(?:panier|checkout|suivi-invite|mes-devis|commandes|profile|favourites|login|signup|forgot-password)(?:\/|$)/i;
@@ -102,6 +103,8 @@ const privateTitles = {
   "forgot-password": ["Retrouver mon accès", "Recover my access"],
 };
 export function pageMetadata(pathname, search = "", lang = "fr") {
+  const editorial = editorialMetadata(pathname);
+  if (editorial) return editorial;
   const family = seoFamily(pathname);
   if (family) return familyMetadata(family, search, lang);
   const english = lang === "en",

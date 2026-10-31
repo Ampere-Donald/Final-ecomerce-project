@@ -16,6 +16,8 @@ import { seoFamily } from './src/storefront/seoFamilies.js';
 import { productBackendFragment } from './src/storefront/backendProduct.js';
 import { injectProductFragment } from './src/storefront/initialProduct.js';
 import { sitemapResponse } from './src/storefront/publicSitemap.js';
+import { injectEditorialFragment } from './src/storefront/initialEditorial.js';
+import { editorialDocumentPaths } from './src/storefront/editorialRoutes.js';
 
 function privateResponse(response) {
   const headers = new Headers(response.headers);
@@ -28,6 +30,12 @@ function privateResponse(response) {
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
+    const normalizedEditorial = ['GET', 'HEAD'].includes(request.method)
+      ? editorialDocumentPaths().find(path => path === (url.pathname.toLowerCase().replace(/\/+$/, '') || '/')) : null;
+    if (normalizedEditorial && normalizedEditorial !== url.pathname) {
+      url.pathname = normalizedEditorial;
+      return new Response(null, { status: 308, headers: { Location: url.href, 'Cache-Control': 'public, max-age=300' } });
+    }
     if (url.pathname === '/sitemap.xml' && ['GET', 'HEAD'].includes(request.method) && env.backendCatalogue)
       return sitemapResponse(request, env.backendCatalogue);
     if (url.pathname.startsWith('/api/') || url.pathname.startsWith('/uploads/')) {
@@ -97,6 +105,10 @@ export default {
         headers.delete('Content-Encoding');
         headers.set('Cache-Control', 'public, max-age=0, must-revalidate');
         let html = renderFallbackMetadata(await response.text(), metadata);
+        if (env.editorialFragments) {
+          const editorial = injectEditorialFragment(html, url.pathname, env.editorialFragments, env.editorialStyles);
+          if (editorial) html = editorial;
+        }
         const cataloguePage = url.pathname === '/catalogue' || Boolean(seoFamily(url.pathname));
         if (cataloguePage && env.backendCatalogue) {
           try {

@@ -3,16 +3,24 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import worker from '../worker.js';
 import { isApplicationDocument } from '../src/storefront/documentRoutes.js';
+import { editorialDocumentPaths } from '../src/storefront/editorialRoutes.js';
 
 test('Every explicit React route remains available through the edge classifier', () => {
   const app = readFileSync(new URL('../src/App.jsx', import.meta.url), 'utf8');
   const paths = [...app.matchAll(/path="([^"]+)"/g)].map(m => m[1]).filter(p => p !== '*');
   assert.ok(paths.length > 20);
   for (const path of paths) {
+    // Editorial dynamic templates resolve only selected published slugs. A
+    // made-up slug or private draft is intentionally a real HTTP 404.
+    if (path === '/guides/:slug' || path === '/remplacement/:slug') {
+      assert.equal(isApplicationDocument(path.replace(':slug', 'example')), false);
+      continue;
+    }
     const concrete = path.replace(/:[^/]+/g, 'example');
     assert.equal(isApplicationDocument(concrete), true, concrete);
     assert.equal(isApplicationDocument(concrete.toUpperCase() + '/'), true, concrete);
   }
+  for (const path of editorialDocumentPaths()) assert.equal(isApplicationDocument(path), true, path);
 });
 
 test('Unknown HTML fallback is 404 without losing the application error page', async () => {
