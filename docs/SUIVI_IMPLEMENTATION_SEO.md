@@ -43,9 +43,9 @@ Plan validé par l’utilisateur le 27 octobre 2026. Objectif complet conservé 
 | SEO-27 | Quatre scripts et dispositif d'avis préparés | AVIS_ET_VIDEOS_SEO_NEWOTEG.md ; message neutre, réponses et scripts de 25–40 s. Prises de vue et lien d'avis restant à obtenir ; aucun message envoyé ni compte externe modifié |
 | SEO-28 | Dix pistes et messages préparés | Sources primaires, points d'entrée publics, ressource associée et dix brouillons personnalisés dans PARTENAIRES_EDITORIAUX_SEO_NEWOTEG.md ; fiche de préparation rédigée. Contacts à revalider avant envoi autorisé, aucun message envoyé |
 | SEO-29 | Étude documentaire effectuée, compte à vérifier | Cameroun absent des listes de fiches locales gratuites et des pays classiques consultées, présent pour les annonces locales ; sources non homogènes, éligibilité réelle du compte non établie. MERCHANT_CENTER_DECISION_2026-10-31.md ; aucun flux ou campagne créé |
-| SEO-30 | Diagnostic et raccordement à faire | Préférence locale réappliquée après rendu initial sur la même URL ; comportement non encore corrigé. LOT_ANGLAIS_SEO.md décrit les points de raccordement nécessaires |
-| SEO-31 | Vingt fiches et quatre guides traduits, non publiés | Copies anglaises complètes liées par empreinte aux sources FR ; composant/balisage produit raccordés, 20 rendus de composants réussis. Cinq familles déjà bilingues ; URL anglaises et parcours restant à livrer |
-| SEO-32 | À faire | Canonical propres, hreflang réciproques, sitemap et recette de langue avant/après hydratation ; aucune nouvelle URL anglaise déclarée publiée |
+| SEO-30 | Routage localisé intégré, recette partielle | Langue déterminée par l’URL, sélecteur avec vrais liens, basename anglais, snapshots et rendu serveur cohérents. 184 tests ; recette interactive finale encore à faire. Non publié |
+| SEO-31 | Vingt fiches et quatre guides intégrés en anglais, non publiés | HTML anglais compilé sous /en/, cinq familles et accueil, retrait sur changement d’identité. 32 contrôles Worker locaux ; détails dans LOT_ANGLAIS_SEO.md |
+| SEO-32 | Annotations intégrées et testées localement | Canonical propres, hreflang réciproques, sitemap conditionné aux identités revues, protections privées. Publication et recette publique restantes ; accès navigateur interrompu et GitHub connecté indisponible |
 | SEO-33 | À faire | Évaluation commerciale du pays pilote |
 | SEO-34 | À faire | Extension vers 50 puis jusqu’à 100 fiches selon vérification |
 | SEO-35 | À faire | Extension vers 8–12 familles, 8 guides et 8 dossiers |
@@ -158,3 +158,11 @@ Lecture authentifiée et deux exports natifs effectués dans Chrome le 31 octobr
 Google a confirmé le sitemap soumis et lu le 31 octobre, en Success, avec 1 952 pages découvertes. Le rapport d'indexation est antérieur aux livraisons : dernière actualisation le 23 octobre. Les 122 noindex exportés correspondent à des recherches, filtres et pages de compte ; aucune suppression de ces protections ni validation globale de correction.
 
 Analyse et prochaines vérifications dans ETAT_SEARCH_CONSOLE_2026-10-31.md. Le contrôle de Chrome a ensuite été désactivé dans les paramètres Work ; l'inspection d'URL et la lecture des données terrain ne sont pas déclarées terminées. La bibliothèque technique peut avancer indépendamment de cet accès.
+
+## Lot anglais — raccordement localisé préparé
+
+Les vingt traductions produit et quatre guides sont maintenant reliés aux URL `/en/`, au moteur serveur, aux données d’hydratation, à la canonical et aux hreflang. L’accueil possède deux rendus séparés ; les pages privées conservent leurs protections dans les deux langues. Le sitemap retire une version anglaise dont l’identité revue a changé. Les nouveaux attributs, même encore vides, retirent les textes revus des deux langues jusqu’à relecture.
+
+Recette détaillée et limites dans LOT_ANGLAIS_SEO.md. Les contrôles du moteur compilé utilisent des fixtures déclarées et refusent les écritures. Le navigateur a confirmé une partie du guide condensateur sur mobile puis le changement de langue ; une interaction après Retour n’a pas été confirmée. Work a ensuite désactivé le contrôle. Les corrections d’ancres et la recette complète sur mobile/bureau restent à vérifier visuellement.
+
+Le lot n’est pas publié. GitHub connecté a été revérifié et reste indisponible pour la création de PR. La production ne change pas ; le plan complet reste en cours.

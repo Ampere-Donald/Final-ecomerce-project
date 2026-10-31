@@ -2,7 +2,10 @@
 import assert from 'node:assert/strict';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { resolve, join } from 'node:path';
-import { publishedEditorial } from '../src/storefront/publishedEditorial.generated.js';
+import { publishedEditorial as frenchEditorial } from '../src/storefront/publishedEditorial.generated.js';
+import { preparedEnglishGuides } from '../src/storefront/guidesEnglish.generated.js';
+import { pathLanguage } from '../src/storefront/localePath.js';
+const publishedEditorial = [...frenchEditorial, ...preparedEnglishGuides];
 import { editorialPath, editorialDocumentPaths } from '../src/storefront/editorialRoutes.js';
 const origin = new URL(process.env.ORIGIN || 'http://127.0.0.1:8877').origin;
 const out = process.env.OUT ? resolve(process.env.OUT) : null;
@@ -16,7 +19,7 @@ try {
     const response = await read(path);
     assert.equal(response.status, 200, path);
     const html = await response.text();
-    assert(html.includes('data-initial-editorial="fr"'), path);
+    assert(html.includes(`data-initial-editorial="${pathLanguage(path)}"`), path);
     assert.equal((html.match(/<h1\b/g) || []).length, 1, path);
     const entry = publishedEditorial.find(entry => editorialPath(entry) === path);
     if (entry) {

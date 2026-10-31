@@ -43,6 +43,8 @@ jobs:
       - run: npm run build --prefix Font-end
       - name: Verify emitted editorial pages and draft isolation
         run: node Font-end/tests/verify-editorial-build.mjs
+      - name: Verify localized Worker HTML and stale translation withdrawal
+        run: node Font-end/tests/verify-localized-render.mjs
       - run: npm run build:catalogue-package --prefix Font-end
       - run: npm run build --prefix Back-end
       - name: Verify compiled package and frontend version handshake

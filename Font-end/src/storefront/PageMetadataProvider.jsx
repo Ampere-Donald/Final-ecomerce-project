@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation } from "./LocaleRouter";
 import { useI18n } from "../context/I18nContext";
 import { MetadataContext, metadataKey } from "./metadataContext.js";
 import { pageMetadata, SITE_ORIGIN } from "./routeMetadata.js";
@@ -26,6 +26,8 @@ export default function PageMetadataProvider({ children }) {
       ? "noindex, follow"
       : base.robots;
   const canonical = page.noindex ? null : base.canonical;
+  const alternates = canonical && robots === 'index, follow' &&
+    (!pathname.startsWith('/product/') || page.translated === true) ? base.alternates : [];
 
   return (
     <MetadataContext.Provider value={context}>
@@ -35,6 +37,7 @@ export default function PageMetadataProvider({ children }) {
       <meta name="robots" content={robots} />
       {base.private && <meta name="referrer" content="no-referrer" />}
       {canonical && <link rel="canonical" href={canonical} />}
+      {alternates.map(entry => <link key={entry.lang} rel="alternate" hrefLang={entry.lang} href={entry.href} />)}
       <meta property="og:type" content="website" />
       <meta property="og:site_name" content="X-Electronic / NEWOTEG" />
       <meta property="og:locale" content={(base.lang || lang) === "en" ? "en_CM" : "fr_CM"} />

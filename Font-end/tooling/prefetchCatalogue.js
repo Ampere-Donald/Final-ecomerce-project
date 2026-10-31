@@ -5,6 +5,7 @@ import { cardImage } from '../src/storefront/cardImage.js';
 import { transformWithEsbuild } from 'vite';
 import { productImageUrl, productMediaBase } from '../src/utils/productImageUrl.js';
 import { seoFamilies, seoFamily, familyPath, familyParameters } from '../src/storefront/seoFamilies.js';
+import { pathLanguage, basePath } from '../src/storefront/localePath.js';
 import { catalogueModules, startCatalogueModules } from './catalogueModules.js';
 import { catalogueTransportBase } from '../src/utils/catalogueTransport.js';
 
@@ -21,7 +22,7 @@ export default function prefetchCatalogue() {
         const base = config.env.VITE_API_URL || '/api';
         // No React, runtime import or Worker request. Start the public reads in
         // parallel with deferred scripts; use the same filter contract as React.
-        const families = `var seoFamilies=${JSON.stringify(seoFamilies)};var familyPath=${familyPath.toString()};var seoFamily=${seoFamily.toString()};var familyParameters=${familyParameters.toString()};`;
+        const families = `var pathLanguage=${pathLanguage.toString()};var basePath=${basePath.toString()};var seoFamilies=${JSON.stringify(seoFamilies)};var familyPath=${familyPath.toString()};var seoFamily=${seoFamily.toString()};var familyParameters=${familyParameters.toString()};`;
         const modules = catalogueModules(context.bundle);
         const source = `(function(){${families}var catalogueQuery=${catalogueQuery.toString()};var canRenderCatalogue=${canRenderCatalogue.toString()};var cardImage=${cardImage.toString()};var productImageUrl=${productImageUrl.toString()};var productMediaBase=${productMediaBase.toString()};var catalogueLeadImage=${catalogueLeadImage.toString()};var catalogueTransportBase=${catalogueTransportBase.toString()};(${startCataloguePrefetch.toString()})(window,${JSON.stringify(base)},catalogueQuery,canRenderCatalogue,catalogueLeadImage,catalogueTransportBase);(${startCatalogueModules.toString()})(window,${JSON.stringify(modules)},canRenderCatalogue);})();`;
         const { code } = await transformWithEsbuild(source, 'catalogue-prefetch.js',

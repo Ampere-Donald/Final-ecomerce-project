@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "./LocaleRouter";
 import PageMeta from "./PageMeta";
 import {
   ArrowRight,

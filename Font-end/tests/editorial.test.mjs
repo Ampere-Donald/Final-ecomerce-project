@@ -78,7 +78,7 @@ test('public editorial metadata, canonical and sitemap follow the publication re
   for (const entry of publishedEditorial) {
     const path = editorialPath(entry);
     assert.equal(editorialMetadata(path).canonical, 'https://newoteg.com' + path);
-    assert.equal(pageMetadata(path, '?utm_source=example', 'en').title, entry.title + ' — NEWOTEG');
+    assert.equal(pageMetadata(path, '?utm_source=example').title, entry.title + ' — NEWOTEG');
     assert(renderSitemapResponse([]).includes('<loc>https://newoteg.com' + path + '</loc>'));
   }
   assert.equal(editorialMetadata('/remplacement').robots, 'noindex, follow');

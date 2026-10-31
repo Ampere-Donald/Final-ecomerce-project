@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link } from "./LocaleRouter";
 import { ArrowRight } from "lucide-react";
 import { Copy } from "./Elements";
 import useResource from "./useResource";

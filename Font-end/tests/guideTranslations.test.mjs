@@ -15,8 +15,8 @@ test('four full guide translations preserve structure, source URLs and related p
     assert.deepEqual(translated.sources.map(source=>source.url),source.sources.map(source=>source.url));
     assert.deepEqual(translated.products.map(product=>product.id),source.products.map(product=>product.id));
     assert.deepEqual(translated.sections.map(section=>section.sources),source.sections.map(section=>section.sources));
-    assert(!editorialDocumentPaths().includes('/en/guides/'+source.slug));
-    assert(!renderSitemapResponse([]).includes('/en/guides/'+source.slug));
+    assert(editorialDocumentPaths().includes('/en/guides/'+source.slug));
+    assert(renderSitemapResponse([]).includes('/en/guides/'+source.slug));
   }
 });
 test('guide publication cannot silently reuse a translation of changed source facts',()=>{

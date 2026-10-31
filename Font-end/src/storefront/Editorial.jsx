@@ -1,4 +1,4 @@
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation } from "./LocaleRouter";
 import { useI18n } from "../context/I18nContext";
 import { Copy, Crumbs } from "./Elements";
 import Footer from "./Footer";

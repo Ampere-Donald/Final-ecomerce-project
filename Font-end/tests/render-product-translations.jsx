@@ -10,7 +10,7 @@ import Product from '../src/storefront/Product';
 
 export function renderTranslationPreview(snapshot) {
   const output=renderToString(<StorefrontProviders initialLanguage="en" initialAnonymous>
-    <StaticRouter location={snapshot.url}><InitialResources snapshot={snapshot}><PageMetadataProvider>
+    <StaticRouter location={snapshot.url} basename="/en"><InitialResources snapshot={snapshot}><PageMetadataProvider>
       <StorefrontFrame path={snapshot.url} initial><Suspense><Routes><Route path="/product/:id" element={<Product />} /></Routes></Suspense></StorefrontFrame>
     </PageMetadataProvider></InitialResources></StaticRouter>
   </StorefrontProviders>);

@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { Link } from './LocaleRouter';
 import { useI18n } from '../context/I18nContext';
 import { getProductEditorial } from './productEditorial.js';
 

@@ -1,5 +1,5 @@
 import { createElement, useRef, useState } from "react";
-import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useParams } from "./LocaleRouter";
 import {
   ArrowRight,
   Package,

@@ -1,8 +1,12 @@
 import { seoFamilies, familyPath } from './seoFamilies.js';
 import { productDocumentId } from './initialProduct.js';
 import { publicEditorialPaths } from './editorialRoutes.js';
+import { hasEnglishRoute } from './localeRoutes.js';
+import { localizedPath } from './localePath.js';
+import { getRawProductTranslation } from './productTranslation.js';
 
-export const publicStaticPaths = ['/', '/catalogue', '/projets', '/offres', '/arrivages', '/equivalences', '/guides', '/faq', '/livraison', '/about', '/contact', '/devis', '/terms', '/privacy', ...publicEditorialPaths()];
+const frenchStaticPaths = ['/', '/catalogue', '/projets', '/offres', '/arrivages', '/equivalences', '/guides', '/faq', '/livraison', '/about', '/contact', '/devis', '/terms', '/privacy'];
+export const publicStaticPaths = [...new Set([...frenchStaticPaths, ...frenchStaticPaths.filter(hasEnglishRoute).map(path => localizedPath(path, 'en')), ...publicEditorialPaths()])];
 
 // No stock/prices/private documents and no invented lastmod date. Products
 // currently have a creation date but no reliable public modification timestamp.
@@ -17,8 +21,10 @@ export function renderSitemapResponse(products) {
       if (product.categorieId === family.category && product.sousCategorieId === family.subcategory) familyIds.add(family.slug);
     }
   }
-  const paths = [...publicStaticPaths, ...seoFamilies.filter(f => familyIds.has(f.slug)).map(familyPath),
-    ...[...ids].sort().map(id => '/product/' + id)];
+  const families = seoFamilies.filter(f => familyIds.has(f.slug)).map(familyPath);
+  const paths = [...publicStaticPaths, ...families, ...families.map(path => localizedPath(path, 'en')),
+    ...[...ids].sort().map(id => '/product/' + id),
+    ...products.filter(getRawProductTranslation).map(product => '/en/product/' + product.id).sort()];
   const xml = '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' +
     paths.map(path => '  <url><loc>https://newoteg.com' + path + '</loc></url>').join('\n') + '\n</urlset>\n';
   return xml;

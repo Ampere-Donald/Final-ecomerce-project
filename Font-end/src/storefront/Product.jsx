@@ -1,6 +1,6 @@
 import EquivalenceEntry from "./EquivalenceEntry";
 import { lazy, Suspense, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams } from "./LocaleRouter";
 import PageMeta from "./PageMeta";
 import { ShoppingCart, ZoomIn, FileText } from "lucide-react";
 import { useI18n } from "../context/I18nContext";
@@ -30,7 +30,7 @@ import { isWebsiteHomepage } from './productEditorial.js';
 import { useJourneyObservation } from "./useJourney.js";
 import { productSchemaJSON } from './productSchema.js';
 import { seoFamilies, familyPath } from './seoFamilies.js';
-import { productText } from './productTranslation.js';
+import { productText, getProductTranslation } from './productTranslation.js';
 const ProductViewer = lazy(() => import("./ProductViewer"));
 
 function Detail({ product }) {
@@ -87,7 +87,7 @@ function Detail({ product }) {
   );
   return (
     <>
-      <PageMeta title={`${name} — X-Electronic`} description={description?.slice(0, 155) || `${name} — X-Electronic, ${lang === 'en' ? 'the NEWOTEG electronics shop.' : 'la boutique électronique de NEWOTEG.'}`} />
+      <PageMeta translated={Boolean(getProductTranslation(product))} title={`${name} — X-Electronic`} description={description?.slice(0, 155) || `${name} — X-Electronic, ${lang === 'en' ? 'the NEWOTEG electronics shop.' : 'la boutique électronique de NEWOTEG.'}`} />
       <script type="application/ld+json" data-product-schema="true" dangerouslySetInnerHTML={{ __html: productSchemaJSON(product, lang) }} />
       <div className="e-wrap e-product-page">
         <Crumbs title={name} />
@@ -279,7 +279,8 @@ export default function Product() {
   const { id } = useParams();
   const { lang } = useI18n();
   const resource = useResource("/produits/" + encodeURIComponent(id), true);
-  const missing = resource.error?.response?.status === 404;
+  const missing = resource.error?.response?.status === 404 || (lang === 'en' && resource.data &&
+    !getProductTranslation(adaptProduct(resource.data, resolveImageUrl)));
   return missing ? (
     <>
       <PageMeta title={`${lang === "en" ? "Product not found" : "Produit introuvable"} — X-Electronic`} noindex />

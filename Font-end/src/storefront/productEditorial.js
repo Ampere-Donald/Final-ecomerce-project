@@ -19,7 +19,7 @@ export function getProductEditorial(product, lang = 'fr', entries = productEdito
   const expected = entry.expected;
   if (!expected || ['model', 'image', 'description', 'brand', 'urlDatasheet'].some(key =>
     (product[key] || '') !== (expected[key] || ''))) return null;
-  if (product.technicalAttributes?.length || product.attributes?.length) return null;
+  if (product.attributeCount || product.technicalAttributes?.length || product.attributes?.length) return null;
   return translated ? {...entry, reviewedAt:translated.reviewedAt, en:translated.en} : entry;
 }
 

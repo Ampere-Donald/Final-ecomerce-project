@@ -48,7 +48,7 @@ test('catalogue changes withdraw translated claims and preserve the current comm
   const p=product(productEditorialEntries[0]);
   for(const changed of [{...p,model:p.model+' new'},{...p,description:'New catalogue description'},
     {...p,brand:'New manufacturer'},{...p,image:'/new-image.webp'},{...p,urlDatasheet:'https://example.com/manual'},
-    {...p,attributes:[['Voltage','63V']]},{...p,technicalAttributes:[{name:'Voltage'}]}]) {
+    {...p,attributes:[['Voltage','63V']]},{...p,technicalAttributes:[{name:'Voltage'}]},{...p,attributeCount:1}]) {
     assert.equal(getProductTranslation(changed),null);
     assert.equal(getProductEditorial(changed,'en'),null);
     assert.equal(productText(changed,'en').description,changed.description||'');

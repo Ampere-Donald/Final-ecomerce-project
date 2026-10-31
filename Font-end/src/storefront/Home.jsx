@@ -2,7 +2,7 @@ import EquivalenceEntry from "./EquivalenceEntry";
 import HomeMerchandising from "./HomeMerchandising";
 import "./home-hero.css";
 import HomeSelection from "./HomeSelection";
-import { Link } from "react-router-dom";
+import { Link } from "./LocaleRouter";
 import PageMeta from "./PageMeta";
 import {
   ArrowRight,

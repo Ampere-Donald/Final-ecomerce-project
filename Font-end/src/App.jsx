@@ -4,6 +4,7 @@ import {
   Routes,
   Route,
   useLocation,
+  useNavigationType,
 } from "react-router-dom";
 import ProtectedRoute from "./components/ProtectedRoute/ProtectedRoute";
 import StorefrontFrame from "./storefront/StorefrontFrame";
@@ -12,6 +13,10 @@ import { startJourney, leaveCheckout } from "./storefront/journey.js";
 import PageMetadataProvider from "./storefront/PageMetadataProvider";
 import { seoFamilies, familyPath, seoFamily } from './storefront/seoFamilies.js';
 import { isEditorialDocument } from './storefront/editorialRoutes.js';
+import { useI18n } from './context/I18nContext';
+import { routerBasename } from './storefront/localePath.js';
+import { hasEnglishRoute } from './storefront/localeRoutes.js';
+import { restoreRoutePosition } from './storefront/routeScroll.js';
 
 const Home = lazy(() => import("./storefront/Home"));
 const Catalogue = lazy(() => import("./storefront/Catalogue"));
@@ -37,7 +42,9 @@ const GuestTracking = lazy(() => import("./storefront/GuestTracking"));
 const DevisPrint = lazy(() => import("./storefront/DevisPrint"));
 const NotFound = lazy(() => import("./storefront/ShopInfo"));
 
-const PageFallback = () => (
+const PageFallback = () => {
+  const { lang } = useI18n();
+  return (
   <div
     role="status"
     aria-live="polite"
@@ -49,9 +56,10 @@ const PageFallback = () => (
       fontWeight: 600,
     }}
   >
-    Chargement…
+    {lang === 'en' ? 'Loading…' : 'Chargement…'}
   </div>
-);
+  );
+};
 
 function AppContent({ initialHome, initialCatalogue, initialProduct, initialEditorial }) {
   const HomeRoute = initialHome || Home;
@@ -59,18 +67,20 @@ function AppContent({ initialHome, initialCatalogue, initialProduct, initialEdit
   const ProductRoute = initialProduct || ProductDetails;
   const LibraryRoute = initialEditorial || TechnicalLibrary;
   const location = useLocation();
+  const navigationType = useNavigationType();
+  const { lang } = useI18n();
+  const available = lang !== 'en' || hasEnglishRoute(location.pathname);
   useEffect(() => {
     startJourney();
     if (location.pathname !== "/checkout") leaveCheckout();
   }, [location.pathname]);
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, [location.pathname]);
+  useEffect(() => restoreRoutePosition(window, document, location.hash, navigationType),
+    [location.pathname, location.hash, navigationType]);
 
   return (
     <StorefrontFrame path={location.pathname} initial={Boolean((initialHome && location.pathname === '/') || (initialCatalogue && (location.pathname === '/catalogue' || seoFamily(location.pathname))) || (initialProduct && /^\/product\/[^/]+$/.test(location.pathname)) || (initialEditorial && isEditorialDocument(location.pathname)))}>
       <Suspense fallback={<PageFallback />}>
-        <Routes location={location}>
+        {available ? <Routes location={location}>
           <Route path="/" element={<HomeRoute />} />
           <Route path="/catalogue" element={<CatalogueRoute />} />
           {seoFamilies.map(family => <Route key={family.slug} path={familyPath(family)} element={<CatalogueRoute />} />)}
@@ -161,16 +171,17 @@ function AppContent({ initialHome, initialCatalogue, initialProduct, initialEdit
 
           {/* 404 */}
           <Route path="*" element={<NotFound />} />
-        </Routes>
+        </Routes> : <NotFound />}
       </Suspense>
     </StorefrontFrame>
   );
 }
 
-function App({ initialHome, initialCatalogue, initialProduct, initialEditorial, snapshot, router }) {
+function App({ initialHome, initialCatalogue, initialProduct, initialEditorial, snapshot, router, routerProps }) {
   const RouterComponent = router || Router;
+  const { lang } = useI18n();
   return (
-    <RouterComponent>
+    <RouterComponent basename={routerBasename(lang)} {...routerProps}>
       <InitialResources snapshot={snapshot}><PageMetadataProvider><AppContent initialHome={initialHome} initialCatalogue={initialCatalogue} initialProduct={initialProduct} initialEditorial={initialEditorial} /></PageMetadataProvider></InitialResources>
     </RouterComponent>
   );

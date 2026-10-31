@@ -24,7 +24,7 @@ try {
     const raw={id:entry.id,estActif:true,nomProduit:entry.expected.model,description:entry.expected.description,imageUrl:entry.expected.image,
       marque:entry.expected.brand,urlDatasheet:entry.expected.urlDatasheet,categorieId:family.category,sousCategorieId:family.subcategory,
       categorie:{id:family.category,nom:family.en},sousCategorie:{id:family.subcategory,nom:family.en},attributs:[],prixPublic:null,quantiteStock:null};
-    const snapshot=productSnapshot(new URL('https://newoteg.com/product/'+entry.id),raw,Date.now());
+    const snapshot=productSnapshot(new URL('https://newoteg.com/en/product/'+entry.id),raw,Date.now());
     const html=renderTranslationPreview(snapshot);
     const visible=decode(html);
     assert(visible.includes(copy.name),entry.id+' name');assert(visible.includes(copy.description),entry.id+' description');

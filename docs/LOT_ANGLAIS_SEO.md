@@ -1,52 +1,49 @@
-# Lot anglais — préparation au 31 octobre 2026
+# Lot anglais — raccordement local au 31 octobre 2026
 
-État : traductions préparées et raccordement partiel aux composants, **aucune nouvelle URL anglaise publiée**. Les tâches SEO-30 à SEO-32 restent ouvertes. Ce lot travaille sur `codex/seo-languages`, séparément de la PR #34 qui conserve sa version française testée.
+État : **routage, HTML serveur et annotations intégrés sur `codex/seo-languages`, non publiés**. La recette interactive reste partielle ; aucune nouvelle URL anglaise en production n’est affirmée. Le plan complet reste actif.
 
-## Contenu traduit
+## Comportement préparé
 
-- Vingt fiches : nom et description anglais, titre/texte de la note, deux points de vérification et libellés des sources. Les vingt identifiants et les références documentaires restent identiques au pilote français.
-- Quatre guides : titre, résumé, sections, listes, tableau, limites, portée de revue et libellés des sources/liens. Le corps anglais n'entre pas encore dans le registre public des guides.
-- Les cinq familles possèdent déjà leurs titres, descriptions et aides au choix en anglais. Leur accès indépendant via une URL anglaise reste à raccorder.
-- Les pages de service disposent de chaînes anglaises existantes ; leur parcours complet devra être revu avec le routage localisé, les comptes et les actions de conseil.
+Les URL existantes restent françaises. Les versions anglaises utilisent `/en/` pour l’accueil, les pages de service traduites, les cinq familles, les vingt fiches revues et les quatre guides. Le sélecteur est un lien vers une autre URL ; les préférences du navigateur ou `appLang` ne réécrivent plus la langue après hydratation. Aucun préfixe n’est ajouté aux endpoints API, aux images ou aux sources externes.
 
-Sources de traduction : `Font-end/editorial/product-english.json` et `Font-end/editorial/guides-english.json`. Les textes ne rajoutent pas de caractéristique technique, avis, certification, livraison ou condition commerciale. Les descriptions anglaises des produits sont adaptées pour ne pas conserver une ancienne mention de prix dans une copie éditoriale ; le prix reste la donnée commerciale courante.
+Le routeur conserve les parcours de compte, panier, devis et conseil sous la langue courante. Les liens vers un produit ou projet sans version anglaise rejoignent son URL française. Une URL anglaise inconnue reçoit 404 et noindex ; elle ne publie pas implicitement une copie française. Lorsque la page n’a pas de traduction, le sélecteur propose explicitement l’accueil anglais sans y transporter ses paramètres ou fragments.
 
-Points conservés explicitement : suffixes 2N2907/2N2907A, distinction des formats de condensateurs, reconstitution de certaines zones d'images, fabricant non établi, absence d'indice IP documenté, limites de puissance continue de l'alimentation et catégorie CAT non confirmée des multimètres. Une traduction n'apporte aucune preuve technique nouvelle.
+Chaque version admissible porte sa propre canonical, `html lang`, locale Open Graph et annotations fr/en réciproques et autoréférentes. Les paramètres de pagination admissibles suivent les deux versions ; les recherches et filtres restent noindex. Les comptes et commandes conservent noindex/nofollow, no-store et no-referrer dans les deux langues. Le fragment d’accès invité est retiré avant montage de l’application sur `/suivi-invite` et `/en/suivi-invite`.
 
-## Protection contre l'obsolescence
+Les rendus produit et catalogue prennent en charge les URL anglaises avec leur langue initiale. Les données anonymes d’hydratation restent liées à l’URL complète : un snapshot français ne peut pas amorcer une page anglaise. L’injection refuse une enveloppe d’une autre langue. L’accueil anglais est généré séparément au build ; les guides utilisent les mêmes composants et styles avec leur texte revu.
 
-Les traductions portent une empreinte SHA-256 de leur source française exacte. Toute modification du texte, de ses sources ou de l'identité produit fait échouer la vérification au build jusqu'à relecture de la traduction. Les sources des traductions sont héritées du français, dans le même ordre ; le traducteur ne peut pas substituer une notice différente.
+## Contenu et fraîcheur
 
-Les deux scripts `prepareProductTranslations.mjs` et `prepareGuideTranslations.mjs` vérifient les champs, la complétude, les dates réelles et l'égalité des projections générées. Ils refusent les copies périmées. Pour les guides, les sections, paragraphes, listes, tableaux, produits et sources conservent la structure revue ; aucun HTML libre n'est admis.
+Vingt fiches et quatre guides ont une traduction complète liée par SHA-256 à leur source française. Les sources documentaires et leur ordre sont hérités ; une traduction n’apporte aucune preuve technique nouvelle. Les cinq familles possèdent leurs titres, descriptions et repères anglais. Les caractéristiques manquantes, modèles incomplets et limites documentaires restent explicites.
 
-À l'exécution, `getProductTranslation` compare le nom, l'image, la description, la marque et le lien documentaire à l'identité française revue. Des attributs techniques nouveaux retirent aussi la traduction. Un changement de prix ou de stock ne périme pas les textes : ces valeurs restent issues de l'API. Le composant Product et son balisage utilisent le même nom et la même description traduits.
+La vérification du build refuse une traduction obsolète et un index de routes périmé. Le petit index public ne contient aucun corps de guide ; les textes complets restent dans la partie éditoriale chargée à la demande. Les quatre dossiers de remplacement non validés restent hors des artefacts publics et du sitemap.
 
-## Problème de langue observé et raccordement restant
+À l’exécution, la traduction produit dépend du nom, de l’image, de la description, de la marque, du lien documentaire et de l’absence de nouveaux attributs, même encore vides. Une identité modifiée retire la version anglaise : 404 côté Worker et moteur de rendu, retrait des annotations anglaises sur la fiche française et retrait du sitemap. Le navigateur utilise le même critère de présence d’attributs. Un changement de prix ou de stock ne périme pas la traduction : ces valeurs restent les données commerciales courantes.
 
-Le provider actuel commence avec la langue du rendu initial, puis recharge `appLang` ou la préférence du navigateur dans un effet. La même URL française peut donc afficher un autre contenu après hydratation. Le bouton de langue actuel change l'état sans changer l'URL. **Ce comportement n'est pas encore corrigé dans cette préparation de contenu.**
+Le sitemap lit uniquement les identités actives et, pour cette décision, les champs publics nécessaires ainsi qu’un identifiant d’attribut au maximum. Il ne lit ni prix, ni stock, ni données fournisseur. Seuls les produits dont l’identité revue correspond encore obtiennent une URL anglaise.
 
-Le raccordement doit couvrir ensemble les éléments suivants :
+## Vérifications
 
-1. Résoudre le français depuis les URL existantes et l'anglais depuis `/en/`, y compris au rendu serveur et avant hydratation. La préférence locale ne doit pas modifier la langue d'une URL ; aucune redirection par IP.
-2. Définir les correspondances pour les cinq familles, vingt fiches et quatre guides dont la traduction est complète. Un produit ou guide non traduit ne doit pas hériter d'une fausse version anglaise. Les paramètres de recherche et de pagination restent cohérents avec chaque route.
-3. Adapter App, les liens de navigation et le sélecteur de langue, les parseurs de fragments produit/catalogue, les snapshots d'hydratation et les enveloppes validées. Ne pas simplement réécrire le préfixe d'URL après rendu.
-4. Définir une canonical propre à chaque langue. Ajouter les liens `hreflang` réciproques et autoréférents seulement pour les versions réellement disponibles et admissibles. Les routes privées, brouillons et erreurs restent protégés dans les deux langues.
-5. Alimenter le sitemap avec les traductions effectivement sélectionnées et admissibles. Une traduction de fichier n'est pas à elle seule une publication ; les fichiers anglais préparés ne sont pas ajoutés au sitemap actuel.
-6. Vérifier les entrées directes, changement de langue, retour navigateur, stockage refusé ou de langue opposée, filtres, pages inconnues, conseil et panier. Comparer HTML, balisage et rendu après JavaScript.
+- 184 tests frontend réussis, lint et build ; 15 tests ciblés du backend et build Nest/Prisma réussis. Ces résultats portent aussi sur la correction finale de présence d’attributs.
+- 32 contrôles sur le Worker réel avec le moteur CJS compilé : vingt fiches anglaises et leurs équivalents français, cinq familles, quatre guides, accueil, index des guides et retrait sur identité périmée. Fixtures documentées ; un prix/stock fictif local seulement, les dix-neuf autres inconnus ; aucune écriture de production.
+- Contrôle des onze documents éditoriaux sélectionnés et quatre brouillons 404 ; 2 280 recherches de fuite de brouillons et huit vérifications de corps de guides hors du graphe JavaScript initial.
+- Quinze contrôles HTTP locaux : onze pages, trois chemins non publiés/inconnus et une redirection ; HEAD, sources et styles contrôlés. Une première tentative a révélé une origine de redirection incorrecte dans le serveur de recette ; ce serveur a été corrigé, sans changer les destinations de production.
+- Vingt rendus de composants anglais et contrat indépendant du paquet CJS réussis. Les identités du frontend et du paquet backend doivent rester identiques avant toute livraison.
 
-Le détail du schéma sera choisi pour conserver les URL françaises et les contrats anonymes/versionnés de rendu déjà livrés. Il faut tester les préfixes de langue sur les routes privées et ne pas affaiblir leur traitement noindex/no-store. Le contexte de langue ne doit jamais modifier une requête d'authentification ni ajouter un préfixe aux endpoints API ou aux images.
+## Recette navigateur et limites
 
-Google demande que les versions se citent réciproquement avec des URL absolues et qu'une version se cite elle-même. Les annotations doivent refléter le contenu disponible ; elles n'en réalisent pas la traduction. Une seule méthode d'annotation cohérente suffit, sans obligation d'empiler HTML, en-têtes et sitemap. [Documentation officielle sur les versions localisées](https://developers.google.com/search/docs/specialty/international/localized-versions).
+Le guide condensateur anglais a été observé à 390 × 844 : texte anglais, liens locaux, canonical anglaise, annotations réciproques et largeur de document 375 px. Le sélecteur a ouvert le guide français ; Retour a retrouvé l’URL anglaise. Deux lectures des journaux n’ont montré ni erreur ni avertissement. Le retrait des anciennes balises de métadonnées après démarrage a été constaté.
 
-## Vérifications réalisées et limites
+Cette observation **ne constitue pas une recette d’hydratation complète**. Après Retour, la recherche de la commande de pause des animations n’a pas trouvé sa cible ; aucune interaction réussie n’est déduite de cet essai. La position exacte du tableau/ancre et la stabilité finale doivent être revérifiées. Le navigateur a ensuite été désactivé dans Work avant le contrôle suivant. Aucun contournement n’a été tenté. L’override de viewport n’a pas pu être réinitialisé après cette interruption.
 
-- 175 tests frontend réussis, dont contrôles des vingt traductions, des quatre guides, des sources et du retrait sur changement d'identité.
-- Vingt rendus anglais avec les vrais composants Product, ProductEditorial et ProductSchema passent. Ce banc utilise les identités documentées et des prix/stocks inconnus : il vérifie les textes anglais et l'absence d'offre fabriquée. Ce sont des fixtures déclarées, aucune demande ou commande n'est écrite en production.
-- Les rendus de composants ne vérifient pas encore une URL publique anglaise, une canonical anglaise, l'hydratation ou le comportement réel du navigateur. Le rapport l'indique explicitement avec `publicEnglishURLsVerified: false`.
-- Lint et build vérifiés localement ; le contrat CJS compilé passe et les constructions indépendantes partagent la même identité de renderer. Le contrôle des artefacts éditoriaux français passe aussi : les quatre dossiers non validés restent hors des bundles et du sitemap. Les nouveaux textes ne sont pas encore publiés.
+Le code préserve désormais les ancres à l’entrée/changement de langue, y compris le contenu chargé tardivement, et laisse le navigateur restaurer sa position sur Retour. Cette correction est testée automatiquement mais sa recette visuelle finale reste à faire. Restent aussi les fiches, conseil, panier local, filtres, stockage refusé/opposé et bureau 1440 px.
 
-Preuves locales : `C:/Users/pc/Documents/Newoteg/output/seo-implementation/language-*`. Le contrôle du navigateur reste désactivé dans Work au dernier constat ; aucun contournement de ce réglage n'est entrepris. Les questions sur retours/remboursements et horaires ont été posées au propriétaire sans bloquer les traductions indépendantes.
+Preuves : `C:/Users/pc/Documents/Newoteg/output/seo-implementation/localized-*` et `language-routing-*`. `localized-browser/report.json` distingue explicitement observations et contrôles manquants ; les captures sont locales.
 
-Version préparée poussée sur `codex/seo-languages` : `b6e46a2662ff92f877e6cb8def50f763baaa0547`. Identité du renderer : `d0cc39575b09a5d42c3b07f0ba528f818d97b45dc8ca70eac65285747589d11d`. La PR anglaise n'a pas pu être ouverte : l'outil GitHub connecté signale qu'il n'est pas disponible, et `gh auth status` confirme l'absence de session CLI. Aucun succès de CI distante n'est donc affirmé pour ce commit. La PR #34 garde son périmètre français et son dernier résultat CI connu.
+## Livraison restante
 
-Une version regroupée des textes anglais est disponible pour relecture dans `output/seo-implementation/english-copy-review-2026-10-31.md`. Le raccordement des URL reste le prochain travail de développement, indépendant de la création d'une PR et des réponses commerciales en attente.
+La branche distante conserve le travail sans modifier la production. L’outil GitHub connecté a été revérifié : indisponible pour le modèle ; la PR anglaise n’est pas créée. Aucune CI distante nouvelle n’est annoncée. La PR #34 conserve son périmètre français déjà testé sur `1906f54e`.
+
+Avant publication : finir la recette interactive, ouvrir la PR et obtenir les contrôles CI/runtime des trois profils, préparer une livraison coordonnée backend/Worker avec la même identité et le retour arrière, puis vérifier les URL publiques et leur sitemap. Ne pas publier le Worker anglais avec le moteur backend actuellement en production : le contrat refuse volontairement les versions différentes. Aucun retour arrière de base de données n’est nécessaire pour ce lot sans migration.
+
+Identité du moteur préparé vérifiée après les dernières corrections : `22932018c51fb99e7870521a8785212e42924b087eca56b9fe5a237e6baa94fe`. Les constructions indépendantes frontend/backend sont identiques. Cette identité ne désigne pas le moteur actuellement déployé.

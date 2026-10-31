@@ -6,13 +6,11 @@ import buildCatalogueRenderer from './tooling/buildCatalogueRenderer.js'
 import prefetchCatalogue from './tooling/prefetchCatalogue.js'
 import { applyHostedProductionDefaults } from './tooling/hostedProduction.js'
 import { verifyEditorial } from './tooling/prepareEditorial.mjs'
-import { verifyProductTranslations } from './tooling/prepareProductTranslations.mjs'
-import { verifyGuideTranslations } from './tooling/prepareGuideTranslations.mjs'
+import { verifyEnglishRoutes } from './tooling/prepareEnglishRoutes.mjs'
 
 applyHostedProductionDefaults()
 await verifyEditorial()
-await verifyProductTranslations()
-await verifyGuideTranslations()
+await verifyEnglishRoutes()
 
 // https://vite.dev/config/
 export default defineConfig({

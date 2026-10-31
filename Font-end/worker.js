@@ -5,7 +5,9 @@
 // Cloudflare reconnu par les anciens Android, contrairement au certificat
 // Let's Encrypt de Railway, rejeté avant Android 7.1.1). Résout aussi CORS.
 const BACKEND = 'https://api.newoteg.com';
-import { isPrivateDocument } from './src/storefront/routeMetadata.js';
+import { isPrivateDocument, pageMetadata } from './src/storefront/routeMetadata.js';
+import { basePath, pathLanguage } from './src/storefront/localePath.js';
+import { hasEnglishRoute } from './src/storefront/localeRoutes.js';
 import { isApplicationDocument } from './src/storefront/documentRoutes.js';
 import { staticPublicMetadata, renderFallbackMetadata } from './src/storefront/serverMetadata.js';
 import { publicRecord, recordMetadata } from './src/storefront/recordMetadata.js';
@@ -30,6 +32,18 @@ function privateResponse(response) {
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
+    if (/^\/en(?:\/|$)/i.test(url.pathname) && !isPrivateDocument(url.pathname) && ['GET', 'HEAD'].includes(request.method)) {
+      const normalized = url.pathname.toLowerCase().replace(/\/+$/, '') || '/';
+      const canonical = normalized === '/en' ? '/en/' : normalized;
+      if (hasEnglishRoute(canonical) && canonical !== url.pathname) {
+        url.pathname = canonical;
+        return new Response(null, { status: 308, headers: { Location: url.href, 'Cache-Control': 'public, max-age=300' } });
+      }
+    }
+    if (url.pathname === '/en' && ['GET', 'HEAD'].includes(request.method)) {
+      url.pathname = '/en/';
+      return new Response(null, { status: 308, headers: { Location: url.href, 'Cache-Control': 'public, max-age=300' } });
+    }
     const normalizedEditorial = ['GET', 'HEAD'].includes(request.method)
       ? editorialDocumentPaths().find(path => path === (url.pathname.toLowerCase().replace(/\/+$/, '') || '/')) : null;
     if (normalizedEditorial && normalizedEditorial !== url.pathname) {
@@ -74,7 +88,7 @@ export default {
         try {
           const { fragment, error } = await productRender;
           if (error) throw error;
-          if (fragment) html = injectProductFragment(html, fragment, env.catalogueStyles);
+          if (fragment) html = injectProductFragment(html, fragment, env.catalogueStyles, pathLanguage(url.pathname));
         } catch (error) { env.reportCatalogueFailure?.(error); }
       }
       return new Response(html,
@@ -91,7 +105,7 @@ export default {
       headers.set('Cache-Control', 'no-store');
       headers.delete('ETag');
       headers.delete('Last-Modified');
-      const missing = new Response(request.method === 'HEAD' ? null : response.body,
+      const missing = new Response(request.method === 'HEAD' ? null : renderFallbackMetadata(await response.text(), pageMetadata(url.pathname, url.search)),
         { status: 404, statusText: 'Not Found', headers });
       return isPrivateDocument(url.pathname) ? privateResponse(missing) : missing;
     }
@@ -109,7 +123,7 @@ export default {
           const editorial = injectEditorialFragment(html, url.pathname, env.editorialFragments, env.editorialStyles);
           if (editorial) html = editorial;
         }
-        const cataloguePage = url.pathname === '/catalogue' || Boolean(seoFamily(url.pathname));
+        const cataloguePage = basePath(url.pathname) === '/catalogue' || Boolean(seoFamily(url.pathname));
         if (cataloguePage && env.backendCatalogue) {
           try {
             const fragment = await catalogueBackendFragment(url, env.backendCatalogue);
@@ -133,16 +147,22 @@ export default {
             env.reportCatalogueFailure?.(error);
           }
         }
-        if (url.pathname === '/') {
+        if (basePath(url.pathname) === '/') {
           try {
-            const snapshot = await env.ASSETS.fetch(new Request(new URL('/__public-home.json', url.origin)));
+            const snapshot = await env.ASSETS.fetch(new Request(new URL(pathLanguage(url.pathname) === 'en' ? '/__public-home-en.json' : '/__public-home.json', url.origin)));
             if (snapshot.ok && snapshot.headers.get('content-type')?.includes('application/json'))
-              html = injectInitialHome(html, await snapshot.json());
+              html = injectInitialHome(html, await snapshot.json(), pathLanguage(url.pathname));
           } catch { /* Older asset versions retain the existing client-rendered fallback. */ }
         }
         return new Response(html, { headers });
       }
     }
-    return isPrivateDocument(url.pathname) ? privateResponse(response) : response;
+    if (isPrivateDocument(url.pathname)) {
+      if (request.method === 'HEAD') return privateResponse(new Response(null, response));
+      if (request.method === 'GET' && response.headers.get('content-type')?.includes('text/html'))
+        return privateResponse(new Response(renderFallbackMetadata(await response.text(), pageMetadata(url.pathname, url.search)), response));
+      return privateResponse(response);
+    }
+    return response;
   },
 };
