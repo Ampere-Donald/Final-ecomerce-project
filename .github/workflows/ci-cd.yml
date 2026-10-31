@@ -65,8 +65,8 @@ jobs:
       - name: Vérifier les contrats des parcours et protections du storefront
         run: npm test
       - run: npm run build
-        - name: Vérifier le balisage entreprise dans le HTML généré
-          run: node tests/verify-organization-build.mjs
+      - name: Vérifier le balisage entreprise dans le HTML généré
+        run: node tests/verify-organization-build.mjs
       - run: npm audit --omit=dev --audit-level=high
 
   android:
