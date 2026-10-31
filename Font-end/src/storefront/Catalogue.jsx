@@ -16,6 +16,8 @@ import { useJourneyObservation } from "./useJourney.js";
 import { catalogueQuery } from "./catalogueQuery";
 import useBrowserReady from "./useBrowserReady";
 import { familyGuidance } from './familyGuidance.js';
+import { editorialIndex } from './editorialIndex.generated.js';
+import { editorialPath } from './editorialRoutes.js';
 
 export default function Catalogue() {
   const [params, setParams] = useSearchParams();
@@ -301,6 +303,7 @@ export default function Catalogue() {
           <h2 id="family-guidance-title"><Copy fr="Les repères pour choisir" en="What to check before choosing" /></h2>
           <ul>{familyGuidance[family.slug][lang === 'en' ? 'en' : 'fr'].map(point => <li key={point}>{point}</li>)}</ul>
           <p><Copy fr="Repères généraux : " en="General guidance: " /><a href={familyGuidance[family.slug].source[1]} target="_blank" rel="noopener noreferrer">{familyGuidance[family.slug].source[0]}</a></p>
+          {editorialIndex.filter(entry => entry.families.includes(family.slug)).map(entry => <p key={entry.id}><Copy fr="À lire : " en="Read in French: " /><Link to={editorialPath(entry)} lang="fr">{entry.title}</Link></p>)}
         </section>}
         {query && <EquivalenceEntry query={query} />}
         <div className="e-catalogue-hint">

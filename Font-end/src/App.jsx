@@ -11,6 +11,7 @@ import InitialResources from "./storefront/InitialResources";
 import { startJourney, leaveCheckout } from "./storefront/journey.js";
 import PageMetadataProvider from "./storefront/PageMetadataProvider";
 import { seoFamilies, familyPath, seoFamily } from './storefront/seoFamilies.js';
+import { isEditorialDocument } from './storefront/editorialRoutes.js';
 
 const Home = lazy(() => import("./storefront/Home"));
 const Catalogue = lazy(() => import("./storefront/Catalogue"));
@@ -19,6 +20,7 @@ const ProductDetails = lazy(() => import("./storefront/Product"));
 const Cart = lazy(() => import("./storefront/Cart"));
 const Equivalences = lazy(() => import("./storefront/Equivalences"));
 const Editorial = lazy(() => import("./storefront/Editorial"));
+const TechnicalLibrary = lazy(() => import('./storefront/TechnicalLibrary'));
 const Checkout = lazy(() => import("./storefront/Checkout"));
 const About = lazy(() => import("./storefront/ShopInfo"));
 const Contact = lazy(() => import("./storefront/ShopInfo"));
@@ -51,10 +53,11 @@ const PageFallback = () => (
   </div>
 );
 
-function AppContent({ initialHome, initialCatalogue, initialProduct }) {
+function AppContent({ initialHome, initialCatalogue, initialProduct, initialEditorial }) {
   const HomeRoute = initialHome || Home;
   const CatalogueRoute = initialCatalogue || Catalogue;
   const ProductRoute = initialProduct || ProductDetails;
+  const LibraryRoute = initialEditorial || TechnicalLibrary;
   const location = useLocation();
   useEffect(() => {
     startJourney();
@@ -65,7 +68,7 @@ function AppContent({ initialHome, initialCatalogue, initialProduct }) {
   }, [location.pathname]);
 
   return (
-    <StorefrontFrame path={location.pathname} initial={Boolean((initialHome && location.pathname === '/') || (initialCatalogue && (location.pathname === '/catalogue' || seoFamily(location.pathname))) || (initialProduct && /^\/product\/[^/]+$/.test(location.pathname)))}>
+    <StorefrontFrame path={location.pathname} initial={Boolean((initialHome && location.pathname === '/') || (initialCatalogue && (location.pathname === '/catalogue' || seoFamily(location.pathname))) || (initialProduct && /^\/product\/[^/]+$/.test(location.pathname)) || (initialEditorial && isEditorialDocument(location.pathname)))}>
       <Suspense fallback={<PageFallback />}>
         <Routes location={location}>
           <Route path="/" element={<HomeRoute />} />
@@ -79,7 +82,10 @@ function AppContent({ initialHome, initialCatalogue, initialProduct }) {
           <Route path="/product/:id" element={<ProductRoute />} />
           <Route path="/panier" element={<Cart />} />
           <Route path="/equivalences" element={<Equivalences />} />
-          <Route path="/guides" element={<Editorial />} />
+          <Route path="/guides" element={<LibraryRoute />} />
+          <Route path="/guides/:slug" element={<LibraryRoute />} />
+          <Route path="/remplacement" element={<LibraryRoute />} />
+          <Route path="/remplacement/:slug" element={<LibraryRoute />} />
           <Route path="/faq" element={<Editorial />} />
           <Route path="/livraison" element={<Editorial />} />
           <Route path="/checkout" element={<Checkout />} />
@@ -161,11 +167,11 @@ function AppContent({ initialHome, initialCatalogue, initialProduct }) {
   );
 }
 
-function App({ initialHome, initialCatalogue, initialProduct, snapshot, router }) {
+function App({ initialHome, initialCatalogue, initialProduct, initialEditorial, snapshot, router }) {
   const RouterComponent = router || Router;
   return (
     <RouterComponent>
-      <InitialResources snapshot={snapshot}><PageMetadataProvider><AppContent initialHome={initialHome} initialCatalogue={initialCatalogue} initialProduct={initialProduct} /></PageMetadataProvider></InitialResources>
+      <InitialResources snapshot={snapshot}><PageMetadataProvider><AppContent initialHome={initialHome} initialCatalogue={initialCatalogue} initialProduct={initialProduct} initialEditorial={initialEditorial} /></PageMetadataProvider></InitialResources>
     </RouterComponent>
   );
 }

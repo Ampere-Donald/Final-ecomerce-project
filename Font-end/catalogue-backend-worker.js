@@ -3,8 +3,9 @@
 import worker from './worker.js';
 import manifest from './.catalogue-backend/manifest.json' with { type: 'json' };
 import { catalogueStyles } from './.catalogue-ssr/styles.js';
+import { editorialFragments, editorialStyles } from './.catalogue-ssr/editorial.js';
 export default {
   fetch(request, env, context) {
-    return worker.fetch(request, { ...env, backendCatalogue: { rendererId: manifest.rendererId }, catalogueStyles }, context);
+    return worker.fetch(request, { ...env, backendCatalogue: { rendererId: manifest.rendererId }, catalogueStyles, editorialFragments, editorialStyles }, context);
   },
 };

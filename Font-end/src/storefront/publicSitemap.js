@@ -1,7 +1,8 @@
 import { seoFamilies, familyPath } from './seoFamilies.js';
 import { productDocumentId } from './initialProduct.js';
+import { publicEditorialPaths } from './editorialRoutes.js';
 
-export const publicStaticPaths = ['/', '/catalogue', '/projets', '/offres', '/arrivages', '/equivalences', '/guides', '/faq', '/livraison', '/about', '/contact', '/devis', '/terms', '/privacy'];
+export const publicStaticPaths = ['/', '/catalogue', '/projets', '/offres', '/arrivages', '/equivalences', '/guides', '/faq', '/livraison', '/about', '/contact', '/devis', '/terms', '/privacy', ...publicEditorialPaths()];
 
 // No stock/prices/private documents and no invented lastmod date. Products
 // currently have a creation date but no reliable public modification timestamp.

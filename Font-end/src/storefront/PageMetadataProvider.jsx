@@ -37,7 +37,7 @@ export default function PageMetadataProvider({ children }) {
       {canonical && <link rel="canonical" href={canonical} />}
       <meta property="og:type" content="website" />
       <meta property="og:site_name" content="X-Electronic / NEWOTEG" />
-      <meta property="og:locale" content={lang === "en" ? "en_CM" : "fr_CM"} />
+      <meta property="og:locale" content={(base.lang || lang) === "en" ? "en_CM" : "fr_CM"} />
       <meta property="og:title" content={title} />
       <meta property="og:description" content={description} />
       {!base.private && canonical && (

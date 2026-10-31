@@ -1,0 +1,308 @@
+// Generated from editorial/entries.json by tooling/prepareEditorial.mjs. Published content only.
+export const publishedEditorial = [
+  {
+    "id": "guide-marquage-01",
+    "slug": "lire-marquage-composant",
+    "language": "fr",
+    "type": "guide",
+    "title": "Lire le marquage d’un composant avant de chercher sa référence",
+    "summary": "Une lettre oubliée peut mener à une autre pièce. Préparez une identification exploitable avec le marquage complet, le fabricant et le boîtier.",
+    "createdAt": "2026-10-31",
+    "reviewedAt": "2026-10-31",
+    "sources": [
+      {
+        "id": "st",
+        "label": "STMicroelectronics — 2N3773, révision 2, octobre 2008",
+        "url": "https://www.st.com/resource/en/datasheet/2n3773.pdf",
+        "locator": "Page 1, Device summary ; pages 2–3, limites et caractéristiques ; page 5, plan TO-3",
+        "checkedAt": "2026-10-31"
+      }
+    ],
+    "families": [
+      "transistors",
+      "circuits-integres-audio"
+    ],
+    "products": [
+      {
+        "id": "12cd34b9-bec9-4a1a-a67a-179ecb13b8b2",
+        "label": "Fiche du catalogue : 2N 3773"
+      }
+    ],
+    "sections": [
+      {
+        "id": "relever",
+        "title": "Conserver les indices sans les interpréter trop vite",
+        "paragraphs": [
+          "Recopiez chaque ligne visible, les espaces et les suffixes. Séparez ce que vous lisez de ce que vous supposez : un caractère incertain doit rester signalé."
+        ],
+        "bullets": [
+          "Photographiez la face marquée et le boîtier avec une échelle, sans ouvrir un appareil présentant un risque.",
+          "Notez le modèle de l’appareil et la position de la pièce sur la carte.",
+          "Gardez le logo, le nombre de connexions et les dimensions dans votre demande."
+        ],
+        "sources": []
+      },
+      {
+        "id": "exemple",
+        "title": "Exemple documenté : le 2N3773 de ST",
+        "paragraphs": [
+          "La fiche ST associe le code de commande et le marquage 2N3773 au boîtier métallique TO-3. Elle distingue les limites absolues des caractéristiques électriques, dont les valeurs dépendent de conditions d’essai. Une valeur maximale n’est donc pas, à elle seule, un point de fonctionnement à retenir."
+        ],
+        "bullets": [],
+        "sources": [
+          "st"
+        ]
+      },
+      {
+        "id": "comparer",
+        "title": "Comparer la bonne documentation",
+        "paragraphs": [
+          "Recherchez la fiche du fabricant identifié, puis comparez référence complète, boîtier et brochage. Si le fabricant ou un suffixe reste inconnu, présentez la correspondance comme une piste à vérifier."
+        ],
+        "bullets": [
+          "Dans votre demande, joignez la référence de l’appareil, les photos et le lien documentaire trouvé.",
+          "Pour un remplacement, précisez aussi le rôle du composant et les contraintes du montage."
+        ],
+        "sources": []
+      }
+    ],
+    "limits": [
+      "Cet exemple documentaire ne prouve ni l’authenticité ni le fabricant de l’exemplaire proposé au catalogue. Il ne valide aucun remplacement."
+    ],
+    "review": {
+      "method": "documentary",
+      "scope": "Lecture du document ST et vérification de la portée de l’exemple ; aucun test physique déclaré."
+    }
+  },
+  {
+    "id": "guide-condensateur-01",
+    "slug": "choisir-condensateur-electrolytique",
+    "language": "fr",
+    "type": "guide",
+    "title": "Choisir un condensateur électrolytique : les critères à comparer",
+    "summary": "Capacité et tension ne suffisent pas : examinez aussi polarité, série, encombrement et conditions d’utilisation avant de retenir une pièce.",
+    "createdAt": "2026-10-31",
+    "reviewedAt": "2026-10-31",
+    "sources": [
+      {
+        "id": "nichicon",
+        "label": "Nichicon — Technical Notes et Application Guidelines",
+        "url": "https://www.nichicon.co.jp/english/series_items/catalog_pdf/e-aluminum.pdf",
+        "locator": "Section 2-1-1, Circuit Design ; section 2-3, Operating Voltage and Safety",
+        "checkedAt": "2026-10-31"
+      }
+    ],
+    "families": [
+      "condensateurs"
+    ],
+    "products": [
+      {
+        "id": "02d5805f-7f51-4574-938d-d8cfe8c09487",
+        "label": "Exemple du catalogue : 4700 µF / 63 V, format court"
+      }
+    ],
+    "sections": [
+      {
+        "id": "application",
+        "title": "Partir de l’application et de la série exacte",
+        "paragraphs": [
+          "Nichicon demande de respecter les conditions d’application et de montage de la spécification, notamment la température et le courant d’ondulation. Les condensateurs polarisés imposent le respect de la polarité ; la capacité et la tension inscrites ne décrivent pas toutes leurs contraintes."
+        ],
+        "bullets": [],
+        "sources": [
+          "nichicon"
+        ]
+      },
+      {
+        "id": "comparaison",
+        "title": "Préparer une comparaison complète",
+        "paragraphs": [
+          "Relevez les informations de la pièce d’origine, puis celles de la candidate. Une donnée absente reste à confirmer, même si la pièce entre dans l’emplacement."
+        ],
+        "bullets": [],
+        "table": {
+          "caption": "Informations à réunir pour demander un choix de condensateur",
+          "headers": [
+            "À relever",
+            "Ce qu’il faut préciser"
+          ],
+          "rows": [
+            [
+              "Identification",
+              "Fabricant, série et référence complète"
+            ],
+            [
+              "Caractéristiques",
+              "Capacité, tension, tolérance et polarité"
+            ],
+            [
+              "Conditions",
+              "Température, ondulation, ESR et durée de vie selon la série et l’usage"
+            ],
+            [
+              "Montage",
+              "Diamètre, hauteur, entraxe et type de connexions"
+            ]
+          ]
+        },
+        "sources": [
+          "nichicon"
+        ]
+      },
+      {
+        "id": "catalogue",
+        "title": "Lire les indications du catalogue avec leurs limites",
+        "paragraphs": [
+          "Les variantes 4700 µF / 63 V du pilote distinguent petit ou moyen diamètre et format court ou long. Ces appellations relatives ne donnent pas des dimensions en millimètres. Demandez des mesures et la documentation de la série avant de choisir."
+        ],
+        "bullets": [
+          "Joignez les marquages, les dimensions disponibles et la référence de l’appareil à votre demande.",
+          "Faites examiner un condensateur installé dans un appareil par une personne compétente avant toute intervention."
+        ],
+        "sources": []
+      }
+    ],
+    "limits": [
+      "Le guide Nichicon présente des critères généraux. Il n’établit pas la série, l’ESR, la température ou le courant admissible des pièces génériques du catalogue."
+    ],
+    "review": {
+      "method": "documentary",
+      "scope": "Critères généraux confrontés aux notes Nichicon et aux limites déjà relevées sur les fiches pilotes ; aucune mesure électrique réalisée."
+    }
+  },
+  {
+    "id": "guide-multimetre-01",
+    "slug": "choisir-multimetre-usage",
+    "language": "fr",
+    "type": "guide",
+    "title": "Choisir un multimètre selon les mesures et leur environnement",
+    "summary": "Commencez par votre usage, puis vérifiez la notice du modèle exact, ses fonctions, sa catégorie de mesure et ses accessoires.",
+    "createdAt": "2026-10-31",
+    "reviewedAt": "2026-10-31",
+    "sources": [
+      {
+        "id": "fluke",
+        "label": "Fluke — Guide to Digital Multimeter Safety",
+        "url": "https://www.fluke.com/en-ie/learn/blog/safety/multimeter-guide",
+        "locator": "Choix de la catégorie et de la tension ; tableau Measurement Category",
+        "checkedAt": "2026-10-31"
+      }
+    ],
+    "families": [
+      "multimetres"
+    ],
+    "products": [],
+    "sections": [
+      {
+        "id": "besoin",
+        "title": "Décrire les mesures réellement nécessaires",
+        "paragraphs": [
+          "Préparez une liste concrète : tension continue ou alternative, résistance, continuité et fonctions complémentaires. Précisez la plage attendue et le contexte : atelier électronique, appareil alimenté ou installation électrique. Ne choisissez pas sur le seul nombre de fonctions affichées."
+        ],
+        "bullets": [
+          "Identifiez le modèle complet plutôt qu’un nom de série.",
+          "Demandez la notice, les cordons fournis et les limites propres à chaque fonction.",
+          "Vérifiez si une précision ou une résolution particulière est nécessaire à votre travail."
+        ],
+        "sources": []
+      },
+      {
+        "id": "categorie",
+        "title": "Lire la catégorie et la tension ensemble",
+        "paragraphs": [
+          "Le guide Fluke distingue des catégories de mesure selon l’environnement électrique. Il demande de choisir une catégorie adaptée au contexte et une tension admissible correspondante. Une tension maximale imprimée ne remplace donc pas la catégorie requise pour l’usage."
+        ],
+        "bullets": [],
+        "sources": [
+          "fluke"
+        ]
+      },
+      {
+        "id": "confirmation",
+        "title": "Demander une confirmation liée au modèle",
+        "paragraphs": [
+          "Transmettez à la boutique le type de mesure et l’environnement envisagé. Si la notice ou les limites de sécurité du modèle ne sont pas établies, demandez leur confirmation avant de retenir l’appareil. Ce guide ne décrit pas une procédure de mesure sous tension."
+        ],
+        "bullets": [
+          "Comparez fonctions, protections et accessoires sur la notice de la version vendue.",
+          "Pour une intervention sur installation électrique, faites déterminer l’équipement et la procédure adaptés par une personne qualifiée."
+        ],
+        "sources": []
+      }
+    ],
+    "limits": [
+      "La documentation Fluke ne certifie aucune catégorie CAT des modèles DT-830D, SD9206A, YX-360 ou EPICA du catalogue. Les limites de chaque exemplaire restent à établir dans sa propre notice."
+    ],
+    "review": {
+      "method": "documentary",
+      "scope": "Vérification des critères de catégorie et tension dans le guide fabricant ; aucune certification de modèle ni intervention électrique."
+    }
+  },
+  {
+    "id": "guide-connecteur-01",
+    "slug": "identifier-connecteur",
+    "language": "fr",
+    "type": "guide",
+    "title": "Identifier un connecteur avant de chercher une pièce correspondante",
+    "summary": "Nombre de contacts, pas, orientation et détrompage : réunissez les indices qui permettent de comparer deux connecteurs au-delà de leur apparence.",
+    "createdAt": "2026-10-31",
+    "reviewedAt": "2026-10-31",
+    "sources": [
+      {
+        "id": "jst",
+        "label": "JST — série XH, spécifications et plans",
+        "url": "https://www.jst-mfg.com/product/pdf/eng/eXH.pdf",
+        "locator": "Page 1, pas de 2,5 mm ; page 2, implantation et orientation ; pages suivantes, références des éléments",
+        "checkedAt": "2026-10-31"
+      }
+    ],
+    "families": [],
+    "products": [],
+    "sections": [
+      {
+        "id": "indices",
+        "title": "Réunir les informations des deux côtés",
+        "paragraphs": [
+          "Une photo de face seule laisse souvent le verrouillage ou les dimensions invisibles. Préparez les vues de la fiche et de l’embase, ainsi que la référence de l’appareil."
+        ],
+        "bullets": [
+          "Comptez les contacts et relevez le nombre de rangées.",
+          "Mesurez le pas entre axes voisins et les dimensions du boîtier.",
+          "Montrez l’orientation, le verrouillage, le détrompage et les marquages.",
+          "Notez les informations de câblage connues sans déduire leur fonction de la seule couleur des fils."
+        ],
+        "sources": []
+      },
+      {
+        "id": "exemple",
+        "title": "Exemple : le pas ne dit pas tout",
+        "paragraphs": [
+          "JST documente la série XH avec un pas de 2,5 mm. Ses plans distinguent notamment des orientations d’entrée et des implantations. Cette référence sert d’exemple de lecture de plan ; une pièce qui lui ressemble n’est pas pour autant identifiée comme un JST XH."
+        ],
+        "bullets": [],
+        "sources": [
+          "jst"
+        ]
+      },
+      {
+        "id": "verification",
+        "title": "Séparer correspondance mécanique et électrique",
+        "paragraphs": [
+          "Avant un choix, comparez les références des éléments à accoupler et leurs plans. L’accouplement mécanique ne suffit pas à établir le câblage, ni les caractéristiques électriques admissibles de l’ensemble."
+        ],
+        "bullets": [
+          "Envoyez les photos avec une échelle, les mesures et les deux références si elles sont lisibles.",
+          "Faites confirmer le composant exact et les conditions d’utilisation ; ne forcez pas un assemblage sur la base d’une ressemblance."
+        ],
+        "sources": []
+      }
+    ],
+    "limits": [
+      "Aucune photo inconnue n’est identifiée ici et aucune disponibilité de série XH n’est annoncée. Le nombre de contacts et une mesure approximative ne prouvent pas la compatibilité."
+    ],
+    "review": {
+      "method": "documentary",
+      "scope": "Lecture des spécifications et plans JST XH ; aucune identification physique ni vérification d’accouplement réalisée."
+    }
+  }
+];

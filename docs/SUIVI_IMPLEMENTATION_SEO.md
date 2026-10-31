@@ -33,11 +33,11 @@ Plan validé par l’utilisateur le 27 octobre 2026. Objectif complet conservé 
 | SEO-17 | Publié et activé | PR #32, migration et démarrage validés ; capacité publique active. Déduplication vérifiée en PostgreSQL local ; aucune fausse observation écrite en production |
 | SEO-18 | Publié, lecture réelle à vérifier | Attribution persistante et tableau livrés ; deux rapports protégés contre accès anonyme. Tableau testé avec données synthétiques à 390/1440 px ; lecture authentifiée réelle restante. LIVRAISON_MESURE_SEO.md |
 | SEO-19 | Optimisation publiée, mesure à compléter | 29 images réparées ; deux séries complètes et une troisième incomplète. PR #33 publiée : lectures produit simultanées, 165 tests et 12 contrôles publics réussis ; aucune amélioration de vitesse encore démontrée |
-| SEO-20 | À faire | Modèle éditorial versionné et validation au build |
-| SEO-21 | À faire | Pages de guides et dossiers, rendu et indexation |
-| SEO-22 | À faire | Quatre guides pilotes documentés |
-| SEO-23 | À faire | Quatre dossiers de remplacement vérifiés |
-| SEO-24 | À faire | Maintenance éditoriale et sources |
+| SEO-20 | Développé et testé localement | Registre unique, états, validation et projections publiques ; brouillons exclus des artefacts livrables. BIBLIOTHEQUE_TECHNIQUE_SEO.md |
+| SEO-21 | Développé, recette visuelle restante | Listes/détails, HTML initial statique, métadonnées, liens et sitemap ; 10 contrôles HTTP locaux réussis. Non publié |
+| SEO-22 | Quatre guides rédigés et sourcés | Marquage, condensateur, multimètre, connecteur ; documents fabricants relus le 31 octobre. Textes français sélectionnés dans la version préparée, non encore en production |
+| SEO-23 | Quatre brouillons préparés | Paires et usages issus du catalogue ; notices, contexte ou validation métier manquants. Aucune équivalence inventée, aucun dossier public |
+| SEO-24 | Procédure documentée | Déclencheurs de revue, retrait, preuve métier, régénération et recette dans BIBLIOTHEQUE_TECHNIQUE_SEO.md ; première livraison encore à terminer |
 | SEO-25 | À faire | Vérification des faits commerciaux et informations locales |
 | SEO-26 | À faire | Audit Business Profile accessible et corrections proposées |
 | SEO-27 | À faire | Scripts vidéo et dispositif d’avis |

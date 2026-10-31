@@ -5,8 +5,10 @@ import prerenderHome from './tooling/prerenderHome.js'
 import buildCatalogueRenderer from './tooling/buildCatalogueRenderer.js'
 import prefetchCatalogue from './tooling/prefetchCatalogue.js'
 import { applyHostedProductionDefaults } from './tooling/hostedProduction.js'
+import { verifyEditorial } from './tooling/prepareEditorial.mjs'
 
 applyHostedProductionDefaults()
+await verifyEditorial()
 
 // https://vite.dev/config/
 export default defineConfig({
