@@ -46,3 +46,7 @@ Google demande que les versions se citent réciproquement avec des URL absolues 
 - Lint et build vérifiés localement ; le contrat CJS compilé passe et les constructions indépendantes partagent la même identité de renderer. Le contrôle des artefacts éditoriaux français passe aussi : les quatre dossiers non validés restent hors des bundles et du sitemap. Les nouveaux textes ne sont pas encore publiés.
 
 Preuves locales : `C:/Users/pc/Documents/Newoteg/output/seo-implementation/language-*`. Le contrôle du navigateur reste désactivé dans Work au dernier constat ; aucun contournement de ce réglage n'est entrepris. Les questions sur retours/remboursements et horaires ont été posées au propriétaire sans bloquer les traductions indépendantes.
+
+Version préparée poussée sur `codex/seo-languages` : `b6e46a2662ff92f877e6cb8def50f763baaa0547`. Identité du renderer : `d0cc39575b09a5d42c3b07f0ba528f818d97b45dc8ca70eac65285747589d11d`. La PR anglaise n'a pas pu être ouverte : l'outil GitHub connecté signale qu'il n'est pas disponible, et `gh auth status` confirme l'absence de session CLI. Aucun succès de CI distante n'est donc affirmé pour ce commit. La PR #34 garde son périmètre français et son dernier résultat CI connu.
+
+Une version regroupée des textes anglais est disponible pour relecture dans `output/seo-implementation/english-copy-review-2026-10-31.md`. Le raccordement des URL reste le prochain travail de développement, indépendant de la création d'une PR et des réponses commerciales en attente.
