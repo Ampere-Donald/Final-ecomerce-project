@@ -47,7 +47,14 @@ export default {
     }
     const response = await env.ASSETS.fetch(assetRequest);
     if (record && response.status === 200 && response.headers.get('content-type')?.includes('text/html')) {
-      const resolved = await recordMetadata(record);
+      const resolution = recordMetadata(record);
+      // These anonymous reads are independent. Start the bounded renderer read
+      // while metadata resolves instead of adding both network waits together.
+      // Handle rejection immediately, including when metadata rejects the page.
+      const productRender = request.method === 'GET' && record.type === 'product' && record.valid && env.backendCatalogue
+        ? productBackendFragment(url, env.backendCatalogue).then(fragment => ({ fragment }), error => ({ error }))
+        : null;
+      const resolved = await resolution;
       const headers = new Headers(response.headers);
       for (const key of ['ETag', 'Last-Modified', 'Content-Length', 'Content-Encoding']) headers.delete(key);
       // Never cache a removed reference or an outage as a durable public page.
@@ -55,9 +62,10 @@ export default {
       headers.set('X-Robots-Tag', resolved.metadata.robots);
       if (resolved.status === 503) headers.set('Retry-After', '60');
       let html = request.method === 'HEAD' ? null : renderFallbackMetadata(await response.text(), resolved.metadata);
-      if (html && record.type === 'product' && resolved.status === 200 && env.backendCatalogue) {
+      if (html && resolved.status === 200 && productRender) {
         try {
-          const fragment = await productBackendFragment(url, env.backendCatalogue);
+          const { fragment, error } = await productRender;
+          if (error) throw error;
           if (fragment) html = injectProductFragment(html, fragment, env.catalogueStyles);
         } catch (error) { env.reportCatalogueFailure?.(error); }
       }

@@ -107,9 +107,58 @@ test('edge attaches product HTML only after public record validation and keeps H
     assert.equal(head.status, 200); assert.equal(await head.text(), ''); assert(!calls.includes('/api/storefront/product'));
     active = false; calls.length = 0;
     const missing = await worker.fetch(new Request(url), env);
-    assert.equal(missing.status, 404); assert(!calls.includes('/api/storefront/product'));
+    assert.equal(missing.status, 404); assert(!(await missing.text()).includes('data-initial-product="fr"'));
     failure = true;
     const unavailable = await worker.fetch(new Request(url), env);
     assert.equal(unavailable.status, 503); assert.equal(unavailable.headers.get('retry-after'), '60');
+    assert(!(await unavailable.text()).includes('data-initial-product="fr"'));
+  } finally { globalThis.fetch = previous; }
+});
+
+test('product reads overlap while a slow metadata response still controls publication', async () => {
+  const previous = globalThis.fetch;
+  let releaseMetadata, rendererStarted, timer, pending;
+  const metadata = new Promise(resolve => { releaseMetadata = resolve; });
+  const started = new Promise(resolve => { rendererStarted = resolve; });
+  const env = { backendCatalogue: descriptor, catalogueStyles: ['/assets/Product.css'],
+    ASSETS: { fetch: async () => new Response('<html><head></head><body><div id="root"></div></body></html>', { headers: { 'content-type': 'text/html' } }) } };
+  try {
+    globalThis.fetch = async input => {
+      const endpoint = new URL(typeof input === 'string' ? input : input.url);
+      if (endpoint.pathname === '/api/storefront/product') { rendererStarted(); return response(); }
+      return metadata;
+    };
+    pending = worker.fetch(new Request(url), env);
+    await Promise.race([started, new Promise((_, reject) => { timer = setTimeout(() => reject(Error('Renderer waited for metadata')), 1000); })]);
+    releaseMetadata(Response.json({ ...raw, estActif: false }));
+    const result = await pending;
+    assert.equal(result.status, 404);
+    assert(!(await result.text()).includes('data-initial-product="fr"'));
+  } finally {
+    clearTimeout(timer);
+    releaseMetadata(Response.json(raw));
+    await pending;
+    globalThis.fetch = previous;
+  }
+});
+
+test('a renderer rejection preserves valid metadata and never promotes an unavailable record', async () => {
+  const previous = globalThis.fetch;
+  const env = { backendCatalogue: descriptor, catalogueStyles: ['/assets/Product.css'],
+    ASSETS: { fetch: async () => new Response('<html><head></head><body><div id="root"></div></body></html>', { headers: { 'content-type': 'text/html' } }) } };
+  let metadataStatus = 200;
+  try {
+    globalThis.fetch = async input => {
+      const endpoint = new URL(typeof input === 'string' ? input : input.url);
+      if (endpoint.pathname === '/api/storefront/product') throw Error('Renderer offline');
+      return metadataStatus === 200 ? Response.json(raw) : new Response('', { status: metadataStatus });
+    };
+    const result = await worker.fetch(new Request(url), env);
+    assert.equal(result.status, 200);
+    assert((await result.text()).includes('rel="canonical"'));
+    metadataStatus = 503;
+    const unavailable = await worker.fetch(new Request(url), env);
+    assert.equal(unavailable.status, 503);
+    assert.equal(unavailable.headers.get('retry-after'), '60');
   } finally { globalThis.fetch = previous; }
 });
