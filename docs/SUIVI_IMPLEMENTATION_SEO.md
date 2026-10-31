@@ -41,8 +41,8 @@ Plan validé par l’utilisateur le 27 octobre 2026. Objectif complet conservé 
 | SEO-25 | Registre initial préparé | Coordonnées et horaires effectivement trouvés dans les modules publics ; enseigne observée sur la photo. Horaires opérationnels, point exact et relation des lieux encore à confirmer. IDENTITE_LOCALE_SEO_2026-10-31.md |
 | SEO-26 | Propositions préparées, fiche à identifier | Lien Maps actuel = recherche de quartier ; aucune fiche Business identifiée sans ambiguïté. Nom/description et corrections proposés, aucune modification de compte |
 | SEO-27 | Quatre scripts et dispositif d'avis préparés | AVIS_ET_VIDEOS_SEO_NEWOTEG.md ; message neutre, réponses et scripts de 25–40 s. Prises de vue et lien d'avis restant à obtenir ; aucun message envoyé ni compte externe modifié |
-| SEO-28 | À faire | Dix partenaires et messages préparés ; aucun envoi sans instruction explicite |
-| SEO-29 | À faire | Vérification de l’éligibilité Merchant Center |
+| SEO-28 | Dix pistes et messages préparés | Sources primaires, points d'entrée publics, ressource associée et dix brouillons personnalisés dans PARTENAIRES_EDITORIAUX_SEO_NEWOTEG.md ; fiche de préparation rédigée. Contacts à revalider avant envoi autorisé, aucun message envoyé |
+| SEO-29 | Étude documentaire effectuée, compte à vérifier | Cameroun absent des listes de fiches locales gratuites et des pays classiques consultées, présent pour les annonces locales ; sources non homogènes, éligibilité réelle du compte non établie. MERCHANT_CENTER_DECISION_2026-10-31.md ; aucun flux ou campagne créé |
 | SEO-30 | À faire | Langue déterminée par l’URL |
 | SEO-31 | À faire | Traduction du périmètre pilote |
 | SEO-32 | À faire | Annotations linguistiques et recette FR/EN |
