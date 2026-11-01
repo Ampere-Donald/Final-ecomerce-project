@@ -14,7 +14,9 @@ import { staticPublicMetadata, renderFallbackMetadata } from './src/storefront/s
 import { publicRecord, recordMetadata } from './src/storefront/recordMetadata.js';
 import { injectInitialHome } from './src/storefront/initialHome.js';
 import { catalogueSnapshot, injectInitialCatalogue } from './src/storefront/initialCatalogue.js';
-import { catalogueBackendFragment, injectBackendCatalogue } from './src/storefront/backendCatalogue.js';
+import { catalogueBackendFragment, catalogueFragmentPageMissing, injectBackendCatalogue } from './src/storefront/backendCatalogue.js';
+import { invalidCataloguePage, missingCataloguePage } from './src/storefront/cataloguePagination.js';
+import { catalogueQuery } from './src/storefront/catalogueQuery.js';
 import { seoFamily } from './src/storefront/seoFamilies.js';
 import { productBackendFragment } from './src/storefront/backendProduct.js';
 import { injectProductFragment } from './src/storefront/initialProduct.js';
@@ -60,7 +62,7 @@ export default {
       const response = await fetch(new Request(target, request));
       return /^\/api\/(commandes|avis|incompatibilites)\/guest(?:\/|$)/i.test(url.pathname) ? privateResponse(response) : response;
     }
-    const metadata = request.method === 'GET' ? staticPublicMetadata(url) : null;
+    const metadata = ['GET', 'HEAD'].includes(request.method) ? staticPublicMetadata(url) : null;
     const record = ['GET', 'HEAD'].includes(request.method) ? publicRecord(url.pathname) : null;
     let assetRequest = request;
     if (metadata || record) {
@@ -68,7 +70,7 @@ export default {
       const headers = new Headers(request.headers);
       headers.delete('If-None-Match');
       headers.delete('If-Modified-Since');
-      assetRequest = new Request(request, { headers });
+      assetRequest = new Request(request, { headers, ...(metadata && request.method === 'HEAD' ? { method: 'GET' } : {}) });
     }
     const response = await env.ASSETS.fetch(assetRequest);
     if (record && response.status === 200 && response.headers.get('content-type')?.includes('text/html')) {
@@ -112,7 +114,7 @@ export default {
         { status: 404, statusText: 'Not Found', headers });
       return isPrivateDocument(url.pathname) ? privateResponse(missing) : missing;
     }
-    if (request.method === 'GET' && response.status === 200 &&
+    if (['GET', 'HEAD'].includes(request.method) && response.status === 200 &&
         response.headers.get('content-type')?.includes('text/html')) {
       if (metadata) {
         const headers = new Headers(response.headers);
@@ -127,19 +129,23 @@ export default {
           if (editorial) html = editorial;
         }
         const cataloguePage = basePath(url.pathname) === '/catalogue' || Boolean(seoFamily(url.pathname));
-        if (cataloguePage && env.backendCatalogue) {
+        let pageMissing = cataloguePage && invalidCataloguePage(url.searchParams);
+        if (cataloguePage && !pageMissing && env.backendCatalogue) {
           try {
             const fragment = await catalogueBackendFragment(url, env.backendCatalogue);
             if (fragment) {
               html = injectBackendCatalogue(html, fragment, env.catalogueStyles);
+              pageMissing = catalogueFragmentPageMissing(url, fragment);
               headers.set('Cache-Control', 'no-store');
             }
           } catch (error) { env.reportCatalogueFailure?.(error); }
-        } else if (cataloguePage && typeof env.renderCatalogue === 'function') {
+        } else if (cataloguePage && !pageMissing && typeof env.renderCatalogue === 'function') {
           try {
             const snapshot = await catalogueSnapshot(url);
             if (snapshot) {
               html = injectInitialCatalogue(html, env.renderCatalogue(snapshot), snapshot, env.catalogueStyles);
+              pageMissing = missingCataloguePage(url.searchParams,
+                snapshot.resources[catalogueQuery(url.searchParams, url.pathname).path]);
               // Products and pricing are read for this request only, never cached
               // with a client's URL or served as a build-time stock snapshot.
               headers.set('Cache-Control', 'no-store');
@@ -157,7 +163,12 @@ export default {
               html = injectInitialHome(html, await snapshot.json(), pathLanguage(url.pathname));
           } catch { /* Older asset versions retain the existing client-rendered fallback. */ }
         }
-        return new Response(html, { headers });
+        if (pageMissing) {
+          headers.set('Cache-Control', 'no-store');
+          headers.set('X-Robots-Tag', 'noindex, follow');
+          html = renderFallbackMetadata(html, { ...metadata, canonical: null, alternates: [], robots: 'noindex, follow' });
+        }
+        return new Response(request.method === 'HEAD' ? null : html, { status: pageMissing ? 404 : 200, headers });
       }
     }
     if (isPrivateDocument(url.pathname)) {

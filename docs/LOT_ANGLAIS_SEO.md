@@ -67,3 +67,11 @@ La PR #36, indépendante, a depuis publié les redirections des variantes HTTP/w
 Sur `c352405971f3111e9ae2c02555652099285f5c93`, après intégration des redirections, les 190 tests frontend et la CI générale #377/runtime #101 ont réussi intégralement. Ces résultats décrivent cet état précis.
 
 La PR #37 a ensuite publié le graphe Organization commun, avec sept contrôles publics réussis. Son intégration dans la branche bilingue conserve les validations des contenus FR/EN et ajoute le générateur et son contrôle du véritable HTML en CI. Le conflit d’import du fichier Vite est résolu en conservant ces deux ensembles. La nouvelle suite comporte 194 tests réussis ; la CI du nouveau commit est à relever séparément. La recette interactive finale reste bloquée par l’accès au navigateur local désactivé dans Work ; la PR #35 reste donc en brouillon.
+
+## Synchronisation de pagination — 1er novembre
+
+La tête `f7730209` a obtenu la CI générale #381 et le runtime #105 entièrement réussis, dont les trois profils Docker et la préproduction isolée.
+
+La PR #38 a depuis publié le traitement des paginations hors limites sur les routes françaises : 59 contrôles publics réussis. Son intégration conserve les fragments éditoriaux et le routage localisé ; les mêmes règles de 404/noindex/no-store sans canonical ni hreflang sont vérifiées en français et en anglais. La suite locale comporte 200 tests réussis, lint et build réussis, 44 scénarios compilés de pagination réussis. Le graphe des contenus conserve ses 31 destinations atteignables par langue.
+
+Nouvelle identité préparée : `5e46438a67cbdb18f99cb08dbd80dca3992c36dd931785eec5dda56fb481e795`. Elle ne désigne pas le moteur de production, désormais `2c27bc0ec3abf9f4719bf89c001c8209987423c4bb474538b5a8e72d6686c4da`. La CI de la tête issue de cette synchronisation doit être relevée avant publication. La recette interactive finale reste à faire et le navigateur Work reste désactivé au dernier contrôle.

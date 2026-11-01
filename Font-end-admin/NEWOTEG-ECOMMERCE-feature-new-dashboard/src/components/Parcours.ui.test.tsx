@@ -103,7 +103,8 @@ it('lit deux périodes authentifiées et la répartition séparée sans casser l
   await screen.findByRole('table', {
     name: 'Comparaison des résultats métier',
   });
-  expect(mocks.get).toHaveBeenCalledTimes(3);
+  // The acquisition read starts in the child effect after the main table mounts.
+  await waitFor(() => expect(mocks.get).toHaveBeenCalledTimes(3));
   expect(mocks.get.mock.calls.filter(call => call[0] === '/parcours/acquisition')).toHaveLength(1);
   for (const call of mocks.get.mock.calls.filter(call => call[0] === '/parcours/rapport')) {
     expect(call[0]).toBe('/parcours/rapport');

@@ -1,5 +1,14 @@
 import { pathLanguage } from './localePath.js';
-import { canRenderCatalogue } from './catalogueQuery.js';
+import { canRenderCatalogue, catalogueQuery } from './catalogueQuery.js';
+import { readCatalogueBoot } from './initialCatalogue.js';
+import { missingCataloguePage } from './cataloguePagination.js';
+
+export function catalogueFragmentPageMissing(url, fragment) {
+  const json = fragment.match(/<script type="application\/json" id="initial-catalogue-data">([\s\S]*?)<\/script>$/)?.[1];
+  const snapshot = json && readCatalogueBoot(json, url);
+  return Boolean(snapshot && missingCataloguePage(url.searchParams,
+    snapshot.resources[catalogueQuery(url.searchParams, url.pathname).path]));
+}
 
 export async function catalogueBackendFragment(url, descriptor, fetcher = fetch, timeoutMs = 2000) {
   if (!canRenderCatalogue(url)) return null;

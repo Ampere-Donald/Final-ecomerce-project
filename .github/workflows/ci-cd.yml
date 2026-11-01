@@ -69,6 +69,8 @@ jobs:
       - run: npm run build
       - name: Vérifier le balisage entreprise dans le HTML généré
         run: node tests/verify-organization-build.mjs
+      - name: Vérifier les statuts de pagination avec le moteur compilé
+        run: node tests/verify-pagination-build.mjs
       - run: npm audit --omit=dev --audit-level=high
 
   android:
