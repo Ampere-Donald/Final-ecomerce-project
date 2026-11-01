@@ -71,10 +71,12 @@ export class StorefrontRenderingService {
     if (typeof renderer !== 'string' || !/^[a-f0-9]{64}$/.test(renderer)) throw new BadRequestException('Version de sitemap invalide.');
     if (!this.runtime?.renderSitemapResponse || !this.database) throw new ServiceUnavailableException('Sitemap non activé.');
     if (renderer !== this.runtime.rendererId) throw new ConflictException('Versions de sitemap différentes.');
-    // A single bounded projection avoids prices, supplier data, reservations
-    // and the large attribute joins required for a commercial product response.
+    // Public identity fields withdraw stale English URLs. Attribute presence
+    // alone is sufficient; no values, prices or private business data are read.
     const rows = await this.database.produit.findMany({ where: { estActif: true },
-      select: { id: true, nomProduit: true, categorieId: true, sousCategorieId: true },
+      select: { id: true, nomProduit: true, categorieId: true, sousCategorieId: true,
+        description: true, imageUrl: true, marque: true, urlDatasheet: true,
+        attributs: { select: { id: true }, take: 1 } },
       orderBy: { id: 'asc' }, take: 49001 });
     if (rows.length > 49000) throw new ServiceUnavailableException('Le sitemap doit être partitionné.');
     const xml = this.runtime.renderSitemapResponse(rows);

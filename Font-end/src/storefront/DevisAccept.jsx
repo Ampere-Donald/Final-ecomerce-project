@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link } from "./LocaleRouter";
 import { useAuth } from "../context/AuthContext";
 import { useI18n } from "../context/I18nContext";
 import apiClient from "../utils/apiClient";

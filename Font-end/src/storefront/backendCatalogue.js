@@ -1,3 +1,4 @@
+import { pathLanguage } from './localePath.js';
 import { canRenderCatalogue, catalogueQuery } from './catalogueQuery.js';
 import { readCatalogueBoot } from './initialCatalogue.js';
 import { missingCataloguePage } from './cataloguePagination.js';
@@ -37,7 +38,7 @@ export async function catalogueBackendFragment(url, descriptor, fetcher = fetch,
       html += decoder.decode(value, { stream: true });
     }
     html += decoder.decode();
-    if (!html.startsWith('<div id="root" data-initial-catalogue="fr"><div class="app">') ||
+    if (!html.startsWith(`<div id="root" data-initial-catalogue="${pathLanguage(url.pathname)}"><div class="app">`) ||
         !html.includes('</div><script type="application/json" id="initial-catalogue-data">') ||
         !html.endsWith('</script>') || (html.match(/<script\b/gi) || []).length !== 1)
       throw Error('Invalid catalogue HTML envelope');

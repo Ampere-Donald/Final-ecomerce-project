@@ -22,7 +22,8 @@ test('New technical evidence, drafts and unreviewed languages do not inherit the
   assert.equal(getProductEditorial({ ...product, technicalAttributes: [{ label: 'New evidence' }] }), null);
   assert.equal(getProductEditorial({ ...product, attributes: [['New', 'value']] }), null);
   assert.equal(getProductEditorial(product, 'fr', [{ ...entry, status: 'draft' }]), null);
-  assert.equal(getProductEditorial(product, 'en'), null);
+  assert.equal(getProductEditorial(product, 'en', [entry]), null);
+  assert.equal(getProductEditorial(product, 'de'), null);
 });
 
 test('Publication rejects unsafe sources and incomplete reviews', () => {

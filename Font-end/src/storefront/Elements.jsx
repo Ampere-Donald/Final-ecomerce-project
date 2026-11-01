@@ -1,5 +1,5 @@
 import { useRef, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link } from "./LocaleRouter";
 import { X } from "lucide-react";
 import { Copy } from "./ProductPrimitives";
 import { stockState } from "./productData";

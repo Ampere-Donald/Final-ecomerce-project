@@ -32,3 +32,14 @@ Avant publication, relever la version Worker active et conserver cette version c
 169 tests frontend réussis, lint et build réussis. Identité du moteur compilé : `2038804f430092524ccdabd2f824add31975965d63899bbd350697b44f78041d`. Le point d’entrée produit du backend actif répond 200 avec cette même identité et un fragment produit valide : le Worker préparé ne nécessite donc pas un nouveau moteur backend.
 
 Version Worker active relevée avant livraison : `a8a17247-3aeb-43be-96f1-323f39d6d823`, à 100 % dans le déploiement `f92d0894-35c0-494b-bccb-ac533acbee88`. Cette version compatible est le retour arrière prévu. Les résultats de CI et de publication ne sont pas encore affirmés dans cette recette locale.
+
+
+## Livraison confirmée
+
+PR #36 fusionnée : `a4de2bb89741033eff4d3c5e3d426c0a1a3d784e`, après CI générale #375 et contrat runtime #99 entièrement réussis sur `e71938e24693d6072e21aaa64879f70d7308c9dc`.
+
+Worker publié puis confirmé à 100 % : `4794fe2c-bcaa-4296-8cb9-f984558a74d1`, déploiement `470137a7-4a59-44b2-8d45-c12f506646ad`. Backend automatique `036d13b6-4ce1-4eb7-87df-9ff364628aae` signalé success ; identité du moteur conservée. La version Worker précédente reste le retour arrière documenté.
+
+Recette publique réussie : neuf variantes redirigées directement en 308 vers leur destination HTTPS sans www, neuf destinations 200 avec canonical exacte et rendu produit/catalogue conservé ; trois parcours privés restent sur leur origine avec leurs protections ; HEAD redirige sans corps. Treize contrôles enregistrés dans `origin-production/report.json`, preuves de CI et de version dans `origin-release.json`. Ces résultats ne prouvent ni un gain de classement ni une préférence canonique déjà adoptée par Google.
+
+La correction est également réintégrée dans la branche bilingue pour être conservée lors de sa future publication. Cette dernière reste en préparation et sa recette visuelle n’est pas déclarée complète.

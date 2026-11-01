@@ -6,7 +6,8 @@ const product = '/product/02d5805f-7f51-4574-938d-d8cfe8c09487';
 
 test('HTTP and www public documents converge directly on the preferred HTTPS origin without losing path or query', async () => {
   for (const origin of ['http://newoteg.com', 'http://www.newoteg.com', 'https://www.newoteg.com']) {
-    for (const path of ['/', '/catalogue/condensateurs?page=2', '/catalogue?search=c%C3%A2ble&instock=true', product, '/guides']) {
+    for (const path of ['/', '/catalogue/condensateurs?page=2', '/catalogue?search=c%C3%A2ble&instock=true', product, '/guides',
+      '/en/', '/en/catalogue/condensateurs?page=2', '/en/guides', '/en' + product]) {
       for (const method of ['GET', 'HEAD']) {
         const result = canonicalDocumentRedirect(new Request(origin + path, { method }));
         assert.equal(result.status, 308);
@@ -21,7 +22,7 @@ test('HTTP and www public documents converge directly on the preferred HTTPS ori
 
 test('private routes, unknown pages, media, API and writes retain their existing origin and handling', () => {
   for (const path of ['/login', '/LOGIN?returnTo=%2Fcheckout', '/checkout', '/panier', '/suivi-invite',
-    '/mes-devis/fixture/imprimer', '/commandes/fixture', '/profile', '/favourites',
+    '/mes-devis/fixture/imprimer', '/commandes/fixture', '/profile', '/favourites', '/en/checkout', '/en/mes-devis/fixture/imprimer',
     '/api/produits', '/api/commandes/checkout', '/uploads/photo.jpg', '/assets/index.js', '/sitemap.xml', '/unknown-public-path']) {
     assert.equal(canonicalDocumentRedirect(new Request('http://www.newoteg.com' + path)), null, path);
   }

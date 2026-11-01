@@ -1,6 +1,8 @@
+import { localizedPath } from './localePath.js';
 import { stockState } from './productData.js';
 import { seoFamilies, familyPath } from './seoFamilies.js';
 import { catalogueBootJSON } from './initialCatalogue.js';
+import { productText } from './productTranslation.js';
 
 const origin = 'https://newoteg.com';
 function publicImage(value) {
@@ -12,11 +14,11 @@ function publicImage(value) {
 }
 
 export function productSchema(product, lang = 'fr') {
-  const url = origin + '/product/' + encodeURIComponent(product.id);
-  const name = lang === 'en' && product.englishName ? product.englishName : product.model;
+  const url = origin + localizedPath('/product/' + encodeURIComponent(product.id), lang);
+  const { name, description } = productText(product, lang);
   const image = [...new Set((product.images || []).map(publicImage).filter(Boolean))];
   const item = { '@type': 'Product', '@id': url + '#product', url, name,
-    ...(product.description ? { description: product.description } : {}),
+    ...(description ? { description } : {}),
     ...(image.length ? { image } : {}),
     ...(product.reference ? { sku: product.reference } : {}),
     ...(product.brand ? { brand: { '@type': 'Brand', name: product.brand } } : {}),
@@ -32,9 +34,9 @@ export function productSchema(product, lang = 'fr') {
     };
   }
   const family = seoFamilies.find(f => f.category === product.categoryId && f.subcategory === product.subcategoryId);
-  const items = [{ name: lang === 'en' ? 'Home' : 'Accueil', item: origin + '/' },
-    { name: 'Catalogue', item: origin + '/catalogue' },
-    ...(family ? [{ name: lang === 'en' ? family.en : family.fr, item: origin + familyPath(family) }] : []),
+  const items = [{ name: lang === 'en' ? 'Home' : 'Accueil', item: origin + localizedPath('/', lang) },
+    { name: 'Catalogue', item: origin + localizedPath('/catalogue', lang) },
+    ...(family ? [{ name: lang === 'en' ? family.en : family.fr, item: origin + localizedPath(familyPath(family), lang) }] : []),
     { name, item: url }];
   return { '@context': 'https://schema.org', '@graph': [item,
     { '@type': 'BreadcrumbList', itemListElement: items.map((entry, i) => ({ '@type': 'ListItem', position: i + 1, ...entry })) }] };

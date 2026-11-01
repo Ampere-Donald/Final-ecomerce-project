@@ -8,6 +8,7 @@ COPY Font-end/package.json Font-end/package-lock.json ./
 RUN npm ci --no-audit --no-fund
 COPY Font-end/src ./src
 COPY Font-end/tooling ./tooling
+COPY Font-end/editorial ./editorial
 # The editorial publication check verifies these original evidence files too.
 # They are build inputs; the frontend serves them as static assets.
 COPY Font-end/public/product-reference-images ./public/product-reference-images
