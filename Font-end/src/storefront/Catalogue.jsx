@@ -14,6 +14,7 @@ import Footer from "./Footer";
 import { ComparisonLink } from "./ComparisonAction";
 import { useJourneyObservation } from "./useJourney.js";
 import { catalogueQuery } from "./catalogueQuery";
+import { invalidCataloguePage, missingCataloguePage } from './cataloguePagination.js';
 import useBrowserReady from "./useBrowserReady";
 import { familyGuidance } from './familyGuidance.js';
 
@@ -158,7 +159,8 @@ export default function Catalogue() {
   );
   return (
     <>
-      <PageMeta title={query ? `${query} — Catalogue — X-Electronic` : undefined} />
+      <PageMeta title={query ? `${query} — Catalogue — X-Electronic` : undefined}
+        noindex={invalidCataloguePage(params) || (!resource.loading && !resource.error && !parseError && missingCataloguePage(params, resource.data))} />
       <div className="e-wrap e-catalogue">
         <Crumbs title={family ? (lang === 'en' ? family.en : family.fr) : 'Catalogue'} />
         <div className="e-page-lead">
