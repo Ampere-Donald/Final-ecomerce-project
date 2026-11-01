@@ -25,3 +25,7 @@ La suite frontend comporte 179 tests réussis, dont six nouveaux tests couvrant 
 Le composant partagé fait partie du moteur compilé : nouvelle identité `2c27bc0ec3abf9f4719bf89c001c8209987423c4bb474538b5a8e72d6686c4da`, livraison backend/Worker à coordonner après CI. La version Worker de retour arrière et la compatibilité du backend doivent être relevées à la publication. Aucun déploiement de ce lot ni contrôle public après correction n’est encore affirmé. L’accès navigateur Work reste désactivé au dernier relevé ; aucune recette visuelle nouvelle n’est déclarée réussie.
 
 Le périmètre SEO-11 reste plus large que cette correction : l’audit global des routes, paramètres, contenus et exclusions demeure à terminer.
+
+## Premier passage CI
+
+Sur `6beebdc4`, le contrat runtime #106 réussit ses trois profils Docker et sa préproduction isolée. Dans la CI générale #382, storefront, backend, Android et outils poste réussissent ; le job admin échoue sur `Parcours.ui.test.tsx`, qui attend immédiatement trois appels après apparition du tableau alors que le troisième démarre dans l’effet du panneau enfant. L’assertion conserve le compte exact attendu et utilise désormais `waitFor` pour attendre cet effet. Aucun code produit ni contrôle de confidentialité du tableau n’est modifié. Une nouvelle CI de la tête corrigée doit réussir avant publication ; la première CI n’est pas présentée comme entièrement verte.
