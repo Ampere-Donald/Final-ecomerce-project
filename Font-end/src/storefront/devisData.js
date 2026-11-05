@@ -5,7 +5,10 @@ export function parseReferenceList(text) {
     .filter(Boolean);
   if (!entries.length || entries.length > 50) throw new Error("lineCount");
   return entries.map((line, index) => {
-    const columns = line.split(/[;\t]/).map((value) => value.trim());
+    // A model followed by an explicit multiplication sign is a quantity.
+    // Keep dimensions in descriptive names intact (e.g. "Plaque 10 x 20").
+    const modelQuantity = /^([a-z0-9.-]*[a-z][a-z0-9.-]*)\s+[×x]\s+(\d+)$/i.exec(line);
+    const columns = modelQuantity ? modelQuantity.slice(1) : line.split(/[;\t]/).map((value) => value.trim());
     const reference = columns[0];
     const rawQuantity = columns.length === 1 ? "1" : columns[1];
     if (
@@ -44,6 +47,18 @@ export function resolvedReferenceList(data, input) {
       produitId: "",
     };
   });
+}
+
+export function estimateReferenceList(rows) {
+  let pricedLines = 0;
+  let cents = 0;
+  for (const row of rows) {
+    const product = row.candidates.find(p => p.id === row.produitId);
+    if (!Number.isFinite(product?.prixPublic) || product.prixPublic <= 0) continue;
+    cents += Math.round(product.prixPublic * 100) * row.quantite;
+    pricedLines++;
+  }
+  return { pricedLines, amount: Number.isSafeInteger(cents) ? cents / 100 : null };
 }
 
 export function requestViewValid(row) {

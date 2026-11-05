@@ -1,0 +1,147 @@
+[
+  {
+    "id": "1b7a5523-051e-4723-90e1-e7940aea97ee",
+    "reference": "2N3904",
+    "name": "2N 3904"
+  },
+  {
+    "id": "30f9e9e4-4d8d-4761-a99c-4858228ebae7",
+    "reference": "2N3906",
+    "name": "2N 3906"
+  },
+  {
+    "id": "f4c7d6d2-7b8e-47cf-833f-179777459232",
+    "reference": "2N5401",
+    "name": "2N 5401"
+  },
+  {
+    "id": "56b01df8-b943-4fa5-b2b9-504389b2069d",
+    "reference": "2N5551",
+    "name": "2N 5551"
+  },
+  {
+    "id": "4c27b066-7869-45d5-8027-c592a5b3dede",
+    "reference": "BC327",
+    "name": "BC 327"
+  },
+  {
+    "id": "b0230c4e-59fd-4dfa-b49c-272249c297b8",
+    "reference": "BC337",
+    "name": "BC 337"
+  },
+  {
+    "id": "ab14f4f4-325a-49af-8f23-083754885f0e",
+    "reference": "BC546",
+    "name": "BC 546"
+  },
+  {
+    "id": "a423c223-c042-4a27-bc6c-41058ef79428",
+    "reference": "BC547",
+    "name": "BC 547"
+  },
+  {
+    "id": "21c262ef-c64f-48f9-af18-1672af9e4ca4",
+    "reference": "BC548",
+    "name": "BC 548"
+  },
+  {
+    "id": "65cc92ed-4958-4ba9-8361-fb546809934e",
+    "reference": "BC550",
+    "name": "BC 550"
+  },
+  {
+    "id": "15d1d536-72cb-44df-9790-7d0049ec1858",
+    "reference": "BC557",
+    "name": "BC 557"
+  },
+  {
+    "id": "6c4bb46d-7f40-4114-a269-154a97883824",
+    "reference": "BC558",
+    "name": "BC 558"
+  },
+  {
+    "id": "a03261ef-f3c0-449b-a8fd-ee7bb8ec70f7",
+    "reference": "BC559",
+    "name": "BC 559"
+  },
+  {
+    "id": "49eef32f-8b81-4235-857b-1f46131c4599",
+    "reference": "BD136",
+    "name": "BD 136"
+  },
+  {
+    "id": "63e53dbf-8763-451a-b8f0-057a1178e3fb",
+    "reference": "BD137",
+    "name": "BD 137"
+  },
+  {
+    "id": "018748dd-9e9d-4514-902d-32c0969ccd20",
+    "reference": "BD138",
+    "name": "BD 138"
+  },
+  {
+    "id": "bfba7ff5-0e3d-4d1a-a118-da338c87eaba",
+    "reference": "BD139",
+    "name": "BD 139"
+  },
+  {
+    "id": "3812f470-3b88-4b06-a3d0-68b02cabd508",
+    "reference": "BD140",
+    "name": "BD 140"
+  },
+  {
+    "id": "37c79fa9-d729-457d-b101-535078ce12d8",
+    "reference": "BD911",
+    "name": "BD 911"
+  },
+  {
+    "id": "bfa2fa27-a685-4bc1-8467-9f571badb915",
+    "reference": "BD912",
+    "name": "BD 912"
+  },
+  {
+    "id": "b3589afe-2609-43a6-a525-4488b7a53eb2",
+    "reference": "TDA7265",
+    "name": "TDA 7265"
+  },
+  {
+    "id": "2587a28b-b279-4ffb-9373-bbe8455e2f9d",
+    "reference": "TDA7292",
+    "name": "TDA 7292"
+  },
+  {
+    "id": "40ab210a-6bef-412c-9189-b3939c78c0bb",
+    "reference": "TDA7375",
+    "name": "TDA 7375"
+  },
+  {
+    "id": "26fba281-3561-4935-97a9-f3675aca58de",
+    "reference": "TDA7377",
+    "name": "TDA 7377"
+  },
+  {
+    "id": "d0bee456-a787-43a3-a3ab-54a177a40bfb",
+    "reference": "TDA7388",
+    "name": "TDA 7388"
+  },
+  {
+    "id": "10702d06-1fb1-4f34-812d-87a3226a5243",
+    "reference": "TDA7496",
+    "name": "TDA 7496"
+  },
+  {
+    "id": "0fe03063-dfa3-4921-ac5d-3b2e124d297d",
+    "reference": "TDA7496L",
+    "name": "TDA 7496 L"
+  },
+  {
+    "id": "01e2b084-9896-4023-9705-2a1b78e33720",
+    "reference": "TDA7350",
+    "name": "TDA 7350"
+  },
+  {
+    "id": "44ee09d5-f1e5-4bc4-b5d0-912af4798a66",
+    "reference": "TDA7262",
+    "name": "TDA 7262"
+  }
+]

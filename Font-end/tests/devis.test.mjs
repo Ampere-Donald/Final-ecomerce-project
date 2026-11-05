@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {
   parseReferenceList,
+  estimateReferenceList,
   resolvedReferenceList,
   requestViewValid,
   readDevisAttempt,
@@ -19,6 +20,23 @@ test("reference import preserves suffixes and duplicates, accepts spreadsheet co
       { reference: "LM358-N", quantite: 3 },
     ],
   );
+});
+
+test("workshop quantities preserve model suffixes and descriptive dimensions", () => {
+  assert.deepEqual(parseReferenceList("BC547 × 10\nTDA7267A x 4\nPlaque 10 x 20"), [
+    { reference: "BC547", quantite: 10 },
+    { reference: "TDA7267A", quantite: 4 },
+    { reference: "Plaque 10 x 20", quantite: 1 },
+  ]);
+  assert.throws(() => parseReferenceList("BC547 × 0"));
+});
+
+test("estimate includes only explicitly selected and priced lines", () => {
+  const product = { id: "part", prixPublic: 200 };
+  const line = { candidates: [product], produitId: "part", quantite: 2 };
+  assert.deepEqual(estimateReferenceList([
+    line, { ...line, produitId: "" }, { ...line, candidates: [{ ...product, prixPublic: null }] },
+  ]), { pricedLines: 1, amount: 400 });
 });
 
 test("an unreadable pending attempt blocks creating a fresh one without exposing a different owner", () => {

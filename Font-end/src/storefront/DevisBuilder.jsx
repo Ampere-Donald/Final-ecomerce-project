@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useI18n } from "../context/I18nContext";
 import apiClient from "../utils/apiClient";
@@ -8,6 +8,7 @@ import { entryChannel } from './acquisition.js';
 import { apiMessage } from "./orderData";
 import {
   parseReferenceList,
+  estimateReferenceList,
   resolvedReferenceList,
   requestViewValid,
   readSession,
@@ -23,14 +24,18 @@ export default function DevisBuilder({ existing, onSaved }) {
   const { lang } = useI18n();
   const tr = (fr, en) => (lang === "en" ? en : fr);
   const navigate = useNavigate();
+  const location = useLocation();
+  const requested = location.state?.requestedReference;
   const ownerId = user?.id || null;
   const [initial] = useState(() =>
     !existing ? readSession(draftKey, ownerId) || readSession(draftKey) : null,
   );
+  const copiedList = ownerId && location.state?.listOwner === ownerId && typeof location.state.listText === 'string'
+    ? location.state.listText : '';
   const [text, setText] = useState(
     existing
       ? existing.lignes.map((l) => `${l.reference}; ${l.quantite}`).join("\n")
-      : initial?.text || "",
+      : copiedList || [initial?.text, typeof requested === 'string' && !initial?.text?.split('\n').includes(requested) ? requested : ''].filter(Boolean).join('\n'),
   );
   const [contact, setContact] = useState({
     telephone:
@@ -41,6 +46,8 @@ export default function DevisBuilder({ existing, onSaved }) {
     notes: existing?.notes || initial?.notes || "",
   });
   const [rows, setRows] = useState(null);
+  const estimate = rows && estimateReferenceList(rows);
+  const formatAmount = value => value.toLocaleString(lang === 'en' ? 'en-GB' : 'fr-FR') + ' FCFA';
   const [recovery] = useState(() =>
     ownerId
       ? readDevisAttempt(pendingKey(ownerId), ownerId)
@@ -283,7 +290,7 @@ export default function DevisBuilder({ existing, onSaved }) {
               disabled={frozen}
               value={text}
               aria-describedby="devis-list-help"
-              placeholder={"LM358N; 10\nCâble HDMI 5 m; 2"}
+              placeholder={"BC547 × 10\nCâble HDMI 5 m; 2"}
               onChange={(e) => {
                 if (e.target.value.trim()) observeStart();
                 setText(e.target.value);
@@ -294,8 +301,8 @@ export default function DevisBuilder({ existing, onSaved }) {
           </label>
           <p id="devis-list-help" className="e-devis-help">
             {tr(
-              "Une référence par ligne. Séparez la quantité avec un point-virgule ou collez deux colonnes de votre tableau. Sans quantité, nous retenons 1 pièce. Maximum : 50 lignes.",
-              "One reference per line. Separate the quantity with a semicolon or paste two spreadsheet columns. Without a quantity, we use 1 item. Maximum: 50 lines.",
+              "Une référence par ligne. Écrivez BC547 × 10, utilisez un point-virgule ou collez deux colonnes de votre tableau. Sans quantité, nous retenons 1 pièce. Maximum : 50 lignes.",
+              "One reference per line. Write BC547 × 10, use a semicolon or paste two spreadsheet columns. Without a quantity, we use 1 item. Maximum: 50 lines.",
             )}
           </p>
           <button className="e-btn e-secondary" disabled={frozen}>
@@ -362,6 +369,8 @@ export default function DevisBuilder({ existing, onSaved }) {
                         <option key={p.id} value={p.id}>
                           {p.nomProduit}
                           {p.code ? ` (${p.code})` : ""}
+                          {' · ' + (Number.isFinite(p.prixPublic) ? formatAmount(p.prixPublic) : tr('Prix à confirmer', 'Price on request'))}
+                          {Number.isInteger(p.quantiteStock) && ' · ' + p.quantiteStock + tr(' disponibles', ' available')}
                         </option>
                       ))}
                     </select>
@@ -369,6 +378,12 @@ export default function DevisBuilder({ existing, onSaved }) {
                 )}
               </div>
             ))}
+            {estimate.pricedLines > 0 && estimate.amount != null && (
+              <p aria-live="polite">
+                {tr('Estimation hors livraison', 'Estimate excluding delivery')} · {formatAmount(estimate.amount)}
+                {' (' + estimate.pricedLines + '/' + rows.length + tr(' lignes chiffrées)', ' lines priced)')}
+              </p>
+            )}
           </section>
         )}
         <form onSubmit={submit} className="e-devis-contact">
