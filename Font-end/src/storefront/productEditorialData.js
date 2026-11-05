@@ -913,8 +913,8 @@ export const productEditorialEntries = [
       "urlDatasheet": null
     },
     "fr": {
-      "title": "BD139 : différencier polarité, gain et référence voisine",
-      "summary": "BD139 est lisible sur le visuel. La notice onsemi présente cette référence comme un transistor NPN pour applications linéaires et de commutation de puissance moyenne ; elle distingue les références et classes de gain de la famille.",
+      "title": "BD139 : vérifier polarité, suffixe et référence voisine",
+      "summary": "BD139 est lisible sur le visuel. La notice onsemi présente cette référence comme un transistor NPN pour applications linéaires et de commutation de puissance moyenne ; elle présente plusieurs références et suffixes de la famille.",
       "checks": [
         "Un BD140 complémentaire PNP ne se place pas indifféremment à la place du BD139 NPN.",
         "Vérifiez le suffixe, les limites électriques, le refroidissement et le brochage du fabricant concerné avant de retenir une alternative."
