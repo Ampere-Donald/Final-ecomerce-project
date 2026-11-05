@@ -204,6 +204,7 @@ export default function Catalogue() {
               en={list ? "Grid view" : "List view"}
             />
           </button>
+          <Link className="e-view" to="/devis"><Copy fr="Ma liste de pièces" en="My parts list" /></Link>
           <ComparisonLink />
           <label className="e-sort">
             <span>
@@ -287,6 +288,11 @@ export default function Catalogue() {
               <button className="e-btn" disabled={!ready} onClick={() => setParams({})}>
                 <Copy fr="Voir tous les produits" en="View all products" />
               </button>
+              {query.trim() && query.trim().length <= 100 && (
+                <Link className="e-btn e-secondary" to="/devis" state={{ requestedReference: query.trim() }}>
+                  <Copy fr="Demander cette pièce" en="Request this part" />
+                </Link>
+              )}
               <Link to="/contact">
                 <Copy fr="Demander conseil" en="Ask for advice" />
               </Link>

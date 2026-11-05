@@ -144,6 +144,12 @@ export default function Devis() {
                 {tr("Envoyée le", "Sent on")} {orderDate(data.createdAt, lang)}
               </p>
             </div>
+            <Link className="e-btn e-secondary" to="/devis" state={{
+              listOwner: user?.id,
+              listText: data.lignes.map(line => `${line.reference}; ${line.quantite}`).join('\n'),
+            }}>
+              {tr("Reprendre cette liste pour un nouveau devis", "Use this list for a new quote")}
+            </Link>
             {data.reponseClient && (
               <section className="e-devis-reply">
                 <h2>{tr("La réponse de la boutique", "The shop’s reply")}</h2>

@@ -7,6 +7,8 @@ import {
 } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { createHash } from 'node:crypto';
+import { componentReferencePattern } from '../produit/search-normalization';
+import { cataloguePricing } from '../pricing/catalogue-price';
 import { acquisitionChannel } from '../parcours/acquisition';
 import { DatabaseService } from '../database/database.service';
 import { ProformaService } from '../proforma/proforma.service';
@@ -30,6 +32,8 @@ const productSelect = {
   codeFamille: true,
   quantiteStock: true,
   prixDetail: true,
+  prixPromo: true,
+  finPromo: true,
   imageUrl: true,
 } as const;
 const readSelect = {
@@ -105,6 +109,7 @@ export class DevisService {
 
   async resolve(dto: ResolveDevisDto) {
     this.validateLines(dto);
+    const now = new Date();
     const rows: any[] = new Array(dto.lignes.length);
     let index = 0;
     await Promise.all(
@@ -113,11 +118,19 @@ export class DevisService {
           const i = index++;
           const line = dto.lignes[i];
           const reference = line.reference.trim();
+          const pattern = componentReferencePattern(reference);
+          const variants = pattern
+            ? await this.db.$queryRaw<Array<{ id: string }>>`
+                SELECT id FROM produit WHERE est_actif = TRUE
+                AND (btrim(nom_produit) ~* ${pattern} OR btrim(code) ~* ${pattern})
+                ORDER BY nom_produit, id LIMIT 8`
+            : [];
           const exact = await this.db.produit.findMany({
             where: {
               estActif: true,
               OR: [
                 { code: { equals: reference, mode: 'insensitive' } },
+                ...variants.map(({ id }) => ({ id })),
                 { nomProduit: { equals: reference, mode: 'insensitive' } },
               ],
             },
@@ -155,6 +168,23 @@ export class DevisService {
         }
       }),
     );
+    const ids = [...new Set<string>(rows.flatMap(row => row.candidates.map(p => p.id)))];
+    const reservations = ids.length ? await this.db.ligneTicket.groupBy({
+      by: ['produitId'],
+      where: { produitId: { in: ids }, ticket: { statut: 'EN_ATTENTE', expiresAt: { gt: now } } },
+      _sum: { quantite: true },
+    }) : [];
+    const reserved = new Map(reservations.map(r => [r.produitId, r._sum.quantite ?? 0]));
+    for (const row of rows) {
+      row.candidates = row.candidates.map(p => {
+        const { prixPromo, finPromo, ...product } = p;
+        return {
+          ...product,
+          prixPublic: cataloguePricing({ ...product, prixPromo, finPromo }, now).prixPublic,
+          quantiteStock: Math.max(0, p.quantiteStock - (reserved.get(p.id) ?? 0)),
+        };
+      });
+    }
     return { lignes: rows };
   }
 

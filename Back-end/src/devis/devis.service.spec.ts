@@ -43,6 +43,8 @@ const row = (values: any = {}) => ({
 function harness() {
   let saved: any = null;
   const tx = {
+    $queryRaw: jest.fn().mockResolvedValue([]),
+    ligneTicket: { groupBy: jest.fn().mockResolvedValue([]) },
     client: {
       findUnique: jest
         .fn()
@@ -180,6 +182,19 @@ describe("Customer quote requests", () => {
     expect(query.where.OR[0].code.equals).toBe("LM358-N");
     expect(query.select.cmupActuel).toBeUndefined();
     expect(query.take).toBe(8);
+  });
+
+  it("recognizes a spaced marking and shows promotional price and remaining stock", async () => {
+    const { tx, service } = harness();
+    tx.$queryRaw.mockResolvedValue([{ id: productId }]);
+    tx.produit.findMany.mockResolvedValue([{ id: productId, nomProduit: "BC 547",
+      prixDetail: 250, prixPromo: 200, finPromo: new Date("2099-01-01"), quantiteStock: 9 }]);
+    tx.ligneTicket.groupBy.mockResolvedValue([{ produitId: productId, _sum: { quantite: 3 } }]);
+    const result = await service.resolve({ lignes: [{ reference: "BC547", quantite: 10 }] });
+    expect(result.lignes[0]).toMatchObject({ match: "exact", candidates: [
+      { id: productId, prixPublic: 200, quantiteStock: 6 },
+    ] });
+    expect(tx.$queryRaw.mock.calls[0]).toContain("^bc[ .-]*547$");
   });
 
   it("creates an owned request using server identity, no client price, no stock reservation, and replays once", async () => {

@@ -20,10 +20,12 @@ export const documentedSearchValuesSql = `
 export function documentedSearchMatch(
   query: string,
   key?: 'REFERENCE_FABRICANT' | 'ALIAS_RECHERCHE',
+  referencePattern?: string | null,
 ) {
   return Prisma.sql`EXISTS (
     ${Prisma.raw(documentedSearchValuesSql)}
-    AND ${Prisma.raw(normalizedSearchSql('v.valeur'))} = ${query}
+    AND (${Prisma.raw(normalizedSearchSql('v.valeur'))} = ${query}
+      ${referencePattern ? Prisma.sql`OR btrim(v.valeur) ~* ${referencePattern}` : Prisma.empty})
     ${key ? Prisma.sql`AND a.cle_technique::text = ${key}` : Prisma.empty}
   )`;
 }

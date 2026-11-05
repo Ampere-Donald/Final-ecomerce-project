@@ -97,6 +97,7 @@ describe('ProduitService pagination', () => {
       null,
       false,
       40,
+      '^fer[ .-]*40[ .-]*w$',
     );
     expect(db.produit.count).not.toHaveBeenCalled();
     expect(result.meta).toEqual({ total: 0, page: 1, limit: 20, lastPage: 1 });

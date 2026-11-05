@@ -15,6 +15,7 @@ import { publicCatalogue, publicPriceMetadata } from './public-catalogue';
 import { documentedSearchValuesSql } from './documented-search';
 import {
   normalizeSalesSearch,
+  componentReferencePattern,
   normalizedSearchSql,
 } from './search-normalization';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -111,18 +112,19 @@ export class ProduitService {
           ${normalizedSearchSql('p.marque')} AS brand,
           ${normalizedSearchSql('p.code_famille')} AS family,
           ${normalizedSearchSql('p.code')} AS code,
-          ${normalizedSearchSql('c.nom')} AS category
+          ${normalizedSearchSql('c.nom')} AS category,
+          (btrim(p.nom_produit) ~* $5::text OR btrim(p.code) ~* $5::text) AS marking_exact
         ) AS n
         CROSS JOIN LATERAL (SELECT
           coalesce(bool_or(documented.cle_technique = 'REFERENCE_FABRICANT'), FALSE) AS reference_exact,
           coalesce(bool_or(documented.cle_technique = 'ALIAS_RECHERCHE'), FALSE) AS alias_exact
           FROM (${documentedSearchValuesSql}) AS documented
-          WHERE ${normalizedSearchSql('documented.valeur')} = $1::text
+          WHERE ${normalizedSearchSql('documented.valeur')} = $1::text OR btrim(documented.valeur) ~* $5::text
         ) AS technical
         WHERE ($2::text IS NULL OR p.id_categorie = $2::text)
           AND p.est_actif = TRUE
           AND ($3::boolean = FALSE OR p.quantite_stock > 0)
-          AND (technical.reference_exact OR technical.alias_exact OR NOT EXISTS (
+          AND (n.marking_exact OR technical.reference_exact OR technical.alias_exact OR NOT EXISTS (
             SELECT 1
             FROM unnest(regexp_split_to_array(lower(trim($1::text)), '\\s+')) AS search_term(term)
             WHERE length(search_term.term) >= 2
@@ -149,7 +151,7 @@ export class ProduitService {
           CASE
             WHEN n.code = $1::text THEN 0
             WHEN technical.reference_exact THEN 1
-            WHEN n.name = $1::text THEN 2
+            WHEN n.name = $1::text OR n.marking_exact THEN 2
             WHEN technical.alias_exact THEN 3
             WHEN n.name LIKE $1::text || '%' THEN 4
             ELSE 5
@@ -167,6 +169,7 @@ export class ProduitService {
       categoryId || null,
       Boolean(inStock),
       limit,
+      componentReferencePattern(query),
     );
     return rows.map((row) => row.id);
   }
