@@ -28,3 +28,15 @@ export function normalizedSearchSql(column: SearchColumn): string {
     throw new Error('Unsupported search column');
   return `btrim(regexp_replace(lower(regexp_replace(normalize(coalesce(${column}, ''), NFD), '[\u0300-\u036f]', '', 'g')), '[^a-z0-9]+', ' ', 'g'))`;
 }
+
+// Component markings can separate the letter and digit groups (BC 547, 2N-3904).
+// Keep boundaries within numeric groups and require the whole marking including suffix.
+export function componentReferencePattern(input: string): string | null {
+  const compact = input.trim().toLowerCase().replace(
+    /(?<=[a-z])[ .-]+(?=[0-9])|(?<=[0-9])[ .-]+(?=[a-z])/g,
+    '',
+  );
+  if (!/^(?=[a-z0-9]*[a-z])(?=[a-z0-9]*[0-9])[a-z0-9]{3,40}$/.test(compact))
+    return null;
+  return '^' + compact.match(/[a-z]+|[0-9]+/g)!.join('[ .-]*') + '$';
+}

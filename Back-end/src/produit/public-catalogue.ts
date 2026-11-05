@@ -4,6 +4,7 @@ import { cataloguePriceSql } from '../pricing/catalogue-price.sql';
 import { documentedSearchMatch } from './documented-search';
 import { technicalAttributesSelection } from '../equivalence/technical-context';
 import {
+  componentReferencePattern,
   normalizeSalesSearch,
   normalizedSearchSql,
   SearchColumn,
@@ -63,6 +64,11 @@ export async function publicCatalogue(
     [Prisma.sql`p.code`, params.code],
   ] as Array<[Prisma.Sql, string | undefined]>)
     if (value) conditions.push(Prisma.sql`${field} ILIKE ${contains(value)}`);
+  const search = String(params.search || '').trim().slice(0, 120);
+  const referencePattern = componentReferencePattern(search);
+  const referenceMatch = referencePattern
+    ? Prisma.sql`(btrim(p.nom_produit) ~* ${referencePattern} OR btrim(p.code) ~* ${referencePattern})`
+    : Prisma.sql`FALSE`;
   if (candidateIds !== undefined) {
     conditions.push(
       candidateIds.length
@@ -70,9 +76,6 @@ export async function publicCatalogue(
         : Prisma.sql`FALSE`,
     );
   } else {
-    const search = String(params.search || '')
-      .trim()
-      .slice(0, 120);
     if (search) {
       const normalized = normalizeSalesSearch(search);
       if (!normalized) conditions.push(Prisma.sql`FALSE`);
@@ -94,7 +97,7 @@ export async function publicCatalogue(
                 Prisma.sql`${Prisma.raw(normalizedSearchSql(field))} LIKE ${pattern}`,
             ),
             ' OR ',
-          )} OR ${documentedSearchMatch(normalized)})`,
+          )} OR ${referenceMatch} OR ${documentedSearchMatch(normalized, undefined, referencePattern)})`,
         );
       }
     }
@@ -111,17 +114,13 @@ export async function publicCatalogue(
     ['name_asc', Prisma.sql`e.name ASC, e.id ASC`],
     ['name_desc', Prisma.sql`e.name DESC, e.id ASC`],
   ]);
-  const normalizedQuery = normalizeSalesSearch(
-    String(params.search || '')
-      .trim()
-      .slice(0, 120),
-  );
+  const normalizedQuery = normalizeSalesSearch(search);
   const searchRank = normalizedQuery
     ? Prisma.sql`CASE
     WHEN ${Prisma.raw(normalizedSearchSql('p.code'))} = ${normalizedQuery} THEN 0
-    WHEN ${documentedSearchMatch(normalizedQuery, 'REFERENCE_FABRICANT')} THEN 1
-    WHEN ${Prisma.raw(normalizedSearchSql('p.nom_produit'))} = ${normalizedQuery} THEN 2
-    WHEN ${documentedSearchMatch(normalizedQuery, 'ALIAS_RECHERCHE')} THEN 3
+    WHEN ${documentedSearchMatch(normalizedQuery, 'REFERENCE_FABRICANT', referencePattern)} THEN 1
+    WHEN ${Prisma.raw(normalizedSearchSql('p.nom_produit'))} = ${normalizedQuery} OR ${referenceMatch} THEN 2
+    WHEN ${documentedSearchMatch(normalizedQuery, 'ALIAS_RECHERCHE', referencePattern)} THEN 3
     ELSE 4 END`
     : Prisma.sql`4`;
   const relevance = candidateIds?.length
