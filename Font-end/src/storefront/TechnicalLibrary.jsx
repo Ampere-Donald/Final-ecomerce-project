@@ -23,6 +23,7 @@ const englishLabels = {
   "Les prix et disponibilités sont à consulter sur les fiches du catalogue.": "Check prices and availability on catalogue product pages.",
   "Préparer votre demande": "Prepare your enquiry",
   "Réunissez la référence complète, le modèle de l’appareil et les informations indiquées dans ce guide.": "Gather the full reference, equipment model and information listed in this guide.",
+  "Demander un devis": "Request a quote",
   "Demander conseil": "Ask for advice",
   "Tous les guides": "All guides",
   "Dossiers de remplacement": "Replacement cases",
@@ -86,7 +87,7 @@ function Article({ entry }) {
       <p>{copy('Les prix et disponibilités sont à consulter sur les fiches du catalogue.')}</p>
     </section>}
     <section className="e-library-contact"><h2>{copy('Préparer votre demande')}</h2><p>{copy('Réunissez la référence complète, le modèle de l’appareil et les informations indiquées dans ce guide.')}</p>
-      <div className="e-actions"><Link className="e-btn" to="/contact">{copy('Demander conseil')}</Link><Link to="/guides">{copy('Tous les guides')}</Link></div>
+      <div className="e-actions"><Link className="e-btn" to="/devis">{copy('Demander un devis')}</Link><Link to="/contact">{copy('Demander conseil')}</Link><Link to="/guides">{copy('Tous les guides')}</Link></div>
     </section>
   </article>;
 }

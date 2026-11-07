@@ -17,7 +17,7 @@ const clone = value => structuredClone(value);
 
 test('the generated public projection matches the reviewed registry and omits every private draft', async () => {
   const projection = await verifyEditorial();
-  assert.equal(projection.length, 4);
+  assert.equal(projection.length, 5);
   assert.deepEqual(projection, publishedEditorial);
   const serialized = editorialModule(projection);
   for (const entry of entries.filter(item => item.status !== 'published')) {

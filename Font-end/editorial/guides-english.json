@@ -228,5 +228,74 @@
     ],
     "reviewScope": "JST XH specifications and drawings were read; no physical identification or mating check was performed.",
     "sourceSha256": "2f489087801ee4f2772cddf91f82997482431d4fa14e0c396300381696d2164d"
+  },
+  {
+    "id": "guide-audio-tda7267",
+    "reviewedAt": "2026-11-07",
+    "title": "TDA7267 or TDA7267A for a TV audio board?",
+    "summary": "On these two ST mono amplifiers, the A suffix changes the package. Counting the pins helps distinguish the two references when the last letter has worn off.",
+    "sourceLabels": [
+      "STMicroelectronics — TDA7267",
+      "STMicroelectronics — TDA7267A"
+    ],
+    "sourceLocators": [
+      "Package on page 1, top-view pinout on page 2 and electrical characteristics on page 2.",
+      "Package on page 1, top-view pinout on page 2 and electrical characteristics on page 3."
+    ],
+    "productLabels": [],
+    "sections": [
+      {
+        "id": "boitier",
+        "title": "Count the pins before requesting the part",
+        "paragraphs": [
+          "The TDA7267 has four pins on each side. The TDA7267A has eight on each side. Their different footprints prevent a direct swap on the same board."
+        ],
+        "bullets": []
+      },
+      {
+        "id": "puissance",
+        "title": "What do the 2 W and 3 W figures mean?",
+        "paragraphs": [
+          "ST measures both devices into 8 Ω at 1 kHz and 10% total harmonic distortion. The supply voltage differs between tests, so the two figures describe different operating points."
+        ],
+        "bullets": [],
+        "table": {
+          "caption": "Typical values published by ST at 25 °C",
+          "headers": [
+            "Reference",
+            "Package",
+            "Test supply",
+            "Typical output power"
+          ],
+          "rows": [
+            [
+              "TDA7267",
+              "MINIDIP, 8 pins",
+              "12 V",
+              "2 W"
+            ],
+            [
+              "TDA7267A",
+              "PowerDIP, 16 pins",
+              "14.5 V",
+              "3 W"
+            ]
+          ]
+        }
+      },
+      {
+        "id": "demande",
+        "title": "What should you send NEWOTEG if the suffix is unreadable?",
+        "paragraphs": [
+          "Copy the visible marking and identify the uncertain letter. For a quotation, include the TV model, pins per side and quantity required. Ask for a photograph showing the marking and both pin rows of the offered part."
+        ],
+        "bullets": []
+      }
+    ],
+    "limits": [
+      "Confirm the identity of the stocked part from its marking. This comparison covers the two devices documented by ST."
+    ],
+    "reviewScope": "The package descriptions, top-view pinouts and test conditions were checked in both June 1998 ST datasheets.",
+    "sourceSha256": "7eded07937ab428b5cb84c61d17c2e7af38897b165da3df6f973955f487b21d8"
   }
 ]

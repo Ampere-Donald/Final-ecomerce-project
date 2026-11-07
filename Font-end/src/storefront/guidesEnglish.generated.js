@@ -312,5 +312,102 @@ export const preparedEnglishGuides = [
       "method": "documentary",
       "scope": "JST XH specifications and drawings were read; no physical identification or mating check was performed."
     }
+  },
+  {
+    "id": "guide-audio-tda7267-en",
+    "sourceId": "guide-audio-tda7267",
+    "sourceSha256": "7eded07937ab428b5cb84c61d17c2e7af38897b165da3df6f973955f487b21d8",
+    "slug": "tda7267-tda7267a",
+    "language": "en",
+    "type": "guide",
+    "title": "TDA7267 or TDA7267A for a TV audio board?",
+    "summary": "On these two ST mono amplifiers, the A suffix changes the package. Counting the pins helps distinguish the two references when the last letter has worn off.",
+    "createdAt": "2026-11-07",
+    "reviewedAt": "2026-11-07",
+    "families": [
+      "circuits-integres-audio"
+    ],
+    "products": [],
+    "sources": [
+      {
+        "id": "tda7267",
+        "label": "STMicroelectronics — TDA7267",
+        "url": "https://www.st.com/resource/en/datasheet/tda7267.pdf",
+        "locator": "Package on page 1, top-view pinout on page 2 and electrical characteristics on page 2.",
+        "checkedAt": "2026-11-07"
+      },
+      {
+        "id": "tda7267a",
+        "label": "STMicroelectronics — TDA7267A",
+        "url": "https://www.st.com/resource/en/datasheet/tda7267a.pdf",
+        "locator": "Package on page 1, top-view pinout on page 2 and electrical characteristics on page 3.",
+        "checkedAt": "2026-11-07"
+      }
+    ],
+    "sections": [
+      {
+        "id": "boitier",
+        "title": "Count the pins before requesting the part",
+        "paragraphs": [
+          "The TDA7267 has four pins on each side. The TDA7267A has eight on each side. Their different footprints prevent a direct swap on the same board."
+        ],
+        "bullets": [],
+        "sources": [
+          "tda7267",
+          "tda7267a"
+        ]
+      },
+      {
+        "id": "puissance",
+        "title": "What do the 2 W and 3 W figures mean?",
+        "paragraphs": [
+          "ST measures both devices into 8 Ω at 1 kHz and 10% total harmonic distortion. The supply voltage differs between tests, so the two figures describe different operating points."
+        ],
+        "bullets": [],
+        "table": {
+          "caption": "Typical values published by ST at 25 °C",
+          "headers": [
+            "Reference",
+            "Package",
+            "Test supply",
+            "Typical output power"
+          ],
+          "rows": [
+            [
+              "TDA7267",
+              "MINIDIP, 8 pins",
+              "12 V",
+              "2 W"
+            ],
+            [
+              "TDA7267A",
+              "PowerDIP, 16 pins",
+              "14.5 V",
+              "3 W"
+            ]
+          ]
+        },
+        "sources": [
+          "tda7267",
+          "tda7267a"
+        ]
+      },
+      {
+        "id": "demande",
+        "title": "What should you send NEWOTEG if the suffix is unreadable?",
+        "paragraphs": [
+          "Copy the visible marking and identify the uncertain letter. For a quotation, include the TV model, pins per side and quantity required. Ask for a photograph showing the marking and both pin rows of the offered part."
+        ],
+        "bullets": [],
+        "sources": []
+      }
+    ],
+    "limits": [
+      "Confirm the identity of the stocked part from its marking. This comparison covers the two devices documented by ST."
+    ],
+    "review": {
+      "method": "documentary",
+      "scope": "The package descriptions, top-view pinouts and test conditions were checked in both June 1998 ST datasheets."
+    }
   }
 ];

@@ -24,7 +24,7 @@ test('guide suggestions use exact family identity or an explicitly selected prod
   const capacitor = seoFamilies.find(family => family.slug === 'condensateurs');
   const supply = seoFamilies.find(family => family.slug === 'alimentations-stabilisees');
   for (const lang of ['fr', 'en']) {
-    assert.equal(selectionGuides(lang).length, 4);
+    assert.equal(selectionGuides(lang).length, 5);
     assert(selectionGuides(lang).every(entry => entry.language === lang));
     const matches = productGuides({ id: 'unknown', categoryId: capacitor.category, subcategoryId: capacitor.subcategory }, lang);
     assert.deepEqual(matches.map(entry => entry.slug), ['choisir-condensateur-electrolytique']);

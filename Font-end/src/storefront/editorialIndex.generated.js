@@ -54,5 +54,18 @@ export const editorialIndex = [
     "reviewedAt": "2026-10-31",
     "families": [],
     "productIds": []
+  },
+  {
+    "id": "guide-audio-tda7267",
+    "slug": "tda7267-tda7267a",
+    "language": "fr",
+    "type": "guide",
+    "title": "TDA7267 ou TDA7267A pour la carte audio de votre téléviseur ?",
+    "summary": "Sur ces deux amplificateurs mono ST, la lettre A change le boîtier. Le nombre de broches permet de distinguer les deux références lorsque la dernière lettre du marquage est effacée.",
+    "reviewedAt": "2026-11-07",
+    "families": [
+      "circuits-integres-audio"
+    ],
+    "productIds": []
   }
 ];

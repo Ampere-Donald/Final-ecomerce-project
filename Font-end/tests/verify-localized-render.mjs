@@ -66,6 +66,7 @@ try {
   for (const guide of preparedEnglishGuides) {
     const path = '/en/guides/' + guide.slug, html = await read(path, 'compiled-English-guide');
     assert(html.includes('data-initial-editorial="en"')); assert(decode(html).includes(guide.summary));
+    assert(html.includes('href="/en/devis"') && html.includes('Request a quote'), path);
     assert(html.includes('Scope and limitations')); assert(html.includes('Reviewed on'));
     for (const section of guide.sections) { assert(html.includes('id="' + section.id + '"')); assert(decode(html).includes(section.title)); }
     for (const source of guide.sources) assert(html.includes(source.url));

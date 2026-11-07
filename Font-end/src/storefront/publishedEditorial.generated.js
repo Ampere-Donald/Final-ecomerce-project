@@ -304,5 +304,100 @@ export const publishedEditorial = [
       "method": "documentary",
       "scope": "Lecture des spécifications et plans JST XH ; aucune identification physique ni vérification d’accouplement réalisée."
     }
+  },
+  {
+    "id": "guide-audio-tda7267",
+    "slug": "tda7267-tda7267a",
+    "language": "fr",
+    "type": "guide",
+    "title": "TDA7267 ou TDA7267A pour la carte audio de votre téléviseur ?",
+    "summary": "Sur ces deux amplificateurs mono ST, la lettre A change le boîtier. Le nombre de broches permet de distinguer les deux références lorsque la dernière lettre du marquage est effacée.",
+    "createdAt": "2026-11-07",
+    "reviewedAt": "2026-11-07",
+    "sources": [
+      {
+        "id": "tda7267",
+        "label": "STMicroelectronics — TDA7267",
+        "url": "https://www.st.com/resource/en/datasheet/tda7267.pdf",
+        "locator": "Page 1 pour le boîtier, page 2 pour le brochage et page 2 pour les caractéristiques électriques.",
+        "checkedAt": "2026-11-07"
+      },
+      {
+        "id": "tda7267a",
+        "label": "STMicroelectronics — TDA7267A",
+        "url": "https://www.st.com/resource/en/datasheet/tda7267a.pdf",
+        "locator": "Page 1 pour le boîtier, page 2 pour le brochage et page 3 pour les caractéristiques électriques.",
+        "checkedAt": "2026-11-07"
+      }
+    ],
+    "families": [
+      "circuits-integres-audio"
+    ],
+    "products": [],
+    "sections": [
+      {
+        "id": "boitier",
+        "title": "Comptez les broches avant de demander la pièce",
+        "paragraphs": [
+          "Le TDA7267 présente quatre broches de chaque côté. Le TDA7267A en présente huit de chaque côté. Ces empreintes différentes empêchent un remplacement direct sur la même carte."
+        ],
+        "bullets": [],
+        "sources": [
+          "tda7267",
+          "tda7267a"
+        ]
+      },
+      {
+        "id": "puissance",
+        "title": "Comment lire les puissances de 2 W et 3 W",
+        "paragraphs": [
+          "ST mesure les deux circuits sous une charge de 8 Ω, à 1 kHz et à 10 % de distorsion harmonique totale. La tension d’alimentation change entre les essais. Ces chiffres décrivent donc deux points de mesure distincts."
+        ],
+        "bullets": [],
+        "sources": [
+          "tda7267",
+          "tda7267a"
+        ],
+        "table": {
+          "caption": "Valeurs typiques publiées par ST à 25 °C",
+          "headers": [
+            "Référence",
+            "Boîtier",
+            "Alimentation de l’essai",
+            "Puissance typique"
+          ],
+          "rows": [
+            [
+              "TDA7267",
+              "MINIDIP, 8 broches",
+              "12 V",
+              "2 W"
+            ],
+            [
+              "TDA7267A",
+              "PowerDIP, 16 broches",
+              "14,5 V",
+              "3 W"
+            ]
+          ]
+        }
+      },
+      {
+        "id": "demande",
+        "title": "Que transmettre à NEWOTEG si le suffixe est illisible ?",
+        "paragraphs": [
+          "Recopiez la partie lisible du marquage et signalez la lettre incertaine. Pour demander un devis, indiquez le modèle du téléviseur, le nombre de broches par côté et la quantité souhaitée. Demandez une photo de la pièce proposée où le marquage et les deux rangées sont visibles."
+        ],
+        "bullets": [],
+        "sources": []
+      }
+    ],
+    "limits": [
+      "La référence de l’exemplaire en stock reste à confirmer sur la pièce. Cette comparaison concerne les deux circuits documentés par ST."
+    ],
+    "review": {
+      "method": "documentary",
+      "scope": "Comparaison des boîtiers, vues de dessus et conditions de mesure dans les deux notices ST de juin 1998."
+    }
   }
 ];
