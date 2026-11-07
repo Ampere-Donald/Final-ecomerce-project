@@ -1,6 +1,6 @@
 // Only a build-generated, anonymous home document may populate the public root.
-export function injectInitialHome(document, snapshot) {
-  if (snapshot?.version !== 1 || snapshot.language !== 'fr' ||
+export function injectInitialHome(document, snapshot, lang = 'fr') {
+  if (snapshot?.version !== 1 || snapshot.language !== lang || !['fr', 'en'].includes(lang) ||
       typeof snapshot.html !== 'string' || !snapshot.html.startsWith('<div class="app">') ||
       /<script\b/i.test(snapshot.html) || !Array.isArray(snapshot.css) || !snapshot.css.length ||
       !snapshot.css.every(path => /^\/assets\/[\w.-]+\.css$/.test(path)) ||
@@ -8,7 +8,7 @@ export function injectInitialHome(document, snapshot) {
   const styles = snapshot.css.filter(path => !document.includes(`href="${path}"`))
     .map(path => `<link data-initial-home-css rel="stylesheet" href="${path}" />`).join('');
   return document.replace('</head>', styles + '</head>')
-    .replace('<div id="root"></div>', `<div id="root" data-initial-home="fr">${snapshot.html}</div>`);
+    .replace('<div id="root"></div>', `<div id="root" data-initial-home="${lang}">${snapshot.html}</div>`);
 }
 
 export function initialHomeStyles(manifest) {

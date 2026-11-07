@@ -1,5 +1,5 @@
 import { createElement, useRef, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link } from "./LocaleRouter";
 import { Store, Truck, ArrowRight } from "lucide-react";
 import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "./LocaleRouter";
 import { useCart } from "../context/CartContext";
 import { useI18n } from "../context/I18nContext";
 import apiClient from "../utils/apiClient";

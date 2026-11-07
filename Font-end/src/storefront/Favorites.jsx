@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link } from "./LocaleRouter";
 import PageMeta from "./PageMeta";
 import { useFavorites } from "../context/FavoritesContext";
 import { useI18n } from "../context/I18nContext";

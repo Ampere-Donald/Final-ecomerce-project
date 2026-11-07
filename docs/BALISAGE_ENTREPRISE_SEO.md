@@ -1,6 +1,6 @@
-# Balisage de l’entreprise — préparation SEO-13
+# Balisage de l’entreprise — livraison SEO-13
 
-État : préparation indépendante sur `codex/seo-organization`, non publiée à ce stade.
+État : publié et contrôlé le 31 octobre 2026, PR #37. La validation externe Google reste à effectuer.
 
 Le HTML généré contient une seule description JSON-LD `Organization` : NEWOTEG, sa marque X-Electronic, l’URL canonique du site, le logo existant, l’e-mail et le téléphone principal déjà publiés. Les coordonnées proviennent du même `shopContact.js` que les pages de la boutique. Le logo `logo.png` a été inspecté : fichier PNG de 238 × 254 pixels, déjà employé dans les métadonnées du site.
 
@@ -28,3 +28,13 @@ Ce lot ne publie pas les guides ou les URL anglaises de la PR #35. La livraison 
 173 tests frontend, lint et build réussis. Le contrôle du HTML réellement généré passe pour accueil, contact et parcours privé. Le moteur compilé conserve l’identité `2038804f430092524ccdabd2f824add31975965d63899bbd350697b44f78041d`, déjà acceptée par le backend de production ; aucun nouveau moteur n’est requis par ce lot.
 
 Les tests du générateur ont aussi été exécutés après l’ajustement de son remplacement de balise, pour conserver les scripts appartenant à d’autres fonctionnalités. Les journaux se trouvent dans `output/seo-implementation/organization-*`. La validation externe Google reste à effectuer ; la validité d’un document JSON n’est pas présentée comme son résultat.
+
+## Résultat en production
+
+Sur `90ebc98914f7aab1cf3f27afb55b0e0cda1402ef`, CI générale #379 et contrat runtime #103 entièrement réussis, dont les trois profils Docker et la préproduction isolée. Une indentation du nouveau contrôle CI a été corrigée avant ces réussites. La PR #37 est fusionnée dans `14a491caee0b00d7bdbdffdfb3e405cb1cc79cf7`.
+
+Worker publié : `492e98e4-9d21-476f-9c57-bf54195f7a41`, confirmé actif à 100 % dans le déploiement `d9257ab0-48a9-4a5f-8366-3f8366912eb1`. Retour arrière compatible : `4794fe2c-bcaa-4296-8cb9-f984558a74d1`. Moteur inchangé : `2038804f430092524ccdabd2f824add31975965d63899bbd350697b44f78041d`.
+
+Recette HTTP publique commencée à 19:51:24 UTC : un seul graphe exact sur accueil, contact, famille, produit, checkout et URL inconnue ; logo PNG accessible. Sept contrôles réussis, HTML initial et schéma produit conservés, checkout noindex/no-store, inconnue 404/noindex. Les treize contrôles des variantes HTTP/www, des parcours privés et de HEAD réussissent aussi après cette publication. Aucune donnée commerciale n’a été écrite. Rapport : `output/seo-implementation/organization-production-report.json` ; version active : `organization-deployments-confirmed.json`.
+
+Cette livraison technique ne prouve pas encore l’interprétation du balisage par Google, une indexation nouvelle ou un gain de classement.

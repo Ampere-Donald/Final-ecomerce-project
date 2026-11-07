@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link } from "./LocaleRouter";
 import PageMeta from "./PageMeta";
 import { X, RefreshCw } from "lucide-react";
 import { useI18n } from "../context/I18nContext";

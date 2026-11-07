@@ -2,7 +2,8 @@ import EquivalenceEntry from "./EquivalenceEntry";
 import HomeMerchandising from "./HomeMerchandising";
 import "./home-hero.css";
 import HomeSelection from "./HomeSelection";
-import { Link } from "react-router-dom";
+import HomeGuides from './HomeGuides';
+import { Link } from "./LocaleRouter";
 import PageMeta from "./PageMeta";
 import {
   ArrowRight,
@@ -60,6 +61,7 @@ export default function Home() {
         <EquivalenceEntry illustrated />
         <HomeSelection />
         <HomeMerchandising />
+        <HomeGuides />
         <section className="e-advice-ribbon">
           <MessageCircle size={30} />
           <div>

@@ -64,6 +64,8 @@ jobs:
       - run: npm run lint
       - name: Vérifier les contrats des parcours et protections du storefront
         run: npm test
+      - name: Vérifier les vingt fiches anglaises avec les composants réels
+        run: node tests/verify-product-translation-render.mjs
       - run: npm run build
       - name: Vérifier le balisage entreprise dans le HTML généré
         run: node tests/verify-organization-build.mjs

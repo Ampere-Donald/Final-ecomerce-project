@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "./LocaleRouter";
 import { ArrowRight, Search } from "lucide-react";
 import { useI18n } from "../context/I18nContext";
 import apiClient from "../utils/apiClient";

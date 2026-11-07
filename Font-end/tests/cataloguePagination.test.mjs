@@ -14,7 +14,7 @@ function fragment(target = url, result = data) {
   const snapshot = { version: 1, url: target.pathname + target.search, at: Date.now(), resources: {
     [catalogueQuery(target.searchParams, target.pathname).path]: result, '/categories': [],
   } };
-  return '<div id="root" data-initial-catalogue="fr"><div class="app"><p>No results</p></div></div>' +
+  return `<div id="root" data-initial-catalogue="${target.pathname.startsWith('/en/') ? 'en' : 'fr'}"><div class="app"><p>No results</p></div></div>` +
     '<script type="application/json" id="initial-catalogue-data">' + JSON.stringify(snapshot) + '</script>';
 }
 const env = { backendCatalogue: descriptor, catalogueStyles: ['/assets/Catalogue.css'], ASSETS: {
@@ -56,17 +56,19 @@ test('GET and HEAD return 404/noindex/no-store without canonical only for proven
     globalThis.fetch = async request => {
       reads++;
       assert.equal(request.method, 'GET'); assert(!request.headers.has('Cookie')); assert(!request.headers.has('Authorization'));
-      return new Response(fragment(), { headers: { 'content-type': 'text/html', 'x-catalogue-renderer': descriptor.rendererId } });
+      const target = new URL(new URL(request.url).searchParams.get('url'), 'https://newoteg.com');
+      return new Response(fragment(target), { headers: { 'content-type': 'text/html', 'x-catalogue-renderer': descriptor.rendererId } });
     };
-    for (const method of ['GET', 'HEAD']) {
-      const r = await worker.fetch(new Request(url, { method, headers: { Cookie: 'private', Authorization: 'private' } }), env);
+    for (const language of ['fr', 'en']) for (const method of ['GET', 'HEAD']) {
+      const target = language === 'en' ? new URL('/en' + url.pathname + url.search, url.origin) : url;
+      const r = await worker.fetch(new Request(target, { method, headers: { Cookie: 'private', Authorization: 'private' } }), env);
       assert.equal(r.status, 404); assert.equal(r.headers.get('cache-control'), 'no-store');
       assert.equal(r.headers.get('x-robots-tag'), 'noindex, follow'); assert.equal(r.headers.get('etag'), null);
       const html = await r.text();
       if (method === 'HEAD') assert.equal(html, '');
-      else { assert(html.includes('data-initial-catalogue="fr"')); assert(html.includes('noindex, follow')); assert(!html.includes('rel="canonical"')); }
+      else { assert(html.includes(`data-initial-catalogue="${language}"`)); assert(html.includes('noindex, follow')); assert(!html.includes('rel="canonical"')); assert(!html.includes('hreflang=')); }
     }
-    assert.equal(reads, 2, 'one existing renderer read per request, no pagination API call added');
+    assert.equal(reads, 4, 'one existing renderer read per request, no pagination API call added');
   } finally { globalThis.fetch = previous; }
 });
 

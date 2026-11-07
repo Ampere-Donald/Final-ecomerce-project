@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link } from "./LocaleRouter";
 import { ArrowRight, ArrowLeftRight } from "lucide-react";
 import { Copy } from "./Elements";
 export default function EquivalenceEntry({ query = "", productId = "", illustrated = false }) {

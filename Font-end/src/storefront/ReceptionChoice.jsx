@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { createPortal } from "react-dom";
-import { Link } from "react-router-dom";
+import { Link } from "./LocaleRouter";
 import { MapPin } from "lucide-react";
 import { useI18n } from "../context/I18nContext";
 import { Modal } from "./Elements";

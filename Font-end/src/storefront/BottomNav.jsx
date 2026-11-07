@@ -1,5 +1,5 @@
 import { createElement } from "react";
-import { NavLink, useLocation } from "react-router-dom";
+import { NavLink, useLocation } from "./LocaleRouter";
 import { Home, Grid2X2, MessageCircle, ShoppingCart } from "lucide-react";
 import { useCart } from "../context/CartContext";
 import { Copy } from "./Elements";

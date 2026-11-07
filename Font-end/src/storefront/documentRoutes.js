@@ -1,4 +1,7 @@
 import { seoFamily } from './seoFamilies.js';
+import { isEditorialDocument } from './editorialRoutes.js';
+import { basePath, pathLanguage } from './localePath.js';
+import { hasEnglishRoute } from './localeRoutes.js';
 // Keep aligned with App.jsx. Dynamic records are validated by their page/API;
 // this list only establishes whether the application defines the route.
 const staticRoutes = new Set([
@@ -10,8 +13,9 @@ const staticRoutes = new Set([
 ]);
 
 export function isApplicationDocument(pathname) {
-  const path = pathname.toLowerCase().replace(/\/+$/, '') || '/';
-  return staticRoutes.has(path) || Boolean(seoFamily(path)) ||
+  if (pathLanguage(pathname) === 'en' && !hasEnglishRoute(pathname)) return false;
+  const path = basePath(pathname).toLowerCase().replace(/\/+$/, '') || '/';
+  return staticRoutes.has(path) || Boolean(seoFamily(path)) || isEditorialDocument(path) ||
     /^\/(?:product|projets|commandes)\/[^/]+$/.test(path) ||
     /^\/mes-devis\/[^/]+(?:\/imprimer)?$/.test(path);
 }

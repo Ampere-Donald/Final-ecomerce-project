@@ -1,5 +1,5 @@
 import { createElement, lazy, Suspense, useEffect, useRef, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link } from "./LocaleRouter";
 import { ArrowRight, MapPin, Search, MessageCircle, Truck } from "lucide-react";
 import { useI18n } from "../context/I18nContext";
 import { Copy } from "./ProductPrimitives";

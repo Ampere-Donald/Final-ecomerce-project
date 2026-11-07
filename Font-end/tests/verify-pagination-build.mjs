@@ -19,6 +19,7 @@ const cases = [
   ...['0', '-1', '1.5', '2&page=3', '1000001'].map(page => ({ path: '/catalogue?page=' + page, status: 404, invalid: true })),
   { path: '/catalogue/condensateurs?page=9999', status: 200, outage: true },
 ];
+cases.push(...cases.map(item => ({ ...item, path: '/en' + item.path })));
 try {
   for (const item of cases) for (const method of ['GET', 'HEAD']) {
     let reads = 0;
@@ -53,7 +54,8 @@ try {
       if (method === 'GET') assert(html.includes('name="robots" content="noindex, follow"'));
     }
     if (method === 'GET' && item.row) {
-      assert(html.includes('Pagination fixture')); assert(html.includes('data-initial-catalogue="fr"'));
+      assert(html.includes('Pagination fixture'));
+      assert(html.includes(`data-initial-catalogue="${item.path.startsWith('/en/') ? 'en' : 'fr'}"`));
       assert(html.includes('rel="canonical" href="https://newoteg.com' + item.path + '"'));
       assert(!html.includes('name="robots" content="noindex'));
     }

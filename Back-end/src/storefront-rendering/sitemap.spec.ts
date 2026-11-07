@@ -17,7 +17,9 @@ describe('sitemap public projection', () => {
     const result = await service().sitemap(rendererId);
     expect(result.xml).toBe('<urlset/>'); expect(result.rendererId).toBe(rendererId);
     expect(database.produit.findMany).toHaveBeenCalledWith({ where: { estActif: true },
-      select: { id: true, nomProduit: true, categorieId: true, sousCategorieId: true }, orderBy: { id: 'asc' }, take: 49001 });
+      select: { id: true, nomProduit: true, categorieId: true, sousCategorieId: true,
+        description: true, imageUrl: true, marque: true, urlDatasheet: true,
+        attributs: { select: { id: true }, take: 1 } }, orderBy: { id: 'asc' }, take: 49001 });
     expect(renderSitemapResponse).toHaveBeenCalledWith([{ id: 'public' }]);
   });
   it('invalid or incompatible versions never read the database', async () => {

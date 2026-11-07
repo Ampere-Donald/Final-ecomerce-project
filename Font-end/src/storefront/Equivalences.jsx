@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useSearchParams } from "./LocaleRouter";
 import PageMeta from "./PageMeta";
 import { ArrowRight, Search } from "lucide-react";
 import { useI18n } from "../context/I18nContext";

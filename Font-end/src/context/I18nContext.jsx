@@ -1,5 +1,7 @@
 /* eslint-disable react-refresh/only-export-components */
-import React, { createContext, useState, useContext, useEffect } from 'react';
+import React, { createContext, useContext, useEffect } from 'react';
+import { pathLanguage } from '../storefront/localePath.js';
+import { languageDestination } from '../storefront/localeRoutes.js';
 import fr from '../i18n/fr';
 import en from '../i18n/en';
 
@@ -7,36 +9,17 @@ const translations = { fr, en };
 
 const I18nContext = createContext();
 
-function preferredLanguage() {
-  try {
-    const savedLang = localStorage.getItem('appLang');
-    if (savedLang === 'fr' || savedLang === 'en') return savedLang;
-  } catch { /* Browser storage may be unavailable. */ }
-  const browserLang = typeof navigator === 'undefined' ? 'fr' : navigator.language || navigator.userLanguage || 'fr';
-  return browserLang.toLowerCase().startsWith('fr') ? 'fr' : 'en';
-}
-
 export const I18nProvider = ({ children, initialLanguage }) => {
-  const [lang, setLangState] = useState(() => {
-    return initialLanguage || preferredLanguage();
-  });
-
-  useEffect(() => {
-    let active = true;
-    if (initialLanguage) Promise.resolve().then(() => {
-      if (active) setLangState(preferredLanguage());
-    });
-    return () => { active = false; };
-  }, [initialLanguage]);
+  const lang = initialLanguage || pathLanguage(typeof window === 'undefined' ? '/' : window.location.pathname);
 
   useEffect(() => {
     document.documentElement.lang = lang;
   }, [lang]);
 
   const setLang = (newLang) => {
-    setLangState(newLang);
-    try { localStorage.setItem('appLang', newLang); }
-    catch { /* Language can still change for this visit. */ }
+    if (!['fr', 'en'].includes(newLang) || newLang === lang || typeof window === 'undefined') return;
+    const { pathname, search, hash } = window.location;
+    window.location.assign(languageDestination(pathname, search, hash, newLang));
   };
 
   const t = (key, variables = {}) => {

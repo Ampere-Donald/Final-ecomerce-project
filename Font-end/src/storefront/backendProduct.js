@@ -1,3 +1,4 @@
+import { pathLanguage } from './localePath.js';
 import { productDocumentId, injectProductFragment } from './initialProduct.js';
 
 export async function productBackendFragment(url, descriptor, fetcher = fetch, timeoutMs = 2500) {
@@ -28,7 +29,7 @@ export async function productBackendFragment(url, descriptor, fetcher = fetch, t
     }
     html += decoder.decode();
     // Validate this envelope before the Worker receives a release-owned fragment.
-    injectProductFragment('<html><head></head><div id="root"></div></html>', html, ['/assets/validation.css']);
+    injectProductFragment('<html><head></head><div id="root"></div></html>', html, ['/assets/validation.css'], pathLanguage(url.pathname));
     return html;
   } catch (error) { await reader?.cancel().catch(() => {}); throw error; }
   finally { clearTimeout(timer); controller.abort(); }
