@@ -71,6 +71,8 @@ jobs:
         run: node tests/verify-organization-build.mjs
       - name: Vérifier les statuts de pagination avec le moteur compilé
         run: node tests/verify-pagination-build.mjs
+      - name: Vérifier les notes produit sélectionnées avec le moteur compilé
+        run: node tests/verify-product-editorial-wave.mjs
       - run: npm audit --omit=dev --audit-level=high
 
   android:

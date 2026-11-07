@@ -15,7 +15,9 @@ test('twenty complete English translations preserve the exact French identity an
   const compiled=await verifyProductTranslations();
   assert.equal(compiled.length,20);
   assert.deepEqual(compiled,productEnglishTranslations);
-  for(const entry of productEditorialEntries) {
+  for(const translated of compiled) {
+    const entry = productEditorialEntries.find(item => item.id === translated.id);
+    assert.ok(entry, translated.id);
     const p=product(entry), copy=getProductTranslation(p);
     assert(copy,entry.id);
     assert.deepEqual(copy.en.sources.map(source=>source.url),entry.fr.sources.map(source=>source.url));
@@ -28,6 +30,16 @@ test('twenty complete English translations preserve the exact French identity an
     assert.equal(schema.name,copy.en.name);assert.equal(schema.description,copy.en.description);
     assert.equal(schema.offers.price,1500);assert.equal(schema.offers.priceCurrency,'XAF');
     for(const key of ['price','retailPrice','stock','quantiteStock','cost','cmupActuel']) assert(!Object.hasOwn(copy.en,key));
+  }
+});
+test('extension products with only a French note retain it exclusively in French', async () => {
+  const wave = JSON.parse(await readFile(new URL('./fixtures/product-editorial-wave-2026-11-01.json', import.meta.url), 'utf8'));
+  for (const { product: raw } of wave.products) {
+    const entry = productEditorialEntries.find(item => item.id === raw.id);
+    const p = product(entry);
+    assert.equal(getProductEditorial(p, 'fr').fr.title, entry.fr.title);
+    assert.equal(getProductTranslation(p), null, raw.id);
+    assert.equal(getProductEditorial(p, 'en'), null, raw.id);
   }
 });
 test('a changed French source cannot silently inherit its old translation review',()=>{

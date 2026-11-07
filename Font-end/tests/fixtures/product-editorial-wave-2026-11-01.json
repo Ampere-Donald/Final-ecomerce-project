@@ -1,0 +1,340 @@
+{
+  "at": "2026-11-01T14:24:43.025Z",
+  "scope": "Actual public identity fields read from API; commerce deliberately synthetic: price 1000 XAF and stock 3 for isolated compiled-render acceptance only; never shipped as a catalogue snapshot",
+  "originalPilotDigest": "fd5fb45bd944f8e5a9215752d40889e81cf13ddb62d972f896b3b284e6b9009a",
+  "products": [
+    {
+      "reference": "BC547",
+      "product": {
+        "id": "a423c223-c042-4a27-bc6c-41058ef79428",
+        "nomProduit": "BC 547",
+        "marque": null,
+        "imageUrl": "https://res.cloudinary.com/dm4ij9sxg/image/upload/v1790434458/produits/k20p651fe2gti96p5e8h.webp",
+        "categorieId": "4412d73b-1cbd-4996-a5ad-993101657e74",
+        "sousCategorieId": "2131b777-869a-4f06-83be-f7e62b1f9bad",
+        "estActif": true,
+        "attributs": [],
+        "categorie": {
+          "id": "4412d73b-1cbd-4996-a5ad-993101657e74",
+          "nom": "Composants Électroniques"
+        },
+        "sousCategorie": {
+          "id": "2131b777-869a-4f06-83be-f7e62b1f9bad",
+          "nom": "Transistors"
+        },
+        "prixPublic": 1000,
+        "quantiteStock": 3
+      }
+    },
+    {
+      "reference": "BD912",
+      "product": {
+        "id": "bfa2fa27-a685-4bc1-8467-9f571badb915",
+        "nomProduit": "BD 912",
+        "marque": null,
+        "imageUrl": "https://res.cloudinary.com/dm4ij9sxg/image/upload/v1790434513/produits/taj4hiivvokiwang3rgi.webp",
+        "description": "BD 912",
+        "categorieId": "4412d73b-1cbd-4996-a5ad-993101657e74",
+        "sousCategorieId": "2131b777-869a-4f06-83be-f7e62b1f9bad",
+        "estActif": true,
+        "attributs": [],
+        "categorie": {
+          "id": "4412d73b-1cbd-4996-a5ad-993101657e74",
+          "nom": "Composants Électroniques"
+        },
+        "sousCategorie": {
+          "id": "2131b777-869a-4f06-83be-f7e62b1f9bad",
+          "nom": "Transistors"
+        },
+        "prixPublic": 1000,
+        "quantiteStock": 3
+      }
+    },
+    {
+      "reference": "TDA7265",
+      "product": {
+        "id": "b3589afe-2609-43a6-a525-4488b7a53eb2",
+        "nomProduit": "TDA 7265",
+        "marque": null,
+        "imageUrl": "https://res.cloudinary.com/dm4ij9sxg/image/upload/v1790434149/produits/ld6eycjmh1f8l1dzzwbg.webp",
+        "description": "TDA 7265",
+        "categorieId": "69e8ab9e-bf6a-41de-9093-028170405f55",
+        "sousCategorieId": "4aab0f26-c07a-4102-bc78-82fe24ba5e02",
+        "estActif": true,
+        "attributs": [],
+        "categorie": {
+          "id": "69e8ab9e-bf6a-41de-9093-028170405f55",
+          "nom": "Audio & Son"
+        },
+        "sousCategorie": {
+          "id": "4aab0f26-c07a-4102-bc78-82fe24ba5e02",
+          "nom": "Circuits intégrés audio"
+        },
+        "prixPublic": 1000,
+        "quantiteStock": 3
+      }
+    },
+    {
+      "reference": "TDA7292",
+      "product": {
+        "id": "2587a28b-b279-4ffb-9373-bbe8455e2f9d",
+        "nomProduit": "TDA 7292",
+        "marque": null,
+        "imageUrl": "https://newoteg.com/product-images/inventory-delta-2ebdf1a69795.webp",
+        "description": "TDA 7292",
+        "categorieId": "69e8ab9e-bf6a-41de-9093-028170405f55",
+        "sousCategorieId": "4aab0f26-c07a-4102-bc78-82fe24ba5e02",
+        "estActif": true,
+        "attributs": [],
+        "categorie": {
+          "id": "69e8ab9e-bf6a-41de-9093-028170405f55",
+          "nom": "Audio & Son"
+        },
+        "sousCategorie": {
+          "id": "4aab0f26-c07a-4102-bc78-82fe24ba5e02",
+          "nom": "Circuits intégrés audio"
+        },
+        "prixPublic": 1000,
+        "quantiteStock": 3
+      }
+    },
+    {
+      "reference": "TDA7388",
+      "product": {
+        "id": "d0bee456-a787-43a3-a3ab-54a177a40bfb",
+        "nomProduit": "TDA 7388",
+        "marque": null,
+        "imageUrl": "https://newoteg.com/product-images/inventory-delta-24092a2bb16a.webp",
+        "description": "TDA 7388",
+        "categorieId": "69e8ab9e-bf6a-41de-9093-028170405f55",
+        "sousCategorieId": "4aab0f26-c07a-4102-bc78-82fe24ba5e02",
+        "estActif": true,
+        "attributs": [],
+        "categorie": {
+          "id": "69e8ab9e-bf6a-41de-9093-028170405f55",
+          "nom": "Audio & Son"
+        },
+        "sousCategorie": {
+          "id": "4aab0f26-c07a-4102-bc78-82fe24ba5e02",
+          "nom": "Circuits intégrés audio"
+        },
+        "prixPublic": 1000,
+        "quantiteStock": 3
+      }
+    },
+    {
+      "reference": "TDA7496L",
+      "product": {
+        "id": "0fe03063-dfa3-4921-ac5d-3b2e124d297d",
+        "nomProduit": "TDA 7496 L",
+        "marque": "ST",
+        "imageUrl": "https://newoteg.com/product-images/inventory-delta-aabb7b7ce02a.webp",
+        "description": "TDA 7496 L. Prix sur demande. Vérifier la référence complète et le format avant commande.",
+        "categorieId": "69e8ab9e-bf6a-41de-9093-028170405f55",
+        "sousCategorieId": "4aab0f26-c07a-4102-bc78-82fe24ba5e02",
+        "estActif": true,
+        "attributs": [],
+        "categorie": {
+          "id": "69e8ab9e-bf6a-41de-9093-028170405f55",
+          "nom": "Audio & Son"
+        },
+        "sousCategorie": {
+          "id": "4aab0f26-c07a-4102-bc78-82fe24ba5e02",
+          "nom": "Circuits intégrés audio"
+        },
+        "prixPublic": 1000,
+        "quantiteStock": 3
+      }
+    },
+    {
+      "reference": "2N3904",
+      "product": {
+        "id": "1b7a5523-051e-4723-90e1-e7940aea97ee",
+        "nomProduit": "2N 3904",
+        "marque": null,
+        "imageUrl": "https://res.cloudinary.com/dm4ij9sxg/image/upload/v1790434412/produits/trkts53v344nmeprepz5.webp",
+        "description": "2N 3904",
+        "categorieId": "4412d73b-1cbd-4996-a5ad-993101657e74",
+        "sousCategorieId": "2131b777-869a-4f06-83be-f7e62b1f9bad",
+        "estActif": true,
+        "attributs": [],
+        "categorie": {
+          "id": "4412d73b-1cbd-4996-a5ad-993101657e74",
+          "nom": "Composants Électroniques"
+        },
+        "sousCategorie": {
+          "id": "2131b777-869a-4f06-83be-f7e62b1f9bad",
+          "nom": "Transistors"
+        },
+        "prixPublic": 1000,
+        "quantiteStock": 3
+      }
+    },
+    {
+      "reference": "BC546",
+      "product": {
+        "id": "ab14f4f4-325a-49af-8f23-083754885f0e",
+        "nomProduit": "BC 546",
+        "marque": null,
+        "imageUrl": "https://res.cloudinary.com/dm4ij9sxg/image/upload/v1790434457/produits/cuyivmh9dc6xq52j9ezf.webp",
+        "categorieId": "4412d73b-1cbd-4996-a5ad-993101657e74",
+        "sousCategorieId": "2131b777-869a-4f06-83be-f7e62b1f9bad",
+        "estActif": true,
+        "attributs": [],
+        "categorie": {
+          "id": "4412d73b-1cbd-4996-a5ad-993101657e74",
+          "nom": "Composants Électroniques"
+        },
+        "sousCategorie": {
+          "id": "2131b777-869a-4f06-83be-f7e62b1f9bad",
+          "nom": "Transistors"
+        },
+        "prixPublic": 1000,
+        "quantiteStock": 3
+      }
+    },
+    {
+      "reference": "BC557",
+      "product": {
+        "id": "15d1d536-72cb-44df-9790-7d0049ec1858",
+        "nomProduit": "BC 557",
+        "marque": null,
+        "imageUrl": "https://res.cloudinary.com/dm4ij9sxg/image/upload/v1790434463/produits/ji9hz053atkfhw0dz3i5.webp",
+        "description": "BC 557",
+        "categorieId": "4412d73b-1cbd-4996-a5ad-993101657e74",
+        "sousCategorieId": "2131b777-869a-4f06-83be-f7e62b1f9bad",
+        "estActif": true,
+        "attributs": [],
+        "categorie": {
+          "id": "4412d73b-1cbd-4996-a5ad-993101657e74",
+          "nom": "Composants Électroniques"
+        },
+        "sousCategorie": {
+          "id": "2131b777-869a-4f06-83be-f7e62b1f9bad",
+          "nom": "Transistors"
+        },
+        "prixPublic": 1000,
+        "quantiteStock": 3
+      }
+    },
+    {
+      "reference": "BC558",
+      "product": {
+        "id": "6c4bb46d-7f40-4114-a269-154a97883824",
+        "nomProduit": "BC 558",
+        "marque": null,
+        "imageUrl": "https://res.cloudinary.com/dm4ij9sxg/image/upload/v1790434464/produits/ts7zfg93r7lya8zs6fot.webp",
+        "description": "BC 558",
+        "categorieId": "4412d73b-1cbd-4996-a5ad-993101657e74",
+        "sousCategorieId": "2131b777-869a-4f06-83be-f7e62b1f9bad",
+        "estActif": true,
+        "attributs": [],
+        "categorie": {
+          "id": "4412d73b-1cbd-4996-a5ad-993101657e74",
+          "nom": "Composants Électroniques"
+        },
+        "sousCategorie": {
+          "id": "2131b777-869a-4f06-83be-f7e62b1f9bad",
+          "nom": "Transistors"
+        },
+        "prixPublic": 1000,
+        "quantiteStock": 3
+      }
+    },
+    {
+      "reference": "BD139",
+      "product": {
+        "id": "bfba7ff5-0e3d-4d1a-a118-da338c87eaba",
+        "nomProduit": "BD 139",
+        "marque": null,
+        "imageUrl": "https://res.cloudinary.com/dm4ij9sxg/image/upload/v1790435841/produits/dzujlkfa4v8ffo6m6e4h.webp",
+        "categorieId": "4412d73b-1cbd-4996-a5ad-993101657e74",
+        "sousCategorieId": "2131b777-869a-4f06-83be-f7e62b1f9bad",
+        "estActif": true,
+        "attributs": [],
+        "categorie": {
+          "id": "4412d73b-1cbd-4996-a5ad-993101657e74",
+          "nom": "Composants Électroniques"
+        },
+        "sousCategorie": {
+          "id": "2131b777-869a-4f06-83be-f7e62b1f9bad",
+          "nom": "Transistors"
+        },
+        "prixPublic": 1000,
+        "quantiteStock": 3
+      }
+    },
+    {
+      "reference": "BD140",
+      "product": {
+        "id": "3812f470-3b88-4b06-a3d0-68b02cabd508",
+        "nomProduit": "BD 140",
+        "marque": null,
+        "imageUrl": "https://res.cloudinary.com/dm4ij9sxg/image/upload/v1790434475/produits/fldna7t2sacpw0ys5ndr.webp",
+        "description": "BD 140",
+        "categorieId": "4412d73b-1cbd-4996-a5ad-993101657e74",
+        "sousCategorieId": "2131b777-869a-4f06-83be-f7e62b1f9bad",
+        "estActif": true,
+        "attributs": [],
+        "categorie": {
+          "id": "4412d73b-1cbd-4996-a5ad-993101657e74",
+          "nom": "Composants Électroniques"
+        },
+        "sousCategorie": {
+          "id": "2131b777-869a-4f06-83be-f7e62b1f9bad",
+          "nom": "Transistors"
+        },
+        "prixPublic": 1000,
+        "quantiteStock": 3
+      }
+    },
+    {
+      "reference": "BD911",
+      "product": {
+        "id": "37c79fa9-d729-457d-b101-535078ce12d8",
+        "nomProduit": "BD 911",
+        "marque": null,
+        "imageUrl": "https://res.cloudinary.com/dm4ij9sxg/image/upload/v1790434511/produits/nryv0cjdg06hggczvhyt.webp",
+        "description": "BD 911",
+        "categorieId": "4412d73b-1cbd-4996-a5ad-993101657e74",
+        "sousCategorieId": "2131b777-869a-4f06-83be-f7e62b1f9bad",
+        "estActif": true,
+        "attributs": [],
+        "categorie": {
+          "id": "4412d73b-1cbd-4996-a5ad-993101657e74",
+          "nom": "Composants Électroniques"
+        },
+        "sousCategorie": {
+          "id": "2131b777-869a-4f06-83be-f7e62b1f9bad",
+          "nom": "Transistors"
+        },
+        "prixPublic": 1000,
+        "quantiteStock": 3
+      }
+    },
+    {
+      "reference": "TDA7262",
+      "product": {
+        "id": "44ee09d5-f1e5-4bc4-b5d0-912af4798a66",
+        "nomProduit": "TDA 7262",
+        "marque": null,
+        "imageUrl": "https://newoteg.com/product-images/inventory-delta-b48ce7e9bc5e.webp",
+        "description": "TDA 7262",
+        "categorieId": "69e8ab9e-bf6a-41de-9093-028170405f55",
+        "sousCategorieId": "4aab0f26-c07a-4102-bc78-82fe24ba5e02",
+        "estActif": true,
+        "attributs": [],
+        "categorie": {
+          "id": "69e8ab9e-bf6a-41de-9093-028170405f55",
+          "nom": "Audio & Son"
+        },
+        "sousCategorie": {
+          "id": "4aab0f26-c07a-4102-bc78-82fe24ba5e02",
+          "nom": "Circuits intégrés audio"
+        },
+        "prixPublic": 1000,
+        "quantiteStock": 3
+      }
+    }
+  ]
+}

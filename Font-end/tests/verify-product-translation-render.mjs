@@ -18,8 +18,10 @@ const report={at:new Date().toISOString(),status:'running',writes:0,source:'revi
 const decode=value=>value.replace(/&amp;/g,'&').replace(/&#x27;|&#39;/g,"'").replace(/&quot;/g,'"').replace(/&lt;/g,'<').replace(/&gt;/g,'>');
 try {
   const {renderTranslationPreview}=await server.ssrLoadModule('/tests/render-product-translations.jsx');
-  for(let index=0;index<productEditorialEntries.length;index++) {
-    const entry=productEditorialEntries[index], copy=productEnglishTranslations.find(item=>item.id===entry.id).en;
+  for(const [index, translated] of productEnglishTranslations.entries()) {
+    const entry = productEditorialEntries.find(item => item.id === translated.id);
+    assert.ok(entry, translated.id);
+    const copy = translated.en;
     const family=seoFamilies[Math.floor(index/4)];
     const raw={id:entry.id,estActif:true,nomProduit:entry.expected.model,description:entry.expected.description,imageUrl:entry.expected.image,
       marque:entry.expected.brand,urlDatasheet:entry.expected.urlDatasheet,categorieId:family.category,sousCategorieId:family.subcategory,

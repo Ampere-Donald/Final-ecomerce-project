@@ -1,5 +1,5 @@
-// Reviewed French pilot notes. Commercial values always come from the live API.
-// Missing translations are intentionally omitted until their own review.
+// Reviewed French notes selected for release. Live prices and stock remain API data.
+// Deployment status is tracked separately; this branch is not a production publication.
 export const productEditorialEntries = [
   {
     "id": "02d5805f-7f51-4574-938d-d8cfe8c09487",
@@ -589,6 +589,442 @@ export const productEditorialEntries = [
         {
           "label": "Fluke — guide général de sécurité des multimètres",
           "url": "https://content.fluke.com/promotions/promo-dmm/0518-DMM-campaign/DMM/fluke_DMM-fr/files/safetyguidelines.pdf"
+        }
+      ]
+    }
+  },
+  {
+    "id": "a423c223-c042-4a27-bc6c-41058ef79428",
+    "status": "published",
+    "reviewedAt": "2026-11-01",
+    "expected": {
+      "model": "BC 547",
+      "image": "https://res.cloudinary.com/dm4ij9sxg/image/upload/v1790434458/produits/k20p651fe2gti96p5e8h.webp",
+      "description": null,
+      "brand": null,
+      "urlDatasheet": null
+    },
+    "fr": {
+      "title": "BC547 : référence, polarité et suffixe à vérifier",
+      "summary": "La désignation de cette fiche et le visuel associé indiquent BC547. La documentation onsemi consultée classe cette référence parmi les transistors NPN destinés à l’amplification et à la commutation. Elle sert de repère documentaire ; le fabricant du stock reste à établir.",
+      "checks": [
+        "Relevez la référence complète et le suffixe de l’exemplaire avant de choisir sa notice et sa classe de gain.",
+        "Ne confondez pas BC547 et BC557 : la famille documentaire du second est PNP. Comparez aussi l’orientation du boîtier et le brochage du fabricant concerné."
+      ],
+      "sources": [
+        {
+          "label": "Visuel associé à cette fiche du catalogue",
+          "url": "https://res.cloudinary.com/dm4ij9sxg/image/upload/v1790434458/produits/k20p651fe2gti96p5e8h.webp"
+        },
+        {
+          "label": "onsemi — documentation de référence de la famille BC546–BC550",
+          "url": "https://www.onsemi.com/pdf/datasheet/bc550-d.pdf"
+        },
+        {
+          "label": "onsemi — famille PNP BC556–BC560 pour distinguer BC557",
+          "url": "https://www.onsemi.com/pdf/datasheet/bc556bta-d.pdf"
+        }
+      ]
+    }
+  },
+  {
+    "id": "bfa2fa27-a685-4bc1-8467-9f571badb915",
+    "status": "published",
+    "reviewedAt": "2026-11-01",
+    "expected": {
+      "model": "BD 912",
+      "image": "https://res.cloudinary.com/dm4ij9sxg/image/upload/v1790434513/produits/taj4hiivvokiwang3rgi.webp",
+      "description": "BD 912",
+      "brand": null,
+      "urlDatasheet": null
+    },
+    "fr": {
+      "title": "BD912 : repérer le PNP dans une paire de puissance",
+      "summary": "Le visuel associé porte BD912. La notice ST présente cette référence comme un transistor de puissance PNP, complémentaire du BD911 NPN. Une fonction complémentaire ne signifie pas que les deux références occupent la même place dans un montage.",
+      "checks": [
+        "Contrôlez la polarité attendue, la référence complète et les connexions de l’appareil avant de sélectionner la pièce.",
+        "Lisez les limites électriques avec leurs conditions thermiques : une dissipation annoncée à température de boîtier fixée ne décrit pas un fonctionnement sans refroidissement."
+      ],
+      "sources": [
+        {
+          "label": "Visuel associé à cette fiche du catalogue",
+          "url": "https://res.cloudinary.com/dm4ij9sxg/image/upload/v1790434513/produits/taj4hiivvokiwang3rgi.webp"
+        },
+        {
+          "label": "STMicroelectronics — BD909/BD911 et BD910/BD912",
+          "url": "https://www.st.com/resource/en/datasheet/bd911.pdf"
+        }
+      ]
+    }
+  },
+  {
+    "id": "b3589afe-2609-43a6-a525-4488b7a53eb2",
+    "status": "published",
+    "reviewedAt": "2026-11-01",
+    "expected": {
+      "model": "TDA 7265",
+      "image": "https://res.cloudinary.com/dm4ij9sxg/image/upload/v1790434149/produits/ld6eycjmh1f8l1dzzwbg.webp",
+      "description": "TDA 7265",
+      "brand": null,
+      "urlDatasheet": null
+    },
+    "fr": {
+      "title": "TDA7265 : deux canaux, mute et standby",
+      "summary": "Le marquage TDA7265 est lisible sur le visuel associé. La notice ST décrit un amplificateur stéréo de classe AB avec fonctions mute et standby, en Multiwatt11. Elle présente des applications à alimentation symétrique et à alimentation simple ; leur câblage doit être distingué.",
+      "checks": [
+        "Reliez l’annonce de puissance aux conditions de charge, d’alimentation et de distorsion du constructeur avant de la comparer à un autre circuit.",
+        "Vérifiez le boîtier, les commandes mute/standby et la référence exacte de l’appareil ; cette notice identifie TDA7265, sans valider un remplacement par une variante suffixée."
+      ],
+      "sources": [
+        {
+          "label": "Visuel associé à cette fiche du catalogue",
+          "url": "https://res.cloudinary.com/dm4ij9sxg/image/upload/v1790434149/produits/ld6eycjmh1f8l1dzzwbg.webp"
+        },
+        {
+          "label": "STMicroelectronics — notice TDA7265",
+          "url": "https://www.st.com/resource/en/datasheet/tda7265.pdf"
+        }
+      ]
+    }
+  },
+  {
+    "id": "2587a28b-b279-4ffb-9373-bbe8455e2f9d",
+    "status": "published",
+    "reviewedAt": "2026-11-01",
+    "expected": {
+      "model": "TDA 7292",
+      "image": "https://newoteg.com/product-images/inventory-delta-2ebdf1a69795.webp",
+      "description": "TDA 7292",
+      "brand": null,
+      "urlDatasheet": null
+    },
+    "fr": {
+      "title": "TDA7292 : lire les conditions de puissance stéréo",
+      "summary": "Le visuel porte TDA7292. La notice ST décrit un amplificateur stéréo de classe AB avec mute et standby. Son annonce de 40 W + 40 W est associée à une alimentation de ±26 V, une charge de 8 Ω et 10 % de distorsion ; elle ne s’applique pas indistinctement à tous les montages.",
+      "checks": [
+        "Comparez les conditions de mesure, et pas seulement le nombre de watts, avec les besoins de votre appareil.",
+        "Contrôlez l’alimentation, le refroidissement et la référence complète avant de reprendre le schéma d’application constructeur."
+      ],
+      "sources": [
+        {
+          "label": "Visuel associé à cette fiche du catalogue",
+          "url": "https://newoteg.com/product-images/inventory-delta-2ebdf1a69795.webp"
+        },
+        {
+          "label": "STMicroelectronics — notice TDA7292",
+          "url": "https://www.st.com/resource/en/datasheet/tda7292.pdf"
+        }
+      ]
+    }
+  },
+  {
+    "id": "d0bee456-a787-43a3-a3ab-54a177a40bfb",
+    "status": "published",
+    "reviewedAt": "2026-11-01",
+    "expected": {
+      "model": "TDA 7388",
+      "image": "https://newoteg.com/product-images/inventory-delta-24092a2bb16a.webp",
+      "description": "TDA 7388",
+      "brand": null,
+      "urlDatasheet": null
+    },
+    "fr": {
+      "title": "TDA7388 : quatre canaux à sorties pontées",
+      "summary": "Le visuel associé indique TDA7388. La notice ST décrit un amplificateur automobile de classe AB à quatre canaux en pont, en Flexiwatt25. Elle distingue une puissance maximale annoncée des résultats obtenus sous une alimentation, une charge et une distorsion définies.",
+      "checks": [
+        "Vérifiez le schéma des sorties pontées et les commandes mute/standby de l’appareil ; le nombre de broches ne suffit pas à établir une compatibilité.",
+        "Comparez les puissances avec les mêmes conditions de mesure et prévoyez le refroidissement indiqué par la notice du montage."
+      ],
+      "sources": [
+        {
+          "label": "Visuel associé à cette fiche du catalogue",
+          "url": "https://newoteg.com/product-images/inventory-delta-24092a2bb16a.webp"
+        },
+        {
+          "label": "STMicroelectronics — notice TDA7388",
+          "url": "https://www.st.com/resource/en/datasheet/tda7388.pdf"
+        }
+      ]
+    }
+  },
+  {
+    "id": "0fe03063-dfa3-4921-ac5d-3b2e124d297d",
+    "status": "published",
+    "reviewedAt": "2026-11-01",
+    "expected": {
+      "model": "TDA 7496 L",
+      "image": "https://newoteg.com/product-images/inventory-delta-aabb7b7ce02a.webp",
+      "description": "TDA 7496 L. Prix sur demande. Vérifier la référence complète et le format avant commande.",
+      "brand": "ST",
+      "urlDatasheet": null
+    },
+    "fr": {
+      "title": "TDA7496L : conserver le suffixe L dans la recherche",
+      "summary": "Le visuel montre TDA7496L. La notice ST décrit un amplificateur stéréo de classe AB avec commande de volume en tension continue, mute et standby, dans un boîtier Powerdip. Le suffixe L fait partie de l’identification documentaire ; une notice TDA7496 ou TDA7496SA ne suffit pas à identifier cette variante.",
+      "checks": [
+        "Recherchez la référence complète, puis comparez le boîtier, les commandes et les connexions avec l’appareil concerné.",
+        "Les valeurs de puissance et d’alimentation doivent être lues dans la notice L avec leurs conditions, avant toute conclusion de remplacement."
+      ],
+      "sources": [
+        {
+          "label": "Visuel associé à cette fiche du catalogue",
+          "url": "https://newoteg.com/product-images/inventory-delta-aabb7b7ce02a.webp"
+        },
+        {
+          "label": "STMicroelectronics — notice TDA7496L",
+          "url": "https://www.st.com/resource/en/datasheet/tda7496l.pdf"
+        }
+      ]
+    }
+  },
+  {
+    "id": "1b7a5523-051e-4723-90e1-e7940aea97ee",
+    "status": "published",
+    "reviewedAt": "2026-11-01",
+    "expected": {
+      "model": "2N 3904",
+      "image": "https://res.cloudinary.com/dm4ij9sxg/image/upload/v1790434412/produits/trkts53v344nmeprepz5.webp",
+      "description": "2N 3904",
+      "brand": null,
+      "urlDatasheet": null
+    },
+    "fr": {
+      "title": "2N3904 : repérer un NPN de petit signal",
+      "summary": "Le marquage 2N3904 est lisible sur le visuel. La notice onsemi présente cette référence comme un transistor NPN pour amplification et commutation générales. Le boîtier à trois pattes ne suffit pas à déterminer les connexions de tout transistor voisin.",
+      "checks": [
+        "Comparez la polarité et la référence complète avec la pièce à remplacer ; une apparence proche ne valide pas une équivalence.",
+        "Repérez le sens de lecture et le brochage dans la notice du fabricant de l’exemplaire, avant de comparer les limites électriques."
+      ],
+      "sources": [
+        {
+          "label": "Visuel associé à cette fiche du catalogue",
+          "url": "https://res.cloudinary.com/dm4ij9sxg/image/upload/v1790434412/produits/trkts53v344nmeprepz5.webp"
+        },
+        {
+          "label": "onsemi — notice de référence 2N3904",
+          "url": "https://www.onsemi.com/pdf/datasheet/2n3904-d.pdf"
+        }
+      ]
+    }
+  },
+  {
+    "id": "ab14f4f4-325a-49af-8f23-083754885f0e",
+    "status": "published",
+    "reviewedAt": "2026-11-01",
+    "expected": {
+      "model": "BC 546",
+      "image": "https://res.cloudinary.com/dm4ij9sxg/image/upload/v1790434457/produits/cuyivmh9dc6xq52j9ezf.webp",
+      "description": null,
+      "brand": null,
+      "urlDatasheet": null
+    },
+    "fr": {
+      "title": "BC546 : distinguer la référence des BC547 et BC548",
+      "summary": "Le visuel porte BC546. La notice onsemi le classe parmi les transistors NPN d’amplification et de commutation ; elle distingue les limites de tension des références BC546, BC547 et BC548.",
+      "checks": [
+        "Ne choisissez pas une autre référence de cette famille sur le seul aspect du boîtier.",
+        "Vérifiez le suffixe, les conditions électriques et le brochage du fabricant ; aucune classe de gain du stock n’est déduite ici du seul nom BC546."
+      ],
+      "sources": [
+        {
+          "label": "Visuel associé à cette fiche du catalogue",
+          "url": "https://res.cloudinary.com/dm4ij9sxg/image/upload/v1790434457/produits/cuyivmh9dc6xq52j9ezf.webp"
+        },
+        {
+          "label": "onsemi — famille BC546–BC550",
+          "url": "https://www.onsemi.com/pdf/datasheet/bc550-d.pdf"
+        }
+      ]
+    }
+  },
+  {
+    "id": "15d1d536-72cb-44df-9790-7d0049ec1858",
+    "status": "published",
+    "reviewedAt": "2026-11-01",
+    "expected": {
+      "model": "BC 557",
+      "image": "https://res.cloudinary.com/dm4ij9sxg/image/upload/v1790434463/produits/ji9hz053atkfhw0dz3i5.webp",
+      "description": "BC 557",
+      "brand": null,
+      "urlDatasheet": null
+    },
+    "fr": {
+      "title": "BC557 : identifier le PNP avant de comparer",
+      "summary": "Le marquage BC557 est lisible sur la photo. La documentation onsemi le place dans une famille PNP ; la proximité du nom BC547 ne signifie donc pas une polarité identique.",
+      "checks": [
+        "Comparez la référence et le suffixe inscrits sur votre pièce avec ceux de l’exemplaire proposé.",
+        "Contrôlez les limites utiles au montage, la classe de gain et le sens de lecture du brochage dans la notice correspondante."
+      ],
+      "sources": [
+        {
+          "label": "Visuel associé à cette fiche du catalogue",
+          "url": "https://res.cloudinary.com/dm4ij9sxg/image/upload/v1790434463/produits/ji9hz053atkfhw0dz3i5.webp"
+        },
+        {
+          "label": "onsemi — famille PNP BC556–BC560",
+          "url": "https://www.onsemi.com/pdf/datasheet/bc556bta-d.pdf"
+        },
+        {
+          "label": "onsemi — famille NPN BC546–BC550",
+          "url": "https://www.onsemi.com/pdf/datasheet/bc550-d.pdf"
+        }
+      ]
+    }
+  },
+  {
+    "id": "6c4bb46d-7f40-4114-a269-154a97883824",
+    "status": "published",
+    "reviewedAt": "2026-11-01",
+    "expected": {
+      "model": "BC 558",
+      "image": "https://res.cloudinary.com/dm4ij9sxg/image/upload/v1790434464/produits/ts7zfg93r7lya8zs6fot.webp",
+      "description": "BC 558",
+      "brand": null,
+      "urlDatasheet": null
+    },
+    "fr": {
+      "title": "BC558 : comparer aussi la tenue en tension",
+      "summary": "Le visuel indique BC558. Dans la notice onsemi de cette famille PNP, BC557 et BC558 ont des limites de tension distinctes : leur boîtier similaire ne suffit pas à décider d’un remplacement.",
+      "checks": [
+        "Relevez la référence complète et le suffixe, puis comparez les exigences de votre montage.",
+        "Le gain et le brochage doivent être vérifiés avec la notice du fabricant de l’exemplaire ; le nom du catalogue ne précise pas à lui seul toutes ces variantes."
+      ],
+      "sources": [
+        {
+          "label": "Visuel associé à cette fiche du catalogue",
+          "url": "https://res.cloudinary.com/dm4ij9sxg/image/upload/v1790434464/produits/ts7zfg93r7lya8zs6fot.webp"
+        },
+        {
+          "label": "onsemi — famille PNP BC556–BC560",
+          "url": "https://www.onsemi.com/pdf/datasheet/bc556bta-d.pdf"
+        }
+      ]
+    }
+  },
+  {
+    "id": "bfba7ff5-0e3d-4d1a-a118-da338c87eaba",
+    "status": "published",
+    "reviewedAt": "2026-11-01",
+    "expected": {
+      "model": "BD 139",
+      "image": "https://res.cloudinary.com/dm4ij9sxg/image/upload/v1790435841/produits/dzujlkfa4v8ffo6m6e4h.webp",
+      "description": null,
+      "brand": null,
+      "urlDatasheet": null
+    },
+    "fr": {
+      "title": "BD139 : vérifier polarité, suffixe et référence voisine",
+      "summary": "BD139 est lisible sur le visuel. La notice onsemi présente cette référence comme un transistor NPN pour applications linéaires et de commutation de puissance moyenne ; elle présente plusieurs références et suffixes de la famille.",
+      "checks": [
+        "Un BD140 complémentaire PNP ne se place pas indifféremment à la place du BD139 NPN.",
+        "Vérifiez le suffixe, les limites électriques, le refroidissement et le brochage du fabricant concerné avant de retenir une alternative."
+      ],
+      "sources": [
+        {
+          "label": "Visuel associé à cette fiche du catalogue",
+          "url": "https://res.cloudinary.com/dm4ij9sxg/image/upload/v1790435841/produits/dzujlkfa4v8ffo6m6e4h.webp"
+        },
+        {
+          "label": "onsemi — famille NPN BD135, BD137 et BD139",
+          "url": "https://www.onsemi.com/download/data-sheet/pdf/bd139-d.pdf"
+        },
+        {
+          "label": "onsemi — famille PNP BD136–BD140",
+          "url": "https://www.onsemi.com/download/data-sheet/pdf/bd136-d.pdf"
+        }
+      ]
+    }
+  },
+  {
+    "id": "3812f470-3b88-4b06-a3d0-68b02cabd508",
+    "status": "published",
+    "reviewedAt": "2026-11-01",
+    "expected": {
+      "model": "BD 140",
+      "image": "https://res.cloudinary.com/dm4ij9sxg/image/upload/v1790434475/produits/fldna7t2sacpw0ys5ndr.webp",
+      "description": "BD 140",
+      "brand": null,
+      "urlDatasheet": null
+    },
+    "fr": {
+      "title": "BD140 : une référence PNP à distinguer du BD139",
+      "summary": "Le visuel porte BD140 et les lettres NXP. La notice onsemi citée fournit un repère pour cette référence PNP ; elle ne remplace pas la notice du fabricant de l’exemplaire lorsque vous vérifiez ses caractéristiques détaillées.",
+      "checks": [
+        "Contrôlez la polarité attendue : le complément BD139 est NPN, ce qui ne constitue pas un remplacement direct.",
+        "Comparez le suffixe, le boîtier, les connexions et les conditions thermiques avec la pièce de votre appareil."
+      ],
+      "sources": [
+        {
+          "label": "Visuel associé à cette fiche du catalogue",
+          "url": "https://res.cloudinary.com/dm4ij9sxg/image/upload/v1790434475/produits/fldna7t2sacpw0ys5ndr.webp"
+        },
+        {
+          "label": "onsemi — famille PNP BD136, BD138 et BD140",
+          "url": "https://www.onsemi.com/download/data-sheet/pdf/bd136-d.pdf"
+        },
+        {
+          "label": "onsemi — famille NPN BD135–BD139",
+          "url": "https://www.onsemi.com/download/data-sheet/pdf/bd139-d.pdf"
+        }
+      ]
+    }
+  },
+  {
+    "id": "37c79fa9-d729-457d-b101-535078ce12d8",
+    "status": "published",
+    "reviewedAt": "2026-11-01",
+    "expected": {
+      "model": "BD 911",
+      "image": "https://res.cloudinary.com/dm4ij9sxg/image/upload/v1790434511/produits/nryv0cjdg06hggczvhyt.webp",
+      "description": "BD 911",
+      "brand": null,
+      "urlDatasheet": null
+    },
+    "fr": {
+      "title": "BD911 : identifier le NPN de puissance",
+      "summary": "Le visuel associé porte BD911. La documentation ST décrit cette référence comme un transistor de puissance NPN, avec BD912 comme complément PNP. La notice est utilisée comme référence documentaire, sans attribuer une fabrication ST au stock.",
+      "checks": [
+        "Identifiez le fabricant et la référence complète de l’exemplaire avant de reprendre un brochage ou une valeur limite.",
+        "Comparez le boîtier, l’isolation éventuelle et les conditions de refroidissement prévues par l’appareil ; une limite de dissipation ne décrit pas tous les montages."
+      ],
+      "sources": [
+        {
+          "label": "Visuel associé à cette fiche du catalogue",
+          "url": "https://res.cloudinary.com/dm4ij9sxg/image/upload/v1790434511/produits/nryv0cjdg06hggczvhyt.webp"
+        },
+        {
+          "label": "STMicroelectronics — BD909/BD911 et BD910/BD912",
+          "url": "https://www.st.com/resource/en/datasheet/bd911.pdf"
+        }
+      ]
+    }
+  },
+  {
+    "id": "44ee09d5-f1e5-4bc4-b5d0-912af4798a66",
+    "status": "published",
+    "reviewedAt": "2026-11-01",
+    "expected": {
+      "model": "TDA 7262",
+      "image": "https://newoteg.com/product-images/inventory-delta-b48ce7e9bc5e.webp",
+      "description": "TDA 7262",
+      "brand": null,
+      "urlDatasheet": null
+    },
+    "fr": {
+      "title": "TDA7262 : distinguer le montage et les conditions de puissance",
+      "summary": "TDA7262 est lisible sur le visuel. La notice ST décrit un amplificateur stéréo de classe AB avec standby en Multiwatt11. Son annonce de 20 W + 20 W est donnée sous 28 V, sur 4 Ω et à 10 % de distorsion.",
+      "checks": [
+        "Comparez les conditions de mesure avant de rapprocher ce chiffre de celui d’un autre amplificateur.",
+        "Le même nombre de broches qu’un autre TDA ne valide pas un remplacement : vérifiez la référence, le schéma d’application, l’alimentation et la commande standby."
+      ],
+      "sources": [
+        {
+          "label": "Visuel associé à cette fiche du catalogue",
+          "url": "https://newoteg.com/product-images/inventory-delta-b48ce7e9bc5e.webp"
+        },
+        {
+          "label": "STMicroelectronics — notice historique TDA7262, copie hébergée par DigiKey",
+          "url": "https://media.digikey.com/pdf/Data%20Sheets/ST%20Microelectronics%20PDFS/TDA7262.pdf"
         }
       ]
     }
