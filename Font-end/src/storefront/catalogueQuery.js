@@ -1,4 +1,5 @@
 import { seoFamily, familyParameters } from './seoFamilies.js';
+import { basePath } from './localePath.js';
 // Shared URL contract: the server render and the browser use the same filters.
 export function catalogueQuery(params, pathname = '/catalogue') {
   params = familyParameters(params, seoFamily(pathname));
@@ -24,7 +25,7 @@ export function catalogueQuery(params, pathname = '/catalogue') {
 }
 
 export function canRenderCatalogue(url) {
-  if ((url.pathname !== '/catalogue' && !seoFamily(url.pathname)) || url.search.length > 2048) return false;
+  if ((basePath(url.pathname) !== '/catalogue' && !seoFamily(url.pathname)) || url.search.length > 2048) return false;
   const allowed = new Set(['search', 'category', 'sub', 'instock', 'sort', 'page', 'minPrice', 'maxPrice']);
   if ([...url.searchParams.keys()].some(key => !allowed.has(key))) return false;
   const { query, category, subcategory, sort, page } = catalogueQuery(url.searchParams, url.pathname);

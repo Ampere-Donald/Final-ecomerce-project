@@ -4,7 +4,7 @@ import {
   useNavigate,
   useParams,
   useSearchParams,
-} from "react-router-dom";
+} from "./LocaleRouter";
 import PageMeta from "./PageMeta";
 import { ArrowRight, FileText, RefreshCw, ShoppingCart } from "lucide-react";
 import { useI18n } from "../context/I18nContext";

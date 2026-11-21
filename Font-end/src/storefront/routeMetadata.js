@@ -1,8 +1,9 @@
 import { seoFamily, familyMetadata } from './seoFamilies.js';
+import { editorialMetadata } from './editorialRoutes.js';
+import { basePath, localizedPath, pathLanguage } from './localePath.js';
+import { hasEnglishRoute, languageAlternates, privateRoute } from './localeRoutes.js';
 export const SITE_ORIGIN = "https://newoteg.com";
-const privatePath =
-  /^\/(?:panier|checkout|suivi-invite|mes-devis|commandes|profile|favourites|login|signup|forgot-password)(?:\/|$)/i;
-export const isPrivateDocument = (pathname) => privatePath.test(pathname);
+export const isPrivateDocument = privateRoute;
 const pages = {
   "/": [
     "La boutique électronique de NEWOTEG",
@@ -101,7 +102,9 @@ const privateTitles = {
   signup: ["Créer un compte", "Create an account"],
   "forgot-password": ["Retrouver mon accès", "Recover my access"],
 };
-export function pageMetadata(pathname, search = "", lang = "fr") {
+function baseMetadata(pathname, search = "", lang = "fr") {
+  const editorial = editorialMetadata(localizedPath(pathname, lang));
+  if (editorial) return editorial;
   const family = seoFamily(pathname);
   if (family) return familyMetadata(family, search, lang);
   const english = lang === "en",
@@ -165,4 +168,17 @@ export function pageMetadata(pathname, search = "", lang = "fr") {
     robots: filtered ? "noindex, follow" : "index, follow",
     private: false,
   };
+}
+
+export function pageMetadata(pathname, search = '', lang = pathLanguage(pathname)) {
+  const path = basePath(pathname);
+  const available = lang !== 'en' || hasEnglishRoute(path);
+  const meta = baseMetadata(available ? path : '/__unavailable', search, lang);
+  if (meta.canonical) {
+    const canonical = new URL(meta.canonical);
+    meta.canonical = SITE_ORIGIN + localizedPath(canonical.pathname, lang) + canonical.search;
+  }
+  const canonicalSearch = meta.canonical ? new URL(meta.canonical).search : '';
+  return { ...meta, lang, alternates: meta.canonical && meta.robots === 'index, follow'
+    ? languageAlternates(path, canonicalSearch) : [] };
 }

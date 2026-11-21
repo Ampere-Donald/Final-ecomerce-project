@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect, useRef, useState } from "react";
-import { Link, NavLink, useLocation } from "react-router-dom";
+import { Link, NavLink, useLocation } from "./LocaleRouter";
 import {
   Menu,
   ArrowRight,
@@ -24,6 +24,7 @@ const CatalogueMenu = lazy(() => import("./CatalogueMenu"));
 import { shopContact } from "./shopContact";
 import useBrowserReady from "./useBrowserReady";
 import MotionToggle from './MotionToggle';
+import LanguageLink from './LanguageLink';
 
 export default function Header() {
   const ready = useBrowserReady();
@@ -34,7 +35,7 @@ export default function Header() {
   const { favoritesCount } = useFavorites();
   const { cartCount } = useCart();
   const { isAuthenticated, logout } = useAuth();
-  const { lang, toggleLang } = useI18n();
+  const { lang } = useI18n();
   const location = useLocation();
   const open = menu?.route === location.key && menu.type === "drawer";
   const mega = menu?.route === location.key && menu.type === "catalogue";
@@ -245,10 +246,9 @@ export default function Header() {
               <ArrowRight size={17} />
             </NavLink>
           ))}
-          <button onClick={toggleLang}>
+          <LanguageLink>
             <Globe size={18} />
-            {lang === "fr" ? "English" : "Français"}
-          </button>
+          </LanguageLink>
           <MotionToggle />
           {isAuthenticated && (
             <button

@@ -68,6 +68,7 @@ export function adaptProduct(raw, resolveImage) {
     urlDatasheet: /^https?:\/\//i.test(raw.urlDatasheet || "")
       ? raw.urlDatasheet
       : null,
+    attributeCount: (raw.attributs || []).length,
     attributes: (raw.attributs || [])
       .map((a) => [
         a.nomAttribut,

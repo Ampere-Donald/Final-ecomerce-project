@@ -1,4 +1,4 @@
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation } from "./LocaleRouter";
 import PageMeta from "./PageMeta";
 import { ArrowRight } from "lucide-react";
 import { useI18n } from "../context/I18nContext";

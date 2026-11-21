@@ -1,9 +1,8 @@
-import { Link } from "react-router-dom";
-import { useI18n } from "../context/I18nContext";
+import { Link } from "./LocaleRouter";
+import LanguageLink from './LanguageLink';
 import { Copy } from "./Elements";
 import MotionToggle from './MotionToggle';
 export default function Footer() {
-  const { lang, toggleLang } = useI18n();
   return (
     <footer className="e-footer">
       <div className="e-wrap">
@@ -38,6 +37,7 @@ export default function Footer() {
           <Link to="/catalogue">
             <Copy fr="Catalogue" en="Catalogue" />
           </Link>
+          <Link to="/guides"><Copy fr="Guides de choix" en="Selection guides" /></Link>
           <Link to="/devis">
             <Copy fr="Demander un devis" en="Request a quote" />
           </Link>
@@ -66,9 +66,7 @@ export default function Footer() {
           <Link to="/privacy">
             <Copy fr="Confidentialité" en="Privacy" />
           </Link>
-          <button onClick={toggleLang}>
-            {lang === "fr" ? "English" : "Français"}
-          </button>
+          <LanguageLink />
           <MotionToggle />
         </nav>
         <small>© {new Date().getFullYear()} NEWOTEG · X-Electronic</small>

@@ -1,0 +1,18 @@
+.e-home-guides .e-section-head { align-items: flex-start; margin-bottom: 24px; }
+.e-home-guides .e-section-head h2 { margin: 0; font-size: 25px; line-height: 1.3; }
+.e-home-guides .e-section-head > a { flex-shrink: 0; min-height: 44px; }
+.e-home-guides-list { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+.e-home-guides-list > li { padding: 24px; border: 1px solid var(--e-line); border-top: 3px solid var(--e-green); background: #fff; }
+.e-home-guides-list h3 { margin: 0 0 12px; font-size: 18px; line-height: 1.4; }
+.e-home-guides-list h3 a { display: flex; align-items: flex-start; gap: 12px; color: var(--e-ink); text-decoration: none; }
+.e-home-guides-list h3 a:hover { text-decoration: underline; text-underline-offset: 3px; }
+.e-home-guides-list h3 svg { flex-shrink: 0; margin-top: 4px; color: var(--e-green); }
+.e-home-guides-list p { margin: 0; max-width: 65ch; font-size: 14px; line-height: 1.65; color: var(--e-muted); }
+.e-home-family-links { display: flex; flex-wrap: wrap; gap: 8px 20px; margin-top: 24px; }
+.e-home-family-links a { min-height: 44px; display: inline-flex; align-items: center; color: var(--e-green); font-size: 14px; text-decoration: underline; text-underline-offset: 3px; }
+@media (max-width: 810px) {
+  .e-home-guides-list { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+  .e-home-guides-list > li { padding: 20px; }
+  .e-home-guides .e-section-head { flex-direction: column; gap: 8px; }
+  .e-home-guides .e-section-head h2 { font-size: 22px; }
+}

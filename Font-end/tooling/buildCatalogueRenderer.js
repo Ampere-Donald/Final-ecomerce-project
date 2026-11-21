@@ -3,6 +3,8 @@ import react from '@vitejs/plugin-react';
 import { resolve } from 'node:path';
 import { readFile, writeFile } from 'node:fs/promises';
 import { buildCataloguePackage } from './cataloguePackage.js';
+import { createRequire } from 'node:module';
+import { editorialDocumentPaths } from '../src/storefront/editorialRoutes.js';
 
 export default function buildCatalogueRenderer() {
   let config;
@@ -40,7 +42,18 @@ export default function buildCatalogueRenderer() {
         visit(candidates[0]);
       }
       await writeFile(resolve(output, 'styles.js'), `export const catalogueStyles = ${JSON.stringify([...styles])};\n`);
+      styles.clear(); seen.clear(); visit('index.html');
+      const editorialSource = 'src/storefront/TechnicalLibrary.jsx';
+      if (!manifest[editorialSource]) throw Error('Missing editorial manifest entry');
+      visit(editorialSource);
+      const editorialStyles = [...styles];
       await buildCataloguePackage(config.root, config.env, resolve(config.root, '.catalogue-backend'));
+      const require = createRequire(import.meta.url);
+      const rendererFile = resolve(config.root, '.catalogue-backend/renderer.cjs');
+      delete require.cache[require.resolve(rendererFile)];
+      const renderer = require(rendererFile);
+      const fragments = Object.fromEntries(editorialDocumentPaths().map(path => [path, renderer.renderEditorialResponse(path)]));
+      await writeFile(resolve(output, 'editorial.js'), `export const editorialFragments = ${JSON.stringify(fragments)};\nexport const editorialStyles = ${JSON.stringify(editorialStyles)};\n`);
     },
   };
 }

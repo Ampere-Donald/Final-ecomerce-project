@@ -1,7 +1,7 @@
 import "./home-selection.css";
 import "./product-card.css";
 import { memo, useContext, useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link } from "./LocaleRouter";
 import { Heart, ShoppingCart, ArrowRight, Search } from "lucide-react";
 import { useI18n } from "../context/I18nContext";
 import { useFavorites } from "../context/FavoritesContext";

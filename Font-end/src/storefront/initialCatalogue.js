@@ -1,3 +1,4 @@
+import { pathLanguage } from './localePath.js';
 import { catalogueQuery, canRenderCatalogue } from './catalogueQuery.js';
 import { readOffer } from './offerData.js';
 
@@ -107,6 +108,6 @@ export function injectInitialCatalogue(document, html, snapshot, css) {
     .map(path => `<link rel="stylesheet" href="${path}" />`).join('');
   return document.replace(/<script data-catalogue-prefetch(?:="")?>[\s\S]*?<\/script>/g, '')
     .replace('</head>', styles + '</head>')
-    .replace('<div id="root"></div>', `<div id="root" data-initial-catalogue="fr">${html}</div>`)
+    .replace('<div id="root"></div>', `<div id="root" data-initial-catalogue="${pathLanguage(new URL(snapshot.url, 'https://newoteg.com').pathname)}">${html}</div>`)
     .replace('</body>', `<script type="application/json" id="initial-catalogue-data">${catalogueBootJSON(snapshot)}</script></body>`);
 }

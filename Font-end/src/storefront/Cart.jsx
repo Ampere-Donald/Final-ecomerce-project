@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link } from "./LocaleRouter";
 import { ShoppingCart } from "lucide-react";
 import { useCart } from "../context/CartContext";
 import { useI18n } from "../context/I18nContext";

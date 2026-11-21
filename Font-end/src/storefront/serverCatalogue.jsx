@@ -1,3 +1,4 @@
+import { basePath, pathLanguage, routerBasename } from './localePath.js';
 import { Suspense } from 'react';
 import { renderToString } from 'react-dom/server.browser';
 import { StaticRouter, Routes, Route } from 'react-router-dom';
@@ -9,9 +10,10 @@ import Catalogue from './Catalogue';
 import { seoFamilies, familyPath } from './seoFamilies.js';
 
 export function renderCatalogue(snapshot) {
-  const output = renderToString(<StorefrontProviders initialLanguage="fr" initialAnonymous>
-    <StaticRouter location={snapshot.url}><InitialResources snapshot={snapshot}><PageMetadataProvider>
-      <StorefrontFrame path={new URL(snapshot.url, 'https://newoteg.com').pathname} initial><Suspense>
+  const path = new URL(snapshot.url, 'https://newoteg.com').pathname, lang = pathLanguage(path);
+  const output = renderToString(<StorefrontProviders initialLanguage={lang} initialAnonymous>
+    <StaticRouter location={snapshot.url} basename={routerBasename(lang)}><InitialResources snapshot={snapshot}><PageMetadataProvider>
+      <StorefrontFrame path={basePath(path)} initial><Suspense>
         <Routes><Route path="/catalogue" element={<Catalogue />} />
           {seoFamilies.map(family => <Route key={family.slug} path={familyPath(family)} element={<Catalogue />} />)}
         </Routes>

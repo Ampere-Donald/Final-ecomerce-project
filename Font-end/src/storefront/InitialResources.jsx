@@ -1,10 +1,13 @@
 import { useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation } from './LocaleRouter';
 import { InitialResourceContext } from './initialResourceContext';
+import { useI18n } from '../context/I18nContext';
+import { localizedPath } from './localePath.js';
 
 export default function InitialResources({ snapshot, children }) {
   const location = useLocation();
-  const key = location.pathname + location.search;
+  const { lang } = useI18n();
+  const key = localizedPath(location.pathname, lang) + location.search;
   const [active, setActive] = useState(Boolean(snapshot));
   // A later navigation, including browser Back, must fetch a fresh catalogue.
   if (active && snapshot.url !== key) setActive(false);

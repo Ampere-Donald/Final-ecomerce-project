@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link } from "./LocaleRouter";
 import { Check } from "lucide-react";
 import { Copy } from "./Elements";
 import Footer from "./Footer";

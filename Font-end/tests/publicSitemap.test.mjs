@@ -8,7 +8,7 @@ const row = { id, nomProduit: 'Real reference', categorieId: family.category, so
 
 test('sitemap contains only stable public routes, actual nonempty families and validated unique references', () => {
   const xml = renderSitemapResponse([row]);
-  assert.equal((xml.match(/<loc>/g) || []).length, publicStaticPaths.length + 2);
+  assert.equal((xml.match(/<loc>/g) || []).length, publicStaticPaths.length + 3);
   assert(xml.includes('https://newoteg.com/product/' + id));
   assert(xml.includes('https://newoteg.com/catalogue/condensateurs'));
   assert(!xml.includes('https://newoteg.com/catalogue/transistors'));

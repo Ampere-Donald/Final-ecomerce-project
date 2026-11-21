@@ -25,8 +25,10 @@ export default function prerenderHome() {
       });
       try {
         const { renderHome } = await server.ssrLoadModule('/src/storefront/serverHome.jsx');
-        const snapshot = { version: 1, language: 'fr', html: renderHome(), css: initialHomeStyles(manifest) };
-        await writeFile(resolve(output, '__public-home.json'), JSON.stringify(snapshot), 'utf8');
+        for (const language of ['fr', 'en']) {
+          const snapshot = { version: 1, language, html: renderHome(language), css: initialHomeStyles(manifest) };
+          await writeFile(resolve(output, language === 'en' ? '__public-home-en.json' : '__public-home.json'), JSON.stringify(snapshot), 'utf8');
+        }
         config.logger.info('Generated anonymous public home HTML from shared components');
       } finally { await server.close(); }
     },

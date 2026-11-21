@@ -1,5 +1,6 @@
 import { clearReviewAttempts } from './reviewData.js';
 import { clearIssueAttempts } from './incompatibilityData.js';
+import { basePath, pathLanguage, localizedPath } from './localePath.js';
 const STORAGE = "newoteg_guest_tracking_v1";
 const RECOVERY = "newoteg_guest_recovery_v1";
 const LINK_ATTEMPT = "newoteg_guest_link_v1";
@@ -34,7 +35,7 @@ export function readGuestKey() {
 // Remove the secret before React or third-party auth providers can mount.
 // Fragments are never sent as HTTP URLs; the API receives the key in POST bodies.
 export function captureGuestFragment() {
-  if (window.location.pathname !== "/suivi-invite" || !window.location.hash)
+  if (basePath(window.location.pathname) !== "/suivi-invite" || !window.location.hash)
     return;
   const key = new URLSearchParams(window.location.hash.slice(1)).get("acces");
   window.history.replaceState(
@@ -49,7 +50,7 @@ export function captureGuestFragment() {
   else forgetGuestKey();
 }
 export function privateTrackingLink(key) {
-  return `${window.location.origin}/suivi-invite#acces=${key}`;
+  return `${window.location.origin}${localizedPath('/suivi-invite', pathLanguage(window.location.pathname))}#acces=${key}`;
 }
 export function forgetGuestKey() {
   clearReviewAttempts('guest');
