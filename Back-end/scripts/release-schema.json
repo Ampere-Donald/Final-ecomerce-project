@@ -1,7 +1,7 @@
 {
   "version": 1,
   "sources": {
-    "schemaSha256": "bf77242930d658f31b40aeacede63f2e35630e6728805019bef204140ade670a",
+    "schemaSha256": "eb3add036873f43e7d248794c5cf42100f6ff4ece540dc9b1f408176cbf002b7",
     "migrations": [
       {
         "name": "20260303155632_init",
@@ -266,6 +266,10 @@
       {
         "name": "20261028170000_add_acquisition_channels",
         "sha256": "3a897f70c2ee89c75a7af047c7ba8a8a9237461a3b154c45603e45c8e1d2a434"
+      },
+      {
+        "name": "20261114000000_documentary_workflow",
+        "sha256": "e566b397a99b7881b1642031bbdf84812a4ca8c2891f4b408bfbce61ba485989"
       }
     ]
   },
@@ -11082,6 +11086,354 @@
         "numeric_precision": null,
         "numeric_scale": null,
         "datetime_precision": null
+      },
+      {
+        "table_name": "documentary_batch",
+        "column_name": "actor_id",
+        "type": "text",
+        "type_schema": "pg_catalog",
+        "is_nullable": "NO",
+        "column_default": null,
+        "character_maximum_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "datetime_precision": null
+      },
+      {
+        "table_name": "documentary_batch",
+        "column_name": "created_at",
+        "type": "timestamptz",
+        "type_schema": "pg_catalog",
+        "is_nullable": "NO",
+        "column_default": "CURRENT_TIMESTAMP",
+        "character_maximum_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "datetime_precision": 6
+      },
+      {
+        "table_name": "documentary_batch",
+        "column_name": "id",
+        "type": "text",
+        "type_schema": "pg_catalog",
+        "is_nullable": "NO",
+        "column_default": null,
+        "character_maximum_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "datetime_precision": null
+      },
+      {
+        "table_name": "documentary_batch",
+        "column_name": "source_name",
+        "type": "text",
+        "type_schema": "pg_catalog",
+        "is_nullable": "NO",
+        "column_default": null,
+        "character_maximum_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "datetime_precision": null
+      },
+      {
+        "table_name": "documentary_batch",
+        "column_name": "source_sha256",
+        "type": "text",
+        "type_schema": "pg_catalog",
+        "is_nullable": "NO",
+        "column_default": null,
+        "character_maximum_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "datetime_precision": null
+      },
+      {
+        "table_name": "documentary_event",
+        "column_name": "action",
+        "type": "text",
+        "type_schema": "pg_catalog",
+        "is_nullable": "NO",
+        "column_default": null,
+        "character_maximum_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "datetime_precision": null
+      },
+      {
+        "table_name": "documentary_event",
+        "column_name": "actor_id",
+        "type": "text",
+        "type_schema": "pg_catalog",
+        "is_nullable": "NO",
+        "column_default": null,
+        "character_maximum_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "datetime_precision": null
+      },
+      {
+        "table_name": "documentary_event",
+        "column_name": "after",
+        "type": "jsonb",
+        "type_schema": "pg_catalog",
+        "is_nullable": "NO",
+        "column_default": null,
+        "character_maximum_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "datetime_precision": null
+      },
+      {
+        "table_name": "documentary_event",
+        "column_name": "batch_id",
+        "type": "text",
+        "type_schema": "pg_catalog",
+        "is_nullable": "YES",
+        "column_default": null,
+        "character_maximum_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "datetime_precision": null
+      },
+      {
+        "table_name": "documentary_event",
+        "column_name": "before",
+        "type": "jsonb",
+        "type_schema": "pg_catalog",
+        "is_nullable": "NO",
+        "column_default": null,
+        "character_maximum_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "datetime_precision": null
+      },
+      {
+        "table_name": "documentary_event",
+        "column_name": "created_at",
+        "type": "timestamptz",
+        "type_schema": "pg_catalog",
+        "is_nullable": "NO",
+        "column_default": "CURRENT_TIMESTAMP",
+        "character_maximum_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "datetime_precision": 6
+      },
+      {
+        "table_name": "documentary_event",
+        "column_name": "id",
+        "type": "text",
+        "type_schema": "pg_catalog",
+        "is_nullable": "NO",
+        "column_default": null,
+        "character_maximum_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "datetime_precision": null
+      },
+      {
+        "table_name": "documentary_event",
+        "column_name": "operation_id",
+        "type": "text",
+        "type_schema": "pg_catalog",
+        "is_nullable": "NO",
+        "column_default": null,
+        "character_maximum_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "datetime_precision": null
+      },
+      {
+        "table_name": "documentary_event",
+        "column_name": "product_id",
+        "type": "text",
+        "type_schema": "pg_catalog",
+        "is_nullable": "NO",
+        "column_default": null,
+        "character_maximum_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "datetime_precision": null
+      },
+      {
+        "table_name": "documentary_event",
+        "column_name": "revision_after",
+        "type": "int4",
+        "type_schema": "pg_catalog",
+        "is_nullable": "NO",
+        "column_default": null,
+        "character_maximum_length": null,
+        "numeric_precision": 32,
+        "numeric_scale": 0,
+        "datetime_precision": null
+      },
+      {
+        "table_name": "documentary_event",
+        "column_name": "revision_before",
+        "type": "int4",
+        "type_schema": "pg_catalog",
+        "is_nullable": "NO",
+        "column_default": null,
+        "character_maximum_length": null,
+        "numeric_precision": 32,
+        "numeric_scale": 0,
+        "datetime_precision": null
+      },
+      {
+        "table_name": "product_documentary",
+        "column_name": "batch_id",
+        "type": "text",
+        "type_schema": "pg_catalog",
+        "is_nullable": "YES",
+        "column_default": null,
+        "character_maximum_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "datetime_precision": null
+      },
+      {
+        "table_name": "product_documentary",
+        "column_name": "locked",
+        "type": "bool",
+        "type_schema": "pg_catalog",
+        "is_nullable": "NO",
+        "column_default": "false",
+        "character_maximum_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "datetime_precision": null
+      },
+      {
+        "table_name": "product_documentary",
+        "column_name": "origin",
+        "type": "text",
+        "type_schema": "pg_catalog",
+        "is_nullable": "NO",
+        "column_default": "'ai'::text",
+        "character_maximum_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "datetime_precision": null
+      },
+      {
+        "table_name": "product_documentary",
+        "column_name": "product_id",
+        "type": "text",
+        "type_schema": "pg_catalog",
+        "is_nullable": "NO",
+        "column_default": null,
+        "character_maximum_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "datetime_precision": null
+      },
+      {
+        "table_name": "product_documentary",
+        "column_name": "proposal",
+        "type": "jsonb",
+        "type_schema": "pg_catalog",
+        "is_nullable": "YES",
+        "column_default": null,
+        "character_maximum_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "datetime_precision": null
+      },
+      {
+        "table_name": "product_documentary",
+        "column_name": "reviewed_at",
+        "type": "timestamptz",
+        "type_schema": "pg_catalog",
+        "is_nullable": "YES",
+        "column_default": null,
+        "character_maximum_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "datetime_precision": 6
+      },
+      {
+        "table_name": "product_documentary",
+        "column_name": "reviewed_by",
+        "type": "text",
+        "type_schema": "pg_catalog",
+        "is_nullable": "YES",
+        "column_default": null,
+        "character_maximum_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "datetime_precision": null
+      },
+      {
+        "table_name": "product_documentary",
+        "column_name": "revision",
+        "type": "int4",
+        "type_schema": "pg_catalog",
+        "is_nullable": "NO",
+        "column_default": "1",
+        "character_maximum_length": null,
+        "numeric_precision": 32,
+        "numeric_scale": 0,
+        "datetime_precision": null
+      },
+      {
+        "table_name": "product_documentary",
+        "column_name": "short_description",
+        "type": "text",
+        "type_schema": "pg_catalog",
+        "is_nullable": "YES",
+        "column_default": null,
+        "character_maximum_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "datetime_precision": null
+      },
+      {
+        "table_name": "product_documentary",
+        "column_name": "sources",
+        "type": "jsonb",
+        "type_schema": "pg_catalog",
+        "is_nullable": "NO",
+        "column_default": "'[]'::jsonb",
+        "character_maximum_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "datetime_precision": null
+      },
+      {
+        "table_name": "product_documentary",
+        "column_name": "status",
+        "type": "text",
+        "type_schema": "pg_catalog",
+        "is_nullable": "NO",
+        "column_default": "'enrichi_ia_a_verifier'::text",
+        "character_maximum_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "datetime_precision": null
+      },
+      {
+        "table_name": "product_documentary",
+        "column_name": "uncertainties",
+        "type": "jsonb",
+        "type_schema": "pg_catalog",
+        "is_nullable": "NO",
+        "column_default": "'[]'::jsonb",
+        "character_maximum_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "datetime_precision": null
+      },
+      {
+        "table_name": "product_documentary",
+        "column_name": "updated_at",
+        "type": "timestamptz",
+        "type_schema": "pg_catalog",
+        "is_nullable": "NO",
+        "column_default": "CURRENT_TIMESTAMP",
+        "character_maximum_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "datetime_precision": 6
       }
     ],
     "constraints": [
@@ -12749,6 +13101,132 @@
         "validated": true,
         "deferrable": false,
         "deferred": false
+      },
+      {
+        "table_name": "documentary_batch",
+        "name": "documentary_batch_pkey",
+        "type": "p",
+        "definition": "PRIMARY KEY (id)",
+        "validated": true,
+        "deferrable": false,
+        "deferred": false
+      },
+      {
+        "table_name": "documentary_batch",
+        "name": "documentary_batch_source_sha256_key",
+        "type": "u",
+        "definition": "UNIQUE (source_sha256)",
+        "validated": true,
+        "deferrable": false,
+        "deferred": false
+      },
+      {
+        "table_name": "documentary_event",
+        "name": "documentary_event_action_check",
+        "type": "c",
+        "definition": "CHECK ((action = ANY (ARRAY['import'::text, 'publish'::text, 'edit'::text, 'validate'::text, 'unlock'::text, 'rollback'::text])))",
+        "validated": true,
+        "deferrable": false,
+        "deferred": false
+      },
+      {
+        "table_name": "documentary_event",
+        "name": "documentary_event_batch_id_fkey",
+        "type": "f",
+        "definition": "FOREIGN KEY (batch_id) REFERENCES documentary_batch(id) ON DELETE RESTRICT",
+        "validated": true,
+        "deferrable": false,
+        "deferred": false
+      },
+      {
+        "table_name": "documentary_event",
+        "name": "documentary_event_operation_id_key",
+        "type": "u",
+        "definition": "UNIQUE (operation_id)",
+        "validated": true,
+        "deferrable": false,
+        "deferred": false
+      },
+      {
+        "table_name": "documentary_event",
+        "name": "documentary_event_pkey",
+        "type": "p",
+        "definition": "PRIMARY KEY (id)",
+        "validated": true,
+        "deferrable": false,
+        "deferred": false
+      },
+      {
+        "table_name": "documentary_event",
+        "name": "documentary_event_product_id_fkey",
+        "type": "f",
+        "definition": "FOREIGN KEY (product_id) REFERENCES produit(id) ON DELETE RESTRICT",
+        "validated": true,
+        "deferrable": false,
+        "deferred": false
+      },
+      {
+        "table_name": "product_documentary",
+        "name": "product_documentary_batch_id_fkey",
+        "type": "f",
+        "definition": "FOREIGN KEY (batch_id) REFERENCES documentary_batch(id) ON DELETE RESTRICT",
+        "validated": true,
+        "deferrable": false,
+        "deferred": false
+      },
+      {
+        "table_name": "product_documentary",
+        "name": "product_documentary_check",
+        "type": "c",
+        "definition": "CHECK (((status <> 'valide_admin'::text) OR locked))",
+        "validated": true,
+        "deferrable": false,
+        "deferred": false
+      },
+      {
+        "table_name": "product_documentary",
+        "name": "product_documentary_origin_check",
+        "type": "c",
+        "definition": "CHECK ((origin = ANY (ARRAY['ai'::text, 'admin'::text, 'rollback'::text])))",
+        "validated": true,
+        "deferrable": false,
+        "deferred": false
+      },
+      {
+        "table_name": "product_documentary",
+        "name": "product_documentary_pkey",
+        "type": "p",
+        "definition": "PRIMARY KEY (product_id)",
+        "validated": true,
+        "deferrable": false,
+        "deferred": false
+      },
+      {
+        "table_name": "product_documentary",
+        "name": "product_documentary_product_id_fkey",
+        "type": "f",
+        "definition": "FOREIGN KEY (product_id) REFERENCES produit(id) ON DELETE RESTRICT",
+        "validated": true,
+        "deferrable": false,
+        "deferred": false
+      },
+      {
+        "table_name": "product_documentary",
+        "name": "product_documentary_revision_check",
+        "type": "c",
+        "definition": "CHECK ((revision > 0))",
+        "validated": true,
+        "deferrable": false,
+        "deferred": false
+      },
+      {
+        "table_name": "product_documentary",
+        "name": "product_documentary_status_check",
+        "type": "c",
+        "definition": "CHECK ((status = ANY (ARRAY['enrichi_ia_a_verifier'::text, 'valide_admin'::text, 'identification_insuffisante'::text, 'classification_requise'::text])))",
+        "validated": true,
+        "deferrable": false,
+        "deferred": false
       }
     ],
     "indexes": [
@@ -14109,6 +14587,62 @@
         "definition": "CREATE UNIQUE INDEX parcours_acquisition_jour_pkey ON public.parcours_acquisition_jour USING btree (jour, evenement, langue, appareil, reception, canal_entree)",
         "valid": true,
         "ready": true
+      },
+      {
+        "table_name": "documentary_batch",
+        "name": "documentary_batch_pkey",
+        "definition": "CREATE UNIQUE INDEX documentary_batch_pkey ON public.documentary_batch USING btree (id)",
+        "valid": true,
+        "ready": true
+      },
+      {
+        "table_name": "documentary_batch",
+        "name": "documentary_batch_source_sha256_key",
+        "definition": "CREATE UNIQUE INDEX documentary_batch_source_sha256_key ON public.documentary_batch USING btree (source_sha256)",
+        "valid": true,
+        "ready": true
+      },
+      {
+        "table_name": "documentary_event",
+        "name": "documentary_event_batch_idx",
+        "definition": "CREATE INDEX documentary_event_batch_idx ON public.documentary_event USING btree (batch_id)",
+        "valid": true,
+        "ready": true
+      },
+      {
+        "table_name": "documentary_event",
+        "name": "documentary_event_operation_id_key",
+        "definition": "CREATE UNIQUE INDEX documentary_event_operation_id_key ON public.documentary_event USING btree (operation_id)",
+        "valid": true,
+        "ready": true
+      },
+      {
+        "table_name": "documentary_event",
+        "name": "documentary_event_pkey",
+        "definition": "CREATE UNIQUE INDEX documentary_event_pkey ON public.documentary_event USING btree (id)",
+        "valid": true,
+        "ready": true
+      },
+      {
+        "table_name": "documentary_event",
+        "name": "documentary_event_product_time_idx",
+        "definition": "CREATE INDEX documentary_event_product_time_idx ON public.documentary_event USING btree (product_id, created_at)",
+        "valid": true,
+        "ready": true
+      },
+      {
+        "table_name": "product_documentary",
+        "name": "product_documentary_pkey",
+        "definition": "CREATE UNIQUE INDEX product_documentary_pkey ON public.product_documentary USING btree (product_id)",
+        "valid": true,
+        "ready": true
+      },
+      {
+        "table_name": "product_documentary",
+        "name": "product_documentary_status_idx",
+        "definition": "CREATE INDEX product_documentary_status_idx ON public.product_documentary USING btree (status)",
+        "valid": true,
+        "ready": true
       }
     ],
     "enums": [
@@ -14276,7 +14810,11 @@
       "dossier_incompatibilite.incompatibilite_motif_closed": "CHECK (((motif)::text = ANY (ARRAY[('TENSION'::character varying)::text, ('BROCHAGE'::character varying)::text, ('FORMAT'::character varying)::text, ('FONCTION'::character varying)::text, ('AUTRE'::character varying)::text])))",
       "dossier_incompatibilite.incompatibilite_quantite_bounds": "CHECK (((quantite >= 1) AND (quantite <= 1000000) AND (version > 0)))",
       "dossier_incompatibilite.incompatibilite_return_complete": "CHECK ((((statut = 'RETOUR_CONFIRME'::\"StatutIncompatibilite\") AND (retour_quantite IS NOT NULL) AND ((retour_quantite >= 1) AND (retour_quantite <= quantite)) AND (retour_confirme_at IS NOT NULL) AND (diagnostic IS NOT NULL) AND ((diagnostic)::text = ANY (ARRAY[('TENSION'::character varying)::text, ('BROCHAGE'::character varying)::text, ('FORMAT'::character varying)::text, ('FONCTION'::character varying)::text, ('AUTRE'::character varying)::text]))) OR ((statut <> 'RETOUR_CONFIRME'::\"StatutIncompatibilite\") AND (retour_quantite IS NULL) AND (retour_confirme_at IS NULL) AND (diagnostic IS NULL))))",
-      "parcours_jour.parcours_closed_dimensions": "CHECK ((((evenement)::text = ANY (ARRAY[('RECHERCHE_VIDE'::character varying)::text, ('FICHE_OUVERTE'::character varying)::text, ('AJOUT_PANIER'::character varying)::text, ('FRAIS_VUS'::character varying)::text, ('SORTIE_APRES_FRAIS'::character varying)::text, ('REACHAT_AJOUTE'::character varying)::text, ('WHATSAPP_OUVERT'::character varying)::text])) AND ((langue)::text = ANY (ARRAY[('fr'::character varying)::text, ('en'::character varying)::text])) AND ((appareil)::text = ANY (ARRAY[('mobile'::character varying)::text, ('tablette'::character varying)::text, ('ordinateur'::character varying)::text])) AND ((reception)::text = ANY (ARRAY[('GENERAL'::character varying)::text, ('RETRAIT'::character varying)::text, ('LIVRAISON_A_CONFIRMER'::character varying)::text, ('LIVRAISON_CALCULEE'::character varying)::text])) AND\nCASE\n    WHEN ((evenement)::text = ANY (ARRAY[('FRAIS_VUS'::character varying)::text, ('SORTIE_APRES_FRAIS'::character varying)::text])) THEN ((reception)::text <> 'GENERAL'::text)\n    ELSE ((reception)::text = 'GENERAL'::text)\nEND AND (nombre > 0)))"
+      "parcours_jour.parcours_closed_dimensions": "CHECK ((((evenement)::text = ANY (ARRAY[('RECHERCHE_VIDE'::character varying)::text, ('FICHE_OUVERTE'::character varying)::text, ('AJOUT_PANIER'::character varying)::text, ('FRAIS_VUS'::character varying)::text, ('SORTIE_APRES_FRAIS'::character varying)::text, ('REACHAT_AJOUTE'::character varying)::text, ('WHATSAPP_OUVERT'::character varying)::text])) AND ((langue)::text = ANY (ARRAY[('fr'::character varying)::text, ('en'::character varying)::text])) AND ((appareil)::text = ANY (ARRAY[('mobile'::character varying)::text, ('tablette'::character varying)::text, ('ordinateur'::character varying)::text])) AND ((reception)::text = ANY (ARRAY[('GENERAL'::character varying)::text, ('RETRAIT'::character varying)::text, ('LIVRAISON_A_CONFIRMER'::character varying)::text, ('LIVRAISON_CALCULEE'::character varying)::text])) AND\nCASE\n    WHEN ((evenement)::text = ANY (ARRAY[('FRAIS_VUS'::character varying)::text, ('SORTIE_APRES_FRAIS'::character varying)::text])) THEN ((reception)::text <> 'GENERAL'::text)\n    ELSE ((reception)::text = 'GENERAL'::text)\nEND AND (nombre > 0)))",
+      "commande.commande_canal_entree_check": "CHECK (((canal_entree)::text = ANY (ARRAY[('RECHERCHE_NATURELLE'::character varying)::text, ('CAMPAGNE_PAYANTE'::character varying)::text, ('SOCIAL'::character varying)::text, ('SITE_REFERENT'::character varying)::text, ('DIRECT_OU_INCONNU'::character varying)::text])))",
+      "demande_devis.demande_devis_canal_entree_check": "CHECK (((canal_entree)::text = ANY (ARRAY[('RECHERCHE_NATURELLE'::character varying)::text, ('CAMPAGNE_PAYANTE'::character varying)::text, ('SOCIAL'::character varying)::text, ('SITE_REFERENT'::character varying)::text, ('DIRECT_OU_INCONNU'::character varying)::text])))",
+      "parcours_acquisition_jour.parcours_acquisition_jour_canal_check": "CHECK (((canal_entree)::text = ANY (ARRAY[('RECHERCHE_NATURELLE'::character varying)::text, ('CAMPAGNE_PAYANTE'::character varying)::text, ('SOCIAL'::character varying)::text, ('SITE_REFERENT'::character varying)::text, ('DIRECT_OU_INCONNU'::character varying)::text, ('NON_RENSEIGNEE'::character varying)::text])))",
+      "parcours_acquisition_jour.parcours_acquisition_jour_dimensions": "CHECK ((((evenement)::text = ANY (ARRAY[('RECHERCHE_VIDE'::character varying)::text, ('FICHE_OUVERTE'::character varying)::text, ('AJOUT_PANIER'::character varying)::text, ('FRAIS_VUS'::character varying)::text, ('SORTIE_APRES_FRAIS'::character varying)::text, ('REACHAT_AJOUTE'::character varying)::text, ('WHATSAPP_OUVERT'::character varying)::text, ('CONSEIL_OUVERT'::character varying)::text, ('DEVIS_COMMENCE'::character varying)::text])) AND ((langue)::text = ANY (ARRAY[('fr'::character varying)::text, ('en'::character varying)::text])) AND ((appareil)::text = ANY (ARRAY[('mobile'::character varying)::text, ('tablette'::character varying)::text, ('ordinateur'::character varying)::text])) AND ((reception)::text = ANY (ARRAY[('GENERAL'::character varying)::text, ('RETRAIT'::character varying)::text, ('LIVRAISON_A_CONFIRMER'::character varying)::text, ('LIVRAISON_CALCULEE'::character varying)::text])) AND\nCASE\n    WHEN ((evenement)::text = ANY (ARRAY[('FRAIS_VUS'::character varying)::text, ('SORTIE_APRES_FRAIS'::character varying)::text])) THEN ((reception)::text <> 'GENERAL'::text)\n    ELSE ((reception)::text = 'GENERAL'::text)\nEND AND (nombre > 0)))"
     }
   }
 }

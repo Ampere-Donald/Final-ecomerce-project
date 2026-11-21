@@ -12,6 +12,11 @@ const fieldClass = 'w-full border border-slate-300 rounded px-3 py-2 bg-white fo
 
 export function Attributs() {
   const { admin } = useAdminAuth();
+  const [scopeId] = useState(() => {
+    const value = new URLSearchParams(window.location.search).get('productId') || '';
+    return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value) ? value : '';
+  });
+  const [scopeProduct, setScopeProduct] = useState<Product | null>(null);
   const canEdit = ['ADMIN', 'SUPER_ADMIN'].includes(admin?.role || '');
   const [attributes, setAttributes] = useState<Attribute[]>([]);
   const [values, setValues] = useState<Value[]>([]);
@@ -42,6 +47,13 @@ export function Attributs() {
   };
   useEffect(() => { void load(); }, []);
   useEffect(() => {
+    if (!scopeId) return;
+    let cancelled = false;
+    produitApi.getOne(scopeId).then(product => { if (!cancelled) setScopeProduct(product); })
+      .catch(e => { if (!cancelled) setError(getApiErrorMessage(e, 'Impossible de charger le produit associé.')); });
+    return () => { cancelled = true; };
+  }, [scopeId]);
+  useEffect(() => {
     const controller = new AbortController(); setDictionaryError('');
     attributApi.dictionary(controller.signal).then(data => {
       if (!controller.signal.aborted) setDictionary(readTechnicalDictionary(data));
@@ -65,8 +77,8 @@ export function Attributs() {
   }, [productSearch, attributeEditor]);
   const closeEditors = () => { setAttributeEditor(null); setValueEditor(null); setSourceId(null); setError(''); setMessage(''); };
   const editAttribute = (a?: Attribute) => {
-    closeEditors(); setAttributeEditor(a?.id || 'new'); setSelectedProduct(a?.produit || null); setProductSearch('');
-    setAttributeForm(a ? { nomAttribut: a.nomAttribut, produitId: a.produitId, typeAttribut: a.typeAttribut, cleTechnique: a.cleTechnique || '', obligatoire: Boolean(a.obligatoire) } : emptyAttribute);
+    closeEditors(); setAttributeEditor(a?.id || 'new'); setSelectedProduct(a?.produit || scopeProduct); setProductSearch('');
+    setAttributeForm(a ? { nomAttribut: a.nomAttribut, produitId: a.produitId, typeAttribut: a.typeAttribut, cleTechnique: a.cleTechnique || '', obligatoire: Boolean(a.obligatoire) } : { ...emptyAttribute, produitId: scopeProduct?.id || '' });
   };
   const editValue = (v?: Value, a?: Attribute) => {
     closeEditors(); setValueEditor(v?.id || 'new'); setValueForm({ attributId: v?.attributId || a?.id || '', valeur: v?.valeur || '' });
@@ -94,9 +106,10 @@ export function Attributs() {
     catch (e) { setError(getApiErrorMessage(e, 'Suppression impossible. Réessayez.')); }
     finally { setBusy(false); }
   };
-  const filtered = attributes.filter(a => `${a.nomAttribut} ${a.produit?.nomProduit || ''} ${a.produit?.code || ''}`.toLocaleLowerCase('fr').includes(search.toLocaleLowerCase('fr')));
+  const filtered = attributes.filter(a => (!scopeId || a.produitId === scopeId) && `${a.nomAttribut} ${a.produit?.nomProduit || ''} ${a.produit?.code || ''}`.toLocaleLowerCase('fr').includes(search.toLocaleLowerCase('fr')));
   return <div className="p-4 sm:p-8 max-w-6xl mx-auto text-slate-800">
-    <header className="flex flex-wrap justify-between items-start gap-4 mb-6"><div><h1 className="text-2xl font-semibold">Attributs techniques</h1><p className="text-slate-600 mt-2">Reliez chaque caractéristique à un produit et conservez sa source.</p></div>{canEdit && <button type="button" disabled={busy} onClick={() => editAttribute()} className="bg-primary text-white px-4 py-2 rounded">Ajouter un attribut</button>}</header>
+    <header className="flex flex-wrap justify-between items-start gap-4 mb-6"><div><h1 className="text-2xl font-semibold">Attributs techniques</h1><p className="text-slate-600 mt-2">Reliez chaque caractéristique à un produit et conservez sa source.</p></div>{canEdit && <button type="button" onClick={() => editAttribute()} disabled={busy || Boolean(scopeId && !scopeProduct)} className="bg-primary text-white px-4 py-2 rounded">Ajouter un attribut</button>}</header>
+    {scopeId && <p className="mb-4 text-sm text-slate-600">Produit sélectionné : {scopeProduct?.nomProduit || scopeId}. Les attributs affichés sont limités à cette fiche.</p>}
     {!canEdit && <p className="mb-4 text-slate-600">Consultation uniquement. La modification et la relecture sont réservées aux administrateurs.</p>}
     {error && <p role="alert" className="text-red-800 my-4">{error} <button type="button" onClick={() => void load()} className="underline">Recharger la liste</button></p>}
     {message && <p role="status" className="my-4">{message}</p>}

@@ -651,10 +651,13 @@ export class ProduitService {
     }
 
     try {
-      const produit = await this.db.produit.update({
-        where: { ...where, version: existing.version },
-        data: updateData,
-        include: { categorie: true },
+      const produit = await this.db.$transaction(async tx => {
+        await tx.$queryRaw`SELECT set_config('newoteg.documentary_actor', ${actor?.id || 'legacy-unattributed'}, true)`;
+        return tx.produit.update({
+          where: { ...where, version: existing.version },
+          data: updateData,
+          include: { categorie: true },
+        });
       });
 
       this.notifications

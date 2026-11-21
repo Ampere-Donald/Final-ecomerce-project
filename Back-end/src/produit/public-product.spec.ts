@@ -1,5 +1,14 @@
 import { masquerCouts } from './public-product';
 describe('shared public catalogue projection', () => {
+  it('keeps documentary drafts and revision history out of public responses', () => {
+    const p = { nomProduit: 'Public title', description: 'Public text', documentary: { proposal: { privateDraft: 'Draft' } }, documentaryEvents: [{ actorId: 'internal' }] };
+    const result = masquerCouts(p);
+    expect(result).not.toHaveProperty('documentary');
+    expect(result).not.toHaveProperty('documentaryEvents');
+    expect(result.description).toBe('Public text');
+    expect(masquerCouts(p, new Date(), false)).toHaveProperty('documentary');
+    expect(p).toHaveProperty('documentary');
+  });
   it('preserves staff stock behaviour, hides costs and uses dated public offers', () => {
     const now = new Date('2026-10-10T12:00:00Z');
     const product = { prixDetail: 1000, prixPromo: 800, finPromo: new Date('2026-10-10T13:00:00Z'),
