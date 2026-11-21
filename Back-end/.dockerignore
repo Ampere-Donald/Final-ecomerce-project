@@ -9,3 +9,7 @@ Dockerfile
 docker-compose.yml
 docker-compose.test.yml
 uploads
+
+# Private local backups and rehearsal assets
+.local-postgres
+backups

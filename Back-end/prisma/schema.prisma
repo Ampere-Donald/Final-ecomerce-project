@@ -20,6 +20,8 @@ model Categorie {
 }
 
 model Produit {
+  documentary ProductDocumentary?
+  documentaryEvents DocumentaryEvent[]
   id                   String           @id @default(uuid())
   categorieId          String           @map("id_categorie")
   sousCategorieId      String?          @map("sous_categorie_id")
@@ -1880,4 +1882,54 @@ model CataloguePresence {
   expireAt DateTime @map("expire_at")
   @@index([produitId, expireAt])
   @@map("catalogue_presence")
+}
+
+model DocumentaryBatch {
+  id String @id
+  sourceSha256 String @unique @map("source_sha256")
+  sourceName String @map("source_name")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  actorId String @map("actor_id")
+  documents ProductDocumentary[]
+  events DocumentaryEvent[]
+  @@map("documentary_batch")
+}
+
+model ProductDocumentary {
+  productId String @id @map("product_id")
+  revision Int @default(1)
+  status String @default("enrichi_ia_a_verifier")
+  locked Boolean @default(false)
+  shortDescription String? @map("short_description")
+  proposal Json?
+  sources Json @default("[]")
+  uncertainties Json @default("[]")
+  origin String @default("ai")
+  batchId String? @map("batch_id")
+  updatedAt DateTime @default(now()) @map("updated_at") @db.Timestamptz
+  reviewedAt DateTime? @map("reviewed_at") @db.Timestamptz
+  reviewedBy String? @map("reviewed_by")
+  product Produit @relation(fields: [productId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  batch DocumentaryBatch? @relation(fields: [batchId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  @@index([status], map: "product_documentary_status_idx")
+  @@map("product_documentary")
+}
+
+model DocumentaryEvent {
+  id String @id
+  operationId String @unique @map("operation_id")
+  productId String @map("product_id")
+  batchId String? @map("batch_id")
+  action String
+  actorId String @map("actor_id")
+  before Json
+  after Json
+  revisionBefore Int @map("revision_before")
+  revisionAfter Int @map("revision_after")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  product Produit @relation(fields: [productId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  batch DocumentaryBatch? @relation(fields: [batchId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  @@index([productId, createdAt], map: "documentary_event_product_time_idx")
+  @@index([batchId], map: "documentary_event_batch_idx")
+  @@map("documentary_event")
 }

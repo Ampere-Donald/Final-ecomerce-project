@@ -43,6 +43,8 @@ export function masquerCouts(p: any, now = new Date(), publicView = true): any {
     }
     delete copie.commercialRevision;
     delete copie.propositionsCatalogue;
+    delete copie.documentary;
+    delete copie.documentaryEvents;
     delete copie.presence;
     if (copie.quantiteDisponibleVente !== undefined)
       copie.quantiteStock = copie.quantiteDisponibleVente;

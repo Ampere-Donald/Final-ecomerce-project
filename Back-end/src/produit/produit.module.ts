@@ -1,3 +1,5 @@
+import { DocumentaryController } from './documentary.controller';
+import { DocumentaryService } from './documentary.service';
 import { Module } from '@nestjs/common';
 import { ProduitService } from './produit.service';
 import { ProduitController } from './produit.controller';
@@ -7,8 +9,8 @@ import { ProductPricingService } from './product-pricing.service';
 
 @Module({
   imports: [EquivalenceModule],
-  controllers: [ProduitController, ProductPricingController],
-  providers: [ProduitService, ProductPricingService],
+  controllers: [ProduitController, ProductPricingController, DocumentaryController],
+  providers: [ProduitService, ProductPricingService, DocumentaryService],
   exports: [ProduitService],
 })
 export class ProduitModule {}
