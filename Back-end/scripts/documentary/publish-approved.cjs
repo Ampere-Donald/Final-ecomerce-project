@@ -21,7 +21,10 @@ async function main() {
   const sourceHash = crypto.createHash('sha256').update(fs.readFileSync(source)).digest('hex');
   const batchId = 'documentary-' + sourceHash;
   const config = require('dotenv').parse(fs.readFileSync(sourceEnv));
-  const db = new Client({ connectionString: config.DATABASE_URL, ssl: { rejectUnauthorized: false }, connectionTimeoutMillis: 15000 });
+  const connection = { connectionString: config.DATABASE_URL, ssl: { rejectUnauthorized: false }, connectionTimeoutMillis: 15000 };
+  const db = new Client(connection);
+  const concurrency = Number(process.env.DOCUMENTARY_CONCURRENCY || 1);
+  if (!Number.isInteger(concurrency) || concurrency < 1 || concurrency > 8) throw Error('INVALID_CONCURRENCY');
   const output = path.join(input, 'production-' + new Date().toISOString().replace(/[:.]/g, '-'));
   fs.mkdirSync(output, { mode: 0o700 });
   const logFile = path.join(output, 'results.jsonl');
@@ -31,7 +34,14 @@ async function main() {
     await db.connect();
     if (!(await db.query("SELECT to_regclass('public.product_documentary') AS table_name")).rows[0].table_name) throw Error('DOCUMENTARY_MIGRATION_REQUIRED');
     await db.query('INSERT INTO documentary_batch(id,source_sha256,source_name,actor_id) VALUES($1,$2,$3,$4) ON CONFLICT(source_sha256) DO NOTHING', [batchId, sourceHash, path.basename(source), actorId]);
-    for (const proposal of proposals) {
+    let next = 0;
+    let failure;
+    const workers = Array.from({ length: concurrency }, async () => {
+     const db = new Client(connection);
+     try {
+      await db.connect();
+      while (!failure && next < proposals.length) {
+      const proposal = proposals[next++];
       const prior = original.get(proposal.id);
       if (!prior || prior.original.title !== proposal.original_title || prior.source_fingerprint_sha256 !== proposal.source_fingerprint_sha256) throw Error('ORIGINAL_SNAPSHOT_MISMATCH');
       const request = { proposal, batchId, actorId, original: { id: prior.id, title: prior.original.title, description: prior.original.description } };
@@ -40,8 +50,13 @@ async function main() {
       const decision = result.reason || result.action;
       counts[decision] = (counts[decision] || 0) + 1;
       fs.appendFileSync(logFile, JSON.stringify({ id: proposal.id, staged, publication: result }) + '\n', { mode: 0o600 });
-    }
-    const report = { batchId, products: proposals.length, counts, source_sha256: sourceHash, owner_authorized: true, output };
+      }
+     } catch (error) { failure ||= error; }
+     finally { await db.end(); }
+    });
+    await Promise.all(workers);
+    if (failure) throw failure;
+    const report = { batchId, products: proposals.length, concurrency, counts, source_sha256: sourceHash, owner_authorized: true, output };
     fs.writeFileSync(path.join(output, 'summary.json'), JSON.stringify(report, null, 2) + '\n', { mode: 0o600 });
     console.log(JSON.stringify(report));
   } finally { await db.end(); }
