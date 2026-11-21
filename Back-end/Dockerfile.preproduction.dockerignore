@@ -18,6 +18,8 @@
 !scripts/accepted-migration-history.cjs
 !scripts/release-schema-contract.cjs
 !scripts/release-schema.json
+!scripts/documentary/
+!scripts/documentary/**
 !Dockerfile.preproduction
 !Dockerfile.preproduction.dockerignore
 **/*.spec.ts
