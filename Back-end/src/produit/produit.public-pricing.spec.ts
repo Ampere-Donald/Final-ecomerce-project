@@ -89,7 +89,8 @@ describe('Public merchandising boundaries', () => {
     });
   });
   it('prevents an employee changing the promotion amount or validity via product editing', async () => {
-    const db: any = { produit: { update: jest.fn().mockResolvedValue(raw) } };
+    const db: any = { produit: { update: jest.fn().mockResolvedValue(raw) }, $queryRaw:jest.fn().mockResolvedValue([]) };
+    db.$transaction=jest.fn((run:any)=>run(db));
     const service = new ProduitService(
       db,
       { create: jest.fn().mockResolvedValue({}) } as any,
@@ -112,6 +113,8 @@ describe('Public merchandising boundaries', () => {
     expect(data).not.toHaveProperty('finPromo');
     expect(data).not.toHaveProperty('quantiteStock');
     expect(data.nomProduit).toBe('Correction');
+    expect(db.$transaction).toHaveBeenCalledTimes(1);
+    expect(db.$queryRaw.mock.calls[0][1]).toBe('a');
     await expect(
       service.update(
         'p',
@@ -124,7 +127,9 @@ describe('Public merchandising boundaries', () => {
   it('refuses the edit if the product changes between commercial validation and writing', async () => {
     const db: any = {
       produit: { update: jest.fn().mockRejectedValue({ code: 'P2025' }) },
+      $queryRaw:jest.fn().mockResolvedValue([]),
     };
+    db.$transaction=jest.fn((run:any)=>run(db));
     const service = new ProduitService(db, {} as any, {} as any, {} as any);
     jest
       .spyOn(service, 'findOne')
