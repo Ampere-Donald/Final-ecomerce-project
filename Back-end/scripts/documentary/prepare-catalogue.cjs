@@ -63,6 +63,7 @@ function prepare(snapshot, proposals, output) {
       ) {
         if (!content.locales.fr.paragraphs.includes(t.description))
           content.locales.fr.paragraphs.unshift(t.description);
+        content.locales.fr.summary = t.short_description.slice(0,700);
         reused = true;
       }
     } catch {}
