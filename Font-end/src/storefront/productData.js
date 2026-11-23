@@ -41,6 +41,7 @@ export function adaptProduct(raw, resolveImage) {
     englishName: raw.designationEn,
     brand: raw.marque,
     description: raw.description,
+    documentation: raw.documentationProduit || null,
     categoryName: raw.categorie?.nom || "",
     categoryId: raw.categorieId || raw.categorie?.id || "",
     subcategoryName: raw.sousCategorie?.nom || "",

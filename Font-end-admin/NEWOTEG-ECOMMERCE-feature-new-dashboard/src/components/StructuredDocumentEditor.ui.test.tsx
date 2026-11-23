@@ -1,0 +1,33 @@
+import {render,screen,waitFor,fireEvent} from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import {beforeEach,expect,it,vi} from 'vitest';
+import StructuredDocumentEditor from './StructuredDocumentEditor';
+const mocks=vi.hoisted(()=>({patch:vi.fn()}));
+vi.mock('../services/api',()=>({default:mocks,getApiErrorMessage:()=> 'Conflit : rechargez la fiche.'}));
+const content={schemaVersion:1 as const,family:'passifs',locales:{fr:{summary:'Résumé',paragraphs:['Texte détaillé'],applications:[],integration:[],replacement:[],missing:[],faq:[],documents:[]}}};
+const detail={id:'000431de-8d4a-441f-8bb4-3075c0248ce5',revision:2,nom_produit:'Composant',description:'Texte publié',short_description:'Résumé'};
+beforeEach(()=>{vi.clearAllMocks();mocks.patch.mockResolvedValue({data:{revision:3}});});
+it('saves a draft without changing public content and requires a saved revision before publishing',async()=>{
+ const props={onSaved:vi.fn(),onDirty:vi.fn(),onBusy:vi.fn()};
+ const view=render(<StructuredDocumentEditor detail={detail} {...props}/>);
+ expect((screen.getByRole('button',{name:'Publier le brouillon enregistré'}) as HTMLButtonElement).disabled).toBe(true);
+ fireEvent.change(screen.getByLabelText('Présentation courte'),{target:{value:'Nouveau résumé'}});
+ await userEvent.click(screen.getByRole('button',{name:'Enregistrer le brouillon'}));
+ await waitFor(()=>expect(mocks.patch).toHaveBeenCalledOnce());
+ expect(mocks.patch.mock.calls[0][1]).toMatchObject({action:'draft',expectedRevision:2,content:{locales:{fr:{summary:'Nouveau résumé'}}}});
+ expect(mocks.patch.mock.calls[0][1]).not.toHaveProperty('prixDetail');
+ view.rerender(<StructuredDocumentEditor detail={{...detail,revision:3,draft_content:content}} {...props}/>);
+ await userEvent.click(screen.getByRole('button',{name:'Publier le brouillon enregistré'}));
+ await waitFor(()=>expect(mocks.patch).toHaveBeenCalledTimes(2));
+ expect(mocks.patch.mock.calls[1][1]).toMatchObject({action:'publish',expectedRevision:3});
+ expect(mocks.patch.mock.calls[1][1]).not.toHaveProperty('content');
+});
+it('keeps unsaved content on conflict and reuses the operation id for the identical retry',async()=>{
+ mocks.patch.mockRejectedValue({response:{status:409}});
+ render(<StructuredDocumentEditor detail={detail} onSaved={vi.fn()} onDirty={vi.fn()} onBusy={vi.fn()}/>);
+ fireEvent.change(screen.getByLabelText('Présentation courte'),{target:{value:'Correction préservée'}});
+ await userEvent.click(screen.getByRole('button',{name:'Enregistrer le brouillon'}));await screen.findByRole('alert');
+ expect((screen.getByLabelText('Présentation courte') as HTMLTextAreaElement).value).toBe('Correction préservée');
+ await userEvent.click(screen.getByRole('button',{name:'Enregistrer le brouillon'}));
+ expect(mocks.patch.mock.calls[1][1].operationId).toBe(mocks.patch.mock.calls[0][1].operationId);
+});

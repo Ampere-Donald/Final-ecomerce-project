@@ -7,6 +7,7 @@ async function rollbackEvent(client, {eventId,operationId,actorId}) {
   try {
     const event=(await client.query("SELECT * FROM documentary_event WHERE id=$1 AND action='publish'",[eventId])).rows[0];
     if(!event)throw Error('PUBLICATION_EVENT_NOT_FOUND');
+    if(event.after?.kind==='structured-publish') { await client.query('ROLLBACK'); return {action:'conflict',reason:'use_structured_rollback',productId:event.product_id}; }
     const product=(await client.query('SELECT id,nom_produit,description FROM produit WHERE id=$1 FOR UPDATE',[event.product_id])).rows[0];
     const previous=(await client.query('SELECT * FROM documentary_event WHERE operation_id=$1',[operationId])).rows[0];
     if(previous){

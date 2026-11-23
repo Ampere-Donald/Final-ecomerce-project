@@ -1,5 +1,16 @@
 import { masquerCouts } from './public-product';
 describe('shared public catalogue projection', () => {
+  it('publishes only the current structured version and never internal metadata', () => {
+    const { fingerprint } = require('../../scripts/documentary/content.cjs');
+    const product = { id:'p',nomProduit:'Article',description:'Texte existant',marque:'Marque' };
+    const content = {schemaVersion:1,family:'passifs',locales:{fr:{summary:'Résumé',paragraphs:['Fonction du composant.'],applications:[],integration:[],replacement:[],missing:[],faq:[],documents:[]}},productFingerprint:fingerprint(product),privateDraft:'secret',reviewerId:'private'};
+    const result=masquerCouts({...product,documentaryPublished:content});
+    expect(result.documentationProduit.locales.fr.summary).toBe('Résumé');
+    expect(JSON.stringify(result)).not.toContain('secret');
+    expect(JSON.stringify(result)).not.toContain('reviewerId');
+    expect(result).not.toHaveProperty('documentaryPublished');
+    expect(masquerCouts({...product,description:'Changement ultérieur',documentaryPublished:content}).documentationProduit).toBeNull();
+  });
   it('keeps documentary drafts and revision history out of public responses', () => {
     const p = { nomProduit: 'Public title', description: 'Public text', documentary: { proposal: { privateDraft: 'Draft' } }, documentaryEvents: [{ actorId: 'internal' }] };
     const result = masquerCouts(p);

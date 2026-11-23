@@ -394,3 +394,7 @@
     flex-wrap: wrap;
   }
 }
+
+.e-project-groups{display:flex;flex-wrap:wrap;align-items:end;gap:16px;margin:28px 0;padding:24px;background:#f3f6fa;border-radius:10px}.e-project-groups>div{flex:1 1 280px}.e-project-groups h2{font-size:1.2rem;margin:0 0 8px}.e-project-groups p{margin:0}.e-project-groups label{display:grid;gap:8px}.e-project-groups input{width:110px;min-height:44px;padding:8px;border:1px solid #bccbd9;border-radius:6px;background:white}.e-project-groups>p{flex-basis:100%;font-size:.9rem;color:#516577}
+
+.e-project-purpose,.e-project-guidance p{white-space:pre-line}

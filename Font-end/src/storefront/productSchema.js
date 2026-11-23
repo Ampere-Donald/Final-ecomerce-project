@@ -1,3 +1,4 @@
+import { readProductContent } from './productContent.js';
 import { stockState } from './productData.js';
 import { seoFamilies, familyPath } from './seoFamilies.js';
 import { catalogueBootJSON } from './initialCatalogue.js';
@@ -15,8 +16,9 @@ export function productSchema(product, lang = 'fr') {
   const url = origin + '/product/' + encodeURIComponent(product.id);
   const name = lang === 'en' && product.englishName ? product.englishName : product.model;
   const image = [...new Set((product.images || []).map(publicImage).filter(Boolean))];
+  const description = readProductContent(product.documentation, lang)?.summary || product.description;
   const item = { '@type': 'Product', '@id': url + '#product', url, name,
-    ...(product.description ? { description: product.description } : {}),
+    ...(description ? { description } : {}),
     ...(image.length ? { image } : {}),
     ...(product.reference ? { sku: product.reference } : {}),
     ...(product.brand ? { brand: { '@type': 'Brand', name: product.brand } } : {}),

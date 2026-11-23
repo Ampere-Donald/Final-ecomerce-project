@@ -532,7 +532,8 @@ export class ProduitService {
     if (!produit) {
       throw new NotFoundException(`Produit avec l'id ${id} non trouvé`);
     }
-    return (await addSellableStock(this.db as any, [produit]))[0];
+    const documents: any[] = await this.db.$queryRawUnsafe('SELECT published_content FROM product_documentary WHERE product_id=$1',id);
+    return (await addSellableStock(this.db as any, [{...produit, documentaryPublished: documents[0]?.published_content || null}]))[0];
   }
 
   async findByCode(codeFamille: string, code: string) {

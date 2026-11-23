@@ -1,3 +1,4 @@
+import { groupChoices, projectQuoteText } from './projectGroups';
 import { useEffect, useRef, useState } from "react";
 import {
   Link,
@@ -199,6 +200,7 @@ function MaterialSelection({ initial }) {
   const [project, setProject] = useState(initial);
   const [rows, setRows] = useState(() => materialRows(initial, materialImage));
   const [choices, setChoices] = useState(() => initialChoices(initial));
+  const [groups,setGroups]=useState('1'),[appliedGroups,setAppliedGroups]=useState(1);
   const [partialAccepted, setPartialAccepted] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -218,6 +220,7 @@ function MaterialSelection({ initial }) {
     };
   }, []);
   const selected = projectSelection(rows, choices, cartItems);
+  const quoteText = projectQuoteText(rows,choices,true);
   const reasons = {
     missing: tr("Référence indisponible", "Reference unavailable"),
     removed: tr(
@@ -399,6 +402,12 @@ function MaterialSelection({ initial }) {
             </h2>
             <p>{project.contraintes}</p>
           </div>
+        </section>
+        <section className="e-project-groups" aria-label={tr('Préparer le matériel de plusieurs groupes','Prepare material for multiple groups')}>
+          <div><h2>{tr('Préparer un TP ou un projet en équipe','Prepare a lab or team project')}</h2><p>{tr('Appliquez les quantités conseillées, puis ajustez chaque ligne si nécessaire.','Apply recommended quantities, then adjust each line as needed.')}</p></div>
+          <label>{tr('Nombre de groupes','Number of groups')}<input disabled={busy} type="number" min="1" max="1000" step="1" value={groups} onChange={e=>setGroups(e.target.value)}/></label>
+          <button className="e-btn e-secondary" disabled={busy} onClick={()=>{try{setChoices(groupChoices(rows,choices,Number(groups)));setAppliedGroups(Number(groups));setPartialAccepted(false);setError('');}catch{setError(tr('Vérifiez le nombre de groupes et la limite de 10 000 unités par ligne.','Check group count and the 10,000-unit per-line limit.'));}}}>{tr('Appliquer les quantités','Apply quantities')}</button>
+          <p role="status">{tr('Groupes appliqués','Applied groups')} : {appliedGroups}</p>
         </section>
         <div className="e-project-material-layout">
           <section>
@@ -674,6 +683,7 @@ function MaterialSelection({ initial }) {
                 />
               </p>
             )}
+            {quoteText&&<Link className="e-btn e-secondary" to="/devis" state={{projectListText:quoteText,projectTitle:project.titre}}>{tr('Devis pour le matériel requis','Quote for required material')}</Link>}
             <ReceptionSummary />
             <Link to="/contact">
               <Copy

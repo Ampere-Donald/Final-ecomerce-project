@@ -1896,6 +1896,9 @@ model DocumentaryBatch {
 }
 
 model ProductDocumentary {
+  draftContent Json? @map("draft_content")
+  publishedContent Json? @map("published_content")
+  publishedAt DateTime? @map("published_at") @db.Timestamptz
   productId String @id @map("product_id")
   revision Int @default(1)
   status String @default("enrichi_ia_a_verifier")
