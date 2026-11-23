@@ -1,6 +1,24 @@
 'use strict';
 // Authored English guidance. Does not machine-translate unverified numeric claims.
 const copies = {
+  servomoteur: [
+    'A servo is a motorised assembly controlled to produce motion according to its variant. It differs from a standalone gear.',
+    'Document supply, control signal, motion, torque and mounting for the exact model. A family name does not guarantee travel.',
+    ['Study of an actuator in a dimensioned assembly.', 'Mechanism control according to the variant.'],
+    ['Compare model and motion type.', 'Check supply, control and wiring.', 'Check mounting and drive parts.'],
+    'Define motion and load, then select supply and control from the manual. Account for mechanical constraints.',
+    'Is a servo merely a gear?',
+    'A servo includes a motorised control assembly. A gear alone does not provide the same function.'
+  ],
+  optocoupleur: [
+    'An optocoupler transfers information through an optical link between its input and output. Output type depends on the reference.',
+    'Phototransistor, thyristor and triac outputs use different connections. Identify the variant, pinout and conditions on both sides before integration.',
+    ['Isolated information transfer in a documented circuit.', 'Study of a control interface for an identified reference.'],
+    ['Compare reference and output type.', 'Identify input, output and package orientation.', 'Check drive, output and isolation requirements.'],
+    'Start from the model circuit and define input and output conditions. Isolation must be justified for the complete assembly.',
+    'Is an optocoupler a mechanical coupling or a slotted sensor?',
+    'These are distinct functions. The word coupler alone does not establish mechanical transmission or position sensing.'
+  ],
   condensateur: [
     'This capacitor stores electric charge. Its role may include filtering, decoupling or timing, depending on its technology and the circuit.',
     'Capacitance alone does not determine suitability. Compare rated voltage, technology, polarity where applicable, dimensions and operating conditions.',
