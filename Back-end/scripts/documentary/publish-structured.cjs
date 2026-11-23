@@ -5,6 +5,7 @@ const fs = require('node:fs'),
 const { Client } = require('pg');
 const { fingerprint, normalizeContent } = require('./content.cjs');
 const { saveStructured } = require('./structured-store.cjs');
+const { sourceConsistencyRisks } = require('./source-consistency.cjs');
 const sha = (x) => createHash('sha256').update(x).digest('hex');
 async function publish(file, snapshot, output) {
   const backup = process.env.DOCUMENTARY_VERIFIED_BACKUP,
@@ -49,6 +50,8 @@ async function publish(file, snapshot, output) {
     )
       throw Error('REVIEWED_CONTENT_REQUIRED');
     if (!originals.has(item.id)) throw Error('SNAPSHOT_ID_REQUIRED');
+    if (sourceConsistencyRisks(originals.get(item.id), [item.content.locales.fr.summary,...item.content.locales.fr.paragraphs].join(' ')).length)
+      throw Error('DOCUMENTARY_INCONSISTENT_SOURCE');
   }
   if (
     !proof.archives?.['schema.dump'] ||

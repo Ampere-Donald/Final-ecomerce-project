@@ -2,6 +2,26 @@
 // Editorial guidance only. Numeric specifications remain in existing product attributes.
 const profiles = [
   [
+    'servomoteur', 'modules', /servomoteur|servo.?motor|\b(?:MG90S|SG90)\b/i,
+    'Un servomoteur est un ensemble motorisé commandé pour produire un mouvement selon sa variante. Il se distingue d’un engrenage seul.',
+    'L’alimentation, le signal de commande, le mouvement, le couple et les fixations doivent être documentés pour le modèle exact. Le nom de famille ne garantit pas une plage de mouvement.',
+    ['Comparer le modèle et le type de mouvement.', 'Vérifier alimentation, commande et raccordement.', 'Contrôler fixation et éléments d’entraînement.'],
+    ['Étude d’un actionneur dans un montage dimensionné.', 'Commande d’un mécanisme selon la variante.'],
+    'Définir le mouvement et la charge, puis sélectionner alimentation et commande à partir de la notice. Prévoir les contraintes mécaniques du montage.',
+    'Un servomoteur est-il seulement un engrenage ?',
+    'Le servomoteur comprend un ensemble motorisé de commande. Un engrenage seul ne fournit pas la même fonction.'
+  ],
+  [
+    'optocoupleur', 'semiconducteurs', /optocoupl|\b(?:CNX|CNY|MOC)\s?\d/i,
+    'Un optocoupleur transmet une information par une liaison optique entre son entrée et sa sortie. Le type de sortie dépend de la référence.',
+    'Une sortie phototransistor, thyristor ou triac ne se raccorde pas de la même façon. Identifier la variante, le brochage et les conditions de chaque côté avant intégration.',
+    ['Comparer la référence et le type de sortie.', 'Identifier entrée, sortie et orientation du boîtier.', 'Vérifier les conditions de commande, de sortie et les exigences d’isolation.'],
+    ['Transmission isolée d’une information dans un circuit documenté.', 'Étude d’une interface de commande selon la référence.'],
+    'Partir du schéma du modèle et définir les conditions de l’entrée et de la sortie. Une fonction d’isolation doit être justifiée pour le montage complet.',
+    'Un optocoupleur est-il un coupleur mécanique ou un capteur à fourche ?',
+    'Ces fonctions sont distinctes. Le mot coupleur seul ne détermine ni un mécanisme de transmission ni une détection de position.'
+  ],
+  [
     'condensateur',
     'passifs',
     /condens|capacitor|\bcondo\b/i,
@@ -102,7 +122,7 @@ const profiles = [
   [
     'connectique',
     'connectique',
-    /câble|cable|cordon|adaptateur|connecteur|fiche|prise|hdmi|rca|jack|usb|socle.*(?:jk|alim)/i,
+    /câble|cable|cordon|adaptateur|connecteur|fiche|prise|hdmi|rca|jack|usb|\brj45\b|socle.*(?:jk|alim)/i,
     'Cet article assure une liaison ou une adaptation entre équipements. Identifier les connecteurs, leur genre, le sens de liaison et la fonction du signal.',
     'La forme du connecteur ne suffit pas à établir les performances. Une adaptation mécanique, une conversion active et un simple cordon doivent être distingués.',
     [

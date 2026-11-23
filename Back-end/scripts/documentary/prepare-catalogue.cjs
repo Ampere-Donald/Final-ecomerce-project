@@ -6,6 +6,7 @@ const fs = require('node:fs'),
 const { normalizeContent } = require('./content.cjs');
 const { familyContent, profileFor } = require('./family-content.cjs');
 const { proposedText, publicationRisks } = require('./policy.cjs');
+const { sourceConsistencyRisks } = require('./source-consistency.cjs');
 const read = (p) =>
   fs.readFileSync(p, 'utf8').trim().split('\n').filter(Boolean).map(JSON.parse);
 const jsonl = (rows) => rows.map((r) => JSON.stringify(r)).join('\n') + '\n';
@@ -49,6 +50,7 @@ function prepare(snapshot, proposals, output) {
     const existing = p.original.description || '';
     if (
       existing.length >= 140 &&
+      !sourceConsistencyRisks(p, existing).length &&
       !/Composant destiné au montage|Article de connectique.*annoncé|Prix sur demande|fiche à compléter/i.test(
         existing,
       )
@@ -59,7 +61,8 @@ function prepare(snapshot, proposals, output) {
       const t = proposedText(proposal);
       if (
         proposal.enrichment.auto_publish_description_eligible === true &&
-        !publicationRisks(t).length
+        !publicationRisks(t).length &&
+        !sourceConsistencyRisks(p, t.description + ' ' + t.short_description).length
       ) {
         if (!content.locales.fr.paragraphs.includes(t.description))
           content.locales.fr.paragraphs.unshift(t.description);
