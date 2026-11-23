@@ -10,6 +10,17 @@ const read = (p) =>
   fs.readFileSync(p, 'utf8').trim().split('\n').filter(Boolean).map(JSON.parse);
 const digest = (c) =>
   createHash('sha256').update(JSON.stringify(c)).digest('hex');
+// Spread the remainder across family batches instead of emitting a tiny tail.
+const balancedBatches = (rows) => {
+  const count = Math.ceil(rows.length / 50), batches = [];
+  let start = 0;
+  for (let index = 0; index < count; index++) {
+    const size = Math.ceil((rows.length - start) / (count - index));
+    batches.push(rows.slice(start, start + size));
+    start += size;
+  }
+  return batches;
+};
 const generalSources = {
   resistance: {
     label: 'Vishay — principes des résistances fixes',
@@ -105,13 +116,12 @@ async function review(prepared, snapshot, out, probesFile) {
   write('a-clarifier.jsonl', held);
   write('catalogue-pret.jsonl', ready);
   const batches = [];
-  for (const profile of [...new Set(ready.map((p) => p.profile))]) {
+  for (const family of [...new Set(ready.map((p) => p.content.family))]) {
     const group = ready.filter(
-      (p) => p.profile === profile && !pilotIds.includes(p.id),
+      (p) => p.content.family === family && !pilotIds.includes(p.id),
     );
-    for (let i = 0; i < group.length; i += 50) {
-      const batch = group.slice(i, i + 50),
-        file = `lots/${String(batches.length + 1).padStart(3, '0')}-${profile}.jsonl`;
+    for (const batch of balancedBatches(group)) {
+      const file = `lots/${String(batches.length + 1).padStart(3, '0')}-${family}.jsonl`;
       write(file, batch);
       batches.push({ file, products: batch.length });
     }
@@ -133,11 +143,9 @@ async function review(prepared, snapshot, out, probesFile) {
     };
   });
   fs.mkdirSync(path.join(out, 'anglais'), { mode: 0o700 });
-  for (let i = 0; i < english.length; i += 50)
-    write(
-      `anglais/${String(i / 50 + 1).padStart(3, '0')}.jsonl`,
-      english.slice(i, i + 50),
-    );
+  balancedBatches(english).forEach((batch, index) =>
+    write(`anglais/${String(index + 1).padStart(3, '0')}.jsonl`, batch),
+  );
   const manifest = {
     products: rows.length,
     ready: ready.length,
