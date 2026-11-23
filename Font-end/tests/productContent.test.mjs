@@ -23,3 +23,14 @@ test('hero uses only current documented attributes, never family or proposal val
  const p={technicalAttributes:[{label:'Capacité',values:[{value:'4700 µF',source:{etat:'DOCUMENTE'}}]},{label:'Courant',values:[{value:'10 A',source:{etat:'A_VERIFIER'}}]},{label:'Tension',values:[{value:'63 V',source:{etat:'DOCUMENTE',obsolete:true}}]}]};
  assert.deepEqual(essentialSpecifications(p),[{label:'Capacité',value:'4700 µF'}]);
 });
+
+test('documented capacitor values replace designation duplicates while unresolved values stay visible', () => {
+  const product = {
+    model: 'Condensateur polarisé 4700 µF 63 V',
+    technicalAttributes: [
+      { technicalKey: 'CONDENSATEUR_CAPACITE', values: [{ value: '4700 µF', source: { etat: 'DOCUMENTE' } }] },
+      { technicalKey: 'CONDENSATEUR_TENSION', values: [{ value: '63 V', source: { etat: 'DOCUMENTE', obsolete: true } }] },
+    ],
+  };
+  assert.deepEqual(designationSpecifications(product).map(({ value }) => value), ['63 V', 'Polarisé']);
+});

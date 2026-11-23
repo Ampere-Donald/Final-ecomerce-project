@@ -26,6 +26,7 @@ import {
   selectionChanged,
 } from "./projectData";
 import ProjectListItem, { ProjectVisual } from "./ProjectPreview";
+import ProjectMaterialPrint from "./ProjectMaterialPrint";
 import { levels, titleOf, summaryOf, materialImage } from "./projectPresentation";
 import "./projects.css";
 
@@ -409,6 +410,13 @@ function MaterialSelection({ initial }) {
           <button className="e-btn e-secondary" disabled={busy} onClick={()=>{try{setChoices(groupChoices(rows,choices,Number(groups)));setAppliedGroups(Number(groups));setPartialAccepted(false);setError('');}catch{setError(tr('Vérifiez le nombre de groupes et la limite de 10 000 unités par ligne.','Check group count and the 10,000-unit per-line limit.'));}}}>{tr('Appliquer les quantités','Apply quantities')}</button>
           <p role="status">{tr('Groupes appliqués','Applied groups')} : {appliedGroups}</p>
         </section>
+        <ProjectMaterialPrint
+          project={project}
+          rows={rows}
+          choices={choices}
+          groups={appliedGroups}
+          disabled={busy || unavailable}
+        />
         <div className="e-project-material-layout">
           <section>
             <div className="e-section-head">
