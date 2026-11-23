@@ -1,3 +1,5 @@
+import ProductKnowledge, { EssentialSpecifications } from './ProductKnowledge';
+import { readProductContent, essentialSpecifications } from './productContent';
 import EquivalenceEntry from "./EquivalenceEntry";
 import { lazy, Suspense, useState } from "react";
 import { Link, useParams } from "react-router-dom";
@@ -54,6 +56,8 @@ function Detail({ product }) {
   const stock = stockState(product);
   const name =
     lang === "en" && product.englishName ? product.englishName : product.model;
+  const content = readProductContent(product.documentation, lang);
+  const essentials = essentialSpecifications(product,lang);
   const chosen = { ...product, image: product.images[active] || product.image };
   const family = seoFamilies.find(f => f.category === product.categoryId && f.subcategory === product.subcategoryId);
   const purchase = (
@@ -87,7 +91,7 @@ function Detail({ product }) {
   );
   return (
     <>
-      <PageMeta title={`${name} — X-Electronic`} description={product.description?.slice(0, 155) || `${name} — X-Electronic, la boutique électronique de NEWOTEG.`} />
+      <PageMeta title={`${name} — X-Electronic`} description={(content?.summary || product.description)?.slice(0, 155) || `${name} — X-Electronic, la boutique électronique de NEWOTEG.`} />
       <script type="application/ld+json" data-product-schema="true" dangerouslySetInnerHTML={{ __html: productSchemaJSON(product, lang) }} />
       <div className="e-wrap e-product-page">
         <Crumbs title={name} />
@@ -135,14 +139,14 @@ function Detail({ product }) {
                 ? `${lang === "fr" ? "Référence" : "Reference"} : ${product.reference}`
                 : product.brand || product.categoryName}
             </p>
-            {product.description && (
-              <p className="e-description">{product.description}</p>
+            {(content?.summary || product.description) && (
+              <p className="e-description">{content?.summary || product.description}</p>
             )}
             {product.categoryId && <nav className="e-catalogue-subfamilies" aria-label={lang === "fr" ? "Classement du produit" : "Product categories"}>
               <Link to={`/catalogue?category=${encodeURIComponent(product.categoryId)}`}>{product.categoryName}</Link>
               {product.subcategoryId && <Link to={family ? familyPath(family) : `/catalogue?category=${encodeURIComponent(product.categoryId)}&sub=${encodeURIComponent(product.subcategoryId)}`}>{product.subcategoryName}</Link>}
             </nav>}
-            <section className="e-specs">
+            {content ? <EssentialSpecifications rows={essentials}/> : <section className="e-specs">
               <h2>
                 <Copy fr="Les repères essentiels" en="Key specifications" />
               </h2>
@@ -169,6 +173,7 @@ function Detail({ product }) {
                 ))}
               </dl>
             </section>
+            }
             <div className="e-product-price">
               <Price value={product.retailPrice} />
               <span>
@@ -239,7 +244,7 @@ function Detail({ product }) {
             )}
           </section>
         </div>
-        <ProductEditorial product={product} />
+        {content ? <ProductKnowledge product={product} content={content}/> : <ProductEditorial product={product} />}
         <EquivalenceEntry query={name} productId={product.id} />
         <ProductReviews key={product.id} productId={product.id} />
         {relatedRows.length > 0 && (

@@ -44,7 +44,16 @@ async function main(){
 
   const restoredState={};for(const table of tables){restoredState[table]=await fingerprint(local,table);if(JSON.stringify(restoredState[table])!==JSON.stringify(sourceState[table]))throw Error('RESTORE_FINGERPRINT_MISMATCH');}
   const clients=(await local.query('SELECT count(*)::int n FROM client')).rows[0].n;if(clients!==0)throw Error('CLIENT_DATA_MUST_BE_ABSENT');
-  const report={scope:'Catalogue tables only; public schema metadata. Not a full production business-data backup.',source_read_only:true,source_snapshot_consistent:!reuse,restored_matches_readonly_source_fingerprints:true,required_extensions:extensions,source_tables:sourceState,restored_tables:restoredState,customer_rows_exported:0,native_restore_verified:true,production_written:false,archives:Object.fromEntries(['schema.dump','catalogue-data.dump'].map(name=>[name,crypto.createHash('sha256').update(fs.readFileSync(path.join(out,name))).digest('hex')]))};
+  let structuredMigrationVerified=false;
+  if(process.env.DOCUMENTARY_VERIFY_STRUCTURED_LOCAL==='1'){
+   const {readStructure,compareStructure,readReleaseContract}=require('../release-schema-contract.cjs');
+   const columns=await local.query("SELECT 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='product_documentary' AND column_name='published_content'");
+   if(!columns.rows.length)await local.query(fs.readFileSync(path.join(root,'prisma/migrations/20261123000000_structured_documentary/migration.sql'),'utf8'));
+   const differences=compareStructure(readReleaseContract().structure,await readStructure(local));
+   if(differences.length){fs.writeFileSync(path.join(out,'local-schema-differences.json'),JSON.stringify(differences,null,2),{mode:0o600});throw Error('LOCAL_STRUCTURED_SCHEMA_CONTRACT_MISMATCH');}
+   structuredMigrationVerified=true;
+  }
+  const report={structured_migration_verified_locally:structuredMigrationVerified,scope:'Catalogue tables only; public schema metadata. Not a full production business-data backup.',source_read_only:true,source_snapshot_consistent:!reuse,restored_matches_readonly_source_fingerprints:true,required_extensions:extensions,source_tables:sourceState,restored_tables:restoredState,customer_rows_exported:0,native_restore_verified:true,production_written:false,archives:Object.fromEntries(['schema.dump','catalogue-data.dump'].map(name=>[name,crypto.createHash('sha256').update(fs.readFileSync(path.join(out,name))).digest('hex')]))};
   fs.writeFileSync(path.join(out,'verification.json'),JSON.stringify(report,null,2)+'\n',{mode:0o600});console.log(JSON.stringify({native_restore_verified:true,products:sourceState.produit.count,customer_rows_exported:0,production_written:false,output:out}));
  }finally{
   try{await source.end();}catch{}if(local)await local.end();if(started)await run(bin('pg_ctl'),['-D',cluster,'-m','fast','-w','stop'],localEnv);

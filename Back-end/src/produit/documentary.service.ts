@@ -3,6 +3,8 @@ import { join } from 'node:path';
 import { DatabaseService } from '../database/database.service';
 import type { DocumentaryEditDto } from './documentary.controller';
 const { editDocument } = require(join(process.cwd(), 'scripts/documentary/manual-edit.cjs'));
+const { fingerprint } = require(join(process.cwd(), 'scripts/documentary/content.cjs'));
+const { saveStructured } = require(join(process.cwd(), 'scripts/documentary/structured-store.cjs'));
 const statuses = ['enrichi_ia_a_verifier', 'valide_admin', 'identification_insuffisante', 'classification_requise'];
 @Injectable()
 export class DocumentaryService {
@@ -16,19 +18,33 @@ export class DocumentaryService {
    AND ($2='' OR COALESCE(d.status,'classification_requise')=$2)`;
   return this.db.$transaction(async tx => {
    const items = await tx.$queryRawUnsafe(`SELECT p.id,p.code,p.code_famille,p.nom_produit,p.est_actif,COALESCE(d.status,'classification_requise') AS status,
-    COALESCE(d.revision,0) AS revision,COALESCE(d.locked,false) AS locked,d.reviewed_at FROM produit p
+    COALESCE(d.revision,0) AS revision,COALESCE(d.locked,false) AS locked,d.reviewed_at,(d.published_content IS NOT NULL) AS has_published_content,(d.draft_content IS NOT NULL) AS has_draft_content FROM produit p
     LEFT JOIN product_documentary d ON d.product_id=p.id WHERE ${where} ORDER BY p.nom_produit,p.id LIMIT 50 OFFSET $3`, term, status, (page-1)*50);
    const count: any[] = await tx.$queryRawUnsafe(`SELECT count(*)::int AS total FROM produit p LEFT JOIN product_documentary d ON d.product_id=p.id WHERE ${where}`,term,status);
    return {items,total:count[0].total,page,pageSize:50};
   }, {isolationLevel:'RepeatableRead'});
  }
  async detail(id: string) {
-  const rows: any[] = await this.db.$queryRawUnsafe(`SELECT p.id,p.nom_produit,p.description,p.code,p.code_famille,p.est_actif,
-   COALESCE(d.revision,0) AS revision, d.status,d.locked,d.short_description,d.proposal,d.sources,d.uncertainties,d.reviewed_at
+  const rows: any[] = await this.db.$queryRawUnsafe(`SELECT p.id,p.nom_produit,p.description,p.marque,p.reference_fabricant,p.code,p.code_famille,p.est_actif,
+   COALESCE(d.revision,0) AS revision, d.status,d.locked,d.short_description,d.proposal,d.sources,d.uncertainties,d.reviewed_at,d.draft_content,d.published_content,d.published_at
    FROM produit p LEFT JOIN product_documentary d ON d.product_id=p.id WHERE p.id=$1`,id);
   if (!rows.length) throw new NotFoundException('Produit introuvable.');
   const history = await this.db.$queryRawUnsafe(`SELECT id,action,actor_id,"before","after",created_at FROM documentary_event WHERE product_id=$1 ORDER BY created_at DESC,id DESC LIMIT 100`,id);
-  return {...rows[0],history};
+  return {...rows[0],product_fingerprint:fingerprint(rows[0]),history};
+ }
+ async structured(id: string, input: any, actorId: string) {
+  try {
+   return await this.db.$transaction(async tx => saveStructured({query:async(sql: string,args: unknown[]=[])=>{
+    if(['BEGIN','COMMIT','ROLLBACK'].includes(sql)) return {rows:[]};
+    if(sql.startsWith('SELECT')) return {rows:await tx.$queryRawUnsafe(sql,...args)};
+    return {rows:[],rowCount:await tx.$executeRawUnsafe(sql,...args)};
+   }},{...input,productId:id,actorId}),{isolationLevel:'Serializable',timeout:15000});
+  } catch(error: any) {
+   if(error.message==='PRODUCT_NOT_FOUND') throw new NotFoundException('Produit introuvable.');
+   if(/^(DOCUMENTARY_|IDEMPOTENCY_)/.test(error.message||'') || error.code==='P2034') throw new ConflictException('La fiche est protégée ou a changé. Rechargez-la avant de réessayer.');
+   if(/^(INVALID_)/.test(error.message||'')) throw new BadRequestException('Contenu structuré invalide.');
+   throw error;
+  }
  }
  async edit(id: string, input: DocumentaryEditDto, actorId: string) {
   try {

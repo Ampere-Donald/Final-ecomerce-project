@@ -32,10 +32,12 @@ export default function DevisBuilder({ existing, onSaved }) {
   );
   const copiedList = ownerId && location.state?.listOwner === ownerId && typeof location.state.listText === 'string'
     ? location.state.listText : '';
+  const projectList = typeof location.state?.projectListText === 'string' && location.state.projectListText.length<=10000
+    ? location.state.projectListText : '';
   const [text, setText] = useState(
     existing
       ? existing.lignes.map((l) => `${l.reference}; ${l.quantite}`).join("\n")
-      : copiedList || [initial?.text, typeof requested === 'string' && !initial?.text?.split('\n').includes(requested) ? requested : ''].filter(Boolean).join('\n'),
+      : projectList || copiedList || [initial?.text, typeof requested === 'string' && !initial?.text?.split('\n').includes(requested) ? requested : ''].filter(Boolean).join('\n'),
   );
   const [contact, setContact] = useState({
     telephone:

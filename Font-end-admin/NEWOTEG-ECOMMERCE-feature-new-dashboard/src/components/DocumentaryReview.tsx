@@ -1,10 +1,11 @@
+import StructuredDocumentEditor from './StructuredDocumentEditor';
 import { useEffect, useRef, useState } from 'react';
 import api, { getApiErrorMessage } from '../services/api';
 import { createClientId } from '../utils/clientId';
 const labels: Record<string, string> = { enrichi_ia_a_verifier: 'À vérifier', valide_admin: 'Validé par admin', identification_insuffisante: 'Identification insuffisante', classification_requise: 'À classer' };
-type Row = { id: string; code: string; nom_produit: string; revision: number; status: string; locked: boolean };
+type Row = { has_published_content?: boolean; has_draft_content?: boolean; id: string; code: string; nom_produit: string; revision: number; status: string; locked: boolean };
 type Text = { display_title: string; short_description: string; description: string };
-type Detail = Row & { description: string | null; short_description: string | null; proposal: { proposed_changes?: Partial<Text> } | null; sources: { url?: string; organisme?: string; portee?: string }[] | null; uncertainties: string[] | null; reviewed_at: string | null; history: { id: string; action: string; created_at: string; before: {title?: string; description?: string}; after: {title?: string; description?: string} }[] };
+type Detail = Row & { product_fingerprint?:string; draft_content?: any; published_content?: any; description: string | null; short_description: string | null; proposal: { proposed_changes?: Partial<Text> } | null; sources: { url?: string; organisme?: string; portee?: string }[] | null; uncertainties: string[] | null; reviewed_at: string | null; history: { id: string; action: string; created_at: string; before: {title?: string; description?: string}; after: {title?: string; description?: string} }[] };
 const empty: Text = { display_title: '', short_description: '', description: '' };
 const safeLink = (url?: string) => { try { const u = new URL(url || ''); return ['https:', 'http:'].includes(u.protocol) && !u.username && !u.password ? u.href : null; } catch { return null; } };
 export function DocumentaryReview() {
@@ -13,6 +14,7 @@ export function DocumentaryReview() {
  const [detail, setDetail] = useState<Detail | null>(null), [text, setText] = useState<Text>(empty);
  const [loading, setLoading] = useState(false), [loadingDetail, setLoadingDetail] = useState(false), [saving, setSaving] = useState(false);
  const [error, setError] = useState(''), [listError, setListError] = useState(''), [success, setSuccess] = useState(''), [dirty, setDirty] = useState(false), [refresh, setRefresh] = useState(0), [listRefresh, setListRefresh] = useState(0);
+ const [structuredDirty,setStructuredDirty]=useState(false),[structuredBusy,setStructuredBusy]=useState(false);
  const operation = useRef('');
  const operationIntent = useRef<boolean | null>(null);
  useEffect(() => {
@@ -27,9 +29,9 @@ export function DocumentaryReview() {
   return ()=>controller.abort();
  }, [selected, refresh]);
  const edit = (key: keyof Text, value: string) => {setText(t=>({...t,[key]:value}));setDirty(true);operation.current='';setSuccess('');};
- const choose = (id: string) => {if(saving || (dirty && !window.confirm('Abandonner les modifications non enregistrées ?')))return;setSelected(id);setSuccess('');};
+ const choose = (id: string) => {if(saving || structuredBusy || ((dirty || structuredDirty) && !window.confirm('Abandonner les modifications non enregistrées ?')))return;setSelected(id);setSuccess('');};
  async function save(validate: boolean) {
-  if(!detail || saving)return;setSaving(true);setError('');setSuccess('');
+  if(!detail || saving || structuredBusy)return;if(structuredDirty){setError('Enregistrez le brouillon structuré avant de modifier le texte historique.');return;}setSaving(true);setError('');setSuccess('');
   if (!operation.current || operationIntent.current !== validate) operation.current = createClientId();
   operationIntent.current = validate;
   try {await api.patch(`/catalogue-documentary/${detail.id}`,{operationId:operation.current,expectedRevision:detail.revision,text,validate});setDirty(false);setSuccess(validate?'Fiche validée et protégée.':'Correction enregistrée et protégée.');setRefresh(v=>v+1);}
@@ -49,7 +51,7 @@ export function DocumentaryReview() {
    <aside className="min-w-0 rounded-xl border border-slate-200 bg-white p-4" aria-busy={loading}>
     <p className="mb-3 text-sm text-slate-600">{loading?'Chargement…':`${total} fiche${total > 1 ? 's' : ''}`}</p>
     {!loading && !rows.length && <p>Aucune fiche pour ces critères.</p>}
-    <ul className="max-h-80 divide-y divide-slate-100 overflow-y-auto xl:max-h-[42rem]">{rows.map(r=><li key={r.id}><button disabled={saving} aria-current={selected===r.id?'true':undefined} className={`w-full rounded-lg p-3 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-600 ${selected===r.id?'bg-blue-50':'hover:bg-slate-50'}`} onClick={()=>choose(r.id)}><span className="block font-medium text-slate-900">{r.nom_produit}</span><span className="mt-1 block text-sm text-slate-600">{r.code} · {labels[r.status] || 'À classer'}{r.locked?' · Protégée':''}</span></button></li>)}</ul>
+    <ul className="max-h-80 divide-y divide-slate-100 overflow-y-auto xl:max-h-[42rem]">{rows.map(r=><li key={r.id}><button disabled={saving||structuredBusy} aria-current={selected===r.id?'true':undefined} className={`w-full rounded-lg p-3 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-600 ${selected===r.id?'bg-blue-50':'hover:bg-slate-50'}`} onClick={()=>choose(r.id)}><span className="block font-medium text-slate-900">{r.nom_produit}</span><span className="mt-1 block text-sm text-slate-600">{r.code} · {labels[r.status] || 'À classer'}{r.locked?' · Protégée':''}{r.has_published_content?' · Fiche structurée publiée':r.has_draft_content?' · Brouillon structuré':''}</span></button></li>)}</ul>
     <nav aria-label="Pagination des fiches" className="mt-4 flex items-center justify-between gap-2"><button disabled={page===1||loading} onClick={()=>setPage(p=>p-1)}>Précédent</button><span className="text-sm">{page} / {Math.max(1,Math.ceil(total/50))}</span><button disabled={page*50>=total||loading} onClick={()=>setPage(p=>p+1)}>Suivant</button></nav>
    </aside>
    <article className="min-w-0 rounded-xl border border-slate-200 bg-white p-5" aria-busy={loadingDetail}>
@@ -66,6 +68,7 @@ export function DocumentaryReview() {
       <p className="text-sm text-slate-600">L’enregistrement protège vos corrections contre les enrichissements automatiques.</p>
       <div className="flex flex-wrap gap-3"><button disabled={saving||loadingDetail} className="rounded-lg border border-slate-300 px-4 py-3" type="submit">{saving?'Enregistrement…':'Enregistrer la correction'}</button><button disabled={saving||loadingDetail||Object.values(text).some(v=>!v.trim())} className="rounded-lg bg-blue-700 px-4 py-3 text-white" type="button" onClick={()=>void save(true)}>Valider et protéger</button></div>
      </form>
+     <fieldset disabled={saving||dirty}><StructuredDocumentEditor detail={detail} onDirty={value=>{setStructuredDirty(value);if(value)setSuccess('');}} onBusy={setStructuredBusy} onSaved={message=>{setSuccess(message);setRefresh(v=>v+1);}}/></fieldset>
      <section><h3 className="font-semibold">Attributs techniques validés</h3><p className="mt-2 text-sm text-slate-600">Modifiez les caractéristiques avec leurs sources dans l’éditeur technique. Les propositions IA ne sont pas copiées dans les attributs.</p><a className="mt-3 inline-block text-blue-700 underline" href={`/attributs?productId=${encodeURIComponent(detail.id)}`} target="_blank" rel="noopener noreferrer">Ouvrir les attributs de cette fiche</a></section>
      <section><h3 className="font-semibold">Sources et incertitudes</h3><ul className="mt-3 space-y-2 text-sm">{(detail.sources||[]).map((s,i)=>{const url=safeLink(s.url);return <li key={i}>{url?<a className="break-all text-blue-700 underline" href={url} target="_blank" rel="noreferrer">{s.organisme || url}</a>:<span>Source sans lien public valide</span>}{s.portee&&<p className="text-slate-600">{s.portee}</p>}</li>;})}</ul>{!detail.sources?.length&&<p className="mt-2 text-sm text-slate-600">Aucune source enregistrée.</p>}<ul className="mt-3 list-inside list-disc text-sm text-amber-900">{(detail.uncertainties||[]).map((u,i)=><li key={i}>{u}</li>)}</ul></section>
      <details><summary className="cursor-pointer font-medium">Historique des 100 dernières opérations</summary>{detail.history.map(h=><div key={h.id} className="mt-3 border-t border-slate-200 pt-3 text-sm"><p>{h.action} · {new Date(h.created_at).toLocaleString('fr-FR')}</p><p className="mt-2 whitespace-pre-wrap">Avant : {h.before.description || 'Vide'}</p><p className="mt-2 whitespace-pre-wrap">Après : {h.after.description || 'Vide'}</p></div>)}</details>

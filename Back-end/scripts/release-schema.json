@@ -1,7 +1,7 @@
 {
   "version": 1,
   "sources": {
-    "schemaSha256": "eb3add036873f43e7d248794c5cf42100f6ff4ece540dc9b1f408176cbf002b7",
+    "schemaSha256": "6b7b61ab795da32601d8fa2c8f7860673e2d5049a69508fa43e611d4b6d11068",
     "migrations": [
       {
         "name": "20260303155632_init",
@@ -270,6 +270,10 @@
       {
         "name": "20261114000000_documentary_workflow",
         "sha256": "e566b397a99b7881b1642031bbdf84812a4ca8c2891f4b408bfbce61ba485989"
+      },
+      {
+        "name": "20261123000000_structured_documentary",
+        "sha256": "794b87936c573f20249b30582a188c39cdf54670ae44dc49f131932fdb486275"
       }
     ]
   },
@@ -11293,6 +11297,18 @@
       },
       {
         "table_name": "product_documentary",
+        "column_name": "draft_content",
+        "type": "jsonb",
+        "type_schema": "pg_catalog",
+        "is_nullable": "YES",
+        "column_default": null,
+        "character_maximum_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "datetime_precision": null
+      },
+      {
+        "table_name": "product_documentary",
         "column_name": "locked",
         "type": "bool",
         "type_schema": "pg_catalog",
@@ -11330,6 +11346,30 @@
       {
         "table_name": "product_documentary",
         "column_name": "proposal",
+        "type": "jsonb",
+        "type_schema": "pg_catalog",
+        "is_nullable": "YES",
+        "column_default": null,
+        "character_maximum_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "datetime_precision": null
+      },
+      {
+        "table_name": "product_documentary",
+        "column_name": "published_at",
+        "type": "timestamptz",
+        "type_schema": "pg_catalog",
+        "is_nullable": "YES",
+        "column_default": null,
+        "character_maximum_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "datetime_precision": 6
+      },
+      {
+        "table_name": "product_documentary",
+        "column_name": "published_content",
         "type": "jsonb",
         "type_schema": "pg_catalog",
         "is_nullable": "YES",
@@ -13161,6 +13201,24 @@
         "name": "documentary_event_product_id_fkey",
         "type": "f",
         "definition": "FOREIGN KEY (product_id) REFERENCES produit(id) ON DELETE RESTRICT",
+        "validated": true,
+        "deferrable": false,
+        "deferred": false
+      },
+      {
+        "table_name": "product_documentary",
+        "name": "documentary_draft_object",
+        "type": "c",
+        "definition": "CHECK (((draft_content IS NULL) OR (jsonb_typeof(draft_content) = 'object'::text)))",
+        "validated": true,
+        "deferrable": false,
+        "deferred": false
+      },
+      {
+        "table_name": "product_documentary",
+        "name": "documentary_published_object",
+        "type": "c",
+        "definition": "CHECK (((published_content IS NULL) OR (jsonb_typeof(published_content) = 'object'::text)))",
         "validated": true,
         "deferrable": false,
         "deferred": false

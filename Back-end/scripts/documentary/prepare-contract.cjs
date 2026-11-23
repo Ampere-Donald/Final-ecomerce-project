@@ -9,6 +9,7 @@ async function main(){
  try{
   await db.exec(fs.readFileSync(path.join(__dirname,'../../.local-postgres/documentary/baseline.sql'),'utf8'));
   await db.exec(fs.readFileSync(path.join(__dirname,'../../prisma/migrations/20261114000000_documentary_workflow/migration.sql'),'utf8'));
+  await db.exec(fs.readFileSync(path.join(__dirname,'../../prisma/migrations/20261123000000_structured_documentary/migration.sql'),'utf8'));
   const structure=await readStructure(db);
   for(const kind of ['columns','constraints','indexes']){
    const rows=structure[kind].filter(r=>names.has(r.table_name));

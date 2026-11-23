@@ -104,3 +104,6 @@ __pycache__/
 .venv/
 venv/
 env/
+
+# Also exclude dependency-directory symlinks used by isolated worktrees.
+**/node_modules

@@ -1,3 +1,5 @@
+import { join } from 'node:path';
+const { publicContent } = require(join(process.cwd(), 'scripts/documentary/content.cjs'));
 import { cataloguePricing } from '../pricing/catalogue-price';
 import { publicDocumentation } from '../valeur-attribut/documentation-data';
 import { technicalDictionaryEntries } from '../attribut/technical-dictionary';
@@ -37,6 +39,8 @@ export function masquerCouts(p: any, now = new Date(), publicView = true): any {
   ])
     delete copie[field];
   if (publicView) {
+    copie.documentationProduit = publicContent(copie.documentaryPublished, copie);
+    delete copie.documentaryPublished;
     for (const prefix of ['prix', 'classement', 'identification', 'photo']) {
       for (const suffix of ['Revision', 'VerifieRevision', 'VerifieAt', 'VerifiePar'])
         delete copie[`${prefix}${suffix}`];

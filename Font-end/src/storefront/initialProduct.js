@@ -1,5 +1,6 @@
 import { publicCatalogueData, catalogueBootJSON } from './initialCatalogue.js';
 import { readTechnicalSource } from './technicalProvenance.js';
+import { publicProductDocumentation } from './productContent.js';
 
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const scalarText = value => typeof value === 'string' ? value : null;
@@ -14,6 +15,8 @@ export function publicProductData(raw, id) {
   if (!raw || !uuid.test(id) || raw.id?.toLowerCase() !== id.toLowerCase() || raw.estActif !== true)
     throw Error('Invalid public product detail');
   const row = publicCatalogueData({ data: [raw], meta: { total: 1, lastPage: 1 } }).data[0];
+  const documentation=publicProductDocumentation(raw.documentationProduit);
+  if(documentation) row.documentationProduit=documentation;
   for (const key of ['description', 'urlDatasheet', 'sousCategorieId']) {
     if (raw[key] != null && typeof raw[key] !== 'string') throw Error('Invalid product text');
     if (typeof raw[key] === 'string') row[key] = raw[key];
