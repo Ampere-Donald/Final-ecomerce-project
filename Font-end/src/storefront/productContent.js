@@ -127,24 +127,32 @@ export function essentialSpecifications(product, lang = "fr") {
 export function designationSpecifications(product, lang = "fr") {
   const title = product.model || "";
   if (!/condensateur|\bcondo\b/i.test(title)) return [];
+  const documentedKeys = new Set(
+    (product.technicalAttributes || [])
+      .filter((attribute) => attribute.values.some(
+        (value) => value.source?.etat === "DOCUMENTE" && !value.source?.obsolete,
+      ))
+      .map((attribute) => attribute.technicalKey),
+  );
   const result = [];
   const capacitance = title.match(
     /\b(\d+(?:[ \u00a0\u202f]\d{3})*(?:[.,]\d+)?)\s*(µF|uF|nF|pF)\b/i,
   );
   const voltage = title.match(/\b(\d+(?:[.,]\d+)?)\s*(V(?:AC|DC)?)(?:\b|~)/i);
-  if (capacitance)
+  if (capacitance && !documentedKeys.has("CONDENSATEUR_CAPACITE"))
     result.push({
       label: lang === "en" ? "Stated capacitance" : "Capacité indiquée",
       value: capacitance[1] + " " + capacitance[2],
       designation: true,
     });
-  if (voltage)
+  if (voltage && !documentedKeys.has("CONDENSATEUR_TENSION"))
     result.push({
       label: lang === "en" ? "Stated voltage" : "Tension indiquée",
       value: voltage[1] + " " + voltage[2],
       designation: true,
     });
-  if (/\bpolarisé/i.test(title) && !/non[ -]polarisé/i.test(title))
+  if (/\bpolarisé/i.test(title) && !/non[ -]polarisé/i.test(title) &&
+      !documentedKeys.has("CONDENSATEUR_POLARITE"))
     result.push({
       label: lang === "en" ? "Stated type" : "Type indiqué",
       value: lang === "en" ? "Polarised" : "Polarisé",
